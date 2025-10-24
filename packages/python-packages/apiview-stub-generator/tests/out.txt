@@ -1,0 +1,306 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-8.3.2, pluggy-1.6.0 -- /home/swathip/venvs/env310/bin/python
+cachedir: .pytest_cache
+rootdir: /home/swathip/repos/azure-sdk-tools/packages/python-packages/apiview-stub-generator
+plugins: cov-7.0.0, asyncio-0.14.0, anyio-4.11.0
+collecting ... collected 0 items
+* Creating isolated environment: virtualenv+pip...
+* Installing packages in isolated environment:
+  - setuptools >= 40.8.0
+* Getting build dependencies for sdist...
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+* Building sdist...
+running sdist
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+running check
+creating apistubgentest-0.0.0
+creating apistubgentest-0.0.0/apistubgentest
+creating apistubgentest-0.0.0/apistubgentest.egg-info
+creating apistubgentest-0.0.0/apistubgentest/models
+creating apistubgentest-0.0.0/apistubgentest/optdep
+copying files to apistubgentest-0.0.0...
+copying CHANGELOG.md -> apistubgentest-0.0.0
+copying MANIFEST.in -> apistubgentest-0.0.0
+copying README.md -> apistubgentest-0.0.0
+copying setup.py -> apistubgentest-0.0.0
+copying apistubgentest/__init__.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest/_client.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest/_patch.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest/_version.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest.egg-info/PKG-INFO -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/SOURCES.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/dependency_links.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/not-zip-safe -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/requires.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/top_level.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest/models/__init__.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/models/_dataclasses.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/models/_mixin.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/models/_models.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/optdep/__init__.py -> apistubgentest-0.0.0/apistubgentest/optdep
+copying apistubgentest/optdep/testing.py -> apistubgentest-0.0.0/apistubgentest/optdep
+copying apistubgentest.egg-info/SOURCES.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+Writing apistubgentest-0.0.0/setup.cfg
+Creating tar archive
+removing 'apistubgentest-0.0.0' (and everything under it)
+Successfully built apistubgentest-0.0.0.tar.gz
+* Creating isolated environment: virtualenv+pip...
+* Installing packages in isolated environment:
+  - setuptools >= 40.8.0
+* Getting build dependencies for wheel...
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+* Building wheel...
+running bdist_wheel
+running build
+running build_py
+copying apistubgentest/_client.py -> build/lib/apistubgentest
+copying apistubgentest/_version.py -> build/lib/apistubgentest
+copying apistubgentest/_patch.py -> build/lib/apistubgentest
+copying apistubgentest/__init__.py -> build/lib/apistubgentest
+copying apistubgentest/optdep/testing.py -> build/lib/apistubgentest/optdep
+copying apistubgentest/optdep/__init__.py -> build/lib/apistubgentest/optdep
+copying apistubgentest/models/_models.py -> build/lib/apistubgentest/models
+copying apistubgentest/models/_mixin.py -> build/lib/apistubgentest/models
+copying apistubgentest/models/__init__.py -> build/lib/apistubgentest/models
+copying apistubgentest/models/_dataclasses.py -> build/lib/apistubgentest/models
+installing to build/bdist.linux-x86_64/wheel
+running install
+running install_lib
+creating build/bdist.linux-x86_64/wheel
+creating build/bdist.linux-x86_64/wheel/apistubgentest
+copying build/lib/apistubgentest/_client.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+copying build/lib/apistubgentest/_version.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+creating build/bdist.linux-x86_64/wheel/apistubgentest/optdep
+copying build/lib/apistubgentest/optdep/testing.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/optdep
+copying build/lib/apistubgentest/optdep/__init__.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/optdep
+copying build/lib/apistubgentest/_patch.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+copying build/lib/apistubgentest/__init__.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+creating build/bdist.linux-x86_64/wheel/apistubgentest/models
+copying build/lib/apistubgentest/models/_models.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+copying build/lib/apistubgentest/models/_mixin.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+copying build/lib/apistubgentest/models/__init__.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+copying build/lib/apistubgentest/models/_dataclasses.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+running install_egg_info
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+Copying apistubgentest.egg-info to build/bdist.linux-x86_64/wheel/./apistubgentest-0.0.0-py3.10.egg-info
+running install_scripts
+creating build/bdist.linux-x86_64/wheel/apistubgentest-0.0.0.dist-info/WHEEL
+creating '/home/swathip/repos/azure-sdk-tools/packages/python-packages/apistubgentest/dist/.tmp-7k04ui3h/apistubgentest-0.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+adding 'apistubgentest/__init__.py'
+adding 'apistubgentest/_client.py'
+adding 'apistubgentest/_patch.py'
+adding 'apistubgentest/_version.py'
+adding 'apistubgentest/models/__init__.py'
+adding 'apistubgentest/models/_dataclasses.py'
+adding 'apistubgentest/models/_mixin.py'
+adding 'apistubgentest/models/_models.py'
+adding 'apistubgentest/optdep/__init__.py'
+adding 'apistubgentest/optdep/testing.py'
+adding 'apistubgentest-0.0.0.dist-info/METADATA'
+adding 'apistubgentest-0.0.0.dist-info/WHEEL'
+adding 'apistubgentest-0.0.0.dist-info/top_level.txt'
+adding 'apistubgentest-0.0.0.dist-info/RECORD'
+removing build/bdist.linux-x86_64/wheel
+Successfully built apistubgentest-0.0.0-py3-none-any.whl
+* Creating isolated environment: virtualenv+pip...
+* Installing packages in isolated environment:
+  - setuptools>=42
+  - wheel
+* Getting build dependencies for sdist...
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+* Building sdist...
+running sdist
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+running check
+creating apistubgentest-0.0.0
+creating apistubgentest-0.0.0/apistubgentest
+creating apistubgentest-0.0.0/apistubgentest.egg-info
+creating apistubgentest-0.0.0/apistubgentest/models
+creating apistubgentest-0.0.0/apistubgentest/optdep
+creating apistubgentest-0.0.0/sphinx_source
+copying files to apistubgentest-0.0.0...
+copying CHANGELOG.md -> apistubgentest-0.0.0
+copying MANIFEST.in -> apistubgentest-0.0.0
+copying README.md -> apistubgentest-0.0.0
+copying pyproject.toml -> apistubgentest-0.0.0
+copying apistubgentest/__init__.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest/_client.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest/_patch.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest/_version.py -> apistubgentest-0.0.0/apistubgentest
+copying apistubgentest.egg-info/PKG-INFO -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/SOURCES.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/dependency_links.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/requires.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest.egg-info/top_level.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+copying apistubgentest/models/__init__.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/models/_dataclasses.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/models/_mixin.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/models/_models.py -> apistubgentest-0.0.0/apistubgentest/models
+copying apistubgentest/optdep/__init__.py -> apistubgentest-0.0.0/apistubgentest/optdep
+copying apistubgentest/optdep/testing.py -> apistubgentest-0.0.0/apistubgentest/optdep
+copying sphinx_source/conf.py -> apistubgentest-0.0.0/sphinx_source
+copying apistubgentest.egg-info/SOURCES.txt -> apistubgentest-0.0.0/apistubgentest.egg-info
+Writing apistubgentest-0.0.0/setup.cfg
+Creating tar archive
+removing 'apistubgentest-0.0.0' (and everything under it)
+Successfully built apistubgentest-0.0.0.tar.gz
+* Creating isolated environment: virtualenv+pip...
+* Installing packages in isolated environment:
+  - setuptools>=42
+  - wheel
+* Getting build dependencies for wheel...
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+* Building wheel...
+running bdist_wheel
+running build
+running build_py
+copying apistubgentest/_client.py -> build/lib/apistubgentest
+copying apistubgentest/_version.py -> build/lib/apistubgentest
+copying apistubgentest/_patch.py -> build/lib/apistubgentest
+copying apistubgentest/__init__.py -> build/lib/apistubgentest
+creating build/lib/sphinx_source
+copying sphinx_source/conf.py -> build/lib/sphinx_source
+copying apistubgentest/optdep/testing.py -> build/lib/apistubgentest/optdep
+copying apistubgentest/optdep/__init__.py -> build/lib/apistubgentest/optdep
+copying apistubgentest/models/_models.py -> build/lib/apistubgentest/models
+copying apistubgentest/models/_mixin.py -> build/lib/apistubgentest/models
+copying apistubgentest/models/__init__.py -> build/lib/apistubgentest/models
+copying apistubgentest/models/_dataclasses.py -> build/lib/apistubgentest/models
+creating build/lib/build/lib/apistubgentest
+copying build/lib/apistubgentest/_client.py -> build/lib/build/lib/apistubgentest
+copying build/lib/apistubgentest/_version.py -> build/lib/build/lib/apistubgentest
+copying build/lib/apistubgentest/_patch.py -> build/lib/build/lib/apistubgentest
+copying build/lib/apistubgentest/__init__.py -> build/lib/build/lib/apistubgentest
+creating build/lib/build/lib/apistubgentest/optdep
+copying build/lib/apistubgentest/optdep/testing.py -> build/lib/build/lib/apistubgentest/optdep
+copying build/lib/apistubgentest/optdep/__init__.py -> build/lib/build/lib/apistubgentest/optdep
+creating build/lib/build/lib/apistubgentest/models
+copying build/lib/apistubgentest/models/_models.py -> build/lib/build/lib/apistubgentest/models
+copying build/lib/apistubgentest/models/_mixin.py -> build/lib/build/lib/apistubgentest/models
+copying build/lib/apistubgentest/models/__init__.py -> build/lib/build/lib/apistubgentest/models
+copying build/lib/apistubgentest/models/_dataclasses.py -> build/lib/build/lib/apistubgentest/models
+running egg_info
+writing apistubgentest.egg-info/PKG-INFO
+writing dependency_links to apistubgentest.egg-info/dependency_links.txt
+writing requirements to apistubgentest.egg-info/requires.txt
+writing top-level names to apistubgentest.egg-info/top_level.txt
+reading manifest file 'apistubgentest.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+writing manifest file 'apistubgentest.egg-info/SOURCES.txt'
+installing to build/bdist.linux-x86_64/wheel
+running install
+running install_lib
+creating build/bdist.linux-x86_64/wheel
+creating build/bdist.linux-x86_64/wheel/apistubgentest
+copying build/lib/apistubgentest/_client.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+copying build/lib/apistubgentest/_version.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+creating build/bdist.linux-x86_64/wheel/apistubgentest/optdep
+copying build/lib/apistubgentest/optdep/testing.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/optdep
+copying build/lib/apistubgentest/optdep/__init__.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/optdep
+copying build/lib/apistubgentest/_patch.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+copying build/lib/apistubgentest/__init__.py -> build/bdist.linux-x86_64/wheel/./apistubgentest
+creating build/bdist.linux-x86_64/wheel/apistubgentest/models
+copying build/lib/apistubgentest/models/_models.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+copying build/lib/apistubgentest/models/_mixin.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+copying build/lib/apistubgentest/models/__init__.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+copying build/lib/apistubgentest/models/_dataclasses.py -> build/bdist.linux-x86_64/wheel/./apistubgentest/models
+creating build/bdist.linux-x86_64/wheel/sphinx_source
+copying build/lib/sphinx_source/conf.py -> build/bdist.linux-x86_64/wheel/./sphinx_source
+creating build/bdist.linux-x86_64/wheel/build
+creating build/bdist.linux-x86_64/wheel/build/lib
+creating build/bdist.linux-x86_64/wheel/build/lib/apistubgentest
+copying build/lib/build/lib/apistubgentest/_client.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest
+copying build/lib/build/lib/apistubgentest/_version.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest
+creating build/bdist.linux-x86_64/wheel/build/lib/apistubgentest/optdep
+copying build/lib/build/lib/apistubgentest/optdep/testing.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest/optdep
+copying build/lib/build/lib/apistubgentest/optdep/__init__.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest/optdep
+copying build/lib/build/lib/apistubgentest/_patch.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest
+copying build/lib/build/lib/apistubgentest/__init__.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest
+creating build/bdist.linux-x86_64/wheel/build/lib/apistubgentest/models
+copying build/lib/build/lib/apistubgentest/models/_models.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest/models
+copying build/lib/build/lib/apistubgentest/models/_mixin.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest/models
+copying build/lib/build/lib/apistubgentest/models/__init__.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest/models
+copying build/lib/build/lib/apistubgentest/models/_dataclasses.py -> build/bdist.linux-x86_64/wheel/./build/lib/apistubgentest/models
+running install_egg_info
+Copying apistubgentest.egg-info to build/bdist.linux-x86_64/wheel/./apistubgentest-0.0.0-py3.10.egg-info
+running install_scripts
+creating build/bdist.linux-x86_64/wheel/apistubgentest-0.0.0.dist-info/WHEEL
+creating '/tmp/tmppbw_ijpr/apistubgentest-copied/dist/.tmp-3b4phor6/apistubgentest-0.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+adding 'apistubgentest/__init__.py'
+adding 'apistubgentest/_client.py'
+adding 'apistubgentest/_patch.py'
+adding 'apistubgentest/_version.py'
+adding 'apistubgentest/models/__init__.py'
+adding 'apistubgentest/models/_dataclasses.py'
+adding 'apistubgentest/models/_mixin.py'
+adding 'apistubgentest/models/_models.py'
+adding 'apistubgentest/optdep/__init__.py'
+adding 'apistubgentest/optdep/testing.py'
+adding 'build/lib/apistubgentest/__init__.py'
+adding 'build/lib/apistubgentest/_client.py'
+adding 'build/lib/apistubgentest/_patch.py'
+adding 'build/lib/apistubgentest/_version.py'
+adding 'build/lib/apistubgentest/models/__init__.py'
+adding 'build/lib/apistubgentest/models/_dataclasses.py'
+adding 'build/lib/apistubgentest/models/_mixin.py'
+adding 'build/lib/apistubgentest/models/_models.py'
+adding 'build/lib/apistubgentest/optdep/__init__.py'
+adding 'build/lib/apistubgentest/optdep/testing.py'
+adding 'sphinx_source/conf.py'
+adding 'apistubgentest-0.0.0.dist-info/METADATA'
+adding 'apistubgentest-0.0.0.dist-info/WHEEL'
+adding 'apistubgentest-0.0.0.dist-info/top_level.txt'
+adding 'apistubgentest-0.0.0.dist-info/RECORD'
+removing build/bdist.linux-x86_64/wheel
+Successfully built apistubgentest-0.0.0-py3-none-any.whl
+
+====================== no tests ran in 109.99s (0:01:49) =======================

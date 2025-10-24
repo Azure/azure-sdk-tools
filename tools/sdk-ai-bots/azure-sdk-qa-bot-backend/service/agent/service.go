@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	neturl "net/url"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
 )
 
@@ -50,12 +52,6 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.Sources == nil {
 			req.Sources = tenantConfig.Sources
 		}
-		if req.PromptTemplate == nil {
-			req.PromptTemplate = &tenantConfig.PromptTemplate
-		}
-		if req.IntensionPromptTemplate == nil {
-			req.IntensionPromptTemplate = &tenantConfig.IntensionPromptTemplate
-		}
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
@@ -71,7 +67,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("Failed to marshal request: %v\n", err)
 	} else {
-		log.Printf("Request: %s", jsonReq)
+		log.Printf("Request: %s", utils.SanitizeForLog(string(jsonReq)))
 	}
 
 	if err = s.CheckArgs(req); err != nil {
@@ -93,7 +89,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+	prompt, err := s.buildPrompt(intension, chunks, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -101,7 +98,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 5. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
-	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
+	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -139,7 +136,7 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	}
 
 	if len(resp.Choices) > 0 {
-		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intension.md")
+		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
 			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
 			return nil, err
@@ -183,10 +180,25 @@ func processName(name *string) *string {
 }
 
 func getImageDataURI(url string) (string, error) {
-	if !strings.HasPrefix(url, "https://smba.trafficmanager.net") {
-		log.Printf("URL does not start with expected prefix: %s", url)
-		return url, nil
+	// Parse and validate the URL to prevent SSRF attacks
+	parsedURL, err := neturl.Parse(url)
+	if err != nil {
+		log.Printf("Invalid URL format: %s, error: %v", utils.SanitizeForLog(url), err)
+		return "", fmt.Errorf("invalid URL format: %w", err)
 	}
+
+	// Validate scheme is HTTPS
+	if parsedURL.Scheme != "https" {
+		log.Printf("URL scheme is not HTTPS: %s", utils.SanitizeForLog(url))
+		return "", fmt.Errorf("only HTTPS URLs are allowed")
+	}
+
+	// Validate hostname is exactly smba.trafficmanager.net
+	if parsedURL.Hostname() != "smba.trafficmanager.net" {
+		log.Printf("URL hostname is not allowed: %s", utils.SanitizeForLog(parsedURL.Hostname()))
+		return "", fmt.Errorf("only smba.trafficmanager.net hostname is allowed")
+	}
+
 	cred, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
 		ID: azidentity.ClientID(config.GetBotClientID()),
 	})
@@ -308,7 +320,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					log.Printf("Failed to get image data URI: %v", err)
 					continue
 				}
-				log.Println("Image link:", link)
+				log.Println("Image link:", utils.SanitizeForLog(link))
 				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(
 						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
@@ -341,7 +353,8 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		query = *req.Message.RawContent
 	}
 	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(*req.IntensionPromptTemplate, messages)
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+	intentResult, err := s.RecongnizeIntension(tenantConfig.IntensionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -360,7 +373,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	}
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-	log.Printf("Searching query: %s", query)
+	log.Printf("Searching query: %s", utils.SanitizeForLog(query))
 	return query, intentResult
 }
 

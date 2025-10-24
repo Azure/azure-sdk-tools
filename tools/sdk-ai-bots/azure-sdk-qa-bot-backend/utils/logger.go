@@ -57,3 +57,12 @@ func ConfigureAzureCompatibleLogging() {
 	// Set the log output to use our custom writer
 	log.SetOutput(singleLineWriter)
 }
+
+// SanitizeForLog removes newline and carriage return characters from user input to prevent log injection
+// This function should be used to sanitize any user-provided data before logging it
+// to prevent CWE-117 (Improper Output Neutralization for Logs) vulnerabilities
+func SanitizeForLog(s string) string {
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	return s
+}

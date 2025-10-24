@@ -9,6 +9,7 @@ import (
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 type PreprocessService struct{}
@@ -70,7 +71,7 @@ func (s *PreprocessService) PreprocessHTMLContent(input string) string {
 	// Then remove HTML tags while preserving the text content
 	cleaned := s.CleanHTMLTags(decoded)
 
-	log.Printf("HTML preprocessed: %s", cleaned)
+	log.Printf("HTML preprocessed: %s", utils.SanitizeForLog(cleaned))
 	return cleaned
 }
 

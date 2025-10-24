@@ -10,6 +10,7 @@ namespace APIViewWeb.DTOs
         CommentResolved,
         CommentUnResolved,
         CommentUpVoteToggled,
+        CommentDownVoteToggled,
         CommentDeleted
     }
 

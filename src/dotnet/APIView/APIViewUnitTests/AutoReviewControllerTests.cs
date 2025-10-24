@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb;
 using APIViewWeb.Controllers;
-using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
@@ -482,7 +481,7 @@ namespace APIViewUnitTests
             public override string[] Extensions => new[] { ".json" };
             public override string VersionString => "1.0";
             public override bool CanUpdate(string versionString) => false;
-            public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis) => Task.FromResult<CodeFile>(null);
+            public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null) => Task.FromResult<CodeFile>(null);
             public override bool UsesTreeStyleParser => _usesTreeStyleParser;
             public override CodeFile GetReviewGenPendingCodeFile(string fileName) => null;
             public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => false;

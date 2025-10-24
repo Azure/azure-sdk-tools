@@ -394,7 +394,7 @@ export async function cleanUpDirectory(
         await rm(directory, { recursive: true, force: true });
         await mkdir(directory, { recursive: true });
         return;
-    }else if(entriesToPreserve.length === 1){
+    } else if (entriesToPreserve.length === 1) {
         await rm(path.join(directory, entriesToPreserve[0]), { recursive: true, force: true });
         return;
     }

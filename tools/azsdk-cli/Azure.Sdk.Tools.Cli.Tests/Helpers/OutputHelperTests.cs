@@ -40,7 +40,8 @@ internal class OutputHelperTests
       ""message"": ""message2""
     }
   ],
-  ""suggested_fix"": ""a test suggested fix""
+  ""suggested_fix"": ""a test suggested fix"",
+  ""command_status"": ""Succeeded""
 }";
 
         var output = new OutputHelper(OutputHelper.OutputModes.Json);

@@ -14,17 +14,20 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<JavaScriptLanguageSpecificChecks> _logger;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     public JavaScriptLanguageSpecificChecks(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
-        ILogger<JavaScriptLanguageSpecificChecks> logger)
+        ILogger<JavaScriptLanguageSpecificChecks> logger,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
+        _commonValidationHelpers = commonValidationHelpers;
     }
 
     public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
@@ -57,7 +60,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
     
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -87,7 +90,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> LintCode(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -122,7 +125,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCode(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -181,5 +184,17 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
         // Fallback to directory name if package.json reading fails
         return Path.GetFileName(packagePath);
+    }
+
+    public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await _commonValidationHelpers.ValidateReadmeCommon(packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
+        return await _commonValidationHelpers.ValidateChangelogCommon(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }

@@ -227,10 +227,10 @@ azsdk verify-setup --all
 }
 ```
 
-**When Automatically Invoked**:
+**When Invoked**:
 
-1. **MCP Server Start**: Automatically check requirements for detected language when server starts
-2. **Before Generation**: When user requests SDK generation, verify requirements first
+- **Before Tool Calls**: When user requests a tool, verify requirements first
+- **On user request**: When user asks the agent to check their setup, environment, installations, etc.
 
 ### User Experience
 

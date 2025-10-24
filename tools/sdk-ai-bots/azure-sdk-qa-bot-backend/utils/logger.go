@@ -7,28 +7,27 @@ import (
 	"strings"
 )
 
+// SanitizeForLog removes newline and carriage return characters from user input to prevent log injection
+// This function should be used to sanitize any user-provided data before logging it
+// to prevent CWE-117 (Improper Output Neutralization for Logs) vulnerabilities
+func SanitizeForLog(s string) string {
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	return s
+}
+
 // SingleLineWriter wraps an io.Writer and escapes newlines
 // This prevents log entries from being split across multiple lines in Azure App Service
 // while preserving the original newline information.
 // It also limits log entry length to prevent log flooding attacks.
 type SingleLineWriter struct {
-	writer   io.Writer
-	maxBytes int
+	writer io.Writer
 }
 
-// NewSingleLineWriter creates a new SingleLineWriter with a default max length of 10000 bytes
+// NewSingleLineWriter creates a new SingleLineWriter
 func NewSingleLineWriter(w io.Writer) *SingleLineWriter {
 	return &SingleLineWriter{
-		writer:   w,
-		maxBytes: 10000,
-	}
-}
-
-// NewSingleLineWriterWithMaxBytes creates a new SingleLineWriter with a custom max length
-func NewSingleLineWriterWithMaxBytes(w io.Writer, maxBytes int) *SingleLineWriter {
-	return &SingleLineWriter{
-		writer:   w,
-		maxBytes: maxBytes,
+		writer: w,
 	}
 }
 
@@ -38,11 +37,6 @@ func NewSingleLineWriterWithMaxBytes(w io.Writer, maxBytes int) *SingleLineWrite
 func (w *SingleLineWriter) Write(p []byte) (n int, err error) {
 	// Convert to string, escape newlines, then convert back to bytes
 	content := string(p)
-
-	// Limit content length to prevent log flooding
-	if len(content) > w.maxBytes {
-		content = content[:w.maxBytes] + "... [truncated]"
-	}
 
 	// Check if the content ends with a newline (which is typical for log entries)
 	endsWithNewline := strings.HasSuffix(content, "\n")

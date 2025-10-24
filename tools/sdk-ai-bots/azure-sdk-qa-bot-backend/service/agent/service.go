@@ -22,6 +22,7 @@ import (
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
 )
 
@@ -66,7 +67,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("Failed to marshal request: %v\n", err)
 	} else {
-		log.Printf("Request: %s", jsonReq)
+		log.Printf("Request: %s", utils.SanitizeForLog(string(jsonReq)))
 	}
 
 	if err = s.CheckArgs(req); err != nil {
@@ -182,19 +183,19 @@ func getImageDataURI(url string) (string, error) {
 	// Parse and validate the URL to prevent SSRF attacks
 	parsedURL, err := neturl.Parse(url)
 	if err != nil {
-		log.Printf("Invalid URL format: %s, error: %v", url, err)
+		log.Printf("Invalid URL format: %s, error: %v", utils.SanitizeForLog(url), err)
 		return "", fmt.Errorf("invalid URL format: %w", err)
 	}
 
 	// Validate scheme is HTTPS
 	if parsedURL.Scheme != "https" {
-		log.Printf("URL scheme is not HTTPS: %s", url)
+		log.Printf("URL scheme is not HTTPS: %s", utils.SanitizeForLog(url))
 		return "", fmt.Errorf("only HTTPS URLs are allowed")
 	}
 
 	// Validate hostname is exactly smba.trafficmanager.net
 	if parsedURL.Hostname() != "smba.trafficmanager.net" {
-		log.Printf("URL hostname is not allowed: %s", parsedURL.Hostname())
+		log.Printf("URL hostname is not allowed: %s", utils.SanitizeForLog(parsedURL.Hostname()))
 		return "", fmt.Errorf("only smba.trafficmanager.net hostname is allowed")
 	}
 
@@ -319,7 +320,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					log.Printf("Failed to get image data URI: %v", err)
 					continue
 				}
-				log.Println("Image link:", link)
+				log.Println("Image link:", utils.SanitizeForLog(link))
 				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(
 						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
@@ -372,7 +373,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	}
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-	log.Printf("Searching query: %s", query)
+	log.Printf("Searching query: %s", utils.SanitizeForLog(query))
 	return query, intentResult
 }
 

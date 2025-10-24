@@ -58,6 +58,15 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
             const clientType = getSDKType(packageFolderPath);
             if (sdkType && sdkType === 'mgmt' || clientType === SDKType.RestLevelClient) {
                 logger.info(`Package ${packageName} released before is track2 sdk.`);
+                
+                // Check if review folder exists and has files
+                const reviewFolderPath = path.join(packageFolderPath, 'review');
+                if (!fs.existsSync(reviewFolderPath) || fs.readdirSync(reviewFolderPath).length === 0) {
+                    logger.info('Review folder is empty or does not exist. Please fix build errors first.');
+                    logger.info(`After build succeeds, run \`changelog-tool ${packageFolderPath}\` to generate changelog.`);
+                    return;
+                }
+                
                 logger.info('Start to generate changelog by comparing api.md.');
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);

@@ -74,6 +74,9 @@ parameters:
   - name: Model
     type: string
     default: ''
+  - name: EvalJob
+    type: template
+    default: ''
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -223,20 +226,13 @@ extends:
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
-          - ${{ if ne(parameters.EvalProject, '') }}:
-            - job: Eval
-              displayName: 'Run AI Eval'
-              pool:
-                name: $(LINUXPOOL)
-                image: $(LINUXVMIMAGE)
-                os: linux
-
-              steps:
-                - template: /eng/pipelines/templates/steps/run-ai-eval.yml
-                  parameters:
-                    EvalProject: ${{ parameters.EvalProject }}
-                    OpenAIEndPoint: ${{ parameters.OpenAIEndPoint }}
-                    Model: ${{ parameters.Model }}
+          - ${{ if ne(parameters.EvalJob, '') }}:
+            - template: {{ parameters.EvalJob }}
+              parameters:
+                EvalProject: ${{ parameters.EvalProject }}
+                OpenAIEndPoint: ${{ parameters.OpenAIEndPoint }}
+                Model: ${{ parameters.Model }}
+                GitHubToken: $(azuresdk-github-pat)
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml

@@ -142,16 +142,16 @@ export async function buildPackage(
 
         logger.info(`Start to build package '${name}'.`);
         const modularSDKType = getModularSDKType(packageDirectory);
+        let errorAsWarning = false;
         if (modularSDKType === ModularSDKType.DataPlane) {
             await customizeCodes(packageDirectory);
-            try {
-                await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions, true, undefined, true);
-            } catch (error) {
-                logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
-                buildStatus = `failed`;
-            }
-        } else {
-            await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
+            errorAsWarning = true;
+        }
+        try {
+            await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions, errorAsWarning);
+        } catch (error) {
+            logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
+            buildStatus = `failed`;
         }
     }
     if (buildStatus === `succeeded`) {

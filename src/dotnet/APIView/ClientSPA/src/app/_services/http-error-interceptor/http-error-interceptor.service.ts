@@ -9,6 +9,13 @@ export class HttpErrorInterceptorService implements HttpInterceptor{
     return next.handle(request)
       .pipe(
         catchError((error: HttpErrorResponse) => {
+          // Handle 403 Forbidden - user is authenticated but not authorized (wrong organization)
+          if (error.status === 403) {
+            const baseUrl = window.location.origin.replace('spa.', '');
+            window.location.href = `${baseUrl}/Unauthorized?returnUrl=/`;
+            return throwError(() => error);
+          }
+
           let errorMessage = 'Unknown error occurred';
           if (error.error instanceof ErrorEvent) {
             errorMessage = `Client Side: ${error.error.message}`;

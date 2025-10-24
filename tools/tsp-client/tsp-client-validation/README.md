@@ -9,7 +9,6 @@ When the tsp-client version is updated in `eng/common/tsp-client/package.json`, 
 ## Files
 
 - **`Invoke-TspClientValidation.ps1`** - Main automation script (PowerShell)
-- **`run-validation.cmd`** - Windows batch wrapper for easy execution
 - **`Example-Usage.ps1`** - Example script showing current scenario usage
 - **`README.md`** - This documentation
 
@@ -45,13 +44,7 @@ az devops configure --defaults project=29ec6040-b234-4e31-b139-33dc4287b756
 .\Invoke-TspClientValidation.ps1 -PRNumber 12360 -SyncBranch "sync-eng/common-update-tsp-client-12360"
 ```
 
-#### Option 2: Windows Batch (Interactive)
-
-```cmd
-run-validation.cmd
-```
-
-#### Option 3: Example Script (Current Scenario)
+#### Option 2: Example Script (Current Scenario)
 
 ```powershell
 .\Example-Usage.ps1 -DryRun

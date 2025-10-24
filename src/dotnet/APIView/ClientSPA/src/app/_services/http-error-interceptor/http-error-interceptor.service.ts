@@ -1,19 +1,27 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, Observable, of, throwError } from 'rxjs';
+import { catchError, EMPTY, Observable, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable()
 export class HttpErrorInterceptorService implements HttpInterceptor{
+  private static lastRedirectTime = 0;
+  private static readonly REDIRECT_COOLDOWN_MS = 1000;
+
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(request)
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          // Handle 403 Forbidden - user is authenticated but not authorized (wrong organization)
           if (error.status === 403) {
-            const baseUrl = window.location.origin.replace('spa.', '');
-            window.location.href = `${baseUrl}/Unauthorized?returnUrl=/`;
-            return throwError(() => error);
+            const now = Date.now();            
+            if (now - HttpErrorInterceptorService.lastRedirectTime > HttpErrorInterceptorService.REDIRECT_COOLDOWN_MS) {
+              HttpErrorInterceptorService.lastRedirectTime = now;
+              
+              const baseUrl = window.location.origin.replace('spa.', '');
+              window.location.href = `${baseUrl}/Unauthorized?returnUrl=/`;
+            }
+            
+            return EMPTY;
           }
 
           let errorMessage = 'Unknown error occurred';

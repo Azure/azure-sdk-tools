@@ -241,7 +241,15 @@ Name (CLI): `azsdk package update-metadata`
 
 Name (MCP): `azsdk_package_update_metadata`
 
-Purpose: Update additional language-specific metadata and documentation, such as `_metadata.json`, `pom.xml` etc., export API surface (.NET).
+Purpose: Update additional language-specific metadata and documentation.
+
+Target files per language:
+
+- .NET: API view artifacts under `{package-path}/api/`.
+- Java: `pom.xml` files in both the `azure-sdk-for-java` repo root and the `service` folder.
+- Python: `_metadata.json` and `pyproject.toml`.
+- JavaScript: N/A (no targets).
+- Go: N/A (no targets).
 
 Inputs:
 

@@ -9,11 +9,11 @@ When the tsp-client version is updated in `eng/common/tsp-client/package.json`, 
 ## Files
 
 - **`Invoke-TspClientValidation.ps1`** - Main automation script (PowerShell)
-- **`TspClientConfig.ps1`** - PowerShell configuration module
-- **`config.json`** - JSON configuration file with pipeline IDs and settings
 - **`run-validation.cmd`** - Windows batch wrapper for easy execution
 - **`Example-Usage.ps1`** - Example script showing current scenario usage
-- **`README.md`** - This documentation## Prerequisites
+- **`README.md`** - This documentation
+
+## Prerequisites
 
 1. **Azure CLI** with the `azure-devops` extension:
 
@@ -27,7 +27,13 @@ When the tsp-client version is updated in `eng/common/tsp-client/package.json`, 
    az devops configure --defaults organization=https://dev.azure.com/azure-sdk
    ```
 
-3. **Permissions** - Access to trigger pipelines in the azure-sdk DevOps organization
+3. **Azure DevOps default project** - Set the default azure-sdk project to the `public` project id:
+
+```bash
+az devops configure --defaults project=29ec6040-b234-4e31-b139-33dc4287b756
+```
+
+4. **Permissions** - Access to trigger pipelines in the azure-sdk DevOps organization
 
 ## Usage
 
@@ -151,7 +157,7 @@ Check that:
 
 - The sync branch exists in the azure-rest-api-specs repository
 - You have proper permissions to trigger pipelines
-- The pipeline IDs in `TspClientConfig.ps1` are up to date
+- The pipeline IDs in `$PipelineMapping` variable are up to date
 
 ### Authentication Issues
 
@@ -164,7 +170,7 @@ az devops configure --defaults organization=https://dev.azure.com/azure-sdk
 
 ## Configuration Updates
 
-If pipeline IDs change, update them in `TspClientConfig.ps1`. You can find current pipeline IDs with:
+If pipeline IDs change, update them in the `$PipelineMapping` variable. You can find current pipeline IDs with:
 
 ```bash
 az pipelines list --output table | findstr "SDK Validation"

@@ -6,8 +6,7 @@
 
 .DESCRIPTION
     This script helps automate the process of running SDK validation pipelines across all languages
-    when a new tsp-client version is released. It follows the checklist from the 
-    tspclient-automation-check.prompt.md file.
+    when a new tsp-client version.
 
 .PARAMETER PRNumber
     The PR number from azure-sdk-tools that updates the tsp-client version (e.g., 12360)
@@ -63,27 +62,22 @@ $PipelineMapping = @{
     "Python" = @{
         PipelineId = 7519
         Repository = "azure-sdk-for-python"
-        PRPattern = "Azure/azure-sdk-for-python/pull/"
     }
     "NET" = @{
         PipelineId = 7516
         Repository = "azure-sdk-for-net"
-        PRPattern = "Azure/azure-sdk-for-net/pull/"
     }
     "Java" = @{
         PipelineId = 7515
         Repository = "azure-sdk-for-java"
-        PRPattern = "Azure/azure-sdk-for-java/pull/"
     }
     "JS" = @{
         PipelineId = 7518
         Repository = "azure-sdk-for-js"
-        PRPattern = "Azure/azure-sdk-for-js/pull/"
     }
     "Go" = @{
         PipelineId = 7517
         Repository = "azure-sdk-for-go"
-        PRPattern = "Azure/azure-sdk-for-go/pull/"
     }
 }
 

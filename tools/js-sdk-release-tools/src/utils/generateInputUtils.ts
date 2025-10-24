@@ -110,7 +110,7 @@ export async function parseInputJson(inputJson: any) {
     };
 }
 
-export function getModularSDKType(packageDirectory: string) {    
+export function getModularSDKType(packageDirectory: string) {
     if (packageDirectory.includes("arm-")) {
         return ModularSDKType.ManagementPlane;
     }

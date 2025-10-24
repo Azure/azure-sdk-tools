@@ -151,7 +151,6 @@ public class VerifySetupTool : MCPTool
         var trimmed = string.Empty;
         try
         {
-            logger.LogInformation("Running command: {Command} in {packagePath}", string.Join(' ', command), packagePath);
             var result = await processHelper.Run(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 

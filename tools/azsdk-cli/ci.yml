@@ -23,14 +23,7 @@ extends:
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
-    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
-      customJob: 
-      - template: /tools/azsdk-cli/run-ai-eval.yml
-        parameters:
-          EvalProject: tools/ai-evals/azsdk-mcp
-          OpenAIEndPoint: $(AZURE_OPENAI_ENDPOINT)
-          Model: 'gpt-4'
+    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests    
     VerifyChangelog: true
     StandaloneExeMatrix:
       - rid: linux-x64
@@ -48,3 +41,10 @@ extends:
       - rid: win-x64
         framework: net8.0
         assembly: azsdk
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
+      customJob: 
+      - template: /tools/azsdk-cli/run-ai-eval.yml
+        parameters:
+          EvalProject: tools/ai-evals/azsdk-mcp
+          OpenAIEndPoint: $(AZURE_OPENAI_ENDPOINT)
+          Model: 'gpt-4'

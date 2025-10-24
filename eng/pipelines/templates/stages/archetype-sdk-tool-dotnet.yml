@@ -66,8 +66,8 @@ parameters:
         Image: $(MACVMIMAGE)
         Os: macOS
   - name: customJob
-    type: job
-    default: {}
+    type: jobList
+    default: []
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -218,7 +218,7 @@ extends:
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
           
-          - ${{ if ne(parameters.customJob, {}) }}:
+          - ${{ if ne(parameters.customJob, []) }}:
             - ${{ parameters.customJob }}
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:

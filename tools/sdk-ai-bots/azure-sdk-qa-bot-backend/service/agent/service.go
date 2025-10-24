@@ -82,24 +82,36 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 1. Build messages from the openai request
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
-	// 2. Build query for search
+	// 2. Build query for search and recognize intention
 	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Run agentic search and knowledge search in parallel, then merge results
-	chunks, err := s.runParallelSearchAndMergeResults(ctx, req, query)
-	if err != nil {
-		log.Printf("Parallel search failed: %v", err)
-		return nil, model.NewSearchFailureError(err)
+	// 3. Check if we need RAG processing
+	var chunks []string
+	var prompt string
+
+	if intension != nil && !intension.NeedsRagProcessing {
+		// Skip RAG workflow for greetings/announcements
+		log.Printf("Skipping RAG workflow - non-technical message detected")
+		chunks = []string{}
+		prompt = "You are a helpful AI assistant. Respond naturally to the user's message."
+	} else {
+		// Run agentic search and knowledge search in parallel, then merge results
+		var err error
+		chunks, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+		if err != nil {
+			log.Printf("Parallel search failed: %v", err)
+			return nil, model.NewSearchFailureError(err)
+		}
+
+		// Build prompt with retrieved context
+		prompt, err = s.buildPrompt(intension, chunks, *req.PromptTemplate)
+		if err != nil {
+			log.Printf("Prompt building failed: %v", err)
+			return nil, err
+		}
 	}
 
-	// 4. Build prompt
-	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
-	if err != nil {
-		log.Printf("Prompt building failed: %v", err)
-		return nil, err
-	}
-
-	// 5. Get answer from LLM
+	// 4. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
 	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
 	if err != nil {
@@ -107,7 +119,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 6. Process the result
+	// 5. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")

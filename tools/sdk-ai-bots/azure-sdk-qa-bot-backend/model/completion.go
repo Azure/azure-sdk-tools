@@ -98,8 +98,9 @@ const (
 )
 
 type IntensionResult struct {
-	Question string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category string        `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
-	Scope    QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
 }

@@ -12,6 +12,12 @@ export enum CommentSeverity {
     MustFix = 3
 }
 
+export enum CommentSource {
+    UserGenerated = 'userGenerated',
+    AIGenerated = 'aiGenerated',
+    Diagnostic = 'diagnostic'
+}
+
 export class CommentItemModel {
     id: string = '';
     reviewId: string = '';
@@ -36,6 +42,10 @@ export class CommentItemModel {
     isInEditMode: boolean = false;
     hasRelatedComments: boolean = false; 
     relatedCommentsCount: number = 0; 
+    commentSource: CommentSource | null = null;
+    guidelineIds: string[] = [];
+    memoryIds: string[] = [];
+    confidenceScore: number = 0.0;
 
     constructor() {
         this.id = '';
@@ -61,5 +71,9 @@ export class CommentItemModel {
         this.isInEditMode = false;
         this.hasRelatedComments = false;
         this.relatedCommentsCount = 0;
+        this.commentSource = null;
+        this.confidenceScore = 0.0;
+        this.guidelineIds = [];
+        this.memoryIds = [];
     }
 }

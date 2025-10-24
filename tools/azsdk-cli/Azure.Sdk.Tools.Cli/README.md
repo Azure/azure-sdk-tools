@@ -70,6 +70,7 @@ Commands:
   spec-workflow             Tools to help with the TypeSpec SDK generation.
   validate-typespec         Run typespec validation
   test-results              Analyze test results
+  generators                AI-powered code generation tools (e.g., sample generation)
 ```
 
 ### 1. MCP Server Mode

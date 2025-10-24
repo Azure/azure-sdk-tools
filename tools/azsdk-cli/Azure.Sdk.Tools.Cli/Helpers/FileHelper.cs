@@ -69,32 +69,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Represents metadata about a discovered file.
-        /// </summary>
-        /// <param name="FilePath">Full path to the file</param>
-        /// <param name="RelativePath">Relative path for display purposes</param>
-        /// <param name="FileSize">Total size of the file in bytes</param>
-        /// <param name="Priority">Priority for inclusion (lower numbers = higher priority)</param>
-        public record FileMetadata(
-            string FilePath,
-            string RelativePath,
-            int FileSize,
-            int Priority
-        );
-
-        /// <summary>
-        /// Represents an input specification with its own filtering rules.
-        /// </summary>
-        /// <param name="Path">File or directory path to include</param>
-        /// <param name="IncludeExtensions">File extensions to include for this input (e.g., [".cs", ".ts"]). If null, all extensions are included.</param>
-        /// <param name="ExcludeGlobPatterns">Glob patterns for paths to exclude for this input (e.g., ["**/test/**", "**/bin/**"]). If null, no exclusions are applied.</param>
-        public record SourceInput(
-            string Path,
-            string[]? IncludeExtensions = null,
-            string[]? ExcludeGlobPatterns = null
-        );
-
-        /// <summary>
         /// Represents an individual file in a loading plan.
         /// </summary>
         /// <param name="FilePath">Full path to the file</param>

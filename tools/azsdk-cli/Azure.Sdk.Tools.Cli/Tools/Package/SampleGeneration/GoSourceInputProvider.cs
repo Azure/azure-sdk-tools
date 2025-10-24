@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
 public class GoSourceInputProvider : ILanguageSourceInputProvider
 {
-    public IReadOnlyList<FileHelper.SourceInput> Create(string packagePath)
+    public IReadOnlyList<SourceInput> Create(string packagePath)
     {
         return
         [

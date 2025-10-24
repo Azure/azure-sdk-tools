@@ -13,5 +13,5 @@ public interface ILanguageSourceInputProvider
     /// <summary>
     /// Returns the list of source inputs (files/directories with filters) for the given package root.
     /// </summary>
-    IReadOnlyList<FileHelper.SourceInput> Create(string packagePath);
+    IReadOnlyList<SourceInput> Create(string packagePath);
 }

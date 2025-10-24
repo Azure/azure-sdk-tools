@@ -7,12 +7,12 @@ namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
 public class TypeScriptSourceInputProvider : ILanguageSourceInputProvider
 {
-    public IReadOnlyList<FileHelper.SourceInput> Create(string packagePath)
+    public IReadOnlyList<SourceInput> Create(string packagePath)
     {
-        var inputs = new List<FileHelper.SourceInput>();
+        var inputs = new List<SourceInput>();
         var packageJsonPath = Path.Combine(packagePath, "package.json");
         if (File.Exists(packageJsonPath)) {
-            inputs.Add(new FileHelper.SourceInput(packageJsonPath));
+            inputs.Add(new SourceInput(packageJsonPath));
         } else {
             throw new InvalidOperationException($"No valid package.json found in package path '{packagePath}'.");
         }
@@ -20,11 +20,11 @@ public class TypeScriptSourceInputProvider : ILanguageSourceInputProvider
         var srcPath = Path.Combine(packagePath, "src");
         if (Directory.Exists(distEsmPath))
         {
-            inputs.Add(new FileHelper.SourceInput(distEsmPath, IncludeExtensions: [".d.ts"]));
+            inputs.Add(new SourceInput(distEsmPath, IncludeExtensions: [".d.ts"]));
         }
         else if (Directory.Exists(srcPath))
         {
-            inputs.Add(new FileHelper.SourceInput(srcPath, IncludeExtensions: [".ts"]));
+            inputs.Add(new SourceInput(srcPath, IncludeExtensions: [".ts"]));
         }
         else
         {
@@ -34,19 +34,19 @@ public class TypeScriptSourceInputProvider : ILanguageSourceInputProvider
         var sampleEnvPath = Path.Combine(packagePath, "sample.env");
         if (File.Exists(sampleEnvPath))
         {
-            inputs.Add(new FileHelper.SourceInput(sampleEnvPath));
+            inputs.Add(new SourceInput(sampleEnvPath));
         }
 
         var samplesDevPath = Path.Combine(packagePath, "samples-dev");
         if (Directory.Exists(samplesDevPath))
         {
-            inputs.Add(new FileHelper.SourceInput(samplesDevPath, IncludeExtensions: [".ts"]));
+            inputs.Add(new SourceInput(samplesDevPath, IncludeExtensions: [".ts"]));
         }
 
         var testSnippetsPath = Path.Combine(packagePath, "test", "snippets.spec.ts");
         if (File.Exists(testSnippetsPath))
         {
-            inputs.Add(new FileHelper.SourceInput(testSnippetsPath));
+            inputs.Add(new SourceInput(testSnippetsPath));
         }
 
         return inputs;

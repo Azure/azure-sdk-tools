@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 {
     [TestFixture]
-    public class FileHelperTests
+    public partial class FileHelperTests
     {
     private TempDirectory _tempDir;
         private ILogger<FileHelper> _logger;
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 priorityFunc: _ => 1);
 
             // Assert
-            var fileMatches = System.Text.RegularExpressions.Regex.Matches(result, @"<file path=");
+            var fileMatches = FilePathElementRegex().Matches(result);
             Assert.That(fileMatches.Count, Is.EqualTo(1), "Should only include one file due to budget constraint");
             Assert.That(result, Does.Contain("additional files omitted"));
         }
@@ -193,8 +193,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             var inputs = new[]
             {
-                new FileHelper.SourceInput(dir1, IncludeExtensions: new[] { ".cs" }),
-                new FileHelper.SourceInput(dir2, IncludeExtensions: new[] { ".js" }, ExcludeGlobPatterns: new[] { "**/test.js" })
+                new SourceInput(dir1, IncludeExtensions: new[] { ".cs" }),
+                new SourceInput(dir2, IncludeExtensions: new[] { ".js" }, ExcludeGlobPatterns: new[] { "**/test.js" })
             };
 
             // Act
@@ -305,7 +305,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void CreateFileLoadingPlan_WithBudgetConstraint_ShouldCreateValidPlan()
         {
             // Arrange
-            var files = new List<FileHelper.FileMetadata>
+            var files = new List<FileMetadata>
             {
                 new("file1.cs", "file1.cs", 300, 1),
                 new("file2.cs", "file2.cs", 400, 2),
@@ -332,7 +332,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void CreateFileLoadingPlan_WithZeroBudget_ShouldReturnEmptyPlan()
         {
             // Arrange
-            var files = new List<FileHelper.FileMetadata>
+            var files = new List<FileMetadata>
             {
                 new("file1.cs", "file1.cs", 100, 1)
             };
@@ -406,7 +406,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(result, Does.Contain("truncated"));
             // Should contain some x's but not all 1000
             Assert.That(result, Does.Contain("xxx"));
-            var xMatches = System.Text.RegularExpressions.Regex.Matches(result, "x");
+            var xMatches = SingleCharacterXRegex().Matches(result);
             Assert.That(xMatches.Count, Is.LessThan(1000));
         }
 
@@ -437,5 +437,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
         #endregion
 
+        #region Regex Patterns for Tests
+
+        /// <summary>
+        /// Matches file path elements in XML format: &lt;file path=
+        /// </summary>
+        [GeneratedRegex(@"<file path=", RegexOptions.Compiled)]
+        private static partial Regex FilePathElementRegex();
+
+        /// <summary>
+        /// Matches single character 'x' for counting test purposes
+        /// </summary>
+        [GeneratedRegex(@"x", RegexOptions.Compiled)]
+        private static partial Regex SingleCharacterXRegex();
+
+        #endregion
     }
 }

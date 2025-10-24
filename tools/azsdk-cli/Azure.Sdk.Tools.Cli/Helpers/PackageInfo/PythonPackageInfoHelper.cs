@@ -4,44 +4,112 @@ using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public sealed partial class PythonPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
+public sealed partial class PythonPackageInfoHelper(IGitHelper gitHelper, ILogger<PythonPackageInfoHelper> logger) : IPackageInfoHelper
 {
-    public Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
+    public async Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
-        var realPath = RealPath.GetRealPath(packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, realPath);
+        logger.LogDebug("Resolving Python package info for path: {packagePath}", packagePath);
+        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
+        
+        if (packageName == null)
+        {
+            logger.LogWarning("Could not determine package name for Python package at {fullPath}", fullPath);
+        }
+        if (packageVersion == null)
+        {
+            logger.LogWarning("Could not determine package version for Python package at {fullPath}", fullPath);
+        }
+        
         var model = new PackageInfo
         {
             PackagePath = fullPath,
             RepoRoot = repoRoot,
             RelativePath = relativePath,
-            PackageName = Path.GetFileName(fullPath),
+            PackageName = packageName,
+            PackageVersion = packageVersion,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.Python,
-            SamplesDirectoryProvider = (pi, _) => Task.FromResult(Path.Combine(pi.PackagePath, "samples")),
-            VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
+            SamplesDirectory = Path.Combine(fullPath, "samples")
         };
-        return Task.FromResult(model);
+        
+        logger.LogDebug("Resolved Python package: {packageName} v{packageVersion} at {relativePath}", 
+            packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
+        
+        return model;
     }
 
-    private static async Task<string?> TryGetVersionAsync(string packagePath, CancellationToken ct)
+    private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
     {
-        async Task<string?> TryFileAsync(string file, Func<string, string?> extractor)
+        string? packageName = null;
+        string? packageVersion = null;
+
+        var sdkPackagingPath = Path.Combine(packagePath, "sdk_packaging.toml");
+        if (File.Exists(sdkPackagingPath))
         {
-            var path = Path.Combine(packagePath, file);
-            if (!File.Exists(path)) { return null; }
-            try { return extractor(await File.ReadAllTextAsync(path, ct)); } catch { return null; }
+            try
+            {
+                logger.LogTrace("Reading sdk_packaging.toml from {sdkPackagingPath}", sdkPackagingPath);
+                var content = await File.ReadAllTextAsync(sdkPackagingPath, ct);
+                var match = PackageNameRegex().Match(content);
+                if (match.Success)
+                {
+                    packageName = match.Groups[1].Value.Trim();
+                    logger.LogTrace("Found package name from sdk_packaging.toml: {packageName}", packageName);
+                }
+                else
+                {
+                    logger.LogTrace("No package_name found in sdk_packaging.toml");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error reading sdk_packaging.toml from {sdkPackagingPath}", sdkPackagingPath);
+            }
+        }
+        else
+        {
+            logger.LogWarning("No sdk_packaging.toml file found at {sdkPackagingPath}", sdkPackagingPath);
         }
 
-        string? Extract(string content)
+        if (!string.IsNullOrWhiteSpace(packageName))
         {
-            var match = MyRegex().Match(content);
-            return match.Success ? match.Groups[1].Value : null;
+            var modulePath = packageName.Replace('-', Path.DirectorySeparatorChar);
+            var versionPyPath = Path.Combine(packagePath, modulePath, "_version.py");
+            if (File.Exists(versionPyPath))
+            {
+                try
+                {
+                    logger.LogTrace("Reading _version.py from {versionPyPath}", versionPyPath);
+                    var content = await File.ReadAllTextAsync(versionPyPath, ct);
+                    var match = VersionFieldRegex().Match(content);
+                    if (match.Success)
+                    {
+                        packageVersion = match.Groups[1].Value.Trim();
+                        logger.LogTrace("Found version from _version.py: {packageVersion}", packageVersion);
+                    }
+                    else
+                    {
+                        logger.LogTrace("No VERSION found in _version.py");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error reading _version.py from {versionPyPath}", versionPyPath);
+                }
+            }
+            else
+            {
+                logger.LogTrace("No _version.py file found at {versionPyPath}", versionPyPath);
+            }
         }
 
-        return await TryFileAsync("pyproject.toml", Extract) ?? await TryFileAsync("setup.py", Extract);
+        return (packageName, packageVersion);
     }
 
-    [GeneratedRegex("(?i)version\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOptions.Compiled, "")]
-    private static partial Regex MyRegex();
+    [GeneratedRegex(@"^\s*package_name\s*=\s*['""]([^'""]+)['""]", RegexOptions.Compiled | RegexOptions.Multiline, "")]
+    private static partial Regex PackageNameRegex();
+    
+    [GeneratedRegex(@"^\s*VERSION\s*=\s*['""]([^'""]+)['""]", RegexOptions.Compiled | RegexOptions.Multiline, "")]
+    private static partial Regex VersionFieldRegex();
 }

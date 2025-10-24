@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<string> promptOption = new("--prompt")
         {
-            Description = "Prompt to use for the sample generation. It is either a path to a .md file containing the sample description, or a text prompt",
+            Description = "Prompt to use for the sample generation, e.g. \"upload a blob\". It is either a path to a .md file containing the sample description, or a text prompt",
             Required = true,
         };
 
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
-            var resolvedOutputDirectory = await packageInfo.GetSamplesDirectoryAsync(ct);
+            var resolvedOutputDirectory = packageInfo.SamplesDirectory;
 
             logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);
             SampleLanguageContext sampleContext = await sampleContextResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");

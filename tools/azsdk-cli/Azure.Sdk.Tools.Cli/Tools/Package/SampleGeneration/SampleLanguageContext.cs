@@ -55,7 +55,7 @@ public abstract class SampleLanguageContext
     /// </summary>
     /// <param name="f">File metadata.</param>
     /// <returns>Smaller numbers indicate higher priority.</returns>
-    protected virtual int GetSourcePriority(FileHelper.FileMetadata f)
+    protected virtual int GetSourcePriority(FileMetadata f)
     {
         var name = Path.GetFileNameWithoutExtension(f.FilePath);
         return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;

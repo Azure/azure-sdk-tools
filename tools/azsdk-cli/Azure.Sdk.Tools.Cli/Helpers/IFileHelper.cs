@@ -4,6 +4,32 @@
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     /// <summary>
+    /// Represents an input specification with its own filtering rules.
+    /// </summary>
+    /// <param name="Path">File or directory path to include</param>
+    /// <param name="IncludeExtensions">File extensions to include for this input (e.g., [".cs", ".ts"]). If null, all extensions are included.</param>
+    /// <param name="ExcludeGlobPatterns">Glob patterns for paths to exclude for this input (e.g., ["**/test/**", "**/bin/**"]). If null, no exclusions are applied.</param>
+    public record SourceInput(
+        string Path,
+        string[]? IncludeExtensions = null,
+        string[]? ExcludeGlobPatterns = null
+    );
+
+    /// <summary>
+    /// Represents metadata about a discovered file.
+    /// </summary>
+    /// <param name="FilePath">Full path to the file</param>
+    /// <param name="RelativePath">Relative path for display purposes</param>
+    /// <param name="FileSize">Total size of the file in bytes</param>
+    /// <param name="Priority">Priority for inclusion (lower numbers = higher priority)</param>
+    public record FileMetadata(
+        string FilePath,
+        string RelativePath,
+        int FileSize,
+        int Priority
+    );
+
+    /// <summary>
     /// Interface for file and directory operations.
     /// </summary>
     public interface IFileHelper
@@ -16,15 +42,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         string? ValidateEmptyDirectory(string dir);
 
         /// <summary>
-        /// Discovers, plans, and loads source files described by a set of <see cref="FileHelper.SourceInput"/> entries, applying per-input
+        /// Discovers, plans, and loads source files described by a set of <see cref="SourceInput"/> entries, applying per-input
         /// extension and glob-based exclusion rules. This is the highest-level convenience overload.
         /// </summary>
         Task<string> LoadFilesAsync(
-            IEnumerable<FileHelper.SourceInput> inputs,
+            IEnumerable<SourceInput> inputs,
             string relativeTo,
             int totalBudget,
             int perFileLimit,
-            Func<FileHelper.FileMetadata, int> priorityFunc,
+            Func<FileMetadata, int> priorityFunc,
             CancellationToken ct = default);
 
         /// <summary>
@@ -37,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             string relativeTo,
             int totalBudget,
             int perFileLimit,
-            Func<FileHelper.FileMetadata, int> priorityFunc,
+            Func<FileMetadata, int> priorityFunc,
             CancellationToken ct = default);
 
         /// <summary>
@@ -50,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             string relativeTo,
             int totalBudget,
             int perFileLimit,
-            Func<FileHelper.FileMetadata, int> priorityFunc,
+            Func<FileMetadata, int> priorityFunc,
             CancellationToken ct = default);
     }
 }

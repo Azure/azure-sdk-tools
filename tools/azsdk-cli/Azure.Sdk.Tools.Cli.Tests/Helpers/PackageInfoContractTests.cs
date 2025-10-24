@@ -36,6 +36,66 @@ public class PackageInfoContractTests
         return (sdkPath, gitHelper);
     }
 
+    private void CreateTestFile(string packagePath, string relativePath, string content)
+    {
+        var fullPath = Path.Combine(packagePath, relativePath);
+        var directory = Path.GetDirectoryName(fullPath);
+        if (directory != null && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        File.WriteAllText(fullPath, content);
+    }
+
+    private void SetupDotNetPackage(string packagePath, string version)
+    {
+        CreateTestFile(packagePath, "src/test.csproj", $"<Project><PropertyGroup><Version>{version}</Version></PropertyGroup></Project>");
+    }
+
+    private void SetupJavaPackage(string packagePath, string artifactId, string version)
+    {
+        CreateTestFile(packagePath, "pom.xml", $"<project><modelVersion>4.0.0</modelVersion><groupId>com.azure</groupId><artifactId>{artifactId}</artifactId><version>{version}</version></project>");
+    }
+
+    private void SetupPythonPackage(string packagePath, string packageName, string version)
+    {
+        CreateTestFile(packagePath, "sdk_packaging.toml", $"[packaging]\npackage_name = \"{packageName}\"\n");
+        var modulePath = packageName.Replace('-', Path.DirectorySeparatorChar);
+        CreateTestFile(packagePath, $"{modulePath}/_version.py", $"VERSION = \"{version}\"\n");
+    }
+
+    private void SetupJavaScriptPackage(string packagePath, string packageName, string version)
+    {
+        CreateTestFile(packagePath, "package.json", $"{{\n  \"name\": \"@azure/{packageName}\",\n  \"version\": \"{version}\"\n}}");
+    }
+
+    private void SetupGoPackage(string packagePath, string version)
+    {
+        CreateTestFile(packagePath, "version.go", $"package azkeys\n\nconst (\n    moduleName = \"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys\"\n    version    = \"{version}\"\n)\n");
+    }
+
+    private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version)
+    {
+        switch (language)
+        {
+            case SdkLanguage.DotNet:
+                SetupDotNetPackage(packagePath, version);
+                break;
+            case SdkLanguage.Java:
+                SetupJavaPackage(packagePath, packageName, version);
+                break;
+            case SdkLanguage.Python:
+                SetupPythonPackage(packagePath, packageName, version);
+                break;
+            case SdkLanguage.JavaScript:
+                SetupJavaScriptPackage(packagePath, packageName, version);
+                break;
+            case SdkLanguage.Go:
+                SetupGoPackage(packagePath, version);
+                break;
+        }
+    }
+
 
     [Test]
     [TestCase(SdkLanguage.DotNet)]
@@ -55,12 +115,12 @@ public class PackageInfoContractTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(info.PackagePath, Is.EqualTo(RealPath.GetRealPath(Path.GetFullPath(pkgPath))));
+            Assert.That(info.PackagePath, Is.EqualTo(Path.GetFullPath(pkgPath)));
             Assert.That(info.RepoRoot, Does.EndWith("azure-sdk-repo-root"));
             var expectedRelative = language == SdkLanguage.Go ? Path.Combine(group, service, package) : Path.Combine(service, package);
             Assert.That(info.RelativePath, Is.EqualTo(expectedRelative));
             Assert.That(info.ServiceName, Is.EqualTo(service));
-            Assert.That(info.PackageName, Is.EqualTo(package));
+            Assert.That(info.PackageName, Is.Null);
             Assert.That(info.Language, Is.EqualTo(language));
         });
     }
@@ -86,20 +146,21 @@ public class PackageInfoContractTests
     }
 
     [Test]
-    [TestCase(SdkLanguage.DotNet, "Azure.Data.Test", "<Project><PropertyGroup><Version>5.6.7</Version></PropertyGroup></Project>", ".csproj", "5.6.7")]
-    [TestCase(SdkLanguage.Java, "azure-core", "<project><modelVersion>4.0.0</modelVersion><groupId>com.azure</groupId><artifactId>azure-core</artifactId><version>1.2.3</version></project>", "pom.xml", "1.2.3")]
-    [TestCase(SdkLanguage.Python, "azure-ai", "[project]\nname='azure-ai'\nversion='1.0.1'\n", "pyproject.toml", "1.0.1")]
-    [TestCase(SdkLanguage.JavaScript, "azure-testpkg", "{\n  \"name\": \"@azure/azure-testpkg\",\n  \"version\": \"2.3.4\"\n}", "package.json", "2.3.4")]
-    [TestCase(SdkLanguage.Go, "azkeys", "package azkeys\n\nconst (\n    moduleName = \"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys\"\n    version    = \"v1.4.1-beta.1\"\n)\n", "version.go", "v1.4.1-beta.1")]
-    public async Task VersionParsing_Works(SdkLanguage language, string package, string fileContent, string fileName, string expectedVersion)
+    [TestCase(SdkLanguage.DotNet, "Azure.Data.Test", "5.6.7")]
+    [TestCase(SdkLanguage.Java, "azure-core", "1.2.3")]
+    [TestCase(SdkLanguage.Python, "azure-ai-test", "1.0.1")]
+    [TestCase(SdkLanguage.JavaScript, "azure-testpkg", "2.3.4")]
+    [TestCase(SdkLanguage.Go, "azkeys", "v1.4.1-beta.1")]
+    public async Task VersionParsing_Works(SdkLanguage language, string package, string expectedVersion)
     {
         var servicePath = language == SdkLanguage.Go ? "security/keyvault" : "ai";
         var (pkgPath, gitHelper) = CreateSdkPackage(servicePath, package);
-        File.WriteAllText(Path.Combine(pkgPath, fileName), fileContent);
+        
+        SetupPackageForLanguage(language, pkgPath, package, expectedVersion);
+        
         var helper = CreateHelperForLanguage(language, gitHelper);
         var info = await helper.ResolvePackageInfo(pkgPath);
-        var parsed = await info.GetPackageVersionAsync();
-        Assert.That(parsed, Is.EqualTo(expectedVersion));
+        Assert.That(info.PackageVersion, Is.EqualTo(expectedVersion));
     }
 
     [Test]
@@ -114,17 +175,16 @@ public class PackageInfoContractTests
         var (pkgPath, gitHelper) = CreateSdkPackage(servicePath, package);
         var helper = CreateHelperForLanguage(language, gitHelper);
         var info = await helper.ResolvePackageInfo(pkgPath);
-        var parsed = await info.GetPackageVersionAsync();
-        Assert.That(parsed, Is.Null);
+        Assert.That(info.PackageVersion, Is.Null);
     }
 
     private static IPackageInfoHelper CreateHelperForLanguage(SdkLanguage language, IGitHelper gitHelper) => language switch
     {
-        SdkLanguage.DotNet => new DotNetPackageInfoHelper(gitHelper),
-        SdkLanguage.Java => new JavaPackageInfoHelper(gitHelper),
-        SdkLanguage.Python => new PythonPackageInfoHelper(gitHelper),
-        SdkLanguage.JavaScript => new JavaScriptPackageInfoHelper(gitHelper),
-        SdkLanguage.Go => new GoPackageInfoHelper(gitHelper),
+        SdkLanguage.DotNet => new DotNetPackageInfoHelper(gitHelper, new TestLogger<DotNetPackageInfoHelper>()),
+        SdkLanguage.Java => new JavaPackageInfoHelper(gitHelper, new TestLogger<JavaPackageInfoHelper>()),
+        SdkLanguage.Python => new PythonPackageInfoHelper(gitHelper, new TestLogger<PythonPackageInfoHelper>()),
+        SdkLanguage.JavaScript => new JavaScriptPackageInfoHelper(gitHelper, new TestLogger<JavaScriptPackageInfoHelper>()),
+        SdkLanguage.Go => new GoPackageInfoHelper(gitHelper, new TestLogger<GoPackageInfoHelper>()),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

@@ -1,10 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
@@ -31,7 +26,7 @@ public sealed class TempDirectory : IDisposable, IAsyncDisposable
     public static TempDirectory Create(string? prefix = null)
     {
         var name = (prefix ?? "azsdk-temp") + "_" + Guid.NewGuid().ToString("N");
-        var fullPath = RealPath.GetRealPath(Path.Combine(Path.GetTempPath(), name));
+        var fullPath = Path.Combine(Path.GetTempPath(), name);
         return new TempDirectory(fullPath);
     }
 
@@ -43,7 +38,7 @@ public sealed class TempDirectory : IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
-        TryDeleteWithRetries(DirectoryPath);
+        Task.Run(() => TryDeleteWithRetries(DirectoryPath));
         GC.SuppressFinalize(this);
     }
 
@@ -53,7 +48,7 @@ public sealed class TempDirectory : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
-    private static void TryDeleteWithRetries(string path, int attempts = 5, int initialDelayMs = 40)
+    private static void TryDeleteWithRetries(string path, int attempts = 3, int initialDelayMs = 1)
     {
         if (!Directory.Exists(path))
         {

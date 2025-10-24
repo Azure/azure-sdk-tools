@@ -105,11 +105,11 @@ public class SampleGeneratorToolTests
         {
             return language switch
             {
-                SdkLanguage.DotNet => new DotNetPackageInfoHelper(realGitHelper),
-                SdkLanguage.Java => new JavaPackageInfoHelper(realGitHelper),
-                SdkLanguage.Python => new PythonPackageInfoHelper(realGitHelper),
-                SdkLanguage.JavaScript => new JavaScriptPackageInfoHelper(realGitHelper),
-                SdkLanguage.Go => new GoPackageInfoHelper(realGitHelper),
+                SdkLanguage.DotNet => new DotNetPackageInfoHelper(realGitHelper, new TestLogger<DotNetPackageInfoHelper>()),
+                SdkLanguage.Java => new JavaPackageInfoHelper(realGitHelper, new TestLogger<JavaPackageInfoHelper>()),
+                SdkLanguage.Python => new PythonPackageInfoHelper(realGitHelper, new TestLogger<PythonPackageInfoHelper>()),
+                SdkLanguage.JavaScript => new JavaScriptPackageInfoHelper(realGitHelper, new TestLogger<JavaScriptPackageInfoHelper>()),
+                SdkLanguage.Go => new GoPackageInfoHelper(realGitHelper, new TestLogger<GoPackageInfoHelper>()),
                 _ => throw new InvalidOperationException($"Unexpected language value '{language}' in test case.")
             };
         });
@@ -336,7 +336,7 @@ public class SampleGeneratorToolTests
         var packageInfoResolverMock = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
         packageInfoResolverMock
             .Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>())));
+                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>()), new TestLogger<GoPackageInfoHelper>()));
         var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
@@ -504,7 +504,7 @@ public class SampleGeneratorToolTests
         // Package info resolver returns a valid helper.
         var pkgResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
         pkgResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>())));
+            .ReturnsAsync(new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>()), new TestLogger<GoPackageInfoHelper>()));
 
         // Sample context resolver returns null to trigger validation error.
         var sampleCtxResolver = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();

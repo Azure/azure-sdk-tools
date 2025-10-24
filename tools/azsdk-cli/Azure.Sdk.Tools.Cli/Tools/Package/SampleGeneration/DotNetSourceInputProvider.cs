@@ -34,14 +34,14 @@ public class DotNetSourceInputProvider : ILanguageSourceInputProvider
 
     private static readonly ConcurrentDictionary<string, (DateTime LastWrite, bool IsTest)> s_cache = new();
 
-    public IReadOnlyList<FileHelper.SourceInput> Create(string packagePath)
+    public IReadOnlyList<SourceInput> Create(string packagePath)
     {
-        var result = new List<FileHelper.SourceInput>();
+        var result = new List<SourceInput>();
 
         var src = Path.Combine(packagePath, "src");
         if (Directory.Exists(src))
         {
-            result.Add(new FileHelper.SourceInput(src, IncludeExtensions: [".cs"]));
+            result.Add(new SourceInput(src, IncludeExtensions: [".cs"]));
         }
 
         var tests = Path.Combine(packagePath, "tests");
@@ -49,14 +49,14 @@ public class DotNetSourceInputProvider : ILanguageSourceInputProvider
         {
             foreach (var file in EnumerateInfrastructureFiles(tests))
             {
-                result.Add(new FileHelper.SourceInput(file));
+                result.Add(new SourceInput(file));
             }
         }
 
         var samples = Path.Combine(packagePath, "tests", "samples");
         if (Directory.Exists(samples))
         {
-            result.Add(new FileHelper.SourceInput(samples, IncludeExtensions: [".cs"]));
+            result.Add(new SourceInput(samples, IncludeExtensions: [".cs"]));
         }
 
         return result;

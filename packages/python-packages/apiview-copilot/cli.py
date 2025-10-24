@@ -701,6 +701,8 @@ def report_metrics(start_date: str, end_date: str, markdown: bool = False, save:
     environment = os.getenv("ENVIRONMENT_NAME", None)
     if not environment:
         raise ValueError("ENVIRONMENT_NAME environment variable is not set. Must be 'production' or 'staging'.")
+    if environment not in ("production", "staging"):
+        raise ValueError(f"ENVIRONMENT_NAME must be 'production' or 'staging', got '{environment}'.")
     return get_metrics_report(start_date, end_date, environment, markdown, save)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "azuresdkqabot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "msteams": {
     "teamsAppId": null
   },

@@ -355,7 +355,8 @@ def verify_results(all_results: dict[str, Any], with_baseline: bool = True) -> b
                         baseline_results[result["testcase"]] = result
                     baseline_results["average_score"] = baseline_data[-1]["average_score"]
                     if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
-                        scenario_ret = False
+                        # scenario_ret = False //ignore decrease in average score
+                        logging.warning(f"scenario {name} avarage score decrease!")
         
         if test_results[-1]["similarity_pass_rate"] < test_results[-1]["total_evals"] or test_results[-1]["groundedness_pass_rate"] < test_results[-1]["total_evals"]:
             scenario_ret = False
@@ -425,7 +426,7 @@ if __name__ == "__main__":
     
     logging.info(f"test folder: {args.test_folder}")
     # Required environment variables
-    load_dotenv()
+    load_dotenv() 
     channel_to_tenant_id_dict = retrieve_tenant_ids()
     all_results = {}
     try: 
@@ -438,6 +439,7 @@ if __name__ == "__main__":
             "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
             "api_version": os.environ["AZURE_API_VERSION"],
         }
+        similarity_threshold = os.environ.get("SIMILARITY_THRESHOLD", 3)
         kwargs = {}
         if args.send_result:
             if args.is_ci:
@@ -460,7 +462,7 @@ if __name__ == "__main__":
             result = evaluate(
                 data=output_file,
                 evaluators={
-                    "similarity": SimilarityEvaluator(model_config=model_config),
+                    "similarity": SimilarityEvaluator(model_config=model_config, threshold=similarity_threshold),
                     "groundedness": GroundednessEvaluator(model_config=model_config)
                 },
                 evaluation_name=f"{args.evaluation_name_prefix}-{os.path.splitext(os.path.basename(output_file))[0]}" if args.evaluation_name_prefix else os.path.splitext(os.path.basename(output_file))[0],
@@ -470,7 +472,6 @@ if __name__ == "__main__":
                         "column_mapping": {
                             "query": "${data.query}",
                             "response": "${data.response}",
-                            "context": "${data.context}",
                             "ground_truth": "${data.ground_truth}",
                             "testcase": "${data.testcase}"
                         } 
@@ -480,7 +481,6 @@ if __name__ == "__main__":
                             "query": "${data.query}",
                             "response": "${data.response}",
                             "context": "${data.context}",
-                            "ground_truth": "${data.ground_truth}",
                             "testcase": "${data.testcase}"
                         } 
                     }

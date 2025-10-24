@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         
         private static readonly string AzureOpenAIModelDeploymentName = 
             Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME") 
-            ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
+            ?? "gpt-4o";
 
         public static TokenCredential GetCredential(ILogger? logger = null)
         {

@@ -16,8 +16,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT environment variable is required");
         
         private static readonly string AzureOpenAIModelDeploymentName = 
-            Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME") 
-            ?? "gpt-4o";
+            "gpt-4o";
 
         public static TokenCredential GetCredential(ILogger? logger = null)
         {

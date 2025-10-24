@@ -294,7 +294,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         var output = result.Output;
         
         // Simple check - if Maven succeeded and no conflict indicators, it's success
-        if (output.Contains("[INFO] BUILD SUCCESS"))
+        if (output.Contains("[INFO] BUILD SUCCESS", StringComparison.OrdinalIgnoreCase))
         {
             var message = "Dependency analysis completed - no conflicts detected";
             _logger.LogInformation(message);
@@ -309,9 +309,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             {
                 NextSteps = [
                     "Add Azure SDK BOM to dependencyManagement section in pom.xml: https://github.com/Azure/azure-sdk-for-java/tree/main/sdk/boms/azure-sdk-bom",
-                    "Use Azure SDK BOM to manage versions: <groupId>com.azure</groupId> <artifactId>azure-sdk-bom</artifactId> <version>1.3.0</version>",
                     "Remove version numbers from Azure SDK dependencies - let BOM manage versions",
-                    "For Spring Boot apps, check Spring-Versions-Mapping: https://aka.ms/spring/versions",
                     "Review verbose dependency tree output to identify specific conflicts"
                 ]
             };
@@ -371,19 +369,22 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     }
 
     private static bool HasCheckstyleIssues(string output) =>
-        output.Contains("Checkstyle violations") && 
-        !output.Contains("You have 0 Checkstyle violations.") && 
-        !output.Contains("Audit done.");
+        output.Contains("Checkstyle violations", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("You have 0 Checkstyle violations.", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("Audit done.", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasSpotBugsIssues(string output) =>
-        output.Contains("BugInstance size is") && !output.Contains("BugInstance size is 0");
+        output.Contains("BugInstance size is", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("BugInstance size is 0", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasRevapiIssues(string output) =>
-        output.Contains("API problems detected") && 
-        !output.Contains("API checks completed without failures.");
+        output.Contains("API problems detected", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("API checks completed without failures.", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasJavadocIssues(string output) =>
-        output.Contains("Error while generating Javadoc:") ||
-        (output.Contains("maven-javadoc-plugin") && output.Contains("[ERROR]") &&
-         !output.Contains("Building jar:") && !output.Contains("-javadoc.jar"));
+        output.Contains("Error while generating Javadoc:", StringComparison.OrdinalIgnoreCase) ||
+        (output.Contains("maven-javadoc-plugin", StringComparison.OrdinalIgnoreCase) && 
+         output.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase) &&
+         !output.Contains("Building jar:", StringComparison.OrdinalIgnoreCase) && 
+         !output.Contains("-javadoc.jar", StringComparison.OrdinalIgnoreCase));
 }

@@ -32,8 +32,8 @@ export class AppComponent  implements OnInit{
   }
 
   setAppTheme() {
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile) => {
+    this.userProfileService.getUserProfile().subscribe({
+      next: (userProfile) => {
         this.userProfile = userProfile;
         const theme = userProfile.preferences.theme;
         switch (userProfile.preferences.scrollBarSize) {
@@ -55,7 +55,12 @@ export class AppComponent  implements OnInit{
           body.classList.add(theme);
         }
         this.loadHighlightTheme(this.getHighlightTheme(theme));
-      });
+      },
+      error: () => {
+        // If user profile fails (e.g., 403 Forbidden), use default theme
+        this.configService.setAppTheme('light-theme');
+      }
+    });
   }
 
   getHighlightTheme(appTheme: string): string {

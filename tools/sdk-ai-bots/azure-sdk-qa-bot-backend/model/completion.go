@@ -68,7 +68,7 @@ type AdditionalInfo struct {
 type CompletionReq struct {
 	TenantID                TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
 	PromptTemplate          *string          `json:"prompt_template" jsonschema:"omitempty,description=The prompt template to use for the agent"`
-	IntensionPromptTemplate *string          `json:"intension_prompt_template,omitempty" jsonschema:"omitempty,description=The intention prompt template to use for the agent"`
+	IntentionPromptTemplate *string          `json:"intention_prompt_template,omitempty" jsonschema:"omitempty,description=The intention prompt template to use for the agent"`
 	PromptTemplateArguments *string          `json:"prompt_template_arguments" jsonschema:"omitempty,description=The arguments to use for the prompt template"`
 	TopK                    *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
 	Sources                 []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
@@ -85,7 +85,7 @@ type CompletionResp struct {
 	HasResult         bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
 	References        []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
 	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
-	Intension         *IntensionResult `json:"intension" jsonschema:"omitempty,description=The intension of the question"`
+	Intention         *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
 }
 
@@ -97,7 +97,7 @@ const (
 	QuestionScope_Unbranded QuestionScope = "unbranded"
 )
 
-type IntensionResult struct {
+type IntentionResult struct {
 	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
 	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
 	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`

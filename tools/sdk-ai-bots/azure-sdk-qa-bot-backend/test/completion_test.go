@@ -41,7 +41,7 @@ func TestCompletionAPI(t *testing.T) {
 	require.Greater(t, len(resp.Answer), 0, "Expected non-empty answer")
 }
 
-func TestIntensionRecognition_TechnicalQuestion(t *testing.T) {
+func TestIntentionRecognition_TechnicalQuestion(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
@@ -58,16 +58,16 @@ func TestIntensionRecognition_TechnicalQuestion(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intensionResult, err := service.RecongnizeIntension("intension.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention("intention.md", llmMessages)
 
 	require.NoError(t, err)
-	require.NotNil(t, intensionResult)
-	require.True(t, intensionResult.NeedsRagProcessing, "Technical question should require RAG processing")
-	require.NotEmpty(t, intensionResult.Question)
-	require.NotEqual(t, "unknown", intensionResult.Category)
+	require.NotNil(t, intentionResult)
+	require.True(t, intentionResult.NeedsRagProcessing, "Technical question should require RAG processing")
+	require.NotEmpty(t, intentionResult.Question)
+	require.NotEqual(t, "unknown", intentionResult.Category)
 }
 
-func TestIntensionRecognition_GreetingMessage(t *testing.T) {
+func TestIntentionRecognition_GreetingMessage(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
@@ -84,15 +84,15 @@ func TestIntensionRecognition_GreetingMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intensionResult, err := service.RecongnizeIntension("intension.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention("intention.md", llmMessages)
 
 	require.NoError(t, err)
-	require.NotNil(t, intensionResult)
-	require.False(t, intensionResult.NeedsRagProcessing, "Greeting should NOT require RAG processing")
-	require.Equal(t, "unknown", intensionResult.Category)
+	require.NotNil(t, intentionResult)
+	require.False(t, intentionResult.NeedsRagProcessing, "Greeting should NOT require RAG processing")
+	require.Equal(t, "unknown", intentionResult.Category)
 }
 
-func TestIntensionRecognition_ThankYouMessage(t *testing.T) {
+func TestIntentionRecognition_ThankYouMessage(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
@@ -117,15 +117,15 @@ func TestIntensionRecognition_ThankYouMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intensionResult, err := service.RecongnizeIntension("intension.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention("intention.md", llmMessages)
 
 	require.NoError(t, err)
-	require.NotNil(t, intensionResult)
-	require.False(t, intensionResult.NeedsRagProcessing, "Thank you message should NOT require RAG processing")
-	require.Equal(t, "unknown", intensionResult.Category)
+	require.NotNil(t, intentionResult)
+	require.False(t, intentionResult.NeedsRagProcessing, "Thank you message should NOT require RAG processing")
+	require.Equal(t, "unknown", intentionResult.Category)
 }
 
-func TestIntensionRecognition_AnnouncementMessage(t *testing.T) {
+func TestIntentionRecognition_AnnouncementMessage(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
@@ -158,13 +158,13 @@ Important Links:
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intensionResult, err := service.RecongnizeIntension("intension.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention("intention.md", llmMessages)
 
 	require.NoError(t, err)
-	require.NotNil(t, intensionResult)
-	require.False(t, intensionResult.NeedsRagProcessing, "Announcement message should NOT require RAG processing")
-	require.Equal(t, "unknown", intensionResult.Category)
-	require.Equal(t, model.QuestionScope_Unknown, intensionResult.Scope)
+	require.NotNil(t, intentionResult)
+	require.False(t, intentionResult.NeedsRagProcessing, "Announcement message should NOT require RAG processing")
+	require.Equal(t, "unknown", intentionResult.Category)
+	require.Equal(t, model.QuestionScope_Unknown, intentionResult.Scope)
 }
 
 // Helper function to convert model.Message to LLM message format

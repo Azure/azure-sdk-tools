@@ -53,8 +53,8 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.PromptTemplate == nil {
 			req.PromptTemplate = &tenantConfig.PromptTemplate
 		}
-		if req.IntensionPromptTemplate == nil {
-			req.IntensionPromptTemplate = &tenantConfig.IntensionPromptTemplate
+		if req.IntentionPromptTemplate == nil {
+			req.IntentionPromptTemplate = &tenantConfig.IntentionPromptTemplate
 		}
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
@@ -83,13 +83,13 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
 	// 2. Build query for search and recognize intention
-	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
+	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Check if we need RAG processing
 	var chunks []string
 	var prompt string
 
-	if intension != nil && !intension.NeedsRagProcessing {
+	if intention != nil && !intention.NeedsRagProcessing {
 		// Skip RAG workflow for greetings/announcements
 		log.Printf("Skipping RAG workflow - non-technical message detected")
 		chunks = []string{}
@@ -104,7 +104,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 
 		// Build prompt with retrieved context
-		prompt, err = s.buildPrompt(intension, chunks, *req.PromptTemplate)
+		prompt, err = s.buildPrompt(intention, chunks, *req.PromptTemplate)
 		if err != nil {
 			log.Printf("Prompt building failed: %v", err)
 			return nil, err
@@ -125,16 +125,16 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		fullContext := strings.Join(chunks, "-------------------------\n")
 		result.FullContext = &fullContext
 	}
-	result.Intension = intension
+	result.Intention = intention
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
 
-func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
-	promptParser := prompt.IntensionPromptParser{}
+func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+	promptParser := prompt.IntentionPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
 	if err != nil {
-		log.Printf("Failed to parse intension prompt: %v", err)
+		log.Printf("Failed to parse intention prompt: %v", err)
 		return nil, err
 	}
 
@@ -146,14 +146,14 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	}, nil)
 
 	if err != nil {
-		log.Printf("LLM intension recognition failed: %v", err)
+		log.Printf("LLM intention recognition failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
 	if len(resp.Choices) > 0 {
-		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intension.md")
+		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intention.md")
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
+			log.Printf("Failed to parse intention response: %v, content: %s", err, *resp.Choices[0].Message.Content)
 			return nil, err
 		}
 		return result, nil
@@ -347,13 +347,13 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	return llmMessages, reasoningModelMessages
 }
 
-func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntensionResult) {
+func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntentionResult) {
 	query := req.Message.Content
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
 	}
 	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(*req.IntensionPromptTemplate, messages)
+	intentResult, err := s.RecognizeIntention(*req.IntentionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -376,7 +376,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intention *model.IntentionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
@@ -391,11 +391,11 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 			break
 		}
 	}
-	intensionStr, _ := json.Marshal(intension)
+	intentionStr, _ := json.Marshal(intention)
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
 		"context":   strings.Join(chunks, "-------------------------\n"),
-		"intension": string(intensionStr),
+		"intention": string(intentionStr),
 	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)

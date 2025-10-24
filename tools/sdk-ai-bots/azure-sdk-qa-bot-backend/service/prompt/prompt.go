@@ -78,10 +78,10 @@ func (p *DefaultPromptParser) ParseResponse(response, template string) (*model.C
 	}, nil
 }
 
-type IntensionPromptParser struct {
+type IntentionPromptParser struct {
 }
 
-func (p *IntensionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
+func (p *IntentionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
 	moduleRoot, err := findModuleRoot()
 	if err != nil {
 		panic(err)
@@ -101,10 +101,10 @@ func (p *IntensionPromptParser) ParsePrompt(params map[string]string, template s
 	return prompt, nil
 }
 
-func (p *IntensionPromptParser) ParseResponse(response, template string) (*model.IntensionResult, error) {
+func (p *IntentionPromptParser) ParseResponse(response, template string) (*model.IntentionResult, error) {
 	// Implement your response parsing logic here
 	// For example, you can unmarshal the response into a struct
-	var resp model.IntensionResult
+	var resp model.IntentionResult
 	err := json.Unmarshal([]byte(response), &resp)
 	if err != nil {
 		return nil, err

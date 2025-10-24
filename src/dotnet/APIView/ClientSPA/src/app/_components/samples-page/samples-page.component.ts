@@ -544,6 +544,10 @@ export class SamplesPageComponent {
       });
     });
 
+    componentRef.instance.batchResolutionActionEmitter.subscribe(() => {
+      this.loadComments();
+    });
+
     componentRef.instance.instanceLocation = 'samples';
     componentRef.instance.userProfile = this.userProfile;
     this.renderer.appendChild(commentThreadContainer, componentRef.location.nativeElement);

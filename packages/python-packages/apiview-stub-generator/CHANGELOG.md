@@ -1,6 +1,7 @@
 # Release History
 
-## Version 0.3.23 (2025-10-02)
+## Version 0.3.23 (2025-10-03)
+Added the CrossLanguageMetadata to the token file.
 Fixed a bug where unexpanded **kwargs in docstring will show duplicate/incorrect kwargs in the API review function signature.
 Fixed a bug where string Literal types were not quoted and fully-qualified enum member names  were not being preserved in types.
 

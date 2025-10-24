@@ -34,11 +34,7 @@ namespace Azure.Tools.GeneratorAgent
 
             if (!string.IsNullOrEmpty(workingDir))
             {
-                Result<string> workingDirValidation = InputValidator.ValidateWorkingDirectory(workingDir);
-                if (workingDirValidation.IsFailure)
-                {
-                    throw new SecurityException($"Working directory validation failed: {workingDirValidation.Exception?.Message}");
-                }
+                workingDir = InputValidator.ValidateWorkingDirectory(workingDir);
             }
 
             arguments ??= string.Empty;

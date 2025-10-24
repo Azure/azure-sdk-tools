@@ -22,7 +22,7 @@ public class TspClientUpdateResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var sb = new StringBuilder();
         if (!string.IsNullOrEmpty(Message))
@@ -37,7 +37,7 @@ public class TspClientUpdateResponse : CommandResponse
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
         }
-        return ToString(sb);
+        return sb.ToString();
     }
 }
 

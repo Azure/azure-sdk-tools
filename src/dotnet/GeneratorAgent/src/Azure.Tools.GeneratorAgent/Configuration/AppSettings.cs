@@ -23,8 +23,8 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string AgentName => Configuration.GetSection("AzureSettings:AgentName").Value ?? "AZC Fixer";
         public int MaxIterations => Configuration.GetSection("AzureSettings:MaxIterations").Get<int>();
         public string AgentInstructions => Configuration.GetSection("AzureSettings:AgentInstructions").Value ?? "";
+        public string ErrorAnalysisInstructions => Configuration.GetSection("AzureSettings:ErrorAnalysisInstructions").Value ?? "You are an expert at analyzing compilation errors. Return JSON object with 'errors' array containing objects with 'type' and 'message' fields.";
         public string FixPromptTemplate => Configuration.GetSection("AzureSettings:FixPromptTemplate").Value ?? "";
-        public string ErrorAnalysisPromptTemplate => Configuration.GetSection("AzureSettings:ErrorAnalysisPromptTemplate").Value ?? "";
 
         // Timeout and polling configurations
         public TimeSpan IndexingMaxWaitTime => TimeSpan.FromSeconds(
@@ -56,6 +56,12 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         // Fix processing settings
         public int DelayBetweenFixesMs => 
             int.Parse(Configuration.GetSection("AzureSettings:DelayBetweenFixesMs").Value ?? "500");
+        
+
+        // OpenAI Settings
+        public string? OpenAIApiKey => Configuration.GetSection("OpenAI:ApiKey").Value ?? EnvironmentVariables.OpenAIApiKey;
+        public string? OpenAIEndpoint => Configuration.GetSection("OpenAI:Endpoint").Value;
+        public string OpenAIModel => Configuration.GetSection("OpenAI:Model").Value ?? "gpt-4o";
         
         public string TypespecEmitterPackage => "@typespec/http-client-csharp";
         public string TypespecCompiler => "@typespec/compiler";

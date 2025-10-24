@@ -1,41 +1,49 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, diffs old vs new generated code, maps API changes to impacted customization files, applies patches.")]
 public class TspClientUpdateTool(
     ILogger<TspClientUpdateTool> logger,
-    IClientUpdateLanguageServiceResolver languageServiceResolver,
+    ILanguageSpecificResolver<IClientUpdateLanguageService> clientUpdateLanguageSpecificService,
     ITspClientHelper tspClientHelper
 ) : MCPTool
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-    private readonly Argument<string> updateCommitSha = new(name: "update-commit-sha", description: "SHA of the commit to apply update changes for") { Arity = ArgumentArity.ExactlyOne };
-    private readonly Option<string?> newGenOpt = new(["--new-gen"], () => "./tmpgen", "Directory for regenerated TypeSpec output (optional)");
+    private readonly Argument<string> updateCommitSha = new("update-commit-sha")
+    {
+        Description = "SHA of the commit to apply update changes for",
+        Arity = ArgumentArity.ExactlyOne
+    };
+    private readonly Option<string?> newGenOpt = new("--new-gen")
+    {
+        Description = "Directory for regenerated TypeSpec output (optional)",
+        Required = false,
+        DefaultValueFactory = _ => "./tmpgen",
+    };
 
     protected override Command GetCommand() =>
         new("customized-update", "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply")
         {
-            updateCommitSha,
-            SharedOptions.PackagePath,
-            newGenOpt
+            updateCommitSha, SharedOptions.PackagePath, newGenOpt,
         };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
-        var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-        var newGenPath = ctx.ParseResult.GetValueForOption(newGenOpt);
+        var spec = parseResult.GetValue(updateCommitSha);
+        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+        var newGenPath = parseResult.GetValue(newGenOpt);
         try
         {
             logger.LogInformation("Starting client update (CLI) for package at: {packagePath} with new-gen: {newGenPath}", packagePath, newGenPath);
@@ -65,7 +73,7 @@ public class TspClientUpdateTool(
             {
                 return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
             }
-            var resolved = await languageServiceResolver.ResolveAsync(packagePath, ct);
+            var resolved = await clientUpdateLanguageSpecificService.Resolve(packagePath, ct);
             if (resolved == null)
             {
                 return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };

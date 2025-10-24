@@ -3,8 +3,11 @@ using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -15,9 +18,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
         //{ "sampling_mode":"Linear","iters":[216428.0, 432856.0, 649284.0, 865712.0, 1082140.0, 1298568.0, 1514996.0, 1731424.0, 1947852.0, 2164280.0],"times":[89284700.0, 182949300.0, 279225800.0, 370553800.0, 459758900.0, 544908000.0, 647300900.0, 757810300.0, 831844100.0, 926051100.0]}
         struct Samples
         {
-            public string SamplingMode { get; set; }
-            public double[] Iters { get; set; }
-            public double[] Times { get; set; }
+            [JsonPropertyName("test_name")]
+            public string TestName { get; set; }
+
+            [JsonPropertyName("operations_per_second")]
+            public double OperationsPerSecond { get; set; }
+
+            [JsonPropertyName("average_cpu_use")]
+            public double? AverageCpuUse { get; set; }
+
+            [JsonPropertyName("average_memory_use")]
+            public long? AverageMemoryUse { get; set; }
         }
     }
 
@@ -37,7 +48,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private const string _sdkDirectory = "sdk";
         private const string _cargoName = "cargo";
-        private string _resultsDirectory = Path.Combine("target", "criterion");
+        private string _resultsDirectory = "testResults";
+        private bool _debug = false;
+        private string _executablePath = "";
+        private string _testCommand = "";
         private string _targetResultsDirectory;
         public bool IsTest { get; set; } = false;
         public bool IsWindows { get; set; } = Util.IsWindows;
@@ -51,9 +65,55 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             bool debug)
         {
-            // just make sure we have the target directory clened up of previous results in case of a test issue in a previous test / run
+
+            // just make sure we have the target directory cleaned up of previous results in case of a test issue in a previous test / run
             _targetResultsDirectory = await CleanupAsync(project);
-            return (String.Empty, String.Empty, String.Empty);
+            Directory.CreateDirectory(_targetResultsDirectory);
+            _debug = debug;
+
+            string flavor = debug ? "debug" : "release";
+            _testCommand = $"--{flavor} --package {primaryPackage} --test perf ";
+            var result = await Util.RunAsync(_cargoName, $"build {_testCommand} --message-format=json", WorkingDirectory, log: false);
+            // Look for errors in the build.
+            if (result.ExitCode != 0)
+            {
+                return (result.StandardOutput, result.StandardError, null);
+            }
+
+            Console.WriteLine("Parsing build output to find test executables...");
+            string[] json_elements = result.StandardOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string[] executables = new string[0];
+            foreach (string element in json_elements)
+            {
+                try
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(element))
+                    {
+                        if (doc.RootElement.TryGetProperty("executable", out JsonElement executableElement) && executableElement.ValueKind == JsonValueKind.String)
+                        {
+                            Console.WriteLine($"Found executable: {executableElement.GetString()}");
+                            executables = executables.Append(executableElement.GetString()).ToArray();
+                        }
+                    }
+                }
+                catch (JsonException e)
+                {
+                    Console.WriteLine($"Exception {e} parsing line as JSON, skipping line.");
+                    // Ignore lines that are not valid JSON
+                }
+            }
+            if (executables.Length != 1)
+            {
+                Console.WriteLine($"Found {executables.Length} test executables after building the project.");
+                foreach (var exe in executables)
+                {
+                    Console.WriteLine($"Executable: {exe}");
+                }
+                throw new Exception($"No test executables were found after building the project");
+            }
+            _executablePath = executables[0];
+
+            return (result.ToString(), result.ToString(), null);
         }
         public override async Task<IterationResult> RunAsync(
             string project,
@@ -66,22 +126,61 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string profilerOptions,
             object context)
         {
-            // set up the params for cargo
-            string finalParams = $"bench -- \"{testName}\"";
-            ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
-            if (IsTest)
+            // The Rust SDK uses environment variables to determine if the tests should run in playback or live mode.
+            // If --test-proxy is in the command line arguments, set AZURE_TEST_MODE environment variable to "playback" to indicate that we are going to use the test proxy.
+            // Otherwise set test mode to `live`.
+            if (arguments.Contains("test-proxy"))
             {
-                UtilMethodCall(this, new UtilEventArgs(
-                    "RunAsync",
-                    new string[] {
-                        _cargoName,
-                        finalParams,
-                        WorkingDirectory}));
-                result = new ProcessResult(0, "cargo bench result", "error");
+                Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "playback");
             }
             else
             {
-                result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
+                Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
+            }
+            ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
+            if (_executablePath == String.Empty)
+            {
+                Console.WriteLine("Executable path is empty, building test.");
+                // set up the params for cargo. Some of the arguments were established in the setup stage.
+                string finalParams = $"test {_testCommand} -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+                if (IsTest)
+                {
+                    UtilMethodCall(this, new UtilEventArgs(
+                        "RunAsync",
+                        new string[] {
+                        _cargoName,
+                        finalParams,
+                        WorkingDirectory}));
+                    result = new ProcessResult(0, "cargo bench result", "error");
+                }
+                else
+                {
+                    result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
+                }
+            }
+            else
+            {
+                string finalParams = $" --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+                if (IsTest)
+                {
+                    UtilMethodCall(this, new UtilEventArgs(
+                        "RunAsync",
+                        new string[] {
+                        _executablePath,
+                        finalParams,
+                        WorkingDirectory}));
+                    result = new ProcessResult(0, "cargo bench result", "error");
+                }
+                else
+                {
+                    result = await Util.RunAsync(_executablePath, finalParams, WorkingDirectory);
+                }
+
+            }
+
+            if (result.ExitCode != 0)
+            {
+                throw new Exception($"Error running the benchmark test {testName} in project {project}. Error: {result.StandardError}");
             }
 
             //parse the samples file for the test and calculate the ops per second
@@ -132,18 +231,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private double ExtractOpsPerSecond(string testName)
         {
             // the results are in the target directory under target/criterion/<testName>/new
-            var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory, testName, "new", "sample.json"));
-            double nanos = 0.0;
-            // the timings are in nanos, also we have to divide the time by the number of iterations to get the time for one operation
-            for (int i = 0; i < results.Iters.Length; i++)
-            {
-                nanos += results.Times[i] / results.Iters[i];
-            }
-            nanos /= results.Iters.Length;
-            // once we have the timing of one operation( in nano seconds) divide one sec in nanos by the time to get ops/sec
-            var opsPerSecond = Math.Pow(10, 9) / nanos;
+            var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory, $"{testName}-results.json"));
 
-            return opsPerSecond;
+            return results.OperationsPerSecond;
         }
 
         private Models.Rust.Samples ParseFromJsonFile(string filePath)

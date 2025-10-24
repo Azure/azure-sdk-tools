@@ -10,17 +10,22 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
+import { AccessToken, ManagedIdentityCredential, TokenCredential } from '@azure/identity';
+import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
   private readonly promptGenerator: PromptGenerator;
   private readonly channelConfigManager: ChannelConfigManager;
+  private readonly credential: TokenCredential;
 
-  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager) {
+  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager, credential: TokenCredential) {
     this.conversationHandler = conversationHandler;
     this.promptGenerator = new PromptGenerator();
     this.channelConfigManager = channelConfigManager;
+    this.credential = credential;
   }
+
 
   public async completePrompt(
     context: TurnContext,
@@ -29,16 +34,17 @@ export class RAGModel implements PromptCompletionModel {
     tokenizer: Tokenizer,
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
+    const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
     const [ ragTenantId, ragEndpoint ] = await Promise.all([
       this.channelConfigManager.getRagTenant(channelId),
       this.channelConfigManager.getRagEndpoint(channelId),
     ]);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}`, { meta });
+    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
-      apiKey: config.ragApiKey,
+      accessToken: token ? token.token : undefined
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
 

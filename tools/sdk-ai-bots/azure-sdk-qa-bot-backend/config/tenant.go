@@ -21,6 +21,7 @@ var typespecSources = []model.Source{
 	model.Source_AzureRestAPISpec,
 	model.Source_TypeSpecMigration,
 	model.Source_TypeSpecHttpSpecs,
+	model.Source_StaticAzureDocs,
 }
 
 var SourceTopK = map[model.Source]int{
@@ -29,7 +30,7 @@ var SourceTopK = map[model.Source]int{
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
 	model.TenantID_PythonChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki, model.Source_AzureSDKGuidelines}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('python_*', 'title')",
 		},

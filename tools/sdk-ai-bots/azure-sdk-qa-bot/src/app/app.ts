@@ -11,13 +11,17 @@ import config from '../config/config.js';
 import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
+import { ManagedIdentityCredential, TokenCredential } from '@azure/identity';
+import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 
 const conversationHandler = new ConversationHandler();
 const channelConfigManager = new ChannelConfigManager();
 await Promise.all([conversationHandler.initialize(), channelConfigManager.initialize()]);
 
+let credential: TokenCredential = new ManagedIdentityCredential(config.userManagedIdentityClientID);
+
 // Create AI components
-const model = new RAGModel(conversationHandler, channelConfigManager);
+const model = new RAGModel(conversationHandler, channelConfigManager, credential);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,9 +57,10 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   const { channelId } = parseConversationId(context.activity.conversation.id);
   const ragTenantId = await channelConfigManager.getRagTenant(channelId);
   const ragEndpoint = await channelConfigManager.getRagEndpoint(channelId);
+  const token = await getAccessTokenByManagedIdentity(credential, config.ragScope);
   const ragOptions: RAGOptions = {
     endpoint: ragEndpoint,
-    apiKey: config.ragApiKey,
+    accessToken: token ? token.token : undefined
   };
   const action = context.activity.value?.action;
   const feedbackComment = context.activity.value?.feedbackComment;

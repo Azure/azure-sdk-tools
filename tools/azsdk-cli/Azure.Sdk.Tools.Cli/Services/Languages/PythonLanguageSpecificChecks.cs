@@ -15,9 +15,9 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
 
     public PythonLanguageSpecificChecks(
-        IProcessHelper processHelper, 
-        INpxHelper npxHelper, 
-        IGitHelper gitHelper, 
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
         ILogger<PythonLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
@@ -25,9 +25,8 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-    public string SupportedLanguage => "Python";
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -75,7 +74,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -133,17 +132,87 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for linting code in a Python project
-        // Could use pylint, flake8, black --check, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code linting not yet implemented for Python", ""));
+        try
+        {
+            _logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
+            var timeout = TimeSpan.FromMinutes(10); 
+
+            // Run multiple linting tools
+            var lintingTools = new[]
+            {
+                ("pylint", new[] { "azpysdk", "pylint", "--isolate", packagePath }),
+                ("mypy", new[] { "azpysdk", "mypy", "--isolate", packagePath }),
+            };
+
+            _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
+
+            // Create tasks for all linting tools to run in parallel
+            var lintingTasks = lintingTools.Select(async tool =>
+            {
+                var (toolName, command) = tool;
+                var result = await _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
+                return (toolName, result);
+            });
+
+            // Wait for all linting tools to complete
+            var allResults = await Task.WhenAll(lintingTasks);
+
+            // Analyze results
+            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
+
+            if (failedTools.Count == 0)
+            {
+                _logger.LogInformation("All linting tools completed successfully - no issues found");
+                return new CLICheckResponse(0, "All linting tools completed successfully - no issues found");
+            }
+            else
+            {
+                var failedToolNames = string.Join(", ", failedTools.Select(t => t.toolName));
+                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
+                
+                _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
+                    failedTools.Count, allResults.Length, failedToolNames);
+                
+                return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}");
+        }
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for formatting code in a Python project
-        // Could use black, autopep8, yapf, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code formatting not yet implemented for Python", ""));
+        try
+        {
+            _logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
+            // Run azpysdk black
+            var command = "azpysdk";
+            var args = new[] { "black", "--isolate", packagePath };
+
+            _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
+            var timeout = TimeSpan.FromMinutes(10);
+            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                _logger.LogInformation("Code formatting completed successfully - no issues found");
+                return new CLICheckResponse(result.ExitCode, "Code formatting completed successfully - no issues found");
+            }
+            else
+            {
+                _logger.LogWarning("Code formatting found issues with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result.ExitCode, result.Output, "Code formatting found issues that need attention");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error running code formatting: {ex.Message}");
+        }
     }
 }

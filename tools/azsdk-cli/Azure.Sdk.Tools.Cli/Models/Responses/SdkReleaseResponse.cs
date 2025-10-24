@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses
@@ -27,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         [JsonPropertyName("Release status details")]
         public string ReleaseStatusDetails { get; set; } = string.Empty;
 
-        public override string ToString()
+        protected override string Format()
         {
             //Create an output string with all the properties of the package release
             StringBuilder output = new StringBuilder();
@@ -38,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Release Build Id: {PipelineBuildId}");
             output.AppendLine($"### Release Pipeline Status: {ReleasePipelineStatus}");
             output.AppendLine($"### Release Status Details: {ReleaseStatusDetails}");
-            return ToString(output.ToString());
+            return output.ToString();
         }
     }
 }

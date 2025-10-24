@@ -44,7 +44,7 @@ namespace APIViewWeb.Controllers
         // regular CI pipeline will not send this flag in request
         [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string packageType = null)
         {
             if (file != null)
             {
@@ -54,7 +54,7 @@ namespace APIViewWeb.Controllers
                     var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                         runAnalysis: false, memoryStream: memoryStream);
 
-                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
+                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                     if (apiRevision != null)
                     {
                         apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
@@ -142,7 +142,8 @@ namespace APIViewWeb.Controllers
             bool compareAllRevisions,
             string project,
             string packageVersion = null,
-            bool setReleaseTag = false
+            bool setReleaseTag = false,
+            string packageType = null
             )
         {
             using var memoryStream = new MemoryStream();
@@ -154,7 +155,7 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
-            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
+            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
             if (apiRevision != null)
             {
                 apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
@@ -177,8 +178,11 @@ namespace APIViewWeb.Controllers
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false)
+        private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, string packageType, bool compareAllRevisions = false)
         {
+            // Parse package type once at the beginning
+            var parsedPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null;
+            
             var createNewRevision = true;
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
             var apiRevision = default(APIRevisionListItemModel);
@@ -187,6 +191,13 @@ namespace APIViewWeb.Controllers
 
             if (review != null)
             {
+                // Update package type if provided from controller parameter and not already set
+                if (parsedPackageType.HasValue && !review.PackageType.HasValue)
+                {
+                    review.PackageType = parsedPackageType;
+                    review = await _reviewManager.UpdateReviewAsync(review);
+                }
+
                 apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
                 if (apiRevisions.Any())
                 {
@@ -239,7 +250,7 @@ namespace APIViewWeb.Controllers
             }
             else
             {
-                review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
+                review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType);
             }
             
             if (createNewRevision)

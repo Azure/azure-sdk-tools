@@ -1,6 +1,36 @@
 # Release History
 
-## 0.5.2 (Unreleased)
+## 0.5.5 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.5.4 (2025-10-21)
+
+### Features
+
+- None
+
+### Bugs Fixed
+
+- Fix in create release plan tool to use Active spec PR URL field in the query to resolve the failure in DevOps side.
+
+## 0.5.3 (2025-10-17)
+
+### Features
+
+- Updated System.CommandLine dependency to 2.5 beta
+
+### Bugs Fixed
+
+- Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)
+
+## 0.5.2 (2025-10-13)
 
 ### Features
 

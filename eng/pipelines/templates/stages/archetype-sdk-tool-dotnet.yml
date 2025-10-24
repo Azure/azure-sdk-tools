@@ -65,18 +65,9 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
-  - name: EvalProject
-    type: string
-    default: ''
-  - name: OpenAIEndPoint
-    type: string
-    default: ''
-  - name: Model
-    type: string
-    default: ''
-  - name: EvalJob
-    type: template
-    default: ''
+  - name: customJob
+    type: job
+    default: {}
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -226,13 +217,9 @@ extends:
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
-          - ${{ if ne(parameters.EvalJob, '') }}:
-            - template: {{ parameters.EvalJob }}
-              parameters:
-                EvalProject: ${{ parameters.EvalProject }}
-                OpenAIEndPoint: ${{ parameters.OpenAIEndPoint }}
-                Model: ${{ parameters.Model }}
-                GitHubToken: $(azuresdk-github-pat)
+          
+          - ${{ if ne(parameters.customJob, {}) }}:
+            - ${{ parameters.customJob }}
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml

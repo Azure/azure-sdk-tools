@@ -30,18 +30,14 @@ class MetadataMap:
             with open(mapping_path, "r") as json_file:
                 mapping = json.load(json_file)
                 self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
-                self.cross_language_package_id = mapping.get(
-                    "CrossLanguagePackageId", ""
-                )
+                self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
         except OSError:
             old_mapping_path = os.path.join(pkg_path, OLD_MAPPING_FILE_NAME)
             try:
                 with open(old_mapping_path, "r") as json_file:
                     mapping = json.load(json_file)
                     self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
-                    self.cross_language_package_id = mapping.get(
-                        "CrossLanguagePackageId", ""
-                    )
+                    self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
             except OSError:
                 self.cross_language_map = {}
                 self.cross_language_package_id = ""

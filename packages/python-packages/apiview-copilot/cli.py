@@ -696,9 +696,11 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
-def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
+def report_metrics(
+    start_date: str, end_date: str, environment: str = "production", markdown: bool = False, save: bool = False
+) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    return get_metrics_report(start_date, end_date, environment, markdown)
+    return get_metrics_report(start_date, end_date, environment, markdown, save)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -1053,6 +1055,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
             )
             ac.argument(
                 "ids",

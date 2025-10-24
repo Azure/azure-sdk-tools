@@ -3,6 +3,14 @@ import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { environment } from 'src/environments/environment';
 
+export type VoteType = 'none' | 'up' | 'down';
+
+export interface CommentResolutionData {
+  commentIds: string[];
+  batchVote?: VoteType;
+  resolutionComment?: string;
+}
+
 @Component({
   selector: 'app-related-comments-dialog',
   templateUrl: './related-comments-dialog.component.html',
@@ -14,11 +22,13 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() selectedCommentId: string = '';
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
   @Output() visibleChange = new EventEmitter<boolean>();
-  @Output() resolveSelectedComments = new EventEmitter<string[]>();
+  @Output() resolveSelectedComments = new EventEmitter<CommentResolutionData>();
 
   assetsPath: string = environment.assetsPath;
   selectedCommentIds: Set<string> = new Set();
   selectAll: boolean = false;
+  batchVote: VoteType | null = null;
+  resolutionComment: string = '';
 
   // Performance optimization: Cache for code context
   private codeContextCache = new Map<string, string>();
@@ -39,6 +49,8 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   private resetSelection() {
     this.selectedCommentIds.clear();
     this.selectAll = false;
+    this.batchVote = null;
+    this.resolutionComment = '';
   }
 
   onHide() {
@@ -78,7 +90,12 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
 
   resolveSelected() {
     if (this.selectedCommentIds.size > 0) {
-      this.resolveSelectedComments.emit(Array.from(this.selectedCommentIds));
+      const resolutionData: CommentResolutionData = {
+        commentIds: Array.from(this.selectedCommentIds),
+        batchVote: this.batchVote || undefined,
+        resolutionComment: this.resolutionComment.trim() || undefined
+      };
+      this.resolveSelectedComments.emit(resolutionData);
       this.onHide();
     }
   }
@@ -89,6 +106,22 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
 
   isTriggeringComment(commentId: string): boolean {
     return commentId === this.selectedCommentId;
+  }
+
+  toggleBatchVote(voteType: 'up' | 'down') {
+    if (this.batchVote === voteType) {
+      this.batchVote = null;
+    } else {
+      this.batchVote = voteType;
+    }
+  }
+
+  hasBatchUpvote(): boolean {
+    return this.batchVote === 'up';
+  }
+
+  hasBatchDownvote(): boolean {
+    return this.batchVote === 'down';
   }
 
   getCodeContextForComment(comment: CommentItemModel): string {

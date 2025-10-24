@@ -145,8 +145,8 @@ _If you create a PR to compare the generated library with the existing library a
    └─ Update versions, changelogs, READMEs, metadata files
    └─ Validate: versions, READMEs, changelogs
 
-4. Validating → run-checks
-   └─ Run commonly failing validation checks locally to ensure green PR
+4. Validating → validate
+   └─ Run validation checks locally to ensure green PR
 
 ⚠️  STOP: This is a test scenario only. Do NOT commit these changes or create release PRs.
 ```
@@ -177,7 +177,7 @@ _If you create a PR to compare the generated library with the existing library a
 
 ### 4. Validating
 
-**Tools**: `run-checks` ([#11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127))  
+**Tools**: `validate` ([#11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127))  
 **Action**: Run [validation checks](#pr-checks) locally before creating PRs  
 **Success**: All checks pass for all languages - PR will be green
 
@@ -214,7 +214,7 @@ I want to prepare a preview version of the Health Deidentification SDK for all l
 1. Execute `verify-setup` for all 5 languages
 2. Execute `generate-sdk` for Health Deidentification service
 3. Execute `update-package` to update versions, changelogs, READMEs
-4. Execute `run-checks` locally to validate all checks pass
+4. Execute `validate` locally to validate all checks pass
 5. Report status and next steps
 
 ### Environment Setup
@@ -263,11 +263,11 @@ Update the package metadata for Health Deidentification SDKs to prepare for a pr
 
 **Prompt:**
 ```
-Run all validation checks locally for the Health Deidentification SDKs before I create pull requests.
+Run validation checks locally for the Health Deidentification SDKs before I create pull requests.
 ```
 
 **Expected Agent Activity:**
-1. Execute `run-checks` for all 5 languages
+1. Execute `validate` for all 5 languages
 1. Report which checks passed and which failed
 1. Provide general guidance on fixing failures
 
@@ -384,14 +384,15 @@ Package metadata updated for 5/5 languages
 **Command:**
 ```bash
 # Run all checks (default)
-azsdk package run-checks --package-path <path_to_sdk_package>/
+azsdk package validate --package-path <path_to_sdk_package>/
 
 # Run specific check type
-azsdk package run-checks <check-type> --package-path <path_to_sdk_package>/
+azsdk package validate <check-type> --package-path <path_to_sdk_package>/
 ```
 
 **Options:**
 - `--package-path <path>`: Path to the specific SDK package directory (required)
+- `--fix`: Option to fix the errors reported (Milestone 2)
 
 **Available Check Types (as subcommands):**
 - `all`: Run all available validation checks (default)
@@ -404,7 +405,7 @@ azsdk package run-checks <check-type> --package-path <path_to_sdk_package>/
 - `format`: Run code formatting check
 - `checkaotcompat`: .NET AOT compatibility validation
 - `generatedcodechecks`: .NET generated code validation
-- `samples`: Validate samples
+- `samples`: Validate samples for JS
 
 **Expected Output:**
 ```

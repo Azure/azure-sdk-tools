@@ -4,18 +4,19 @@ description: 'Identify languages configured in the TypeSpec project and add it t
 # Step 1: Find the list of languages and package names
 **Goal**: Identify languages configured in the TypeSpec project and generate the json object with language and package name.
 1. Identify the language emitter configuration in the `tspconfig.yaml` file in the TypeSpec project root.
-2. Identify the package name or namespace for each language emitter.
+2. Identify and display the package name or namespace for each language emitter.
    - For Java and Python, use `emitter-output-dir` for package name if it exists. Otherwise use `package-dir` to get the package name as fallback approach.
    - For .NET, use namespace property to get package name.
    - For JavaScript, use `packagedetails:name` property to get package name.
    - For Go, use module name and remove `github.com/Azure/azure-sdk-for-go/` to get package name
-3. Map the language name in emitter to one of the following in Pascal case(except .NET):
+3. Use `azsdk_package_validate_name` to validate each of the package names before proceeding.If any of the package names are invalid, correct the package name.
+4. Map the language name in emitter to one of the following in Pascal case(except .NET):
    - .NET
    - Java
    - Python
    - JavaScript
    - Go
-4. Create a JSON array object with the following structure:
+5. Create a JSON array object with the following structure:
    ```json
    [
            {
@@ -25,7 +26,7 @@ description: 'Identify languages configured in the TypeSpec project and add it t
            ...
     ]
    ```
-5. If no languages are configured, inform the user: "No languages configured in TypeSpec project. Please add at least one language emitter in tspconfig.yaml."
+6. If no languages are configured, inform the user: "No languages configured in TypeSpec project. Please add at least one language emitter in tspconfig.yaml."
 **Success Criteria**: JSON object with languages and package names created.
 
 # Step 2: Check if release plan exists

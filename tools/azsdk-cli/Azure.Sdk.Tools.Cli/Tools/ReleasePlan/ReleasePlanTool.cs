@@ -451,6 +451,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
                 }
 
+                // Validate SDK Package names
+                foreach (var sdk in SdkInfos)
+                {
+                    var response = ValidatePackageName(sdk.Language, sdk.PackageName);
+                    if (response.IsValid != true)
+                    {
+                        return new DefaultCommandResponse { ResponseError = response.ResponseError, Message = response.Message};
+                    }
+                }
+                
                 StringBuilder sb = new();
                 // Update SDK package name and languages in work item
                 var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos);
@@ -631,6 +641,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_package_validate_name"), Description("Validate package name based on language")]
+        public ValidationResponse ValidatePackageName(string language, string packageName)
+        {
+            try
+            {
+                var languagePrefixMap = new Dictionary<string, List<string>>
+                (StringComparer.OrdinalIgnoreCase)
+                {
+                    { ".NET", new List<string> { "Azure." } },
+                    { "JavaScript", new List<string> { "@azure/", "@azure-rest/" } },
+                    { "Java", new List<string> { "azure-", "com.azure." } },
+                    { "Go", new List<string> { "sdk/" } },
+                    { "Python", new List<string> { "azure-" } }
+                };
+
+                languagePrefixMap.TryGetValue(language, out var prefixes);
+                if (prefixes.Any(prefix => packageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return new ValidationResponse { Message = $"Package Name [{packageName}] is valid.", IsValid = true };
+                }
+
+                var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {string.Join(" or ", kvp.Value)}"));
+                return new ValidationResponse { Message = $"Unsupported package name. Package names must follow these rules: {prefixRules}", IsValid = false };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to validate package name {packageName}");
+                return new ValidationResponse { ResponseError = $"Failed to validate package name {packageName}: {ex.Message}" };
             }
         }
     }

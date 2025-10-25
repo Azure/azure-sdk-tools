@@ -20,7 +20,9 @@ import { dirname } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
+export const packageJson = JSON.parse(
+  await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"),
+);
 
 /**
  * Prints the command preamble, including the version and banner.

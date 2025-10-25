@@ -36,6 +36,7 @@ import { config as dotenvConfig } from "dotenv";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
+import { createTspClientMetadata } from "./metadata.js";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
@@ -402,10 +403,15 @@ export async function generateCommand(argv: any) {
     throw new Error("cannot find project name");
   }
   const srcDir = joinPaths(tempRoot, projectName);
-  const emitter = await getEmitterFromRepoConfig(getEmitterPackageJsonPath(repoRoot, tspLocation));
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
+  const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
+
+  // Create tsp_client_metadata.yaml file
+  await createTspClientMetadata(outputDir, emitterPackageJsonPath);
+
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   // Read tspconfig.yaml contents

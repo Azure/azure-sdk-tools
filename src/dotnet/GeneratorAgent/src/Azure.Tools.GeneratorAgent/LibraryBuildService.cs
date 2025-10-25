@@ -26,7 +26,7 @@ namespace Azure.Tools.GeneratorAgent
         public async Task<Result<object>> BuildSdkAsync(string sdkOutputDir, CancellationToken cancellationToken = default)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sdkOutputDir);
-            Logger.LogInformation("Starting library build in directory: {SdkOutputDir}", sdkOutputDir);
+            Logger.LogDebug("Starting library build in directory: {SdkOutputDir}", sdkOutputDir);
 
             string buildTargetResult = DetermineBuildTarget(sdkOutputDir);
 
@@ -34,24 +34,11 @@ namespace Azure.Tools.GeneratorAgent
             
             string validatedArguments = InputValidator.ValidateProcessArguments(arguments);
 
-            Result<object> buildResult = await ProcessExecutionService.ExecuteAsync(
+            return await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.DotNetExecutable,
                 validatedArguments,
                 sdkOutputDir,
                 cancellationToken).ConfigureAwait(false);
-
-            if (buildResult.IsFailure && buildResult.ProcessException != null)
-            {
-                return Result<object>.Failure(
-                    new DotNetBuildException(
-                        buildResult.ProcessException.Command,
-                        buildResult.ProcessException.Output,
-                        buildResult.ProcessException.Error,
-                        buildResult.ProcessException.ExitCode ?? -1,
-                        buildResult.ProcessException));
-            }
-
-            return buildResult;
         }
 
         /// <summary>
@@ -97,8 +84,7 @@ namespace Azure.Tools.GeneratorAgent
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error while determining build target in {SdkOutputDir}", sdkOutputDir);
-                throw;
+                throw new InvalidOperationException($"Error while determining build target in {sdkOutputDir}", ex);
             }
         }
     }

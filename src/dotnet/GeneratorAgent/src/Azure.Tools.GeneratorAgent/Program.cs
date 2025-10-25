@@ -48,8 +48,6 @@ namespace Azure.Tools.GeneratorAgent
 
         internal async Task<int> HandleCommandAsync(string? typespecPath, string? commitId, string sdkPath)
         {
-            var validationContext = ValidationContext.ValidateAndCreate(typespecPath, commitId, sdkPath);
-
             using var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (_, eventArgs) =>
             {
@@ -60,8 +58,11 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                var orchestrator = ServiceProvider.GetRequiredService<GenerationOrchestrator>();
+                var validationContext = ValidationContext.ValidateAndCreate(typespecPath, commitId, sdkPath);
+
+                var orchestrator = ServiceProvider.GetRequiredService<GenerationOrchestrator>();      
                 await orchestrator.ExecuteAsync(validationContext, cancellationTokenSource.Token).ConfigureAwait(false);
+                
                 return ExitCodeSuccess;
             }
             catch (OperationCanceledException)

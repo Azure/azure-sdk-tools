@@ -10,22 +10,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 internal static class PackagePathParser
 {
     /// <summary>
-    /// Parse and validate a package path ensuring it is under the repo's 'sdk' folder.
+    /// Parse a package path.
     /// Expected general structure: &lt;repoRoot&gt;/sdk/&lt;service&gt;/&lt;package&gt; (language-specific depth checks may vary).
     /// </summary>
     /// <param name="gitHelper">Git helper used to discover repository root.</param>
     /// <param name="realPackagePath">Real (fully resolved) package path.</param>
     /// <returns>Tuple of (RepoRoot, RelativePath, FullPath).</returns>
-    /// <exception cref="ArgumentException">Thrown when the path is not under the expected 'sdk' directory.</exception>
     public static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
     {
         var full = realPackagePath;
         var repoRoot = gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
-        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException($"Path '{realPackagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(realPackagePath));
-        }
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
         return (repoRoot, relativePath, full);
     }

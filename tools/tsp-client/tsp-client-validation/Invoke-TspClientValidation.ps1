@@ -170,9 +170,11 @@ function Invoke-PipelineRun {
         Write-Error "Unknown language: $Language"
         return $null
     }
-    
+    $ApiVersion = "2021-10-01-preview"
+    $SdkReleaseType = "beta"
+
     $pipelineId = $pipelineInfo.PipelineId
-    $command = "az pipelines run --id $pipelineId --branch $SyncBranch --parameters SdkRepoBranch=$SyncBranch"
+    $command = "az pipelines run --id $pipelineId --branch $SyncBranch --parameters SdkRepoBranch=$SyncBranch ApiVersion=$ApiVersion SdkReleaseType=$SdkReleaseType"
     
     Write-Info "Command: $command"
     

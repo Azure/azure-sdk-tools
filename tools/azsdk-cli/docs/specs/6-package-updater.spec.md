@@ -30,7 +30,7 @@
 
 ### Current State
 
-After SDK code generation, build, tests, and sample validation, engineers must perform repetitive cross-language housekeeping: updating changelogs, synchronizing README and language-specific files, adjusting package versions, exporting API surfaces (.NET), and inserting or validating CI configuration. Today these tasks are:
+After code generation, build, tests, and sample validation, engineers must perform repetitive cross-language housekeeping: updating changelogs, synchronizing README and language-specific files, adjusting package versions, exporting API surfaces (.NET), and inserting or validating CI configuration. Today these tasks are:
 
 - Partially automated in ad-hoc scripts per language / repo.
 - Inconsistent between management-plane and data-plane SDKs (especially version bump timing and changelog handling).
@@ -46,7 +46,7 @@ Without a unified tool layer:
 - Agents cannot reliably assist because state transitions ("now bump version", "now update changelog") aren't formalized.
 - Management-plane vs data-plane discrepancies introduce confusion (e.g., when to bump versions or generate changelog entries).
 
-Formalizing Stage 6 as four cohesive tools improves reliability, supports automation-first workflows, and prepares for future LLM-assisted changelog generation.
+Formalizing Stage 6 as cohesive tools improves reliability, supports automation-first workflows, and prepares for future LLM-assisted tasks.
 
 ---
 
@@ -60,21 +60,14 @@ Formalizing Stage 6 as four cohesive tools improves reliability, supports automa
 - [ ] Emit structured JSON results (status + message + next steps hints) enabling orchestration by AI agents and pipelines.
 - [ ] Support configuration-driven per-language scripting (path or inline) without recompiling the tool.
 
-### Exceptions and Limitations
+### Exceptions
 
-#### Exception 1: Data-Plane Deferred Version Bump
+| Exception | Description | Impact | Workaround |
+|---|---|---|---|
+| Data‑Plane Deferred Version Bump | Data‑plane packages typically defer version adjustment and release‑date updates until the release‑preparedness phase. | The `update-version` tool may be a no‑op for data‑plane flows during Stage 6. | Keep version changes manually for milestone 1. |
+| Changelog Auto‑Generation (Data‑Plane) | Automatic changelog generation is not performed for data‑plane packages; manual editing is expected. | The `update-changelog` tool should not auto‑generate entries for data‑plane packages and should instead surface guidance. | Return a `noop` result with `next_steps` prompting manual edits. Consider future LLM integration to automate this post milestone 1. |
 
-**Description:** Data-plane packages typically defer version adjustment and release date update until the release preparedness phase, not immediately after Stage 6 baseline tasks.
-**Impact:** The `version update` tool may be a no-op for data-plane flows outside release prep.
-**Workaround:** Initial version of milestone 1 remains user decided and manual edits.
-
-#### Exception 2: Changelog Auto-Generation (Data-Plane)
-
-**Description:** No automatic generation for data-plane; manual editing expected.
-**Impact:** Tool returns success with a `next_steps` message prompting manual edits.
-**Workaround:** Future LLM integration (post milestone 1).
-
-#### Language-Specific Limitations
+### Language-Specific Limitations
 
 | Language   | Limitation | Impact | Workaround |
 |------------|------------|--------|------------|
@@ -94,7 +87,7 @@ Implement four individual CLI + MCP tools. Each tool:
 4. Executes the relevant sub-script(s) in an ordered, fault-isolated manner.
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
-Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary.
+Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary (post milestone 1).
 
 ### Detailed Design
 
@@ -186,11 +179,16 @@ Inputs:
 
 Execution Steps:
 
-1. Compute a version based on the given information (mgmt-plane).
-2. Apply updates across language-specific files.
-3. Validate consistency (all files now share identical new version).
-4. For data-plane outside release: return `noop`.
-5. For data-plane prepare release: use current version from the metadata file or from user input (support may be post-milestone-1).
+- for mgmt-plane SDKs:
+
+ 1. Compute a version based on the given information.
+ 2. Apply updates across language-specific files.
+ 3. Validate consistency (all files now share identical new version).
+
+- for data-plane SDKs:
+
+ 1. return `noop`.
+ 2. use current version from the metadata file or from user input (support may be post-milestone-1).
 
 > **Note:** In milestone 1, Java management-plane packages will follow the same version update strategy as data-plane packages. Adjustments for Java-specific workflows may be introduced in later versions.
 
@@ -292,97 +290,6 @@ update-metadata.ps1 \
       -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
 ```
 
-#### 4. CI Update Tool
-
-Name (CLI): `azsdk package update-ci`
-
-Name (MCP): `azsdk_package_update_ci`
-
-> **Note:** Support for this tool is planned for post‑milestone-1.
-
-Purpose: Create or update CI pipeline configuration.
-
-Inputs:
-
-- `--package-path <abs path>` (required) – Absolute path to the root of the SDK package.
-
-Execution Steps:
-
-1. Create the corresponding YAML file, like `ci.yml`, which will be used to setup pipeline.
-2. Update the relevant CI YAML file accordingly
-3. Return the changed file name with the result.
-
-Outputs (examples):
-
-```json
-{"result":"succeeded", "ci-file": "../ci.yml", "message":"CI files created: ci.yml", "next_steps": "update changelog"}
-```
-
-```json
-{"result":"failed", "message":"script exited 1: missing pwsh"}
-```
-
-Failure Modes:
-
-- Create file fails due to insufficient permissions → return `failed` with error.
-
-##### Update CI script
-
-When the tool executes the language-specific `update-ci` script it will pass the following parameters. All paths are absolute.
-
-| Parameter | Description | Type | Required |
-|-----------|-------------|-----:|:--------:|
-| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
-
-**Example invocations:**
-
-```powershell
-update-ci.ps1 \
-      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
-```
-
-#### 5. Aggregated Tool (chained execution)
-
-Name (CLI): `azsdk package update-all`
-
-Name (MCP): `azsdk_package_update_all`
-
-> **Note:** Support for this tool is planned for post‑milestone-1. Consider making the tool attempt safe, deterministic fixes where reasonable instead of immediately failing and delegating remediation to the caller.
-
-Purpose: provide a single entrypoint that orchestrates the four tools in a deterministic sequence for common release-prep workflows.
-
-Sequence: update-ci -> update-changelog -> update-version -> update-metadata
-
-Execution Steps:
-
-- Validate the provided `packagePath` and fail fast if invalid.
-- Run `update-ci` first to ensure CI config is present/updated.
-- Run `update-changelog` next; if it returns `failed`, stop and return the error.
-- Run `update-version` after changelog succeeds; support `noop` for data-plane flows and propagate `failed` results upward.
-- Run `update-metadata` last to apply remaining metadata and documentation updates.
-- Aggregate each tool's JSON result into a top-level JSON summary with per-tool results, overall `result` (succeeded/failed), and an ordered `next_steps` hint.
-
-Failure Modes:
-
-- If any tool returns `failed`, the aggregated tool should stop execution and return `failed` with the failing tool's details.
-
-Example aggregated output (successful):
-
-```json
-{
-      "result": "succeeded",
-      "steps": [
-            {"tool":"update-ci", "result":"succeeded", "ci-file": "../ci.yml"},
-            {"tool":"update-changelog", "result":"succeeded"},
-            {"tool":"update-version", "result":"succeeded", "version":"1.2.0", "release-date": "2025-10-17"},
-            {"tool":"update-metadata", "result":"succeeded"}
-      ],
-      "message": "Package updates complete", "next_steps": "open PR"
-}
-```
-
 ### User Experience
 
 Typical CLI workflow:
@@ -469,7 +376,16 @@ This tool set is complete when:
 
 - [ ] All four tools emit structured JSON with consistent schema.
 - [ ] Management-plane package run updates version + changelog automatically.
+      Exception: Java returns `no-op` for `update-version` tool.
 - [ ] Data-plane run returns advisory for changelog and version.
+- [ ] Metadata files are updated accordingly.
+
+  | Language | Exception |
+  |---|---|
+  |Java|No additional files need updating|
+  |JavaScript|No additional files need updating|
+  |Go|No additional files need updating|
+
 - [ ] Cross-language scripts execute without manual intervention.
 - [ ] Errors surface actionable mitigation text.
 

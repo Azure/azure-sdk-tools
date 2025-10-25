@@ -59,7 +59,7 @@ Respond with a JSON object using this structure (no markdown formatting needed):
   "question": string,    // The rewritten standalone question
   "scope": string        // Must be one of the intent scopes or unknown
   "category": string     // Must be one of the intent categories or unknown
-  ......
+  "needs_rag_processing": boolean    // Whether to invoke RAG workflow (true for technical questions, false for greetings/announcements)
 }
 
 ## Examples
@@ -69,6 +69,13 @@ Response:
 {
   "question": "How do I migrate Azure Resource Manager (ARM) swagger specifications to TypeSpec?",
   "category": "TypeSpec Migration",
-  "scope": "branded"
-  ......
+  "scope": "branded",
+  "needs_rag_processing": true
+}
+
+{
+  "question": "Good Job",
+  "category": "unknown",
+  "scope": "unknown",
+  "needs_rag_processing": false
 }

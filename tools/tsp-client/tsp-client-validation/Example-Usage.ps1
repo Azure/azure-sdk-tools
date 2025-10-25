@@ -2,11 +2,11 @@
 
 <#
 .SYNOPSIS
-    Example usage of the TSP-Client validation automation script.
+    Example usage of the tsp-client validation automation script.
 
 .DESCRIPTION
     This script demonstrates how to use the Invoke-TspClientValidation.ps1 script
-    with the current tsp-client update scenario (PR #12360).
+    with an example PR #12360.
 
 .PARAMETER DryRun
     Run in dry-run mode to see what would be executed
@@ -22,7 +22,7 @@ $PRNumber = 12360
 $SyncBranch = "sync-eng/common-update-tsp-client-12360"
 
 Write-Host "TSP-Client Validation Example - PR #$PRNumber" -ForegroundColor Yellow
-Write-Host "=" * 50 -ForegroundColor Gray
+Write-Host ("=" * 50) -ForegroundColor Gray
 
 Write-Host "`nThis example demonstrates validating the current tsp-client update:" -ForegroundColor White
 Write-Host "  • PR: Azure/azure-sdk-tools#$PRNumber" -ForegroundColor Cyan
@@ -53,9 +53,9 @@ if ($DryRun) {
 }
 
 # Example 1: Validate all languages
-Write-Host "`n" + "=" * 50 -ForegroundColor Gray
+Write-Host "`n" + ("=" * 50) -ForegroundColor Gray
 Write-Host "EXAMPLE 1: Validate All Languages" -ForegroundColor Yellow
-Write-Host "=" * 50 -ForegroundColor Gray
+Write-Host ("=" * 50) -ForegroundColor Gray
 
 $command1 = ".\Invoke-TspClientValidation.ps1 -PRNumber $PRNumber -SyncBranch '$SyncBranch' $dryRunParam"
 Write-Host "Command: $command1" -ForegroundColor Green
@@ -66,17 +66,17 @@ if (Test-Path ".\Invoke-TspClientValidation.ps1") {
     Write-Host "Script not found. Run this from the tools/tsp-client-validation directory." -ForegroundColor Red
 }
 
-Write-Host "`n" + "=" * 50 -ForegroundColor Gray
+Write-Host "`n" + ("=" * 50) -ForegroundColor Gray
 Write-Host "EXAMPLE 2: Validate Specific Languages" -ForegroundColor Yellow
-Write-Host "=" * 50 -ForegroundColor Gray
+Write-Host ("=" * 50) -ForegroundColor Gray
 
 Write-Host "Example command for Python and .NET only:" -ForegroundColor White
 $command2 = ".\Invoke-TspClientValidation.ps1 -PRNumber $PRNumber -SyncBranch '$SyncBranch' -Languages @('Python', 'NET') $dryRunParam"
 Write-Host $command2 -ForegroundColor Green
 
-Write-Host "`n" + "=" * 50 -ForegroundColor Gray
+Write-Host "`n" + ("=" * 50) -ForegroundColor Gray
 Write-Host "EXAMPLE 3: Monitor Existing Pipelines" -ForegroundColor Yellow
-Write-Host "=" * 50 -ForegroundColor Gray
+Write-Host ("=" * 50) -ForegroundColor Gray
 
 Write-Host "To monitor existing pipeline runs:" -ForegroundColor White
 Write-Host ".\Invoke-TspClientValidation.ps1 -MonitorOnly" -ForegroundColor Green

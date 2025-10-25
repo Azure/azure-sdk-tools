@@ -1,16 +1,17 @@
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Microagents.Tools;
 
 internal class ListFilesToolTests
 {
-    private string baseDir;
+    private TempDirectory? _temp;
+    private string baseDir => _temp!.DirectoryPath;
 
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
-        baseDir = Path.Combine(Path.GetTempPath(), "listfiles_" + Guid.NewGuid());
-        Directory.CreateDirectory(baseDir);
+        _temp = TempDirectory.Create("listfilestests");
 
         // Directory structure:
         // baseDir/
@@ -33,10 +34,7 @@ internal class ListFilesToolTests
     [OneTimeTearDown]
     public void OneTimeTearDown()
     {
-        if (!string.IsNullOrEmpty(baseDir) && Directory.Exists(baseDir))
-        {
-            Directory.Delete(baseDir, true);
-        }
+        _temp?.Dispose();
     }
 
     [Test]

@@ -19,7 +19,7 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
-import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { SamplesRevision } from 'src/app/_models/samples';
@@ -218,6 +218,13 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
         this.codePanelRowData = data.payload as CodePanelRowData[];
+        
+        if (this.userProfile?.preferences?.showSystemComments === false) {
+          this.codePanelRowData = this.codePanelRowData.filter(row => 
+            !(row.type === CodePanelRowDatatype.CommentThread && this.isDiagnosticCommentThread(row))
+          );
+        }
+        
         this.checkForFatalDiagnostics();
       }
 
@@ -436,12 +443,8 @@ export class ReviewPageComponent implements OnInit {
     userPreferenceModel!.showSystemComments = state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        if (userPreferenceModel!.showSystemComments) {
-          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
-        }
-        else {
-          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
-        }
+        // Filter diagnostic comment threads
+        this.codePanelComponent?.filterDiagnosticCommentThreads(state);
       }
     });
   }
@@ -459,6 +462,11 @@ export class ReviewPageComponent implements OnInit {
         }
       }
     });
+  }
+
+  private isDiagnosticCommentThread(commentThread: CodePanelRowData): boolean {
+    return commentThread?.comments?.length > 0 && 
+           commentThread.comments.every(comment => comment.commentSource === CommentSource.Diagnostic);
   }
 
   handleShowLeftNavigationEmitter(state: boolean) {

@@ -21,6 +21,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using APIView;
 
 namespace APIViewWeb.Managers
 {
@@ -30,6 +31,7 @@ namespace APIViewWeb.Managers
         private readonly ICosmosReviewRepository _reviewsRepository;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
+        private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly ICodeFileManager _codeFileManager;
@@ -43,6 +45,7 @@ namespace APIViewWeb.Managers
             IAuthorizationService authorizationService,
             ICosmosReviewRepository reviewsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            ICosmosCommentsRepository commentsRepository,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
             IDevopsArtifactRepository devopsArtifactRepository,
@@ -55,6 +58,7 @@ namespace APIViewWeb.Managers
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
+            _commentsRepository = commentsRepository;
             _authorizationService = authorizationService;
             _signalRHubContext = signalRHubContext;
             _codeFileManager = codeFileManager;
@@ -558,6 +562,12 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
+            if (codeFile.ParserStyle == ParserStyle.Tree)
+            {
+                CodeFile codeFileWithDiagnostics = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFile.FileId);
+                await ConvertDiagnosticsToCommentsAsync(apiRevision, codeFileWithDiagnostics);
+            }
+
             if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
             {
                 if (awaitComputeDiff)
@@ -882,6 +892,9 @@ namespace APIViewWeb.Managers
             }
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            await ConvertDiagnosticsToCommentsAsync(apiRevision, codeFile);
+            
+
             return apiRevision;
         }
 
@@ -1074,6 +1087,62 @@ namespace APIViewWeb.Managers
                 }
             }
             return revisionModel;
+        }
+
+        public async Task ConvertDiagnosticsToCommentsAsync(APIRevisionListItemModel apiRevision, CodeFile codeFile)
+        {
+            if (apiRevision.DiagnosticsConvertedToComments)
+            {
+                return;
+            }
+
+            if (codeFile?.Diagnostics == null || codeFile.Diagnostics.Length == 0)
+            {
+                apiRevision.DiagnosticsConvertedToComments = true;
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+                return;
+            }
+
+            foreach (var diagnostic in codeFile.Diagnostics)
+            {
+                var comment = new CommentItemModel
+                {
+                    ReviewId = apiRevision.ReviewId,
+                    APIRevisionId = apiRevision.Id,
+                    ElementId = diagnostic.TargetId,
+                    CommentText = diagnostic.Text,
+                    CommentType = CommentType.APIRevision,
+                    CommentSource = CommentSource.Diagnostic,
+                    Severity = MapDiagnosticLevelToSeverity(diagnostic.Level),
+                    ResolutionLocked = false,
+                    CreatedBy = ApiViewConstants.AzureSdkBotName, 
+                    CreatedOn = DateTime.UtcNow,
+                };
+
+                comment.ChangeHistory.Add(new CommentChangeHistoryModel
+                {
+                    ChangeAction = CommentChangeAction.Created,
+                    ChangedBy = ApiViewConstants.AzureSdkBotName,
+                    ChangedOn = DateTime.UtcNow
+                });
+
+                await _commentsRepository.UpsertCommentAsync(comment);
+            }
+
+            apiRevision.DiagnosticsConvertedToComments = true;
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+        }
+
+        private CommentSeverity MapDiagnosticLevelToSeverity(CodeDiagnosticLevel level)
+        {
+            return level switch
+            {
+                CodeDiagnosticLevel.Fatal => CommentSeverity.MustFix,
+                CodeDiagnosticLevel.Error => CommentSeverity.MustFix,
+                CodeDiagnosticLevel.Warning => CommentSeverity.ShouldFix,
+                CodeDiagnosticLevel.Info => CommentSeverity.Suggestion,
+                _ => CommentSeverity.ShouldFix
+            };
         }
     }
 }

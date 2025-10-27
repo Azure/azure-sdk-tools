@@ -48,5 +48,6 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<APIRevisionListItemModel> UpdateAPIRevisionReviewersAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
         public Task<string> GetOutlineAPIRevisionsAsync(string activeApiRevisionId);
         public Task<string> GetApiRevisionText(APIRevisionListItemModel activeApiRevision);
+        public Task ConvertDiagnosticsToCommentsAsync(APIRevisionListItemModel apiRevision, CodeFile codeFile);
     }
 }

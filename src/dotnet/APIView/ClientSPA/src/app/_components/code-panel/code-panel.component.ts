@@ -8,7 +8,7 @@ import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, 
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto} from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
@@ -252,12 +252,6 @@ export class CodePanelComponent implements OnChanges{
               updatedCodeLinesData.push(nodeData?.commentThread[this.codePanelRowData[i].rowPositionInGroup]);
             }
             break;
-          case CodePanelRowDatatype.Diagnostics:
-            updatedCodeLinesData.push(this.codePanelRowData[i]);
-            if (nodeData?.diagnostics) {
-              updatedCodeLinesData.push(...nodeData?.diagnostics);
-            }
-            break;
           case CodePanelRowDatatype.Documentation:
             if (this.codePanelRowData[i].toggleDocumentationClasses?.includes('bi-arrow-up-square')) {
               if (nodeData?.documentation) {
@@ -385,6 +379,48 @@ export class CodePanelComponent implements OnChanges{
     await this.codePanelRowSource?.adapter?.remove({
       indexes: indexesToRemove
     });
+  }
+
+  async filterDiagnosticCommentThreads(show: boolean) {
+    await this.codePanelRowSource?.adapter?.relax();
+
+    if (show) {
+      const updatedData: CodePanelRowData[] = [];
+      
+      for (const row of this.codePanelRowData) {
+        updatedData.push(row);
+        
+        if (row.type === CodePanelRowDatatype.CodeLine && row.nodeIdHashed! in this.codePanelData?.nodeMetaData!) {
+          const commentThread = this.codePanelData?.nodeMetaData[row.nodeIdHashed!]
+            ?.commentThread?.[row.rowPositionInGroup];
+          
+          if (commentThread && this.isDiagnosticCommentThread(commentThread)) {
+            updatedData.push(commentThread);
+          }
+        }
+      }
+
+      this.isLoading = true;
+      this.codePanelRowSource = undefined;
+      this.codePanelRowData = updatedData;
+      this.changeDetectorRef.detectChanges();
+      this.loadCodePanelViewPort();
+    } else {
+      const indexesToRemove: number[] = [];
+      const filteredData = this.codePanelRowData.filter((row, index) => {
+        const isRemoved = row.type === CodePanelRowDatatype.CommentThread && this.isDiagnosticCommentThread(row);
+        if (isRemoved) indexesToRemove.push(index);
+        return !isRemoved;
+      });
+
+      this.codePanelRowData = filteredData;
+      await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
+    }
+  }
+
+  private isDiagnosticCommentThread(commentThread: CodePanelRowData): boolean {
+    return commentThread?.comments?.length > 0 && 
+           commentThread.comments.every(comment => comment.commentSource === CommentSource.Diagnostic);
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
@@ -774,8 +810,6 @@ export class CodePanelComponent implements OnChanges{
       let codeLineAsString = undefined;
       if (row.type == CodePanelRowDatatype.CodeLine || row.type == CodePanelRowDatatype.Documentation) {
         codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
-      } else if (row.type == CodePanelRowDatatype.Diagnostics) {
-        codeLineAsString = row.diagnostics.text;
       }
 
       if (codeLineAsString) {

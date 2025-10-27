@@ -468,44 +468,24 @@ export class CommentThreadComponent {
     return this.codePanelRowData.comments[0].id === comment.id;
   }
   
-  private normalizeSeverity(severity: CommentSeverity | string | null | undefined): string | null {
-    if (severity === null || severity === undefined) return null;
-    return typeof severity === 'string' ? severity.toLowerCase() : CommentSeverity[severity]?.toLowerCase() || null;
-  }
 
   getSeverityLabel(severity: CommentSeverity | string | null | undefined): string {
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
+    switch (severity) {
       case 'question': return 'Question';
-      case 'suggestion': return 'Suggestion';
-      case 'shouldfix': return 'Should fix';
-      case 'mustfix': return 'Must fix';
+      case CommentSeverity.Question: return 'Suggestion';
+      case CommentSeverity.ShouldFix: return 'Should fix';
+      case CommentSeverity.MustFix: return 'Must fix';
       default: return '';
     }
   }
 
   getSeverityBadgeClass(severity: CommentSeverity | string | null | undefined): string {
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return 'severity-question';
-      case 'suggestion': return 'severity-suggestion';
-      case 'shouldfix': return 'severity-should-fix';
-      case 'mustfix': return 'severity-must-fix';
+    switch (severity) {
+      case CommentSeverity.Question: return 'severity-question';
+      case CommentSeverity.Suggestion: return 'severity-suggestion';
+      case CommentSeverity.ShouldFix: return 'severity-should-fix';
+      case CommentSeverity.MustFix: return 'severity-must-fix';
       default: return '';
-    }
-  }
-
-  getSeverityEnumValue(severity: CommentSeverity | string | null | undefined): CommentSeverity | null {
-    if (severity === null || severity === undefined) return null;
-    if (typeof severity === 'number') return severity; 
-    
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return CommentSeverity.Question;
-      case 'suggestion': return CommentSeverity.Suggestion;
-      case 'shouldfix': return CommentSeverity.ShouldFix;
-      case 'mustfix': return CommentSeverity.MustFix;
-      default: return null;
     }
   }
 
@@ -518,9 +498,7 @@ export class CommentThreadComponent {
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
     if (comment && this.reviewId && this.reviewId.trim() !== '') {
       const originalSeverity = comment.severity; 
-      const originalSeverityEnum = this.getSeverityEnumValue(originalSeverity);
-      
-      if (originalSeverityEnum === newSeverity) {
+      if (originalSeverity === newSeverity) {
         return;
       }
       
@@ -702,6 +680,29 @@ export class CommentThreadComponent {
 
   isAIGenerated(comment: CommentItemModel): boolean {
     return comment.commentSource === CommentSource.AIGenerated;
+  }
+
+  isDiagnostic(comment: CommentItemModel): boolean {
+    return comment.commentSource === CommentSource.Diagnostic;
+  }
+
+  getDiagnosticSeverityClass(comment: CommentItemModel): string {
+    if (comment.severity === null || comment.severity === undefined) {
+      return '';
+    }
+    
+    console.log(comment.severity, CommentSeverity.ShouldFix);
+    switch (comment.severity) {
+      case CommentSeverity.Suggestion:
+        return 'severity-suggestion';
+      case CommentSeverity.ShouldFix:
+        return 'severity-shouldfix';
+      case CommentSeverity.MustFix:
+        return 'severity-mustfix';
+      case CommentSeverity.Question:
+      default:
+        return '';
+    }
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

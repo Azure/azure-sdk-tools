@@ -22,7 +22,7 @@
                 <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
                     <p-dropdown 
                         [options]="severityOptions" 
-                        [ngModel]="getSeverityEnumValue(codePanelRowData!.comments[0].severity)"
+                        [ngModel]="codePanelRowData!.comments[0].severity"
                         (ngModelChange)="onSeverityChange($event, codePanelRowData!.comments[0].id)"
                         (onHide)="onSeverityDropdownHide()"
                         optionLabel="label" 
@@ -70,6 +70,12 @@
                         <span *ngIf="isAIGenerated(comment) && !hasAIInfo(comment)"
                               class="ai-badge-custom ms-2">
                             AI-generated
+                        </span>
+                        <!-- Diagnostic Badge -->
+                        <span *ngIf="isDiagnostic(comment)"
+                              class="diagnostic-badge-custom ms-2"
+                              [ngClass]="getDiagnosticSeverityClass(comment)">
+                            Diagnostic
                         </span>
                     </div>
                 </ng-template>

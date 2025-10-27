@@ -7,7 +7,7 @@ import httpx
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from src._credential import get_credential
-from src._utils import get_language_pretty_name, to_epoch_seconds
+from src._utils import get_language_pretty_name, to_iso8601
 
 _APIVIEW_COMMENT_SELECT_FIELDS = [
     "id",
@@ -224,15 +224,17 @@ def get_active_review_ids(start_date: str, end_date: str, environment: str = "pr
 def get_comments_in_date_range(start_date: str, end_date: str, environment: str = "production") -> list:
     """
     Retrieves all comments created within the specified date range in the given environment.
+    Applies ISO8601 midnight/end-of-day formatting to start_date and end_date.
     """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
     comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
-    start_epoch = to_epoch_seconds(start_date)
-    end_epoch = to_epoch_seconds(end_date, end_of_day=True)
     result = comments_client.query_items(
-        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
+        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
         parameters=[
-            {"name": "@start_date", "value": start_epoch},
-            {"name": "@end_date", "value": end_epoch},
+            {"name": "@start_date", "value": start_iso},
+            {"name": "@end_date", "value": end_iso},
         ],
         enable_cross_partition_query=True,
     )

@@ -1,7 +1,7 @@
 parameters:
   EvalProject: ''
-  OpenAIEndPoint: ''
-  Model: 'gpt-4'
+  OpenAIEndPoint: $(azsdk-eval-openai-url)
+  Model: 'gpt-5'
 
 jobs:
   - job: Run_Eval

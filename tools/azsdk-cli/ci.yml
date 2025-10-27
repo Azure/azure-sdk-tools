@@ -46,5 +46,3 @@ extends:
       - template: /tools/azsdk-cli/run-ai-eval.yml
         parameters:
           EvalProject: tools/ai-evals/azsdk-mcp
-          OpenAIEndPoint: $(AZURE_OPENAI_ENDPOINT)
-          Model: 'gpt-4'

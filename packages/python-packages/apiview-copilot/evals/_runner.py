@@ -20,8 +20,6 @@ from src._settings import SettingsManager
 from evals._util import (
     load_cache_lookup,
     append_results_to_cache,
-    get_cache_file_path,
-    construct_fake_azure_result
 )
 
 DEFAULT_NUM_RUNS: int = 1
@@ -260,12 +258,18 @@ class EvaluationRunner:
             cached_rows = [row for row in cached_azure_rows]
             fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
             all_cached_rows = cached_rows + fresh_rows
-            combined_result = construct_fake_azure_result(all_cached_rows)
+            combined_result = {
+                "rows": all_cached_rows,
+                "metrics": {}, 
+                "studio_url": None
+            }
+            
+            all_passed = all(row.get("outputs.metrics.correct_action", False) for row in all_cached_rows)
             
             return EvaluationResult(
                 target=target,
                 raw_results=[{f"{target.workflow_name}.jsonl": combined_result}],
-                success=True,
+                success=all_passed,
             )
             
         except Exception as e:
@@ -320,35 +324,50 @@ class EvaluationRunner:
         print()
 
         successful = [r for r in results if r.success and r.raw_results]
-        failed = [r for r in results if not r.success]
+        failed = [r for r in results if not r.success and r.raw_results and r.error is None]
+        errored = [r for r in results if r.error is not None]
 
         if successful:
             for result in successful:
-                print(f"✅ {result.workflow_name}")
+                print(f"  ✅ {result.workflow_name}")
                 raw_results = result.raw_results[0]
                 for filename, eval_result in raw_results.items():
-                    print(f"  == {filename} ==")
+                    print(f"    == {filename} ==")
                     for res in eval_result["rows"]:
                         success = res["outputs.metrics.correct_action"]
                         testcase_name = res["inputs.testcase"]
                         score = res["outputs.metrics.score"]
-                        print(f"    -  {'✅' if success else '❌'} {score} - {testcase_name}")
-                print()
+                        print(f"      -  {'✅' if success else '❌'} {score} - {testcase_name}")
+                    print()
 
         if failed:
-            print("❌ FAILED EVALUATIONS:")
             for result in failed:
-                print(f"  • {result.workflow_name}: {result.error}")
+                print(f"  ❌ {result.workflow_name}")
+                raw_results = result.raw_results[0]
+                for filename, eval_result in raw_results.items():
+                    print(f"    == {filename} ==")
+                    for res in eval_result["rows"]:
+                        success = res["outputs.metrics.correct_action"]
+                        testcase_name = res["inputs.testcase"]
+                        score = res["outputs.metrics.score"]
+                        print(f"      -  {'✅' if success else '❌'} {score} - {testcase_name}")
             print()
 
-        if not successful and not failed:
+        if errored:
+            print("💥 ERRORED EVALUATIONS:")
+            for result in errored:
+                print(f"  💥 {result.workflow_name}: {result.error}")
+            print()
+
+        if not successful and not failed and not errored:
             print("No evaluation results to display.")
             print()
 
     def show_summary(self, results: list[EvaluationResult]):
         """Display aggregated results from all evaluations."""
-        successful = [r for r in results if r.success]
-        failed = [r for r in results if not r.success]
+        successful = [r for r in results if r.success and r.raw_results]
+        failed = [r for r in results if not r.success and r.raw_results and r.error is None]
+        errored = [r for r in results if r.error is not None]
 
         print("=" * 60)
         print("📈 EVALUATION SUMMARY")
@@ -356,27 +375,27 @@ class EvaluationRunner:
         print(f"Total targets: {len(results)}")
         print(f"✅ Successful: {len(successful)}")
         print(f"❌ Failed: {len(failed)}")
+        print(f"💥 Errored: {len(errored)}")
         print()
+
+        if errored:
+            print("💥 ERRORED EVALUATIONS:")
+            for result in errored:
+                print(f"  • {result.workflow_name}: {result.error}")
+            print()
 
         if failed:
             print("❌ FAILED EVALUATIONS:")
             for result in failed:
-                print(f"  • {result.workflow_name}: {result.error}")
+                print(f"  • {result.workflow_name}")
             print()
 
         if successful:
             print("✅ SUCCESSFUL EVALUATIONS:")
-            total_test_files = sum(r.num_test_files for r in successful)
-            print(f"  • Processed {total_test_files} test files across {len(successful)} workflows")
-
-            # Group by workflow type
-            by_type = {}
             for result in successful:
-                workflow_type = result.target.config.kind
-                by_type.setdefault(workflow_type, []).append(result)
+                print(f"  • {result.workflow_name}")
+            print()
 
-            for workflow_type, type_results in by_type.items():
-                print(f"  • {workflow_type}: {len(type_results)} workflows")
 
     def cleanup(self):
         """Clean up resources."""

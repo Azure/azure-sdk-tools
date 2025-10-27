@@ -20,8 +20,6 @@ from src._settings import SettingsManager
 from evals._util import (
     load_cache_lookup,
     append_results_to_cache,
-    get_cache_file_path,
-    construct_fake_azure_result
 )
 
 DEFAULT_NUM_RUNS: int = 1
@@ -260,7 +258,11 @@ class EvaluationRunner:
             cached_rows = [row for row in cached_azure_rows]
             fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
             all_cached_rows = cached_rows + fresh_rows
-            combined_result = construct_fake_azure_result(all_cached_rows)
+            combined_result = {
+                "rows": all_cached_rows,
+                "metrics": {}, 
+                "studio_url": None
+            }
             
             return EvaluationResult(
                 target=target,

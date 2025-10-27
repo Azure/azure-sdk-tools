@@ -38,4 +38,31 @@ Describe 'Tool Version' {
         # Assert
         $actual | Should -Be $expectedPackageVersion
     }
+
+    It 'Should scan all files provided by the -FileList' -Tag 'UnitTest' { 
+        $files = @(
+            "eng/common-tests/spelling/file1.txt",
+            "eng/common-tests/spelling/file2.txt"
+        )
+
+        $actual = &"$PSScriptRoot/../../common/spelling/Invoke-Cspell.ps1" `
+            -FileList $files 2>&1
+
+        foreach ($file in $files) {
+            $actual | Where-Object { $_ -like "*$file*" } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    It 'Should scan all files provided via pipeline' -Tag 'UnitTest' { 
+        $files = @(
+            "eng/common-tests/spelling/file1.txt",
+            "eng/common-tests/spelling/file2.txt"
+        )
+
+        $actual = $files | &"$PSScriptRoot/../../common/spelling/Invoke-Cspell.ps1" 2>&1
+
+        foreach ($file in $files) {
+            $actual | Where-Object { $_ -like "*$file*" } | Should -Not -BeNullOrEmpty
+        }
+    }
 }

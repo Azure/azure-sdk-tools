@@ -16,7 +16,6 @@ export class HttpErrorInterceptorService implements HttpInterceptor{
             const now = Date.now();            
             if (now - HttpErrorInterceptorService.lastRedirectTime > HttpErrorInterceptorService.REDIRECT_COOLDOWN_MS) {
               HttpErrorInterceptorService.lastRedirectTime = now;
-              
               // Remove 'spa.' only if it appears at the start of the hostname
               const url = new URL(window.location.origin);
               if (url.hostname.startsWith('spa.')) {

@@ -3,6 +3,7 @@ using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Constants;
+using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 
@@ -17,6 +18,7 @@ internal class OpenAIService
     private readonly AppSettings AppSettings;
     private readonly FormatPromptService FormatPromptService;
     private readonly ToolExecutor ToolExecutor;
+    private readonly KnowledgeBaseService KnowledgeBaseService;
     private readonly ILogger<OpenAIService> Logger;
 
     public OpenAIService(
@@ -24,27 +26,30 @@ internal class OpenAIService
         AppSettings appSettings,
         FormatPromptService formatPromptService,
         ToolExecutor toolExecutor,
+        KnowledgeBaseService knowledgeBaseService,
         ILogger<OpenAIService> logger)
     {
         ArgumentNullException.ThrowIfNull(chatClient);
         ArgumentNullException.ThrowIfNull(appSettings);
         ArgumentNullException.ThrowIfNull(formatPromptService);
         ArgumentNullException.ThrowIfNull(toolExecutor);
+        ArgumentNullException.ThrowIfNull(knowledgeBaseService);
         ArgumentNullException.ThrowIfNull(logger);
 
         ChatClient = chatClient;
         AppSettings = appSettings;
         FormatPromptService = formatPromptService;
         ToolExecutor = toolExecutor;
+        KnowledgeBaseService = knowledgeBaseService;
         Logger = logger;
     }
 
 
-    public async Task<IEnumerable<RuleError>> AnalyzeErrorsAsync(string errorLogs, ValidationContext validationContext, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<RuleError>> AnalyzeErrorsAsync(string errorLogs, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(errorLogs))
         {
-            Logger.LogWarning("Empty error logs provided to AnalyzeErrorsAsync");
+            Logger.LogWarning("Error logs are null or empty, returning empty results");
             return Enumerable.Empty<RuleError>();
         }
 
@@ -55,37 +60,35 @@ internal class OpenAIService
         };
 
         Logger.LogDebug("Sending error analysis request to OpenAI");
-        
+
         var response = await ChatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-        
+
         if (response?.Value == null || response.Value.Content == null || response.Value.Content.Count == 0)
         {
             Logger.LogWarning("OpenAI response is null or does not contain any content.");
             return Enumerable.Empty<RuleError>();
         }
-        
-        var jsonResponse = response.Value.Content[0].Text;
-        
-        // Clean the response - remove markdown code blocks if present
-        var cleanedResponse = CleanJsonResponse(jsonResponse);
-        
-        var errors = AgentResponseParser.ParseErrors(cleanedResponse);
 
-        Logger.LogDebug("Received OpenAI error analysis response (cleaned): {Response}", cleanedResponse);
-        
-        return errors;
+        var jsonResponse = response.Value.Content[0].Text;
+
+        Logger.LogDebug("Raw OpenAI error analysis response: {Response}", jsonResponse);
+
+        return AgentResponseParser.ParseErrors(jsonResponse);
     }
 
-    public async Task<string> GenerateFixesAsync(IList<Fix> fixes, ValidationContext validationContext, CancellationToken cancellationToken = default)
+    public async Task<PatchRequest> GenerateFixesAsync(List<Fix> fixes, ValidationContext validationContext, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(fixes);
         ArgumentNullException.ThrowIfNull(validationContext);
 
-        var prompt = FormatPromptService.ConvertFixesToBatchPrompt(fixes.ToList());
+        var prompt = FormatPromptService.ConvertFixesToBatchPrompt(fixes);
+
+        // Combine system instructions with knowledge base
+        var systemMessage = BuildSystemMessage();
 
         var messages = new List<ChatMessage>
         {
-            new SystemChatMessage(AppSettings.AgentInstructions),
+            new SystemChatMessage(systemMessage),
             new UserChatMessage(prompt)
         };
 
@@ -100,8 +103,9 @@ internal class OpenAIService
             messages.Count, tools.Count);
         
         var response = await ChatClient.CompleteChatAsync(messages, options, cancellationToken);
-        
+
         string result;
+
         // Handle tool calls if any
         if (response.Value.FinishReason == ChatFinishReason.ToolCalls)
         {
@@ -119,13 +123,33 @@ internal class OpenAIService
                 result = string.Empty;
             }
         }
+
+        Logger.LogDebug("Raw OpenAI file change response: {Response}", result);
+
+        return AgentResponseParser.ParsePatchRequest(result);
+    }
+
+    /// <summary>
+    /// Builds the system message by combining agent instructions with knowledge base content
+    /// </summary>
+    private string BuildSystemMessage()
+    {
+        var systemMessage = AppSettings.AgentInstructions;
         
-        // Clean the response - remove markdown code blocks if present
-        var cleanedResult = CleanJsonResponse(result);
+        if (KnowledgeBaseService.IsKnowledgeBaseAvailable)
+        {
+            var knowledgeBase = KnowledgeBaseService.GetKnowledgeBase();
+            systemMessage = $"{systemMessage}\n\n## TypeSpec Knowledge Base\n\n{knowledgeBase}";
+            
+            Logger.LogDebug("Added knowledge base to system message ({KnowledgeSize} characters)", 
+                knowledgeBase.Length);
+        }
+        else
+        {
+            Logger.LogWarning("Knowledge base is not available, using only basic agent instructions");
+        }
         
-        Logger.LogDebug("OpenAI Response: {Response}", cleanedResult);
-        
-        return cleanedResult;
+        return systemMessage;
     }
 
     /// <summary>
@@ -231,65 +255,5 @@ internal class OpenAIService
             Logger.LogWarning("OpenAI response did not contain any content after tool calls.");
             return string.Empty;
         }
-    }
-
-    /// <summary>
-    /// Cleans JSON response by removing markdown code blocks if present
-    /// </summary>
-    private static string CleanJsonResponse(string response)
-    {
-        if (string.IsNullOrWhiteSpace(response))
-            return response;
-
-        var trimmedResponse = response.Trim();
-        
-        // Find first occurrence of ```json (case insensitive)
-        var jsonStartMarker = "```json";
-        var jsonStartIndex = trimmedResponse.IndexOf(jsonStartMarker, StringComparison.OrdinalIgnoreCase);
-        
-        if (jsonStartIndex >= 0)
-        {
-            // Move past the ```json marker and any newlines
-            var jsonContentStart = jsonStartIndex + jsonStartMarker.Length;
-            
-            // Skip any whitespace/newlines after ```json
-            while (jsonContentStart < trimmedResponse.Length && 
-                   char.IsWhiteSpace(trimmedResponse[jsonContentStart]))
-            {
-                jsonContentStart++;
-            }
-            
-            // Find the closing ``` marker
-            var jsonEndIndex = trimmedResponse.IndexOf("```", jsonContentStart);
-            
-            if (jsonEndIndex > jsonContentStart)
-            {
-                // Extract just the JSON content
-                return trimmedResponse.Substring(jsonContentStart, jsonEndIndex - jsonContentStart).Trim();
-            }
-            else
-            {
-                // No closing marker found, take everything after ```json
-                return trimmedResponse.Substring(jsonContentStart).Trim();
-            }
-        }
-        
-        // Fallback: handle generic code blocks that start with ```
-        if (trimmedResponse.StartsWith("```", StringComparison.OrdinalIgnoreCase))
-        {
-            int startIndex = trimmedResponse.IndexOf('\n');
-            if (startIndex != -1)
-            {
-                startIndex++; // Skip the newline
-                int endIndex = trimmedResponse.LastIndexOf("```");
-                if (endIndex > startIndex)
-                {
-                    return trimmedResponse.Substring(startIndex, endIndex - startIndex).Trim();
-                }
-            }
-        }
-        
-        // No markdown code blocks found, return original response
-        return trimmedResponse;
     }
 }

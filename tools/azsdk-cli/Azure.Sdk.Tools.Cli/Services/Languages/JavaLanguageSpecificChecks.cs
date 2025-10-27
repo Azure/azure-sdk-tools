@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 {
-    private readonly IProcessHelper _processHelper;
+    private readonly IMavenHelper _mavenHelper;
     private readonly ILogger<JavaLanguageSpecificChecks> _logger;
 
     // Maven operation timeouts
@@ -36,10 +36,10 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     ];
 
     public JavaLanguageSpecificChecks(
-        IProcessHelper processHelper,
+        IMavenHelper mavenHelper,
         ILogger<JavaLanguageSpecificChecks> logger)
     {
-        _processHelper = processHelper;
+        _mavenHelper = mavenHelper;
         _logger = logger;
     }
 
@@ -60,10 +60,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Determine the Maven goal based on fix parameter
             var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
-            var command = "mvn";
-            var args = new[] { goal, "-f", pomPath };
 
-            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
+            var result = await _mavenHelper.Run(new(goal, [], pomPath, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -113,10 +111,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Use Azure SDK approach: mvn install with linting properties (based on run-and-validate-linting.yml)
             // This matches the Azure SDK for Java pipeline which runs linting during install phase
-            var command = "mvn";
             var args = new List<string>
             {
-                "install",
                 "--no-transfer-progress",
                 "-DskipTests",
                 "-Dgpg.skip",
@@ -125,8 +121,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 "-Dspotless.apply.skip=true",
                 "-Dshade.skip=true",
                 "-Dmaven.antrun.skip=true",
-                "-am",
-                "-f", pomPath
+                "-am"
             };
 
             // Configure linting behavior to match Azure SDK pipeline
@@ -138,7 +133,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 "-Drevapi.failBuildOnProblemsFound=false"
             ]);
 
-            var result = await _processHelper.Run(new(command, [.. args], workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
+            var result = await _mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
 
             // Parse Maven output to determine which linting tools found issues
             var output = result.Output;
@@ -146,8 +141,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Run javadoc validation as separate step (following Azure SDK pipeline pattern)
             _logger.LogInformation("Running javadoc validation");
-            var javadocArgs = new[] { "--no-transfer-progress", "javadoc:jar", "-f", pomPath };
-            var javadocResult = await _processHelper.Run(new("mvn", javadocArgs, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
+            var javadocResult = await _mavenHelper.Run(new("javadoc:jar", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
             
             // Add javadoc results to linting results
             var javadocHasIssues = javadocResult.ExitCode != 0;
@@ -278,10 +272,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             // Use Azure SDK approach: mvn com.azure.tools:codesnippet-maven-plugin:update-codesnippet
-            var command = "mvn";
-            var args = new[] { "com.azure.tools:codesnippet-maven-plugin:update-codesnippet", "-f", pomPath };
-
-            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
+            var result = await _mavenHelper.Run(new("com.azure.tools:codesnippet-maven-plugin:update-codesnippet", [], pomPath, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -319,7 +310,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     private async Task<CLICheckResponse?> ValidateMavenPrerequisitesAsync(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
         // Check if Maven is available
-        var mavenCheckResult = await _processHelper.Run(new("mvn", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+        var mavenCheckResult = await _mavenHelper.Run(new(["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
         if (mavenCheckResult.ExitCode != 0)
         {
             _logger.LogError("Maven is not installed or not available in PATH");

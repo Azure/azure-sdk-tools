@@ -25,6 +25,11 @@ public interface INpxHelper
     public Task<ProcessResult> Run(NpxOptions options, CancellationToken ct);
 }
 
+public interface IMavenHelper
+{
+    public Task<ProcessResult> Run(MavenOptions options, CancellationToken ct);
+}
+
 public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<ProcessHelper>(logger, outputHelper), IProcessHelper
 {
@@ -41,4 +46,10 @@ public sealed class NpxHelper(ILogger<NpxHelper> logger, IRawOutputHelper output
     : ProcessHelperBase<NpxHelper>(logger, outputHelper), INpxHelper
 {
     public async Task<ProcessResult> Run(NpxOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class MavenHelper(ILogger<MavenHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<MavenHelper>(logger, outputHelper), IMavenHelper
+{
+    public async Task<ProcessResult> Run(MavenOptions options, CancellationToken ct) => await base.Run(options, ct);
 }

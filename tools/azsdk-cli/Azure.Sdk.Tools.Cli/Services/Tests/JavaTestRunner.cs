@@ -5,7 +5,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
 public class JavaTestRunner(
-    IProcessHelper _processHelper,
+    IMavenHelper _mavenHelper,
     ILogger<JavaTestRunner> _logger
 ) : ITestRunner
 {
@@ -18,10 +18,8 @@ public class JavaTestRunner(
         
         // Run Maven tests using consistent command pattern
         var pomPath = Path.Combine(packagePath, "pom.xml");
-        var command = "mvn";
-        var args = new[] { "test", "--no-transfer-progress", "-f", pomPath };
 
-        var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: TestTimeout), ct);
+        var result = await _mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: TestTimeout), ct);
 
         if (result.ExitCode == 0)
         {

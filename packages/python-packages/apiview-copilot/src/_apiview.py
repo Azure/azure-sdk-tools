@@ -229,7 +229,7 @@ def get_comments_in_date_range(start_date: str, end_date: str, environment: str 
     start_epoch = to_epoch_seconds(start_date)
     end_epoch = to_epoch_seconds(end_date, end_of_day=True)
     result = comments_client.query_items(
-        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date AND c.IsDeleted = false",
+        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
         parameters=[
             {"name": "@start_date", "value": start_epoch},
             {"name": "@end_date", "value": end_epoch},

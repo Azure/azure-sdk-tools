@@ -33,10 +33,14 @@ class MetricsSegment:
     human_comment_count_with_ai: Optional[int] = None
     human_comment_count_without_ai: Optional[int] = None
 
-    # AI comment classifications
+    # AI comment classifications (live)
     upvoted_ai_comment_count: Optional[int] = None
     neutral_ai_comment_count: Optional[int] = None
     downvoted_ai_comment_count: Optional[int] = None
+    # AI comment classifications (deleted)
+    upvoted_ai_comment_count_deleted: Optional[int] = None
+    neutral_ai_comment_count_deleted: Optional[int] = None
+    downvoted_ai_comment_count_deleted: Optional[int] = None
 
     # Dimension (e.g., {"language": "python"}) or {} for "All"
     dimension: Dict[str, str] = field(default_factory=dict)
@@ -165,20 +169,34 @@ def _build_metrics_segment(
     # get the active number of reviews with copilot comments
     metrics.active_copilot_review_count = len(active_review_ids_with_ai_comments)
 
-    # sort AI comments by sentiment
-    upvoted_ai_comments = []
-    neutral_ai_comments = []
-    downvoted_ai_comments = []
+    # Track live (not deleted) and deleted AI comments by sentiment
+    upvoted_ai_comments_live = []
+    upvoted_ai_comments_deleted = []
+    neutral_ai_comments_live = []
+    neutral_ai_comments_deleted = []
+    downvoted_ai_comments_live = []
+    downvoted_ai_comments_deleted = []
     for comment in ai_comments:
-        if comment.downvotes:
-            downvoted_ai_comments.append(comment)
-        elif comment.upvotes:
-            upvoted_ai_comments.append(comment)
+        if comment.is_deleted:
+            target_up = upvoted_ai_comments_deleted
+            target_down = downvoted_ai_comments_deleted
+            target_neutral = neutral_ai_comments_deleted
         else:
-            neutral_ai_comments.append(comment)
-    metrics.upvoted_ai_comment_count = len(upvoted_ai_comments)
-    metrics.neutral_ai_comment_count = len(neutral_ai_comments)
-    metrics.downvoted_ai_comment_count = len(downvoted_ai_comments)
+            target_up = upvoted_ai_comments_live
+            target_down = downvoted_ai_comments_live
+            target_neutral = neutral_ai_comments_live
+        if comment.downvotes:
+            target_down.append(comment)
+        elif comment.upvotes:
+            target_up.append(comment)
+        else:
+            target_neutral.append(comment)
+    metrics.upvoted_ai_comment_count = len(upvoted_ai_comments_live)
+    metrics.neutral_ai_comment_count = len(neutral_ai_comments_live)
+    metrics.downvoted_ai_comment_count = len(downvoted_ai_comments_live)
+    metrics.upvoted_ai_comment_count_deleted = len(upvoted_ai_comments_deleted)
+    metrics.neutral_ai_comment_count_deleted = len(neutral_ai_comments_deleted)
+    metrics.downvoted_ai_comment_count_deleted = len(downvoted_ai_comments_deleted)
 
     return metrics
 

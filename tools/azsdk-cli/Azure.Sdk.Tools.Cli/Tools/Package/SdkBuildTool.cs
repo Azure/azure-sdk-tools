@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             var (configType, configValue) = await specGenSdkConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
 
-            if (configType == BuildConfigType.Command)
+            if (configType == ConfigContentType.Command)
             {
                 // Execute as command
                 var variables = new Dictionary<string, string>
@@ -151,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
                 );
             }
-            else // BuildConfigType.ScriptPath
+            else // ConfigContentType.ScriptPath
             {
                 // Execute as script file
                 // Always resolve relative paths against sdkRepoRoot, then normalize

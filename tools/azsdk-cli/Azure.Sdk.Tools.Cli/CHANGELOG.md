@@ -1,14 +1,10 @@
 # Release History
 
-## 0.5.5 (Unreleased)
+## 0.5.5 (2025-10-22)
 
-### Features Added
+### Features
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Added new tool to update the changelog file in package
 
 ## 0.5.4 (2025-10-21)
 

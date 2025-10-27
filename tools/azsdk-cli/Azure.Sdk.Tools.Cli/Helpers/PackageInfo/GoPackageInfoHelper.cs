@@ -114,20 +114,12 @@ public sealed partial class GoPackageInfoHelper(IGitHelper gitHelper, ILogger<Go
         return (packageName, packageVersion);
     }
 
-    private (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
+    private static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
     {
-        logger.LogTrace("Parsing Go package path: {realPackagePath}", realPackagePath);
         var full = RealPath.GetRealPath(realPackagePath);
         var repoRoot = gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
-        var segments = relativePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
-        if (segments.Length < 3)
-        {
-            logger.LogError("Path '{realPackagePath}' must be at least three folders deep under 'sdk'. Actual relative path: 'sdk/{relativePath}'", realPackagePath, relativePath);
-            throw new ArgumentException($"Path '{realPackagePath}' must be at least three folders deep under 'sdk' (expected: sdk/<group>/<service>/<package>). Actual relative path: 'sdk/{relativePath}'", nameof(realPackagePath));
-        }
-        logger.LogTrace("Parsed Go package path: repoRoot={repoRoot}, relativePath={relativePath}", repoRoot, relativePath);
         return (repoRoot, relativePath, full);
     }
 

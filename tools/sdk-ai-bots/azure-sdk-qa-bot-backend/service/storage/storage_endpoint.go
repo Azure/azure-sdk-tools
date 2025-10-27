@@ -20,7 +20,7 @@ type StorageService struct {
 func NewStorageService() (*StorageService, error) {
 	// Use the global credential initialized by InitConfiguration
 	if config.Credential == nil {
-		return nil, fmt.Errorf("credential not initialized; call config.InitConfiguration first")
+		return nil, fmt.Errorf("credential not initialized, init configuration first")
 	}
 
 	// Create a blob client

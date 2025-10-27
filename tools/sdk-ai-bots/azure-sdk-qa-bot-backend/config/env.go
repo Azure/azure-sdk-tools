@@ -92,19 +92,15 @@ func GetBotTenantID() string {
 }
 
 func initCredential() error {
-	// Check if we're in development mode
-	if os.Getenv("DEV_MODE") == "true" {
+	var err error
+	var cred azcore.TokenCredential
+	if os.Getenv("PROD_MODE") == "true" {
+		log.Println("Using ManagedIdentityCredential for production")
+		cred, err = azidentity.NewManagedIdentityCredential(nil)
+	} else {
 		log.Println("Using DefaultAzureCredential for local development")
-		cred, err := azidentity.NewDefaultAzureCredential(nil) // CodeQL [SM05142] This is guarded for local development only via DEV_MODE environment variable
-		if err != nil {
-			return err
-		}
-		Credential = cred
-		return nil
+		cred, err = azidentity.NewDefaultAzureCredential(nil) // CodeQL [SM05142] This is guarded for local development
 	}
-
-	log.Println("Using ManagedIdentityCredential for production")
-	cred, err := azidentity.NewManagedIdentityCredential(nil)
 	if err != nil {
 		return err
 	}

@@ -115,7 +115,7 @@ public class PackageInfoContractTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(info.PackagePath, Is.EqualTo(Path.GetFullPath(pkgPath)));
+            Assert.That(info.PackagePath, Is.EqualTo(RealPath.GetRealPath(pkgPath)));
             Assert.That(info.RepoRoot, Does.EndWith("azure-sdk-repo-root"));
             var expectedRelative = language == SdkLanguage.Go ? Path.Combine(group, service, package) : Path.Combine(service, package);
             Assert.That(info.RelativePath, Is.EqualTo(expectedRelative));

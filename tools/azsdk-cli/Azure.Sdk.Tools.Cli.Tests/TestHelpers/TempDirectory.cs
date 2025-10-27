@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers;
+
 namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 /// <summary>
@@ -16,7 +18,7 @@ public sealed class TempDirectory : IDisposable, IAsyncDisposable
 
     private TempDirectory(string directoryPath)
     {
-        DirectoryPath = directoryPath;
+        DirectoryPath = RealPath.GetRealPath(directoryPath);
         Directory.CreateDirectory(directoryPath);
     }
 

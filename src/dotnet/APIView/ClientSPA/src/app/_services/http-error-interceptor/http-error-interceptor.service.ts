@@ -17,7 +17,12 @@ export class HttpErrorInterceptorService implements HttpInterceptor{
             if (now - HttpErrorInterceptorService.lastRedirectTime > HttpErrorInterceptorService.REDIRECT_COOLDOWN_MS) {
               HttpErrorInterceptorService.lastRedirectTime = now;
               
-              const baseUrl = window.location.origin.replace('spa.', '');
+              // Remove 'spa.' only if it appears at the start of the hostname
+              const url = new URL(window.location.origin);
+              if (url.hostname.startsWith('spa.')) {
+                url.hostname = url.hostname.substring(4); // Remove 'spa.' (length 4)
+              }
+              const baseUrl = url.origin;
               window.location.href = `${baseUrl}/Unauthorized?returnUrl=/`;
             }
             

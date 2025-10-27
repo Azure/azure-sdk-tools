@@ -24,3 +24,4 @@ public interface ILanguageSpecificResolver<T> where T : class
     /// <returns>A list of resolved service instances (null for languages that could not be resolved).</returns>
     public List<T?> Resolve(HashSet<SdkLanguage> languages, CancellationToken ct = default);
 }
+

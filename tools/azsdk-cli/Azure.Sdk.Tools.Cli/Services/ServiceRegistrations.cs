@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services.Tests;
 using Azure.Sdk.Tools.Cli.Services.VerifySetup;
 
@@ -52,6 +53,24 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Future: Python = typeof(PythonUpdateLanguageService), etc
             });
 
+            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageInfoHelper),
+                Java = typeof(JavaPackageInfoHelper),
+                Python = typeof(PythonPackageInfoHelper),
+                JavaScript = typeof(JavaScriptPackageInfoHelper),
+                Go = typeof(GoPackageInfoHelper),
+            });
+
+            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetSampleLanguageContext),
+                Java = typeof(JavaSampleLanguageContext),
+                Python = typeof(PythonSampleLanguageContext),
+                JavaScript = typeof(TypeScriptSampleLanguageContext),
+                Go = typeof(GoSampleLanguageContext),
+            });
+
             services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
             {
                 Java = typeof(JavaTestRunner),
@@ -70,6 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             });
 
             // Helper classes
+            services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();

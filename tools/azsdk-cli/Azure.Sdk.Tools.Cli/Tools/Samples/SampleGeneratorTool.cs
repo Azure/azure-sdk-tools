@@ -2,17 +2,16 @@
 // Licensed under the MIT License.
 
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.SampleGeneration;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Samples;
 
-namespace Azure.Sdk.Tools.Cli.Tools.Package
+namespace Azure.Sdk.Tools.Cli.Tools.Samples
 {
     /// <summary>
     /// Represents a generated sample with its filename and content.
@@ -29,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
     ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Samples];
 
         private readonly Option<string> promptOption = new("--prompt")
         {
@@ -51,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false
         };
 
-        protected override Command GetCommand() => new("samples", "Generates sample files")
+        protected override Command GetCommand() => new("generate", "Generates sample files")
         {
             SharedOptions.PackagePath,
             promptOption,

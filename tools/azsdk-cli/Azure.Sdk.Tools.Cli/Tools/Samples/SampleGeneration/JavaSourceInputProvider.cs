@@ -3,7 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.SampleGeneration;
+namespace Azure.Sdk.Tools.Cli.Samples;
 
 public class JavaSourceInputProvider : ILanguageSourceInputProvider
 {

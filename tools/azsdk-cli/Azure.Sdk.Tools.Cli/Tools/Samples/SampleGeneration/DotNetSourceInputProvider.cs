@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace Azure.Sdk.Tools.Cli.SampleGeneration;
+namespace Azure.Sdk.Tools.Cli.Samples;
 
 /// <summary>
 /// Discovers C# source and supporting infrastructure files for .NET client libraries.

@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Azure.Sdk.Tools.Cli.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.SampleGeneration;
+namespace Azure.Sdk.Tools.Cli.Tests.Samples;
 
 public class DotNetSourceInputProviderTests
 {

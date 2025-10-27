@@ -5,12 +5,12 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tools.Package;
 using Moq;
 using Azure.Sdk.Tools.Cli.Telemetry;
-using Azure.Sdk.Tools.Cli.SampleGeneration;
 using LibGit2Sharp;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tools.Samples;
+using Azure.Sdk.Tools.Cli.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators;
 
@@ -39,7 +39,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "1) Create key 2) List keys", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "1) Create key 2) List keys", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.Multiple(() =>
         {
@@ -132,7 +132,7 @@ public class SampleGeneratorToolTests
         tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, resolverMock.Object, sampleCtxResolverMock.Object);
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "Do thing", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
 
@@ -154,7 +154,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("sample_one", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "One", "--package-path", packagePath, "--model", "custom-model"]);
+        var parseResult = command.Parse(["generate", "--prompt", "One", "--package-path", packagePath, "--model", "custom-model"]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.Multiple(() =>
         {
@@ -179,7 +179,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("create_key", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", promptFile, "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", promptFile, "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.Multiple(() =>
@@ -208,7 +208,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("scenario", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", missingPromptPath, "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", missingPromptPath, "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.Multiple(() =>
@@ -229,7 +229,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("nested/folder/sample-name", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "Do thing", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
 
@@ -252,7 +252,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(samples);
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "Do thing", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
 
@@ -283,7 +283,7 @@ public class SampleGeneratorToolTests
         var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, nullResolver.Object, sampleCtxResolver.Object);
         errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = errorTool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "Anything", "--package-path", pkgPath]);
+        var parseResult = command.Parse(["generate", "--prompt", "Anything", "--package-path", pkgPath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(1));
         var error = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr).Output;
@@ -301,7 +301,7 @@ public class SampleGeneratorToolTests
             .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("one", "package main\nfunc main(){}") });
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "Scenario", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "Scenario", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
         Assert.That(captured, Is.Not.Null);
@@ -319,7 +319,7 @@ public class SampleGeneratorToolTests
             .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("multi", "package main\nfunc main(){}`") });
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", multilinePrompt, "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", multilinePrompt, "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
         Assert.That(captured, Is.Not.Null);
@@ -381,7 +381,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "List keys", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "List keys", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.That(exitCode, Is.EqualTo(0), "Command should succeed");
@@ -409,7 +409,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "List keys", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "List keys", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.That(exitCode, Is.EqualTo(0));
@@ -434,7 +434,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "List keys", "--package-path", packagePath, "--overwrite"]);
+        var parseResult = command.Parse(["generate", "--prompt", "List keys", "--package-path", packagePath, "--overwrite"]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.That(exitCode, Is.EqualTo(0));
@@ -453,7 +453,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync([]);
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "List keys", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "List keys", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.That(exitCode, Is.EqualTo(0));
@@ -469,7 +469,7 @@ public class SampleGeneratorToolTests
         var invalidPath = invalidTemp.DirectoryPath;
 
         var command = tool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "List keys", "--package-path", invalidPath]);
+        var parseResult = command.Parse(["generate", "--prompt", "List keys", "--package-path", invalidPath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.Multiple(() =>
@@ -489,7 +489,7 @@ public class SampleGeneratorToolTests
         var command = tool.GetCommandInstances().First();
 
         // Act: invoke without required --prompt
-        var parseResult = command.Parse(["samples", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         // Assert: parser/tool should fail with non-zero exit code
@@ -514,7 +514,7 @@ public class SampleGeneratorToolTests
         var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, pkgResolver.Object, sampleCtxResolver.Object);
         errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = errorTool.GetCommandInstances().First();
-        var parseResult = command.Parse(["samples", "--prompt", "Scenario", "--package-path", packagePath]);
+        var parseResult = command.Parse(["generate", "--prompt", "Scenario", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
 
         Assert.That(exitCode, Is.EqualTo(1), "Expected validation error exit code when sample context resolver returns null");

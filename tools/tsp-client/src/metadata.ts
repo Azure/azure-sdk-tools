@@ -1,6 +1,5 @@
 import { writeFile } from "fs/promises";
 import { Logger } from "./log.js";
-import { stringify as stringifyYaml } from "yaml";
 import { joinPaths } from "@typespec/compiler";
 import { readFile } from "fs/promises";
 import { packageJson } from "./index.js";
@@ -18,7 +17,7 @@ interface TspClientMetadata {
 }
 
 /**
- * Creates a tsp_client_metadata.yaml file with information about the tsp-client command run.
+ * Creates a tsp_client_metadata.json file with information about the tsp-client command run.
  *
  * @param outputDir - The directory where the metadata file will be created
  * @param emitterPackageJsonPath - Path to the emitter-package.json file
@@ -29,7 +28,7 @@ export async function createTspClientMetadata(
   emitterPackageJsonPath: string,
 ): Promise<void> {
   try {
-    Logger.info("Creating tsp_client_metadata.yaml file...");
+    Logger.info("Creating tsp_client_metadata.json file...");
 
     // Create the metadata object
     const metadata: TspClientMetadata = {
@@ -38,27 +37,24 @@ export async function createTspClientMetadata(
       emitterPackageJsonContent: JSON.parse(await readFile(emitterPackageJsonPath, "utf8")),
     };
 
-    // Convert the metadata to YAML format with proper formatting
-    const yamlContent = stringifyYaml(
+    // Convert the metadata to JSON format with proper formatting
+    const jsonContent = JSON.stringify(
       {
         version: metadata.version,
         "date-created-or-modified": metadata.dateCreatedOrModified,
         "emitter-package-json-content": metadata.emitterPackageJsonContent,
       },
-      {
-        indent: 2,
-        lineWidth: 0, // No line wrapping
-        minContentWidth: 0,
-      },
+      null,
+      2, // 2-space indentation for pretty formatting
     );
 
     // Write the metadata file
-    const metadataFilePath = joinPaths(outputDir, "tsp_client_metadata.yaml");
-    await writeFile(metadataFilePath, yamlContent, "utf8");
+    const metadataFilePath = joinPaths(outputDir, "tsp_client_metadata.json");
+    await writeFile(metadataFilePath, jsonContent, "utf8");
 
-    Logger.info(`Successfully created tsp_client_metadata.yaml at ${metadataFilePath}`);
+    Logger.info(`Successfully created tsp_client_metadata.json at ${metadataFilePath}`);
   } catch (error) {
-    Logger.error(`Error creating tsp_client_metadata.yaml: ${error}`);
+    Logger.error(`Error creating tsp_client_metadata.json: ${error}`);
     throw error;
   }
 }

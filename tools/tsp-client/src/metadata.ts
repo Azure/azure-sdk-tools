@@ -2,7 +2,7 @@ import { writeFile } from "fs/promises";
 import { Logger } from "./log.js";
 import { joinPaths } from "@typespec/compiler";
 import { readFile } from "fs/promises";
-import { packageJson } from "./index.js";
+import { getPackageJson } from "./utils.js";
 
 /**
  * Interface representing the metadata information for a tsp-client command run.
@@ -29,6 +29,9 @@ export async function createTspClientMetadata(
 ): Promise<void> {
   try {
     Logger.info("Creating tsp_client_metadata.json file...");
+
+    // Get package.json information
+    const packageJson = await getPackageJson();
 
     // Create the metadata object
     const metadata: TspClientMetadata = {

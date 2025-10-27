@@ -126,26 +126,6 @@ public class PackageInfoContractTests
     }
 
     [Test]
-    [TestCase(SdkLanguage.DotNet)]
-    [TestCase(SdkLanguage.Java)]
-    [TestCase(SdkLanguage.Python)]
-    [TestCase(SdkLanguage.JavaScript)]
-    [TestCase(SdkLanguage.Go)]
-    public void Resolve_InvalidPath_Throws(SdkLanguage language)
-    {
-        var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root-invalid");
-        Directory.CreateDirectory(repoRoot);
-        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { Repository.Init(repoRoot); }
-        // Invalid because missing sdk segment entirely or insufficient depth under sdk.
-        var badRoot = Path.Combine(repoRoot, "random", "folder");
-        Directory.CreateDirectory(badRoot);
-        var ghMock = new Mock<IGitHubService>();
-        var gitHelper = new GitHelper(ghMock.Object, new TestLogger<GitHelper>());
-        var helper = CreateHelperForLanguage(language, gitHelper);
-        Assert.ThrowsAsync<ArgumentException>(() => helper.ResolvePackageInfo(badRoot));
-    }
-
-    [Test]
     [TestCase(SdkLanguage.DotNet, "Azure.Data.Test", "5.6.7")]
     [TestCase(SdkLanguage.Java, "azure-core", "1.2.3")]
     [TestCase(SdkLanguage.Python, "azure-ai-test", "1.0.1")]

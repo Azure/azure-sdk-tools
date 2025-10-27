@@ -18,7 +18,7 @@ internal static class PackagePathParser
     /// <returns>Tuple of (RepoRoot, RelativePath, FullPath).</returns>
     public static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
     {
-        var full = realPackagePath;
+        var full = Path.GetFullPath(realPackagePath);
         var repoRoot = gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);

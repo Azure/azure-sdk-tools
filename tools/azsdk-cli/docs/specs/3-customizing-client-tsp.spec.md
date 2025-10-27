@@ -28,7 +28,9 @@ _Terms used throughout this spec with precise meanings:_
 
 TypeSpec specs are written to describe service APIs. However, our team supports generating SDKs in no less than 7 languages, each differing in their idioms. The `client.tsp` file acts as a TypeSpec entry point for SDK emitters, applying language-specific customizations to the service spec that are then used by each respective SDK emitter.
 
-Service teams cannot be expected to understand SDK API patterns and best practices on their own. Applying changes also requires understanding how to use [Azure.ClientGenerator.Core](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/).
+Service teams cannot be expected to understand SDK API patterns and best practices on their own. Applying changes requires understanding how to use [Azure.ClientGenerator.Core](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/).
+
+In addition to TypeSpec customizations, there are also code customizations - these exist in the generated SDKs rather than in the TypeSpec files. Whenever possible we want to prefer TypeSpec customizations over code customizations, so the general path should steer towards that outcome as well.
 
 ### Current State
 
@@ -49,6 +51,8 @@ _We don't currently have a clear step in our process for identifying breaking ch
 
 **All Languages**:
 All language SDKs have their APIs reviewed in API View. Common feedback includes renaming models per language, or changing operations that appear in a client. We have documentation for customizing SDKs such as [renaming types](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/09renaming/), but recent (10/14/2025) testing shows that even with the current documentation, AI agents have difficulty applying these customizations correctly in a consistent manner: particularly when `scope` is required.
+
+There has already been some work done to support identifying and fixing code customizations - customizations made directly to generated SDKs rather than to the TypeSpec files - in the `TspClientUpdateTool`. This tool exists and an MCP tool/CLI command and currently works _after_ an SDK has been generated from TypeSpec.
 
 #### Gaps
 
@@ -77,14 +81,17 @@ What are we trying to achieve with this design?
 
 - [ ] Improve the service team experience for authoring `client.tsp` customizations
 - [ ] Simplify the process of _how_ to apply `client.tsp` customizations for language teams
+- [ ] Integrate with the existing workflow for client code customizations
+
+Put another way, we have the following areas to focus on in the design proposal:
+
+1. Make AI an expert on `client.tsp` customizations. The base expertise shouldn't have to be redefined by each language team.
+2. Providing the infra in azsdk-cli to to utilize this expertise and steer customizations. This must also integrate with the code customizations workflow to prioritize TypeSpec changes and reduce friction from needing to know the correct order of operations to apply changes in.
+3. Updating the `client.tsp` file, including from outside the azure-rest-api-specs repo.
 
 ## Design Proposal
 
-The design will address the identified gaps by focusing on three main areas:
-
-1. Make AI an expert on `client.tsp` customizations. The base expertise shouldn't have to be redefined by each language team.
-2. Providing the infra in azsdk-cli to to utilize this expertise and steer customizations. Let language teams focus on _what_ they want to update rather than the _how_ as much as possible.
-3. Updating the `client.tsp` file, including from outside the azure-rest-api-specs repo.
+WIP
 
 ## Alternatives Considered
 

@@ -34,12 +34,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private static ValidationContext CreateLocalValidationContext(string typeSpecDir, string outputDir)
         {
-            return ValidationContext.CreateFromValidatedInputs(typeSpecDir, "", outputDir);
+            return ValidationContext.ValidateAndCreate(typeSpecDir, null, outputDir);
         }
 
         private static ValidationContext CreateGitHubValidationContext(string typeSpecPath, string commitId, string outputDir)
         {
-            return ValidationContext.CreateFromValidatedInputs(typeSpecPath, commitId, outputDir);
+            return ValidationContext.ValidateAndCreate(typeSpecPath, commitId, outputDir);
         }
 
         private static TypeSpecFileService CreateService(
@@ -98,7 +98,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             public string CreateValidGitHubTypeSpecPath()
             {
-                return "https://github.com/Azure/azure-rest-api-specs/tree/main/specification/typespec";
+                return "specification/typespec";
             }
 
             public string CreateValidCommitId()
@@ -130,11 +130,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void Constructor_WithValidParameters_ShouldCreateInstance()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
             var gitHubFileService = CreateGitHubFileService();
 
             // Act
@@ -142,7 +138,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(service, Is.Not.Null);
-            httpClient.Dispose();
         }
 
         [Test]
@@ -150,64 +145,47 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange
             var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
             var gitHubFileService = CreateGitHubFileService();
 
             // Act & Assert
             var service = new TypeSpecFileService(mockLogger.Object, gitHubFileService);
             Assert.That(service, Is.Not.Null);
-            httpClient.Dispose();
         }
 
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
             var gitHubFileService = CreateGitHubFileService();
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
                 new TypeSpecFileService(null!, gitHubFileService));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
-            httpClient.Dispose();
         }
 
         [Test]
         public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
             var gitHubFileService = CreateGitHubFileService();
 
             // Act & Assert
             var service = new TypeSpecFileService(mockLogger.Object, gitHubFileService);
             Assert.That(service, Is.Not.Null);
-            httpClient.Dispose();
         }
 
         [Test]
         public void Constructor_WithNullValidationContext_ShouldThrowArgumentNullException()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var httpClient = new HttpClient();
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
                 new TypeSpecFileService(mockLogger.Object, null!));
             Assert.That(exception!.ParamName, Is.EqualTo("gitHubFileService"));
-            httpClient.Dispose();
         }
 
         [Test]
@@ -231,7 +209,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task GetTypeSpecFilesAsync_WithLocalPath_EmptyDirectory_ShouldReturnEmptyDictionary()
+        public void GetTypeSpecFilesAsync_WithLocalPath_EmptyDirectory_ShouldThrowException()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
@@ -239,16 +217,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Directory.CreateDirectory(typeSpecDir);
             var outputDir = fixture.CreateValidOutputDirectory();
 
-            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
-            var service = CreateService();
-
-            // Act
-            var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(0));
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() => CreateLocalValidationContext(typeSpecDir, outputDir));
+            Assert.That(ex!.Message, Does.Contain("No .tsp or .yaml files found in directory"));
         }
 
         [Test]
@@ -307,12 +278,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange
             var invalidPath = "C:\\NonExistentDirectory\\TypeSpec";
-            var validationContext = CreateLocalValidationContext(invalidPath, "C:\\temp\\output");
             var service = CreateService();
 
             // Act & Assert
-            Assert.ThrowsAsync<DirectoryNotFoundException>(
-                async () => await service.GetTypeSpecFilesAsync(validationContext,CancellationToken.None));
+            Assert.Throws<DirectoryNotFoundException>(
+                () => CreateLocalValidationContext(invalidPath, "C:\\temp\\output"));
         }
 
         [Test]
@@ -610,7 +580,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // This tests the path generation logic indirectly through GitHub flow
             // Arrange
             using var fixture = new TestEnvironmentFixture();
-            var typeSpecPath = "https://github.com/test/repo/tree/main/spec_with_special_chars<>|";
+            var typeSpecPath = "specification/test/TestService";
             var commitId = fixture.CreateValidCommitId();
             var outputDir = fixture.CreateValidOutputDirectory();
             

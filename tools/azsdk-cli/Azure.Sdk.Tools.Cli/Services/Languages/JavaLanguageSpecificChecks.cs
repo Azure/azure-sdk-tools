@@ -15,6 +15,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     // Maven operation timeouts
     private static readonly TimeSpan MavenFormatTimeout = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan MavenLintTimeout = TimeSpan.FromMinutes(15);
+    private static readonly TimeSpan MavenSnippetTimeout = TimeSpan.FromMinutes(5);
 
     // Common NextSteps messages
     private static readonly string[] mavenInstallationNextSteps = [
@@ -42,7 +43,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -58,7 +59,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
 
             // Determine the Maven goal based on fix parameter
-            var goal = fix ? "spotless:apply" : "spotless:check";
+            var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
             var command = "mvn";
             var args = new[] { goal, "-f", pomPath };
 
@@ -66,17 +67,17 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode == 0)
             {
-                var message = fix ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
+                var message = fixCheckErrors ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
                 _logger.LogInformation(message);
                 return new CLICheckResponse(result.ExitCode, message);
             }
             else
             {
-                var errorMessage = fix ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
+                var errorMessage = fixCheckErrors ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
                 _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", errorMessage, result.ExitCode);
 
                 var output = result.Output;
-                var nextSteps = fix ?
+                var nextSteps = fixCheckErrors ?
                     "Review the error output and check if spotless-maven-plugin is properly configured in the pom.xml" :
                     "Run with --fix flag to automatically format code, or run 'mvn spotless:apply' manually";
 
@@ -96,11 +97,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting code linting for Java project at: {PackagePath} (Fix: {Fix})", packagePath, fix);
+            _logger.LogInformation("Starting code linting for Java project at: {PackagePath} (Fix: {Fix})", packagePath, fixCheckErrors);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
@@ -141,18 +142,30 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Parse Maven output to determine which linting tools found issues
             var output = result.Output;
-            var lintingResults = ParseLintingResults(output, result.ExitCode);
+            var lintingResults = ParseLintingResults(output);
+
+            // Run javadoc validation as separate step (following Azure SDK pipeline pattern)
+            _logger.LogInformation("Running javadoc validation");
+            var javadocArgs = new[] { "--no-transfer-progress", "javadoc:jar", "-f", pomPath };
+            var javadocResult = await _processHelper.Run(new("mvn", javadocArgs, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
+            
+            // Add javadoc results to linting results
+            var javadocHasIssues = javadocResult.ExitCode != 0;
+            lintingResults.Add(("Javadoc", javadocHasIssues));
+            
+            // Combine outputs for comprehensive reporting
+            var combinedOutput = $"{output}\n\n--- Javadoc Validation ---\n{javadocResult.Output}";
 
             var failedTools = lintingResults.Where(r => r.HasIssues).ToList();
             var passedTools = lintingResults.Where(r => !r.HasIssues).ToList();
 
             if (failedTools.Count == 0)
             {
-                var message = result.ExitCode == 0
+                var message = result.ExitCode == 0 && javadocResult.ExitCode == 0
                     ? $"Code linting passed - All tools successful: {string.Join(", ", passedTools.Select(t => t.Tool))}"
                     : "Code linting completed, but build had other issues. Check Maven output for details.";
                 _logger.LogInformation(message);
-                return new CLICheckResponse(result.ExitCode, message);
+                return new CLICheckResponse(Math.Max(result.ExitCode, javadocResult.ExitCode), message);
             }
             else
             {
@@ -175,11 +188,15 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 {
                     nextSteps.Add("RevAPI: Manually review API compatibility - requires design decisions");
                 }
+                if (failedTools.Any(t => t.Tool == "Javadoc"))
+                {
+                    nextSteps.Add("Javadoc: Fix javadoc comments, missing documentation, or invalid HTML in docstrings");
+                }
 
                 nextSteps.Add("Review the linting errors and fix them manually - no auto-fix available");
-                nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true to skip specific tools during development");
+                nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true to skip specific tools during development");
 
-                return new CLICheckResponse(result.ExitCode, output, errorMessage)
+                return new CLICheckResponse(Math.Max(result.ExitCode, javadocResult.ExitCode), combinedOutput, errorMessage)
                 {
                     NextSteps = nextSteps
                 };
@@ -200,9 +217,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// Based on Azure SDK for Java pipeline patterns that run linting during install phase.
     /// </summary>
     /// <param name="output">Maven command output</param>
-    /// <param name="exitCode">Maven command exit code</param>
     /// <returns>List of linting results per tool</returns>
-    private List<(string Tool, bool HasIssues)> ParseLintingResults(string output, int exitCode)
+    private List<(string Tool, bool HasIssues)> ParseLintingResults(string output)
     {
         var results = new List<(string Tool, bool HasIssues)>();
 
@@ -245,6 +261,52 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             checkstyleRan, checkstyleHasIssues, spotbugsRan, spotbugsHasIssues, revapiRan, revapiHasIssues);
 
         return results;
+    }
+
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Starting code snippet update for Java project at: {PackagePath}", packagePath);
+
+            // Validate Maven and POM prerequisites
+            var pomPath = Path.Combine(packagePath, "pom.xml");
+            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            if (prerequisiteCheck != null)
+            {
+                return prerequisiteCheck;
+            }
+
+            // Use Azure SDK approach: mvn com.azure.tools:codesnippet-maven-plugin:update-codesnippet
+            var command = "mvn";
+            var args = new[] { "com.azure.tools:codesnippet-maven-plugin:update-codesnippet", "-f", pomPath };
+
+            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                _logger.LogInformation("Code snippets updated successfully");
+                return new CLICheckResponse(result.ExitCode, "Code snippets updated successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Code snippet update failed with exit code {ExitCode}", result.ExitCode);
+
+                var output = result.Output;
+                return new CLICheckResponse(result.ExitCode, output, "Code snippet update failed - some snippets may be outdated or missing")
+                {
+                    NextSteps = ["Ensure that code snippets in documentation match the actual code implementation, or check if codesnippet-maven-plugin is configured in the pom.xml"]
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during code snippet update for Java project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error during code snippet update: {ex.Message}")
+            {
+                NextSteps = [.. exceptionHandlingNextSteps]
+            };
+        }
     }
 
     /// <summary>

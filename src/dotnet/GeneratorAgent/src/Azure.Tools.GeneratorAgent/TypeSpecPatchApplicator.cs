@@ -52,7 +52,7 @@ namespace Azure.Tools.GeneratorAgent
                     return false;
                 }
 
-                Logger.LogInformation("Parsed patch for file '{File}' with {ChangeCount} changes. Reason: {Reason}", 
+                Logger.LogDebug("Parsed patch for file '{File}' with {ChangeCount} changes. Reason: {Reason}", 
                     patchRequest.File, patchRequest.Changes.Count, patchRequest.Reason);
 
                 // Step 2: Validate the patch
@@ -62,18 +62,7 @@ namespace Azure.Tools.GeneratorAgent
                 }
 
                 // Step 3: Apply the changes
-                bool success = await ApplyChangesToFileAsync(patchRequest, typeSpecDirectory, cancellationToken).ConfigureAwait(false);
-                
-                if (success)
-                {
-                    Logger.LogInformation("✅ Patch applied successfully to {File}", patchRequest.File);
-                }
-                else
-                {
-                    Logger.LogWarning("❌ Failed to apply patch to {File}", patchRequest.File);
-                }
-
-                return success;
+                return await ApplyChangesToFileAsync(patchRequest, typeSpecDirectory, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -230,6 +219,14 @@ namespace Azure.Tools.GeneratorAgent
             // Convert from 1-based to 0-based indexing
             int startIndex = change.StartLine - 1;
             int endIndex = change.EndLine - 1;
+
+            // Handle "append to end" case when trying to add content beyond file end
+            if (startIndex == lines.Count && string.IsNullOrEmpty(change.OldContent.Trim()))
+            {
+                var newLines = change.NewContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                lines.AddRange(newLines);
+                return true;
+            }
 
             if (startIndex < 0 || endIndex >= lines.Count || startIndex > endIndex)
             {

@@ -11,7 +11,7 @@
     <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.5.2</VersionPrefix>
+    <VersionPrefix>0.5.3</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <!-- Package metadata -->
     <PackageReleaseNotes>See CHANGELOG.md for release notes</PackageReleaseNotes>
@@ -33,7 +33,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25277.114" />
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Octokit" Version="14.0.0" />

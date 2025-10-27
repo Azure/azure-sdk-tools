@@ -52,7 +52,7 @@ _We don't currently have a clear step in our process for identifying breaking ch
 **All Languages**:
 All language SDKs have their APIs reviewed in API View. Common feedback includes renaming models per language, or changing operations that appear in a client. We have documentation for customizing SDKs such as [renaming types](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/09renaming/), but recent (10/14/2025) testing shows that even with the current documentation, AI agents have difficulty applying these customizations correctly in a consistent manner: particularly when `scope` is required.
 
-There has already been some work done to support identifying and fixing code customizations - customizations made directly to generated SDKs rather than to the TypeSpec files - in the `TspClientUpdateTool`. This tool exists and an MCP tool/CLI command and currently works _after_ an SDK has been generated from TypeSpec.
+There has already been some work done to support identifying and fixing code customizations - customizations made directly to generated SDKs rather than to the TypeSpec files - in the `TspClientUpdateTool`. This tool exists as an MCP tool/CLI command and currently works _after_ an SDK has been generated from TypeSpec.
 
 #### Gaps
 

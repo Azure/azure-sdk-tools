@@ -117,7 +117,7 @@ public sealed partial class GoPackageInfoHelper(IGitHelper gitHelper, ILogger<Go
     private (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
     {
         logger.LogTrace("Parsing Go package path: {realPackagePath}", realPackagePath);
-        var full = new DirectoryInfo(realPackagePath).FullName;
+        var full = RealPath.GetRealPath(realPackagePath);
         var repoRoot = gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);

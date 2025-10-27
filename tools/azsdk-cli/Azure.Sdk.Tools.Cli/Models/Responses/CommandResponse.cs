@@ -53,7 +53,7 @@ public abstract class CommandResponse
     /// <summary>
     /// Status shows whether the command operation was successful.
     /// </summary>
-    [JsonPropertyName("command_status")]
+    [JsonPropertyName("status")]
     public Status CommandStatus
     {
         get

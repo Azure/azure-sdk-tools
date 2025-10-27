@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, SDK_LANGUAGES, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -107,6 +107,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   namespaceReviewBtnLabel: string = '';
   namespaceReviewMessage: string = '';
   namespaceReviewEnabled: boolean = false; // Feature flag from Azure App Configuration
+  allAssociatedReviewsApproved: boolean = false; // Track if all associated SDK reviews are approved
 
   codeLineSearchText: FormControl = new FormControl('');
 
@@ -457,6 +458,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
               this.pullRequestsOfAssociatedAPIRevisions.push(pr);
             }
           }
+
+          // Check if all associated reviews are approved
+          this.checkAssociatedReviewsApprovalStatus();
+
           // Re-evaluate namespace review states after associated reviews are loaded
           this.setNamespaceReviewStates();
         }
@@ -635,7 +640,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   updateNamespaceReviewButtonState() {
-    if (this.review?.isApproved) {
+    if (this.review?.isApproved && this.review?.language === 'TypeSpec') {
       this.namespaceReviewBtnClass = "btn btn-outline-success disabled";
       this.namespaceReviewBtnLabel = "Review Approved";
       this.namespaceReviewMessage = "This review has already been approved - namespace review is not needed.";
@@ -668,7 +673,34 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   isNamespaceApproved(): boolean {
-    return this.review?.namespaceReviewStatus === 'approved' || false;
+    return this.review?.namespaceReviewStatus === 'approved' || this.allAssociatedReviewsApproved || false;
+  }
+
+  /**
+   * Check if all associated SDK language reviews are approved
+   */
+  private checkAssociatedReviewsApprovalStatus() {
+    if (this.pullRequestsOfAssociatedAPIRevisions.length === 0) {
+      this.allAssociatedReviewsApproved = false;
+      return;
+    }
+
+    // Fetch and check approval status for SDK language reviews only
+    combineLatest(
+      this.pullRequestsOfAssociatedAPIRevisions.map(pr =>
+        this.reviewsService.getReview(pr.reviewId).pipe(take(1))
+      )
+    ).pipe(take(1)).subscribe({
+      next: (reviews: any[]) => {
+        const sdkLanguageReviews = reviews.filter(review => SDK_LANGUAGES.includes(review?.language));
+        this.allAssociatedReviewsApproved = sdkLanguageReviews.length > 0 &&
+                                             sdkLanguageReviews.every(review => review?.isApproved === true);
+        this.updateNamespaceReviewButtonState();
+      },
+      error: () => {
+        this.allAssociatedReviewsApproved = false;
+      }
+    });
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

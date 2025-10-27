@@ -14,6 +14,9 @@ export const DIFF_ADDED = "added";
 export const DIFF_REMOVED = "removed";
 export const INDEXED_DB_NAME = "apiview-indexed-db";
 
+// SDK Languages - must match ApiViewConstants.SdkLanguages in backend
+export const SDK_LANGUAGES = ["C#", "Java", "Python", "Go", "JavaScript"];
+
 export enum CodeLineRowNavigationDirection {
   prev = 0,
   next
@@ -27,12 +30,12 @@ export function getLanguageCssSafeName(language: string): string {
       return "cplusplus";
     default:
       return language.toLowerCase();
-  }   
+  }
 }
 
 export function mapLanguageAliases(languages: Iterable<string>): string[] {
   const result: Set<string> = new Set<string>();
-  
+
   for (const language of languages) {
     if (language === "TypeSpec" || language === "Cadl") {
       result.add("Cadl");

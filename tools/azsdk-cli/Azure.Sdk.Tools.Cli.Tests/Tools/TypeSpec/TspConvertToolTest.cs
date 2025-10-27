@@ -15,7 +15,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
+            var fileHelper = new Mock<IFileHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper, fileHelper);
 
             // Act
             var command = tool.GetCommandInstances().First();
@@ -33,7 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
+            var fileHelper = new Mock<IFileHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper, fileHelper);
 
             // Act
             var result = await tool.ConvertSwaggerAsync("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
@@ -49,7 +51,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
+            var fileHelper = new Mock<IFileHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper, fileHelper);
 
             // Act
             var result = await tool.ConvertSwaggerAsync(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);

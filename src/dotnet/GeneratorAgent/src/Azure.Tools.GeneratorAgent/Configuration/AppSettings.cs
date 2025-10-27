@@ -63,8 +63,8 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string? OpenAIEndpoint => Configuration.GetSection("OpenAI:Endpoint").Value;
         public string OpenAIModel => Configuration.GetSection("OpenAI:Model").Value ?? "gpt-4o";
         
-        public string TypespecEmitterPackage => "@typespec/http-client-csharp";
-        public string TypespecCompiler => "@typespec/compiler";
+        public string TypespecEmitterPackage => Configuration.GetSection("AzureSettings:TypespecEmitterPackage").Value ?? "@typespec/http-client-csharp";
+        public string TypespecCompiler => Configuration.GetSection("AzureSettings:TypespecCompiler").Value ?? "@typespec/compiler";
         public string TypeSpecDirectoryName => "@typespec";
         public string HttpClientCSharpDirectoryName => "http-client-csharp";
 

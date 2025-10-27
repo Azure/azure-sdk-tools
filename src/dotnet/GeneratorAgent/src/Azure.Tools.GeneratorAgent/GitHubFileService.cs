@@ -58,7 +58,6 @@ namespace Azure.Tools.GeneratorAgent
             if (!response.IsSuccessStatusCode)
             {
                 string errorMessage = $"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase} for {apiUrl}";
-                Logger.LogError(errorMessage);
                 throw new HttpRequestException(errorMessage);
             }
 
@@ -72,14 +71,12 @@ namespace Azure.Tools.GeneratorAgent
             catch (JsonException ex)
             {
                 string errorMessage = $"Failed to deserialize GitHub API response for '{AppSettings.AzureSpecRepository}/{typeSpecDir}' at commit '{commitId}'. Please verify the repository path and commit ID are correct.";
-                Logger.LogError(ex, errorMessage);
                 throw new InvalidOperationException(errorMessage, ex);
             }
 
             if (contents == null)
             {
                 string errorMessage = $"GitHub API returned null content for '{AppSettings.AzureSpecRepository}/{typeSpecDir}' at commit '{commitId}'";
-                Logger.LogError(errorMessage);
                 throw new InvalidOperationException(errorMessage);
             }
 
@@ -89,8 +86,6 @@ namespace Azure.Tools.GeneratorAgent
             IEnumerable<GitHubContent> allFiles = contents
                 .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) &&
                         !string.IsNullOrEmpty(c.DownloadUrl));
-
-            Logger.LogDebug("Found {FileCount} files to download", allFiles.Count());
 
             // Download files
             foreach (GitHubContent file in allFiles)

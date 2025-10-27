@@ -18,40 +18,87 @@ model:
     reasoning_effort: "medium"
 sample:
   data: | 
-    {     
-        "end_date": "2025-07-31",
-        "metrics": {
-            "ai_vs_manual_comment_ratio": 3.139393939393939,
-            "good_vs_bad_comment_ratio": 1.263157894736842,
-            "language_adoption": {
-            "c#": {
-                "active_copilot_reviews": 1,
-                "active_reviews": 5,
-                "adoption_rate": "0.20"
-            },
-            "go": {
-                "active_copilot_reviews": 1,
-                "active_reviews": 1,
-                "adoption_rate": "1.00"
-            },
-            "java": {
-                "active_copilot_reviews": 4,
-                "active_reviews": 9,
-                "adoption_rate": "0.44"
-            },
-            "javascript": {
-                "active_copilot_reviews": 8,
-                "active_reviews": 9,
-                "adoption_rate": "0.89"
-            },
-            "python": {
-                "active_copilot_reviews": 9,
-                "active_reviews": 15,
-                "adoption_rate": "0.60"
-            }
-            }
+    {
+      "end_date": "2025-09-12",
+      "metrics": {
+        "C#": {
+          "adoption": {
+            "active_review_count": 2,
+            "adoption_rate": 1.0,
+            "copilot_review_count": 2
+          },
+          "comment_makeup": {
+            "ai_comment_count": 72,
+            "ai_comment_rate": 0.92,
+            "human_comment_count_with_ai": 6,
+            "human_comment_count_without_copilot": 0
+          },
+          "comment_quality": {
+            "ai_comment_count": 72,
+            "bad": 0.06,
+            "good": 0.01,
+            "neutral": 0.93
+          }
         },
-        "start_date": "2025-07-01"
+        "Javascript": {
+          "adoption": {
+            "active_review_count": 1,
+            "adoption_rate": 1.0,
+            "copilot_review_count": 1
+          },
+          "comment_makeup": {
+            "ai_comment_count": 29,
+            "ai_comment_rate": 1.0,
+            "human_comment_count_with_ai": 0,
+            "human_comment_count_without_copilot": 0
+          },
+          "comment_quality": {
+            "ai_comment_count": 29,
+            "bad": 0.0,
+            "good": 0.0,
+            "neutral": 1.0
+          }
+        },
+        "Python": {
+          "adoption": {
+            "active_review_count": 4,
+            "adoption_rate": 1.0,
+            "copilot_review_count": 4
+          },
+          "comment_makeup": {
+            "ai_comment_count": 571,
+            "ai_comment_rate": 0.97,
+            "human_comment_count_with_ai": 18,
+            "human_comment_count_without_copilot": 0
+          },
+          "comment_quality": {
+            "ai_comment_count": 571,
+            "bad": 0.0,
+            "good": 0.06,
+            "neutral": 0.94
+          }
+        },
+        "overall": {
+          "adoption": {
+            "active_review_count": 7,
+            "adoption_rate": 1.0,
+            "copilot_review_count": 7
+          },
+          "comment_makeup": {
+            "ai_comment_count": 672,
+            "ai_comment_rate": 0.97,
+            "human_comment_count_with_ai": 24,
+            "human_comment_count_without_copilot": 0
+          },
+          "comment_quality": {
+            "ai_comment_count": 672,
+            "bad": 0.01,
+            "good": 0.05,
+            "neutral": 0.94
+          }
+        }
+      },
+      "start_date": "2025-08-15"
     }
 ---
 system:
@@ -60,7 +107,33 @@ You are a helpful AI agent that summarizes metrics reports for management.
 You shall receive a JSON object containing the metrics data, including the start and end dates, and you will generate
 a concise summary of the metrics in markdown format.
 
+Here are what the metrics mean:
+```yaml
+adoption:  // measure of how many code reviews are using Copilot
+  active_review_count: 2
+  adoption_rate: 1.0  // KEY METRIC: what fraction of code reviews are using Copilot.
+  copilot_review_count: 2
+comment_makeup:  // measure of whether comments are made by AI or humans
+  ai_comment_count: 72
+  ai_comment_rate: 0.92  // KEY METRIC: fraction of comments made by AI in active reviews that used copilot
+  human_comment_count_with_ai: 6  // the number of comments made by humans in active reviews that used copilot
+  human_comment_count_without_copilot: 0  // the number of comments made by humans in active reviews that did NOT use copilot
+comment_quality:  // Measure of how good or bad the AI comments were
+  ai_comment_count: 72
+  bad: 0.06  // KEY METRIC: fraction of AI comments rated as bad
+  good: 0.01 // KEY METRIC: fraction of AI comments rated as good
+  neutral: 0.93 // KEY METRIC: fraction of AI comments not rated (neutral)
+```
+
 Title the report "APIView Copilot Metrics Report" and include the date range.
+
+For "comment_makeup" we want to show whether copilot reduces the number of human contexts in reviews compared to those
+that did not use copilot.
+
+For "adoption" we want to show that languages are consistently using Copilot in their reviews. Ideal is 100%.
+
+For "comment_quality" we want to show that more comments are rated "good" than "bad". A lot of "neutral" comments is also cause
+for concern, but not inherently bad.
 
 user:
 ```

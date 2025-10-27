@@ -335,18 +335,98 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public async Task UploadAutoReview_WithNullFile_ReturnsInternalServerError()
+        public async Task UploadAutoReview_WhenCodeFileCreationFails_Returns500WithDetails()
         {
-            // Act
-            var result = await _controller.UploadAutoReview(null, "test-label", packageType: "client");
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
 
-            // Assert
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ThrowsAsync(new Exception("Failed to parse code file: Invalid format"));
+
+            var result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
+
             result.Should().NotBeNull();
-            result.Should().BeOfType<StatusCodeResult>().Which.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+            var objectResult = result.Should().BeOfType<ObjectResult>().Which;
+            objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+            objectResult.Value.Should().NotBeNull();
+            
+            string errorDetails = objectResult.Value.ToString();
+            errorDetails.Should().Contain("Failed to parse code file: Invalid format");
+        }
 
-            // Verify no manager methods were called
-            _mockCodeFileManager.Verify(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
-            _mockReviewManager.Verify(m => m.CreateReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()), Times.Never);
+        [Fact]
+        public async Task UploadAutoReview_WhenReviewCreationFails_Returns500WithDetails()
+        {
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockCodeFile = new CodeFile()
+            {
+                Name = "test",
+                Language = "C#",
+                PackageName = "TestPackage",
+                PackageVersion = "1.0.0"
+            };
+
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .ReturnsAsync((ReviewListItemModel)null);
+
+            _mockReviewManager.Setup(m => m.CreateReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
+                .ThrowsAsync(new InvalidOperationException("Database connection failed"));
+
+            ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
+
+            result.Should().NotBeNull();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Which;
+            objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+            objectResult.Value.Should().NotBeNull();
+            
+            string errorDetails = objectResult.Value.ToString();
+            errorDetails.Should().Contain("Database connection failed");
+        }
+
+        [Fact]
+        public async Task UploadAutoReview_WhenAPIRevisionCreationFails_Returns500WithDetails()
+        {
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockCodeFile = new CodeFile()
+            {
+                Name = "test",
+                Language = "C#",
+                PackageName = "TestPackage",
+                PackageVersion = "1.0.0"
+            };
+
+            var existingReview = new ReviewListItemModel()
+            {
+                Id = "existing-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .ReturnsAsync(existingReview);
+
+            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
+                .ReturnsAsync(new List<APIRevisionListItemModel>());
+
+            // Setup mock to throw an exception during API revision creation
+            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(), It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<int?>()))
+                .ThrowsAsync(new ArgumentException("Invalid API revision data: Missing required field 'Version'"));
+
+            ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
+
+            result.Should().NotBeNull();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Which;
+            objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+            objectResult.Value.Should().NotBeNull();
+            
+            string errorDetails = objectResult.Value.ToString();
+            errorDetails.Should().Contain("Invalid API revision data: Missing required field 'Version'");
         }
 
         private Mock<IFormFile> CreateMockFormFile(string fileName, string content)

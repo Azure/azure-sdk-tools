@@ -32,7 +32,7 @@ public class PythonRequirementsCheck : IEnvRequirementsCheck
 
         if (string.IsNullOrWhiteSpace(venvPath))
         {
-            venvPath = FindOrCreateVenv(packagePath);
+            venvPath = FindVenv(packagePath);
         }
 
         if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
@@ -40,6 +40,7 @@ public class PythonRequirementsCheck : IEnvRequirementsCheck
             logger.LogWarning("Provided venv path is invalid or does not exist: {VenvPath}", venvPath);
             return reqs;
         }
+        
         logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
         return UpdateChecksWithVenv(reqs, venvPath);
     }
@@ -56,48 +57,25 @@ public class PythonRequirementsCheck : IEnvRequirementsCheck
         return reqs;
     }
 
-    private string FindOrCreateVenv(string packagePath)
+    private string FindVenv(string packagePath)
     {
-        try
+        // try to find existing venv in package path if none was provided
+        if (string.IsNullOrWhiteSpace(packagePath))
         {
-            if (string.IsNullOrWhiteSpace(packagePath))
-            {
-                packagePath = Environment.CurrentDirectory;
-            }
-
-            var candidates = new[] { ".venv", "venv", ".env", "env" };
-
-            foreach (var c in candidates)
-            {
-                var path = Path.Combine(packagePath, c);
-                if (Directory.Exists(path))
-                {
-                    return Path.GetFullPath(path);
-                }
-            }
-
-            // no venv found, create one
-            var venvPath = Path.Combine(packagePath, ".venv");
-
-            var processOptions = new ProcessOptions(
-                "python",
-                new[] { "-m", "venv", venvPath },
-                workingDirectory: packagePath
-            );
-
-            var result = processHelper.Run(processOptions, CancellationToken.None).GetAwaiter().GetResult();
-
-            if (result.ExitCode == 0 && Directory.Exists(venvPath))
-            {
-                return Path.GetFullPath(venvPath);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Exception occurred while trying to find or create a Python virtual environment at path: {PackagePath}", packagePath);
-            return null;
+            packagePath = Environment.CurrentDirectory;
         }
 
+        var candidates = new[] { ".venv", "venv", ".env", "env" };
+
+        foreach (var c in candidates)
+        {
+            var path = Path.Combine(packagePath, c);
+            if (Directory.Exists(path))
+            {
+                return Path.GetFullPath(path);
+            }
+        }
+        
         return null;
     }
 }

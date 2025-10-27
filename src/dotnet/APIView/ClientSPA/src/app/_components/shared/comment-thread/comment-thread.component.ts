@@ -691,7 +691,6 @@ export class CommentThreadComponent {
       return '';
     }
     
-    console.log(comment.severity, CommentSeverity.ShouldFix);
     switch (comment.severity) {
       case CommentSeverity.Suggestion:
         return 'severity-suggestion';

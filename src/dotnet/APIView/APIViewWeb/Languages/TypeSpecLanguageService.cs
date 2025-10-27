@@ -32,7 +32,7 @@ namespace APIViewWeb
             _reviewGenerationPipelineUrl = configuration["TypeSpecReviewGenerationPipelineUrl"] ?? String.Empty;
             _telemetryClient = telemetryClient;
         }
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
         {
             return await CodeFile.DeserializeAsync(stream);
         }

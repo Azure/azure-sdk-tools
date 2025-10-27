@@ -1,14 +1,13 @@
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Models;
-using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.Logging;
 
-namespace Azure.Tools.GeneratorAgent.Tools
+namespace Azure.Tools.GeneratorAgent.Agent
 {
     /// <summary>
     /// Handles TypeSpec-related tool calls from the AI agent by orchestrating specialized services
     /// </summary>
-    internal class TypeSpecToolHandler : ITypeSpecToolHandler
+    internal class TypeSpecToolHandler
     {
         private readonly TypeSpecFileService FileService;
         private readonly TypeSpecFileVersionManager VersionManager;
@@ -53,12 +52,12 @@ namespace Azure.Tools.GeneratorAgent.Tools
                 };
 
                 Logger.LogInformation("Returning {Count} TypeSpec files with complete content for analysis", response.Files.Count);
+                
                 return response;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error handling list_typespec_files tool call");
-                throw;
+                throw new InvalidOperationException("Failed to list TypeSpec files using list_typespec_files tool call", ex);
             }
         }
 
@@ -84,12 +83,13 @@ namespace Azure.Tools.GeneratorAgent.Tools
                 // Add the file content to the response for agent analysis
                 fileInfo.Content = fileEntry.Value;
 
+                Logger.LogInformation("Returning TypeSpec file {FileName}", fileEntry.Key);
+
                 return fileInfo;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error handling get_typespec_file tool call for {Filename}", filename);
-                throw;
+                throw new InvalidOperationException("Failed to get typespec files using get_typespec_file tool call", ex);
             }
         }
 

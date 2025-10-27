@@ -48,7 +48,8 @@
         (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
         (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
         (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
-        (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
+        (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
+        (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
       </app-comment-thread>
     </ng-container>
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguage">

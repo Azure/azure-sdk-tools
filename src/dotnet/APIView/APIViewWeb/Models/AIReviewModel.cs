@@ -30,6 +30,8 @@ namespace APIViewWeb.Models
         public string CorrelationId { get; set; }
         [JsonPropertyName("severity")]
         public string Severity { get; set; }
+        [JsonPropertyName("confidence_score")]
+        public float ConfidenceScore { get; set; }
     }
 
     public class AIReviewJobPolledResponseModel

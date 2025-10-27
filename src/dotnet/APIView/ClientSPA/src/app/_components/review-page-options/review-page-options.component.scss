@@ -45,6 +45,55 @@
         }
     }
 
+    // Dark mode support for dialog components
+    .p-dialog {
+        .p-dialog-header {
+            background-color: var(--base-fg-color);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--base-text-color);
+        }
+        
+        .p-dialog-content {
+            background-color: var(--base-bg-color);
+            color: var(--base-text-color);
+        }
+        
+        .p-dialog-footer {
+            background-color: var(--base-fg-color);
+            border-top: 1px solid var(--border-color);
+        }
+    }
+
+    // Bootstrap list-group dark mode support
+    .list-group {
+        .list-group-item {
+            background-color: var(--base-fg-color);
+            border: 1px solid var(--border-color);
+            color: var(--base-text-color);
+            
+            &:first-child {
+                border-top: 1px solid var(--border-color);
+            }
+            
+            &:last-child {
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+    }
+
+    // Input switch dark mode support
+    .p-inputswitch {
+        .p-inputswitch-slider {
+            background-color: var(--border-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        &.p-inputswitch-checked .p-inputswitch-slider {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    }
+
     .change-history {
         .deleted {
             color: red;

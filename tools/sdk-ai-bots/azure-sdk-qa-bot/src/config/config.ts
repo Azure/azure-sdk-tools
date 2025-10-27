@@ -6,6 +6,9 @@ const config = {
   MicrosoftAppPassword: process.env.BOT_PASSWORD,
   // RAG
   ragApiKey: process.env.RAG_API_KEY,
+  // auth
+  userManagedIdentityClientID: process.env.BOT_ID,
+  ragScope: process.env.RAG_SERVICE_SCOPE, 
   // Computer Vision
   azureComputerVisionEndpoint: process.env.AZURE_COMPUTER_VISION_ENDPOINT,
   azureComputerVisionApiKey: process.env.AZURE_COMPUTER_VISION_API_KEY,

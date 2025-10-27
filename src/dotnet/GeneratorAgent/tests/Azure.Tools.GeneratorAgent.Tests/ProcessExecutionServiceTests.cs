@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using System.Security;
 using Azure.Tools.GeneratorAgent.Exceptions;
 using Azure.Tools.GeneratorAgent.Security;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -11,550 +11,395 @@ namespace Azure.Tools.GeneratorAgent.Tests
     [TestFixture]
     public class ProcessExecutionServiceTests
     {
-        private sealed class TestEnvironmentFixture : IDisposable
-        {
-            private readonly CancellationTokenSource _cancellationTokenSource;
-            private readonly string _uniqueId;
-            private readonly List<string> _tempFiles;
-            private readonly List<string> _tempDirectories;
-
-            public TestEnvironmentFixture()
-            {
-                _cancellationTokenSource = new CancellationTokenSource();
-                _uniqueId = Guid.NewGuid().ToString("N")[..8];
-                _tempFiles = new List<string>();
-                _tempDirectories = new List<string>();
-            }
-
-            public CancellationToken CancellationToken => _cancellationTokenSource.Token;
-            public string UniqueId => _uniqueId;
-
-            public Mock<ILogger<ProcessExecutionService>> CreateMockLogger()
-            {
-                return new Mock<ILogger<ProcessExecutionService>>();
-            }
-
-            public ProcessExecutionService CreateProcessExecutionService(Mock<ILogger<ProcessExecutionService>>? mockLogger = null)
-            {
-                return new ProcessExecutionService((mockLogger ?? CreateMockLogger()).Object);
-            }
-
-            public string CreateValidCommand()
-            {
-                // Use PowerShell on all platforms as it's cross-platform and in allowed commands
-                return SecureProcessConfiguration.PowerShellExecutable;
-            }
-
-            public string CreateAllowedCommand()
-            {
-                return SecureProcessConfiguration.GitExecutable;
-            }
-
-            public string CreateDisallowedCommand()
-            {
-                return $"malicious-command-{_uniqueId}";
-            }
-
-            public string CreateNonExistentCommand()
-            {
-                // Use git as it's in allowed commands but modify path to make it nonexistent
-                return "git";
-            }
-
-            public string CreateNonExistentArguments()
-            {
-                return "invalid-git-command-that-does-not-exist";
-            }
-
-            public string CreateEchoArguments(string message = "test output")
-            {
-                return $"-Command \"Write-Output '{message}'\"";
-            }
-
-            public string CreateErrorArguments(string errorMessage = "test error", int exitCode = 1)
-            {
-                return $"-Command \"Write-Error '{errorMessage}'; exit {exitCode}\"";
-            }
-
-            public string CreateMultilineArguments()
-            {
-                return "-Command \"Write-Output 'Line1'; Write-Output 'Line2'; Write-Output 'Line3'\"";
-            }
-
-            public string CreateLongRunningArguments(int seconds = 10)
-            {
-                return $"-Command \"Start-Sleep {seconds}\"";
-            }
-
-            public string CreateValidWorkingDirectory()
-            {
-                var tempDir = Path.Combine(Path.GetTempPath(), $"ProcessExecutionServiceTest_{_uniqueId}");
-                Directory.CreateDirectory(tempDir);
-                _tempDirectories.Add(tempDir);
-                return tempDir;
-            }
-
-            public string CreateInvalidWorkingDirectory()
-            {
-                return Path.Combine(Path.GetTempPath(), $"NonExistent_{_uniqueId}");
-            }
-
-            public string CreateDirectoryTraversalPath()
-            {
-                return Path.Combine(Path.GetTempPath(), "..", "..", "etc", "passwd");
-            }
-
-            public string CreateValidArguments()
-            {
-                return "-Command \"Write-Output 'Hello World'\"";
-            }
-
-            public string CreateEmptyArguments()
-            {
-                return string.Empty;
-            }
-
-            public TimeSpan CreateShortTimeout(int milliseconds = 100)
-            {
-                return TimeSpan.FromMilliseconds(milliseconds);
-            }
-
-            public TimeSpan CreateLongTimeout(int milliseconds = 10000)
-            {
-                return TimeSpan.FromMilliseconds(milliseconds);
-            }
-
-            public void CancelAfterDelay(int milliseconds)
-            {
-                _cancellationTokenSource.CancelAfter(milliseconds);
-            }
-
-            public void Dispose()
-            {
-                _cancellationTokenSource?.Dispose();
-
-                // Clean up temp files
-                foreach (var file in _tempFiles)
-                {
-                    try
-                    {
-                        if (File.Exists(file))
-                            File.Delete(file);
-                    }
-                    catch { /* Ignore cleanup errors */ }
-                }
-
-                // Clean up temp directories
-                foreach (var dir in _tempDirectories)
-                {
-                    try
-                    {
-                        if (Directory.Exists(dir))
-                            Directory.Delete(dir, true);
-                    }
-                    catch { /* Ignore cleanup errors */ }
-                }
-            }
-        }
-
-        #region Constructor Tests
-
         [Test]
-        public void Constructor_WithValidLogger_CreatesInstance()
+        public void Constructor_WithValidLogger_ShouldInitializeCorrectly()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
-
-            var executor = new ProcessExecutionService(mockLogger.Object);
-
-            Assert.That(executor, Is.Not.Null);
+            // Arrange & Act
+            var logger = NullLogger<ProcessExecutionService>.Instance;
+            
+            // Assert
+            Assert.DoesNotThrow(() => new ProcessExecutionService(logger));
         }
 
         [Test]
-        public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+        public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
+            // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => new ProcessExecutionService(null!));
-
-            Assert.That(exception.ParamName!, Is.EqualTo("logger"));
+            Assert.That(exception!.ParamName, Is.EqualTo("logger"));
         }
 
-        #endregion
-
-        #region ExecuteAsync - Success Scenarios
+        [Test]
+        public void ExecuteAsync_WithNullCommand_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var service = CreateService();
+            
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(() => 
+                service.ExecuteAsync(null!, "", null, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("command"));
+        }
 
         [Test]
-        public async Task ExecuteAsync_WithValidCommand_ReturnsSuccessResult()
+        public void ExecuteAsync_WithEmptyCommand_ShouldThrowArgumentException()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateEchoArguments("test message");
-            var workingDir = fixture.CreateValidWorkingDirectory();
+            // Arrange
+            var service = CreateService();
+            
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(() => 
+                service.ExecuteAsync("", "", null, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("command"));
+        }
 
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
+        [Test]
+        public void ExecuteAsync_WithWhitespaceCommand_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var service = CreateService();
+            
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(() => 
+                service.ExecuteAsync("   ", "", null, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("command"));
+        }
 
+        [Test]
+        public void ExecuteAsync_WithDisallowedCommand_ShouldThrowUnauthorizedAccessException()
+        {
+            // Arrange
+            var service = CreateService();
+            var disallowedCommand = "malicious-command";
+            
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(() => 
+                service.ExecuteAsync(disallowedCommand, "", null, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("not in the allowed commands list"));
+        }
+
+        [Test]
+        public void ExecuteAsync_WithNonExistentWorkingDirectory_ShouldThrowDirectoryNotFoundException()
+        {
+            // Arrange
+            var service = CreateService();
+            var nonExistentDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<DirectoryNotFoundException>(() => 
+                service.ExecuteAsync("pwsh", "", nonExistentDir, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("Working directory does not exist"));
+        }
+
+        [Test]
+        public async Task ExecuteAsync_WithValidCommand_ShouldReturnSuccessResult()
+        {
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Hello World'\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.IsFailure, Is.False);
                 Assert.That(result.Value, Is.Not.Null);
-                Assert.That(result.Value!.ToString(), Does.Contain("test message"));
+                Assert.That(result.Value!.ToString(), Does.Contain("Hello World"));
                 Assert.That(result.ProcessException, Is.Null);
-                Assert.That(result.Exception, Is.Null);
             });
         }
 
         [Test]
-        public async Task ExecuteAsync_WithNullArguments_UsesEmptyArguments()
+        public async Task ExecuteAsync_WithNullArguments_ShouldUseEmptyArguments()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                null!, // Explicitly allow null for this test
-                workingDir,
-                fixture.CancellationToken);
-
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, null!, null, CancellationToken.None);
+            
+            // Assert
             Assert.That(result.IsSuccess, Is.True);
         }
 
         [Test]
-        public async Task ExecuteAsync_WithEmptyArguments_Succeeds()
+        public async Task ExecuteAsync_WithEmptyArguments_ShouldSucceed()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateEmptyArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, "", null, CancellationToken.None);
+            
+            // Assert
             Assert.That(result.IsSuccess, Is.True);
         }
 
         [Test]
-        public async Task ExecuteAsync_WithNullWorkingDirectory_Succeeds()
+        public async Task ExecuteAsync_WithNullWorkingDirectory_ShouldUseCurrentDirectory()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateValidArguments();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                null,
-                fixture.CancellationToken);
-
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test'\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
             Assert.That(result.IsSuccess, Is.True);
         }
 
         [Test]
-        public async Task ExecuteAsync_WithMultilineOutput_CapturesAllLines()
+        public async Task ExecuteAsync_WithValidWorkingDirectory_ShouldUseSpecifiedDirectory()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateMultilineArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test'\"";
+            var tempDir = CreateTempDirectory();
+            
+            try
+            {
+                // Act
+                var result = await service.ExecuteAsync(command, arguments, tempDir, CancellationToken.None);
+                
+                // Assert
+                Assert.That(result.IsSuccess, Is.True);
+            }
+            finally
+            {
+                CleanupTempDirectory(tempDir);
+            }
+        }
 
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
+        [Test]
+        public async Task ExecuteAsync_WithMultilineOutput_ShouldCaptureAllOutput()
+        {
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Line1'; Write-Output 'Line2'; Write-Output 'Line3'\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value?.ToString(), Does.Contain("Line1"));
-                Assert.That(result.Value?.ToString(), Does.Contain("Line2"));
-                Assert.That(result.Value?.ToString(), Does.Contain("Line3"));
+                Assert.That(result.Value!.ToString(), Does.Contain("Line1"));
+                Assert.That(result.Value!.ToString(), Does.Contain("Line2"));
+                Assert.That(result.Value!.ToString(), Does.Contain("Line3"));
             });
         }
 
         [Test]
-        public async Task ExecuteAsync_WithTimeout_CompletesWithinTimeout()
+        public async Task ExecuteAsync_WithSuccessfulTimeout_ShouldCompleteWithinTimeout()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateEchoArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-            var timeout = fixture.CreateLongTimeout();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken,
-                timeout);
-
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Quick task'\"";
+            var timeout = TimeSpan.FromSeconds(10);
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None, timeout);
+            
+            // Assert
             Assert.That(result.IsSuccess, Is.True);
         }
 
-        #endregion
-
-        #region ExecuteAsync - Failure Scenarios
-
         [Test]
-        public void ExecuteAsync_WithNullCommand_ThrowsArgumentException()
+        public async Task ExecuteAsync_WithOutputTrimming_ShouldRemoveTrailingWhitespace()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var arguments = fixture.CreateValidArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var exception = Assert.ThrowsAsync<ArgumentNullException>(async () =>
-                await executor.ExecuteAsync(
-                    null!,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken));
-
-            Assert.That(exception.ParamName!, Is.EqualTo("command"));
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test   '\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.ToString(), Does.Not.EndWith("   "));
+            });
         }
 
         [Test]
-        public void ExecuteAsync_WithEmptyCommand_ThrowsArgumentException()
+        public async Task ExecuteAsync_WithFailingCommand_ShouldReturnFailureResult()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var arguments = fixture.CreateValidArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var exception = Assert.ThrowsAsync<ArgumentException>(async () =>
-                await executor.ExecuteAsync(
-                    string.Empty,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken));
-
-            Assert.That(exception.ParamName!, Is.EqualTo("command"));
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Error 'Test error'; exit 1\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(result.IsFailure, Is.True);
+                Assert.That(result.Value, Is.Null);
+                Assert.That(result.ProcessException, Is.Not.Null);
+                Assert.That(result.ProcessException!.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ProcessException.Command, Is.EqualTo(command));
+                Assert.That(result.ProcessException.Message, Does.Contain("exit code 1"));
+            });
         }
 
         [Test]
-        public void ExecuteAsync_WithWhitespaceCommand_ThrowsArgumentException()
+        public async Task ExecuteAsync_WithNonExistentCommand_ShouldReturnFailureResult()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var arguments = fixture.CreateValidArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var exception = Assert.ThrowsAsync<ArgumentException>(async () =>
-                await executor.ExecuteAsync(
-                    "   ",
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken));
-
-            Assert.That(exception.ParamName!, Is.EqualTo("command"));
-        }
-
-        [Test]
-        public void ExecuteAsync_WithDisallowedCommand_ThrowsUnauthorizedAccessException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateDisallowedCommand();
-            var arguments = fixture.CreateValidArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
-                await executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken));
-
-            Assert.That(exception.Message!, Does.Contain("not in the allowed commands list"));
-        }
-
-        [Test]
-        public void ExecuteAsync_WithInvalidWorkingDirectory_ThrowsSecurityException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateValidArguments();
-            var invalidDir = fixture.CreateInvalidWorkingDirectory();
-
-            var exception = Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
-                await executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    invalidDir,
-                    fixture.CancellationToken));
-
-            Assert.That(exception.Message!, Does.Contain("Working directory does not exist"));
-        }
-
-        [Test]
-        public async Task ExecuteAsync_WithFailingCommand_ReturnsFailureResult()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateErrorArguments("test error", 1);
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
+            // Arrange
+            var service = CreateService();
+            var command = "git"; // Valid command but invalid arguments
+            var arguments = "nonexistent-git-subcommand-that-does-not-exist";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsSuccess, Is.False);
                 Assert.That(result.ProcessException, Is.Not.Null);
-                Assert.That(result.ProcessException, Is.TypeOf<GeneralProcessExecutionException>());
-                Assert.That(result.ProcessException?.ExitCode, Is.EqualTo(1));
-                Assert.That(result.ProcessException?.Command, Is.EqualTo(command));
+                Assert.That(result.ProcessException!.ExitCode, Is.Not.EqualTo(0));
+                Assert.That(result.ProcessException.Command, Is.EqualTo(command));
             });
         }
 
         [Test]
-        public async Task ExecuteAsync_WithNonExistentCommand_ReturnsFailureResult()
+        public async Task ExecuteAsync_WithTimeout_ShouldReturnTimeoutFailure()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateNonExistentCommand();
-            var arguments = fixture.CreateNonExistentArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Start-Sleep 5\""; // Sleep for 5 seconds
+            var timeout = TimeSpan.FromMilliseconds(500); // But timeout after 500ms
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None, timeout);
+            
+            // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result.IsSuccess, Is.False);
                 Assert.That(result.ProcessException, Is.Not.Null);
-                Assert.That(result.ProcessException?.ExitCode, Is.Not.EqualTo(0));
+                Assert.That(result.ProcessException!.Message, Does.Contain("timeout"));
             });
         }
 
         [Test]
-        public async Task ExecuteAsync_WithTimeoutExceeded_ReturnsTimeoutFailure()
+        public async Task ExecuteAsync_WithZeroTimeout_ShouldReturnTimeoutFailure()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateLongRunningArguments(10);
-            var workingDir = fixture.CreateValidWorkingDirectory();
-            var timeout = fixture.CreateShortTimeout(200);
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken,
-                timeout);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsSuccess, Is.False);
-                Assert.That(result.Exception, Is.Not.Null);
-                Assert.That(result.Exception, Is.TypeOf<TimeoutException>());
-                Assert.That(result.Exception?.Message, Does.Contain("timed out"));
-            });
-        }
-
-        #endregion
-
-        #region Cancellation Tests
-
-        [Test]
-        public void ExecuteAsync_WithCancellation_ThrowsOperationCanceledException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateLongRunningArguments(10);
-            var workingDir = fixture.CreateValidWorkingDirectory();
-            fixture.CancelAfterDelay(200);
-
-            Assert.ThrowsAsync<TaskCanceledException>(async () =>
-                await executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken));
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test'\"";
+            var timeout = TimeSpan.Zero;
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None, timeout);
+            
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
         }
 
         [Test]
-        public void ExecuteAsync_WithTimeoutAndCancellation_HandlesCorrectly()
+        public void ExecuteAsync_WithCancellation_ShouldThrowOperationCanceledException()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateLongRunningArguments(10);
-            var workingDir = fixture.CreateValidWorkingDirectory();
-            var timeout = fixture.CreateLongTimeout(5000); // Longer than cancellation
-            fixture.CancelAfterDelay(200);
-
-            Assert.ThrowsAsync<TaskCanceledException>(async () =>
-                await executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken,
-                    timeout));
-        }
-
-        #endregion
-
-        #region Logging Tests
-
-        [Test]
-        public async Task ExecuteAsync_WithSuccessfulCommand_LogsSuccess()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutionService(mockLogger);
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateEchoArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
-            // The service doesn't log success - just verify it completed without throwing
-            Assert.That(result, Is.Not.Null);
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Start-Sleep 10\"";
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(200);
+            
+            // Act & Assert
+            Assert.ThrowsAsync<TaskCanceledException>(() => 
+                service.ExecuteAsync(command, arguments, null, cts.Token));
         }
 
         [Test]
-        public async Task ExecuteAsync_WithFailedCommand_LogsError()
+        public void ExecuteAsync_WithTimeoutAndCancellation_ShouldRespectCancellation()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutionService(mockLogger);
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateErrorArguments("test error", 1);
-            var workingDir = fixture.CreateValidWorkingDirectory();
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"Start-Sleep 10\"";
+            var timeout = TimeSpan.FromSeconds(5); // Longer timeout
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(200); // But cancel earlier
+            
+            // Act & Assert
+            Assert.ThrowsAsync<TaskCanceledException>(() => 
+                service.ExecuteAsync(command, arguments, null, cts.Token, timeout));
+        }
 
-            await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
+        [Test]
+        public void ExecuteAsync_WithUnexpectedException_ShouldThrowException()
+        {
+            // Arrange
+            var mockLogger = new Mock<ILogger<ProcessExecutionService>>();
+            var service = new TestableProcessExecutionService(mockLogger.Object);
+            var command = "pwsh";
+            var arguments = "simulate-unexpected-error";
+            
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<Exception>(() => 
+                service.ExecuteAsync(command, arguments, null, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("Simulated unexpected error"));
+        }
 
+        [Test]
+        public async Task ExecuteAsync_WithSuccessfulCommand_ShouldLogDebugWhenEnabled()
+        {
+            // Arrange
+            var mockLogger = new Mock<ILogger<ProcessExecutionService>>();
+            mockLogger.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
+            var service = new ProcessExecutionService(mockLogger.Object);
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test'\"";
+            
+            // Act
+            await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
+            mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Debug,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("succeeded")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task ExecuteAsync_WithFailedCommand_ShouldLogError()
+        {
+            // Arrange
+            var mockLogger = new Mock<ILogger<ProcessExecutionService>>();
+            var service = new ProcessExecutionService(mockLogger.Object);
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Error 'Error'; exit 1\"";
+            
+            // Act
+            await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
             mockLogger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -566,75 +411,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task ExecuteAsync_WithNonExistentCommand_LogsError()
+        public async Task ExecuteAsync_WithTimeout_ShouldLogTimeoutError()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutionService(mockLogger);
-            var command = fixture.CreateNonExistentCommand();
-            var arguments = fixture.CreateNonExistentArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
-            mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("failed with exit code")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public async Task ExecuteAsync_WithWin32Exception_LogsError()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutionService(mockLogger);
-            var command = fixture.CreateNonExistentCommand();
-            var arguments = fixture.CreateNonExistentArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
-            mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("failed with exit code")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce);
-        }
-
-        [Test]
-        public async Task ExecuteAsync_WithTimeout_LogsTimeoutError()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutionService(mockLogger);
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateLongRunningArguments(10);
-            var workingDir = fixture.CreateValidWorkingDirectory();
-            var timeout = fixture.CreateShortTimeout(200);
-
-            await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken,
-                timeout);
-
+            // Arrange
+            var mockLogger = new Mock<ILogger<ProcessExecutionService>>();
+            var service = new ProcessExecutionService(mockLogger.Object);
+            var command = "pwsh";
+            var arguments = "-Command \"Start-Sleep 5\"";
+            var timeout = TimeSpan.FromMilliseconds(200);
+            
+            // Act
+            await service.ExecuteAsync(command, arguments, null, CancellationToken.None, timeout);
+            
+            // Assert
             mockLogger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -645,24 +434,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Times.Once);
         }
 
-        #endregion
-
-        #region CreateProcess Tests
-
         [Test]
-        public void CreateProcess_WithValidParameters_CreatesProcessCorrectly()
+        public void CreateProcess_WithValidParameters_ShouldConfigureProcessCorrectly()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateValidArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            // Use reflection to access protected method
-            var method = typeof(ProcessExecutionService).GetMethod("CreateProcess", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var process = (Process)method!.Invoke(executor, [command, arguments, workingDir])!;
-
+            // Arrange
+            var service = new TestableProcessExecutionService(NullLogger<ProcessExecutionService>.Instance);
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test'\"";
+            var workingDir = Path.GetTempPath();
+            
+            // Act
+            var process = service.PublicCreateProcess(command, arguments, workingDir);
+            
+            // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(process.StartInfo.FileName, Is.EqualTo(command));
@@ -673,207 +457,168 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(process.StartInfo.UseShellExecute, Is.False);
                 Assert.That(process.StartInfo.CreateNoWindow, Is.True);
             });
-
-            process.Dispose();
-        }
-
-        [Test]
-        public void CreateProcess_WithNullWorkingDirectory_UsesCurrentDirectory()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateValidArguments();
-
-            // Use reflection to access protected method
-            var method = typeof(ProcessExecutionService).GetMethod("CreateProcess", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var process = (Process)method!.Invoke(executor, [command, arguments, null])!;
-
-            Assert.That(process.StartInfo.WorkingDirectory, Is.EqualTo(Environment.CurrentDirectory));
-
-            process.Dispose();
-        }
-
-        #endregion
-
-        #region Exception Handling Tests
-
-        [Test]
-        public async Task ExecuteAsync_WithWin32ExceptionNativeErrorCode2_ReturnsSpecificFailure()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateNonExistentCommand();
-            var arguments = fixture.CreateNonExistentArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsSuccess, Is.False);
-                Assert.That(result.ProcessException, Is.Not.Null);
-                Assert.That(result.ProcessException?.ExitCode, Is.Not.EqualTo(0));
-            });
-        }
-
-        [Test]
-        public void ExecuteAsync_HandlesUnexpectedExceptions()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var mockLogger = fixture.CreateMockLogger();
             
-            // Create a testable executor that can simulate unexpected exceptions
-            var executor = new TestableProcessExecutionService(mockLogger.Object);
-            var command = "simulate-error"; // This will trigger the exception in TestableProcessExecutionService
-            var arguments = fixture.CreateValidArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
-            {
-                await executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken);
-            });
+            process.Dispose();
         }
 
-        #endregion
-
-        #region Thread Safety Tests
+        [Test]
+        public void CreateProcess_WithNullWorkingDirectory_ShouldUseCurrentDirectory()
+        {
+            // Arrange
+            var service = new TestableProcessExecutionService(NullLogger<ProcessExecutionService>.Instance);
+            var command = "pwsh";
+            var arguments = "-Command \"Write-Output 'Test'\"";
+            
+            // Act
+            var process = service.PublicCreateProcess(command, arguments, null);
+            
+            // Assert
+            Assert.That(process.StartInfo.WorkingDirectory, Is.EqualTo(Environment.CurrentDirectory));
+            process.Dispose();
+        }
 
         [Test]
-        public async Task ExecuteAsync_ConcurrentExecution_HandlesCorrectly()
+        public async Task ExecuteAsync_ConcurrentExecution_ShouldHandleCorrectly()
         {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
             var tasks = new List<Task<Result<object>>>();
+            
+            // Act
             for (int i = 0; i < 5; i++)
             {
-                var arguments = fixture.CreateEchoArguments($"Test message {i}");
-                tasks.Add(executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken));
+                var arguments = $"-Command \"Write-Output 'Test {i}'\"";
+                tasks.Add(service.ExecuteAsync(command, arguments, null, CancellationToken.None));
             }
-
+            
             var results = await Task.WhenAll(tasks);
-
+            
+            // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(results.Length, Is.EqualTo(5));
                 for (int i = 0; i < 5; i++)
                 {
                     Assert.That(results[i].IsSuccess, Is.True, $"Task {i} should succeed");
-                    Assert.That(results[i].Value?.ToString(), Does.Contain($"Test message {i}"), $"Task {i} should contain correct message");
+                    Assert.That(results[i].Value!.ToString(), Does.Contain($"Test {i}"), $"Task {i} should contain correct output");
                 }
             });
         }
 
-        #endregion
+        [Test]
+        public async Task ExecuteAsync_WithVeryLongOutput_ShouldCaptureAll()
+        {
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var longString = new string('X', 10000);
+            var arguments = $"-Command \"Write-Output '{longString}'\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.ToString(), Does.Contain(longString));
+            });
+        }
 
-        #region Helper Classes
+        [Test]
+        public async Task ExecuteAsync_WithSpecialCharactersInOutput_ShouldHandleCorrectly()
+        {
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var specialChars = "Hello World! 123";
+            var arguments = $"-Command \"Write-Output '{specialChars}'\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.ToString(), Does.Contain(specialChars));
+            });
+        }
+
+        [Test]
+        public async Task ExecuteAsync_WithDifferentExitCodes_ShouldCaptureCorrectExitCode()
+        {
+            // Arrange
+            var service = CreateService();
+            var command = "pwsh";
+            var arguments = "-Command \"exit 42\"";
+            
+            // Act
+            var result = await service.ExecuteAsync(command, arguments, null, CancellationToken.None);
+            
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(result.ProcessException!.ExitCode, Is.EqualTo(42));
+            });
+        }
+
+        private ProcessExecutionService CreateService()
+        {
+            return new ProcessExecutionService(NullLogger<ProcessExecutionService>.Instance);
+        }
+
+        private string CreateTempDirectory()
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+            return tempDir;
+        }
+
+        private void CleanupTempDirectory(string tempDir)
+        {
+            try
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+
 
         /// <summary>
-        /// Testable version of ProcessExecutionService for simulating specific scenarios
+        /// Testable version of ProcessExecutionService that exposes protected methods and can simulate errors
         /// </summary>
         private class TestableProcessExecutionService : ProcessExecutionService
         {
             public TestableProcessExecutionService(ILogger<ProcessExecutionService> logger) : base(logger) { }
 
-            protected override Process CreateProcess(string command, string arguments, string? workingDirectory)
+            public Process PublicCreateProcess(string command, string arguments, string? workingDirectory)
             {
-                // Simulate an unexpected exception scenario if needed
-                if (command.Contains("simulate-error"))
+                return CreateProcess(command, arguments, workingDirectory);
+            }
+
+            public override async Task<Result<object>> ExecuteAsync(
+                string command,
+                string arguments,
+                string? workingDir,
+                CancellationToken cancellationToken,
+                TimeSpan? timeout = null)
+            {
+                if (arguments == "simulate-unexpected-error")
                 {
-                    throw new InvalidOperationException("Simulated unexpected error");
+                    throw new Exception("Simulated unexpected error");
                 }
 
-                return base.CreateProcess(command, arguments, workingDirectory);
+                return await base.ExecuteAsync(command, arguments, workingDir, cancellationToken, timeout);
             }
         }
-
-        #endregion
-
-        #region Edge Case Tests
-
-        [Test]
-        public async Task ExecuteAsync_WithVeryLongArguments_HandlesCorrectly()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var longMessage = new string('x', 1000);
-            var arguments = fixture.CreateEchoArguments(longMessage);
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value?.ToString(), Does.Contain(longMessage));
-            });
-        }
-
-        [Test]
-        public async Task ExecuteAsync_WithZeroTimeout_CompletesSuccessfully()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = fixture.CreateEchoArguments();
-            var workingDir = fixture.CreateValidWorkingDirectory();
-            var timeout = TimeSpan.Zero;
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken,
-                timeout);
-
-            // Zero timeout means immediate timeout, should fail
-            Assert.That(result.IsSuccess, Is.False);
-        }
-
-        [Test]
-        public async Task ExecuteAsync_OutputTrimming_RemovesTrailingWhitespace()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutionService();
-            var command = fixture.CreateValidCommand();
-            var arguments = "-Command \"Write-Output 'Test'; Write-Output ''\""; // Extra newline
-            var workingDir = fixture.CreateValidWorkingDirectory();
-
-            var result = await executor.ExecuteAsync(
-                command,
-                arguments,
-                workingDir,
-                fixture.CancellationToken);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value?.ToString(), Does.Not.EndWith("\n"));
-                Assert.That(result.Value?.ToString(), Does.Not.EndWith("\r"));
-            });
-        }
-
-        #endregion
     }
 }

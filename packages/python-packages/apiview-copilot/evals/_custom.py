@@ -4,7 +4,7 @@ import os
 import pathlib
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Set
 
 import prompty
 import prompty.azure_beta
@@ -19,8 +19,7 @@ from evals._util import ensure_json_obj
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
-
-def _review_apiview(query: str, language: str):
+def _review_apiview(testcase: str, query: str, language: str):
     """APIView review target function for evals framework."""
     from src._apiview_reviewer import ApiViewReview
 
@@ -28,7 +27,6 @@ def _review_apiview(query: str, language: str):
     review = reviewer.run()
     reviewer.close()
     return {"actual": review.model_dump_json()}
-
 
 def _mention_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, other_comments: str, trigger_comment: str
@@ -45,7 +43,6 @@ def _mention_action_workflow(
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
-
 
 def _thread_resolution_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, comments: str
@@ -64,7 +61,6 @@ def _thread_resolution_action_workflow(
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
-
 def _filter_comment_metadata(testcase: str, response: str, language: str, exceptions: str, outline: str, content: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_comment_with_metadata.prompty"
     prompty_kwargs = {
@@ -77,7 +73,6 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
-
 
 def _filter_existing_comment(testcase: str, response: str, language: str, existing: str, comment: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_existing_comment.prompty"
@@ -100,7 +95,7 @@ class BaseEvaluator(ABC):
     """
 
     @abstractmethod
-    def __call__(self, **kwargs) -> Dict[str, Any]:
+    def __call__(self, **kwargs) -> dict[str, Any]:
         """Evaluate the given inputs and return evaluation metrics.
 
         Args:
@@ -108,18 +103,18 @@ class BaseEvaluator(ABC):
                      The specific arguments depend on the evaluator implementation.
 
         Returns:
-            Dict[str, Any]: A dictionary containing evaluation metrics and results.
+            dict[str, Any]: A dictionary containing evaluation metrics and results.
                            The structure depends on the evaluator implementation.
         """
         pass
 
     @property
     @abstractmethod
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         """Return the evaluator configuration for the Azure AI evaluation framework.
 
         Returns:
-            Dict[str, Any]: Configuration dictionary containing column mappings
+            dict[str, Any]: Configuration dictionary containing column mappings
                            and other evaluator-specific settings.
         """
         pass
@@ -156,7 +151,7 @@ class BaseEvaluator(ABC):
 class CustomAPIViewEvaluator(BaseEvaluator):
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, jsonl_file: str = None):
         settings = SettingsManager()
         # for best results, this should always be a different model from the one we are evaluating
         self._judge_model = "gpt-4.1"
@@ -175,7 +170,7 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         }
 
     @property
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         """Return the evaluator configuration for the Azure AI evaluation framework."""
         return {
             "column_mapping": {
@@ -229,7 +224,7 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         normalized_score = max(0, min(100, score * 100))
         return round(normalized_score)
 
-    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
+    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> tuple[Set, Set, Set]:
         """Compare comments based on both line numbers and rule IDs."""
         exact_matches = set()
         rule_matches_wrong_line = set()
@@ -649,7 +644,7 @@ class PromptyEvaluator(BaseEvaluator):
         """Peek at JSONL to see what fields are available."""
 
     @property
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         config = {}
         with open(self._jsonl_file, encoding="utf-8") as f:
             first_line = json.loads(f.readline())

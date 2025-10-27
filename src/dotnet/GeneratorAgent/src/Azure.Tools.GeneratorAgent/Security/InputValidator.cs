@@ -127,45 +127,6 @@ namespace Azure.Tools.GeneratorAgent.Security
         }
 
         /// <summary>
-        /// Validates a PowerShell script path for security.
-        /// </summary>
-        public static string ValidatePowerShellScriptPath(string scriptPath, string azureSdkPath)
-        {
-            if (string.IsNullOrWhiteSpace(scriptPath))
-            {
-                throw new ArgumentException("PowerShell script path cannot be null or empty");
-            }
-
-            if (string.IsNullOrWhiteSpace(azureSdkPath))
-            {
-                throw new ArgumentException("Azure SDK path cannot be null or empty");
-            }
-
-            // Ensure it's a PowerShell script
-            if (!string.Equals(Path.GetExtension(scriptPath), ".ps1", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("PowerShell script must have .ps1 extension");
-            }
-
-            var fullScriptPath = Path.Combine(azureSdkPath, scriptPath);
-            
-            if (!File.Exists(fullScriptPath))
-            {
-                throw new FileNotFoundException($"PowerShell script not found: {fullScriptPath}");
-            }
-
-            var normalizedPath = Path.GetFullPath(fullScriptPath);
-            var normalizedAzureSdkPath = Path.GetFullPath(azureSdkPath);
-            
-            if (!normalizedPath.StartsWith(normalizedAzureSdkPath, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new UnauthorizedAccessException("PowerShell script must be within Azure SDK directory");
-            }
-
-            return fullScriptPath;
-        }
-
-        /// <summary>
         /// Validates process arguments for security (prevents injection).
         /// </summary>
         public static string ValidateProcessArguments(string arguments)

@@ -22,8 +22,8 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             var fullChat = json.ChatHistory.Append(json.NextMessage);
 
             // 2. Get chat response
-            var expectedToolCalls = SerializationHelper.NumberOfToolCalls(json.ExpectedOutcome, s_toolNames);
-            var response = await s_chatCompletion!.GetChatResponseAsync(fullChat, expectedToolCalls);
+            var expectedToolResults = SerializationHelper.GetExpectedToolsByName(json.ExpectedOutcome, s_toolNames);
+            var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
 
             // 3. Custom Evaluator to check tool inputs
             // Layers the reporting configuration on top of it for a nice html report. 
@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
                 enableResponseCaching: true);
             await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(this.ScenarioName);
 
-            // Pass the expected outcome through the additional context, then run the evaluation.
+            // Pass the expected outcome through the additional context. 
             var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames);
             var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 

@@ -13,6 +13,8 @@ Design specs serve several important purposes:
 
 ## Spec Review Process
 
+**Turnaround Goal**: 1 week from PR submission to approval and merge
+
 ### 1. Create Your Design Spec
 
 1. Copy the [spec-template.md](./spec-template.md) to create a new spec file
@@ -51,11 +53,15 @@ Use these stage prefixes when naming your spec files:
 2. Add your completed spec file to this `docs/specs/` directory
 3. Open a PR with a clear title like: `[Spec] Environment Setup Verification Design`
 4. Tag relevant stakeholders and language representatives as reviewers:
-   - **.NET**: @dotnet-driver
-   - **Java**: @java-driver
-   - **JavaScript**: @js-driver
-   - **Python**: @python-driver
-   - **Go**: @go-driver
+   - **C#**: Maddy (@m-redding)
+   - **Python**: Libba (@LibbaLawrence)
+   - **Java**: Sameeksha (@savaity)
+   - **JS**: Timo (@timovv)
+   - **Go**: Richard (@richardpark-msft) or Chenjie (@tadelesh)
+   - **EngSys**: Ben (@benbp) and Ray (@raychen-msft)
+   - **Leads**: Mariana (@maririos), Laurent (@lmazuel), Ronnie (@ronniegeraghty)
+   - **Outer loop**: Praveen (@praveenkuttappan)
+   - **SH**: Haoling (@haolingdong-msft)
 
 ### 3. Gather Feedback and Obtain Sign-Off
 
@@ -128,7 +134,9 @@ Every spec should include the following sections (see [spec-template.md](./spec-
 
 ## Examples
 
-Example specs will be added here as they are created and approved.
+- [Scenario 1 Specification](0-scenario-1.spec.md) - End-to-end workflow for generating and validating preview SDKs across all 5 languages using the Health Deidentification service
+
+Additional example specs will be added here as they are created and approved.
 
 ## Tips for Writing Good Specs
 

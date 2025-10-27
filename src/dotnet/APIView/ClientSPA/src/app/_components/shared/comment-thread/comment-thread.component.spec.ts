@@ -128,4 +128,82 @@ describe('CommentThreadComponent', () => {
       expect(component.threadResolvedBy).toBe('test user 2');
     });
   });
+
+  describe('batch resolution functionality', () => {
+    beforeEach(() => {
+      component.userProfile = { userName: 'test-user' } as any;
+      component.reviewId = 'test-review-id';
+      
+      const comment1 = new CommentItemModel();
+      comment1.id = 'comment1';
+      comment1.upvotes = [];
+      comment1.downvotes = [];
+      comment1.elementId = 'element1';
+      
+      const comment2 = new CommentItemModel();
+      comment2.id = 'comment2';
+      comment2.upvotes = [];
+      comment2.downvotes = [];
+      comment2.elementId = 'element2';
+      
+      component.relatedComments = [comment1, comment2];
+    });
+
+    it('should apply upvotes to comments correctly', () => {
+      spyOn(component.batchResolutionActionEmitter, 'emit');
+      component.allCodePanelRowData = [
+        { 
+          nodeIdHashed: 'hash1', 
+          associatedRowPositionInGroup: 0,
+          comments: [{ id: 'comment1' } as CommentItemModel]
+        } as CodePanelRowData
+      ];
+      
+      component['applyBatchVotes'](['comment1'], 'up', 'test-user');
+      
+      expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          commentThreadUpdateAction: jasmine.any(Number), // CommentUpVoteToggled
+          commentId: 'comment1'
+        })
+      );
+    });
+
+    it('should apply downvotes to comments correctly', () => {
+      spyOn(component.batchResolutionActionEmitter, 'emit');
+      component.allCodePanelRowData = [
+        { 
+          nodeIdHashed: 'hash1', 
+          associatedRowPositionInGroup: 0,
+          comments: [{ id: 'comment1' } as CommentItemModel]
+        } as CodePanelRowData
+      ];
+      
+      component['applyBatchVotes'](['comment1'], 'down', 'test-user');
+      
+      expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          commentThreadUpdateAction: jasmine.any(Number), // CommentDownVoteToggled
+          commentId: 'comment1'
+        })
+      );
+    });
+
+    it('should emit resolution events for batch resolution', () => {
+      spyOn(component.batchResolutionActionEmitter, 'emit');
+      component.allCodePanelRowData = [
+        { nodeId: 'element1', nodeIdHashed: 'hash1', associatedRowPositionInGroup: 0 } as CodePanelRowData
+      ];
+      
+      const commentIds = ['comment1'];
+      component['emitResolutionEvents'](commentIds);
+      
+      expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          commentId: 'comment1',
+          resolvedBy: 'test-user'
+        })
+      );
+    });
+  });
 });

@@ -3,7 +3,6 @@ using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenAI;
@@ -127,6 +126,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton<FormatPromptService>();
             services.AddSingleton<TypeSpecFileVersionManager>();
             services.AddSingleton<TypeSpecPatchApplicator>();
+            services.AddSingleton<KnowledgeBaseService>();
 
             services.AddScoped<ErrorAnalysisService>();
             services.AddScoped<GenerationOrchestrator>();
@@ -136,7 +136,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddScoped<ToolExecutor>();
             services.AddScoped<TypeSpecFileService>();
             services.AddScoped<GitHubFileService>();
-            services.AddScoped<ITypeSpecToolHandler, TypeSpecToolHandler>();
+            services.AddScoped<TypeSpecToolHandler>();
 
             services.AddScoped<OpenAIService>();
 

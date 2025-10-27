@@ -70,9 +70,17 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
                 }
             };
 
+            // Notify if the command might take a while
+            var timeoutMessage = options.Timeout > ProcessOptions.DEFAULT_PROCESS_TIMEOUT
+                                    ? $"with timeout {options.Timeout.TotalMinutes} minutes "
+                                    : "";
+
             logger.LogInformation(
-                "Running command: {command} {args} in {workingDirectory}",
-                options.Command, string.Join(" ", options.Args), options.WorkingDirectory);
+                "Running command [{command} {args}] {timeoutMessage}in {workingDirectory}",
+                options.Command,
+                string.Join(" ", options.Args),
+                timeoutMessage,
+                options.WorkingDirectory);
 
             process.Start();
             lock (result)

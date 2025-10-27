@@ -22,6 +22,7 @@ namespace APIViewWeb.Managers
         public Task SoftDeleteCommentAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment);
         public Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId);
+        public Task<List<CommentItemModel>> ResolveBatchConversationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request);
         public Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId);
         public Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);

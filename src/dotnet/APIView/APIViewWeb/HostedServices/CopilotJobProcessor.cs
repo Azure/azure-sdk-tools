@@ -103,7 +103,9 @@ namespace APIViewWeb.HostedServices
                         CorrelationId = comment.CorrelationId,
                         GuidelineIds = comment.GuidelineIds ?? [],
                         MemoryIds = comment.MemoryIds ?? [],
-                        Severity = CommentItemModel.ParseSeverity(comment.Severity)
+                        Severity = CommentItemModel.ParseSeverity(comment.Severity),
+                        ConfidenceScore = comment.ConfidenceScore,
+                        CommentSource = CommentSource.AIGenerated,
                     };
 
                     var commentText = new StringBuilder();

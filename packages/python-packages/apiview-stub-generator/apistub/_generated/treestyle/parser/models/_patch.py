@@ -23,6 +23,7 @@ from ._models import (
     ReviewToken as TokenImpl,
     ReviewLine as ReviewLineImpl,
     CodeDiagnostic as Diagnostic,
+    CrossLanguageMetadata,
 )
 from ._enums import TokenKind
 
@@ -91,6 +92,12 @@ class ApiView(CodeFile):
         pkg_version="",
     ):
         self.metadata_map = metadata_map or MetadataMap("")
+        cross_language_metadata = None
+        if self.metadata_map.cross_language_map:
+            cross_language_metadata = CrossLanguageMetadata(
+                cross_language_package_id=self.metadata_map.cross_language_package_id,
+                cross_language_definition_id=self.metadata_map.cross_language_map,
+            )
         self.review_lines: ReviewLines
         super().__init__(
             package_name=pkg_name,
@@ -98,7 +105,7 @@ class ApiView(CodeFile):
             parser_version=VERSION,
             language="Python",
             review_lines=ReviewLines(),
-            cross_language_package_id=self.metadata_map.cross_language_package_id,
+            cross_language_metadata=cross_language_metadata,
             diagnostics=[],
         )
 
@@ -137,9 +144,7 @@ class ApiView(CodeFile):
 
 class ReviewToken(TokenImpl):
 
-    def __init__(
-        self, *args, **kwargs
-    ) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(self, *args, **kwargs) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
 
     def render(self):
@@ -172,13 +177,8 @@ class ReviewLines(list):
         )
 
     def set_blank_lines(
-        self,
-        count: int = 1,
-        *,
-        last_is_context_end_line: bool = False,
-        related_to_line: Union[str, List[str]] = None
+        self, count: int = 1, *, last_is_context_end_line: bool = False, related_to_line: Union[str, List[str]] = None
     ):
-
         """Ensures a specific number of blank lines.
         Will add or remove newline tokens as needed
         to ensure the exact number of blank lines.
@@ -328,13 +328,9 @@ class ReviewLine(ReviewLineImpl):
         )
 
     def add_link(self, url, *, skip_diff=False):
-        self.add_token(
-            ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url, skip_diff=skip_diff)
-        )
+        self.add_token(ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url, skip_diff=skip_diff))
 
-    def add_string_literal(
-        self, value, *, has_prefix_space=False, has_suffix_space=True
-    ):
+    def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
             ReviewToken(
                 kind=TokenKind.STRING_LITERAL,
@@ -344,9 +340,7 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    def add_literal(
-        self, value, *, has_prefix_space=False, has_suffix_space=True, skip_diff=False
-    ):
+    def add_literal(self, value, *, has_prefix_space=False, has_suffix_space=True, skip_diff=False):
         self.add_token(
             ReviewToken(
                 kind=TokenKind.LITERAL,
@@ -384,9 +378,7 @@ class ReviewLine(ReviewLineImpl):
             token.navigate_to_id = navigate_to_id
         self.add_token(token)
 
-    def _add_type_token(
-        self, type_name, apiview, has_prefix_space=False, has_suffix_space=True
-    ):
+    def _add_type_token(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
 
@@ -420,9 +412,7 @@ class ReviewLine(ReviewLineImpl):
             if type_name:  # if type name is empty, don't add punctuation
                 self.add_punctuation(type_name, has_suffix_space=False)
 
-    def add_type(
-        self, type_name, apiview, has_prefix_space=False, has_suffix_space=True
-    ):
+    def add_type(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
         # TODO: add_type should require an ArgType or similar object so we can link *all* types
 
         # This method replace full qualified internal types to short name and generate tokens
@@ -434,11 +424,7 @@ class ReviewLine(ReviewLineImpl):
         # Check if multiple types are listed with 'or' separator
         # Encode multiple types with or separator into Union
         if TYPE_OR_SEPARATOR in type_name:
-            types = [
-                t.strip()
-                for t in type_name.split(TYPE_OR_SEPARATOR)
-                if t != TYPE_OR_SEPARATOR
-            ]
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 

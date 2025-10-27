@@ -496,7 +496,12 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		agenticSearchPrompt = tenantConfig.AgenticSearchPrompt
 	}
 
-	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources, agenticSearchPrompt)
+	sourceFilter := map[model.Source]string{}
+	if hasConfig && tenantConfig.SourceFilter != nil {
+		sourceFilter = tenantConfig.SourceFilter
+	}
+
+	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err

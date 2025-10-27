@@ -79,9 +79,9 @@
             "default": "None",
             "description": "Language variant is applicable only for java variants"
         },
-        "CrossLanguagePackageId": {
-            "type": "string",
-            "description": "Id to identify Reviews for different languages generated from the same TypeSpec specification."
+        "CrossLanguageMetadata": {
+            "$ref": "#/$defs/CrossLanguageMetadata",
+            "description": "Metadata for different languages generated from the same TypeSpec specification."
         },
         "ReviewLines": {
             "type": "array",
@@ -113,6 +113,21 @@
     ],
     "description": "ReviewFile represents entire API review object. This will be processed to render review lines.",
     "$defs": {
+        "CrossLanguageMetadata": {
+            "type": "object",
+            "properties": {
+                "CrossLanguagePackageId": {
+                    "type": "string"
+                },
+                "CrossLanguageDefinitionId": {
+                    "$ref": "#/$defs/LanguageIdMap"
+                }
+            },
+            "required": [
+                "CrossLanguagePackageId",
+                "CrossLanguageDefinitionId"
+            ]
+        },
         "ReviewLine": {
             "type": "object",
             "properties": {
@@ -211,6 +226,14 @@
                 "Tags"
             ]
         },
+        "LanguageIdMap": {
+            "type": "object",
+            "properties": {},
+            "unevaluatedProperties": {
+                "type": "string"
+            },
+            "description": "Maps a language-specific ID (key) to a TypeSpec ID (value).\nKey: Language-specific ID (e.g., 'en-US', 'fr-FR')\nValue: Cross-language TypeSpec ID"
+        },
         "ReviewToken": {
             "type": "object",
             "properties": {
@@ -279,7 +302,7 @@
         "RecordString": {
             "type": "object",
             "properties": {},
-            "additionalProperties": {
+            "unevaluatedProperties": {
                 "type": "string"
             }
         },

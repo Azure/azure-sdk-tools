@@ -187,7 +187,7 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Resolve comments in a comment thread
+        /// Resolve a single comment thread
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="elementId"></param>
@@ -197,6 +197,19 @@ namespace APIViewWeb.LeanControllers
         {
             await _commentsManager.ResolveConversation(User, reviewId, elementId);
             return Ok();
+        }
+
+        /// <summary>
+        /// Resolve multiple comment threads with optional voting and reply
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPatch("{reviewId}/resolveBatchComments", Name = "ResolveBatchComments")]
+        public async Task<ActionResult> ResolveBatchCommentsAsync(string reviewId, [FromBody] ResolveBatchConversationRequest request)
+        {
+            List<CommentItemModel> createdComments = await _commentsManager.ResolveBatchConversationAsync(User, reviewId, request);
+            return new LeanJsonResult(createdComments, StatusCodes.Status201Created);
         }
 
         /// <summary>

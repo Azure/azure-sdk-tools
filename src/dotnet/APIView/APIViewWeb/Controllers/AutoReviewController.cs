@@ -46,15 +46,16 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string packageType = null)
         {
-            if (file != null)
+            try
             {
-                using (var openReadStream = file.OpenReadStream())
+                if (file != null)
                 {
+                    await using var openReadStream = file.OpenReadStream();
                     using var memoryStream = new MemoryStream();
                     var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                         runAnalysis: false, memoryStream: memoryStream);
 
-                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
+                    (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                     if (apiRevision != null)
                     {
                         apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
@@ -64,19 +65,29 @@ namespace APIViewWeb.Controllers
                         {
                             return Ok(reviewUrl);
                         }
-                        else if (review.IsApproved)
+                        if (review.IsApproved)
                         {
                             return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                         }
-                        else 
-                        {
-                            return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
-                        }
+                        return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
                     }
-                };
+                }
             }
-            // Return internal server error for any unknown error
-            return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
+            catch (Exception e)
+            {
+                return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new 
+                { 
+                    error = "Failed to create API review",
+                    message = e.Message,
+                    exceptionType = e.GetType().Name,
+                });
+            }
+  
+            return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
+            {
+                error = "Failed to create API review"
+
+            });
         }
     
         public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null, string packageVersion = null)
@@ -85,12 +96,17 @@ namespace APIViewWeb.Controllers
             // If there is no matching revisions then it will return latest automatic revision details.
             // This is used by prepare release script and build pipeline to verify approval status.
 
-            ReviewListItemModel review = await _reviewManager.GetReviewAsync(packageName: packageName, language: language, isClosed: null);
-
-            if (review != null)
+            try
             {
+                ReviewListItemModel review = await _reviewManager.GetReviewAsync(packageName: packageName, language: language, isClosed: null);
+
+                if (review == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
+                }
+
                 APIRevisionListItemModel apiRevision = null;
-                
+                    
                 if (!string.IsNullOrEmpty(packageVersion))
                 {
                     var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
@@ -102,7 +118,7 @@ namespace APIViewWeb.Controllers
                 {
                     apiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
                 }
-                
+                    
 
                 if(apiRevision == null)
                 {
@@ -114,17 +130,30 @@ namespace APIViewWeb.Controllers
                 {
                     return Ok();
                 }
-                else 
+                if (review.IsApproved)
                 {
-                    if (review.IsApproved)
-                    {
-                        return StatusCode(statusCode: StatusCodes.Status201Created);
-                    }
-                    // Return 202 to indicate package name is not approved
-                    return StatusCode(statusCode: StatusCodes.Status202Accepted);
+                    return StatusCode(statusCode: StatusCodes.Status201Created);
                 }
+                // Return 202 to indicate package name is not approved
+                return StatusCode(statusCode: StatusCodes.Status202Accepted);
+
             }
-            return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
+            catch (Exception e)
+            {
+                return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
+                {
+                    error = "Failed to get review status",
+                    message = e.Message,
+                    exceptionType = e.GetType().Name,
+                    details = new
+                    {
+                        packageName,
+                        language,
+                        packageVersion,
+                        reviewId
+                    }
+                });
+            }
         }
 
         // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
@@ -146,18 +175,24 @@ namespace APIViewWeb.Controllers
             string packageType = null
             )
         {
-            using var memoryStream = new MemoryStream();
-            var codeFile = await _codeFileManager.GetCodeFileAsync(repoName: repoName, buildId: buildId, artifactName: artifactName,
-                packageName: packageName, originalFileName: originalFilePath, codeFileName: reviewFilePath, originalFileStream: memoryStream,
-                project: project);
+            try
+            {
+                using var memoryStream = new MemoryStream();
+                var codeFile = await _codeFileManager.GetCodeFileAsync(repoName: repoName, buildId: buildId, artifactName: artifactName,
+                    packageName: packageName, originalFileName: originalFilePath, codeFileName: reviewFilePath, originalFileStream: memoryStream,
+                    project: project);
 
-            if (codeFile == null)
-            {
-                return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
-            }
-            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
-            if (apiRevision != null)
-            {
+                if (codeFile == null)
+                {
+                    return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
+                }
+
+                (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
+                if (apiRevision == null)
+                {
+                    return StatusCode(statusCode: StatusCodes.Status500InternalServerError, "API revision creation returned null. This may indicate an issue with the code file parsing or revision creation process.");
+                }
+
                 apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                 var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
@@ -165,17 +200,31 @@ namespace APIViewWeb.Controllers
                 {
                     return Ok(reviewUrl);
                 }
-                else if (review.IsApproved)
+                if (review.IsApproved)
                 {
                     return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                 }
-                else
-                {
-                    return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
-                }
+
+                return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+
             }
-            // Return internal server error for any unknown error
-            return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
+            catch (Exception e)
+            {
+                return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
+                {
+                    error = "Failed to create API review from DevOps artifacts",
+                    message = e.Message,
+                    details = new
+                    {
+                        buildId,
+                        artifactName,
+                        packageName,
+                        originalFilePath,
+                        reviewFilePath,
+                        label
+                    }
+                });
+            }
         }
 
         private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, string packageType, bool compareAllRevisions = false)

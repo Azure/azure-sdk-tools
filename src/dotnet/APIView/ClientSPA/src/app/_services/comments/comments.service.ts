@@ -89,6 +89,22 @@ export class CommentsService {
       withCredentials: true });
   }
 
+  resolveBatchComments(reviewId: string, data: {
+    commentIds: string[],
+    vote?: 'none' | 'up' | 'down',
+    commentReply?: string
+  }) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    return this.http.patch<CommentItemModel[]>(this.baseUrl + `/${reviewId}/resolveBatchComments`, data, { 
+      headers: headers,
+      observe: 'response',
+      withCredentials: true 
+    });
+  }
+
   toggleCommentUpVote(reviewId: string, commentId: string) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

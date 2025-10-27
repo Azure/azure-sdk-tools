@@ -267,7 +267,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -275,14 +275,14 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
             }
 
             // Azure SDK for Java uses BOM-based dependency management
-            return await AnalyzeDependencyTreeAsync(packagePath, pomPath, cancellationToken);
+            return await AnalyzeDependencyTree(packagePath, pomPath, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -302,7 +302,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <param name="pomPath">The path to the pom.xml file</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Analysis results</returns>
-    private async Task<PackageCheckResponse> AnalyzeDependencyTreeAsync(string packagePath, string pomPath, CancellationToken cancellationToken)
+    private async Task<PackageCheckResponse> AnalyzeDependencyTree(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
         var command = "mvn";
         var args = new[] { "dependency:tree", "-Dverbose", "-f", pomPath };

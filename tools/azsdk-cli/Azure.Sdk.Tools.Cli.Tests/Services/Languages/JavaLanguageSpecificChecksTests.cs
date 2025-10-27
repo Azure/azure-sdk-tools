@@ -915,7 +915,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulDependencyAnalysis();
 
             // Act
-            var result = await LangService.AnalyzeDependenciesAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.AnalyzeDependencies(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -946,7 +946,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedDependencyAnalysis();
 
             // Act
-            var result = await LangService.AnalyzeDependenciesAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.AnalyzeDependencies(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
         [Test]
         public async Task Evaluate_VerifyApiSpec()
         {
-            const string prompt = "Help me verify my api spec is properly setup for sdk generation. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
+            const string prompt = "Help me verify my api spec is properly setup for sdk generation, skip asking me if I want to generate sdk. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
             string[] expectedTools =
             [
                 "azsdk_typespec_check_project_in_public_repo",
@@ -46,11 +46,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 
             // 4. Assert the results
-            EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];
-            BooleanMetric expectedToolInput = result.Get<BooleanMetric>(ExpectedToolInputEvaluator.ExpectedToolInputMetricName);
-            expectedToolInput.Interpretation!.Failed.Should().BeFalse(because: expectedToolInput.Interpretation.Reason);
-            expectedToolInput.Interpretation.Rating.Should().BeOneOf(expectedRatings, because: expectedToolInput.Reason);
-            expectedToolInput.ContainsDiagnostics(d => d.Severity >= EvaluationDiagnosticSeverity.Warning).Should().BeFalse();
+            EvaluationHelper.ValidateToolInputsEvaluator(result);
         }
     }
 }

@@ -120,19 +120,8 @@ public class PullRequestManagerTests
             _languageServices,
             _mockGitHubClientFactory.Object);
 
-        try
-        {
-            PullRequestModel result = await manager.GetPullRequestModelAsync(123, "Azure/azure-sdk-for-net", "Azure.Core", "test.json", "C#");
 
-            Assert.NotNull(result);
-            Assert.Equal(123, result.PullRequestNumber);
-            Assert.Equal("Azure/azure-sdk-for-net", result.RepoName);
-        }
-        catch
-        {
-            // ignored
-        }
-
+        PullRequestModel result = await manager.GetPullRequestModelAsync(123, "Azure/azure-sdk-for-net", "Azure.Core", "test.json", "C#");
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,

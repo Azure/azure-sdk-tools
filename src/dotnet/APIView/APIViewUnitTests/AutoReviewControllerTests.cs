@@ -22,7 +22,6 @@ namespace APIViewUnitTests
 {
     public class AutoReviewControllerTests
     {
-        private readonly Mock<IAuthorizationService> _mockAuthorizationService;
         private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly Mock<IReviewManager> _mockReviewManager;
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
@@ -33,7 +32,6 @@ namespace APIViewUnitTests
 
         public AutoReviewControllerTests()
         {
-            _mockAuthorizationService = new Mock<IAuthorizationService>();
             _mockCodeFileManager = new Mock<ICodeFileManager>();
             _mockReviewManager = new Mock<IReviewManager>();
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
@@ -45,7 +43,6 @@ namespace APIViewUnitTests
             };
 
             _controller = new AutoReviewController(
-                _mockAuthorizationService.Object,
                 _mockCodeFileManager.Object,
                 _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,

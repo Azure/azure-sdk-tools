@@ -31,7 +31,7 @@ public static class OpenTelemetryExtensions
                 {
                     options.Version = assemblyName.Version.ToString();
                 }
-#if RELEASE
+#if !DEBUG
                 var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_COLLECT_TELEMETRY");
                 options.IsTelemetryEnabled = string.IsNullOrEmpty(collectTelemetry)
                     || (bool.TryParse(collectTelemetry, out var shouldCollect) && shouldCollect);

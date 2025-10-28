@@ -45,7 +45,8 @@ public class PullRequestManagerTests
         _mockLogger = new Mock<ILogger<PullRequestManager>>();
         _mockGitHubClientFactory = new Mock<IGitHubClientFactory>();
 
-        _telemetryClient = new TelemetryClient(new TelemetryConfiguration());
+        TelemetryConfiguration telemetryConfig = TelemetryConfiguration.CreateDefault();
+        _telemetryClient = new TelemetryClient(telemetryConfig);
         _languageServices = new List<LanguageService>();
         _configurationValues = new Dictionary<string, string>();
 

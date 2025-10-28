@@ -81,6 +81,15 @@ public class Pom {
         return pom;
     }
 
+    /**
+     * Returns a singleton Null Object instance representing the absence of a real Maven POM. All string
+     * accessors return empty strings, collections are empty, optional numeric values are null, and
+     * {@link #isPomFileReal()} returns false. This avoids pervasive null checks at call sites.
+     */
+    public static Pom empty() {
+        return new Pom("", "", "", false);
+    }
+
     static Map<String, String> parseFilename(String filename) {
         Matcher matcher = SOURCES_JAR_PATTERN.matcher(filename);
         if (!matcher.matches()) {

@@ -14,9 +14,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
 
-namespace APIViewWeb.Helpers;
+namespace APIViewWeb.Services;
 
-public class GitHubClientFactory
+public class GitHubClientFactory: IGitHubClientFactory
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<GitHubClientFactory> _logger;

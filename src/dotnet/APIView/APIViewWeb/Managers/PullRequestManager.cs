@@ -11,6 +11,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +31,7 @@ namespace APIViewWeb.Managers
         private readonly ICodeFileManager _codeFileManager;
         private readonly IConfiguration _configuration;
         private readonly IEnumerable<LanguageService> _languageServices;
-        private readonly GitHubClientFactory _gitHubClientFactory;
+        private readonly IGitHubClientFactory _gitHubClientFactory;
         private readonly int _pullRequestCleanupDays;
         private readonly bool _isGitHubAppAvailable;
 
@@ -43,7 +44,7 @@ namespace APIViewWeb.Managers
             TelemetryClient telemetryClient, 
             ILogger<PullRequestManager> logger, 
             IEnumerable<LanguageService> languageServices,
-            GitHubClientFactory gitHubClientFactory)
+            IGitHubClientFactory gitHubClientFactory)
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;

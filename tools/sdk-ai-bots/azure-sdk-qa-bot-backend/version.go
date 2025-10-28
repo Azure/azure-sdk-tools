@@ -4,6 +4,6 @@
 package main
 
 const (
-	moduleName    = "github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
-	moduleVersion = "v1.0.0"
+	moduleName    = "github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend" //nolint:unused // Used by pipeline
+	moduleVersion = "v1.0.0"                                                                //nolint:unused // Used by pipeline
 )

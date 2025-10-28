@@ -12,12 +12,11 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
     public partial class Scenario
     {
         [Test]
-        public async Task Evaluate_VerifyApiSpec()
+        public async Task Evaluate_ValidateTypespec()
         {
-            const string prompt = "Help me verify my api spec is properly setup for sdk generation, skip asking me if I want to generate sdk. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
+            const string prompt = "Validate my typespec project. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
             string[] expectedTools =
             [
-                "azsdk_typespec_check_project_in_public_repo",
                 "azsdk_run_typespec_validation",
             ];
 

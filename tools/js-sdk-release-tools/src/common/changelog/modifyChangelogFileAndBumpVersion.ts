@@ -84,7 +84,7 @@ export async function makeChangesForReleasingTrack2(packageFolderPath: string, p
     let finalChangeLog: string;
     
     if (modularSDKType === ModularSDKType.DataPlane) {
-        finalChangeLog = `Please manually update the changelog with the appropriate changes.\n`;
+        finalChangeLog = `// TODO: Please manually update the changelog with the appropriate changes.\n`;
     } else {
         finalChangeLog = changeLog;
     }

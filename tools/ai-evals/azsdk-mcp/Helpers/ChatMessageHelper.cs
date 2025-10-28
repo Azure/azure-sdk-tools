@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
                 {
                     if (content is FunctionResultContent funcResult && callIdToName.TryGetValue(funcResult.CallId, out var functionName))
                     {
-                        expectedToolResults[functionName] = message;
+                        expectedToolResults[functionName!] = message;
                     }
                 }
             }

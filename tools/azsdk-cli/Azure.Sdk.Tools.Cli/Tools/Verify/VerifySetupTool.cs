@@ -211,7 +211,7 @@ public class VerifySetupTool : MCPTool
             }
         } else
         {
-            reqGetters = envRequirementsCheck.Resolve(languages);
+            reqGetters = (await Task.WhenAll(languages.Select(lang => envRequirementsCheck.Resolve(lang, ct)))).ToList();
         }
 
         if (reqGetters == null)

@@ -16,12 +16,10 @@ public interface ILanguageSpecificResolver<T> where T : class
     public Task<T?> Resolve(string packagePath, CancellationToken ct = default);
 
     /// <summary>
-    /// Resolves language-specific service implementations for a list of language identifiers.
-    /// This is used by tools that need to check or operate across multiple languages in one request.
+    /// Resolves the language-specific service implementation for a given Sdk language.
     /// </summary>
-    /// <param name="languages">A list of language identifiers (e.g. "python", "java").</param>
+    /// <param name="language">A language identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A list of resolved service instances (null for languages that could not be resolved).</returns>
-    public List<T?> Resolve(HashSet<SdkLanguage> languages, CancellationToken ct = default);
+    public Task<T?> Resolve(SdkLanguage language, CancellationToken ct = default);
 }
-

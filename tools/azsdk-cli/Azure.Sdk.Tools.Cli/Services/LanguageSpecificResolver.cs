@@ -23,8 +23,12 @@ public class LanguageSpecificResolver<T>(
     public async Task<T?> Resolve(string packagePath, CancellationToken ct = default)
     {
         var language = await DetectLanguageAsync(packagePath, ct);
+        return await Resolve(language ?? default, ct);
+    }
 
-        return language switch
+    public Task<T?> Resolve(SdkLanguage language, CancellationToken ct = default)
+    {
+        var service = language switch
         {
             SdkLanguage.DotNet => dotnetService,
             SdkLanguage.Java => javaService,
@@ -34,29 +38,7 @@ public class LanguageSpecificResolver<T>(
             // If adding languages in future, add a corresponding entry here.
             _ => default,
         };
-    }
-
-    public List<T?> Resolve(HashSet<SdkLanguage> languages, CancellationToken ct = default)
-    {
-        var services = new List<T?>();
-
-        foreach (var lang in languages)
-        {
-            var service = lang switch
-            {
-                SdkLanguage.DotNet => dotnetService,
-                SdkLanguage.Java => javaService,
-                SdkLanguage.Python => pythonService,
-                SdkLanguage.JavaScript => javaScriptService,
-                SdkLanguage.Go => goService,
-                // If adding languages in future, add a corresponding entry here.
-                _ => default,
-            };
-
-            services.Add(service);
-        }
-
-        return services;
+        return Task.FromResult(service);
     }
 
     private async Task<SdkLanguage?> DetectLanguageAsync(string packagePath, CancellationToken ct)

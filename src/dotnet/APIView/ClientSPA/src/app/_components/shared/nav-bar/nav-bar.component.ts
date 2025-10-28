@@ -80,12 +80,32 @@ export class NavBarComponent implements OnInit {
   private checkApproverStatus() {
     if (this.userProfile?.userName) {
       // Call the API to get allowed approvers
-      this.http.get<string>(`${this.configService.apiUrl}/Reviews/allowedApprovers`).subscribe({
+      const apiUrl = this.configService.apiUrl;
+      const endpoint = '/Reviews/allowedApprovers';
+      const url = `${apiUrl}${endpoint}`;
+
+      console.log('=== Approver Check Debug Info ===');
+      console.log('apiUrl length:', apiUrl?.length);
+      console.log('apiUrl value:', apiUrl);
+      console.log('endpoint:', endpoint);
+      console.log('Full URL length:', url.length);
+      console.log('Full URL (relative):', url);
+      console.log('Resolved absolute URL:', new URL(url, window.location.origin).href);
+      console.log('window.location.href:', window.location.href);
+      console.log('================================');
+
+      this.http.get<string>(url).subscribe({
         next: (allowedApprovers) => {
+          console.log('Raw allowedApprovers response:', allowedApprovers);
+
           if (allowedApprovers) {
             // Split comma-separated string and check if current user is in the list
             const approversList = allowedApprovers.split(',').map(username => username.trim());
+            console.log('Parsed approversList:', approversList);
+            console.log('Current username:', this.userProfile?.userName);
+
             this.isApprover = approversList.includes(this.userProfile?.userName || '');
+            console.log('isApprover result:', this.isApprover);
           }
         },
         error: (error) => {

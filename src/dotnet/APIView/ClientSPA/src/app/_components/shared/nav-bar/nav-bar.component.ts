@@ -99,7 +99,7 @@ export class NavBarComponent implements OnInit {
 
     console.log('Fetching preferred approvers for review:', this.reviewId);
 
-    this.http.get<string[]>(url).subscribe({
+    this.http.get<string[]>(url, { withCredentials: true }).subscribe({
       next: (preferredApprovers) => {
         console.log('Preferred approvers response:', preferredApprovers);
         console.log('Current username:', this.userProfile?.userName);

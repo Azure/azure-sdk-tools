@@ -6,7 +6,8 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
     public static class LLMSystemInstructions
     {
-        private static string s_copilotPath = ".github\\copilot-instructions.md";
+        private static string CopilotRepositoryPath => ".github\\copilot-instructions.md";
+
         public static async Task<string> BuildLLMInstructions()
         {
             var toolInstructions = DefaultToolInstructions;
@@ -32,24 +33,35 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
         private static async Task<string> GetCopilotInstructions()
         {
-            var logger = new LoggerFactory().CreateLogger<GitHubService>();
-            var githubService = new GitHubService(logger);
-            var copilotInstructions = await githubService.GetContentsSingleAsync("Azure", "azure-rest-api-specs", s_copilotPath);
-
-            //return File.ReadAllText(TestSetup.CopilotInstructionsPath);
-            return copilotInstructions.Content;
+            if (string.IsNullOrEmpty(TestSetup.GetRepoOwner) || string.IsNullOrEmpty(TestSetup.GetRepoName))
+            {
+                return File.ReadAllText(CopilotRepositoryPath);
+            }
+            else
+            {
+                var logger = new LoggerFactory().CreateLogger<GitHubService>();
+                var githubService = new GitHubService(logger);
+                var copilotInstructions = await githubService.GetContentsSingleAsync(TestSetup.GetRepoOwner!, TestSetup.GetRepoName!, CopilotRepositoryPath);
+                return copilotInstructions.Content;
+            }
         }
 
         private static async Task<string> GetMentionedInstructions(string instructionRelativePath)
         {
-            //var copilotBaseDirectory = Path.GetDirectoryName(s_copilotPath);
-            string instructionPath = Path.Combine(/*copilotBaseDirectory!, */instructionRelativePath.Substring(3));
-
-            var logger = new LoggerFactory().CreateLogger<GitHubService>();
-            var githubService = new GitHubService(logger);
-            var instructions = await githubService.GetContentsSingleAsync("Azure", "azure-rest-api-specs", instructionPath);
-            //return File.ReadAllText(instructionPath);
-            return instructions.Content;
+            if (string.IsNullOrEmpty(TestSetup.GetRepoOwner) || string.IsNullOrEmpty(TestSetup.GetRepoName))
+            {
+                var copilotBaseDirectory = Path.GetDirectoryName(CopilotRepositoryPath);
+                string instructionPath = Path.Combine(copilotBaseDirectory!, instructionRelativePath.Substring(3));
+                return File.ReadAllText(instructionPath);
+            }
+            else
+            {
+                string instructionPath = Path.Combine(/*copilotBaseDirectory!, */instructionRelativePath.Substring(3));
+                var logger = new LoggerFactory().CreateLogger<GitHubService>();
+                var githubService = new GitHubService(logger);
+                var instructions = await githubService.GetContentsSingleAsync(TestSetup.GetRepoOwner!, TestSetup.GetRepoName!, instructionPath);
+                return instructions.Content;
+            }
         }
 
         private static readonly string DefaultToolInstructions =

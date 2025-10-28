@@ -11,12 +11,19 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
     public static class TestSetup
     {
         // Configuration from environment variables - required
-        private static readonly string AzureOpenAIEndpoint = 
-            Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") 
+        private static readonly string AzureOpenAIEndpoint =
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
             ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT environment variable is required");
+
+        private static readonly string AzureOpenAIModelDeploymentName =
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
+            ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
         
-        private static readonly string AzureOpenAIModelDeploymentName = 
-            "gpt-5";
+        private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
+        public static string? GetRepoName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
+        public static string? GetRepoOwner => Environment.GetEnvironmentVariable("REPOSITORY_OWNER");
+        public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
+        public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
         public static TokenCredential GetCredential(ILogger? logger = null)
         {
@@ -43,8 +50,8 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         public static async Task<IMcpClient> GetMcpClientAsync(ILogger? logger = null)
         {
             logger?.LogDebug("Starting MCP client creation...");
-            logger?.LogDebug("Command: dotnet run --project ../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli -- start");
-            
+            logger?.LogDebug($"Command: dotnet run --project {relativePathToCli} -- start");
+
             try
             {
                 // Run your local MCP server directly with dotnet run
@@ -56,9 +63,9 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
                             Arguments = [
                                 "run",
                                 "--project",
-                                @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
+                                relativePathToCli,
                                 "--",
-                                "start" 
+                                "start"
                             ]
                         }
                     )
@@ -71,11 +78,6 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
                 logger?.LogError(ex, "Failed to create MCP client");
                 throw;
             }
-        }
-
-        public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient)
-        {
-            return new ChatCompletion(chatClient, mcpClient);
         }
     }
 }

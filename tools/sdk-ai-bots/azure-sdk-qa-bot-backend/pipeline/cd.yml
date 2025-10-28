@@ -157,7 +157,6 @@ stages:
     jobs:
       - deployment: DeployToAppService
         displayName: 'Deploy to Azure App Service'
-        environment: '${{ parameters.environment }}'
         pool:
           name: $(LINUXPOOL)
           image: $(LINUXVMIMAGE)

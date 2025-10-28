@@ -79,36 +79,26 @@ stages:
                 echo "##vso[task.setvariable variable=acrLoginServer]$ACR_LOGIN_SERVER"
                 echo "ACR Login Server: $ACR_LOGIN_SERVER"
 
-          - task: Docker@2
-            displayName: 'Login to Azure Container Registry'
+          - task: AzureCLI@2
+            displayName: 'Build and Push Docker Image'
             inputs:
-              command: login
-              containerRegistry: $(ACR_NAME)
-
-          - task: Docker@2
-            displayName: 'Build Docker Image'
-            inputs:
-              command: build
-              repository: $(imageName)
-              dockerfile: '$(workingDirectory)/Dockerfile'
-              buildContext: '$(workingDirectory)'
-              tags: |
-                $(imageTag)
-
-          - task: Docker@2
-            displayName: 'Tag Docker Image'
-            inputs:
-              command: tag
-              arguments: '$(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)'
-
-          - task: Docker@2
-            displayName: 'Push to Azure Container Registry'
-            inputs:
-              command: push
-              repository: $(imageName)
-              containerRegistry: $(ACR_NAME)
-              tags: |
-                $(imageTag)
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                # Login to ACR
+                az acr login --name $(ACR_NAME)
+                
+                # Build Docker image
+                docker build -t $(imageName):$(imageTag) -f $(workingDirectory)/Dockerfile $(workingDirectory)
+                
+                # Tag image for ACR
+                docker tag $(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)
+                
+                # Push image to ACR
+                docker push $(acrLoginServer)/$(imageName):$(imageTag)
+                
+                echo "✓ Image built and pushed successfully"
 
   - stage: ValidateProductionImage
     displayName: 'Validate Production Image Exists'

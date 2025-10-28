@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
 
             // 2. Get chat response
-            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames);
+            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
             var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
 
             // 3. Custom Evaluator to check tool inputs
@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
 
             // Pass the expected outcome through the additional context. 
             var checkInputs = false;
-            var additionalContext = new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames, checkInputs);
+            var additionalContext = new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs);
             var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 
             // 4. Assert the results

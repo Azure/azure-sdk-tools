@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased - 0.29.1
+
+- Output a tsp_client_metadata.json file during code generation with information like tsp-client version, data created or modified, and emitter-package.json content. The metadata file will be outputted when using the following commands: `init`, `update`, `generate`.
+
 ## 2025-09-29 - 0.29.0
 
 - When running the `init` command with the `update-if-exists` flag, if there is an existing tsp-location.yaml do not add or modify the `emitterPackageJsonPath` option, unless the `emitter-package-json-path` flag is passed to the command.

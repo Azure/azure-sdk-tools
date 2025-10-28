@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
     public class EvaluationHelper
     {
-        public static void ValidateToolInputsEvaluator(EvaluationResult? result)
+        public static void ValidateToolInputsEvaluator(EvaluationResult result)
         {
             EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];
             BooleanMetric expectedToolInput = result.Get<BooleanMetric>(ExpectedToolInputEvaluator.ExpectedToolInputMetricName);

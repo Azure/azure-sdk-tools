@@ -44,7 +44,7 @@ public class VerifySetupTool : MCPTool
 
     private readonly Option<List<SdkLanguage>> languagesParam = new("--languages", "-l")
     {
-        Description = $"List of space-separated languages to check requirements for ({string.Join(", ", Enum.GetNames(typeof(SdkLanguage)))}). Defaults to current repo's language.",
+        Description = $"List of space-separated SDK languages to check requirements for ({string.Join(" ", Enum.GetNames(typeof(SdkLanguage)))}). Defaults to current repo's language.",
         Required = false,
         AllowMultipleArgumentsPerToken = true
     };
@@ -56,7 +56,7 @@ public class VerifySetupTool : MCPTool
         DefaultValueFactory = _ => false
     };
 
-    private readonly Option<string> venvOption = new("--venv-path", "-v")
+    private readonly Option<string> venvOption = new("--venv-path", "-venv")
     {
         Description = "Path to Python virtual environment to use for Python requirements checks.",
         Required = false

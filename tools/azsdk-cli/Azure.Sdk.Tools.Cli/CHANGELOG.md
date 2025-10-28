@@ -4,15 +4,20 @@
 
 ### Features Added
 
-- Add support for generating samples for Azure client libraries across all languages
+- Add support for generating samples for Azure client libraries across all languages (DotNet, Go, Java, Python, TypeScript)
+- Add TypeSpec tools for validation, conversion, initialization, and client updates
+- Add package management tools including SDK building, generation, and release readiness checks
+- Add pipeline analysis and testing tools
+- Add GitHub integration tools for labels and pull request management
+- Add engineering system tools for cleanup, codeowners validation, log analysis, and test analysis
+- Add release planning and spec workflow tools
+- Add MCP (Model Context Protocol) server support with telemetry
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
-
-- Security improvements: Fixed code scanning and dependabot alerts
 
 ## 0.5.4 (2025-10-21)
 

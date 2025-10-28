@@ -75,6 +75,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, err
 	}
 
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+
 	// 1. Build messages from the openai request
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
@@ -100,7 +102,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 
 		// Build prompt with retrieved context
-		prompt, err = s.buildPrompt(intention, chunks, *req.PromptTemplate)
+		prompt, err = s.buildPrompt(intention, chunks, tenantConfig.PromptTemplate)
 		if err != nil {
 			log.Printf("Prompt building failed: %v", err)
 			return nil, err
@@ -365,7 +367,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	}
 	intentStart := time.Now()
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	intentResult, err := s.RecongnizeIntension(tenantConfig.IntensionPromptTemplate, messages)
+	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {

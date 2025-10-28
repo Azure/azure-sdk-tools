@@ -138,7 +138,7 @@ func (p *DefaultPromptParser) ParseResponse(response, template string) (*model.C
 type IntentionPromptParser struct {
 }
 
-func (p *IntensionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
+func (p *IntentionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
 	// Validate template name to prevent path injection
 	if err := validateTemplateName(template); err != nil {
 		return "", fmt.Errorf("invalid template name: %w", err)

@@ -33,9 +33,9 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
         private static async Task<string> GetCopilotInstructions()
         {
-            if (string.IsNullOrEmpty(TestSetup.GetRepoOwner) || string.IsNullOrEmpty(TestSetup.GetRepoName))
+            if (!string.IsNullOrEmpty(TestSetup.GetCopilotInstructionsPath))
             {
-                return File.ReadAllText(CopilotRepositoryPath);
+                return File.ReadAllText(TestSetup.GetCopilotInstructionsPath!);
             }
             else
             {
@@ -48,15 +48,15 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
         private static async Task<string> GetMentionedInstructions(string instructionRelativePath)
         {
-            if (string.IsNullOrEmpty(TestSetup.GetRepoOwner) || string.IsNullOrEmpty(TestSetup.GetRepoName))
+            if (!string.IsNullOrEmpty(TestSetup.GetCopilotInstructionsPath))
             {
-                var copilotBaseDirectory = Path.GetDirectoryName(CopilotRepositoryPath);
-                string instructionPath = Path.Combine(copilotBaseDirectory!, instructionRelativePath.Substring(3));
+                var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.GetCopilotInstructionsPath!);
+                string instructionPath = Path.Combine(copilotBaseDirectory!, instructionRelativePath);
                 return File.ReadAllText(instructionPath);
             }
             else
             {
-                string instructionPath = Path.Combine(/*copilotBaseDirectory!, */instructionRelativePath.Substring(3));
+                string instructionPath = Path.Combine(instructionRelativePath.Substring(3));
                 var logger = new LoggerFactory().CreateLogger<GitHubService>();
                 var githubService = new GitHubService(logger);
                 var instructions = await githubService.GetContentsSingleAsync(TestSetup.GetRepoOwner!, TestSetup.GetRepoName!, instructionPath);

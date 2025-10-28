@@ -34,6 +34,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             s_chatConfig = new ChatConfiguration(s_chatClient);
             s_chatCompletion = TestSetup.GetChatCompletion(s_chatClient, s_mcpClient);
             s_toolNames = (await s_mcpClient.ListToolsAsync()).Select(tool => tool.Name)!;
+            TestSetup.ValidateCopilotEnvironmentConfiguration();
 
         }
 

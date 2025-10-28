@@ -20,8 +20,8 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
         
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
-        public static string? GetRepoName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
-        public static string? GetRepoOwner => Environment.GetEnvironmentVariable("REPOSITORY_OWNER");
+        public static string? GetRepoName => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_REPOSITORY_NAME");
+        public static string? GetRepoOwner => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_REPOSITORY_OWNER");
         public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
@@ -77,6 +77,35 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             {
                 logger?.LogError(ex, "Failed to create MCP client");
                 throw;
+            }
+        }
+
+        public static void ValidateCopilotEnvironmentConfiguration()
+        {
+            var repoName = GetRepoName;
+            var repoOwner = GetRepoOwner;
+            var copilotInstructionsPath = GetCopilotInstructionsPath;
+            bool hasRepoName = !string.IsNullOrEmpty(repoName);
+            bool hasRepoOwner = !string.IsNullOrEmpty(repoOwner);
+            bool hasCopilotPath = !string.IsNullOrEmpty(copilotInstructionsPath);
+
+            // Check if both repo name and owner are provided
+            bool hasRepoInfo = hasRepoName && hasRepoOwner;
+
+            // Validate that we have at least one valid configuration
+            if (!hasRepoInfo && !hasCopilotPath)
+            {
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: Either both COPILOT_INSTRUCTIONS_REPOSITORY_NAME and " +
+                    "COPILOT_INSTRUCTIONS_REPOSITORY_OWNER must be provided, OR COPILOT_INSTRUCTIONS_PATH must be provided.");
+            }
+
+            // If repo info is partially provided, it's also an error
+            if (hasRepoOwner ^ hasRepoName)
+            {
+                throw new InvalidOperationException(
+                    "Invalid repository configuration: Both COPILOT_INSTRUCTIONS_REPOSITORY_NAME and " +
+                    "COPILOT_INSTRUCTIONS_REPOSITORY_OWNER must be provided together.");
             }
         }
     }

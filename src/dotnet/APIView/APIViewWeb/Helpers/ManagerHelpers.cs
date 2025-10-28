@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
-using APIViewWeb.Models;
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;

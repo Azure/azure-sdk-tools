@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class TypeSpecInitTool(
         INpxHelper npxHelper,
         ITypeSpecHelper typespecHelper,
+        IFileHelper fileHelper,
         ILogger<TypeSpecInitTool> logger
     ) : MCPTool
     {
@@ -31,9 +32,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private const string InitCommandName = "init";
 
         // command options
-        private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
-        private readonly Option<string> templateArg = new("--template", "The template to use for the TypeSpec project. Use azure-arm for resource management services, or azure-core for data plane services.") { IsRequired = true };
-        private readonly Option<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.") { IsRequired = true };
+        private readonly Option<string> outputDirectoryArg = new("--output-directory")
+        {
+            Description = "The output directory for the generated TypeSpec project. This directory must already exist and be empty.",
+            Required = true,
+        };
+
+        private readonly Option<string> templateArg = new("--template")
+        {
+            Description = "The template to use for the TypeSpec project. Use azure-arm for resource management services, or azure-core for data plane services.",
+            Required = true,
+        };
+
+        private readonly Option<string> serviceNamespaceArg = new("--service-namespace")
+        {
+            Description = "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.",
+            Required = true,
+            Validators =
+            {
+                result =>
+                {
+                    var value = result.GetValueOrDefault<string>();
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        result.AddError("The service namespace cannot be empty or whitespace.");
+                    }
+                }
+            }
+        };
 
         private enum ServiceType
         {
@@ -47,40 +73,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             { "azure-core", ServiceType.DataPlane }
         };
 
-        protected override Command GetCommand()
+        protected override Command GetCommand() => new(InitCommandName, "Initialize a new TypeSpec project")
         {
-            // Add validator to serviceNamespaceArg
-            serviceNamespaceArg.AddValidator(result =>
-            {
-                var value = result.GetValueOrDefault<string>();
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    result.ErrorMessage = "The service namespace cannot be empty or whitespace.";
-                }
-            });
-            Command command = new(InitCommandName, "Initialize a new TypeSpec project") {
-                outputDirectoryArg,
-                templateArg,
-                serviceNamespaceArg
-            };
+            outputDirectoryArg, templateArg, serviceNamespaceArg,
+        };
 
-            return command;
-        }
-
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             try
             {
-                var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
-                var template = ctx.ParseResult.GetValueForOption(templateArg);
-                var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
+                var outputDirectory = parseResult.GetValue(outputDirectoryArg);
+                var template = parseResult.GetValue(templateArg);
+                var serviceNamespace = parseResult.GetValue(serviceNamespaceArg);
 
                 return await InitTypeSpecProjectAsync(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace, isCli: true, ct);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error initializing TypeSpec project");
-                return new() { ResponseError = ex.Message };
+                return new DefaultCommandResponse { ResponseError = ex.Message };
             }
         }
 
@@ -158,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 Directory.CreateDirectory(fullOutputDirectory);
             }
 
-            if (FileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
+            if (fileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
             {
                 return new TspToolResponse
                 {

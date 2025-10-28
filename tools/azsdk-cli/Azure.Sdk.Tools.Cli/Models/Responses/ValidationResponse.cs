@@ -24,8 +24,8 @@ public class ValidationResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? MissingFiles { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
-        return ToString(Message);
+        return Message;
     }
 }

@@ -46,9 +46,9 @@ jobs:
           scriptType: pscore
           scriptPath: eng/scripts/Add-CPEX-Attestation-Entry.ps1
           arguments: >
-            -TableName ${{ parameters.TableName }}
-            -ActionItemId ${{ parameters.ActionItemId }}
-            -TargetId ${{ parameters.TargetId }}
-            -TargetType ${{ parameters.TargetType }}
+            -TableName "${{ parameters.TableName }}"
+            -ActionItemId "${{ parameters.ActionItemId }}"
+            -TargetId "${{ parameters.TargetId }}"
+            -TargetType "${{ parameters.TargetType }}"
             -Status ${{ parameters.Status }}
-            -EvidenceUrl ${{ parameters.EvidenceUrl }}
+            -EvidenceUrl "${{ parameters.EvidenceUrl }}"

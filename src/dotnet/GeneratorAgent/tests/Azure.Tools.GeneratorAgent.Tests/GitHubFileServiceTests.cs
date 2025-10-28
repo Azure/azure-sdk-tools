@@ -40,7 +40,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private static ValidationContext CreateValidationContext()
         {
-            return ValidationContext.CreateFromValidatedInputs(
+            return ValidationContext.ValidateAndCreate(
                 "specification/cognitiveservices/data-plane/Face",
                 "abc123",
                 "/temp/sdk"

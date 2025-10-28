@@ -4,7 +4,7 @@ import os
 import pathlib
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Set
 
 import prompty
 import prompty.azure_beta
@@ -15,13 +15,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from pathlib import Path
 
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
-from evals._config_loader import EvaluationConfig, WorkflowConfigError
 from evals._util import ensure_json_obj
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
-
-def _review_apiview(query: str, language: str):
+def _review_apiview(testcase: str, query: str, language: str):
     """APIView review target function for evals framework."""
     from src._apiview_reviewer import ApiViewReview
 
@@ -29,7 +27,6 @@ def _review_apiview(query: str, language: str):
     review = reviewer.run()
     reviewer.close()
     return {"actual": review.model_dump_json()}
-
 
 def _mention_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, other_comments: str, trigger_comment: str
@@ -46,7 +43,6 @@ def _mention_action_workflow(
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
-
 
 def _thread_resolution_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, comments: str
@@ -65,7 +61,6 @@ def _thread_resolution_action_workflow(
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
-
 def _filter_comment_metadata(testcase: str, response: str, language: str, exceptions: str, outline: str, content: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_comment_with_metadata.prompty"
     prompty_kwargs = {
@@ -78,7 +73,6 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
-
 
 def _filter_existing_comment(testcase: str, response: str, language: str, existing: str, comment: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_existing_comment.prompty"
@@ -101,7 +95,7 @@ class BaseEvaluator(ABC):
     """
 
     @abstractmethod
-    def __call__(self, **kwargs) -> Dict[str, Any]:
+    def __call__(self, **kwargs) -> dict[str, Any]:
         """Evaluate the given inputs and return evaluation metrics.
 
         Args:
@@ -109,18 +103,18 @@ class BaseEvaluator(ABC):
                      The specific arguments depend on the evaluator implementation.
 
         Returns:
-            Dict[str, Any]: A dictionary containing evaluation metrics and results.
+            dict[str, Any]: A dictionary containing evaluation metrics and results.
                            The structure depends on the evaluator implementation.
         """
         pass
 
     @property
     @abstractmethod
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         """Return the evaluator configuration for the Azure AI evaluation framework.
 
         Returns:
-            Dict[str, Any]: Configuration dictionary containing column mappings
+            dict[str, Any]: Configuration dictionary containing column mappings
                            and other evaluator-specific settings.
         """
         pass
@@ -153,16 +147,11 @@ class BaseEvaluator(ABC):
         """
         pass
 
-    @classmethod
-    def validate_config_schema(cls, raw_config: dict) -> dict | None:
-        """Base validation - subclasses should override as needed."""
-        return None
-
 
 class CustomAPIViewEvaluator(BaseEvaluator):
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, jsonl_file: str = None):
         settings = SettingsManager()
         # for best results, this should always be a different model from the one we are evaluating
         self._judge_model = "gpt-4.1"
@@ -181,7 +170,7 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         }
 
     @property
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         """Return the evaluator configuration for the Azure AI evaluation framework."""
         return {
             "column_mapping": {
@@ -235,7 +224,7 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         normalized_score = max(0, min(100, score * 100))
         return round(normalized_score)
 
-    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
+    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> tuple[Set, Set, Set]:
         """Compare comments based on both line numbers and rule IDs."""
         exact_matches = set()
         rule_matches_wrong_line = set()
@@ -525,17 +514,18 @@ class CustomAPIViewEvaluator(BaseEvaluator):
 
 
 class PromptyEvaluator(BaseEvaluator):
-    def __init__(self, config):
-        if config is None:
-            raise ValueError("PromptyEvaluator requires config")
+    def __init__(self, config, jsonl_file=None):
         self.config = config
+        self._jsonl_file = jsonl_file
 
-        # Get evaluation fields from config
-        self.evaluation_config = self.config.evaluation_config
-        self.comparison_field = self.evaluation_config.comparison_field
-        self.display_name = self.evaluation_config.display_name
-        self.breakdown_categories = self.evaluation_config.breakdown_categories
-        self.correct_field_name = f"correct_{self.comparison_field}"
+        # Optionally, you can set up a model config for SimilarityEvaluator if needed
+        settings = SettingsManager()
+        self._model_config = {
+            "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
+            "api_key": settings.get("OPENAI_API_KEY"),
+            "azure_deployment": "gpt-4.1",
+            "api_version": "2025-03-01-preview",
+        }
 
     def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
         # Use ensure_json_obj for both response and actual
@@ -545,7 +535,7 @@ class PromptyEvaluator(BaseEvaluator):
         # Safely extract comparison values
         try:
             expected_value = (
-                expected_data.get(self.comparison_field, "").strip()
+                expected_data.get("action", "").strip()
                 if isinstance(expected_data, dict)
                 else str(expected_data).strip()
             )
@@ -554,23 +544,34 @@ class PromptyEvaluator(BaseEvaluator):
 
         try:
             actual_value = (
-                actual_data.get(self.comparison_field, "").strip()
-                if isinstance(actual_data, dict)
-                else str(actual_data).strip()
+                actual_data.get("action", "").strip() if isinstance(actual_data, dict) else str(actual_data).strip()
             )
         except Exception:
             actual_value = str(actual_data).strip()
 
         is_correct = expected_value == actual_value
 
+        expected_rationale = expected_data.get("rationale", "").strip() if isinstance(expected_data, dict) else ""
+        actual_rationale = actual_data.get("rationale", "").strip() if isinstance(actual_data, dict) else ""
+
+        if expected_rationale or actual_rationale:
+            similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+                response=actual_rationale,
+                query="",  # not used for rationale
+                ground_truth=expected_rationale,
+            )
+            rationale_similarity = similarity_result.get("similarity", 0.0) / 5.0
+        else:
+            rationale_similarity = 1.0 if expected_rationale == actual_rationale else 0.0
+
         return {
-            self.correct_field_name: is_correct,
+            "correct_action": is_correct,
             "actual": actual,
             "expected": response,
             "testcase": testcase,
-            "score": 100 if is_correct else 0,
-            f"expected_{self.comparison_field}": expected_value,
-            f"actual_{self.comparison_field}": actual_value,
+            "score": rationale_similarity * 100 if is_correct else 0,
+            "expected_action": expected_value,
+            "actual_action": actual_value,
         }
 
     def process_results(self, raw_results: list, guideline_ids: set = None) -> dict:
@@ -583,43 +584,29 @@ class PromptyEvaluator(BaseEvaluator):
                     all_results[file_name] = []
 
                 run_summary = {
-                    "total_tests": 0,
-                    f"{self.correct_field_name}s": 0,
+                    "sum_score": 0.0,
+                    "max_score": 0.0,
                     "test_results": [],
-                    f"{self.comparison_field}_breakdown": self.breakdown_categories.copy(),
                 }
 
                 # Process each test case in this run
                 for row in result.get("rows", []):
                     test_result = {
                         "testcase": row.get("inputs.testcase", "unknown"),
-                        "correct": row.get(f"outputs.metrics.{self.correct_field_name}", False),
-                        f"expected_{self.comparison_field}": row.get(
-                            f"outputs.metrics.expected_{self.comparison_field}", ""
-                        ),
-                        f"actual_{self.comparison_field}": row.get(
-                            f"outputs.metrics.actual_{self.comparison_field}", ""
-                        ),
+                        "correct": row.get("outputs.metrics.correct_action", False),
+                        "expected_action": row.get("outputs.metrics.expected_action", ""),
+                        "actual_action": row.get("outputs.metrics.actual_action", ""),
                         "score": row.get("outputs.metrics.score", 0),
                     }
 
                     run_summary["test_results"].append(test_result)
-                    run_summary["total_tests"] += 1
+                    run_summary["max_score"] += 100
 
                     if test_result["correct"]:
-                        run_summary[f"{self.correct_field_name}s"] += 1
-
-                    # Track breakdown by comparison field
-                    expected_val = test_result[f"expected_{self.comparison_field}"]
-                    if expected_val in run_summary[f"{self.comparison_field}_breakdown"]:
-                        run_summary[f"{self.comparison_field}_breakdown"][expected_val]["total"] += 1
-                        if test_result["correct"]:
-                            run_summary[f"{self.comparison_field}_breakdown"][expected_val]["correct"] += 1
+                        run_summary["sum_score"] += test_result["score"]
 
                 run_summary["accuracy"] = (
-                    (run_summary[f"{self.correct_field_name}s"] / run_summary["total_tests"]) * 100
-                    if run_summary["total_tests"] > 0
-                    else 0
+                    (run_summary["sum_score"] / run_summary["max_score"]) * 100 if run_summary["max_score"] > 0 else 0
                 )
                 all_results[file_name].append(run_summary)
 
@@ -637,46 +624,27 @@ class PromptyEvaluator(BaseEvaluator):
         return final_results
 
     def show_results(self, processed_results: dict) -> None:
-        """Display prompt workflow results with category breakdown."""
+        """Display prompt workflow results."""
         from tabulate import tabulate
 
         for file_name, results in processed_results.items():
             accuracy = results["accuracy"]
-            correct = results[f"{self.correct_field_name}s"]
-            total = results["total_tests"]
 
             print("====================================================")
             print(f"\n\n✨ {file_name} results:\n")
-            print(f"Overall {self.display_name} Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
+            print(f"Overall Score: ({accuracy:.0f}%)\n")
 
-            # Show breakdown by category
-            breakdown = results[f"{self.comparison_field}_breakdown"]
-            breakdown_rows = []
-            for rec_type, stats in breakdown.items():
-                if stats["total"] > 0:
-                    type_accuracy = (stats["correct"] / stats["total"]) * 100
-                    breakdown_rows.append([rec_type, f"{stats['correct']}/{stats['total']}", f"{type_accuracy:.1f}%"])
-
-            if breakdown_rows:
-                print(f"{self.display_name} Breakdown:")
-                print(tabulate(breakdown_rows, headers=["Type", "Correct", "Accuracy"], tablefmt="simple"))
-                print()
-
-            # Show failed cases with details
-            failed_cases = [test for test in results["test_results"] if not test["correct"]]
-            if failed_cases:
-                print("Failed Cases:")
-                for test in failed_cases:
-                    print(f"  ❌ {test['testcase']}")
-                    print(f"     Expected {self.display_name}: {test[f'expected_{self.comparison_field}']}")
-                    print(f"     Actual {self.display_name}:   {test[f'actual_{self.comparison_field}']}")
-                    print()
+            # Show each test result
+            print("== TEST RESULTS ==")
+            for test in results["test_results"]:
+                status = "✅" if test["correct"] else "❌"
+                print(f"  {status} {test['score']}% - {test['testcase']} ")
 
     def _discover_jsonl_fields(self) -> set[str]:
         """Peek at JSONL to see what fields are available."""
 
     @property
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         config = {}
         with open(self._jsonl_file, encoding="utf-8") as f:
             first_line = json.loads(f.readline())
@@ -702,28 +670,6 @@ class PromptyEvaluator(BaseEvaluator):
             raise ValueError(f"No target function defined for workflow: {workflow_name}")
 
         return workflow_targets[workflow_name]
-
-    @classmethod
-    def validate_config_schema(cls, raw_config: dict) -> dict | None:
-        """Validate prompt workflow configuration."""
-        if not raw_config or not isinstance(raw_config, dict):
-            return None
-
-        comparison_field = raw_config.get("comparison_field", "action")
-        display_name = raw_config.get("display_name", "Action")
-        breakdown_categories = raw_config.get("breakdown_categories", {})
-
-        # Validate breakdown_categories structure
-        if breakdown_categories:
-            for key, value in breakdown_categories.items():
-                if not isinstance(value, dict) or "correct" not in value or "total" not in value:
-                    raise WorkflowConfigError(f"breakdown_categories.{key} must have 'correct' and 'total' fields")
-                if not isinstance(value["correct"], int) or not isinstance(value["total"], int):
-                    raise WorkflowConfigError(f"breakdown_categories.{key} correct/total must be integers")
-
-        return EvaluationConfig(
-            comparison_field=comparison_field, display_name=display_name, breakdown_categories=breakdown_categories
-        )
 
 
 # Register evaluators at module load time to prevent circular imports

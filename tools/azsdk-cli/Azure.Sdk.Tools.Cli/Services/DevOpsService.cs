@@ -249,7 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // First find the API spec work item
             try
             {
-                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.RESTAPIReviews] CONTAINS WORDS '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ActiveSpecPullRequestUrl] = '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
                 var apiSpecWorkItems = await FetchWorkItemsAsync(query);
                 if (apiSpecWorkItems.Count == 0)
                 {
@@ -439,6 +439,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ".net" => "Dotnet",
                 "csharp" => "Dotnet",
                 "js" => "JavaScript",
+                "javascript" => "JavaScript",
                 "python" => "Python",
                 "java" => "Java",
                 "go" => "Go",
@@ -488,7 +489,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
+                            Path = $"/fields/Custom.SDKGenerationPipelineFor{MapLanguageToId(language)}",
                             Value = sdkGenerationPipelineUrl
                         });
                 }
@@ -498,7 +499,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.SDKPullRequestFor{language}",
+                            Path = $"/fields/Custom.SDKPullRequestFor{MapLanguageToId(language)}",
                             Value = sdkPullRequestUrl
                         });
                 }

@@ -179,6 +179,7 @@ def run_test_case(test_paths: list[str], num_runs: int = 1):
     runner = EvaluationRunner(num_runs=num_runs)
     try:
         results = runner.run(targets)
+        runner.show_results(results)
         runner.show_summary(results)
     finally:
         runner.cleanup()
@@ -695,9 +696,12 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
-def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
+def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    return get_metrics_report(start_date, end_date, environment, markdown)
+    environment = os.getenv("ENVIRONMENT_NAME", None)
+    if environment not in ("production", "staging"):
+        raise ValueError(f"ENVIRONMENT_NAME must be 'production' or 'staging', got '{environment}'.")
+    return get_metrics_report(start_date, end_date, environment, markdown, save)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -746,7 +750,7 @@ def grant_permissions(assignee_id: str = None):
             principal_type=PrincipalType.USER,
             subscription_id=subscription_id,
             rg_name=rg_name,
-            role_kind="readOnly",
+            role_kind="readWrite",
             cosmos_account_name=cosmos_name,
         )
 
@@ -1052,6 +1056,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
             )
             ac.argument(
                 "ids",

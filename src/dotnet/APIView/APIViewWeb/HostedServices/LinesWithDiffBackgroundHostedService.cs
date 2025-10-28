@@ -5,11 +5,9 @@ using Microsoft.Extensions.Hosting;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Managers;
 using Microsoft.Extensions.Configuration;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using System.Collections.Generic;
-using APIViewWeb.LeanModels;
 using System.Linq;
 using APIViewWeb.Helpers;
 
@@ -23,7 +21,8 @@ namespace APIViewWeb.HostedServices
         private readonly TelemetryClient _telemetryClient;
 
         public LinesWithDiffBackgroundHostedService(IReviewManager reviewManager, 
-            IAPIRevisionsManager apiRevisionManager, IConfiguration configuration,
+            IAPIRevisionsManager apiRevisionManager, 
+            IConfiguration configuration,
             TelemetryClient telemetryClient)
         {
             _reviewManager = reviewManager;

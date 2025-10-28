@@ -41,6 +41,10 @@ namespace Azure.Tools.GeneratorAgent
                 throw new InvalidOperationException(
                     "No TypeSpec directory available. Call EnsureTypeSpecFilesAvailableAsync() first for GitHub scenarios.");
             }
+            if (!Directory.Exists(directoryToUse))
+            {
+                throw new DirectoryNotFoundException($"TypeSpec directory not found: {directoryToUse}");
+            }
 
             return await GetLocalTypeSpecFilesAsync(directoryToUse, cancellationToken).ConfigureAwait(false);
         }
@@ -49,12 +53,6 @@ namespace Azure.Tools.GeneratorAgent
             string typeSpecDir, 
             CancellationToken cancellationToken)
         {
-            // Fail fast validation - check directory exists
-            if (!Directory.Exists(typeSpecDir))
-            {
-                throw new DirectoryNotFoundException($"TypeSpec directory not found: {typeSpecDir}");
-            }
-
             var typeSpecFiles = new Dictionary<string, string>();
             string[] allFiles = Directory.GetFiles(typeSpecDir, "*.tsp", SearchOption.AllDirectories);
 
@@ -86,7 +84,6 @@ namespace Azure.Tools.GeneratorAgent
                 validationContext.ValidatedCommitId,
                 validationContext.ValidatedTypeSpecDir,
                 cancellationToken).ConfigureAwait(false);
-            Logger.LogInformation("Successfully downloaded {FileCount} TypeSpec files", githubFiles.Count);
             
             if (githubFiles.Count == 0)
             {
@@ -114,11 +111,7 @@ namespace Azure.Tools.GeneratorAgent
             var tempPath = CreateSecureTempPath(validationContext);
 
             // Validate the constructed path
-            var pathValidation = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
-            if (pathValidation.IsFailure)
-            {
-                throw new SecurityException($"Temporary directory path validation failed: {pathValidation.Exception?.Message}");
-            }
+            tempPath = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
 
             try
             {
@@ -172,17 +165,12 @@ namespace Azure.Tools.GeneratorAgent
         {
             string fullTempPath = Path.GetFullPath(tempPath);
 
-            try
+            foreach (var kvp in githubFiles)
             {
-                foreach (var kvp in githubFiles)
+                try
                 {
                     // Validate each filename
-                    var fileValidation = InputValidator.ValidateDirTraversal(kvp.Key, "TypeSpec filename");
-                    if (fileValidation.IsFailure)
-                    {
-                        Logger.LogWarning("Skipping invalid filename: {FileName}", kvp.Key);
-                        continue;
-                    }
+                    var validatedFileName = InputValidator.ValidateDirTraversal(kvp.Key, "TypeSpec filename");
 
                     string filePath = Path.Combine(tempPath, kvp.Key);
                     
@@ -209,10 +197,11 @@ namespace Azure.Tools.GeneratorAgent
                         Logger.LogDebug("Securely wrote file: {FilePath} ({Size} characters)", filePath, kvp.Value.Length);
                     }
                 }
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                throw new InvalidOperationException($"Failed to write files to temporary directory '{tempPath}': {ex.Message}", ex);
+                catch (Exception ex)
+                {
+                    Logger.LogWarning("Skipping invalid filename {FileName}: {Error}", kvp.Key, ex.Message);
+                    continue;
+                }
             }
         }
 
@@ -257,39 +246,34 @@ namespace Azure.Tools.GeneratorAgent
         /// Updates a TypeSpec file in the current working directory with security validation.
         /// Used for iterative error fixing.
         /// </summary>
-        public async Task<Result<bool>> UpdateTypeSpecFileAsync(string fileName, string content, ValidationContext validationContext, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateTypeSpecFileAsync(string fileName, string content, ValidationContext validationContext, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
             ArgumentNullException.ThrowIfNull(content);
             ArgumentNullException.ThrowIfNull(validationContext);
 
-            // Validate filename
-            Result<string> fileValidation = InputValidator.ValidateDirTraversal(fileName, "TypeSpec filename");
-            if (fileValidation.IsFailure)
-            {
-                return Result<bool>.Failure(new SecurityException($"TypeSpec filename validation failed: {fileName}"));
-            }
+            var validatedFileName = InputValidator.ValidateDirTraversal(fileName, "TypeSpec filename");
 
             string currentDir = validationContext.CurrentTypeSpecDir;
-            string filePath = Path.Combine(currentDir, fileName);
+            string filePath = Path.Combine(currentDir, validatedFileName);
             
             // Ensure file is within current directory
             string fullCurrentDir = Path.GetFullPath(currentDir);
             string fullFilePath = Path.GetFullPath(filePath);
             if (!fullFilePath.StartsWith(fullCurrentDir, StringComparison.OrdinalIgnoreCase))
             {
-                return Result<bool>.Failure(new SecurityException($"File '{fileName}' attempts to write outside current directory"));
+                throw new SecurityException($"File '{validatedFileName}' attempts to write outside current directory");
             }
 
             try
             {
                 await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
-                return Result<bool>.Success(true);
+                return true;
             }
             catch (Exception ex)
             {
-                return Result<bool>.Failure(new InvalidOperationException($"Failed to write TypeSpec file '{fileName}': {ex.Message}", ex));
+                throw new InvalidOperationException($"Failed to write TypeSpec file '{fileName}': {ex.Message}", ex);
             }
         }
 

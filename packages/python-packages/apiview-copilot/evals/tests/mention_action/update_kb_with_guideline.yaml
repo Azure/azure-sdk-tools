@@ -1,0 +1,34 @@
+testcase: mention_action_update_kb_with_guideline
+language: python
+package_name: azure.widget
+code: "class WidgetObject:"
+other_comments: |
+  [
+    {
+      "CreatedBy": "azure-sdk",
+      "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.\n\n**GUIDELINES**\n\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.",
+      "Downvotes": ["tjprescott"],
+      "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+    },
+    {
+      "CreatedBy": "noodle",
+      "CommentText": "We discussed it internally and want to keep it as is because we used that name in the JS SDK and we want to keep them the same.",
+      "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+    },
+    {
+      "CreatedBy": "tjprescott",
+      "CommentText": "@noodle, sorry, that's not a valid reason. If you wanted the names to be consistent you should have had them reviewed at the same time. The suffix `Object` adds no useful information and just results in a longer name.",
+      "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+    }
+  ]
+trigger_comment: |
+  {
+    "CreatedBy": "tjprescott",
+    "CommentText": "@azure-sdk, your comment is correct, but your suggestion was bad because it was actually more verbose! The name should be `Widget`.",
+    "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+  }
+response:
+  action: update_kb
+  reasoning: |
+    The architect indicates that while the copilot's comment about verbosity was correct, the suggestion itself was flawed and more verbose than needed.
+    This suggests the copilot's suggestion logic needs improvement and should be recorded in the Knowledge Base.

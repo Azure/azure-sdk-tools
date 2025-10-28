@@ -48,8 +48,6 @@ param (
 
 )
 
-$EvidenceUrl = [System.Web.HttpUtility]::UrlEncode($EvidenceUrl)
-
 function InvokeKustoCommand($command) {
     try {
         $clusterUri = "https://azsdk-cpex-attestation.westus2.kusto.windows.net"

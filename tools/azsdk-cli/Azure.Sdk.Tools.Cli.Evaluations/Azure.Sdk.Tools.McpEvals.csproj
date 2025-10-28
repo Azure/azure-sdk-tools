@@ -2,10 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>Azure.Sdk.Tools.McpEvals</RootNamespace>
+    <RootNamespace>Azure.Sdk.Tools.Cli.Evaluations</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <NoWarn>CS8618,CS8603</NoWarn>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
@@ -30,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\azsdk-cli\Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj" />
+    <ProjectReference Include="../Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj" />
   </ItemGroup>
 
 </Project>

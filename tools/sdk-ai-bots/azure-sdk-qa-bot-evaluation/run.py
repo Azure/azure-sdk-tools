@@ -65,7 +65,7 @@ def retrieve_tenant_ids() -> dict[str, str]:
 
     return channel_to_tenant_id
 
-async def process_file(input_file: str, output_file: str, scenario: str, is_bot: bool) -> None:
+async def process_file(input_file: str, output_file: str, scenario: str, retrieve_response: bool) -> None:
     """Process a single input file"""
     logging.info(f"Processing file: {input_file}")
     
@@ -82,7 +82,7 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
         for line in f:
             record = json.loads(line)
             logging.debug(record)
-            if is_bot:
+            if retrieve_response:
                 try:
                     api_response = await call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
                     answer = api_response.get("answer", "")
@@ -103,6 +103,8 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
                     logging.error(f"❌ Error occurred when process {input_file}: {str(e)}")
                     import traceback
                     traceback.print_exc()
+            else:
+                outputFile.write(line)
     outputFile.flush()
     outputFile.close()
 
@@ -131,7 +133,7 @@ async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tena
             else:
                 raise Exception(f"API request failed with status {resp.status}")
 
-async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bool = True):
+async def prepare_dataset(testdata_dir: str, file_prefix: str = None, retrieve_response: bool = True):
     """
     Process markdown files in the data directory and generate Q&A pairs.
     
@@ -186,7 +188,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
             output_file = os.path.join(output_dir.absolute(), f"{key}_{current_date}.jsonl")
             for file_path in items:
                 logging.info(f"  - {file_path.name}")
-                await process_file(str(file_path), str(output_file), key, is_bot)
+                await process_file(str(file_path), str(output_file), key, retrieve_response)
     elif file_prefix:
         logging.info(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
         return None
@@ -263,6 +265,49 @@ def format_terminal_diff(new: float, old: float, format_str: str = ".1f", revers
             return f" (\033[32m{diff:{format_str}}\033[0m)"  # Green
         return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
     return f" ({diff:{format_str}})"
+
+def build_output_table(eval_results: list[dict[str, Any]], file_name: str, baseline_results: Optional[dict[str, Any]] = None) -> str:
+    headers = [
+        "Test Case",
+        "Similarity",
+        "Similarity Result",
+        "Groundedness",
+        "Groundedness Result",
+        "Score"
+    ]
+    terminal_rows = []
+
+    for result in eval_results[:-1]:  # Skip summary object
+        testcase = result["testcase"]
+        score = result["overall_score"]
+        sim = result["similarity"]
+        sim_result = result["similarity_result"]
+
+        groundedness = result['groundedness']
+        groundedness_result = result['groundedness_result']
+        
+        terminal_row = [testcase]
+        if baseline_results is not None and testcase in baseline_results:
+            base = baseline_results[testcase]
+            values =[
+                f"{sim:.1f}{format_terminal_diff(sim, base['similarity'])}",
+                f"{sim_result}",
+                f"{groundedness}{format_terminal_diff(groundedness, base['groundedness'])}",
+                f"{groundedness_result}",
+                f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
+            ]
+        else:
+            values = [
+                f"{sim:.1f}",
+                f"{sim_result}",
+                f"{groundedness}",
+                f"{groundedness_result}",
+                f"{score:.1f}"
+            ]
+        terminal_row.extend(values)
+        terminal_rows.append(terminal_row)
+
+    return tabulate(terminal_rows, headers, tablefmt="simple")
 
 def output_table(eval_results: list[dict[str, Any]], file_name: str, baseline_results: Optional[dict[str, Any]] = None) -> None:
     headers = [
@@ -405,12 +450,16 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation_name_prefix", type=str, help="the prefix of evaluation name")
     parser.add_argument("--send_result", type=str, default="True", help="Send the evaluation result to AI foundry project")
     parser.add_argument("--baseline_check", type=str, default="True", help="Compare the result with baseline.")
+    parser.add_argument("--retrieve_response", type=str, default="True", help="Call bot api to retrieve response.")
+    parser.add_argument("--cache_result", type=str, default="False", help="cache the evaluation result persistently.")
     args = parser.parse_args()
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_ci = args.is_ci.lower() in ('true', '1', 'yes', 'on')
     args.send_result = args.send_result.lower() in ('true', '1', 'yes')
     args.baseline_check = args.baseline_check.lower() in ('true', '1', 'yes')
+    args.retrieve_response = args.retrieve_response.lower() in ('true', '1', 'yes')
+    args.cache_result = args.cache_result.lower() in ('true', '1', 'yes')
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -452,7 +501,7 @@ if __name__ == "__main__":
                     "credential": AzureCliCredential()
                 }
         
-        output_file_dir = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
+        output_file_dir = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.retrieve_response))
         if output_file_dir is None:
             logging.info(f"No test data file to process. Exitting")
             sys.exit(1)
@@ -500,6 +549,30 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         sys.exit(1)
+    if (args.cache_result) :
+        now = datetime.now()
+        result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime("%Y-%m-%d-%H-%S")}"), 'a', encoding='utf-8')
+        for name, test_results in all_results.items():
+            result_file.write(f"\n-----------{name}----------------------\n")
+            # for result in test_results[:-1]:  # Skip summary object
+            #     testcase = result["testcase"]
+            #     score = result["overall_score"]
+            #     sim = result["similarity"]
+            #     sim_result = result["similarity_result"]
+
+            #     groundedness = result['groundedness']
+            #     groundedness_result = result['groundedness_result']
+            #     data = {
+            #         "testcase": result["testcase"],
+            #         "similarity": result["similarity"],
+            #         "similarity_result": result["similarity_result"],
+            #         "groundedness": result['groundedness'],
+            #         "groundedness_result": result["similarity_result"]
+            #     }
+            #     result_file.write(json.dumps(data, ensure_ascii=False) + '\n')
+            result_file.write(build_output_table(test_results, name))
+        result_file.flush()
+        result_file.close()
     
     show_results(all_results, args.baseline_check)
     if args.baseline_check:

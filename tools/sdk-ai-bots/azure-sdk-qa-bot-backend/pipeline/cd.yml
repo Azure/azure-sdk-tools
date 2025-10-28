@@ -155,100 +155,97 @@ stages:
       - ${{ if eq(parameters.environment, 'prod') }}:
         - ValidateProductionImage
     jobs:
-      - deployment: DeployToAppService
+      - job: DeployToAppService
         displayName: 'Deploy to Azure App Service'
         pool:
           name: $(LINUXPOOL)
           image: $(LINUXVMIMAGE)
           os: linux
         
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
-                  displayName: 'Checkout repository'
+        steps:
+          - checkout: self
+            displayName: 'Checkout repository'
 
-                - template: templates/set-image-tag.yml
-                  parameters:
-                    environment: ${{ parameters.environment }}
-                    workingDirectory: $(workingDirectory)
+          - template: templates/set-image-tag.yml
+            parameters:
+              environment: ${{ parameters.environment }}
+              workingDirectory: $(workingDirectory)
 
-                - task: AzureCLI@2
-                  displayName: 'Get ACR Login Server'
-                  inputs:
-                    azureSubscription: $(SERVICE_CONNECTION)
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      ACR_LOGIN_SERVER=$(az acr show --name $(ACR_NAME) --resource-group $(ACR_RESOURCE_GROUP) --query "loginServer" --output tsv)
-                      echo "##vso[task.setvariable variable=acrLoginServer]$ACR_LOGIN_SERVER"
-                      echo "ACR Login Server: $ACR_LOGIN_SERVER"
+          - task: AzureCLI@2
+            displayName: 'Get ACR Login Server'
+            inputs:
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                ACR_LOGIN_SERVER=$(az acr show --name $(ACR_NAME) --resource-group $(ACR_RESOURCE_GROUP) --query "loginServer" --output tsv)
+                echo "##vso[task.setvariable variable=acrLoginServer]$ACR_LOGIN_SERVER"
+                echo "ACR Login Server: $ACR_LOGIN_SERVER"
 
-                - task: AzureCLI@2
-                  displayName: 'Update Container Image'
-                  inputs:
-                    azureSubscription: $(SERVICE_CONNECTION)
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      echo "Updating image in ${{ parameters.environment }} environment..."
-                      echo "Image: $(acrLoginServer)/$(imageName):$(imageTag)"
-                      
-                      az webapp config container set \
-                        --name $(APP_NAME) \
-                        --resource-group $(RESOURCE_GROUP) \
-                        --container-image-name $(acrLoginServer)/$(imageName):$(imageTag) \
-                        --container-registry-url https://$(acrLoginServer)
-                      
-                      echo "✓ Container image updated successfully"
+          - task: AzureCLI@2
+            displayName: 'Update Container Image'
+            inputs:
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Updating image in ${{ parameters.environment }} environment..."
+                echo "Image: $(acrLoginServer)/$(imageName):$(imageTag)"
+                
+                az webapp config container set \
+                  --name $(APP_NAME) \
+                  --resource-group $(RESOURCE_GROUP) \
+                  --container-image-name $(acrLoginServer)/$(imageName):$(imageTag) \
+                  --container-registry-url https://$(acrLoginServer)
+                
+                echo "✓ Container image updated successfully"
 
-                - task: AzureCLI@2
-                  displayName: 'Restart Web App'
-                  inputs:
-                    azureSubscription: $(SERVICE_CONNECTION)
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      echo "Restarting webapp $(APP_NAME)..."
-                      az webapp restart --name $(APP_NAME) --resource-group $(RESOURCE_GROUP)
-                      echo "✓ Webapp restarted successfully"
+          - task: AzureCLI@2
+            displayName: 'Restart Web App'
+            inputs:
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Restarting webapp $(APP_NAME)..."
+                az webapp restart --name $(APP_NAME) --resource-group $(RESOURCE_GROUP)
+                echo "✓ Webapp restarted successfully"
 
-                - task: AzureCLI@2
-                  displayName: 'Verify Deployment'
-                  inputs:
-                    azureSubscription: $(SERVICE_CONNECTION)
-                    scriptType: bash
-                    scriptLocation: inlineScript
-                    inlineScript: |
-                      echo "Verifying deployment status..."
-                      
-                      # Get the webapp URL
-                      APP_URL=$(az webapp show --name $(APP_NAME) --resource-group $(RESOURCE_GROUP) --query "defaultHostName" --output tsv)
-                      echo "Application URL: https://$APP_URL"
-                      
-                      # Wait a bit for the app to start
-                      echo "Waiting for application to start..."
-                      sleep 30
-                      
-                      # Check if the app is responding
-                      HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://$APP_URL/health || echo "000")
-                      
-                      if [ "$HTTP_STATUS" == "200" ]; then
-                        echo "✓ Deployment verified successfully - Health check passed"
-                      else
-                        echo "⚠ Warning: Health check returned status $HTTP_STATUS"
-                        echo "Please verify the deployment manually"
-                      fi
-                      
-                      echo ""
-                      echo "================================================"
-                      echo "Deployment Summary"
-                      echo "================================================"
-                      echo "Environment: ${{ parameters.environment }}"
-                      echo "Image Tag: $(imageTag)"
-                      echo "Resource Group: $(RESOURCE_GROUP)"
-                      echo "App Service: $(APP_NAME)"
-                      echo "Image: $(acrLoginServer)/$(imageName):$(imageTag)"
-                      echo "URL: https://$APP_URL"
-                      echo "================================================"
+          - task: AzureCLI@2
+            displayName: 'Verify Deployment'
+            inputs:
+              azureSubscription: $(SERVICE_CONNECTION)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Verifying deployment status..."
+                
+                # Get the webapp URL
+                APP_URL=$(az webapp show --name $(APP_NAME) --resource-group $(RESOURCE_GROUP) --query "defaultHostName" --output tsv)
+                echo "Application URL: https://$APP_URL"
+                
+                # Wait a bit for the app to start
+                echo "Waiting for application to start..."
+                sleep 30
+                
+                # Check if the app is responding
+                HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://$APP_URL/health || echo "000")
+                
+                if [ "$HTTP_STATUS" == "200" ]; then
+                  echo "✓ Deployment verified successfully - Health check passed"
+                else
+                  echo "⚠ Warning: Health check returned status $HTTP_STATUS"
+                  echo "Please verify the deployment manually"
+                fi
+                
+                echo ""
+                echo "================================================"
+                echo "Deployment Summary"
+                echo "================================================"
+                echo "Environment: ${{ parameters.environment }}"
+                echo "Image Tag: $(imageTag)"
+                echo "Resource Group: $(RESOURCE_GROUP)"
+                echo "App Service: $(APP_NAME)"
+                echo "Image: $(acrLoginServer)/$(imageName):$(imageTag)"
+                echo "URL: https://$APP_URL"
+                echo "================================================"

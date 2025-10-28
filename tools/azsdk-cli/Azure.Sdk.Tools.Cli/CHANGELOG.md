@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.5 (Unreleased)
+## 0.5.5 (2025-10-28)
 
 ### Features Added
 
@@ -11,6 +11,8 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+- Security improvements: Fixed code scanning and dependabot alerts
 
 ## 0.5.4 (2025-10-21)
 

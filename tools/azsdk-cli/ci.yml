@@ -45,4 +45,4 @@ extends:
       customJob: 
       - template: /tools/azsdk-cli/run-ai-eval.yml
         parameters:
-          EvalProject: tools/ai-evals/azsdk-mcp
+          EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations

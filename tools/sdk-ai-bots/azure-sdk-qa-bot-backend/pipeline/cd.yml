@@ -20,14 +20,14 @@ variables:
   # Load environment-specific variable groups
   # These groups should define: RESOURCE_GROUP, ACR_NAME, ACR_RESOURCE_GROUP, APP_NAME, SERVICE_CONNECTION
   - ${{ if eq(parameters.environment, 'dev') }}:
-    - group: 'azuresdkqabot-dev-variables'
+    - group: 'Azure SDK QA Bot Dev Variables'
   
   - ${{ if eq(parameters.environment, 'preview') }}:
-    - group: 'azuresdkqabot-preview-variables'
+    - group: 'Azure SDK QA Bot Preview Variables'
   
   - ${{ if eq(parameters.environment, 'prod') }}:
-    - group: 'azuresdkqabot-prod-variables'
-  
+    - group: 'Azure SDK QA Bot Prod Variables'
+
   - name: imageName
     value: 'azure-sdk-qa-bot-backend'
   - name: workingDirectory

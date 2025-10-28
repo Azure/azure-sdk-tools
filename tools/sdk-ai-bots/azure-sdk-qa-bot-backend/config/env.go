@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/joho/godotenv"
 )
@@ -43,6 +44,7 @@ type Config struct {
 
 var BotEnv *BotENV
 var AppConfig *Config
+var Credential azcore.TokenCredential
 
 // LoadEnvFile loads environment variables from .env if it exists
 func LoadEnvFile() {
@@ -89,20 +91,36 @@ func GetBotTenantID() string {
 	return BotEnv.BOT_TENANT_ID
 }
 
-func InitConfiguration() {
-	// Get the endpoint from environment variable
-	endpoint := os.Getenv("AZURE_APPCONFIG_ENDPOINT")
-
-	// Create a credential using DefaultAzureCredential
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
+func initCredential() error {
+	var err error
+	var cred azcore.TokenCredential
+	if os.Getenv("PROD_MODE") == "true" {
+		log.Println("Using ManagedIdentityCredential for production")
+		cred, err = azidentity.NewManagedIdentityCredential(nil)
+	} else {
+		log.Println("Using DefaultAzureCredential for local development")
+		cred, err = azidentity.NewDefaultAzureCredential(nil) // CodeQL [SM05142] This is guarded for local development
+	}
 	if err != nil {
+		return err
+	}
+	Credential = cred
+	return nil
+}
+
+func InitConfiguration() {
+	// Initialize the global credential first
+	if err := initCredential(); err != nil {
 		log.Fatalf("Failed to create credential: %v", err)
 	}
+
+	// Get the endpoint from environment variable
+	endpoint := os.Getenv("AZURE_APPCONFIG_ENDPOINT")
 
 	// Set up authentication options
 	authOptions := azureappconfiguration.AuthenticationOptions{
 		Endpoint:   endpoint,
-		Credential: credential,
+		Credential: Credential,
 	}
 
 	// Load configuration from Azure App Configuration

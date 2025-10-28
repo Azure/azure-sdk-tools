@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Add support for generating samples for Azure client libraries across all languages
+
 ### Breaking Changes
 
 ### Bugs Fixed
@@ -25,7 +27,6 @@
 ### Features
 
 - Updated System.CommandLine dependency to 2.5 beta
-
 ### Bugs Fixed
 
 - Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)

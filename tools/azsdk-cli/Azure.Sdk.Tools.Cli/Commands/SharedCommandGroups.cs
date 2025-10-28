@@ -39,6 +39,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Samples = new(
+            Verb: "samples",
+            Description: "Sample generation and management commands",
+            Options: []
+        );
+
         public static readonly CommandGroup SourceCode = new(
             Verb: "source-code",
             Description: "Source code generation and build commands",

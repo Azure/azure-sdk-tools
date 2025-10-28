@@ -18,7 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType, Description("Tools for converting existing Azure service swagger definitions to TypeSpec projects.")]
     public class TypeSpecConvertTool(
         ILogger<TypeSpecConvertTool> logger,
-        ITspClientHelper tspClientHelper
+        ITspClientHelper tspClientHelper,
+        IFileHelper fileHelper
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
@@ -107,7 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
 
                 // validate outputDirectory using FileHelper
-                var validationResult = FileHelper.ValidateEmptyDirectory(outputDirectory);
+                var validationResult = fileHelper.ValidateEmptyDirectory(outputDirectory);
                 if (validationResult != null)
                 {
                     return new TspToolResponse

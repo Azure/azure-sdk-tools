@@ -7,7 +7,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
@@ -16,22 +15,20 @@ import (
 
 type StorageService struct {
 	blobClient *azblob.Client
-	credential *azidentity.DefaultAzureCredential
 }
 
 func NewStorageService() (*StorageService, error) {
-	// Create a DefaultAzureCredential
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create credential: %v", err)
+	// Use the global credential initialized by InitConfiguration
+	if config.Credential == nil {
+		return nil, fmt.Errorf("credential not initialized, init configuration first")
 	}
 
 	// Create a blob client
-	blobClient, err := azblob.NewClient(config.AppConfig.STORAGE_BASE_URL, credential, nil)
+	blobClient, err := azblob.NewClient(config.AppConfig.STORAGE_BASE_URL, config.Credential, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create blob client: %v", err)
 	}
-	return &StorageService{credential: credential, blobClient: blobClient}, nil
+	return &StorageService{blobClient: blobClient}, nil
 }
 
 func (s *StorageService) DownloadBlob(container, path string) ([]byte, error) {
@@ -83,7 +80,7 @@ func (s *StorageService) DeleteBlob(container, path string) error {
 	blobUrl := fmt.Sprintf("%s/%s/%s", config.AppConfig.STORAGE_BASE_URL, container, path)
 	blobUrl = strings.ReplaceAll(blobUrl, "#", "%23")
 	// Create a blockBlob client
-	blockBlobClient, err := blockblob.NewClient(blobUrl, s.credential, &blockblob.ClientOptions{})
+	blockBlobClient, err := blockblob.NewClient(blobUrl, config.Credential, &blockblob.ClientOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create container client: %v", err)
 	}

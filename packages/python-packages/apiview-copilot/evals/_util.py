@@ -141,20 +141,4 @@ def save_result_to_cache(testcase_id: str, test_file_path: Path, azure_result_ro
     except IOError:
         # Continue without caching if write fails
         pass
-
-def construct_fake_azure_result(cached_rows: list[dict]) -> dict:
-    """Construct a fake Azure AI evaluation result from cached rows."""
-    # Extract the actual Azure AI result rows from cache
-    result_rows = []
-    for cached_row in cached_rows:
-        if "row" in cached_row:
-            result_rows.append(cached_row["row"])
     
-    # Create a minimal Azure AI evaluation result structure
-    fake_result = {
-        "rows": result_rows,
-        "metrics": {},  # Azure AI framework will populate this
-        "studio_url": None  # Not needed for cached results
-    }
-    
-    return fake_result

@@ -1,27 +1,23 @@
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Microagents;
 
 internal class ToolHelpersTests
 {
-
-    private string baseDir;
+  private TempDirectory baseDir;
 
     [OneTimeSetUp]
-    public void OneTimeSetup()
-    {
-        baseDir = Path.Combine(Path.GetTempPath(), "base_" + Guid.NewGuid());
-        Directory.CreateDirectory(baseDir);
-    }
+  public void OneTimeSetup()
+  {
+    baseDir = TempDirectory.Create("base");
+  }
 
     [OneTimeTearDown]
-    public void OneTimeTearDown()
-    {
-        if (Directory.Exists(baseDir))
-        {
-            Directory.Delete(baseDir, true);
-        }
-    }
+  public void OneTimeTearDown()
+  {
+    baseDir.Dispose();
+  }
 
     private class TestJsonSchemaObject
     {
@@ -82,11 +78,11 @@ internal class ToolHelpersTests
         var relativePath = $"test{Path.DirectorySeparatorChar}test.txt";
 
         // Act
-        var result = ToolHelpers.TryGetSafeFullPath(baseDir, relativePath, out var fullPath);
+        var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var fullPath);
 
         // Assert
         Assert.IsTrue(result);
-        Assert.That(fullPath, Is.EqualTo(Path.Combine(baseDir, "test", "test.txt")));
+        Assert.That(fullPath, Is.EqualTo(Path.Combine(baseDir.DirectoryPath, "test", "test.txt")));
     }
 
     [Test]
@@ -96,21 +92,21 @@ internal class ToolHelpersTests
         var relativePath = ".";
 
         // Act
-        var result = ToolHelpers.TryGetSafeFullPath(baseDir, relativePath, out var fullPath);
+        var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var fullPath);
 
         // Assert
         Assert.IsTrue(result);
-        Assert.That(fullPath, Is.EqualTo(baseDir));
+        Assert.That(fullPath, Is.EqualTo(baseDir.DirectoryPath));
     }
 
     [Test]
     public void TryGetSafePath_RejectsFullPathOutsideOfPath()
     {
         // Arrange
-        var relativePath = Path.Join(Path.GetPathRoot(Path.GetFullPath(baseDir)), "test.txt")!;
+      var relativePath = Path.Join(Path.GetPathRoot(Path.GetFullPath(baseDir.DirectoryPath)), "test.txt")!;
 
         // Act
-        var result = ToolHelpers.TryGetSafeFullPath(baseDir, relativePath, out var _);
+      var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var _);
 
         // Assert
         Assert.IsFalse(result);
@@ -123,7 +119,7 @@ internal class ToolHelpersTests
         var relativePath = Path.Join("..", "test.txt");
 
         // Act
-        var result = ToolHelpers.TryGetSafeFullPath(baseDir, relativePath, out var _);
+        var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var _);
 
         // Assert
         Assert.IsFalse(result);

@@ -1,7 +1,6 @@
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -20,11 +19,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
 
             // Act & Assert
             var caughtException = Assert.Throws<ArgumentNullException>(() =>
-                new OpenAIService(null!, appSettings, formatPromptService, toolExecutor, logger));
+                new OpenAIService(null!, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, logger));
             
             Assert.That(caughtException!.ParamName, Is.EqualTo("chatClient"));
         }
@@ -36,11 +36,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var chatClient = new Mock<ChatClient>().Object;
             var formatPromptService = CreateTestFormatPromptService(CreateTestAppSettings());
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
 
             // Act & Assert
             var caughtException = Assert.Throws<ArgumentNullException>(() =>
-                new OpenAIService(chatClient, null!, formatPromptService, toolExecutor, logger));
+                new OpenAIService(chatClient, null!, formatPromptService, toolExecutor, knowledgeBaseService, logger));
             
             Assert.That(caughtException!.ParamName, Is.EqualTo("appSettings"));
         }
@@ -52,11 +53,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var chatClient = new Mock<ChatClient>().Object;
             var appSettings = CreateTestAppSettings();
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
 
             // Act & Assert
             var caughtException = Assert.Throws<ArgumentNullException>(() =>
-                new OpenAIService(chatClient, appSettings, null!, toolExecutor, logger));
+                new OpenAIService(chatClient, appSettings, null!, toolExecutor, knowledgeBaseService, logger));
             
             Assert.That(caughtException!.ParamName, Is.EqualTo("formatPromptService"));
         }
@@ -68,11 +70,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var chatClient = new Mock<ChatClient>().Object;
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
 
             // Act & Assert
             var caughtException = Assert.Throws<ArgumentNullException>(() =>
-                new OpenAIService(chatClient, appSettings, formatPromptService, null!, logger));
+                new OpenAIService(chatClient, appSettings, formatPromptService, null!, knowledgeBaseService, logger));
             
             Assert.That(caughtException!.ParamName, Is.EqualTo("toolExecutor"));
         }
@@ -85,10 +88,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
 
             // Act & Assert
             var caughtException = Assert.Throws<ArgumentNullException>(() =>
-                new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, null!));
+                new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, null!));
             
             Assert.That(caughtException!.ParamName, Is.EqualTo("logger"));
         }
@@ -101,23 +105,25 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
 
             // Act & Assert
             Assert.DoesNotThrow(() =>
-                new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, logger));
+                new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, logger));
         }
 
         [Test]
-        public async Task AnalyzeErrorsAsync_WithEmptyErrorLogs_ShouldReturnEmptyResults()
+        public async Task AnalyzeErrorsAsync_WithEmptyErrorLogs_ReturnsEmptyResults()
         {
             // Arrange
             var chatClient = new Mock<ChatClient>().Object;
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
-            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, logger);
+            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, logger);
 
             var validationContext = CreateTestValidationContext();
             var errorLogs = "";
@@ -125,7 +131,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             try
             {
                 // Act - This will likely fail due to ChatClient being a mock, but it tests the parameter validation
-                var result = await openAIService.AnalyzeErrorsAsync(errorLogs, validationContext);
+                var result = await openAIService.AnalyzeErrorsAsync(errorLogs);
 
                 // If we get here, the method at least validates parameters correctly
                 Assert.That(result, Is.Not.Null);
@@ -145,15 +151,16 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
-            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, logger);
+            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, logger);
 
             var validationContext = CreateTestValidationContext();
 
             try
             {
                 // Act - This will likely fail due to ChatClient being a mock, but it tests the parameter validation
-                var result = await openAIService.AnalyzeErrorsAsync(null!, validationContext);
+                var result = await openAIService.AnalyzeErrorsAsync(null!);
 
                 // If we get here, the method at least validates parameters correctly
                 Assert.That(result, Is.Not.Null);
@@ -173,8 +180,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
-            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, logger);
+            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, logger);
 
             var validationContext = CreateTestValidationContext();
 
@@ -191,8 +199,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateTestAppSettings();
             var formatPromptService = CreateTestFormatPromptService(appSettings);
             var toolExecutor = CreateTestToolExecutor();
+            var knowledgeBaseService = CreateTestKnowledgeBaseService();
             var logger = new Mock<ILogger<OpenAIService>>().Object;
-            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, logger);
+            var openAIService = new OpenAIService(chatClient, appSettings, formatPromptService, toolExecutor, knowledgeBaseService, logger);
 
             var fixes = new List<Fix>();
 
@@ -243,11 +252,38 @@ namespace Azure.Tools.GeneratorAgent.Tests
             return new FormatPromptService(appSettings);
         }
 
+        private KnowledgeBaseService CreateTestKnowledgeBaseService()
+        {
+            var logger = new Mock<ILogger<KnowledgeBaseService>>().Object;
+            return new KnowledgeBaseService(logger);
+        }
+
         private ToolExecutor CreateTestToolExecutor()
         {
-            var mockToolHandler = new Mock<ITypeSpecToolHandler>();
-            var mockLogger = new Mock<ILogger<ToolExecutor>>();
-            return new ToolExecutor(mockToolHandler.Object, mockLogger.Object);
+            // Create the dependencies for TypeSpecToolHandler
+            var loggerToolHandler = new Mock<ILogger<TypeSpecToolHandler>>().Object;
+            var loggerFileService = new Mock<ILogger<TypeSpecFileService>>().Object;
+            var loggerVersionManager = new Mock<ILogger<TypeSpecFileVersionManager>>().Object;
+            var loggerGitHubService = new Mock<ILogger<GitHubFileService>>().Object;
+            
+            // Create AppSettings with minimal configuration
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["AzureSettings:ProjectEndpoint"] = "https://test.openai.azure.com/",
+                    ["GitHubSettings:Token"] = "test-token"
+                })
+                .Build();
+            var appSettings = new AppSettings(configuration, new Mock<ILogger<AppSettings>>().Object);
+            
+            // Create real instances since mocking is complex
+            var httpClient = new HttpClient();
+            var gitHubFileService = new GitHubFileService(appSettings, loggerGitHubService, httpClient);
+            var typeSpecFileService = new TypeSpecFileService(loggerFileService, gitHubFileService);
+            var versionManager = new TypeSpecFileVersionManager(loggerVersionManager);
+            var toolHandler = new TypeSpecToolHandler(typeSpecFileService, versionManager, loggerToolHandler);
+            
+            return new ToolExecutor(toolHandler);
         }
 
         private ValidationContext CreateTestValidationContext()

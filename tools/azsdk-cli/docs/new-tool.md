@@ -61,6 +61,7 @@ All tools in the azsdk-cli project follow a consistent architecture:
 - `AzurePipelines` - Azure DevOps pipeline operations (`azsdk azp`)
 - `EngSys` - Engineering system commands (`azsdk eng`)
 - `Generators` - File generation commands (`azsdk generators`)
+- `Samples` - Sample generation and management commands (`azsdk samples`)
 - `Cleanup` - Resource cleanup commands (`azsdk cleanup`)
 - `Log` - Log processing commands (`azsdk log`)
 - `Package` - Package commands (`azsdk package`)

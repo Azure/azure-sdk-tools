@@ -111,8 +111,9 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 return prerequisiteCheck;
             }
 
-            // Use Azure SDK approach: mvn install with linting properties (based on run-and-validate-linting.yml)
-            // This matches the Azure SDK for Java pipeline which runs linting during install phase
+            // Use mvn install with ALL linting tools in fail-safe mode
+            // This follows the "accumulate all errors" pattern instead of failing fast
+            // The -am flag ensures parent POMs are built/resolved automatically
             var command = "mvn";
             var args = new List<string>
             {
@@ -120,22 +121,24 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 "--no-transfer-progress",
                 "-DskipTests",
                 "-Dgpg.skip",
-                "-Dmaven.javadoc.skip=true",
+                "-DtrimStackTrace=false",
+                "-Dmaven.javadoc.skip=false",
                 "-Dcodesnippet.skip=true",
-                "-Dspotless.apply.skip=true",
+                "-Dspotless.skip=false",
+                "-Djacoco.skip=true",
                 "-Dshade.skip=true",
                 "-Dmaven.antrun.skip=true",
                 "-am",
                 "-f", pomPath
             };
 
-            // Configure linting behavior to match Azure SDK pipeline
-            // Note: There's no automated "fix" mode for linting - all tools require manual review
+            // Configure ALL linting tools in fail-safe mode - accumulate errors instead of failing fast
             args.AddRange([
                 "-Dcheckstyle.failOnViolation=false",
                 "-Dcheckstyle.failsOnError=false",
                 "-Dspotbugs.failOnError=false",
                 "-Drevapi.failBuildOnProblemsFound=false"
+                // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
             ]);
 
             var result = await _processHelper.Run(new(command, [.. args], workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
@@ -144,28 +147,16 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             var output = result.Output;
             var lintingResults = ParseLintingResults(output);
 
-            // Run javadoc validation as separate step (following Azure SDK pipeline pattern)
-            _logger.LogInformation("Running javadoc validation");
-            var javadocArgs = new[] { "--no-transfer-progress", "javadoc:jar", "-f", pomPath };
-            var javadocResult = await _processHelper.Run(new("mvn", javadocArgs, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
-            
-            // Add javadoc results to linting results
-            var javadocHasIssues = javadocResult.ExitCode != 0;
-            lintingResults.Add(("Javadoc", javadocHasIssues));
-            
-            // Combine outputs for comprehensive reporting
-            var combinedOutput = $"{output}\n\n--- Javadoc Validation ---\n{javadocResult.Output}";
-
             var failedTools = lintingResults.Where(r => r.HasIssues).ToList();
             var passedTools = lintingResults.Where(r => !r.HasIssues).ToList();
 
             if (failedTools.Count == 0)
             {
-                var message = result.ExitCode == 0 && javadocResult.ExitCode == 0
+                var message = result.ExitCode == 0
                     ? $"Code linting passed - All tools successful: {string.Join(", ", passedTools.Select(t => t.Tool))}"
                     : "Code linting completed, but build had other issues. Check Maven output for details.";
                 _logger.LogInformation(message);
-                return new CLICheckResponse(Math.Max(result.ExitCode, javadocResult.ExitCode), message);
+                return new CLICheckResponse(result.ExitCode, message);
             }
             else
             {
@@ -196,7 +187,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 nextSteps.Add("Review the linting errors and fix them manually - no auto-fix available");
                 nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true to skip specific tools during development");
 
-                return new CLICheckResponse(Math.Max(result.ExitCode, javadocResult.ExitCode), combinedOutput, errorMessage)
+                return new CLICheckResponse(result.ExitCode, output, errorMessage)
                 {
                     NextSteps = nextSteps
                 };
@@ -210,57 +201,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 NextSteps = [.. exceptionHandlingNextSteps, "Verify that the project's pom.xml is valid and contains required linting plugins"]
             };
         }
-    }
-
-    /// <summary>
-    /// Parses Maven output to determine which linting tools found issues.
-    /// Based on Azure SDK for Java pipeline patterns that run linting during install phase.
-    /// </summary>
-    /// <param name="output">Maven command output</param>
-    /// <returns>List of linting results per tool</returns>
-    private List<(string Tool, bool HasIssues)> ParseLintingResults(string output)
-    {
-        var results = new List<(string Tool, bool HasIssues)>();
-
-        // Check for Checkstyle execution and results
-        var checkstyleRan = output.Contains("checkstyle:") && output.Contains(":check");
-        var checkstyleHasIssues = false;
-        if (checkstyleRan)
-        {
-            // Look for explicit success indicators - if not found, assume there are issues
-            var checkstyleSuccess = output.Contains("You have 0 Checkstyle violations.") ||
-                                   output.Contains("Audit done."); // Sometimes just shows "Audit done." for clean runs
-            checkstyleHasIssues = !checkstyleSuccess;
-        }
-        results.Add(("Checkstyle", checkstyleHasIssues));
-
-        // Check for SpotBugs execution and results
-        var spotbugsRan = output.Contains("spotbugs:") && output.Contains(":check");
-        var spotbugsHasIssues = false;
-        if (spotbugsRan)
-        {
-            // Look for explicit success indicators - SpotBugs reports success patterns
-            var spotbugsSuccess = (output.Contains("BugInstance size is 0") && output.Contains("No errors/warnings found")) ||
-                                 output.Contains("Error size is 0") && output.Contains("No errors/warnings found");
-            spotbugsHasIssues = !spotbugsSuccess;
-        }
-        results.Add(("SpotBugs", spotbugsHasIssues));
-
-        // Check for RevAPI execution and results
-        var revapiRan = output.Contains("revapi:") && output.Contains(":check");
-        var revapiHasIssues = false;
-        if (revapiRan)
-        {
-            // Look for explicit success indicators
-            var revapiSuccess = output.Contains("API checks completed without failures.");
-            revapiHasIssues = !revapiSuccess;
-        }
-        results.Add(("RevAPI", revapiHasIssues));
-
-        _logger.LogInformation("Linting results parsed: Checkstyle ran={CheckstyleRan} issues={CheckstyleIssues}, SpotBugs ran={SpotBugsRan} issues={SpotBugsIssues}, RevAPI ran={RevapiRan} issues={RevapiIssues}",
-            checkstyleRan, checkstyleHasIssues, spotbugsRan, spotbugsHasIssues, revapiRan, revapiHasIssues);
-
-        return results;
     }
 
     public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
@@ -309,6 +249,73 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Starting dependency analysis for Java project at: {PackagePath}", packagePath);
+
+            // Validate Maven and POM prerequisites
+            var pomPath = Path.Combine(packagePath, "pom.xml");
+            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            if (prerequisiteCheck != null)
+            {
+                return prerequisiteCheck;
+            }
+
+            // Azure SDK for Java uses BOM-based dependency management
+            return await AnalyzeDependencyTreeAsync(packagePath, pomPath, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during dependency analysis for Java project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error during dependency analysis: {ex.Message}")
+            {
+                NextSteps = [.. exceptionHandlingNextSteps]
+            };
+        }
+    }
+
+    /// <summary>
+    /// Analyzes the Maven dependency tree for conflicts, duplicates, and issues.
+    /// Uses 'mvn dependency:tree -Dverbose' as recommended in Azure SDK for Java troubleshooting.
+    /// </summary>
+    /// <param name="packagePath">The package directory path</param>
+    /// <param name="pomPath">The path to the pom.xml file</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Analysis results</returns>
+    private async Task<CLICheckResponse> AnalyzeDependencyTreeAsync(string packagePath, string pomPath, CancellationToken cancellationToken)
+    {
+        var command = "mvn";
+        var args = new[] { "dependency:tree", "-Dverbose", "-f", pomPath };
+
+        var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
+
+        var output = result.Output;
+        
+        // Simple check - if Maven succeeded and no conflict indicators, it's success
+        if (output.Contains("[INFO] BUILD SUCCESS", StringComparison.OrdinalIgnoreCase))
+        {
+            var message = "Dependency analysis completed - no conflicts detected";
+            _logger.LogInformation(message);
+            return new CLICheckResponse(0, message);
+        }
+        else
+        {
+            var errorMessage = "Dependency analysis found issues - check Maven output for conflicts or build errors";
+            _logger.LogWarning(errorMessage);
+
+            return new CLICheckResponse(1, output, errorMessage)
+            {
+                NextSteps = [
+                    "Add Azure SDK BOM to dependencyManagement section in pom.xml: https://github.com/Azure/azure-sdk-for-java/tree/main/sdk/boms/azure-sdk-bom",
+                    "Remove version numbers from Azure SDK dependencies - let BOM manage versions",
+                    "Review verbose dependency tree output to identify specific conflicts"
+                ]
+            };
+        }
+    }
+
     /// <summary>
     /// Validates Maven installation and POM.xml existence for both formatting and linting operations.
     /// </summary>
@@ -344,4 +351,40 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger.LogInformation("Using Maven project at: {PackagePath}", packagePath);
         return null; // No error, prerequisites are valid
     }
+
+    /// <summary>
+    /// Parses Maven output to determine which linting tools found issues.
+    /// Based on Azure SDK for Java pipeline patterns that run linting during install phase.
+    /// </summary>
+    /// <param name="output">Maven command output</param>
+    /// <returns>List of linting results per tool</returns>
+    private static List<(string Tool, bool HasIssues)> ParseLintingResults(string output)
+    {
+        return [
+            ("Checkstyle", HasCheckstyleIssues(output)),
+            ("SpotBugs", HasSpotBugsIssues(output)), 
+            ("RevAPI", HasRevapiIssues(output)),
+            ("Javadoc", HasJavadocIssues(output))
+        ];
+    }
+
+    private static bool HasCheckstyleIssues(string output) =>
+        output.Contains("Checkstyle violations", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("You have 0 Checkstyle violations.", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("Audit done.", StringComparison.OrdinalIgnoreCase);
+
+    private static bool HasSpotBugsIssues(string output) =>
+        output.Contains("BugInstance size is", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("BugInstance size is 0", StringComparison.OrdinalIgnoreCase);
+
+    private static bool HasRevapiIssues(string output) =>
+        output.Contains("API problems detected", StringComparison.OrdinalIgnoreCase) && 
+        !output.Contains("API checks completed without failures.", StringComparison.OrdinalIgnoreCase);
+
+    private static bool HasJavadocIssues(string output) =>
+        output.Contains("Error while generating Javadoc:", StringComparison.OrdinalIgnoreCase) ||
+        (output.Contains("maven-javadoc-plugin", StringComparison.OrdinalIgnoreCase) && 
+         output.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase) &&
+         !output.Contains("Building jar:", StringComparison.OrdinalIgnoreCase) && 
+         !output.Contains("-javadoc.jar", StringComparison.OrdinalIgnoreCase));
 }

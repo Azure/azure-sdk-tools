@@ -10,7 +10,6 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +18,6 @@ namespace APIViewWeb.Controllers
 {
     public class AutoReviewController : Controller
     {
-        private readonly IAuthorizationService _authorizationService;
         private readonly ICodeFileManager _codeFileManager;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
@@ -27,11 +25,13 @@ namespace APIViewWeb.Controllers
         private readonly IConfiguration _configuration;
         private readonly IEnumerable<LanguageService> _languageServices;
 
-        public AutoReviewController(IAuthorizationService authorizationService, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager,
-            IConfiguration configuration, IEnumerable<LanguageService> languageServices)
+        public AutoReviewController(ICodeFileManager codeFileManager,
+            IReviewManager reviewManager, 
+            IAPIRevisionsManager apiRevisionManager, 
+            ICommentsManager commentsManager,
+            IConfiguration configuration, 
+            IEnumerable<LanguageService> languageServices)
         {
-            _authorizationService = authorizationService;
             _codeFileManager = codeFileManager;
             _apiRevisionsManager = apiRevisionManager;
             _commentsManager = commentsManager;

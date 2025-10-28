@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 using System.Linq;
 using APIViewWeb.LeanModels;
-using APIViewWeb.Helpers;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 

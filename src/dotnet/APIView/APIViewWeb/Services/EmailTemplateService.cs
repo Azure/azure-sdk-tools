@@ -31,7 +31,6 @@ namespace APIViewWeb.Services
     public class EmailTemplateService : IEmailTemplateService
     {
         private readonly string _apiviewEndpoint;
-        private const int MaxPackageNameLength = 60;
         // TODO: 3 days auto-approval feature is temporarily disabled
         // private const int BusinessDaysForDeadline = 3;
 
@@ -161,15 +160,10 @@ namespace APIViewWeb.Services
             var linksHtml = "";
             foreach (var review in languageReviews)
             {
-                var truncatedName = review.PackageName.Length > MaxPackageNameLength 
-                    ? review.PackageName[..MaxPackageNameLength] + "..." 
-                    : review.PackageName;
-
-                // Build HTML that matches the pending namespace approval tab format
                 linksHtml += $@"
                     <li class=""language-item"">
                         <span class=""language-name"">{review.Language}:</span>
-                        <a href=""{_apiviewEndpoint}/Assemblies/Review/{review.Id}"" class=""package-link"">{truncatedName}</a>
+                        <a href=""{_apiviewEndpoint}/Assemblies/Review/{review.Id}"" class=""package-link"">{review.PackageName}</a>
                     </li>";
             }
             return linksHtml;

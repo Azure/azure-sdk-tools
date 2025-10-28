@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             }
                             else
                             {
-                                differences.Add($"{path}.{key}: Missing in request JSON");
+                                differences.Add($"{path}.{key}: Missing in record JSON");
                             }
                         }
 
@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         {
                             if (!propDict1.ContainsKey(key))
                             {
-                                differences.Add($"{path}.{key}: Missing in record JSON");
+                                differences.Add($"{path}.{key}: Missing in request JSON");
                             }
                         }
 
@@ -89,29 +89,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     }
                 case JsonValueKind.Array:
                     {
-                        var array1 = element1.EnumerateArray();
-                        var array2 = element2.EnumerateArray();
+                        // Use index-based iteration to avoid double-advancing enumerators
+                        int len1 = element1.GetArrayLength();
+                        int len2 = element2.GetArrayLength();
+                        int common = Math.Min(len1, len2);
 
-                        int index = 0;
-                        var enum1 = array1.GetEnumerator();
-                        var enum2 = array2.GetEnumerator();
-
-                        while (enum1.MoveNext() && enum2.MoveNext())
+                        for (int i = 0; i < common; i++)
                         {
-                            CompareElements(enum1.Current, enum2.Current, differences, $"{path}[{index}]");
-                            index++;
+                            CompareElements(element1[i], element2[i], differences, $"{path}[{i}]");
                         }
 
-                        while (enum1.MoveNext())
+                        for (int i = common; i < len1; i++)
                         {
-                            differences.Add($"{path}[{index}]: Extra element in request JSON");
-                            index++;
+                            differences.Add($"{path}[{i}]: Extra element in request JSON");
                         }
 
-                        while (enum2.MoveNext())
+                        for (int i = common; i < len2; i++)
                         {
-                            differences.Add($"{path}[{index}]: Extra element in record JSON");
-                            index++;
+                            differences.Add($"{path}[{i}]: Extra element in record JSON");
                         }
 
                         break;

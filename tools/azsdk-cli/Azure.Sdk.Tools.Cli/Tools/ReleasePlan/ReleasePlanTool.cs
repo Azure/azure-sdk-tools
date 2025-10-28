@@ -349,7 +349,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         return new ObjectCommandResponse
                         {
-                            Message = $" Release plan not created. Release plan(s) already exist for the product: {productTreeId}." 
+                            Message = $"An active release plan already exists for the product: {productTreeId}. " 
                             +  $"Release plan link(s): {string.Join("\n ", existingReleasePlans.Select(p => p.ReleasePlanLink))}",
                             Result = existingReleasePlans
                         };

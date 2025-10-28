@@ -110,7 +110,7 @@ def to_iso8601(date_str: str, *, end_of_day: bool = False) -> str:
     if len(date_str) == 10 and date_str.count("-") == 2:
         year, month, day = map(int, date_str.split("-"))
         if end_of_day:
-            dt = datetime(year, month, day, 23, 59, 59, 999000, tzinfo=timezone.utc)
+            dt = datetime(year, month, day, 23, 59, 59, 999999, tzinfo=timezone.utc)
         else:
             dt = datetime(year, month, day, 0, 0, 0, 0, tzinfo=timezone.utc)
         return dt.isoformat().replace("+00:00", "Z")
@@ -121,7 +121,7 @@ def to_iso8601(date_str: str, *, end_of_day: bool = False) -> str:
     except Exception:
         dt = datetime.strptime(ds, "%Y-%m-%d")
     if end_of_day:
-        dt = dt.replace(hour=23, minute=59, second=59, microsecond=999000, tzinfo=timezone.utc)
+        dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc)
     else:
         dt = dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
     return dt.isoformat().replace("+00:00", "Z")

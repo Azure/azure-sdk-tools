@@ -98,6 +98,9 @@ def get_metrics_report(
         db_manager = get_database_manager()
         cosmos_client = db_manager.get_container_client("metrics")
         for doc in data.values():
+            # do not save language-agnostic overall metrics to CosmosDB. PowerBI will calculate these.
+            if not doc.dimension.get("language", None):
+                continue
             try:
                 cosmos_client.upsert(doc.id, data=doc.to_dict())
             except Exception as e:

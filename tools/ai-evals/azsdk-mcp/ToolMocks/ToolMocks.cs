@@ -23,6 +23,8 @@ namespace Azure.Sdk.Tools.McpEvals.ToolMocks
                 new TypespecCheckProjectInPublicRepo(),
                 new RunTypespecValidation(),
                 new GetModifiedTypespecProjects(),
+                new GetPullRequestLinkForCurrentBranch(),
+                new CreatePullRequest(),
             };
 
             foreach (var mock in mockInstances)

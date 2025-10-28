@@ -289,6 +289,10 @@ export async function initCommand(argv: any) {
     }
     await syncCommand(argv);
     await generateCommand(argv);
+  } else {
+    // If skip-sync-and-generate is set, just create the tsp_client_metadata.json file. Otherwise, the metadata file
+    // will be created during the generateCommand step.
+    await createTspClientMetadata(outputDir);
   }
   return outputDir;
 }

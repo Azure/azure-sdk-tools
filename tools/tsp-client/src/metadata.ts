@@ -12,20 +12,19 @@ interface TspClientMetadata {
   version: string;
   /** Date when the metadata file was created or last modified */
   dateCreatedOrModified: string;
-  /** JSON content of the emitter-package.json file used to generate */
-  emitterPackageJsonContent: object;
+  /** Optional: Content of the emitter-package.json file used to generate */
+  emitterPackageJsonContent?: object;
 }
 
 /**
  * Creates a tsp_client_metadata.json file with information about the tsp-client command run.
  *
  * @param outputDir - The directory where the metadata file will be created
- * @param emitterPackageJsonPath - Path to the emitter-package.json file
- * @param tspClientVersion - Version of the tsp-client tool (optional, will read from package.json if not provided)
+ * @param emitterPackageJsonPath - Optional path to the emitter-package.json file
  */
 export async function createTspClientMetadata(
   outputDir: string,
-  emitterPackageJsonPath: string,
+  emitterPackageJsonPath?: string,
 ): Promise<void> {
   try {
     Logger.info("Creating tsp_client_metadata.json file...");
@@ -37,9 +36,13 @@ export async function createTspClientMetadata(
     const metadata: TspClientMetadata = {
       version: packageJson.version,
       dateCreatedOrModified: new Date().toISOString(),
-      emitterPackageJsonContent: JSON.parse(await readFile(emitterPackageJsonPath, "utf8")),
     };
 
+    if (emitterPackageJsonPath) {
+      metadata.emitterPackageJsonContent = JSON.parse(
+        await readFile(emitterPackageJsonPath, "utf8"),
+      );
+    }
     // Convert the metadata to JSON format with proper formatting
     const jsonContent = JSON.stringify(
       {

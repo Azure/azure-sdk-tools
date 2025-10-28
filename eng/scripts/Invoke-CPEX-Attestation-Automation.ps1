@@ -152,6 +152,7 @@ foreach ($triage in $triages) {
         $productServiceTreeId = $fields["Custom.ProductServiceTreeID"]
         $productType = $fields["Custom.ProductType"]
         $productName = $fields["Custom.ProductName"]
+        $url = $triage.url
 
         if ($productType -eq "Sku") {
             $productType = "ProductSku"
@@ -222,6 +223,7 @@ foreach ($releasePlan in $releasePlans) {
         $productServiceTreeId = $fields["Custom.ProductServiceTreeID"]
         $productType = $fields["Custom.ProductType"]
         $productName = $fields["Custom.ProductName"]
+        $url = $releasePlan.url
 
         if ($productType -eq "Sku") {
             $productType = "ProductSku"

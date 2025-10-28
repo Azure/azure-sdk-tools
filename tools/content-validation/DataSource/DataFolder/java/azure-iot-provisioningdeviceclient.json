@@ -1,0 +1,17 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/iot?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/iot/provisioningdeviceclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device.additionaldata?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device.provisioningdeviceclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device.provisioningdeviceclientregistrationresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device.provisioningdeviceclientregistrationcallback?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device.provisioningdeviceclientstatus?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.device.provisioningdeviceclienttransportprotocol?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "view=azure-dotnet-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/dotnet/azure/intro?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/azure/key-azure-services?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/communication?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/communication/programmableconnectivity?view=azure-dotnet\u0026branch=main"
+    ]
+  }
+]

@@ -13,6 +13,25 @@ namespace APIViewWeb.LeanModels
         SampleRevision
     }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum CommentSeverity
+    {
+        Question = 0,
+        Suggestion = 1,
+        ShouldFix = 2,
+        MustFix = 3
+    }
+
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum CommentSource
+    {
+        UserGenerated,
+        AIGenerated,
+        Diagnostic
+    }
+
     public class CommentItemModel
     {
         [System.Text.Json.Serialization.JsonPropertyName("id")]
@@ -25,17 +44,35 @@ namespace APIViewWeb.LeanModels
         public string SectionClass { get; set; }
         public string CommentText { get; set; }
         public string CrossLanguageId { get; set; }
+        public string CorrelationId { get; set; }
         public List<CommentChangeHistoryModel> ChangeHistory { get; set; } = new List<CommentChangeHistoryModel>();        
         public bool IsResolved { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();
         public List<string> Downvotes { get; set; } = new List<string>();
-
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public CommentType CommentType { get; set; }
+        public CommentSeverity? Severity { get; set; }
+        public CommentSource CommentSource { get; set; } = CommentSource.UserGenerated;
         public bool ResolutionLocked { get; set; } = false;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? LastEditedOn { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsGeneric { get; set; }
+        public List<string> GuidelineIds { get; set; } = [];
+        public List<string> MemoryIds { get; set; } = [];
+        public float ConfidenceScore { get; set; }
+
+        public static CommentSeverity ParseSeverity(string value)
+        {
+            return value?.ToUpperInvariant() switch
+            {
+                "QUESTION" => CommentSeverity.Question,
+                "SHOULD" => CommentSeverity.ShouldFix,
+                "SUGGESTION" => CommentSeverity.Suggestion,
+                "MUST" => CommentSeverity.MustFix,
+                _ => CommentSeverity.ShouldFix
+            };
+        }
     }
 }

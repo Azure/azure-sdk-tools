@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceBaseName": {
+      "value": "${{RESOURCE_SUFFIX}}"
+    },
+    "azureStorageUrl": {
+      "value": "${{AZURE_STORAGE_URL}}"
+    },
+    "azureTableNameForConversation": {
+      "value": "${{AZURE_TABLE_NAME_FOR_CONVERSATION}}"
+    },
+    "ragScope": {
+      "value": "${{RAG_SERVICE_SCOPE}}"
+    },
+    "webAppSKU": {
+      "value": "B3"
+    },
+    "botDisplayName": {
+      "value": "${{TEAMS_BOT_FULL_DISPLAY_NAME}}"
+    },
+    "alertEmailAddresses": {
+      "value": "${{ALERT_EMAIL_ADDRESSES}}"
+    },
+    "storageAccountName": {
+      "value": "${{STORAGE_ACCOUNT_NAME}}"
+    },
+    "storageResourceGroupName": {
+      "value": "${{STORAGE_RESOURCE_GROUP_NAME}}"
+    },
+    "dockerImageTag": {
+      "value": "${{DOCKER_IMAGE_TAG}}"
+    },
+    "dockerContainerName": {
+      "value": "${{DOCKER_CONTAINER_NAME}}"
+    }
+  }
+}

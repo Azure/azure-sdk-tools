@@ -1,8 +1,20 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for sectioning large documents with line numbers.
+"""
+
 import re
 from typing import List, Optional
 
 
 class LineData:
+    """Data class representing a line in the document with its metadata."""
+
     def __init__(self, *, line_no: Optional[int], indent: int, line: str, git_status: Optional[str] = None):
         self.line_no = line_no
         self.indent = indent
@@ -11,6 +23,7 @@ class LineData:
 
 
 class Section:
+    """Represents a section of the document with its lines and metadata."""
 
     def __init__(self, lines: List[LineData]):
         self.lines = lines
@@ -41,6 +54,7 @@ class Section:
 
 
 class SectionedDocument:
+    """Represents a document sectioned into smaller parts based on indentation and line numbers."""
 
     def __init__(
         self,
@@ -53,7 +67,7 @@ class SectionedDocument:
         if max_chunk_size == 1:
             raise ValueError("max_chunk_size must be greater than 1")
 
-        self.sections = []
+        self.sections: List[Section] = []
         # Step 1: Create initial fine-grained sections based on indentation
         if line_data is None:
             line_data = []
@@ -84,9 +98,8 @@ class SectionedDocument:
 
         # Create initial sections based on top-level lines
         initial_sections = []
-        for i in range(len(top_level_lines)):
+        for i, line1 in enumerate(top_level_lines):
             try:
-                line1 = top_level_lines[i]
                 line2 = top_level_lines[i + 1]
                 line1_idx = line_data.index(line1)
                 line2_idx = line_data.index(line2)

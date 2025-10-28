@@ -126,8 +126,8 @@
         </div>
     </ng-template>
 </p-table>
-<p-sidebar [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [modal]="false" styleClass="create-revision-sidebar">
-    <h3>Create Revision</h3>
+<p-sidebar [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [showCloseIcon]="false" styleClass="create-revision-sidebar">
+    <h4>Create Revision</h4>
     <p *ngIf="!createRevisionForm.get('selectedCRLanguage')!.value">Select a Language Below to view instructions for creating a Review.</p>
     <form [formGroup]="createRevisionForm" (ngSubmit)="createRevision()">
         <p-dropdown formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
@@ -205,8 +205,8 @@
         </div>
     </form>
 </p-sidebar>
-<p-sidebar [(visible)]="optionsSidebarVisible" position="right" [modal]="false" styleClass="options-sidebar">
-    <h3>Filter APIRevisions</h3>
+<p-sidebar [(visible)]="optionsSidebarVisible" position="right" [showCloseIcon]="false" styleClass="options-sidebar">
+    <h4>Filter APIRevisions</h4>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">
             <div class="form-check form-switch">

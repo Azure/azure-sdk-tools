@@ -1,0 +1,25 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/container-registry?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/containerregistry-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.aio.asyncdownloadblobstream?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.aio.containerregistryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.artifactmanifestproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.artifacttagproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.containerregistryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.digestvalidationerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.downloadblobstream?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.getmanifestresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.repositoryproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.artifactarchitecture?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.artifactmanifestorder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.artifactoperatingsystem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-containerregistry/azure.containerregistry.artifacttagorder?view=azure-python\u0026branch=main"
+    ]
+  }
+]

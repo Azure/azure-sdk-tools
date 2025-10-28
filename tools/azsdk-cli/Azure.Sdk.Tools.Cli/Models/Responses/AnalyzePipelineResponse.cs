@@ -1,12 +1,13 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class AnalyzePipelineResponse : Response
+public class AnalyzePipelineResponse : CommandResponse
 {
-    [JsonPropertyName("failed_tests")]
+    [JsonPropertyName("failed_test_titles")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<FailedTestRunResponse> FailedTests { get; set; } = [];
+    public Dictionary<string, List<string>> FailedTests { get; set; } = [];
 
     [JsonPropertyName("failed_tasks")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -16,7 +17,12 @@ public class AnalyzePipelineResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string PipelineUrl { get; set; }
 
-    public override string ToString()
+    private readonly JsonSerializerOptions jsonOptions = new()
+    {
+        WriteIndented = true,
+    };
+
+    protected override string Format()
     {
         var output = "";
 
@@ -25,7 +31,7 @@ public class AnalyzePipelineResponse : Response
             output += "--------------------------------------------------------------------------------" + Environment.NewLine +
                       $"Failed Tests" + Environment.NewLine +
                       "--------------------------------------------------------------------------------" + Environment.NewLine;
-            output += string.Join(Environment.NewLine, FailedTests.Select(t => t.ToString())) + Environment.NewLine;
+            output += JsonSerializer.Serialize(FailedTests, jsonOptions) + Environment.NewLine;
         }
 
         if (FailedTasks.Count > 0)
@@ -36,6 +42,6 @@ public class AnalyzePipelineResponse : Response
             output += string.Join(Environment.NewLine, FailedTasks.Select(t => t.ToString())) + Environment.NewLine;
         }
 
-        return ToString(output);
+        return output;
     }
 }

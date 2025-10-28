@@ -6,6 +6,7 @@ import { PaginatedResult } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
+import { CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 
 @Injectable({
   providedIn: 'root'
@@ -35,20 +36,20 @@ export class ReviewsService {
     if (approval == "Approved" || approval == "Pending") {
       params = (approval == "Approved") ? params.append('isApproved', true) : params.append('isApproved', false);
     }
-      
+
     params = params.append('sortField', sortField);
     params = params.append('sortOrder', sortOrder);
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     })
-      
+
     return this.http.get<Review[]>(this.baseUrl,
-      { 
+      {
         headers: headers,
         params: params,
-        observe: 'response', 
-        withCredentials: true 
+        observe: 'response',
+        withCredentials: true
       } ).pipe(
           map((response : any) => {
             if (response.body) {
@@ -76,6 +77,10 @@ export class ReviewsService {
     return this.http.get<string[]>(this.baseUrl + `/${reviewId}/preferredApprovers`, { withCredentials: true });
   }
 
+  getEnableNamespaceReview() : Observable<boolean> {
+    return this.http.get<boolean>(this.baseUrl + `/enableNamespaceReview`, { withCredentials: true });
+  }
+
   openReviewPage(reviewId: string) {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
   }
@@ -86,9 +91,9 @@ export class ReviewsService {
     })
 
     return this.http.post<Review>(this.baseUrl, formData,
-      { 
-        observe: 'response', 
-        withCredentials: true 
+      {
+        observe: 'response',
+        withCredentials: true
       }).pipe(
         map((response : any) => {
           if (response.body) {
@@ -99,12 +104,24 @@ export class ReviewsService {
     );
   }
 
-  toggleReviewApproval(reviewId: string, apiRevisionId: string) : Observable<Review> {
+  toggleReviewApproval(reviewId: string, apiRevisionId: string, approve: boolean) : Observable<Review> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
-    { 
+
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { approve: approve },
+    {
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+
+  requestNamespaceReview(reviewId: string, activeApiRevisionId: string, notes: string = '') : Observable<Review> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/requestNamespaceReview/${activeApiRevisionId}`, { notes },
+    {
       headers: headers,
       withCredentials: true,
     });
@@ -117,9 +134,9 @@ export class ReviewsService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-   
+
     return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/toggleSubscribe`, {},
-    { 
+    {
       headers: headers,
       params: params,
       withCredentials: true
@@ -134,8 +151,34 @@ export class ReviewsService {
     if (diffApiRevisionId) {
       params = params.append('diffApiRevisionId', diffApiRevisionId);
     }
-    return this.http.get(this.baseUrl + `/${reviewId}/content`, 
-    { 
+    return this.http.get(this.baseUrl + `/${reviewId}/content`,
+    {
       params: params, observe: 'response',
-      responseType: 'arraybuffer', withCredentials: true });
-  }}
+      responseType: 'arraybuffer', withCredentials: true
+    });
+  }
+
+  getCrossLanguageContent(apiRevisionId: string, apiCodeFileId: string) : Observable<CrossLanguageContentDto> {
+    let params = new HttpParams();
+    params = params.append('apiRevisionId', apiRevisionId);
+    params = params.append('apiCodeFileId', apiCodeFileId);
+    return this.http.get<CrossLanguageContentDto>(this.baseUrl + `/crossLanguageContent`,
+    {
+      params: params, withCredentials: true
+    });
+  }
+
+  getIsReviewByCopilotRequired(language?: string): Observable<boolean> {
+    const url = `${this.baseUrl}/isReviewByCopilotRequired`;
+    const params = language ? `?language=${encodeURIComponent(language)}` : '';
+    return this.http.get<boolean>(`${url}${params}`, { withCredentials: true });
+  }
+
+  getIsReviewVersionReviewedByCopilot(reviewId: string, packageVersion?: string): Observable<boolean> {
+    let url = `${this.baseUrl}/${reviewId}/isReviewVersionReviewedByCopilot`;
+    if (packageVersion) {
+      url += `?packageVersion=${encodeURIComponent(packageVersion)}`;
+    }
+    return this.http.get<boolean>(url, { withCredentials: true });
+  }
+}

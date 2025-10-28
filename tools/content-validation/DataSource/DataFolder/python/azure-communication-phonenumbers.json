@@ -1,0 +1,43 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication-phonenumbers-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.aio.phonenumbersclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.siprouting?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.siprouting.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.siprouting.aio.siproutingclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.siprouting.siproutingclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.siprouting.siptrunk?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.siprouting.siptrunkroute?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.availablephonenumber?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.communicationerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.operatorinformation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.operatorinformationoptions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.operatorinformationresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumberadministrativedivision?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumberareacode?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbercapabilities?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbercost?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbercountry?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumberlocality?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumberoffering?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbersearchresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbersbrowseresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbersclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbersreservation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.purchasedphonenumber?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.billingfrequency?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumberassignmenttype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumberavailabilitystatus?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbercapabilitytype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbersearchresulterror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.phonenumbertype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-phonenumbers/azure.communication.phonenumbers.reservationstatus?view=azure-python\u0026branch=main"
+    ]
+  }
+]

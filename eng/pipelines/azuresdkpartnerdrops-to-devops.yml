@@ -20,9 +20,9 @@ extends:
   template: /eng/pipelines/templates/jobs/azuresdkpartnerdrops-to-nugetfeed.yml
   parameters:
     ${{ if eq(parameters.DevOpsFeed, 'Net Public Dev Feed') }}:
-      DevOpsFeedID: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+      Feed: 'public/azure-sdk-for-net'
     ${{ if eq(parameters.DevOpsFeed, 'Net Private Preview Feed') }}:
-      DevOpsFeedID: '590cfd2a-581c-4dcb-a12e-6568ce786175/fa8b2d77-74d9-48d7-bb96-badb2b9c6ca4'
+      Feed: 'internal/azure-sdk-for-net-pr'
     PartnerDropsBlobSourceSuffix: ${{ parameters.BlobPath }}
     ShouldSign: ${{ parameters.ShouldSign }}
     ShouldPublish: ${{ parameters.ShouldPublish }}

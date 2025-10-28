@@ -1,73 +1,61 @@
-from enum import Enum
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from src._apiview_reviewer import ApiViewReview
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+FastAPI application for APIView Copilot.
+"""
+
+import asyncio
 import json
 import logging
 import os
-from fastapi import FastAPI
-from src.agent._api import router as agent_router
-from fastapi import APIRouter
-from pydantic import BaseModel
-from src.agent._agent import get_main_agent
-import asyncio
-from semantic_kernel.agents import AzureAIAgentThread
-import uuid
-from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 import threading
 import time
-from typing import Dict, Any
+from enum import Enum
 
-
-job_store: Dict[str, Dict[str, Any]] = {}
-job_store_lock = threading.RLock()
+import prompty
+import prompty.azure
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
+from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
+from src._database_manager import get_database_manager
+from src._diff import create_diff_with_line_numbers
+from src._mention import handle_mention_request
+from src._settings import SettingsManager
+from src._thread_resolution import handle_thread_resolution_request
+from src._utils import get_language_pretty_name, get_prompt_path
+from src.agent._agent import get_main_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
-JOB_RETENTION_SECONDS = 600  # 10 minutes
+JOB_RETENTION_SECONDS = 1800  # 30 minutes
+db_manager = get_database_manager()
+settings = SettingsManager()
 
-app = FastAPI()
-app.include_router(agent_router)
+app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
 logger = logging.getLogger("uvicorn")  # Use Uvicorn's logger
-
-supported_languages = [
-    "android",
-    "clang",
-    "cpp",
-    "dotnet",
-    "golang",
-    "ios",
-    "java",
-    "python",
-    "rest",
-    "typescript",
-]
-
-
-class ApiReviewJobStatus(str, Enum):
-    InProgress = "InProgress"
-    Success = "Success"
-    Error = "Error"
 
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 
 
-class AgentChatRequest(BaseModel):
-    user_input: str
-    thread_id: str = None
-    messages: list = None  # Optional: for multi-turn
+# pylint: disable=invalid-name
+class ApiReviewJobStatus(str, Enum):
+    """Enumeration for API review job statuses."""
+
+    InProgress = "InProgress"
+    Success = "Success"
+    Error = "Error"
 
 
-class AgentChatResponse(BaseModel):
-    response: str
-    thread_id: str
-    messages: list
-
-
-# Models for job endpoints
 class ApiReviewJobRequest(BaseModel):
+    """Request model for starting an API review job."""
+
     language: str
     target: str
     base: str = None
@@ -77,76 +65,32 @@ class ApiReviewJobRequest(BaseModel):
 
 
 class ApiReviewJobStatusResponse(BaseModel):
+    """Response model for API review job status."""
+
     status: ApiReviewJobStatus
     comments: list = None
     details: str = None
 
 
-# legacy endpoint for direct API review
-@app.post("/{language}")
-async def api_reviewer(language: str, request: Request):
-    logger.info(f"Received request for language: {language}")
-    logging.getLogger("uvicorn.error").debug(f"Request body: {await request.body()}")
-
-    if language not in supported_languages:
-        logger.warning(f"Unsupported language: {language}")
-        raise HTTPException(status_code=400, detail=f"Unsupported language `{language}`")
-
-    try:
-        data = await request.json()
-
-        target_apiview = data.get("target", None)
-        base_apiview = data.get("base", None)
-        outline = data.get("outline", None)
-        comments = data.get("comments", None)
-
-        if not target_apiview:
-            logger.warning("No API content provided in the request")
-            raise HTTPException(status_code=400, detail="No API content provided")
-
-        logger.info(f"Processing {language} API review")
-
-        reviewer = ApiViewReview(
-            language=language, target=target_apiview, base=base_apiview, outline=outline, comments=comments
-        )
-        result = reviewer.run()
-        reviewer.close()
-
-        # Check if "error.log" file exists and is not empty
-        if os.path.exists(error_log_file) and os.path.getsize(error_log_file) > 0:
-            with open(error_log_file, "r") as f:
-                error_message = f.read()
-                logger.error(f"Error log contents:\n{error_message}")
-
-        logger.info("API review completed successfully")
-        return JSONResponse(content=json.loads(result.model_dump_json()))
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error processing request: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
 @app.post("/api-review/start", status_code=202)
 async def submit_api_review_job(job_request: ApiReviewJobRequest):
+    """Submit a new API review job."""
     # Validate language
-    if job_request.language not in supported_languages:
+    if job_request.language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
-    job_id = str(uuid.uuid4())
-    now = time.time()
-    with job_store_lock:
-        job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "created": now}
+
+    reviewer = ApiViewReview(
+        language=job_request.language,
+        target=job_request.target,
+        base=job_request.base,
+        outline=job_request.outline,
+        comments=job_request.comments,
+    )
+    job_id = reviewer.job_id
+    db_manager.review_jobs.create(job_id, data={"status": ApiReviewJobStatus.InProgress, "finished": None})
 
     async def run_review_job():
         try:
-            reviewer = ApiViewReview(
-                language=job_request.language,
-                target=job_request.target,
-                base=job_request.base,
-                outline=job_request.outline,
-                comments=job_request.comments,
-            )
             loop = asyncio.get_running_loop()
             # Run the blocking review in a thread pool executor
             result = await loop.run_in_executor(None, reviewer.run)
@@ -155,11 +99,15 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
             result_json = json.loads(result.model_dump_json())
             comments = result_json.get("comments", [])
 
-            with job_store_lock:
-                job_store[job_id] = {"status": ApiReviewJobStatus.Success, "comments": comments, "created": now}
+            now = time.time()
+            db_manager.review_jobs.upsert(
+                job_id, data={"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now}
+            )
         except Exception as e:
-            with job_store_lock:
-                job_store[job_id] = {"status": ApiReviewJobStatus.Error, "details": str(e), "created": now}
+            now = time.time()
+            db_manager.review_jobs.upsert(
+                job_id, data={"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now}
+            )
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
@@ -168,64 +116,169 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(job_id: str):
-    job = job_store.get(job_id)
+    """Get the status of an API review job."""
+    job = db_manager.review_jobs.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    # Remove internal 'created' field from response
-    if job and "created" in job:
-        job = dict(job)
-        job.pop("created", None)
     return job
 
 
 def cleanup_job_store():
-    """Cleanup completed jobs from the job store periodically."""
-    global job_store
+    """Cleanup completed jobs from the Cosmos DB periodically."""
     while True:
         time.sleep(60)  # Run every 60 seconds
-        now = time.time()
-        with job_store_lock:
-            to_delete = []
-            for job_id, job in list(job_store.items()):
-                if job.get("status") in (ApiReviewJobStatus.Success, ApiReviewJobStatus.Error):
-                    created = job.get("created", now)
-                    if now - created > JOB_RETENTION_SECONDS:
-                        to_delete.append(job_id)
-            for job_id in to_delete:
-                del job_store[job_id]
+        db_manager.review_jobs.cleanup_old_jobs(JOB_RETENTION_SECONDS)
+
+
+class AgentChatRequest(BaseModel):
+    """Request model for agent chat interaction."""
+
+    user_input: str
+    thread_id: str = None
+    messages: list = None  # Optional: for multi-turn
+
+
+class AgentChatResponse(BaseModel):
+    """Response model for agent chat interaction."""
+
+    response: str
+    thread_id: str
+    messages: list
+
+
+@app.post("/agent/chat", response_model=AgentChatResponse)
+async def agent_chat(request: AgentChatRequest):
+    """Handle chat requests to the agent."""
+    logger.info("Received /agent/chat request: user_input=%s, thread_id=%s", request.user_input, request.thread_id)
+    try:
+        async with get_main_agent() as agent:
+            response, thread_id_out, messages = await invoke_agent(
+                agent=agent, user_input=request.user_input, thread_id=request.thread_id, messages=request.messages
+            )
+        return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
+    except AgentInvokeException as e:
+        if "Rate limit is exceeded" in str(e):
+            logger.warning("Rate limit exceeded: %s", e)
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.") from e
+        logger.error("AgentInvokeException: %s", e)
+        raise HTTPException(status_code=500, detail="Agent error: {e}") from e
+    except Exception as e:
+        logger.error("Error in /agent/chat: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+class SummarizeRequest(BaseModel):
+    """Request model for summarizing API changes."""
+
+    language: str
+    target: str
+    base: str = None
+
+
+class SummarizeResponse(BaseModel):
+    """Response model for summarizing API changes."""
+
+    summary: str
+
+
+@app.post("/api-review/summarize", response_model=SummarizeResponse)
+async def summarize_api(request: SummarizeRequest):
+    """Summarize API changes based on the provided request."""
+    if request.language not in SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language `{request.language}`")
+    try:
+        if request.base:
+            summary_prompt_file = "summarize_diff.prompty"
+            summary_content = create_diff_with_line_numbers(old=request.base, new=request.target)
+        else:
+            summary_prompt_file = "summarize_api.prompty"
+            summary_content = request.target
+
+        pretty_language = get_language_pretty_name(request.language)
+
+        prompt_path = get_prompt_path(folder="summarize", filename=summary_prompt_file)
+        inputs = {"language": pretty_language, "content": summary_content}
+
+        # Run prompty in a thread pool to avoid blocking
+        loop = asyncio.get_running_loop()
+
+        def run_prompt():
+            os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
+            return prompty.execute(prompt_path, inputs=inputs)
+
+        summary = await loop.run_in_executor(None, run_prompt)
+        if not summary:
+            raise HTTPException(status_code=500, detail="Summary could not be generated.")
+        return SummarizeResponse(summary=summary)
+    except Exception as e:
+        logger.error("Error in /api-review/summarize: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+class MentionRequest(BaseModel):
+    """Request model for handling mentions in API reviews."""
+
+    comments: list
+    language: str
+    package_name: str = Field(..., alias="packageName")
+    code: str
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/api-review/mention", response_model=AgentChatResponse)
+async def handle_mention(request: MentionRequest):
+    """Handle mentions in API reviews."""
+    logger.info(
+        "Received /api-review/mention request: language=%s, package_name=%s, comments_count=%d",
+        request.language,
+        request.package_name,
+        len(request.comments) if request.comments else 0,
+    )
+    try:
+        pretty_language = get_language_pretty_name(request.language)
+        response = handle_mention_request(
+            comments=request.comments,
+            language=pretty_language,
+            package_name=request.package_name,
+            code=request.code,
+        )
+        return AgentChatResponse(
+            response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
+        )
+    except HTTPException as e:
+        logger.error("Error in /api-review/mention: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+@app.post("/api-review/resolve", response_model=AgentChatResponse)
+async def handle_thread_resolution(request: MentionRequest):
+    """Handle thread resolution in API reviews."""
+    logger.info(
+        "Received /api-review/resolve request: language=%s, package_name=%s, comments_count=%d",
+        request.language,
+        request.package_name,
+        len(request.comments) if request.comments else 0,
+    )
+    try:
+        pretty_language = get_language_pretty_name(request.language)
+        response = handle_thread_resolution_request(
+            comments=request.comments,
+            language=pretty_language,
+            package_name=request.package_name,
+            code=request.code,
+        )
+        return AgentChatResponse(
+            response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
+        )
+    except HTTPException as e:
+        logger.error("Error in /api-review/resolve: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 # Start the cleanup thread when the app starts
 cleanup_thread = threading.Thread(target=cleanup_job_store, daemon=True)
 cleanup_thread.start()
-
-
-@app.post("/agent/chat", response_model=AgentChatResponse)
-async def agent_chat_thread_endpoint(request: AgentChatRequest):
-    user_input = request.user_input
-    thread_id = request.thread_id
-    messages = request.messages or []
-    # Only append user_input if not already the last message
-    if not messages or messages[-1] != user_input:
-        messages.append(user_input)
-    try:
-        async with get_main_agent() as agent:
-            # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
-            thread = None
-            if thread_id and isinstance(thread_id, str) and thread_id.startswith("thread"):
-                thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
-            else:
-                thread = AzureAIAgentThread(client=agent.client)
-            response = await agent.get_response(messages=messages, thread=thread)
-            # Get the thread id from the thread object if available
-            thread_id_out = getattr(thread, "id", None) or thread_id
-        return AgentChatResponse(response=str(response), thread_id=thread_id_out, messages=messages)
-    except AgentInvokeException as e:
-        if "Rate limit is exceeded" in str(e):
-            logger.warning(f"Rate limit exceeded: {e}")
-            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.")
-        logger.error(f"AgentInvokeException: {e}")
-        raise HTTPException(status_code=500, detail="Agent error: " + str(e))
-    except Exception as e:
-        logger.error(f"Error in /agent/chat: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error")

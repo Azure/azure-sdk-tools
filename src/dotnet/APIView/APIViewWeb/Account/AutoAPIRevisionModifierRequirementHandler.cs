@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Authorization;
 
@@ -9,7 +10,7 @@ namespace APIViewWeb
 {
     public class AutoAPIRevisionModifierRequirementHandler : IAuthorizationHandler
     {
-        private static string _autoReviewOwner = "azure-sdk";
+        private static string _autoReviewOwner = ApiViewConstants.AzureSdkBotName;
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
             if (context.User != null)

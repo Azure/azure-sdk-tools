@@ -1,0 +1,14 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/schema-registry-json-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-json/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-json/jsonschemaserializer?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-json/deserializeoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-json/jsonschemaserializeroptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-json/messageadapter?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-json/messagecontent?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

@@ -81,32 +81,9 @@ After doing any setup described in the [general section](#generally), run the
 ```
 
 This will copy the [test proxy certificate](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/common/testproxy/dotnet-devcert.crt) and place the copy
-under `azure-sdk-for-python/.certificate` as a `pem` file.
+under `azure-sdk-for-python/.certificate` as a `pem` file. Take note, when pulling down a new version of the dev-cert to replace an expired SSL cert, **delete** the local `.certificate` folder at root before rerunning `trust_proxy_cert.py`.
 
-The only remaining step is to set two environment variables to point to this certificate. The script will output the environment variables and values that you'll
-need to set once it finishes running. For example where `YOUR DIRECTORY` specifies where you've cloned the repo:
-```cmd
-Set the following certificate paths:
-        SSL_CERT_DIR=C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate
-        REQUESTS_CA_BUNDLE=C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem
-```
-
-Persistently set these environment variables. In a Windows Powershell command prompt as an administrator, use the `SETX` command (not the `SET` command) to set these variables.
-Using the example above, you would run:
-```cmd
-SETX SSL_CERT_DIR "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate"
-SETX REQUESTS_CA_BUNDLE "C:\<YOUR DIRECTORY>\azure-sdk-for-python\.certificate\dotnet-devcert.pem"
-```
-
-_Disclaimer:_ __A new terminal__ should be started up to make these variables available. 
-To check if these variables are indeed in the environment,
-```powershell
-[Environment]::GetEnvironmentVariable('SSL_CERT_DIR')
-[Environment]::GetEnvironmentVariable('REQUESTS_CA_BUNDLE')
-```
-should output your SSL certificate directory and file location path in this new terminal.
-
-In this and subsequent terminals, with the variables in place, running tests with the test proxy should now work with HTTPS requests.
+The test-framework will take care of using the correct certificate bundle at runtime.
 
 ## Java
 

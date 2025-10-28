@@ -74,7 +74,7 @@ export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, m
     
     try {
         await mkdirp('./tmp-patch');
-        const astContext = await createAstContext(mdFilePathOld, mdFilePathNew, './tmp-patch');
+        const astContext = await createAstContext({path: mdFilePathOld}, {path: mdFilePathNew}, './tmp-patch');
         const changeLog = changelogGenerator(metaDataOld, metaDataNew, oldSdkType, newSdkType, astContext);
         logger.info('Generated changelog successfully:');
         logger.info(changeLog.displayChangeLog());

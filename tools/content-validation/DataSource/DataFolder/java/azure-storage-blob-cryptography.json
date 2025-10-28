@@ -1,0 +1,17 @@
+[
+  {
+    "version": "view=azure-java-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/storage?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-cryptography-readme?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography.blobclientsideencryptionoptions?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography.blobdecryptionpolicy?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography.encryptedblobasyncclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography.encryptedblobclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography.encryptedblobclientbuilder?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.storage.blob.specialized.cryptography.encryptionversion?view=azure-java-preview\u0026branch=main"
+    ]
+  }
+]

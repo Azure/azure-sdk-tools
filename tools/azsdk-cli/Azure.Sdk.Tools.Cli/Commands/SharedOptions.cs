@@ -2,65 +2,96 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
-using Azure.Sdk.Tools.Cli.Tools.HostServer;
-using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
+using Azure.Sdk.Tools.Cli.Tools.EngSys;
+using Azure.Sdk.Tools.Cli.Tools.GitHub;
+using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Tools.Pipeline;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Tools.Example;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
-        public static readonly List<Type> ToolsList = new List<Type>(){
-            typeof(AnalyzePipelinesTool),
-            typeof(PipelineDetailsTool),
+        public static readonly List<Type> ToolsList = [
+            typeof(PackageCheckTool),
             typeof(CleanupTool),
+            typeof(CodeownersTools),
+            typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),
-            typeof(HostServerTool),
+            typeof(PipelineTool),
+            typeof(PipelineAnalysisTool),
+            typeof(PipelineTestsTool),
+            typeof(QuokkaTool),
+            typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
+            typeof(ReleaseReadinessTool),
+            typeof(SdkBuildTool),
+            typeof(SdkGenerationTool),
+            typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
-            typeof(SpecPullRequestTools),
+            typeof(PullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
-            typeof(ReleaseReadinessTool),
-            #if DEBUG
-            // only add this tool in debug mode
+            typeof(TestAnalysisTool),
+            typeof(TypeSpecConvertTool),
+            typeof(TypeSpecInitTool),
+            typeof(TspClientUpdateTool),
+            typeof(TypeSpecPublicRepoValidationTool),
+            typeof(TestTool),
+#if DEBUG
+            // only add these tools in debug mode
+            typeof(ExampleTool),
             typeof(HelloWorldTool),
-            #endif
-        };
+#endif
+        ];
 
         public static Option<string> ToolOption = new("--tools")
         {
             Description = "If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.",
-            IsRequired = false,
+            Required = false,
         };
 
-        public static Option<string> Format = new(["--output", "-o"], () => "plain")
+        public static Option<string> Format = new("--output", "-o")
         {
             Description = "The format of the output. Supported formats are: plain, json",
-            IsRequired = false,
+            Required = false,
+            Recursive = true,
+            DefaultValueFactory = _ => "plain",
         };
 
-        public static Option<bool> Debug = new(["--debug"], () => false)
+        public static Option<bool> Debug = new("--debug")
         {
             Description = "Enable debug logging",
-            IsRequired = false,
+            Required = false,
+            Recursive = true,
+            DefaultValueFactory = _ => false,
         };
 
-        public static (string, bool) GetGlobalOptionValues(string[] args)
+        public static Option<string> PackagePath = new("--package-path", "-p")
+        {
+            Description = "Path to the package directory to check. Defaults to the current working directory",
+            Required = false,
+            DefaultValueFactory = _ => Environment.CurrentDirectory,
+        };
+
+        public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.AddGlobalOption(Format);
-            root.AddGlobalOption(Debug);
+            root.Options.Add(Format);
+            root.Options.Add(Debug);
 
-            var parser = new Parser(root);
-            var result = parser.Parse(args);
+            var result = root.Parse(args);
 
-            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
-            var debug = result.GetValueForOption(Debug);
-            return (raw, debug);
+            // Note: When --help is present, GetValue returns null instead of calling DefaultValueFactory
+            // because the command isn't actually being invoked. The ?? "plain" fallback handles this case.
+            var outputFormat = result.GetValue(Format)?.ToLowerInvariant() ?? "plain";
+            var debug = result.GetValue(Debug);
+            return (outputFormat, debug);
         }
 
         public static string[] GetToolsFromArgs(string[] args)
@@ -69,12 +100,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.AddOption(ToolOption);
+            root.Options.Add(ToolOption);
 
-            var parser = new Parser(root);
-            var result = parser.Parse(args);
+            var result = root.Parse(args);
 
-            var raw = result.GetValueForOption(ToolOption);
+            var raw = result.GetValue(ToolOption);
             if (string.IsNullOrWhiteSpace(raw))
             {
                 return new string[] { };
@@ -84,20 +114,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => s.ToLowerInvariant())
                 .ToArray();
-        }
-
-        public static List<Type> GetFilteredToolTypes(string[] args)
-        {
-            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
-
-            if (toolMatchList.Length > 0)
-            {
-                return ToolsList
-                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name) || t.Name.StartsWith("HostServer")))
-                             .ToList();
-            }
-
-            return ToolsList;
         }
     }
 }

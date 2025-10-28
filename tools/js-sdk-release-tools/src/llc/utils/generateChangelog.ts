@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "../../utils/logger.js";
-import { getLatestStableVersion } from "../../utils/version.js";
 import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
+import { getLatestStableVersion } from "../../utils/version.js";
 import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
 
@@ -44,7 +44,7 @@ export async function generateChangelog(packagePath) {
         generateChangelogForFirstRelease(packagePath, version);
         logger.info(`Generated changelog successfully.`);
     } else {
-        const stableVersion = getLatestStableVersion(npmViewResult);
+        const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);
             process.exit(1);

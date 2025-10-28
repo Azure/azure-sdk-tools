@@ -1,0 +1,28 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/event-grid?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/messaging-eventgrid-namespaces-readme?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridreceiverasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridreceiverclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridreceiverclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridsenderasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridsenderclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridsenderclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.eventgridserviceversion?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.acknowledgeresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.brokerproperties?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.failedlocktoken?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.receivedetails?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.receiveresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.rejectresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.releasedelay?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.releaseresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventgrid.namespaces.models.renewlocksresult?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

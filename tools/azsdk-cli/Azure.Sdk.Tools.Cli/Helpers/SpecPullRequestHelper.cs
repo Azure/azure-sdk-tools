@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     var matches = regex.Matches(comment);
                     if (matches == null)
                     {
-                        _logger.LogInformation("No matching found");
+                        _logger.LogDebug("No API review links found in comment");
                         continue;
                     }
 
@@ -40,7 +40,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     {
                         if (m is Match match)
                         {
-                            _logger.LogInformation($"API view match {match.Value}");
+                            var matchValue = match.Value;
+                            _logger.LogDebug($"Found API view match: {matchValue}");
                             if(match.Groups.Count == 4)
                             {
                                 apiviewLinks.Add(

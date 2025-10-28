@@ -1,19 +1,26 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""Plugin for utility functions in the APIView Copilot."""
+
 import json
 import os
+import tempfile
+from urllib.parse import urlparse
+
 import prompty
 import prompty.azure_beta
 import requests
 from semantic_kernel.functions import kernel_function
-from urllib.parse import urlparse
-
 from src._diff import create_diff_with_line_numbers
-
-# Set up paths
-_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
+from src._utils import get_prompt_path
 
 
 class UtilityPlugin:
+    """Utility plugin for APIView Copilot."""
 
     def _download_if_url(self, file_path: str) -> str:
         """
@@ -22,9 +29,7 @@ class UtilityPlugin:
         """
         parsed = urlparse(file_path)
         if parsed.scheme in ("http", "https"):
-            import tempfile
-
-            response = requests.get(file_path)
+            response = requests.get(file_path, timeout=30)
             response.raise_for_status()
             suffix = os.path.splitext(parsed.path)[-1]
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode="wb") as tmp:
@@ -40,7 +45,7 @@ class UtilityPlugin:
             api (str): The API to summarize.
             language (str): The programming language of the API.
         """
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_api.prompty")
+        prompt_path = get_prompt_path(folder="summarize", filename="summarize_api.prompty")
         if not os.path.exists(prompt_path):
             raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         response = prompty.execute(prompt_path, inputs={"content": api, "language": language}, configuration={})
@@ -55,7 +60,7 @@ class UtilityPlugin:
             base (str): The base (old) API to compare against.
             language (str): The programming language of the APIs.
         """
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_diff.prompty")
+        prompt_path = get_prompt_path(folder="summarize", filename="summarize_diff.prompty")
         if not os.path.exists(prompt_path):
             raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         api_diff = create_diff_with_line_numbers(old=base, new=target)
@@ -77,7 +82,9 @@ class UtilityPlugin:
                 json_content = json.load(file)
                 return json.dumps(json_content, indent=2)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Error decoding JSON from file {file_path}: {e}")
+            raise ValueError(f"Error decoding JSON from file {file_path}.") from e
+        except Exception as e:
+            raise ValueError(f"Error reading JSON file {file_path}.") from e
 
     @kernel_function(description="Load a text file from the specified path or URL.")
     async def load_text_file(self, file_path: str):
@@ -93,4 +100,4 @@ class UtilityPlugin:
             with open(file_path, "r", encoding="utf-8") as file:
                 return file.read()
         except Exception as e:
-            raise ValueError(f"Error reading text file {file_path}: {e}")
+            raise ValueError(f"Error reading text file {file_path}.") from e

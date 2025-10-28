@@ -8,14 +8,20 @@ public interface IAzureAgentService
     string ProjectEndpoint { get; }
 
     Task DeleteAgents(CancellationToken ct);
-    Task<(string, TokenUsageHelper)> QueryFiles(List<string> files, string session, string query, CancellationToken ct);
+    Task<string> QueryFiles(List<string> files, string session, string query, CancellationToken ct);
 }
 
-public class AzureAgentService(IAzureService azureService, ILogger<AzureAgentService> logger, string? _projectEndpoint, string? _model) : IAzureAgentService
+public class AzureAgentService(
+    IAzureService azureService,
+    ILogger<AzureAgentService> logger,
+    TokenUsageHelper tokenUsageHelper,
+    string? _projectEndpoint,
+    string? _model
+) : IAzureAgentService
 {
     public string ProjectEndpoint { get; } = _projectEndpoint ?? defaultProjectEndpoint;
-    private static readonly string defaultProjectEndpoint = "https://azsdk-engsys-ai.services.ai.azure.com/api/projects/azsdk-engsys-ai";
-    private readonly string model = _model ?? "gpt-4.1-mini";
+    private static readonly string defaultProjectEndpoint = "https://azsdk-engsys-openai.services.ai.azure.com/api/projects/azsdk-engsys-openai-foundry";
+    private readonly string model = _model ?? "gpt-4o";
 
     private readonly PersistentAgentsClient client = new(_projectEndpoint ?? defaultProjectEndpoint, azureService.GetCredential());
 
@@ -25,6 +31,7 @@ Your task is to analyze the logs and provide a summary of the failures.
 Include relevant data like error type, error messages, functions and error lines.
 Find other log lines in addition to the final error that may be descriptive of the problem.
 Errors like 'Powershell exited with code 1' are not error messages, but the error message may be in the logs above it.
+The full response should be parsed as valid json, do not prefix with another message.
 Provide suggested next steps. Respond only in valid JSON with a single object in the following format:
 {
     ""summary"": ""..."",
@@ -32,43 +39,68 @@ Provide suggested next steps. Respond only in valid JSON with a single object in
         { ""file"": ""..."", ""line"": ..., ""message"": ""..."" }
     ],
     ""suggested_fixes"": ""...""
-}";
+}
+Again, the entire response **MUST BE VALID JSON**";
 
     public async Task DeleteAgents(CancellationToken ct = default)
     {
-        logger.LogInformation("Deleting agents in project '{ProjectEndpoint}'", ProjectEndpoint);
+        logger.LogDebug("Deleting agents in project '{ProjectEndpoint}'", ProjectEndpoint);
         AsyncPageable<PersistentAgent> agents = client.Administration.GetAgentsAsync(cancellationToken: ct);
         await foreach (var agent in agents)
         {
-            logger.LogInformation("Deleting agent {AgentId} ({AgentName})", agent.Id, agent.Name);
+            logger.LogDebug("Deleting agent {AgentId} ({AgentName})", agent.Id, agent.Name);
             await client.Administration.DeleteAgentAsync(agent.Id, ct);
         }
 
         AsyncPageable<PersistentAgentThread> threads = client.Threads.GetThreadsAsync(cancellationToken: ct);
         await foreach (var thread in threads)
         {
-            logger.LogInformation("Deleting thread {ThreadId}", thread.Id);
+            logger.LogDebug("Deleting thread {ThreadId}", thread.Id);
             await client.Threads.DeleteThreadAsync(thread.Id, ct);
         }
 
         AsyncPageable<PersistentAgentsVectorStore> vectorStores = client.VectorStores.GetVectorStoresAsync(cancellationToken: ct);
         await foreach (var vectorStore in vectorStores)
         {
-            logger.LogInformation("Deleting vector store {VectorStoreId} ({VectorStoreName})", vectorStore.Id, vectorStore.Name);
+            logger.LogDebug("Deleting vector store {VectorStoreId} ({VectorStoreName})", vectorStore.Id, vectorStore.Name);
             await client.VectorStores.DeleteVectorStoreAsync(vectorStore.Id, ct);
         }
 
         var files = await client.Files.GetFilesAsync(cancellationToken: ct);
         foreach (var file in files.Value)
         {
-            logger.LogInformation("Deleting file {FileId} ({FileName})", file.Id, file.Filename);
+            logger.LogDebug("Deleting file {FileId} ({FileName})", file.Id, file.Filename);
             await client.Files.DeleteFileAsync(file.Id, ct);
         }
     }
 
-    public async Task<(string, TokenUsageHelper)> QueryFiles(List<string> files, string session, string query, CancellationToken ct)
+    public async Task DeleteAgentResources(
+        PersistentAgent agent,
+        PersistentAgentsVectorStore vectorStore,
+        PersistentAgentThread thread,
+        List<PersistentAgentFileInfo> sessionFiles,
+        CancellationToken ct = default)
+    {
+        logger.LogDebug("Deleting agent {AgentId} ({AgentName})", agent.Id, agent.Name);
+        await client.Administration.DeleteAgentAsync(agent.Id, ct);
+
+        logger.LogDebug("Deleting thread {ThreadId}", thread.Id);
+        await client.Threads.DeleteThreadAsync(thread.Id, ct);
+
+        logger.LogDebug("Deleting vector store {VectorStoreId} ({VectorStoreName})", vectorStore.Id, vectorStore.Name);
+        await client.VectorStores.DeleteVectorStoreAsync(vectorStore.Id, ct);
+
+        foreach (var file in sessionFiles)
+        {
+            logger.LogDebug("Deleting file {FileId} ({FileName})", file.Id, file.Filename);
+            await client.Files.DeleteFileAsync(file.Id, ct);
+        }
+    }
+
+    public async Task<string> QueryFiles(List<string> files, string session, string query, CancellationToken ct)
     {
         List<string> uploaded = [];
+        List<PersistentAgentFileInfo> sessionFiles = [];
         foreach (var file in files)
         {
             if (string.IsNullOrWhiteSpace(file) || Path.GetExtension(file) == string.Empty)
@@ -78,6 +110,7 @@ Provide suggested next steps. Respond only in valid JSON with a single object in
             logger.LogDebug("Uploading file {FileName}", file);
             PersistentAgentFileInfo info = await client.Files.UploadFileAsync(file, PersistentAgentFilePurpose.Agents, ct);
             uploaded.Add(info.Id);
+            sessionFiles.Add(info);
         }
 
         PersistentAgentsVectorStore vectorStore = await client.VectorStores.CreateVectorStoreAsync(uploaded, name: session, cancellationToken: ct);
@@ -133,10 +166,12 @@ Provide suggested next steps. Respond only in valid JSON with a single object in
             }
         }
 
-        // NOTE: in the future we will want to keep these around if the user wants to keep querying the file in a session
-        logger.LogDebug("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);
+        tokenUsageHelper.Add(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
 
-        var tokenUsage = new TokenUsageHelper(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
-        return (string.Join("\n", response), tokenUsage);
+        // NOTE: in the future we will want to keep these around if the user wants to keep querying the file in a session
+        logger.LogInformation("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);
+        await DeleteAgentResources(agent, vectorStore, thread, sessionFiles, ct);
+
+        return string.Join("\n", response);
     }
 }

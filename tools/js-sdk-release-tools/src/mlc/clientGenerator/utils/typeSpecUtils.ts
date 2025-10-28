@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { ModularClientPackageOptions } from '../../../common/types.js';
-import { getGeneratedPackageDirectory, generateRepoDataInTspLocation, runCommand, runCommandOptions } from '../../../common/utils.js';
+import { generateRepoDataInTspLocation, runCommand } from '../../../common/utils.js';
 import { logger } from '../../../utils/logger.js';
 import pkg from '@npmcli/package-json';
 const { load } = pkg;
@@ -18,10 +18,20 @@ export async function generateTypeScriptCodeFromTypeSpec(
     const tspConfigPath = join(options.typeSpecDirectory, 'tspconfig.yaml');
     logger.info('Start to generate code by tsp-client.');
     const repoUrl = generateRepoDataInTspLocation(options.repoUrl);
+    const tspClientDir = join(process.cwd(), 'eng', 'common', 'tsp-client');
+    
+    logger.info(`Using tsp-client from: ${tspClientDir}`);
     await runCommand(
-        'tsp-client',
+        'npm',
         [
+            '--prefix',
+            tspClientDir,
+            'exec',
+            '--no',
+            '--',
+            'tsp-client',
             'init',
+            '--update-if-exists',
             '--debug',
             '--tsp-config',
             tspConfigPath,

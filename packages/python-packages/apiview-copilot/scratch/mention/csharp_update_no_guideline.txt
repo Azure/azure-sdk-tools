@@ -1,0 +1,18 @@
+{
+  "language": "dotnet",
+  "package_name": "azure.widgets",
+  "code": "public static implicit operator SettingLabelFields?(string value);",
+  "comments": [
+        {
+            "CreatedBy": "azure-sdk",
+            "CommentText": "Implicit nullable conversion can lead to surprising overload resolution; make it explicit. (general comment)\n\nSuggestion : public static explicit operator SettingLabelFields?(string value);",
+            "Downvotes": ["tjprescott"],
+            "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+        },
+        {
+            "CreatedBy": "tjprescott",
+            "CommentText": "@azure-sdk a nullable conversion is an allowed pattern in the C# SDK and the code is generated that way by design.",
+            "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/communication?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/communication-rooms-readme?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.roomsasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.roomsclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.roomsclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.roomsserviceversion?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.addorupdateparticipantsresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.communicationroom?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.createroomoptions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.participantrole?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.removeparticipantsresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.roomparticipant?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.rooms.models.updateroomoptions?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

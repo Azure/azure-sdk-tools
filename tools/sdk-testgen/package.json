@@ -39,8 +39,8 @@
         "@typescript-eslint/parser": "^8.18.2",
         "@types/lodash": "^4.17.5",
         "autorest": "^3.2.3",
-        "cpy-cli": "^5.0.0",
-        "cross-env": "^7.0.3",
+        "cpy-cli": "^6.0.0",
+        "cross-env": "^10.0.0",
         "eslint": "^9.0.0",
         "eslint-config-prettier": "^10.1.2",
         "eslint-plugin-prettier": "^5.2.2",
@@ -54,7 +54,7 @@
         "reflect-metadata": "0.2.2",
         "source-map-support": "^0.5.19",
         "ts-jest": "^29.2.5",
-        "typescript": "~5.8.3",
+        "typescript": "~5.9.2",
         "ts-loader": "^9.4.2"
     },
     "files": [

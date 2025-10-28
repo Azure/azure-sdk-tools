@@ -1,0 +1,42 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/key-vault?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/security-keyvault-administration-readme?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultaccesscontrolasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultaccesscontrolclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultaccesscontrolclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultbackupasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultbackupclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultbackupclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultsettingsasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultsettingsclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultsettingsclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.keyvaultadministrationserviceversion?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultadministrationerror?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultadministrationexception?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultbackupoperation?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultdataaction?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultgetsettingsresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultlongrunningoperation?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultpermission?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultrestoreoperation?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultrestoreresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultroleassignment?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultroleassignmentproperties?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultroledefinition?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultroledefinitiontype?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultrolescope?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultroletype?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultselectivekeyrestoreoperation?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultselectivekeyrestoreresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultsetting?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.keyvaultsettingtype?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration.models.setroledefinitionoptions?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

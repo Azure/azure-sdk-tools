@@ -1,4 +1,9 @@
 scratch/prompts
+scratch/output
+scratch/logs
 raw_requests
 build
+.runs
 *.log
+flow.flex.yaml
+cache

@@ -121,7 +121,7 @@ class ClassNode(NodeEntityBase):
             return (
                 function_module
                 and function_module.startswith(self.pkg_root_namespace)
-                and not function_module.endswith("_model_base")
+                and not (function_module.endswith("_model_base") or function_module.endswith("model_base"))
             )
         return False
 
@@ -321,11 +321,11 @@ class ClassNode(NodeEntityBase):
         """
         logging.info(f"Processing class {self.namespace_id}")
         for decorator in self.decorators:
-            line = review_lines.create_review_line(related_to_line=self.namespace_id)
+            line = review_lines.create_review_line(related_to_line=self.namespace_id, is_handwritten=self.is_handwritten)
             line.add_keyword(decorator, has_suffix_space=False)
             review_lines.append(line)
 
-        line = review_lines.create_review_line()
+        line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         line.add_line_marker(
             self.namespace_id, add_cross_language_id=True, apiview=self.apiview
         )

@@ -1,42 +1,31 @@
-from collections import deque
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for managing search operations in APIView Copilot.
+"""
+
 import copy
-import os
-from typing import List, Dict, Optional
+from collections import deque
+from typing import Dict, List, Optional
 
-from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient, SearchItemPaged
+from azure.search.documents.indexes import SearchIndexerClient
 from azure.search.documents.models import (
-    VectorizableTextQuery,
-    QueryType,
-    QueryAnswerType,
     QueryAnswerResult,
+    QueryAnswerType,
     QueryCaptionType,
+    QueryType,
     SemanticErrorMode,
+    VectorizableTextQuery,
 )
-
 from src._credential import get_credential
-from src._models import Guideline, Example, Memory
-
-
-if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
-    # running on dev machine, loadenv
-    import dotenv
-
-    dotenv.load_dotenv()
-
-# Cosmos DB
-COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
-COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
-
-# Azure AI Search
-AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
-SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
-
-CREDENTIAL = get_credential()
-
-_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
+from src._database_manager import ContainerNames, get_database_manager
+from src._models import Example, Guideline, Memory
+from src._settings import SettingsManager
 
 
 class SearchItem:
@@ -53,7 +42,6 @@ class SearchItem:
         self.service = result.get("service")
         self.is_exception = result.get("is_exception") or False
         self.example_type = result.get("example_type")
-        self.source = result.get("source")
         self.score = result.get("@search.score", None)
         self.reranker_score = result.get("@search.reranker_score", None)
         self.captions = []
@@ -139,7 +127,7 @@ class Context:
                 max_related = max(related_scores)
                 if score is None or (max_related is not None and max_related > score):
                     score = max_related
-            item = ContextItem(guideline, examples=examples, score=score)
+            item = ContextItem(guideline, examples=examples, score=score, kind="guideline")
             self.items.append(item)
 
         # For memories, use their own score, or the max score of their related examples
@@ -153,7 +141,7 @@ class Context:
                 max_related = max(related_scores)
                 if score is None or (max_related is not None and max_related > score):
                     score = max_related
-            item = ContextItem(memory, examples=examples, score=score)
+            item = ContextItem(memory, examples=examples, score=score, kind="memory")
             self.items.append(item)
         self._normalize_scores()
         # Only sort items with a valid normalized_score, put None scores at the end
@@ -214,15 +202,17 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, item, *, examples: Dict[str, object], score=None):
+    def __init__(self, item, *, examples: Dict[str, object], score: int = None, kind: str = None):
         self.id = self._process_id(item.id)
         self.content = getattr(item, "content", getattr(item, "text", None))
         self.language = getattr(item, "language", None)
         self.title = getattr(item, "title", None)
         self.service = getattr(item, "service", None)
         self.is_exception = getattr(item, "is_exception", None)
+        self.kind = kind
         self.examples = []
         self.score = score
+        self.normalized_score = None  # Will be set after normalization
         for ex_id in getattr(item, "related_examples", []):
             example = copy.deepcopy(examples.get(ex_id)) if examples else None
             if example is not None:
@@ -247,7 +237,7 @@ class ContextItem:
         """
         Converts the metadata to a markdown string.
         """
-        markdown = f"> **id:** {self.id}<br>"
+        markdown = f"> **{self.kind}_id:** {self.id}<br>"
         if self.normalized_score is not None:
             markdown += f"**score:** {int(round(self.normalized_score))}<br>"
         if self.is_exception:
@@ -265,7 +255,7 @@ class ContextItem:
         markdown += f"## {self.title}\n\n"
 
         if self.is_exception:
-            markdown += f"**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
+            markdown += "**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
 
         markdown += f"{self.content}\n\n"
 
@@ -292,32 +282,38 @@ class ContextItem:
 
 
 class SearchManager:
+    """Manages search operations using Azure Search."""
 
-    def __init__(self, *, language: str, include_general_guidelines: bool = False):
+    def __init__(self, *, language: Optional[str] = None, include_general_guidelines: bool = False):
         self.language = language
-        self.filter_expression = f"language eq '{language}'"
+        self.filter_expression = None
+        if language:
+            self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
-            self.filter_expression += " or language eq '' or language eq null"
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        self.client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
-        self.language_guidelines = self._fetch_language_guidelines(language)
+            general_guidelines_filter = "language eq '' or language eq null"
+            if self.filter_expression:
+                self.filter_expression += f" or {general_guidelines_filter}"
+            else:
+                self.filter_expression = general_guidelines_filter
+        self._settings = SettingsManager()
+        self._search_endpoint = self._settings.get("SEARCH_ENDPOINT")
+        self._credential = get_credential()
+        self._index_name = self._settings.get("SEARCH_INDEX_NAME")
+        self.client = SearchClient(
+            endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
+        )
+        self.language_guidelines = self._fetch_language_guidelines(language) if language else None
 
-    def _ensure_env_vars(self, vars: List[str]):
-        """
-        Ensures that the given environment variables are set.
-        """
-        missing = []
-        for var in vars:
-            if os.getenv(var) is None:
-                missing.append(var)
-        if missing:
-            raise ValueError(f"Environment variables not set: {', '.join(missing)}")
+    def _ensure_language(self):
+        if not self.language:
+            raise ValueError("Language must be specified for searches.")
 
     def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
         Fetch all language-specific guidelines (kind='guidelines') from Azure Search,
         excluding those tagged 'vague' or 'documentation'.
         """
+        self._ensure_language()
         filter_expr = (
             f"kind eq 'guidelines' and language eq '{language}'"
             " and not tags/any(t: t eq 'vague')"
@@ -332,10 +328,11 @@ class SearchManager:
         Internal method to perform a search on the Azure Search index.
         This method is used by the public search methods to perform the actual search.
         """
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+        self._ensure_language()
         result = self.client.search(
             search_text=query,
             filter=filter,
+            search_fields=["chunk", "title", "tags"],
             semantic_configuration_name="semantic-search-config",
             semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,
@@ -347,18 +344,24 @@ class SearchManager:
         return SearchResult(result)
 
     def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for guidelines in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'guidelines'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
     def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for examples in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'examples'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
-    def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
+    def search_memories(self, query: str, *, top: int = 20) -> SearchResult:
+        """Search for memories in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'memories'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -370,51 +373,43 @@ class SearchManager:
         """
         return self._search(query, filter=self.filter_expression, top=top)
 
-    def guidelines_for_ids(self, ids: List[str]) -> List[object]:
-        """
-        Retrieves the guidelines for the given IDs from CosmosDB.
-        """
-        ids = list(ids)  # Ensure ids is subscriptable
-        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
-        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
-        database = client.get_database_client(COSMOS_DB_NAME)
-        guidelines_container = database.get_container_client("guidelines")
-        batch_size = 50
-        results = []
-        for i in range(0, len(ids), batch_size):
-            batch = ids[i : i + batch_size]
-            placeholders = ",".join([f"@id{j}" for j in range(len(batch))])
-            query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
-            parameters = [{"name": f"@id{j}", "value": value} for j, value in enumerate(batch)]
-            items = list(
-                guidelines_container.query_items(
-                    query=query,
-                    parameters=parameters,
-                    enable_cross_partition_query=True,
-                )
-            )
-            results.extend([Guideline.model_validate(r) for r in items])
-        return results
+    def search_all_by_id(self, ids: List[str]) -> List[SearchItem]:
+        """Searches for items by their IDs in the Azure Search index."""
+        if not ids:
+            return []
+        escaped = ",".join(id.replace("'", "''") for id in ids)
+        filter = f"search.in(id, '{escaped}', ',')"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        result = self.client.search(
+            search_text="*",
+            filter=filter,
+            query_type=QueryType.SIMPLE,
+            top=len(ids),
+        )
+        return list(SearchResult(result).results)
 
-    def build_context(self, items: List[SearchItem]) -> Context:
+    def build_context(self, search_results: List[SearchItem]) -> Context:
         """
         Given a set of items (guidelines, examples, memories), resolve the knowledge graph by traversing
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
         breadth-first traversal. Ensures the final context contains all linked guidelines, examples, and memories.
         """
-        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
-        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
-        database = client.get_database_client(COSMOS_DB_NAME)
-        guidelines_container = database.get_container_client("guidelines")
-        examples_container = database.get_container_client("examples")
-        memories_container = database.get_container_client("memories")
+        database = get_database_manager()
 
         # Partition input items by kind using SearchItem attributes
-        guidelines = {item.id: item for item in items.results if item.kind == "guidelines"}
-        examples = {item.id: item for item in items.results if item.kind == "examples"}
-        memories = {item.id: item for item in items.results if item.kind == "memories"}
+        guidelines = {}
+        examples = {}
+        memories = {}
+        for item in search_results:
+            if item.kind == "guidelines":
+                guidelines[item.id] = item
+            elif item.kind == "examples":
+                examples[item.id] = item
+            elif item.kind == "memories":
+                memories[item.id] = item
         # Save scores for each id
-        scores = {item.id: item.score for item in items.results if hasattr(item, "score")}
+        scores = {item.id: item.score for item in search_results if hasattr(item, "score")}
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set()
@@ -459,7 +454,7 @@ class SearchManager:
             # Process guidelines
             if guideline_queue:
                 batch_ids = [guideline_queue.popleft() for _ in range(min(batch_size, len(guideline_queue)))]
-                new_guidelines = batch_query(guidelines_container, batch_ids)
+                new_guidelines = batch_query(database.guidelines.client, batch_ids)
                 for guideline in new_guidelines:
                     gid = guideline.id
                     if gid in seen_guideline_ids:
@@ -478,7 +473,7 @@ class SearchManager:
             # Process examples
             if example_queue:
                 batch_ids = [example_queue.popleft() for _ in range(min(batch_size, len(example_queue)))]
-                new_examples = batch_query(examples_container, batch_ids)
+                new_examples = batch_query(database.examples.client, batch_ids)
                 for example in new_examples:
                     ex_id = example.id
                     if ex_id in seen_example_ids:
@@ -497,7 +492,7 @@ class SearchManager:
             # Process memories
             if memory_queue:
                 batch_ids = [memory_queue.popleft() for _ in range(min(batch_size, len(memory_queue)))]
-                new_memories = batch_query(memories_container, batch_ids)
+                new_memories = batch_query(database.memories.client, batch_ids)
                 for memory in new_memories:
                     mem_id = memory.id
                     if mem_id in seen_memory_ids:
@@ -515,3 +510,31 @@ class SearchManager:
 
         context = Context(guidelines=guidelines, examples=examples, memories=memories, scores=scores)
         return context
+
+    @classmethod
+    def run_indexers(cls, container_names: Optional[List[str]] = None):
+        """
+        Reindex one or more Azure Search indexers. If container_names is None, reindex all known indexers.
+        """
+        indexed_containers = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
+        if not container_names:
+            indexers_to_run = [f"{name}-indexer" for name in indexed_containers]
+        else:
+            # Map container names to indexer names (simple mapping: container_name + '-indexer')
+            indexers_to_run = [f"{name}-indexer" for name in container_names]
+
+        results = {}
+        settings = SettingsManager()
+        search_endpoint = settings.get("SEARCH_ENDPOINT")
+        client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
+        for indexer_name in indexers_to_run:
+            try:
+                status = client.get_indexer_status(indexer_name)
+                if status.status == "inProgress":
+                    results[indexer_name] = {"status": "inProgress", "message": "Indexer is already running."}
+                else:
+                    client.run_indexer(indexer_name)
+                    results[indexer_name] = {"status": "success", "message": "Indexer started successfully."}
+            except Exception as e:
+                results[indexer_name] = {"status": "error", "message": str(e)}
+        return results

@@ -1,12 +1,13 @@
 import path from 'path';
 import { spawn } from 'child_process';
-import { FailureType, setFailureType, WorkflowContext } from '../automation/workflow';
 import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/SwaggerToSdkConfig';
 import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { removeAnsiEscapeCodes } from './utils';
-import { vsoLogErrors, vsoLogWarnings } from '../automation/entrypoint';
 import { externalError, externalWarning } from './messageUtils';
+import { vsoLogErrors, vsoLogWarnings } from '../automation/logging';
+import { FailureType, WorkflowContext } from '../types/Workflow';
+import { setFailureType } from './workflowUtils';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending' | 'notEnabled'>;
 export type StatusContainer = { status: SDKAutomationState };
@@ -39,6 +40,9 @@ export const runSdkAutoCustomScript = async (
     continueOnFailed?: boolean;
   }
 ): Promise<SDKAutomationState> => {
+  if (!runOptions.path) {
+    throw new Error('Script path is not provided in run options.');
+  }
   const scriptPath = runOptions.path;
   const cwdAbsolutePath = path.resolve(options.cwd);
   const vsoLogErrorsArray: string[] = [];
@@ -142,7 +146,7 @@ export const runSdkAutoCustomScript = async (
   return result.status;
 };
 
-const listenOnStream = (
+export const listenOnStream = (
   context: WorkflowContext,
   result: StatusContainer,
   prefix: string,

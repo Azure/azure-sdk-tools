@@ -1,0 +1,23 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/communication-rooms-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/roomsclient?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/communicationroom?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/createroomoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/roomparticipant?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/roomparticipantpatch?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/roomsclientoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/updateroomoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/addorupdateparticipantsoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/deleteroomoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/getroomoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/listparticipantsoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/listroomoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/participantrole?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-rooms/removeparticipantsoptions?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

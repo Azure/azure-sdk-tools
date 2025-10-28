@@ -40,6 +40,12 @@ jobs:
       version: $(GoVersion)
     displayName: 'Install Golang'
 
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core SDK'
+    inputs:
+      useGlobalJson: true
+      performMultiLevelLookup: true
+
   - script: |
       go mod download golang.org/x/tools@latest
       go install golang.org/x/tools/cmd/goimports@latest

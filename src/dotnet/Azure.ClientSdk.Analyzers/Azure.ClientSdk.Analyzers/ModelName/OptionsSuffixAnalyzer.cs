@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Azure.ClientSdk.Analyzers.ModelName
 {
     /// <summary>
-    /// Analyzer that checks model names ending with "Options". This analyzer shares the diagnostic ID with <see cref="GeneralSuffixAnalyzer"/>.
+    /// Analyzer that checks model names ending with "Options". This analyzer uses its own diagnostic ID AZC0036.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class OptionsSuffixAnalyzer : SuffixAnalyzerBase
@@ -20,7 +20,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         private const string JsonElement = "JsonElement";
         private static readonly string[] suffixes = new string[] { OptionsSuffix };
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0030);
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0036);
 
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context)
         {
@@ -61,10 +61,12 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         protected override string[] SuffixesToCatch => suffixes;
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
+            var suggestedName = NamingSuggestionHelper.GetNamespacedSuggestion(typeSymbol.Name, typeSymbol, "Settings", "Config");
             var additionalMessage = $"The `{suffix}` suffix is reserved for input models described by " +
                 $"https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-parameters. Please rename `{typeSymbol.Name}` " +
-                $"according to our guidelines at https://azure.github.io/azure-sdk/general_design.html#model-types for output or roundtrip models.";
-            return Diagnostic.Create(Descriptors.AZC0030, context.Symbol.Locations[0], typeSymbol.Name, suffix, additionalMessage);
+                $"to {suggestedName} or another suitable name according to our guidelines at " +
+                $"https://azure.github.io/azure-sdk/general_design.html#model-types for output or roundtrip models.";
+            return Diagnostic.Create(Descriptors.AZC0036, context.Symbol.Locations[0], typeSymbol.Name, suffix, additionalMessage);
         }
     }
 }

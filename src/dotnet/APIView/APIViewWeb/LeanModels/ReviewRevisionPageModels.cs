@@ -20,7 +20,8 @@ namespace APIViewWeb.LeanModels
         CodeLine,
         Documentation,
         Diagnostics,
-        CommentThread
+        CommentThread,
+        Separator,
     }
 
     public class ReviewContentModel

@@ -1,0 +1,13 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/eventhubs-checkpointstore-blob-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/eventhubs-checkpointstore-blob/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/eventhubs-checkpointstore-blob/blobcheckpointstore?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/eventhubs-checkpointstore-blob/blobclientlike?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/eventhubs-checkpointstore-blob/blockblobclientlike?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/eventhubs-checkpointstore-blob/containerclientlike?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

@@ -10,15 +10,22 @@
     "**/*.env" // Exclude .env files
   ],
   "words": [
+    "ACCESSTOKEN",
     "apiview",
     "apiviewcopilot",
     "apiviews",
+    "apiviewstaging",
+    "apiviewstagingrg",
     "appsetting",
     "archagent",
     "asyncio",
+    "azurecore",
+    "AZURESUBSCRIPTION",
     "contoso",
+    "DEFINITIONNAME",
     "docstrings",
     "dotenv",
+    "downvotes",
     "evals",
     "guidelines",
     "imageanalysis",
@@ -29,17 +36,24 @@
     "levelname",
     "lineterm",
     "loadenv",
+    "mgmt",
+    "MUSTNOT",
     "popleft",
     "prompty",
     "pyenv",
     "reranker",
     "retryable",
+    "SHOULDNOT",
     "SIGALRM",
     "signum",
     "textvector",
     "tjprescott",
     "tofile",
+    "upvotes",
     "vectorizable"
   ],
-  "dictionaries": ["python", "softwareTerms"]
+  "dictionaries": [
+    "python",
+    "softwareTerms"
+  ]
 }

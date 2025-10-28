@@ -39,8 +39,8 @@ Bot Service,,e99695
 Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
 Client,This issue points to a problem in the data-plane of the library.,ffeb77
 Cloud Shell,,e99695
-CodeGen,Issues that relate to code generation,e99695
 Code Signing,,e99695
+CodeGen,Issues that relate to code generation,e99695
 Cognitive - Anomaly Detector,,e99695
 Cognitive - Bing,,e99695
 Cognitive - Computer Vision,,e99695
@@ -58,12 +58,12 @@ Cognitive - Personalizer,,e99695
 Cognitive - QnA Maker,,e99695
 Cognitive - Speech,,e99695
 Cognitive - Text Analytics,,e99695
-Communication - Toll Free Verification,,e99695
 Cognitive - Translator,,e99695
 Cognitive - Vision,,e99695
 Cognitive Services,,e99695
 Commerce,,e99695
 Communication,,e99695
+Communication - Call Automation,,e99695
 Communication - Calling Server,,e99695
 Communication - Chat,,e99695
 Communication - Common,,e99695
@@ -71,9 +71,10 @@ Communication - Identity,,e99695
 Communication - Messages,,e99695
 Communication - Network Traversal,,e99695
 Communication - Phone Numbers,,e99695
-Communication - Short Codes,,e99695
-Communication - SMS,,e99695
 Communication - Resource Manager,,e99695
+Communication - SMS,,e99695
+Communication - Short Codes,,e99695
+Communication - Toll Free Verification,,e99695
 Community Contribution,Community members are working on the issue,1aa874
 Compute,,e99695
 Compute - Extensions,,e99695
@@ -85,21 +86,21 @@ Compute - VM,,e99695
 Compute - VMSS,,e99695
 Confidential Ledger,,e99695
 Connected Kubernetes,,e99695
+Consumption - Billing,All issues in consumption where billing/price-related data is shown.,e99695
 Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
 Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
-Consumption - Billing,"All issues in consumption where billing/price-related data is shown.",e99695
-Consumption - UsageDetailsAndExport,"All issues in consumption for usage details API and exports API.",e99695
-Consumption - RIandShowBack,"All issues in consumption associated with Reservation and ShowBack.",e99695
+Consumption - RIandShowBack,All issues in consumption associated with Reservation and ShowBack.,e99695
+Consumption - UsageDetailsAndExport,All issues in consumption for usage details API and exports API.,e99695
 Container Instances,,e99695
 Container Orchestrator Runtime,,e99695
 Container Registry,,e99695
 Container Service,,e99695
 Cosmos,,e99695
+Cost Management - Billing,All issues in cost management where billing/price-related data is shown.,e99695
 Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
 Cost Management - Query,"All issues in cost management associated with tags, dimensions and forecasts.",e99695
-Cost Management - Billing,"All issues in cost management where billing/price-related data is shown.",e99695
-Cost Management - UsageDetailsAndExport,"All issues in cost management for usage details API and exports API.",e99695
-Cost Management - RIandShowBack,"All issues in cost management associated with Reservation and ShowBack.",e99695
+Cost Management - RIandShowBack,All issues in cost management associated with Reservation and ShowBack.,e99695
+Cost Management - UsageDetailsAndExport,All issues in cost management for usage details API and exports API.,e99695
 Custom Providers,,e99695
 Customer Insights,,e99695
 CycleCloud,,e99695
@@ -118,9 +119,9 @@ DataBox Edge,,e99695
 Database Watcher,,e99695
 Defender ESAM,,e99695
 Dev Spaces,,e99695
-Device Update,,e99695
 DevOps,,e99695
 DevOps - Infrastructure,,e99695
+Device Update,,e99695
 Devtestlab,,e99695
 Digital Twins,,e99695
 Do Not Merge,,b60205
@@ -196,6 +197,7 @@ Operations Management,,e99695
 Operator Nexus - Network Cloud,,e99695
 Peering,,e99695
 Pinecone,,e99695
+Planetary Computer,,e99695
 Policy,,e99695
 Policy Insights,,e99695
 PostgreSQL,,e99695
@@ -244,10 +246,13 @@ Tables,,e99695
 TimeseriesInsights,,e99695
 Training,Work items that track the work to build training materials for building Client libraries,e99695
 VideoAnalyzer,Azure Video Analyzer,e99695
+Virtual Enclaves,,e99695
 Visual Studio,,e99695
+Voice Live,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695
 Weights & Biases,,e99695
+Workload Orchestration,,e99695
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49
@@ -258,8 +263,8 @@ duplicate,This issue is the duplicate of another issue,e4c288
 feature-request,This issue requires a new behavior in the product in order be resolved.,eaa875
 good first issue,This issue tracks work that may be a good starting point for a first-time contributor,64c170
 help wanted,This issue is tracking work for which community contributions would be welcomed and appreciated,64c170
-late-blocker,Changes based on review feedback before imminent release.,d8f74c
 issue-addressed,Workflow: The Azure SDK team believes it to be addressed and ready to close.,5df772
+late-blocker,Changes based on review feedback before imminent release.,d8f74c
 needs-author-feedback,Workflow: More information is needed from author to address the issue.,f72598
 needs-team-attention,Workflow: This issue needs attention from Azure service team or SDK team,3BA0F8
 needs-team-triage,Workflow: This issue needs the team to triage.,ededed

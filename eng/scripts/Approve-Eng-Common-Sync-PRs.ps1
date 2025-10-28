@@ -3,7 +3,9 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
   [Parameter(Mandatory = $true)]
-  [string] $ToolsPRNumber
+  [string] $ToolsPRNumber,
+  [Parameter()]
+  [string] $PRFileOverride
 )
 
 $PSNativeCommandUseErrorActionPreference = $true
@@ -15,13 +17,26 @@ gh auth status
 
 if ($LASTEXITCODE -ne 0) {
   Write-Error "Please login via gh auth login"
-  exit 1
+  exit $LASTEXITCODE
 }
 
 $ToolsRepo = "Azure/azure-sdk-tools"
 
 $ghloggedInUser = (gh api user -q .login)
 # Get a temp access token from the logged in az cli user for azure devops resource
+$account = (az account show -o json | ConvertFrom-Json)
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Az login failed, try logging in again."
+  exit $LASTEXITCODE
+}
+if ($account.homeTenantId -ne "72f988bf-86f1-41af-91ab-2d7cd011db47") {
+  Write-Host "Currently not logged into correct tenant so setting the subscription to EngSys sub in the correct tenant so token will be valid."
+  az account set -s "a18897a6-7e44-457d-9260-f2854c0aca42"
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to set Azure subscription. Please check your permissions and try again."
+    exit $LASTEXITCODE
+  }
+}
 $jwt_accessToken = (az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv)
 $headers = @{ Authorization = "Bearer $jwt_accessToken" }
 
@@ -34,9 +49,15 @@ foreach ($check in $syncChecks) {
 
   $devOpsBuild = $check.link -replace "_build/results\?buildId=(\d+)", "_apis/build/builds/`$1/artifacts?artifactName=pullrequestdata"
   try {
-    $response = Invoke-RestMethod $devOpsBuild -Headers $headers
-    $artifactDownload = $response.resource.downloadUrl
-    $PrsCreatedContent = Invoke-RestMethod $artifactDownload.Replace("format=zip","format=file&subPath=/PRsCreated.txt") -headers $headers
+    if ($PRFileOverride) {
+        $PrsCreatedContent = Get-Content -Raw $PRFileOverride
+    }
+    else {
+        $response = Invoke-RestMethod $devOpsBuild -Headers $headers
+        $artifactDownload = $response.resource.downloadUrl
+        $PrsCreatedContent = Invoke-RestMethod $artifactDownload.Replace("format=zip","format=file&subPath=/PRsCreated.txt") -headers $headers
+    }
+
     if ($PrsCreatedContent) {
       $PrsCreatedContent = $PrsCreatedContent.Split("`n") | Where-Object { $_ }
       foreach ($line in $PrsCreatedContent) {

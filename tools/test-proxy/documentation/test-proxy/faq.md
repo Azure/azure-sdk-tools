@@ -101,3 +101,27 @@ In this case, the issue is likely due to an unhandled edge case when resolving a
 - Share the folder with `scbedd` over teams along with any details on the proxy-side error that you've found in your logs.
 - Delete your existing `.assets`
 - Re-run your tests. The proxy will download a fresh copy of the tag from your `assets.json` and re-init the `.assets` folder automatically.
+
+### I've been successfully using the test-proxy for a while, but I'm suddenly getting SSL cert validation errors and my tests won't start
+
+The test-proxy enables SSL by meeting in the middle with each language's test framework. The test-framework adds the test-proxy dev cert to its trusted cert bundle, and then the proxy is _started_ using that same certificate to secure its HTTPS port. The combination of running the proxy using the dev cert and trusting that same dev cert allows any localhost to communicate over HTTPS with the test-proxy.
+
+While it is very possible that local users may encounter errors due to misconfiguration of SSL variables or other minutae, users must ensure that the dev-cert being utilized is valid for their current date!
+
+To ensure that the appropriate dev-cert is being used:
+
+- Check validity of current certificate. The dev cert will always be located at `eng/common/testproxy/dotnet-devcert.pfx` in each language repo.
+  - On `windows`: `certutil -dump eng/common/testproxy/dotnet-devcert.pfx`. Enter `password` for the password when asked.
+  - On `linux/mac`, you must have `openssl` installed, then: `openssl pkcs12 -in eng/common/testproxy/dotnet-devcert.pfx -nokeys -clcerts -passin pass:password | openssl x509 -noout -enddate`
+  - If the current date DOES NOT fall within the date range of the cert, **expiration is the problem**.
+  - Otherwise the issue causing your SSL verification errors is most likely system configuration related, and not specifically related to the utilized dev-cert.
+
+If the current date is outside of the valid date range of the certificate, then you need to do the following:
+
+- Pull latest `main` of your repo.
+- Check the validity of the certificate as you did in previous step. If not up to date, you do not have latest main.
+- Shut down **any** running proxy instances. They will be using the previous SSL certificate, which is invalid.
+  - `windows` check task manager
+  - `linux/mac` use `ps aux | grep TestProxy`. Kill any processes that match.
+- Delete any local copies of the certificate.
+- Follow any specific `import` directions in [trusting-cert-per-language](trusting-cert-per-language.md) for your current `language`.

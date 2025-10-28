@@ -1,20 +1,21 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Filters
 {
     public class ApiKeyAuthorizeAsyncFilter : Attribute, IAsyncAuthorizationFilter
     {
         private static string _apiKeyHeader = "ApiKey";
-        private string _azure_sdk_bot = "azure-sdk";
+        private string _azure_sdk_bot = ApiViewConstants.AzureSdkBotName;
         private HashSet<string> _apiKeyValues = new HashSet<string>();
 
         public ApiKeyAuthorizeAsyncFilter(IConfiguration configuration)

@@ -1,0 +1,23 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/web-pubsub?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/messaging-webpubsub-readme?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.webpubsubauthenticationpolicy?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.webpubsubserviceasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.webpubsubserviceclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.webpubsubserviceclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.webpubsubserviceversion?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models.getclientaccesstokenoptions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models.webpubsubclientaccesstoken?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models.webpubsubclientprotocol?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models.webpubsubgroupconnection?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models.webpubsubpermission?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.webpubsub.models.webpubsubcontenttype?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

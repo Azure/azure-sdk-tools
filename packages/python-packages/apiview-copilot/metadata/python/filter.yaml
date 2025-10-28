@@ -1,59 +1,21 @@
 exceptions: |
-  1. Comment on the `send_request` method
-  2. Suggest changes to class inheritance patterns (i.e. base‑class relationships only)
-  3. Comment on `implements ContextManager` pseudocode
-  4. Comment on ellipsis (...) usage in optional parameters
-  5. Comment on __init__ overloads in model classes or MutableMapping inheritance
-  6. Suggest adding docstrings
-  7. Suggest using pydantic or dataclasses for models
-  8. Comment on indentation
-  9. Suggest consolidating multiple overloads
-  10. Suggest providing convenience methods directly on the client
-  11. Comment on non-standard use of TypedDict syntax
-  12. Comment about ivar being non-standard in docstrings
-  13. Comment about use standard attribute annotations (or @property decorators) rather than a custom 'property' syntax.
-  14. Comment about methods ending with :
-  15. Comment on namespaces unless they are violating guidelines
-  16. Comment about removing the non-Python 'namespace' declaration
-  17. Comment on the overuse of **kwargs
-  18. Comment that the *syntax* of including a module path in the *definition* is wrong (e.g. flagging `class azure.foo.FooClient:` itself as illegal)
-sample: |
-  - description: "Should filter out docstring suggestions"
-    initial_results: |
-      {
-        "comments": [
-          {
-            "line_no": 2,
-            "bad_code": "def method1(self, arg1: str) -> None",
-            "suggestion": "Add docstring explaining method purpose",
-            "comment": "Methods should have descriptive docstrings"
-          },
-          {
-            "line_no": 2,
-            "bad_code": "def method1(self, arg1: str) -> None",
-            "suggestion": "def get_something(self, name: str) -> None",
-            "comment": "Method name should be more descriptive"
-          }
-        ]
-      }
-    expected_results: |
-      {
-        "comments": [
-          {
-            "line_no": 2,
-            "bad_code": "def method1(self, arg1: str) -> None",
-            "suggestion": "Add docstring explaining method purpose",
-            "comment": "Methods should have descriptive docstrings"
-            "status": "REMOVE",
-            "status_reason": "Comment on docstring suggestion violates exceptions"
-          },
-          {
-            "line_no": 2,
-            "bad_code": "def method1(self, arg1: str) -> None",
-            "suggestion": "def get_something(self, name: str) -> None",
-            "comment": "Method name should be more descriptive"
-            "status": "KEEP",
-            "status_reason": "Comment enhances API design"
-          }
-        ]
-      }
+  1. DO NOT make comments that don't actually identify a problem
+  2. DO NOT comment on the `send_request` method
+  3. DO NOT suggest changes to class inheritance patterns (i.e. base‑class relationships only)
+  4. DO NOT suggest removing non-standard `implements` pseudocode
+  5. DO NOT comment on removing ellipsis (...) usage in optional parameters
+  6. DO NOT comment on __init__ overloads in model classes
+  7. DO NOT suggest adding docstrings
+  8. DO NOT suggest using pydantic or dataclasses for models
+  9. DO NOT comment on indentation
+  10. DO NOT suggest consolidating multiple overloads
+  11. DO NOT suggest providing convenience methods directly on the client
+  12. DO NOT comment on non-standard use of TypedDict syntax
+  13. DO NOT comment about using non-standard ivar syntax
+  14. DO NOT comment about using standard attribute annotations (or @property decorators) rather than a custom 'property' syntax.
+  15. DO NOT comment about methods ending with : (colon)
+  16. DO NOT comment on namespaces unless they are violating guidelines
+  17. DO NOT comment about removing the non-standard 'namespace' declaration
+  18. DO NOT suggest removing the full package prefix from class names.
+  19. DO NOT comment on the overuse of **kwargs
+  20. DO NOT comment that the *syntax* of including a module path in the *definition* is wrong (e.g. flagging `class azure.foo.FooClient:` itself as illegal)

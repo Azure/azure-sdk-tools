@@ -73,10 +73,13 @@ namespace Azure.ClientSdk.Analyzers
             "Internal visible to product libraries effectively become public API and have to be versioned appropriately", DiagnosticCategory.Usage, DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0012 = new DiagnosticDescriptor(
-            nameof(AZC0012), "Avoid single word type names",
-            "Single word class names are too generic and have high chance of collision with BCL types or types from other libraries",
+            nameof(AZC0012),
+            "Avoid single word type names",
+            "Type name '{0}' is too generic and has high chance of collision with BCL types or types from other libraries. {1}",
             DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning, true);
+            DiagnosticSeverity.Warning,
+            true,
+            "Single word type names are too generic and have high chance of collision with BCL types or types from other libraries.");
 
         public static DiagnosticDescriptor AZC0013 = new DiagnosticDescriptor(
             nameof(AZC0013),
@@ -161,7 +164,7 @@ namespace Azure.ClientSdk.Analyzers
         public static readonly DiagnosticDescriptor AZC0033 = new DiagnosticDescriptor(
             nameof(AZC0033),
             "Improper model name suffix",
-            "Model name '{0}' ends with '{1}'. Suggest to rename it to '{2}' or '{3}', if an appropriate name could not be found.",
+            "Model name '{0}' ends with '{1}'. {2}.",
             DiagnosticCategory.Naming,
             DiagnosticSeverity.Warning,
             true,
@@ -170,7 +173,7 @@ namespace Azure.ClientSdk.Analyzers
         public static readonly DiagnosticDescriptor AZC0034 = new DiagnosticDescriptor(
             nameof(AZC0034),
             "Avoid duplicate type names",
-            "Type name '{0}' conflicts with '{1}'. Consider renaming to avoid confusion.",
+            "Type name '{0}' conflicts with '{1}'. {2}",
             DiagnosticCategory.Naming,
             DiagnosticSeverity.Error,
             true,
@@ -184,6 +187,15 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticSeverity.Warning,
             true,
             "Output model types returned from client methods should have corresponding model factory methods for mocking support.");
+
+        public static readonly DiagnosticDescriptor AZC0036 = new DiagnosticDescriptor(
+            nameof(AZC0036),
+            "Improper model name suffix",
+            "Model name '{0}' ends with '{1}'. {2}",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Warning,
+            true,
+            "Suffix is not recommended. Consider to remove or modify it.");
         #endregion
 
         #region General

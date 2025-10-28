@@ -1,0 +1,36 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/cognitive-services?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/ai-contentsafety-readme?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.blocklistasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.blocklistclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.blocklistclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.contentsafetyasyncclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.contentsafetyclient?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.contentsafetyclientbuilder?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.contentsafetyserviceversion?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.addorupdatetextblocklistitemsresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.analyzeimageoptions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.analyzeimageoutputtype?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.analyzeimageresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.analyzetextoptions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.analyzetextoutputtype?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.analyzetextresult?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.contentsafetyimagedata?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.imagecategoriesanalysis?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.imagecategory?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.removetextblocklistitemsoptions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.textblocklist?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.textblocklistitem?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.textblocklistmatch?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.textcategoriesanalysis?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.ai.contentsafety.models.textcategory?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

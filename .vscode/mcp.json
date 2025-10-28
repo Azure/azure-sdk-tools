@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "azure-sdk-mcp": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["run", "--project", "${workspaceFolder}/tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--configuration", "Debug", "--", "start"]
+    }
+  }
+}
+

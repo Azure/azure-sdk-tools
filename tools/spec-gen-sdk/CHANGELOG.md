@@ -1,5 +1,18 @@
 # Release
 
+## 2025-09-09 - 0.9.2
+
+- Updated SwaggerToSdkConfigSchema by introducing 'command' to 'RunOptions' type. This is to support running single command for build SDK process
+
+## 2025-08-05 - 0.9.1
+
+- Support SDK breaking change flagging for V2 folder structure by detecting management plane TypeSpec projects containing 'resource-manager' in the path
+
+## 2025-07-25 - 0.9.0
+
+- Added 'generateFromTypeSpec' property to ExecutionReport
+- Restructure code directory and add unit test in test/ folder
+
 ## 2025-06-03 - 0.8.1
 
 - Created stagedArtifacts folder all the time if it's been set to the execution report

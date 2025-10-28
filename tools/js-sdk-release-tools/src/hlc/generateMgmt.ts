@@ -16,7 +16,9 @@ import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
 import { isRushRepo } from "../common/rushUtils.js";
-import { updateSnippets } from "../common/devToolUtils.js";
+import { lintFix, updateSnippets } from "../common/devToolUtils.js";
+import { ChangelogResult } from "../changelog/v2/ChangelogGenerator.js";
+import { RunMode } from "../common/types.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -33,6 +35,7 @@ export async function generateMgmt(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    runMode?: RunMode;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
@@ -114,7 +117,7 @@ export async function generateMgmt(options: {
                     outputPackageInfo.path.push(file);
                 }
             }
-            let changelog: Changelog | undefined;
+            let changelog: ChangelogResult | undefined;
             if (isRushRepo(options.sdkRepo)) {
                 logger.info(`Start to run command: 'rush update'.`);
                 execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
@@ -128,17 +131,21 @@ export async function generateMgmt(options: {
                 logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
                 execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
             } else {
-                logger.info(`Start to run command: 'pnpm update'.`);
+                logger.info(`Start to run command: 'pnpm install'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
+
+                if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+                    await lintFix(packagePath);
+                }
                                 
-                logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-                execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+                logger.info(`Start to run command: 'pnpm build --filter ${packageName}...', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
                 }
-                logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
-                execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
+                logger.info(`Start to run command: 'pnpm run --filter ${packageJson.name}... pack'.`);
+                execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
             }
             
             await updateSnippets(packagePath);
@@ -151,8 +158,8 @@ export async function generateMgmt(options: {
             if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
                 if (changelog) {
                     outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
-                    outputPackageInfo.changelog.content = changelog.displayChangeLog();
-                    const breakingChangeItems = changelog.getBreakingChangeItems();
+                    outputPackageInfo.changelog.content = changelog.content;
+                    const breakingChangeItems = changelog.breakingChangeItems;
                     if (!!breakingChangeItems && breakingChangeItems.length > 0) {
                         outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
                     } else {

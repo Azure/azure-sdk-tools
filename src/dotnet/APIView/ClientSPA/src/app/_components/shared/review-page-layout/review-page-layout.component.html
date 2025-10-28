@@ -16,7 +16,7 @@
                 <ng-template pTemplate="item" let-item>
                     <a pRipple class="flex align-items-center p-menuitem-link" pTooltip="{{item.tooltip}}" tooltipPosition="right">
                         <span [class]="item.icon"></span>
-                        <p-badge *ngIf="item.badge" class="ml-auto" [value]="item.badge" severity="danger" />
+                        <p-badge *ngIf="item.badge" class="ml-auto" [style]="{'font-size': '0.7rem'}" [value]="item.badge" severity="danger" />
                     </a>
                 </ng-template>
             </p-menu>

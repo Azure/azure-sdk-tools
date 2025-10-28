@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     public class EnforceToolsListAnalyzer : DiagnosticAnalyzer
     {
         public const string Id = "MCP002";
-        private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor rule = new DiagnosticDescriptor(
             Id,
             "Every MCPTool must be listed in SharedOptions.ToolsList",
             "MCPTool implementation '{0}' is not included in SharedOptions.ToolsList",
@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         );
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(Rule);
+            => ImmutableArray.Create(rule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -44,18 +44,24 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
                     // Find the field symbol this typeof lives in
                     var variable = tof.FirstAncestorOrSelf<VariableDeclaratorSyntax>();
-                    if (variable == null) return;
+                    if (variable == null)
+                    {
+                        return;
+                    }
 
-                    var field = syntaxCtx.SemanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
-                    if (field == null) return;
+                    if (!(syntaxCtx.SemanticModel.GetDeclaredSymbol(variable) is IFieldSymbol field))
+                    {
+                        return;
+                    }
 
                     // Check it's the exact static List<Type> ToolsList on your SharedOptions
                     if (field.ContainingType?.ToDisplayString() == "Azure.Sdk.Tools.Cli.Commands.SharedOptions"
                      && field.Name == "ToolsList")
                     {
-                        var sym = syntaxCtx.SemanticModel.GetTypeInfo(tof.Type).Type as INamedTypeSymbol;
-                        if (sym != null)
+                        if (syntaxCtx.SemanticModel.GetTypeInfo(tof.Type).Type is INamedTypeSymbol sym)
+                        {
                             listedTypes.Add(sym);
+                        }
                     }
                 }, SyntaxKind.TypeOfExpression);
 
@@ -64,11 +70,15 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 {
                     var named = (INamedTypeSymbol)symCtx.Symbol;
                     if (named.TypeKind != TypeKind.Class || named.IsAbstract)
+                    {
                         return;
+                    }
 
-                    var baseTool = symCtx.Compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Contract.MCPTool");
+                    var baseTool = symCtx.Compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Contract.MCPToolBase");
                     if (baseTool != null && InheritsFrom(named, baseTool))
+                    {
                         implementations.Add(named);
+                    }
 
                 }, SymbolKind.NamedType);
 
@@ -81,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                         {
                             // Report on the location of the class declaration
                             var loc = impl.Locations.FirstOrDefault() ?? Location.None;
-                            endCtx.ReportDiagnostic(Diagnostic.Create(Rule, loc, impl.Name));
+                            endCtx.ReportDiagnostic(Diagnostic.Create(rule, loc, impl.Name));
                         }
                     }
                 });
@@ -91,8 +101,12 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         private static bool InheritsFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
         {
             for (var t = type.BaseType; t != null; t = t.BaseType)
+            {
                 if (SymbolEqualityComparer.Default.Equals(t, baseType))
+                {
                     return true;
+                }
+            }
             return false;
         }
     }

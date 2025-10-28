@@ -17,7 +17,7 @@ namespace APIViewWeb
         private readonly TelemetryClient _telemetryClient;
         public override string Name { get; } = "Python";
         public override string[] Extensions { get; } = { ".whl" };
-        public override string VersionString { get; } = "0.3.18";
+        public override string VersionString { get; } = "0.3.24";
         public override string ProcessName => _pythonExecutablePath;
         public override string ReviewGenerationPipelineUrl => _reviewGenerationPipelineUrl;
 
@@ -45,7 +45,7 @@ namespace APIViewWeb
             return Path.Combine(tempDirectory, "Scripts", "python.exe");
         }
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
         {
             var tempPath = Path.GetTempPath();
             _telemetryClient.TrackEvent("Creating code file for " + originalName);
@@ -59,9 +59,29 @@ namespace APIViewWeb
             {
                 await stream.CopyToAsync(file);
             }
-            var pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
-            var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
+
+            string mappingFilePath = null;
+            if (!string.IsNullOrEmpty(crossLanguageMetadata))
+            {
+                mappingFilePath = Path.Combine(tempDirectory, "apiview-properties.json");
+                await File.WriteAllTextAsync(mappingFilePath, crossLanguageMetadata);
+            }
+
+            string pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
+            string arguments = GetProcessorArgumentsWithMapping(originalName, tempDirectory, jsonFilePath, mappingFilePath);
             return await RunParserProcess(originalName, pythonVenvPath, jsonFilePath, arguments);
+        }
+
+        public string GetProcessorArgumentsWithMapping(string originalName, string tempDirectory, string jsonPath, string mappingFilePath)
+        {
+            string baseArgs = $" -m apistub --pkg-path {originalName} --temp-path {tempDirectory} --out-path {jsonPath}";
+
+            if (!string.IsNullOrEmpty(mappingFilePath) && File.Exists(mappingFilePath))
+            {
+                baseArgs += $" --mapping-path {mappingFilePath}";
+            }
+
+            return baseArgs;
         }
     }
 }

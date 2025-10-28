@@ -1,0 +1,86 @@
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.pnpm-debug.log*
+
+# TypeScript source files (we only need compiled lib)
+src
+*.ts
+!*.d.ts
+tsconfig.json
+
+# Build and development files
+.git
+.gitignore
+README.md
+*.md
+.env*
+.env
+.localConfigs*
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Test files
+test
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage
+.nyc_output
+jest.config.*
+vitest.config.*
+
+# Development tools
+devTools
+tools/test-tool
+scripts
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.ps1
+
+# Teams development files
+.localConfigs
+.localConfigs.testTool
+teamsapp.*.yml
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
+.tmp
+
+# Keep lib directory (compiled output)
+!lib
+!lib/**
+
+# Keep essential runtime files
+!package.json
+!package-lock.json
+!config
+!config/**
+!appPackage/manifest.json
+!appPackage/*.png

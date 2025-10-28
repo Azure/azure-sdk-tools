@@ -3,65 +3,69 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isAssocConstItem } from "./utils/typeGuards";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 /**
  * Processes an associated constant item and returns ReviewLine objects.
  *
  * @param {Item} item - The associated constant item to process.
+ * @param {string} lineIdPrefix - The prefix from ancestors for hierarchical LineId
  * @returns {ReviewLine[] | null} The ReviewLine objects or null if processing fails.
  */
-export function processAssocConst(item: Item): ReviewLine[] | null {
+export function processAssocConst(item: Item, lineIdPrefix: string = ""): ReviewLine[] | null {
   if (!isAssocConstItem(item)) return null;
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  // Create the ReviewLine object
-  const reviewLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
-
-  // Add const keyword
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "const",
-  });
-
-  // Add name
-  reviewLine.Tokens.push({
-    Kind: TokenKind.MemberName,
-    Value: item.name || "unknown_assoc_const",
-    HasSuffixSpace: false,
-  });
-
-  // Add colon
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: ":",
-  });
-
-  reviewLine.Tokens.push(...typeToReviewTokens(item.inner.assoc_const.type));
+  // Build tokens first
+  const tokens = [
+    {
+      Kind: TokenKind.Keyword,
+      Value: "const",
+    },
+    {
+      Kind: TokenKind.MemberName,
+      Value: item.name || "unknown_assoc_const",
+      HasSuffixSpace: false,
+      NavigateToId: item.id.toString(), // Will be updated in post-processing
+    },
+    {
+      Kind: TokenKind.Punctuation,
+      Value: ":",
+    },
+    ...typeToReviewTokens(item.inner.assoc_const.type),
+  ];
 
   if (item.inner.assoc_const.value) {
-    reviewLine.Tokens.push({
-      Kind: TokenKind.Punctuation,
-      Value: " =",
-    });
-
-    reviewLine.Tokens.push({
-      Kind: TokenKind.Text,
-      Value: item.inner.assoc_const.value,
-      HasSuffixSpace: false,
-    });
+    tokens.push(
+      {
+        Kind: TokenKind.Punctuation,
+        Value: " =",
+      },
+      {
+        Kind: TokenKind.Text,
+        Value: item.inner.assoc_const.value,
+        HasSuffixSpace: false,
+      }
+    );
   }
 
-  reviewLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Punctuation,
     Value: ";",
   });
 
+  // Create content-based LineId from tokens
+  const contentBasedLineId = createContentBasedLineId(tokens, lineIdPrefix, item.id.toString());
+
+  // Create docs with content-based LineId
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item, contentBasedLineId) : [];
+
+  // Create the ReviewLine object
+  const reviewLine: ReviewLine = {
+    LineId: contentBasedLineId,
+    Tokens: tokens,
+    Children: [],
+  };
+
   reviewLines.push(reviewLine);
-  lineIdMap.set(item.id.toString(), `const_${item.name}`);
   return reviewLines;
 }

@@ -3,19 +3,27 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Linq;
 using System.Security.Claims;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using APIViewWeb.DTOs;
+using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.AspNetCore.Authorization;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using APIViewWeb.LeanModels;
-using APIViewWeb.Helpers;
-using APIViewWeb.Managers.Interfaces;
+using Newtonsoft.Json;
 
 namespace APIViewWeb.Managers
 {
@@ -23,27 +31,48 @@ namespace APIViewWeb.Managers
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IAuthorizationService _authorizationService;
-
         private readonly ICosmosCommentsRepository _commentsRepository;
-
+        private readonly ICosmosReviewRepository _reviewRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly IConfiguration _configuration;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<CommentsManager> _logger;
+        private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
+        public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
 
         public HashSet<GithubUser> TaggableUsers;
 
-        public CommentsManager(
-            IAPIRevisionsManager apiRevisionsManager,
+        public CommentsManager(IAPIRevisionsManager apiRevisionsManager,
             IAuthorizationService authorizationService,
             ICosmosCommentsRepository commentsRepository,
+            ICosmosReviewRepository reviewRepository,
             INotificationManager notificationManager,
-            IOptions<OrganizationOptions> options)
+            IBlobCodeFileRepository codeFileRepository,
+            IHubContext<SignalRHub> signalRHubContext,
+            IHttpClientFactory httpClientFactory,
+            UserProfileCache userProfileCache,
+            IConfiguration configuration,
+            IOptions<OrganizationOptions> options,
+            IBackgroundTaskQueue backgroundTaskQueue,
+            ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
+            _reviewRepository = reviewRepository;
             _notificationManager = notificationManager;
+            _codeFileRepository = codeFileRepository;
+            _signalRHubContext = signalRHubContext;
+            _httpClientFactory = httpClientFactory;
+            _userProfileCache = userProfileCache;
+            _configuration = configuration;
             _Options = options.Value;
+            _backgroundTaskQueue = backgroundTaskQueue;
+            _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
 
@@ -75,7 +104,7 @@ namespace APIViewWeb.Managers
             // Order users alphabetically
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
-
+        
         public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
         {
             return await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
@@ -146,6 +175,157 @@ namespace APIViewWeb.Managers
             await _notificationManager.NotifyUserOnCommentTag(comment);
             await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;
+        }
+
+        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await AssertOwnerAsync(user, comment);
+            
+            comment.ChangeHistory.Add(
+                new CommentChangeHistoryModel()
+                {
+                    ChangeAction = CommentChangeAction.Edited,
+                    ChangedBy = user.GetGitHubLogin(),
+                    ChangedOn = DateTime.Now,
+                });
+            comment.LastEditedOn = DateTime.Now;
+            comment.Severity = severity;
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+            return comment;
+        }
+
+        public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
+        {
+            ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+            if (!IsUserAllowedToChatWithAgent(user, review))
+            {
+                await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveNotification",
+                    new SiteNotificationDto()
+                    {
+                        ReviewId = comment.ReviewId,
+                        RevisionId = comment.APIRevisionId,
+                        Title = "Agent Interaction Restricted",
+                        Summary = "You are not authorized to interact with the agent.",
+                        Message =
+                            "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature",
+                        Status = SiteNotificationStatus.Error
+                    });
+
+                return;
+            }
+
+            _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
+            {
+                await ProcessAgentReplyRequest(user, comment, activeRevisionId, cancellationToken);
+            });
+        }
+
+        private async Task ProcessAgentReplyRequest(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+                IEnumerable<CommentItemModel> threadComments =
+                    await _commentsRepository.GetCommentsAsync(reviewId: comment.ReviewId, lineId: comment.ElementId);
+
+                var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeRevisionId);
+                var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+                List<ApiViewAgentComment> commentsForAgent =
+                    AgentHelpers.BuildCommentsForAgent(threadComments, activeCodeFile);
+                MentionRequest mentionRequest = new()
+                {
+                    Language = review.Language,
+                    PackageName = activeApiRevision.PackageName,
+                    Code = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    Comments = commentsForAgent
+                };
+
+                string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
+                var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
+                {
+                    Content = new StringContent(
+                        System.Text.Json.JsonSerializer.Serialize(mentionRequest),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+
+                //TODO: See: https://github.com/Azure/azure-sdk-tools/issues/11128
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "dummy_token_value");
+
+                var client = _httpClientFactory.CreateClient();
+                var clientResponse = await client.SendAsync(request);
+                clientResponse.EnsureSuccessStatusCode();
+                string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
+                AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
+
+                await AddAgentComment(comment, agentChatResponse?.Response);
+                
+                _logger.LogInformation("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+            }
+            catch (Exception ex)            
+            {
+                await _signalRHubContext.Clients.Group(user.GetGitHubLogin())
+                    .SendAsync("ReceiveNotification",
+                        new SiteNotificationDto()
+                        {
+                            ReviewId = comment.ReviewId,
+                            RevisionId = comment.APIRevisionId,
+                            Title = "Agent Service Unavailable",
+                            Summary = "The agent service could not be reached.",
+                            Message =
+                                "We were unable to connect to the agent service at this time. Please try again later.",
+                            Status = SiteNotificationStatus.Error
+                        });
+
+                _logger.LogError(ex, "Error while requesting agent reply for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+            }
+        }
+
+        private async Task AddAgentComment (CommentItemModel comment, string response)
+        {
+            var commentResult = new CommentItemModel
+            {
+                ReviewId = comment.ReviewId,
+                APIRevisionId = comment.APIRevisionId,
+                SampleRevisionId = comment.SampleRevisionId,
+                ElementId = comment.ElementId,
+                CommentText = response,
+                ResolutionLocked = false,
+                CreatedBy = ApiViewConstants.AzureSdkBotName,
+                CreatedOn = DateTime.UtcNow,
+                CommentType = CommentType.APIRevision
+            };
+
+            await _commentsRepository.UpsertCommentAsync(commentResult);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                new CommentUpdatesDto()
+                {
+                    CommentThreadUpdateAction = CommentThreadUpdateAction.CommentCreated,
+                    NodeId = commentResult.ElementId,
+                    CommentId = commentResult.Id,
+                    RevisionId = commentResult.APIRevisionId,
+                    ReviewId = commentResult.ReviewId,
+                    CommentText = commentResult.CommentText,
+                    ElementId = commentResult.ElementId,
+                    Comment = commentResult
+                });
+        }
+
+        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, ReviewListItemModel review)
+        {
+            return IsUserLanguageArchitect(user, review);
+        }
+
+        private bool IsUserLanguageArchitect(ClaimsPrincipal user, ReviewListItemModel review)
+        {
+            if (user == null || review == null)
+                return false;
+
+            string githubUser = user.GetGitHubLogin();
+            HashSet<string> approvers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
+            return approvers.Contains(githubUser);
         }
 
         /// <summary>
@@ -238,30 +418,52 @@ namespace APIViewWeb.Managers
             }
         }
 
+        public async Task<List<CommentItemModel>> ResolveBatchConversationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
+        {
+            var response = new List<CommentItemModel>();
+            
+            foreach (string commentId in request.CommentIds)
+            {
+                CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+                if (request.Vote != FeedbackVote.None)
+                {
+                    await ToggleVoteAsync(user, comment, request.Vote);
+                }
+
+                if (!string.IsNullOrEmpty(request.CommentReply))
+                {
+                    var commentUpdate = new CommentItemModel
+                    {
+                        ReviewId = reviewId,
+                        APIRevisionId = comment.APIRevisionId,
+                        SampleRevisionId = comment.SampleRevisionId,
+                        ElementId = comment.ElementId,
+                        CommentText = request.CommentReply,
+                        CreatedBy = user.GetGitHubLogin(),
+                        CreatedOn = DateTime.UtcNow,
+                        CommentType = comment.CommentType,
+                        IsResolved = true
+                    };
+                    await AddCommentAsync(user, commentUpdate);
+                    response.Add(commentUpdate);
+                }
+
+                await ResolveConversation(user, reviewId, comment.ElementId);
+            }
+            
+            return response;
+        }
+
         public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
-            {
-                comment.Upvotes.Add(user.GetGitHubLogin());
-                comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin());
-            }
-
-            await _commentsRepository.UpsertCommentAsync(comment);
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await ToggleVoteAsync(user, comment, FeedbackVote.Up);
         }
 
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
-            {
-                comment.Downvotes.Add(user.GetGitHubLogin());
-                comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin());
-            }
-
-            await _commentsRepository.UpsertCommentAsync(comment);
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
@@ -272,6 +474,33 @@ namespace APIViewWeb.Managers
             {
                 throw new AuthorizationFailedException();
             }
+        }
+
+        private async Task ToggleVoteAsync(ClaimsPrincipal user, CommentItemModel comment, FeedbackVote voteType)
+        {
+            string userName = user.GetGitHubLogin();
+            switch (voteType)
+            {
+                case FeedbackVote.Up:
+                    if (comment.Upvotes.RemoveAll(u => u == userName) == 0)
+                    {
+                        comment.Upvotes.Add(userName);
+                        comment.Downvotes.RemoveAll(u => u == userName);
+                    }
+                    break;
+                case FeedbackVote.Down:
+                    if (comment.Downvotes.RemoveAll(u => u == userName) == 0)
+                    {
+                        comment.Downvotes.Add(userName);
+                        comment.Upvotes.RemoveAll(u => u == userName);
+                    }
+                    break;
+                case FeedbackVote.None:
+                default:
+                    return;
+            }
+
+            await _commentsRepository.UpsertCommentAsync(comment);
         }
     }
 }

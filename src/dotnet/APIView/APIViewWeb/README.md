@@ -40,7 +40,7 @@ Run `dotnet pack` for the required package to generate Nuget file. Upload the re
 2. Upload generated api.json file using `Create Review` link.
 
 ### Python
-1. Generate wheel for the package. python setup.py bdist_wheel -d [dest_folder]
+1. Generate wheel for the package. pip install build; python -m build --wheel --outdir [dest_folder]
 2. Upload generated whl file
 
 ### Swagger

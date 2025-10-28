@@ -1,3 +1,14 @@
 exceptions: |
-  1. Comment on lack of documentation comments
-  2. Comment on the use of "."
+  1. DO NOT make comments that don't actually identify a problem.
+  2. DO NOT comment on lack of documentation comments
+  3. DO NOT comment on the use of "."
+  4. DO NOT comment on syntax errors
+  5. DO NOT suggest renaming overload methods to distinguish one from another
+  6. DO NOT suggest consolidating overloads into a single declaration
+  7. DO NOT suggest consolidating the similar Options interfaces into one
+  8. DO NOT suggest providing an explicit default value to constant variables
+  9. DO NOT suggest narrowing aliased type of string to an enum or a union of known literal values
+  10. DO NOT suggest including namespace prefix
+  11. DO NOT suggest using namespaces or modules
+  12. DO NOT suggest grouping related interfaces into separate modules
+  13. DO NOT suggest a type alias over an empty interface extension

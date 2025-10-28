@@ -3,6 +3,7 @@
 
 using System.Linq;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +28,7 @@ namespace APIViewWeb
                     var approvers = _configuration["Approvers"].Split(',');
                     var loggedInUserName = context.User.GetGitHubLogin();
                     if (creator == loggedInUserName ||
-                        (approvers.Contains(loggedInUserName) && creator == "azure-sdk"))
+                        (approvers.Contains(loggedInUserName) && creator == ApiViewConstants.AzureSdkBotName))
                     {
                         context.Succeed(requirement);
                     }

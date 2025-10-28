@@ -1,5 +1,8 @@
 import { mkdirp, pathExists } from 'fs-extra';
 import { Project, ScriptTarget } from 'ts-morph';
+import { createAstContext } from '../azure/detect-breaking-changes';
+import { join } from 'path';
+import { AstContext } from '../azure/common/types';
 
 export function getFormattedDate(): string {
   const today = new Date();
@@ -24,11 +27,17 @@ export async function createTempFolder(tempFolderPrefix: string): Promise<string
   throw new Error(`Failed to create temp folder at "${tempFolder}" for ${maxRetry} times`);
 }
 
-export function createTestAstContext(baselineApiView: string, currentApiView: string) {
-  const project = new Project({
-    compilerOptions: { target: ScriptTarget.ES2022 },
-  });
-  const baseline = project.createSourceFile('review/baseline/index.ts', baselineApiView);
-  const current = project.createSourceFile('review/current/index.ts', currentApiView);
-  return { baseline, current };
+export function createTestAstContext(baselineCode: string, currentCode: string): Promise<AstContext> {
+  const tempFolder = join('.tmp-breaking-change-detect-' + Math.random().toString(36).substring(7));
+  const generateApiView = (code: string) => `
+\`\`\` ts
+  ${code}
+\`\`\`
+  `;
+  return createAstContext(
+    { apiView: generateApiView(baselineCode) },
+    { apiView: generateApiView(currentCode) },
+    tempFolder,
+    true
+  );
 }

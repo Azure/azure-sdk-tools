@@ -32,9 +32,9 @@ extends:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
           - name: NodeVersion
-            value: '20.x'
+            value: "20.x"
           - name: VAR_ARTIFACT_NAME
-            value: 'drop'
+            value: "drop"
           - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
             value: $(Build.ArtifactStagingDirectory)
         jobs:

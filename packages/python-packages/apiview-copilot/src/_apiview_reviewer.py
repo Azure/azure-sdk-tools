@@ -1,27 +1,38 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for the APIView Copilot API review functionality.
+"""
+
 import concurrent.futures
-import datetime
 import json
 import logging
 import os
-import prompty
-import prompty.azure_beta
 import signal
+import sys
 import threading
+import uuid
 from time import time
-from typing import Optional, List
+from typing import List, Optional
+
 import yaml
 
-from ._credential import in_ci, get_credential
+from ._comment_grouper import CommentGrouper
+from ._credential import get_credential
 from ._diff import create_diff_with_line_numbers
-from ._models import ReviewResult, Comment, ExistingComment
-from ._search_manager import SearchManager, SearchResult
+from ._models import Comment, ExistingComment, ReviewResult
+from ._prompt_runner import run_prompt
+from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
-from ._retry import retry_with_backoff
+from ._settings import SettingsManager
+from ._utils import get_language_pretty_name, get_prompt_path
 
-
-# Set up paths
+# Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
 # Configure logger to write to project root error.log and info.log
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
@@ -51,31 +62,33 @@ root_logger.addHandler(console_handler)
 # Create module-level logger
 logger = logging.getLogger(__name__)
 
-if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
-    # running on dev machine, loadenv
-    import dotenv
-
-    dotenv.load_dotenv()
-
 
 CREDENTIAL = get_credential()
 
+SUPPORTED_LANGUAGES = [
+    "android",
+    "clang",
+    "cpp",
+    "dotnet",
+    "golang",
+    "ios",
+    "java",
+    "python",
+    "rust",
+    "typescript",
+]
 
-# create enum for the ReviewMode
+
 class ApiViewReviewMode:
+    """Enumeration for APIView review modes."""
+
     FULL = "full"
     DIFF = "diff"
 
 
+# pylint: disable=too-many-instance-attributes
 class ApiViewReview:
-
-    # Define status characters with colors
-    PENDING = "░"
-    PROCESSING = "▒"
-    SUCCESS = "\033[32m█\033[0m"  # Green square
-    FAILURE = "\033[31m█\033[0m"  # Red square
-    RED_TEXT = "\033[31m"  # Red text
-    RESET_COLOR = "\033[0m"  # Reset to default text color
+    """Class representing an APIView review."""
 
     def __init__(
         self,
@@ -86,26 +99,77 @@ class ApiViewReview:
         outline: Optional[str] = None,
         comments: Optional[list] = None,
         include_general_guidelines: bool = False,
-        debug_log: bool = False,
+        write_debug_logs: bool = False,
+        write_output: bool = False,
     ):
+        self.job_id = str(uuid.uuid4())
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
         if self.base == "":
             self.base = None
         self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
+        # lower threshold for Java because lines are unusually dense
+        if self.language in ["java", "android"]:
+            self.max_chunk_size = 450
+        else:
+            self.max_chunk_size = 500
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
-        language_guideline_ids = [x.id for x in self.search.language_guidelines]
-        self.results = ReviewResult(allowed_ids=language_guideline_ids, comments=[])
+        self.allowed_ids = [x.id for x in self.search.language_guidelines or []]
+        self.results = ReviewResult()
         self.summary = None
         self.outline = outline
-        self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
+        self.existing_comments = (
+            [ExistingComment(**self._normalize_comment_keys(data)) for data in comments] if comments else []
+        )
         self.executor = concurrent.futures.ThreadPoolExecutor()
         self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
-        self.debug_log = debug_log
+        self.settings = SettingsManager()
+        self._isatty = sys.stdout.isatty()
+
+        self.write_debug_logs = write_debug_logs
+        self.write_output = write_output
+        if write_output or write_debug_logs:
+            self.output_dir = os.path.join("scratch", "output", self.job_id)
+        else:
+            self.output_dir = None
+
+        class JobLogger:
+            """Logger wrapper to prepend job_id to all log messages."""
+
+            def __init__(self, inner_logger, job_id):
+                self._logger = inner_logger
+                self._job_id = job_id
+
+            def debug(self, msg, *args, **kwargs):
+                """Log a debug message with job_id prefix."""
+                self._logger.debug(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def info(self, msg, *args, **kwargs):
+                """Log an info message with job_id prefix."""
+                self._logger.info(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def warning(self, msg, *args, **kwargs):
+                """Log a warning message with job_id prefix."""
+                self._logger.warning(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def error(self, msg, *args, **kwargs):
+                """Log an error message with job_id prefix."""
+                self._logger.error(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def critical(self, msg, *args, **kwargs):
+                """Log a critical message with job_id prefix."""
+                self._logger.critical(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def exception(self, msg, *args, **kwargs):
+                """Log an exception message with job_id prefix."""
+                self._logger.exception(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+        self.logger = JobLogger(logger, self.job_id)
+        self.run_prompt = run_prompt  # Use shared prompt runner
 
     def __del__(self):
         # Ensure the executor is properly shut down
@@ -115,16 +179,39 @@ class ApiViewReview:
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
-    def _ensure_env_vars(self, vars: List[str]):
+    def _normalize_comment_keys(self, data):
+        # Map alternative keys to the canonical ones
+        if "author" in data:
+            data["createdBy"] = data.pop("author")
+        if "text" in data:
+            data["commentText"] = data.pop("text")
+        if "timestamp" in data:
+            data["createdOn"] = data.pop("timestamp")
+        return data
+
+    def _print_comment_counts(self):
         """
-        Ensures that the given environment variables are set.
+        Print the current comment counts.
         """
-        missing = []
-        for var in vars:
-            if os.getenv(var) is None:
-                missing.append(var)
-        if missing:
-            raise ValueError(f"Environment variables not set: {', '.join(missing)}")
+        total = len(self.results.comments)
+        generic = sum(1 for c in self.results.comments if c.is_generic)
+        guideline = sum(1 for c in self.results.comments if c.guideline_ids)
+        context = sum(1 for c in self.results.comments if c.memory_ids)
+        self._print_message(f"  Comments: Total={total}, Guideline={guideline}, Memory={context}, Generic={generic}")
+
+    def _print_message(self, msg: str = "", overwrite: bool = False):
+        """
+        Print messages, using carriage return for terminal, or newlines for non-terminal.
+        Prepend job_id to non-tty output for cloud log traceability.
+        """
+        if self._isatty and overwrite:
+            print(msg, end="\r", flush=True)
+        elif msg:
+            lines = msg.splitlines()
+            for line in lines:
+                print(f"[{self.job_id}] {line}", flush=True)
+        else:
+            print(f"[{self.job_id}]", flush=True)
 
     def _create_sectioned_document(self) -> SectionedDocument:
         """
@@ -135,17 +222,20 @@ class ApiViewReview:
             numbered_lines = []
             for i, line in enumerate(self.target.splitlines()):
                 numbered_lines.append(f"{i + 1}: {line}")
-            return SectionedDocument(lines=numbered_lines)
+            return SectionedDocument(lines=numbered_lines, max_chunk_size=self.max_chunk_size)
         elif self.mode == ApiViewReviewMode.DIFF:
             # Create a sectioned document for the diff
-            return SectionedDocument(lines=create_diff_with_line_numbers(old=self.base, new=self.target).splitlines())
+            return SectionedDocument(
+                lines=create_diff_with_line_numbers(old=self.base, new=self.target).splitlines(),
+                max_chunk_size=self.max_chunk_size,
+            )
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
     def _execute_prompt_task(
         self, *, prompt_path: str, inputs: dict, task_name: str, status_idx: int, status_array: List[str]
     ) -> Optional[dict]:
-        """Execute a single prompt task with status tracking.
+        """Execute a single prompt task with percent progress tracking.
 
         Args:
             prompt_path (str): Path to the prompt file.
@@ -157,39 +247,38 @@ class ApiViewReview:
         Returns:
             Optional[dict]: The result of the prompt execution, or None if an error occurred.
         """
-        status_array[status_idx] = self.PROCESSING
-        print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+        # Numeric percent progress update (status_array is just a placeholder for counting)
+        total = len(status_array)
+        completed = sum(1 for s in status_array if s)
+        percent = int((completed / total) * 100) if total else 100
+        self._print_message(f"Evaluating prompts... {percent}% complete", overwrite=True)
 
         try:
             # Run the prompt
             response = self._run_prompt(prompt_path, inputs)
+            result = json.loads(response)
 
-            # Process result based on task type
-            if task_name == "summary" or task_name == "outline":
-                result = response  # Just return the text
-            else:
-                # Parse JSON for guideline/generic tasks
-                result = json.loads(response)
-
-            # Update status and return result
-            status_array[status_idx] = self.SUCCESS
-            print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+            # Mark this task as done (for numeric progress only)
+            status_array[status_idx] = True
+            completed = sum(1 for s in status_array if s)
+            percent = int((completed / total) * 100) if total else 100
+            self._print_message(f"Evaluating prompts... {percent}% complete", overwrite=True)
             return result
 
         except Exception as e:
-            status_array[status_idx] = self.FAILURE
-            print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
-            logger.error(f"Error executing {task_name}: {str(e)}")
+            status_array[status_idx] = True  # Mark as done even on error
+            completed = sum(1 for s in status_array if s)
+            percent = int((completed / total) * 100) if total else 100
+            self._print_message(f"Evaluating prompts... {percent}% complete", overwrite=True)
+            self.logger.error(f"Error executing {task_name}: {str(e)}")
             return None
 
     def _generate_comments(self):
         """
         Generate comments for the API view by submitting jobs in parallel.
         """
-        summary_tag = "summary"
         guideline_tag = "guideline"
         generic_tag = "generic"
-        outline_tag = "outline"
         context_tag = "context"
 
         sectioned_doc = self._create_sectioned_document()
@@ -201,22 +290,18 @@ class ApiViewReview:
             guideline_prompt_file = "guidelines_review.prompty"
             context_prompt_file = "context_review.prompty"
             generic_prompt_file = "generic_review.prompty"
-            summary_prompt_file = "summarize_api.prompty"
-            summary_content = self.target
         elif self.mode == ApiViewReviewMode.DIFF:
             guideline_prompt_file = "guidelines_diff_review.prompty"
             context_prompt_file = "context_diff_review.prompty"
             generic_prompt_file = "generic_diff_review.prompty"
-            summary_prompt_file = "summarize_diff.prompty"
-            summary_content = create_diff_with_line_numbers(old=self.base, new=self.target)
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
         # Set up progress tracking
-        print("Processing sections: ", end="", flush=True)
+        self._print_message("Processing sections: ", overwrite=True)
 
-        total_prompts = 1 + (len(sections_to_process) * 3)  # 1 for summary, 3 for each section
-        prompt_status = [self.PENDING] * total_prompts
+        total_prompts = len(sections_to_process) * 3  # 3 prompts per section
+        prompt_status = [False] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
         cancel_event = threading.Event()
@@ -225,8 +310,8 @@ class ApiViewReview:
         if is_main_thread:
             original_handler = signal.getsignal(signal.SIGINT)
 
-            def keyboard_interrupt_handler(signalnum, frame):
-                print("\n\nCancellation requested! Terminating process...")
+            def keyboard_interrupt_handler():
+                self._print_message("\n\nCancellation requested! Terminating process...")
                 cancel_event.set()
                 os._exit(1)
 
@@ -238,22 +323,8 @@ class ApiViewReview:
 
         # Submit all jobs to the executor
         all_futures = {}
-        section_contexts = {}
 
-        # 1. Summary task
-        all_futures[summary_tag] = self.executor.submit(
-            self._execute_prompt_task,
-            prompt_path=os.path.join(_PROMPTS_FOLDER, summary_prompt_file),
-            inputs={
-                "language": self._get_language_pretty_name(),
-                "content": summary_content,
-            },
-            task_name=summary_tag,
-            status_idx=0,
-            status_array=prompt_status,
-        )
-
-        # 2. Guideline and generic tasks for each section
+        # Guideline and generic tasks for each section
         for idx, (section_idx, section) in enumerate(sections_to_process):
             # First check if cancellation is requested
             if cancel_event.is_set():
@@ -263,14 +334,14 @@ class ApiViewReview:
             guideline_key = f"{guideline_tag}_{section_idx}"
             all_futures[guideline_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=guideline_prompt_file),
                 inputs={
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "context": guideline_context_string,
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=(idx * 3) + 1,
+                status_idx=idx * 3,
                 status_array=prompt_status,
             )
 
@@ -279,55 +350,40 @@ class ApiViewReview:
             generic_key = f"{generic_tag}_{section_idx}"
             all_futures[generic_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=generic_prompt_file),
                 inputs={
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "custom_rules": generic_metadata["custom_rules"],
                     "content": section.numbered(),
                 },
                 task_name=generic_key,
-                status_idx=(idx * 3) + 2,
+                status_idx=(idx * 3) + 1,
                 status_array=prompt_status,
             )
 
             # Context prompt
             context_key = f"{context_tag}_{section_idx}"
             context = self._retrieve_context(str(section))
-            section_contexts[section_idx] = [x.id for x in context]
             context_string = context.to_markdown() if context else ""
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, context_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=context_prompt_file),
                 inputs={
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "context": context_string,
                     "content": section.numbered(),
                 },
                 task_name=context_key,
-                status_idx=(idx * 3) + 3,
+                status_idx=(idx * 3) + 2,
                 status_array=prompt_status,
             )
 
         # Process results as they complete
         try:
-            # Process summary result
-            summary_response = all_futures[summary_tag].result()
-            if summary_response:
-                self.summary = Comment(
-                    rule_ids=[],
-                    line_no=1,
-                    bad_code="",
-                    suggestion=None,
-                    comment=summary_response,
-                    source="summary",
-                )
-
             # Process each section's results
             section_results = {}
 
             for key, future in all_futures.items():
-                if key in {summary_tag, outline_tag}:
-                    continue  # Already processed
                 try:
                     result = future.result()
                     if result:
@@ -338,31 +394,138 @@ class ApiViewReview:
                         if section_idx not in section_results:
                             section_results[section_idx] = {"comments": []}
 
-                        # Add comments from this prompt
                         if "comments" in result:
-                            # Tag comments with their source
+                            filtered_comments = []
+                            # ensure raw comments are of a pure type
                             for comment in result["comments"]:
-                                comment["source"] = section_type
-                            section_results[section_idx]["comments"].extend(result["comments"])
+                                if section_type == generic_tag:
+                                    comment["is_generic"] = True
+                                    comment["guideline_ids"] = []
+                                    comment["memory_ids"] = []
+                                    filtered_comments.append(comment)
+                                    continue
+                                if section_type == guideline_tag and comment.get("guideline_ids"):
+                                    comment["is_generic"] = False
+                                    comment["memory_ids"] = []
+                                    filtered_comments.append(comment)
+                                    continue
+                                if section_type == context_tag and comment.get("memory_ids"):
+                                    comment["is_generic"] = False
+                                    comment["guideline_ids"] = []
+                                    filtered_comments.append(comment)
+                                    continue
+                            section_results[section_idx]["comments"].extend(filtered_comments)
                 except Exception as e:
-                    logger.error(f"Error processing {key}: {str(e)}")
-
-            print()  # Add newline after progress indicator
+                    self.logger.error(f"Error processing {key}: {str(e)}")
 
             # Merge results from all sections
             for section_idx, section_result in section_results.items():
                 if section_result and section_result["comments"]:
+                    comments = section_result["comments"]
                     section = sections_to_process[section_idx][1]
-                    section_result = ReviewResult(allowed_ids=section_contexts[section_idx], **section_result)
-                    self.results.merge(section_result, section=section)
+                    section_result = ReviewResult(comments=comments, allowed_ids=self.allowed_ids, section=section)
+                    self.results.comments.extend(section_result.comments)
         except KeyboardInterrupt:
-            print("\n\nCancellation requested! Terminating process...")
+            self._print_message("\n\nCancellation requested! Terminating process...")
             cancel_event.set()
             os._exit(1)
         finally:
             # Restore original signal handler if it was set
             if is_main_thread:
                 signal.signal(signal.SIGINT, original_handler)
+
+    def _filter_generic_comments(self):
+        """
+        Filter generic comments by running the filter prompt on each comment, separating into keep
+        and discard lists, reporting counts, and dumping to debug log if enabled.
+        """
+        prompt_file = "filter_generic_comment.prompty"
+        prompt_path = get_prompt_path(folder="api_review", filename=prompt_file)
+
+        self._print_message("\nFiltering generic comments...")
+
+        # Submit each generic comment to the executor for parallel processing
+        futures = {}
+        for idx, comment in enumerate(self.results.comments):
+            if not comment.is_generic:
+                continue
+            search_result = self.search.search_all(query=comment.comment)
+            context = self.search.build_context(search_result)
+            context_text = context.to_markdown() if search_result else "EMPTY"
+            futures[idx] = self.executor.submit(
+                self._run_prompt,
+                prompt_path,
+                inputs={
+                    "content": comment.model_dump(),
+                    "language": get_language_pretty_name(self.language),
+                    "context": context_text,
+                },
+            )
+
+        # Collect results as they complete, with % complete logging
+        keep_results = {}
+        discard_results = {}
+        total = len(futures)
+        for progress_idx, (idx, future) in enumerate(futures.items()):
+            try:
+                response = future.result()
+                if not response or not response.strip():
+                    self.logger.error(f"Error judging comment at index {idx}: Empty response from prompt.")
+                    continue
+                try:
+                    response_json = json.loads(response)
+                except Exception as je:
+                    self.logger.error(
+                        f"Error judging comment at index {idx}: Invalid JSON response: {repr(response)} | {str(je)}"
+                    )
+                    continue
+                if response_json.get("action") == "DISCARD":
+                    discard_results[idx] = response_json
+                elif response_json.get("action") == "KEEP":
+                    keep_results[idx] = response_json
+                else:
+                    # log an error but keep the comment to be safe
+                    self.logger.error(
+                        f"Error judging comment at index {idx}: Unknown action in response: {repr(response)}"
+                    )
+                    keep_results[idx] = response_json
+            except Exception as e:
+                self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Filtering generic comments... {percent}% complete", overwrite=True)
+        self._print_message()  # Ensure the progress bar is visible before the summary
+
+        # Report summary
+        self._print_message(
+            # pylint: disable=line-too-long
+            f"Filtering generic comments completed. Kept {len(keep_results)}. Discarded {len(discard_results)}."
+        )
+
+        # Debug log: dump keep_comments and discard_comments to files if enabled
+        if self.write_debug_logs:
+            os.makedirs(self.output_dir, exist_ok=True)
+            for idx, comment in keep_results.items():
+                comment_dict = self.results.comments[idx].model_dump()
+                keep_results[idx] = {**comment_dict, **comment}
+            for idx, comment in discard_results.items():
+                comment_dict = self.results.comments[idx].model_dump()
+                discard_results[idx] = {**comment_dict, **comment}
+            keep_path = os.path.join(self.output_dir, "filter_generic_comments_KEEP.json")
+            discard_path = os.path.join(self.output_dir, "filter_generic_comments_DISCARD.json")
+            with open(keep_path, "w", encoding="utf-8") as f:
+                json.dump(list(keep_results.values()), f, indent=2)
+            with open(discard_path, "w", encoding="utf-8") as f:
+                json.dump(list(discard_results.values()), f, indent=2)
+            self.logger.debug(f"Kept generic comments written to {keep_path}")
+            self.logger.debug(f"Discarded generic comments written to {discard_path}")
+
+        # handle removing the discarded comments, preserving order of remaining comments
+        idx_to_remove = list(set(discard_results.keys()))
+        filtered_comments = []
+        for idx, comment in enumerate(self.results.comments):
+            if idx not in idx_to_remove:
+                filtered_comments.append(comment)
+        self.results.comments = filtered_comments
 
     def _deduplicate_comments(self):
         """
@@ -382,20 +545,23 @@ class ApiViewReview:
                 continue
             batches[line_id] = matches
 
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "merge_comments.prompty")
+        prompt_path = get_prompt_path(folder="api_review", filename="merge_comments.prompty")
 
-        print(f"Deduplicating comments...")
+        self._print_message("\nDeduplicating comments...")
 
         # Submit all batches to the executor for parallel processing
         futures = {}
         for line_no, batch in batches.items():
             # Collect all rule IDs for the batch
-            all_rule_ids = set()
+            all_guideline_ids = set()
+            all_memory_ids = set()
             for comment in batch:
-                all_rule_ids.update(comment.rule_ids)
+                all_guideline_ids.update(comment.guideline_ids)
+                all_memory_ids.update(comment.memory_ids)
 
             # Prepare the context for the prompt
-            context = self.search.guidelines_for_ids(all_rule_ids)
+            search_results = self.search.search_all_by_id(list(all_guideline_ids.union(all_memory_ids)))
+            context = self.search.build_context(search_results)
 
             # Submit the task to the executor
             futures[line_no] = self.executor.submit(
@@ -411,24 +577,23 @@ class ApiViewReview:
                 merge_results = json.loads(response)
                 result_comments = merge_results.get("comments", [])
                 if len(result_comments) != 1:
-                    logger.error(f"Error merging comments for line {line_no}: {merge_results}")
+                    self.logger.error(f"Error merging comments for line {line_no}: {merge_results}")
                     continue
                 merged_comment = result_comments[0]
-                merged_comment["source"] = "merged"
                 merged_comment_obj = Comment(**merged_comment)
                 unique_comments.append(merged_comment_obj)
             except Exception as e:
-                logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
+                self.logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
 
         # Update the comments list with the unique comments
         self.results.comments = unique_comments
 
-    def _filter_comments(self):
+    def _filter_comments_with_metadata(self):
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
-        filter_prompt_file = "comment_filter.prompty"
-        filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
+        filter_prompt_file = "filter_comment_with_metadata.prompty"
+        filter_prompt_path = get_prompt_path(folder="api_review", filename=filter_prompt_file)
 
         # Submit each comment to the executor for parallel processing
         futures = {}
@@ -438,49 +603,60 @@ class ApiViewReview:
                 filter_prompt_path,
                 inputs={
                     "content": comment.model_dump(),
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "outline": self.outline,
                     "exceptions": self._load_filter_metadata().get("exceptions", "None"),
                 },
             )
 
         # Collect results as they complete, with % complete logging
-        keep_comments = []
-        discard_comments = []
+        keep_debug = []
+        discard_debug = []
+        comments_to_remove = []
         total = len(futures)
-        for idx, future in futures.items():
+        for progress_idx, (idx, future) in enumerate(futures.items()):
+            orig_comment = self.results.comments[idx]
             try:
                 response = future.result()
                 response_json = json.loads(response)
-                if response_json.get("status") == "KEEP":
-                    keep_comments.append(response_json)
+                action = response_json.get("action")
+                if action == "KEEP":
+                    keep_debug.append({**orig_comment.model_dump(), **response_json})
+                elif action == "DISCARD":
+                    discard_debug.append({**orig_comment.model_dump(), **response_json})
+                    comments_to_remove.append(idx)
                 else:
-                    discard_comments.append(response_json)
+                    self.logger.warning(f"Unexpected action for line {orig_comment.line_no}: {repr(response)}")
+                    keep_debug.append({**orig_comment.model_dump(), **response_json})
             except Exception as e:
-                logger.error(f"Error filtering comment at index {idx}: {str(e)}")
+                self.logger.error(f"Error filtering comment at index {idx}: {str(e)}")
             # Log % complete
-            percent = int(((idx + 1) / total) * 100) if total else 100
-            print(f"Filtering comments... {percent}% complete", end="\r", flush=True)
-        print()  # Ensure the progress bar is visible before the summary
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Hard filtering comments... {percent}% complete", overwrite=True)
+        self._print_message()  # Ensure the progress bar is visible before the summary
 
-        # Update the results with the filtered comments
-        print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
+        # Summary message (final counts computed after removals)
+        removed_count = len(set(comments_to_remove))
+        initial_count = len(self.results.comments)
+        final_count = initial_count - removed_count
+        self._print_message(f"Hard filtering completed. Kept {final_count}. Discarded {removed_count}.")
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
-        if self.debug_log:
-            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            debug_dir = os.path.join("scratch", "logs", self.language)
-            os.makedirs(debug_dir, exist_ok=True)
-            keep_path = os.path.join(debug_dir, f"debug_keep_comments_{ts}.json")
-            discard_path = os.path.join(debug_dir, f"debug_discard_comments_{ts}.json")
+        if self.write_debug_logs:
+            os.makedirs(self.output_dir, exist_ok=True)
+            keep_path = os.path.join(self.output_dir, "filter_comments_with_metadata_KEEP.json")
+            discard_path = os.path.join(self.output_dir, "filter_comments_with_metadata_DISCARD.json")
             with open(keep_path, "w", encoding="utf-8") as f:
-                json.dump(keep_comments, f, indent=2)
+                json.dump(keep_debug, f, indent=2)
             with open(discard_path, "w", encoding="utf-8") as f:
-                json.dump(discard_comments, f, indent=2)
-            logger.debug(f"Kept comments written to {keep_path}")
-            logger.debug(f"Discarded comments written to {discard_path}")
+                json.dump(discard_debug, f, indent=2)
+            self.logger.debug(f"Kept comments written to {keep_path}")
+            self.logger.debug(f"Discarded comments written to {discard_path}")
 
-        self.results.comments = [Comment(**comment) for comment in keep_comments]
+        # Remove comments that were marked for removal, preserving order of remaining comments
+        if comments_to_remove:
+            to_remove = set(comments_to_remove)
+            self.results.comments = [comment for i, comment in enumerate(self.results.comments) if i not in to_remove]
 
     def _filter_preexisting_comments(self):
         """
@@ -498,9 +674,9 @@ class ApiViewReview:
             inputs = {
                 "comment": comment.model_dump(),
                 "existing": [e.model_dump() for e in existing_comments],
-                "language": self._get_language_pretty_name(),
+                "language": get_language_pretty_name(self.language),
             }
-            prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
+            prompt_path = get_prompt_path(folder="api_review", filename="filter_existing_comment.prompty")
             tasks.append((idx, comment, prompt_path, inputs))
             indices.append(idx)
 
@@ -513,16 +689,21 @@ class ApiViewReview:
             try:
                 response = futures[idx].result()
                 response_json = json.loads(response)
-                if response_json.get("status") == "KEEP":
-                    comment.comment = response_json.get("comment")
-                elif response_json.get("status") == "DISCARD":
+                action = response_json.get("action")
+                refined_comment = response_json.get("comment")
+                if action == "KEEP":
+                    comment.comment = refined_comment
+                elif action == "DISCARD":
                     comments_to_remove.append(idx)
+                else:
+                    self.logger.warning(f"Unexpected action for line {comment.line_no}: {repr(response)}")
+                    comment.comment = refined_comment
             except Exception as e:
-                logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
-                logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
+                self.logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
+                self.logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
             percent = int(((i + 1) / total) * 100) if total else 100
-            print(f"Filtering preexisting comments... {percent}% complete", end="\r", flush=True)
-        print()  # Ensure the progress bar is visible before the summary
+            self._print_message(f"Filtering preexisting comments... {percent}% complete", overwrite=True)
+        self._print_message()  # Ensure the progress bar is visible before the summary
 
         # remove comments that were marked for removal
         if not comments_to_remove:
@@ -532,74 +713,146 @@ class ApiViewReview:
             comment for idx, comment in enumerate(self.results.comments) if idx not in comments_to_remove
         ]
         final_comment_count = len(self.results.comments)
-        print(
-            f"Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
+        self._print_message(
+            # pylint: disable=line-too-long
+            f"\nFiltered preexisting comments. Kept: {final_comment_count}. Discarded: {initial_comment_count - final_comment_count}."
         )
+
+    def _score_comments_with_judge_prompt(self):
+        """
+        Score all comments using the judge prompt, processing each comment in parallel.
+        """
+        prompt_file = "judge_comment_confidence.prompty"
+        prompt_path = get_prompt_path(folder="api_review", filename=prompt_file)
+
+        self._print_message("\nScoring comments...")
+
+        # Submit each comment to the executor for parallel processing
+        futures = {}
+        for idx, comment in enumerate(self.results.comments):
+            context_ids = comment.guideline_ids + comment.memory_ids
+            search_results = self.search.search_all_by_id(context_ids)
+            context = self.search.build_context(search_results)
+            futures[idx] = self.executor.submit(
+                self._run_prompt,
+                prompt_path,
+                inputs={
+                    "content": comment.model_dump(),
+                    "language": get_language_pretty_name(self.language),
+                    "context": context.to_markdown() if search_results else "NONE",
+                },
+            )
+
+        # Collect results as they complete, with % complete logging
+        total = len(futures)
+
+        # Collect raw judge results for optional debug output
+        judge_results = []
+
+        for progress_idx, (idx, future) in enumerate(futures.items()):
+            try:
+                # Capture original comment snapshot before we modify severity/confidence
+                orig_comment = self.results.comments[idx].model_dump()
+                response = future.result()
+                response_json = json.loads(response)
+                results = response_json.get("results", {})
+                severity = response_json.get("severity", "UNKNOWN").upper()
+
+                yes_votes = 0
+                no_votes = 0
+                unknown_votes = 0
+
+                for result in results:
+                    answer = result.get("answer", "").upper()
+                    if answer == "YES":
+                        yes_votes += 1
+                    elif answer == "NO":
+                        no_votes += 1
+                    elif answer == "UNKNOWN":
+                        unknown_votes += 1
+                    else:
+                        self.logger.warning(f"Unexpected answer {answer} for comment at index {idx}")
+                total_votes = yes_votes + no_votes + unknown_votes
+                confidence = (yes_votes / total_votes) if total_votes > 0 else 0.0
+                self.results.comments[idx].severity = severity
+                self.results.comments[idx].confidence_score = confidence
+
+                # Record the judge result for debug output
+                judge_results.append(
+                    {
+                        "index": idx,
+                        "original_comment": orig_comment,
+                        "results": results,
+                        "computed_severity": severity,
+                        "computed_confidence": confidence,
+                    }
+                )
+            except Exception as e:
+                self.logger.error(f"Error scoring comment at index {idx}: {str(e)}")
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Scoring comments... {percent}% complete", overwrite=True)
+
+        # If debug logging is enabled, write individual and aggregated judge results
+        if self.write_debug_logs and self.output_dir:
+            try:
+                judge_dir = os.path.join(self.output_dir, "judge_comments")
+                os.makedirs(judge_dir, exist_ok=True)
+                # Write aggregated file
+                aggregated_path = os.path.join(judge_dir, "judge_comments_all.json")
+                with open(aggregated_path, "w", encoding="utf-8") as af:
+                    json.dump(judge_results, af, indent=2)
+                self.logger.debug(f"Aggregated judge results written to {aggregated_path}")
+
+                # Write one file per comment for easier inspection
+                for jr in judge_results:
+                    idx = jr.get("index")
+                    per_path = os.path.join(judge_dir, f"judge_comment_{idx}.json")
+                    with open(per_path, "w", encoding="utf-8") as pf:
+                        json.dump(jr, pf, indent=2)
+            except Exception as e:
+                self.logger.error(f"Failed to write judge debug logs: {str(e)}")
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
         Run a prompt with retry logic.
-
-        Args:
-            prompt_path: Path to the prompt file
-            inputs: Dictionary of inputs for the prompt
-            max_retries: Maximum number of retry attempts (default: 5)
-
-        Returns:
-            String result of the prompt execution
-
-        Raises:
-            Exception: If all retry attempts fail
         """
-
-        def execute_prompt() -> str:
-            if in_ci():
-                configuration = {"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
-            else:
-                configuration = {}
-
-            return prompty.execute(prompt_path, inputs=inputs, configuration=configuration)
-
-        def on_retry(exception, attempt, max_attempts):
-            logger.warning(
-                f"Error executing prompt {os.path.basename(prompt_path)}, "
-                f"attempt {attempt+1}/{max_attempts}: {str(exception)}"
-            )
-
-        def on_failure(exception, attempt):
-            logger.error(
-                f"Failed to execute prompt {os.path.basename(prompt_path)} "
-                f"after {attempt} attempts: {str(exception)}"
-            )
-            raise exception
-
-        return retry_with_backoff(
-            func=execute_prompt,
+        return self.run_prompt(
+            prompt_path=prompt_path,
+            inputs=inputs,
+            settings=self.settings,
             max_retries=max_retries,
-            retry_exceptions=(json.JSONDecodeError, Exception),
-            on_retry=on_retry,
-            on_failure=on_failure,
-            logger=logger,
-            description=f"prompt {os.path.basename(prompt_path)}",
+            logger=self.logger,
         )
 
+    # pylint: disable=too-many-locals
     def run(self) -> ReviewResult:
+        """Execute the APIView review process."""
         try:
-            print(f"Generating {self._get_language_pretty_name()} review...")
+            self._print_message(f"Generating {get_language_pretty_name(self.language)} review {self.job_id}")
+            self.logger.info(f"Generating review {self.job_id} for language={self.language}")
             overall_start_time = time()
 
             # Canary check: try authenticating against Search and CosmosDB before LLM calls
             canary_error = self._canary_check_search_and_cosmos()
             if canary_error:
-                print(f"{self.RED_TEXT}ERROR: {canary_error}{self.RESET_COLOR}")
-                logger.error(f"Aborting review due to canary check failure: {canary_error}")
+                self._print_message(f"ERROR: {canary_error}")
+                self.logger.error(f"Aborting review due to canary check failure: {canary_error}")
                 raise RuntimeError(f"Aborting review: {canary_error}")
 
-            # Track time for _generate_comments
-            generate_start_time = time()
+            start_time = time()
             self._generate_comments()
-            generate_end_time = time()
-            print(f"  Generated comments in {generate_end_time - generate_start_time:.2f} seconds.")
+            end_time = time()
+            self._print_message(
+                f"\nGenerated {len(self.results.comments)} comments in {end_time - start_time:.2f} seconds."
+            )
+            self._print_comment_counts()
+
+            # Run generic comments through a filter
+            start_time = time()
+            self._filter_generic_comments()
+            end_time = time()
+            self._print_message(f"  Generic comments filtered in {end_time - start_time:.2f} seconds.")
+            self._print_comment_counts()
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()
@@ -607,32 +860,65 @@ class ApiViewReview:
             self._deduplicate_comments()
             merged_comment_count = len(self.results.comments)
             deduplicate_end_time = time()
-            print(f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds.")
-            print(f"  Initial comments: {initial_comment_count}, Merged comments: {merged_comment_count}")
+            self._print_message(
+                f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds. Collapsed {initial_comment_count - merged_comment_count} comments."
+            )
+            self._print_comment_counts()
 
             # Track time for _filter_comments
             filter_start_time = time()
-            self._filter_comments()
+            self._filter_comments_with_metadata()
             filter_end_time = time()
-            print(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
-
-            # Add the summary to the results
-            if self.summary:
-                self.results.comments.append(self.summary)
+            self._print_message(f"  Hard filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
+            self._print_comment_counts()
 
             # Track time for _filter_preexisting_comments
             preexisting_start_time = time()
             self._filter_preexisting_comments()
             preexisting_end_time = time()
-            print(f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds.")
+            self._print_message(
+                f"Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
+            )
+            self._print_comment_counts()
+
+            score_comments_start_time = time()
+            self._score_comments_with_judge_prompt()
+            score_comments_end_time = time()
+            self._print_message(
+                f"  Comment scoring completed in {score_comments_end_time - score_comments_start_time:.2f} seconds."
+            )
 
             results = self.results.sorted()
 
+            correlation_id_start_time = time()
+            # Assign correlation IDs for similar comments
+            results.comments = CommentGrouper(
+                comments=results.comments,
+                run_prompt_func=self.run_prompt,
+                settings=self.settings,
+                logger=self.logger,
+            ).group()
+            correlation_id_end_time = time()
+            self._print_message(
+                f"\nCorrelation IDs assigned in {correlation_id_end_time - correlation_id_start_time:.2f} seconds."
+            )
+
             overall_end_time = time()
-            print(f"Review generated in {overall_end_time - overall_start_time:.2f} seconds.")
+            self._print_message(
+                # pylint: disable=line-too-long
+                f"\nReview {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
+            )
 
             if self.semantic_search_failed:
-                print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
+                self._print_message("WARN: Semantic search failed for some chunks (see error.log).")
+
+            # Write output JSON if enabled
+            if self.write_output:
+                os.makedirs(self.output_dir, exist_ok=True)
+                output_path = os.path.join(self.output_dir, "output.json")
+                with open(output_path, "w", encoding="utf-8") as f:
+                    json.dump(results.model_dump(), f, indent=2)
+                self._print_message(f"Review results written to {output_path}")
 
             return results
         finally:
@@ -645,33 +931,15 @@ class ApiViewReview:
         Returns an error string if authentication fails, otherwise None.
         """
         try:
-            # Canary: minimal search query
-            self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             try:
                 # Use a real search result, even if empty
-                canary_results = self.search.search_all(query="canary")
-                _ = self.search.build_context(canary_results)
+                _ = self.search.search_all(query="canary")
+                _ = self.search.build_context([])
             except Exception as cosmos_exc:
                 return f"CosmosDB authentication failed: {type(cosmos_exc).__name__}: {cosmos_exc}"
         except Exception as e:
             return f"Unexpected canary check error: {type(e).__name__}: {e}"
         return None
-
-    def _get_language_pretty_name(self) -> str:
-        """
-        Returns a pretty name for the language.
-        """
-        language_pretty_names = {
-            "android": "Android",
-            "cpp": "C++",
-            "dotnet": "C#",
-            "golang": "Go",
-            "ios": "Swift",
-            "java": "Java",
-            "python": "Python",
-            "typescript": "TypeScript",
-        }
-        return language_pretty_names.get(self.language, self.language.capitalize())
 
     def _retrieve_context(self, query: str) -> List[object] | None:
         """
@@ -679,12 +947,11 @@ class ApiViewReview:
         memories and examples.
         """
         try:
-            self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             results = self.search.search_all(query=query)
-            context = self.search.build_context(results)
+            context = self.search.build_context(results.results)
             return context
         except Exception as e:
-            logger.error(f"Error retrieving context: {type(e).__name__}: {e}", exc_info=True)
+            logger.error("Error retrieving context: %s: %s", type(e).__name__, e, exc_info=True)
             return None
 
     def _retrieve_guidelines_as_context(self) -> List[object] | None:
@@ -692,13 +959,13 @@ class ApiViewReview:
         Retrieves all guidelines for the current language as context.
         """
         try:
-            guidelines = self.search.language_guidelines
-            if not guidelines:
+            language_guidelines = self.search.language_guidelines
+            if not language_guidelines:
                 return None
-            context = self.search.build_context(self.search.language_guidelines)
+            context = self.search.build_context(language_guidelines.results)
             return context
         except Exception as e:
-            logger.error(f"Error retrieving guidelines: {type(e).__name__}: {e}", exc_info=True)
+            logger.error("Error retrieving guidelines: %s: %s", type(e).__name__, e, exc_info=True)
             return None
 
     def _load_generic_metadata(self):
@@ -713,7 +980,7 @@ class ApiViewReview:
             return {"custom_rules": ""}
 
         # Load the YAML file
-        with open(yaml_file, "r") as f:
+        with open(yaml_file, "r", encoding="utf-8") as f:
             yaml_data = yaml.safe_load(f)
 
         custom_rules_yaml = yaml_data.get("custom_rules", "")
@@ -732,26 +999,16 @@ class ApiViewReview:
 
         # Return defaults if the file doesn't exist
         if not os.path.exists(yaml_file):
-            return {"exceptions": "None", "sample": ""}
+            return {"exceptions": "None"}
 
         # Load the YAML file
-        with open(yaml_file, "r") as f:
+        with open(yaml_file, "r", encoding="utf-8") as f:
             yaml_data = yaml.safe_load(f)
 
-        sample_yaml = yaml_data.get("sample", None)
         exceptions_yaml = yaml_data.get("exceptions", None)
         metadata = {
-            "sample": "",
             "exceptions": exceptions_yaml or "None",
         }
-        # format the sample string if there's a value
-        if sample_yaml:
-            metadata[
-                "sample"
-            ] = f"""
-            sample:
-              {sample_yaml}
-            """
         return metadata
 
     def _unescape(self, text: str) -> str:

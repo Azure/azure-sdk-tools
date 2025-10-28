@@ -94,7 +94,7 @@ class DataClassNode(ClassNode):
         logging.info(f"Processing dataclass {self.namespace_id}")
 
         # Generate class name line
-        review_line = review_lines.create_review_line()
+        review_line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         review_line.add_keyword("@dataclass", has_suffix_space=False)
         review_line.add_line_marker(f"{self.namespace_id}.@dataclass")
         self._generate_dataclass_annotation_properties(review_line, self.namespace)

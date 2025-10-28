@@ -17,5 +17,10 @@ from ._client import (
     module_func,
     another_func,
 )
+from ._patch import (
+    HandwrittenExtendedClass,
+    HandwrittenEnum,
+    HandwrittenDict,
+)
 
 __version__ = VERSION

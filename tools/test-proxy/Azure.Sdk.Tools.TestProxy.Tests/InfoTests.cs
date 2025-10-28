@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await testRecordingHandler.RegisterSanitizer(new UriRegexSanitizer(regex: "ABC123"), recordingId);
             await testRecordingHandler.RegisterSanitizer(new BodyRegexSanitizer(regex: ".+?"), recordingId);
-            testRecordingHandler.SetMatcherForRecording(recordingId, new CustomDefaultMatcher(compareBodies: false, excludedHeaders: "an-excluded-header"));
+            await testRecordingHandler.SetMatcherForRecording(recordingId, new CustomDefaultMatcher(compareBodies: false, excludedHeaders: "an-excluded-header"));
 
             var model = new ActiveMetadataModel(testRecordingHandler, recordingId);
             var descriptions = model.Descriptions.ToList();

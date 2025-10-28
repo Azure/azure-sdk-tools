@@ -34,6 +34,15 @@ namespace APIViewWeb.Repositories
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId);
 
         /// <summary>
+        /// Retrieve Revisions from the APIRevisions container in CosmosDb for a given crossLanguageId and language
+        /// </summary>
+        /// <param name="crossLanguageId"></param> The identifier used to group related revisions across different programming languages.
+        /// <param name="language"></param> The reviewId
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, string language, APIRevisionType apiRevisionType = APIRevisionType.All);
+
+        /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb
         /// </summary>
         /// <param name="apiRevisionId"></param> The revisionId

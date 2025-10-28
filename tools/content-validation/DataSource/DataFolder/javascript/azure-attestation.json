@@ -1,0 +1,35 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/attestation-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationadministrationclient?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationclient?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestopenenclaveoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestsgxenclaveoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attesttpmoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationadministrationclientoperationoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationadministrationclientoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationadministrationclientpolicycertificateoperationoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationadministrationclientpolicyoperationoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationclientoperationoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationclientoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationpolicytoken?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationresponse?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationresult?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationsgxcollateralinfo?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationsigner?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationtoken?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationtokenvalidationoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/policycertificatesmodificationresult?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/policyresult?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/attestationtype?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/certificatemodification?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/policymodification?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/knownattestationtype?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/knowncertificatemodification?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/attestation/knownpolicymodification?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

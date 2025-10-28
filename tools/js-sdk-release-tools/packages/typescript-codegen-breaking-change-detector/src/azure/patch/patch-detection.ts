@@ -1,31 +1,29 @@
-import {
-  CallSignatureDeclaration,
-  ClassDeclaration,
-  FunctionDeclaration,
-  Node,
-  SourceFile,
-  SyntaxKind,
-} from 'ts-morph';
+// TODO: combine patch functions into findXXXDifference functions in `declaration-diff.ts`
+
+import { CallSignatureDeclaration, FunctionDeclaration, Node, SourceFile, SyntaxKind } from 'ts-morph';
 import {
   AstContext,
   DiffLocation,
   DiffPair,
   DiffReasons,
   AssignDirection,
-  FindMappingConstructorLikeDeclaration,
+  FindMappingCallSignatureLikeDeclaration,
+  DeclarationDifferenceDetectorOptions,
 } from '../common/types';
-import {
-  findFunctionBreakingChanges,
-  findInterfaceBreakingChanges,
-  findTypeAliasBreakingChanges,
-  checkRemovedDeclaration,
-  createDiffPair,
-  checkAddedDeclaration,
-  findClassBreakingChanges,
-} from '../diff/declaration-diff';
+import { DeclarationDifferenceDetector } from '../diff/DeclarationDifferenceDetector';
 import { logger } from '../../logging/logger';
 
-const findMappingCallSignature: FindMappingConstructorLikeDeclaration<CallSignatureDeclaration> = (
+// TODO: keep the same with v1, and separate input and output models in the future
+const detectorOptions: DeclarationDifferenceDetectorOptions = {
+  RequiredToOptionalAsBreakingChange: true,
+  OptionalToRequiredAsBreakingChange: true,
+  ReadonlyToMutableAsBreakingChange: true,
+  MutableToReadonlyAsBreakingChange: true,
+  ConcretTypeToAnyAsBreakingChange: false,
+};
+const detector = new DeclarationDifferenceDetector(detectorOptions);
+
+const findMappingCallSignatureForRoutes: FindMappingCallSignatureLikeDeclaration<CallSignatureDeclaration> = (
   target: CallSignatureDeclaration,
   signatures: CallSignatureDeclaration[]
 ) => {
@@ -54,37 +52,19 @@ export function patchRoutes(astContext: AstContext): DiffPair[] {
 
   if (!baseline && !current) throw new Error(`Failed to find interface 'Routes' in baseline and current package`);
 
-  const addPair = checkAddedDeclaration(DiffLocation.Interface, baseline, current);
+  const addPair = detector.checkAddedDeclaration(DiffLocation.Interface, baseline, current);
   if (addPair) return [addPair];
 
-  const removePair = checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
+  const removePair = detector.checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
   if (removePair) return [removePair];
 
-  const breakingChangePairs = patchDeclaration(
+  return patchDeclaration(
     AssignDirection.CurrentToBaseline,
-    findInterfaceBreakingChanges,
+    detector.findInterfaceDifferences.bind(detector),
     baseline!,
     current!,
-    findMappingCallSignature
+    findMappingCallSignatureForRoutes
   );
-
-  const newFeaturePairs = patchDeclaration(
-    AssignDirection.BaselineToCurrent,
-    findInterfaceBreakingChanges,
-    baseline!,
-    current!,
-    findMappingCallSignature
-  )
-    .filter((p) => p.reasons === DiffReasons.Removed)
-    .map((p) => {
-      p.reasons = DiffReasons.Added;
-      p.assignDirection = AssignDirection.CurrentToBaseline;
-      const temp = p.source;
-      p.source = p.target;
-      p.target = temp;
-      return p;
-    });
-  return [...breakingChangePairs, ...newFeaturePairs];
 }
 
 export function patchTypeAlias(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
@@ -93,12 +73,12 @@ export function patchTypeAlias(name: string, astContext: AstContext, assignDirec
 
   if (!baseline && !current) throw new Error(`Failed to find type '${name}' in baseline and current package`);
 
-  const addPair = checkAddedDeclaration(DiffLocation.TypeAlias, baseline, current);
+  const addPair = detector.checkAddedDeclaration(DiffLocation.TypeAlias, baseline, current);
   if (addPair) return [addPair];
 
-  const removePair = checkRemovedDeclaration(DiffLocation.TypeAlias, baseline, current);
+  const removePair = detector.checkRemovedDeclaration(DiffLocation.TypeAlias, baseline, current);
   if (removePair) return [removePair];
-  return patchDeclaration(assignDirection, findTypeAliasBreakingChanges, baseline!, current!);
+  return patchDeclaration(assignDirection, detector.findTypeAliasBreakingChanges.bind(detector), baseline!, current!);
 }
 
 export function patchFunction(name: string, astContext: AstContext): DiffPair[] {
@@ -119,14 +99,14 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     logger.warn(`Found overloads for function '${name}'`);
   }
 
-  const addPair = checkAddedDeclaration(
+  const addPair = detector.checkAddedDeclaration(
     DiffLocation.Signature,
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
   );
   if (addPair) return [addPair];
 
-  const removePair = checkRemovedDeclaration(
+  const removePair = detector.checkRemovedDeclaration(
     DiffLocation.Signature,
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
@@ -135,12 +115,20 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
 
   const getNameNode = (s: FunctionDeclaration) => ({ name, node: s as Node });
   if (currentFunctions.length === 0) {
-    return [createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, getNameNode(baselineFunctions[0]))];
+    return [
+      detector.createDiffPair(
+        DiffLocation.Signature,
+        DiffReasons.Removed,
+        undefined,
+        getNameNode(baselineFunctions[0])
+      ),
+    ];
   }
 
+  // TODO: add both assign directions like routes
   const pairs = patchDeclaration(
     AssignDirection.CurrentToBaseline,
-    findFunctionBreakingChanges,
+    detector.findFunctionDifferences.bind(detector),
     baselineFunctions[0],
     currentFunctions[0]
   );
@@ -153,12 +141,48 @@ export function patchClass(name: string, astContext: AstContext, assignDirection
 
   if (!baseline && !current) throw new Error(`Failed to find class '${name}' in baseline and current package`);
 
-  const addPair = checkAddedDeclaration(DiffLocation.Class, baseline, current);
+  const addPair = detector.checkAddedDeclaration(DiffLocation.Class, baseline, current);
   if (addPair) return [addPair];
 
-  const removePair = checkRemovedDeclaration(DiffLocation.Class, baseline, current);
+  const removePair = detector.checkRemovedDeclaration(DiffLocation.Class, baseline, current);
   if (removePair) return [removePair];
-  return patchDeclaration(assignDirection, findClassBreakingChanges, baseline!, current!);
+
+  return patchDeclaration(assignDirection, detector.findClassDifferences.bind(detector), baseline!, current!);
+}
+
+export function patchInterface(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+  const baseline = astContext.baseline.getInterface(name);
+  const current = astContext.current.getInterface(name);
+
+  if (!baseline && !current) throw new Error(`Failed to find interface '${name}' in baseline and current package`);
+
+  const addPair = detector.checkAddedDeclaration(DiffLocation.Interface, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = detector.checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
+  if (removePair) return [removePair];
+
+  const diffPairs = patchDeclaration(
+    assignDirection,
+    detector.findInterfaceDifferences.bind(detector),
+    baseline!,
+    current!
+  );
+  return diffPairs;
+}
+
+export function patchEnum(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+  const baseline = astContext.baseline.getEnum(name);
+  const current = astContext.current.getEnum(name);
+
+  if (!baseline && !current) throw new Error(`Failed to find enum '${name}' in baseline and current package`);
+  const addPair = detector.checkAddedDeclaration(DiffLocation.Enum, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = detector.checkRemovedDeclaration(DiffLocation.Enum, baseline, current);
+  if (removePair) return [removePair];
+
+  return patchDeclaration(assignDirection, detector.findEnumDifferences.bind(detector), baseline!, current!);
 }
 
 export function patchDeclaration<T extends Node>(

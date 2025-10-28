@@ -14,5 +14,6 @@ extends:
   template: /eng/pipelines/templates/jobs/azuresdkpartnerdrops-to-nugetfeed.yml
   parameters:
     PartnerDropsBlobSourceSuffix: ${{ parameters.BlobPath }}
+    Feed: 'Nuget.org'
     ShouldSign: ${{ parameters.ShouldSign }}
     ShouldPublish: ${{ parameters.ShouldPublish }}

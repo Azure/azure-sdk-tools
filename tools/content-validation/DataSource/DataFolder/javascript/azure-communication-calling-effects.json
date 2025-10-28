@@ -1,0 +1,18 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/communication/@azure/communication-calling-effects?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/backgroundblureffect?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/backgroundreplacementeffect?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/backgroundblurconfig?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/backgroundreplacementconfig?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/videoeffect?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/videoeffectconfig?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/videoeffecterror?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/videoeffecterrorpayload?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-calling-effects/videoeffectname?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public string Name { get; set; }
         public string ProjectRootPath { get; set; }
-       
+
         public bool IsDataPlane { get;}
         public string SdkServicePath { get; set; }
 
@@ -25,7 +25,9 @@ namespace Azure.Sdk.Tools.Cli.Models
         public static bool IsValidTypeSpecProjectPath(string typeSpecProjectPath)
         {
             if (string.IsNullOrEmpty(typeSpecProjectPath))
+            {
                 return false;
+            }
 
             var path = typeSpecProjectPath;
             if (!path.EndsWith(TSPCONFIG_FILENAME))
@@ -65,6 +67,6 @@ namespace Azure.Sdk.Tools.Cli.Models
             {
                 return TypeSpecConfigYaml.Contains("azure-resource-provider-folder: ./resource-manager") || TypeSpecConfigYaml.Contains("@azure-tools/typespec-azure-rulesets/resource-manager");
             }
-        }       
+        }
     }
 }

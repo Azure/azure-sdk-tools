@@ -78,18 +78,23 @@ export enum DiffReasons {
   TypeChanged = 2,
   CountChanged = 4,
   RequiredToOptional = 8,
-  ReadonlyToMutable = 16,
+  OptionalToRequired = 16,
+  ReadonlyToMutable = 32,
+  MutableToReadonly = 64,
 
   // new features
   Added = 1024,
+
+  // should not reach here
+  NotComparable = 2048,
 }
 
+// TODO: add related locations for convienience
 export interface DiffPair {
   target?: NameNode;
   source?: NameNode;
   location: DiffLocation;
   reasons: DiffReasons;
-  messages: Map<DiffReasons, string>;
   assignDirection: AssignDirection;
 }
 
@@ -108,6 +113,8 @@ export enum DiffLocation {
   TypeAlias,
   Interface,
   Class,
+  Enum,
+  EnumMember,
 }
 
 export enum AssignDirection {
@@ -116,9 +123,17 @@ export enum AssignDirection {
   CurrentToBaseline, // e.g. output model
 }
 
-export type ConstructorLikeDeclaration = CallSignatureDeclaration | ConstructorDeclaration;
+export type CallSignatureLikeDeclaration = CallSignatureDeclaration | ConstructorDeclaration;
 
-export type FindMappingConstructorLikeDeclaration<T extends ConstructorLikeDeclaration> = (
+export type FindMappingCallSignatureLikeDeclaration<T extends CallSignatureLikeDeclaration> = (
   target: T,
   declarations: T[]
 ) => { declaration: T; id: string } | undefined;
+
+export interface DeclarationDifferenceDetectorOptions {
+    RequiredToOptionalAsBreakingChange: boolean;
+    OptionalToRequiredAsBreakingChange: boolean;
+    ReadonlyToMutableAsBreakingChange: boolean;
+    MutableToReadonlyAsBreakingChange: boolean;
+    ConcretTypeToAnyAsBreakingChange: boolean;
+}

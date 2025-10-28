@@ -1,14 +1,12 @@
 import { getTsSourceFile } from '../../common/utils.js';
 import { ApiVersionType } from '../../common/types.js';
 import path, { basename } from 'node:path';
-import shell from 'shelljs';
 import { FunctionDeclaration, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
-import { getNpmPackageName } from "../../common/utils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getVersion, isBetaVersion } from "../../utils/version.js";
+import { getLatestStableVersion, isBetaVersion } from "../../utils/version.js";
 
 import unixify from 'unixify';
 
@@ -21,10 +19,26 @@ function tryFindVersionInFunctionBody(func: FunctionDeclaration): string | undef
     return extractApiVersionFromText(text);
 }
 
+function getFunctionNameCaseInsensitive(sourceFile: SourceFile, functionName: string): string {
+    const allFunctions = sourceFile.getFunctions();
+    const functionNameLower = functionName.toLowerCase();
+    const matchingFunction = allFunctions.find(func => {
+        const name = func.getName();
+        return name && name.toLowerCase() === functionNameLower;
+    });
+    
+    return matchingFunction?.getName() || functionName;
+}
+
 function tryFindFunctionWithApiVersion(clientPath: string, functionName: string): FunctionDeclaration | undefined {
     const sourceFile = getTsSourceFile(clientPath);
-    const createClientFunction = sourceFile?.getFunction(functionName);
-    return createClientFunction;
+    if (!sourceFile) return undefined;
+    
+    // Get the exact function name with correct case
+    const exactFunctionName = getFunctionNameCaseInsensitive(sourceFile, functionName);
+    
+    // Get the function using the exact name
+    return sourceFile.getFunction(exactFunctionName);
 }
 
 const extractApiVersionFromText = (text: string): string | undefined => {
@@ -134,11 +148,14 @@ export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVers
     return previewVersions.length > 0 ? ApiVersionType.Preview : ApiVersionType.Stable;
 };
 
-export const getApiVersionTypeFromNpm = async (packageRoot: string): Promise<ApiVersionType> => {
-    logger.info('Fallback to get api version type from latest version in NPM');
-    const packageName = getNpmPackageName(packageRoot);
+export const getApiVersionTypeFromNpm = async (
+    packageName: string,
+): Promise<ApiVersionType> => {
+    logger.info("Fallback to get api version type from latest version in NPM");
     const npmViewResult = await tryGetNpmView(packageName);
-    const latestVersion = getVersion(npmViewResult, "latest");
-    const isBeta = isBetaVersion(latestVersion);
-    return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+    if (!npmViewResult) return ApiVersionType.Preview;
+    const latestVersion = getLatestStableVersion(npmViewResult);
+    return latestVersion && !isBetaVersion(latestVersion)
+        ? ApiVersionType.Stable
+        : ApiVersionType.Preview;
 };

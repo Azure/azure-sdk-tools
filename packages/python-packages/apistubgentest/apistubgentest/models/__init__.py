@@ -29,7 +29,9 @@ from ._models import (
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
     SomethingWithProperties,
-    SomeProtocolDecorator
+    SomeProtocolDecorator,
+    SomethingWithLiterals,
+    SomeEnum
 )
 from ._dataclasses import (
     DataClassSimple,
@@ -66,5 +68,7 @@ __all__ = (
     "SomethingWithInheritedOverloads",
     "SomethingWithOverloads",
     "SomethingWithProperties",
-    "SomeProtocolDecorator"
+    "SomeProtocolDecorator",
+    "SomethingWithLiterals",
+    "SomeEnum"
 )

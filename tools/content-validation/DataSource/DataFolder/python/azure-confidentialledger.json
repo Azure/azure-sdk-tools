@@ -1,0 +1,18 @@
+[
+  {
+    "version": "view=azure-python-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/confidentialledger-readme?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger/?view=azure-python-preview",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.aio?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.aio.confidentialledgerclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.certificate?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.certificate.aio?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.certificate.aio.confidentialledgercertificateclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.certificate.confidentialledgercertificateclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.receipt?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.confidentialledgercertificatecredential?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-confidentialledger/azure.confidentialledger.confidentialledgerclient?view=azure-python-preview\u0026branch=main"
+    ]
+  }
+]

@@ -22,6 +22,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
 
+/**
+ * Prints the command preamble, including the version and banner.
+ * This is called at the start of each command to provide context.
+ *
+ * @param argv The parsed arguments from yargs.
+ */
 function commandPreamble(argv: any) {
   checkDebugLogging(argv);
   printBanner();
@@ -124,6 +130,11 @@ const parser = yargs(hideBin(process.argv))
         .option("trace", {
           type: "array",
           description: "Enable tracing during compile",
+        })
+        .option("update-if-exists", {
+          type: "boolean",
+          description: "Update the library if it exists, keeping extra tsp-location.yaml data",
+          default: false,
         });
     },
     async (argv: any) => {

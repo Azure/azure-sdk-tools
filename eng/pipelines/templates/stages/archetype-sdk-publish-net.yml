@@ -1,20 +1,13 @@
 parameters:
   dependsOn: []
   ShouldTag: true
-  ShouldSign: true
-  ShouldPublish: true
-  ShouldPublishSymbols: true
-  # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
-  DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-
+  Feed: 'public/azure-sdk-for-net'
   ShouldPublishExecutables: false
   RequireStrongNames: true
+  PublishEnvironment: ''
   ExeMatrix: []
-  SigningPool:
-    name: azsdk-pool
-    image: windows-2022
-    os: windows
-
+  VerifyChangelog: false
+  ToolDirectory: ''
 # Needs Github Release variable group linked.
 # Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
 
@@ -22,31 +15,41 @@ stages:
 - stage: Release
   dependsOn: ${{ parameters.dependsOn }}
   variables:
-    Artifacts: $(System.DefaultWorkingDirectory)/_artifacts/packages
-    Binaries: $(System.DefaultWorkingDirectory)/_artifacts/binaries
-    BuildToolPath: $(Pipeline.Workspace)/_azure-sdk-build-tools
-    BuildToolScripts: $(BuildToolPath)/scripts
-    BuildToolTools: $(BuildToolPath)/tools
-    ReleaseRepo: azure/azure-sdk-tools
-  jobs:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: Artifacts
+    value: $(System.DefaultWorkingDirectory)/_artifacts/packages
+  - name: Binaries
+    value: $(System.DefaultWorkingDirectory)/_artifacts/binaries
+  - name: BuildToolPath
+    value: $(Pipeline.Workspace)/_azure-sdk-build-tools
+  - name: BuildToolScripts
+    value: $(BuildToolPath)/scripts
+  - name: BuildToolTools
+    value: $(BuildToolPath)/tools
+  - name: ReleaseRepo
+    value: azure/azure-sdk-tools
 
-  - job: SignPackage
-    displayName: Sign Package
+  jobs:
+  - template: /eng/pipelines/templates/jobs/nuget-publish.yml
+    parameters:
+      ArtifactName: packages
+      Feed: ${{ parameters.Feed }}
+      VerifyChangelog: ${{ parameters.VerifyChangelog }}
+      ${{ if parameters.PublishEnvironment }}:
+        PublishEnvironment: ${{ parameters.PublishEnvironment }}
+
+  - job: PostPackagePublish
+    displayName: Post Package Publish
+    dependsOn: PublishPackage
+
     pool:
-      name: ${{ parameters.SigningPool.name }}
-      ${{ if eq(parameters.SigningPool.os, 'macOS') }}:
-        vmImage: ${{ parameters.SigningPool.image }}
-      ${{ else }}:
-        image: ${{ parameters.SigningPool.image }}
-      os: ${{ parameters.SigningPool.os }}
-    templateContext:
-      outputs:
-        - output: pipelineArtifact
-          displayName: 'Store signed packages in $(Artifacts) artifact'
-          targetPath: $(Artifacts)
-          artifactName: packages-signed
+      name: $(WINDOWSPOOL)
+      image: $(WINDOWSVMIMAGE)
+      os: windows
+
     steps:
-      # need to checkout the build tools repo to get the signing helper proj
+      # github release and tagging uses a local script in the build tools repo, so we need to checkout that repo
       - checkout: azure-sdk-build-tools
         path: _azure-sdk-build-tools
 
@@ -55,24 +58,8 @@ stages:
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages
         inputs:
-          artifact: packages
-          path: $(Artifacts)
-
-      - ${{ if and(eq(parameters.ShouldTag, 'true'),eq(parameters.ShouldPublishExecutables, 'true')) }}:
-        - ${{ each target in parameters.ExeMatrix }}:
-          - task: DownloadPipelineArtifact@2
-            displayName: Download ${{ target.rid }} Binary
-            inputs:
-              artifact: standalone-${{ target.rid }}
-              path: $(Binaries)
-
-      - ${{ if eq(parameters.ShouldSign, 'true') }}:
-        # we still need azure-sdk-build-tools present to get the signing helper and partition-by-strongname.ps1
-        - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
-          parameters:
-            PackagesPath: $(Artifacts)
-            BuildToolsPath: $(BuildToolPath)
-            RequireStrongNames: ${{ parameters.RequireStrongNames }}
+          artifactName: packages-signed
+          targetPath: $(Artifacts)
 
       - ${{ if eq(parameters.ShouldTag, 'true') }}:
         # sets output variable $(release)
@@ -88,91 +75,7 @@ stages:
           env:
             GH_TOKEN: $(azuresdk-github-pat)
 
-        - pwsh: |
-            Write-Host "##vso[task.setvariable variable=releaseVar;isOutput=true]$(release)"
-          displayName: 'Set Release Variable'
-          name: SetRelease
-
-  - deployment: Publish_Package
-    dependsOn: SignPackage
-    environment: net-release
-    pool:
-      name: ${{ parameters.SigningPool.name }}
-      ${{ if eq(parameters.OSName, 'macOS') }}:
-        vmImage: ${{ parameters.SigningPool.image }}
-      ${{ else }}:
-        image: ${{ parameters.SigningPool.image }}
-      os: ${{ parameters.SigningPool.os }}
-
-    templateContext:
-      type: releaseJob
-      isProduction: false
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-            - ${{ if eq(parameters.ShouldSign, 'true') }}:
-              - task: 1ES.DownloadPipelineArtifact@1
-                displayName: Download Signed Packages
-                inputs:
-                  ${{ if eq(parameters.ShouldSign, 'true') }}:
-                    artifactName: packages-signed
-                    targetPath: $(Artifacts)
-                  ${{ else }}:
-                    artifactName: packages
-                    targetPath: $(Artifacts)
-
-            - ${{ if eq(parameters.ShouldPublish, 'true') }}:
-              - task: 1ES.PublishNuget@1
-                displayName: Publish to DevOps Feed
-                condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main')) # Optional condition
-                inputs:
-                  useDotNetTask: false
-                  packagesToPush: '$(Artifacts)/*.nupkg;!$(Artifacts)/*.symbols.nupkg'
-                  packageParentPath: '$(Artifacts)'
-                  publishVstsFeed: ${{ parameters.DevOpsFeedID }}
-                  nuGetFeedType: internal
-
-  - job: PostPackagePublish
-    dependsOn:
-     - Publish_Package
-     - SignPackage
-    displayName: Post Package Publish
-    variables:
-      - name: release
-        value: $[ dependencies.SignPackage.outputs['SetRelease.releaseVar'] ]
-    pool:
-      name: ${{ parameters.SigningPool.name }}
-      ${{ if eq(parameters.OSName, 'macOS') }}:
-        vmImage: ${{ parameters.SigningPool.image }}
-      ${{ else }}:
-        image: ${{ parameters.SigningPool.image }}
-      os: ${{ parameters.SigningPool.os }}
-    steps:
-      # publish-symbols uses a local script in the build tools repo, so we need to checkout that repo
-      - checkout: azure-sdk-build-tools
-        path: _azure-sdk-build-tools
-
-      - checkout: self
-
-      - task: DownloadPipelineArtifact@2
-        displayName: Download Packages
-        inputs:
-          ${{ if eq(parameters.ShouldSign, 'true') }}:
-            artifactName: packages-signed
-            targetPath: $(Artifacts)
-          ${{ else }}:
-            artifactName: packages
-            targetPath: $(Artifacts)
-
-      - ${{ if eq(parameters.ShouldPublishSymbols, 'true') }}:
-        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
-          parameters:
-            BuildToolsRepositoryPath: $(BuildToolPath)
-            PackagesPath: $(Artifacts)
-            StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
-
-      - ${{ if and(eq(parameters.ShouldTag, 'true'),eq(parameters.ShouldPublishExecutables, 'true')) }}:
+      - ${{ if and(eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
         - ${{ each target in parameters.ExeMatrix }}:
           - task: DownloadPipelineArtifact@2
             displayName: Download ${{ target.rid }} Binary
@@ -184,7 +87,6 @@ stages:
             BinariesPath: $(Binaries)
             BuildScriptsPath: $(BuildToolScripts)
             ExeMatrix: ${{ parameters.ExeMatrix }}
-            Use1ESTemplate: ${{ parameters.Use1ESTemplate }}
 
         - task: PowerShell@2
           displayName: 'Post to github release'
@@ -196,6 +98,37 @@ stages:
             pwsh: true
           env:
             GH_TOKEN: $(azuresdk-github-pat)
+
+
+      # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
+      - ${{ if eq(parameters.VerifyChangelog, true) }}:
+        - task: PowerShell@2 # will set runtime variable $(NewVersion)
+          displayName: 'Increment version in csproj'
+          inputs:
+            targetType: filePath
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/scripts/Increment-dotnet-package.ps1'
+            arguments: '-ToolDirectory "$(Build.SourcesDirectory)/azure-sdk-tools/${{ parameters.ToolDirectory }}"'
+            pwsh: true
+
+        - task: PowerShell@2
+          displayName: 'Update Changelog'
+          inputs:
+            workingDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/'
+            targetType: filePath
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/Update-Changelog.ps1'
+            # run this locally and figure out what the inputs should be
+            arguments: '-Version $(NewVersion) -ChangelogPath "${{ parameters.ToolDirectory }}/CHANGELOG.md"'
+            pwsh: true
+
+        - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+          parameters:
+            RepoName: azure-sdk-tools
+            PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
+            CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
+            PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
+            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
+            ScriptDirectory: azure-sdk-tools/eng/common/scripts/
+
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'
         inputs:

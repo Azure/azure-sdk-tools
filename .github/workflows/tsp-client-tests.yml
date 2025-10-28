@@ -58,3 +58,7 @@ jobs:
       - run: npm run test
         shell: pwsh
         working-directory: tools/tsp-client
+      
+      - run: npm run format:check
+        shell: pwsh
+        working-directory: tools/tsp-client

@@ -1,10 +1,9 @@
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses
 {
-    public class PackageResponse: Response
+    public class PackageResponse : CommandResponse
     {
         [JsonPropertyName("Work item Id")]
         public int WorkItemId { get; set; }
@@ -77,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         [JsonPropertyName("Package readiness details")]
         public string PackageReadinessDetails { get; set; } = string.Empty;
 
-        public override string ToString()
+        protected override string Format()
         {
             //Create an output string with all the properties of the Package
             StringBuilder output = new StringBuilder();
@@ -121,7 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Is Package Ready: {IsPackageReady}");
             output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");
             output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
-            return ToString(output.ToString());
+            return output.ToString();
         }
     }
 

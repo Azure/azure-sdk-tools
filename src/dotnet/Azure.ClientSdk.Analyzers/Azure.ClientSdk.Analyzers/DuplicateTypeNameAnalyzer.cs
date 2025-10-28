@@ -19,7 +19,7 @@ namespace Azure.ClientSdk.Analyzers
 
         // Sorted array of reserved type names loaded from embedded resource
         private static readonly string[] ReservedTypeNames = LoadReservedTypeNames();
-        
+
         // Parallel array of qualified type names corresponding to the reserved type names
         private static readonly string[] QualifiedTypeNames = LoadQualifiedTypeNames();
 
@@ -27,7 +27,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             var assembly = typeof(DuplicateTypeNameAnalyzer).GetTypeInfo().Assembly;
             var resourceName = "Azure.ClientSdk.Analyzers.reserved-type-names.txt";
-            
+
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
                 if (stream == null)
@@ -35,7 +35,7 @@ namespace Azure.ClientSdk.Analyzers
                     // Fallback to empty array if resource not found
                     return new string[0];
                 }
-                
+
                 using (var reader = new StreamReader(stream))
                 {
                     var names = new List<string>();
@@ -48,9 +48,9 @@ namespace Azure.ClientSdk.Analyzers
                         }
                     }
                     var nameArray = names.ToArray();
-                    
+
                     VerifyNamesSorted(nameArray);
-                    
+
                     return nameArray;
                 }
             }
@@ -60,7 +60,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             var assembly = typeof(DuplicateTypeNameAnalyzer).GetTypeInfo().Assembly;
             var resourceName = "Azure.ClientSdk.Analyzers.reserved-type-qualified-names.txt";
-            
+
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
                 if (stream == null)
@@ -68,7 +68,7 @@ namespace Azure.ClientSdk.Analyzers
                     // Fallback to empty array if resource not found
                     return new string[0];
                 }
-                
+
                 using (var reader = new StreamReader(stream))
                 {
                     var names = new List<string>();
@@ -126,11 +126,11 @@ namespace Azure.ClientSdk.Analyzers
             if (index >= 0)
             {
                 var qualifiedEntry = index < QualifiedTypeNames.Length ? QualifiedTypeNames[index] : "unknown type";
-                
+
                 // Parse the qualified entry to extract the type name and package name
                 string qualifiedTypeName;
                 string packageName = "";
-                
+
                 var semicolonIndex = qualifiedEntry.IndexOf(';');
                 if (semicolonIndex >= 0)
                 {
@@ -141,7 +141,7 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     qualifiedTypeName = qualifiedEntry;
                 }
-                
+
                 // Verify that the qualified name corresponds to the same type name with proper casing
                 var lastDotIndex = qualifiedTypeName.LastIndexOf('.');
                 var extractedTypeName = lastDotIndex >= 0 ? qualifiedTypeName.Substring(lastDotIndex + 1) : qualifiedTypeName;
@@ -149,19 +149,19 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     throw new InvalidOperationException($"Type name mismatch: expected '{typeName}' but qualified name contains '{extractedTypeName}' at index {index}");
                 }
-                
+
                 // Check if this is exactly the same type (same namespace, name, and package)
                 var currentFullTypeName = namedTypeSymbol.ToDisplayString();
                 var currentAssemblyName = namedTypeSymbol.ContainingAssembly?.Name ?? "";
-                
+
                 // Get the metadata name for proper generic type comparison
                 // For generic types, this includes the backtick notation (e.g., "Operation`1" for Operation<T>)
                 var currentMetadataName = namedTypeSymbol.MetadataName;
                 var currentNamespaceName = namedTypeSymbol.ContainingNamespace?.ToDisplayString() ?? "";
-                var currentFullMetadataName = string.IsNullOrEmpty(currentNamespaceName) 
-                    ? currentMetadataName 
+                var currentFullMetadataName = string.IsNullOrEmpty(currentNamespaceName)
+                    ? currentMetadataName
                     : currentNamespaceName + "." + currentMetadataName;
-                
+
                 // Check if it's the same assembly first (most important check for false positives)
                 if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
                 {
@@ -172,17 +172,28 @@ namespace Azure.ClientSdk.Analyzers
                         return;
                     }
                 }
-                
+
                 // Create the error message including package name if available
-                var conflictDescription = string.IsNullOrEmpty(packageName) 
-                    ? qualifiedTypeName 
+                var conflictDescription = string.IsNullOrEmpty(packageName)
+                    ? qualifiedTypeName
                     : $"{qualifiedTypeName} (from {packageName})";
-                
+
+                // Generate contextual suggestions based on namespace
+                var suggestedName = GetSuggestedName(typeName, namedTypeSymbol);
+                var additionalMessage = $"Consider renaming to {suggestedName} to avoid confusion.";
+
                 foreach (var location in namedTypeSymbol.Locations)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName, conflictDescription), namedTypeSymbol);
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location,
+                        new Dictionary<string, string> { { "SuggestedName", suggestedName } }.ToImmutableDictionary(),
+                        typeName, conflictDescription, additionalMessage), namedTypeSymbol);
                 }
             }
+        }
+
+        private string GetSuggestedName(string conflictingTypeName, INamedTypeSymbol typeSymbol)
+        {
+            return NamingSuggestionHelper.GetCommonTypeSuggestion(conflictingTypeName, typeSymbol);
         }
     }
 }

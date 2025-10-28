@@ -421,7 +421,7 @@ function DeleteOrUpdateResourceGroups() {
     }
   }
 
-  $hasError = DeleteAndPurgeGroups $toDelete
+  $errors = @(DeleteAndPurgeGroups $toDelete)
 
   foreach ($rg in $toClean) {
     try {
@@ -432,13 +432,15 @@ function DeleteOrUpdateResourceGroups() {
     }
   }
 
-  if ($hasError) {
-    throw "Encountered errors removing some resource groups"
+  if ($errors.Count -ne 0) {
+    Write-Host "Encountered errors removing some resource groups:"
+    $errors | % { Write-Host "  $_"}
+    exit 1
   }
 }
 
 function DeleteAndPurgeGroups([array]$toDelete) {
-  $hasError = $false
+  $errors = @()
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
 
@@ -470,14 +472,14 @@ function DeleteAndPurgeGroups([array]$toDelete) {
         Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
       }
     } catch {
-      Write-Warning "Failure deleting/purging group $($rg.ResourceGroupName):"
-      Write-Warning $_
-      $hasError = $true
+      $errorMsg = "ERROR: Failure deleting/purging group $($rg.ResourceGroupName): `n $_.ToString()"
+      Write-Warning $errorMsg
+      $errors += $errorMsg
     }
   }
 
   if (!$purgeableResources.Count) {
-    return $hasError
+    return $errors
   }
   if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
     # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
@@ -489,7 +491,7 @@ function DeleteAndPurgeGroups([array]$toDelete) {
     }
   }
 
-  return $hasError
+  return $errors
 }
 
 function Login() {

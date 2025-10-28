@@ -1,0 +1,15 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/monitor-ingestion-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/aggregatelogsuploaderror?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/logsingestionclient?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/logsingestionclientoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/logsuploadfailure?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/logsuploadoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/monitor-ingestion/knownmonitoraudience?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

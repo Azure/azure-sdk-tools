@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -8,14 +9,35 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         public bool IsValidTypeSpecProjectPath(string path);
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
+
+        /// <summary>
+        /// Checks if the path is within either the azure-rest-api-specs repo.
+        /// This should also work for forks of these repos.
+        /// </summary>
+        /// <param name="path">Path within a repo</param>
+        /// <returns>true if within the azure-rest-api-specs repo, false otherwise</returns>
         public bool IsRepoPathForPublicSpecRepo(string path);
+
+        /// <summary>
+        /// Checks if the path is within either the azure-rest-api-specs or azure-rest-api-specs-pr repo.
+        /// This should also work for forks of these repos.
+        /// </summary>
+        /// <param name="path">Path within a repo</param>
+        /// <returns>true if one of our specs repos, false otherwise</returns>
+        public bool IsRepoPathForSpecRepo(string path);
+
         public string GetSpecRepoRootPath(string path);
         public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath);
     }
-    public class TypeSpecHelper : ITypeSpecHelper
+    public partial class TypeSpecHelper : ITypeSpecHelper
     {
+        [GeneratedRegex("azure-rest-api-specs(-pr){0,1}(.git){0,1}$")]
+        private static partial Regex RestApiSpecsPublicOrPrivateRegex();
+
+        [GeneratedRegex("azure-rest-api-specs{0,1}(.git){0,1}$")]
+        private static partial Regex RestApiSpecsPublicRegex();
+
         private IGitHelper _gitHelper;
-        private static readonly string SPEC_REPO_NAME = "azure-rest-api-specs";
 
         public TypeSpecHelper(IGitHelper gitHelper)
         {
@@ -36,7 +58,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public bool IsRepoPathForPublicSpecRepo(string path)
         {
             var uri = _gitHelper.GetRepoRemoteUri(path);
-            return uri.ToString().Contains(SPEC_REPO_NAME);
+            return RestApiSpecsPublicRegex().IsMatch(uri.ToString());
+        }
+
+        public bool IsRepoPathForSpecRepo(string path)
+        {
+            // Docs say this method should work for paths within a repo,
+            // so we need to find the repo root first.
+            var repoRootPath = _gitHelper.DiscoverRepoRoot(path);
+            var uri = _gitHelper.GetRepoRemoteUri(repoRootPath);
+            return RestApiSpecsPublicOrPrivateRegex().IsMatch(uri.ToString());
         }
 
         public string GetSpecRepoRootPath(string path)

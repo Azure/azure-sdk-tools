@@ -14,14 +14,13 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="Azure.Identity" Version="1.12.0" />
-    <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
-
-    <PackageReference Include="Microsoft.TeamFoundation.DistributedTask.WebApi" Version="19.232.0-preview" />
-    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.232.0-preview" />
-    <PackageReference Include="Microsoft.VisualStudio.Services.InteractiveClient" Version="19.232.0-preview" />
-    <PackageReference Include="Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi" Version="19.232.0-preview" />
+    <PackageReference Include="Azure.Identity" Version="1.14.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
+    <PackageReference Include="Microsoft.TeamFoundation.DistributedTask.WebApi" Version="20.257.0-preview" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="20.257.0-preview" />
+    <PackageReference Include="Microsoft.VisualStudio.Services.InteractiveClient" Version="20.257.0-preview" />
+    <PackageReference Include="Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi" Version="20.257.0-preview" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 </Project>

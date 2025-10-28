@@ -1,0 +1,40 @@
+---
+name: Evaluate Generic Comment
+description: A prompt that judges a generic comment in the evals framework.
+authors:
+  - kristapratico
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+sample:
+  language: python
+  code: |
+    class BigReallyLongNameForWidgetClass:
+  exceptions: |
+    - Comment about class inheritance structure
+    - Comment about the send_request method
+  comment: |
+    This class name is too long and verbose. It should be shortened to `Widget` for better readability.
+---
+
+system:
+Given a code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {{language}} review of the code and doesn't mention topics in the exceptions.
+user:
+ # CODE
+ {{context}}
+ 
+ # EXCEPTIONS
+ {{exceptions}}
+ 
+ # COMMENT
+ {{comment}}

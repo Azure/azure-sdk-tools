@@ -1,0 +1,22 @@
+[
+  {
+    "version": "view=azure-node-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/communication-sms-readme?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/?view=azure-node-preview",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/smsclient?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/addoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/checkoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/messagingconnectoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/optoutaddresult?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/optoutcheckresult?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/optoutremoveresult?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/optoutsclient?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/removeoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/smsclientoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/smssendoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/smssendrequest?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-sms/smssendresult?view=azure-node-preview\u0026branch=main"
+    ]
+  }
+]

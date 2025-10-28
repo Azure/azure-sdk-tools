@@ -1,0 +1,90 @@
+---
+name: Parse APIView Conversation - Action
+description: A prompt that parses an APIView conversation and determines if action is required.
+authors: 
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+sample:
+  language: python
+  package_name: azure.widget
+  code: "class WidgetObject:"
+  other_comments: | 
+    [
+      {
+          "CreatedBy": "azure-sdk",
+          "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.\n\n**GUIDELINES**\n\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.",
+          "Downvotes": ["tjprescott"],
+          "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+      },
+      {
+          "CreatedBy": "noodle",
+          "CommentText": "We discussed it internally and want to keep it as is because we used that name in the JS SDK and we want to keep them the same.",
+          "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+      },
+      {
+          "CreatedBy": "tjprescott",
+          "CommentText": "@noodle, sorry, that's not a valid reason. If you wanted the names to be consistent you should have had them reviewed at the same time. The suffix `Object` adds no useful information and just results in a longer name.",
+          "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+      },
+    ]
+  trigger_comment: |
+    {
+      "CreatedBy": "tjprescott",
+      "CommentText": "@azure-sdk, your comment is correct, but your suggestion was bad because it was actually more verbose! The name should be `Widget`.",
+      "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+    }
+---
+system:
+You are an agent that processes architects' mention requests from APIView.
+
+# INSTRUCTIONS
+
+- You must focus on the TRIGGER comment that mentioned @azure-sdk. This is the architect's comment that needs to be addressed.
+- Your job is to ascertain whether the TRIGGER comment implies that the Knowledge Base should be updated or not.
+- Your response must be in JSON format (DO NOT include the ```json at the start or ``` at the end of your response!):
+```json
+{
+  "action": "<no_action|update_kb>",
+  "reasoning": "<rationale>"
+}
+```
+
+# Examples
+
+`no_action` means that the architect's comment does not imply that copilot made a bad suggestion, or cited any guideline inappropriately.
+
+## no_action
+- "@azure-sdk, I agree."
+- "Hey service team, I understand your point, but @azure-sdk is correct here."
+
+`update_kb` means that the architect's comments imply that copilot made some kind of error that needs to be recorded in the Knowledge Base. This could
+be because the copilot suggestion was incorrect and could be improved with examples, or because the copilot cited a guideline incorrectly, or otherwise
+made some kind of mistake that we want to record in the Knowledge Base.
+
+## update_kb
+- "@azure-sdk this is incorrect. The appropriate approach is XYZ."
+- "@azure-sdk, the guideline is correct, but your suggestion is off. The correct suggestions is `def Foo`."
+
+user:
+This {{language}} code is being discussed for the {{package_name}} package.
+```{{language}}
+{{code}}
+```
+
+Here is the background conversation:
+  {{other_comments}}
+
+Please indicate if the architect's TRIGGER comment implies whether a Knowledge Base update is needed:
+  {{trigger_comment}}

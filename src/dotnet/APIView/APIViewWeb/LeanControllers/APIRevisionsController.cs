@@ -1,17 +1,21 @@
-using APIViewWeb.Helpers;
-using APIViewWeb.LeanModels;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 using APIViewWeb.Extensions;
+using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using APIViewWeb.Managers.Interfaces;
-using APIViewWeb.Managers;
-using System.Collections.Generic;
-using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.ApplicationInsights.DataContracts;
-using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -22,16 +26,21 @@ namespace APIViewWeb.LeanControllers
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly string _copilotEndpoint;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
             IReviewManager reviewManager, IPullRequestManager pullRequestManager,
-            IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHub)
+            IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager, IConfiguration configuration,
+            IHubContext<SignalRHub> signalRHub, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
             _signalRHubContext = signalRHub;
+            _copilotEndpoint = configuration["CopilotServiceEndpoint"];
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
@@ -48,6 +57,28 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
+        /// Get APIRevisions with the same Cross Language Id
+        /// </summary>
+        /// <param name="crossLanguageId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        [HttpGet("{crossLanguageId}/crosslanguage", Name = "GetCrossLanguageAPIRevision")]
+        public async Task<ActionResult<APIRevisionListItemModel>> GetCrossLanguageAPIRevision(string crossLanguageId, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var results = new List<APIRevisionListItemModel>();
+            foreach (var language in LanguageServiceHelpers.SupportedLanguages)
+            {
+                results.AddRange(await _apiRevisionsManager.GetCrossLanguageAPIRevisionsAsync(crossLanguageId: crossLanguageId, language: language, apiRevisionType: apiRevisionType));
+            }
+            var groupResults = results.GroupBy(r => r.Language).Select(g => new
+            {
+               Label = g.Key,
+               Items = g.ToList()
+            });
+            return new LeanJsonResult(groupResults, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
         /// Endpoint used by Client SPA for listing API Revisions.
         /// </summary>
         /// <param name="pageParams"></param>
@@ -57,6 +88,33 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<PagedList<APIRevisionListItemModel>>> GetAPIRevisionsAsync([FromQuery] PageParams pageParams, [FromBody] FilterAndSortParams filterAndSortParams)
         {
             var result = await _apiRevisionsManager.GetAPIRevisionsAsync(User, pageParams, filterAndSortParams);
+            if (filterAndSortParams.APIRevisionIds != null && filterAndSortParams.APIRevisionIds.Any())
+            {
+                foreach (var apiRevisionId in filterAndSortParams.APIRevisionIds)
+                {
+                    var apiRevision = result.FirstOrDefault(r => r.Id == apiRevisionId);
+                    if (apiRevision != null && apiRevision.CopilotReviewInProgress)
+                    {
+                        // If Copilot review is in progress let verify that this is not due to a dropped background job
+                        var pollUrl = $"{_copilotEndpoint}/api-review/{apiRevision.CopilotReviewJobId}";
+                        var client = _httpClientFactory.CreateClient();
+                        var response = await client.GetAsync(pollUrl);
+                        response.EnsureSuccessStatusCode();
+                        var pollResponseString = await response.Content.ReadAsStringAsync();
+                        var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
+                        if (pollResponse.Status != "InProgress")
+                        {
+                            apiRevision.CopilotReviewInProgress = false;
+                            var index = result.FindIndex(r => r.Id == apiRevisionId);
+                            if (index >= 0)
+                            {
+                                result[index] = apiRevision;
+                            }
+                            _ = _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision); // no need to await this
+                        }
+                    }
+                }
+            }
             Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));
             return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
@@ -119,16 +177,24 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="approvalRequest"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleAPIRevisionApproval")]
-        public async Task<ActionResult<APIRevisionListItemModel>> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        public async Task<ActionResult<APIRevisionListItemModel>> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId, [FromBody] ApprovalRequest approvalRequest)
         {
-            (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
+            APIRevisionListItemModel currentAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
+            if (currentAPIRevision.IsApproved == approvalRequest.Approve)
+            {
+                return new LeanJsonResult(currentAPIRevision, StatusCodes.Status200OK);
+            }
+
+            (bool updateReview, APIRevisionListItemModel apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
             if (updateReview)
             {
                 var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
                 await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             }
+
             await _signalRHubContext.Clients.All.SendAsync("APIRevisionUpdated", apiRevision);
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
@@ -155,12 +221,12 @@ namespace APIViewWeb.LeanControllers
         {
             try
             {
-                var violations = await _reviewManager.GenerateAIReview(User, reviewId, activeApiRevisionId, diffApiRevisionId);
-                return new LeanJsonResult(violations, StatusCodes.Status200OK);
+                await _reviewManager.GenerateAIReview(User, reviewId, activeApiRevisionId, diffApiRevisionId);
+                return Accepted();
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error generating AI review" + ex.Message);
+                _logger.LogError("Error generating AI review " + ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

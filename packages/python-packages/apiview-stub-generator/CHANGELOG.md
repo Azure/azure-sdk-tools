@@ -1,5 +1,26 @@
 # Release History
 
+## Version 0.3.24 (2025-10-24)
+Fixed a bug where the old cross language mapping path was not being used when the new one was not found.
+Added the cross language metadata to the end of the token file for the cross language feature.
+
+## Version 0.3.23 (2025-10-02)
+Fixed a bug where unexpanded **kwargs in docstring will show duplicate/incorrect kwargs in the API review function signature.
+Fixed a bug where string Literal types were not quoted and fully-qualified enum member names  were not being preserved in types.
+
+## Version 0.3.22 (2025-08-25)
+Fixed a bug where duplicate line IDs were not being raised by the parses, causing Copilot APIView issues.
+
+## Version 0.3.21 (2025-08-08)
+Fixed a bug where the LineId for the kwarg marker was the same as the function LineId.
+Fixed an issue with Model base class inherited methods being shown.
+
+## Version 0.3.20 (2025-07-28)
+Added a feature to distinguish handwritten code from generated code by applying specific CSS to handwritten lines.
+
+## Version 0.3.19 (2025-07-17)
+Fixed an issue with APIView not running in src directories where the package name differs from the directory name.
+
 ## Version 0.3.18 (2025-04-02)
 Updated the default mapping path from "apiview_mapping_python.json" to "apiview-properties.json" to align with TCGC mapping file, and additionally check the old default file name if the new default is not found.
 

@@ -1,0 +1,273 @@
+name: Run switched packages content validation for java
+trigger: none
+
+parameters:
+- name: packages
+  displayName: |
+      Comma-delimited list of packages to test against (by default, 'all' to run all). Example: 'azure-ai-contentsafety, azure-ai-documentintelligence'. Notes: If you select "all", two pipelines will be triggered. The first pipeline will be used to obtain the package to be tested, and then the second pipeline will be automatically triggered to run the test. You need to view the results in the automatically triggered pipeline.
+  type: string
+  default: 'all'
+
+- name: maxParallel
+  displayName: |
+      Maximum number of parallel jobs to run (by default, 2). Example: 10
+  type: number
+  default: 2
+
+- name: packagesListFilePath
+  displayName: Path to packages.json file
+  type: string
+  default: 'packagesList.txt'
+
+- name: rule_InconsistentTextFormat
+  type: boolean
+  default: false
+  displayName: "Create issue for rule InconsistentTextFormat"
+
+- name: rule_TableMissingContent
+  type: boolean
+  default: false
+  displayName: "Create issue for rule TableMissingContent"
+
+
+- name: rule_GarbledText
+  type: boolean
+  default: false
+  displayName: "Create issue for rule GarbledText"
+
+- name: rule_ExtraLabel
+  type: boolean
+  default: true
+  displayName: "Create issue for rule ExtraLabel"
+
+- name: rule_UnnecessarySymbols
+  type: boolean
+  default: false
+  displayName: "Create issue for rule UnnecessarySymbols"
+
+- name: rule_MissingGenerics
+  type: boolean
+  default: true
+  displayName: "Create issue for rule MissingGenerics"
+
+
+stages:
+- stage: Content_Validation_Test
+  displayName: "Content Validation Test"
+  jobs:
+  - job: FetchLastMonthReleasedPackages
+    displayName: "Getting all packages to be tested"
+    condition: eq('${{ parameters.packages }}', 'all')
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '8.0.x'
+        installationPath: $(Agent.ToolsDirectory)/dotnet 
+
+    - task: DotNetCoreCLI@2
+      displayName: New Manifest for tool
+      inputs:
+        command: custom
+        custom: 'new '
+        arguments: tool-manifest
+
+    - task: DotNetCoreCLI@2
+      displayName: Install Playwright CLI
+      inputs:
+        command: custom
+        custom: 'tool '
+        arguments: install Microsoft.Playwright.CLI
+
+    - task: DotNetCoreCLI@2
+      displayName: Build all projects and libraries
+      inputs:
+        command: 'build'
+        projects: 'content-validation.sln'
+
+    - task: DotNetCoreCLI@2
+      displayName: Run Playwright Install
+      inputs:
+        command: custom
+        custom: 'tool '
+        arguments: run playwright install
+
+    - task: DotNetCoreCLI@2
+      displayName: Running project PendingTestingPackagesThisMonth
+      env:
+        Language: 'Java'
+        PackagesListFilePath: ${{ parameters.packagesListFilePath }}
+      inputs:
+        command: 'run'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/PendingTestingPackagesThisMonth'
+      name: runPackagesJob
+
+    - pwsh: |
+        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/${{ parameters.packagesListFilePath }}" -Raw
+        
+        if ($packagesJson -notmatch '^\s*\{') {
+          $packages = $packagesJson -split ',' | ForEach-Object { $_.Trim() }
+          $matrix = @{}
+          foreach ($pkg in $packages) {
+            if ($pkg) {
+              $matrix[$pkg] = @{ packageName = $pkg }
+            }
+          }
+        } else {
+          $matrix = $packagesJson | ConvertFrom-Json -AsHashtable
+        }
+        
+        $matrixJson = $matrix | ConvertTo-Json -Compress
+        Write-Host "Generated matrix: $matrixJson"
+        Write-Host "##vso[task.setvariable variable=matrix;isOutput=true]$matrixJson"
+      name: generateMatrix
+
+  - job: content_validation_matrix_all
+    displayName: RunTest_All
+    condition: eq('${{ parameters.packages }}', 'all')
+    dependsOn: FetchLastMonthReleasedPackages
+    strategy:
+      matrix: $[ dependencies.FetchLastMonthReleasedPackages.outputs['generateMatrix.matrix'] ]
+      maxParallel: ${{ parameters.maxParallel }}
+    variables:
+      PackageName: $(packageName)
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - script: |
+        rules=""
+        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules InconsistentTextFormatValidation"; fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
+        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules GarbledTextValidation"; fi
+        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules ExtraLabelValidation"; fi
+        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules UnnecessarySymbolsValidation"; fi
+        if [ "$(echo ${{ parameters.rule_MissingGenerics }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingGenericsValidation"; fi
+
+        echo "Selected rules: $rules"
+        echo "##vso[task.setvariable variable=SelectedRules]$rules"
+      name: setRules
+
+    - template: /eng/pipelines/common/content-validation-for-java.yml
+      parameters:
+        packageName: $(PackageName)
+        rules: $(SelectedRules)
+
+  - job: content_validation_matrix_not_all
+    displayName: RunTest_Not_All
+    condition: ne('${{ parameters.packages }}', 'all')
+    strategy:
+      matrix:
+        ${{ each pkg in split(parameters.packages, ',') }}:
+          ${{ trim(pkg) }}:
+            packageName: ${{ trim(pkg) }}
+      maxParallel: ${{ parameters.maxParallel }}
+    variables:
+      PackageName: $(packageName)
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - script: |
+        rules=""
+        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules InconsistentTextFormatValidation"; fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
+        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules GarbledTextValidation"; fi
+        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules ExtraLabelValidation"; fi
+        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules UnnecessarySymbolsValidation"; fi
+        if [ "$(echo ${{ parameters.rule_MissingGenerics }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingGenericsValidation"; fi
+
+        echo "Selected rules: $rules"
+        echo "##vso[task.setvariable variable=SelectedRules]$rules"
+      name: setRules
+
+    - template: /eng/pipelines/common/content-validation-for-java.yml
+      parameters:
+        packageName: $(PackageName)
+        rules: $(SelectedRules)
+
+## Need to confirm, disabled for now
+# - stage: TotalIssuesSummary
+#   condition: always()
+#   jobs:
+#   - job: Maintain_Total_Issues_List
+#     displayName: Maintain_Total_Issues_List
+#     pool:
+#       vmImage: ubuntu-latest
+#     steps:
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Last Artifact history-issues-summary
+#       inputs:
+#         buildType: 'specific'
+#         project: '$(System.TeamProject)'
+#         pipeline: '$(System.DefinitionName)'
+#         buildVersionToDownload: 'latestFromBranch'
+#         allowPartiallySucceededBuilds: true
+#         allowFailedBuilds: true
+#         branchName: 'refs/heads/main'
+#         artifactName: 'issues-summary'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+#       continueOnError: true
+
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Current Artifact 
+#       inputs:
+#         buildType: 'current'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+
+#     - task: DotNetCoreCLI@2
+#       displayName: Build issuer helper project
+#       inputs:
+#         command: 'build'
+#         projects: 'IssuerHelper/IssuerHelper.csproj'
+
+#     - script: |
+#         organization=$(System.CollectionUri)
+#         project=$(System.TeamProject)
+#         buildId=$(Build.BuildId)
+  
+#         pipelineUrl="${organization}${project}/_build/results?buildId=${buildId}"
+  
+#         echo "##vso[task.setvariable variable=pipelineUrl;]$pipelineUrl"
+#       displayName: Get the current pipeline url
+
+#     - task: DotNetCoreCLI@2
+#       displayName: Summary Total Issues of all packages
+#       env:
+#         PackageName: ${{ parameters.packages }}
+#         PipelineRunLink: $(pipelineUrl)
+#         GitHubPat: $(GITHUB_PAT)
+#         Language: 'Java'
+#         GitHubOwner: $(GITHUB_OWNER)
+#         GitHubRepo: $(GITHUB_REPO)
+#       inputs:
+#         command: 'run'
+#         workingDirectory: '$(System.DefaultWorkingDirectory)/IssuerHelper'
+
+#     - task: PublishPipelineArtifact@1
+#       displayName: "Upload pipeline test data"
+#       inputs:
+#         targetPath: $(System.DefaultWorkingDirectory)/Reports
+#         artifactName: issues-summary
+#         publishLocation: "pipeline"
+
+#     - task: Bash@3
+#       displayName: 'Set Script Executable'
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#           chmod +x $(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh
+
+#     - task: Bash@3
+#       displayName: 'Push commit about current pipeline status'
+#       inputs:
+#         targetType: 'filePath'
+#         filePath: '$(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh'
+#         arguments: >-
+#           $(GITHUB_PAT)
+#           $(GITHUB_OWNER)
+#           $(GITHUB_REPO)
+#           $(GIT_USER_NAME)
+#           $(GIT_USER_EMAIL)
+#           'Java'

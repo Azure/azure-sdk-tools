@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LogAnalysisResponse : Response
+public class LogAnalysisResponse : CommandResponse
 {
     [JsonPropertyName("summary")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -20,7 +20,7 @@ public class LogAnalysisResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string SuggestedFix { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = $"### Summary:" + Environment.NewLine +
                      $"{Summary}" + Environment.NewLine + Environment.NewLine;
@@ -37,11 +37,11 @@ public class LogAnalysisResponse : Response
             output += $"### Suggested Fix:" + Environment.NewLine +
                       $"{SuggestedFix}" + Environment.NewLine + Environment.NewLine +
                       $"### Errors:" + Environment.NewLine +
-                      $"{string.Join(Environment.NewLine+Environment.NewLine, Errors.Select(e => $"--> {e.File}:{e.Line}{Environment.NewLine}{e.Message}"))}" +
+                      $"{string.Join(Environment.NewLine + Environment.NewLine, Errors.Select(e => $"--> {e.File}:{e.Line}{Environment.NewLine}{e.Message}"))}" +
                       Environment.NewLine;
         }
 
-        return ToString(output);
+        return output;
     }
 }
 
@@ -49,7 +49,10 @@ public class LogEntry
 {
     [JsonPropertyName("file")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string File { get; set; } = string.Empty;
+    public string File { get; set; }
+    [JsonPropertyName("url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string Url { get; set; }
     [JsonPropertyName("line")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Line { get; set; }

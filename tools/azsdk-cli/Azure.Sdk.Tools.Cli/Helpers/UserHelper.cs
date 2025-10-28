@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
-using Azure.Identity;
+using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Graph;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -10,13 +9,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         public Task<string> GetUserEmail();
     }
-    public class UserHelper: IUserHelper
+
+    public class UserHelper(IAzureService azureService): IUserHelper
     {
-        private readonly string[]  scopes = new[] { "https://graph.microsoft.com/.default" };
+        private readonly string[]  scopes = ["https://graph.microsoft.com/.default"];
 
         public async Task<string> GetUserEmail()
         {
-            var graphClient = new GraphServiceClient(new DefaultAzureCredential(), scopes);
+            var graphClient = new GraphServiceClient(azureService.GetCredential(), scopes);
             var user = await graphClient.Me.GetAsync();
             if (user == null)
             {

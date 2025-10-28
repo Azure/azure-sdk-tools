@@ -1,40 +1,44 @@
-// Adapted from https://github.com/Azure/azure-mcp/blob/main/src/Services/Azure/BaseAzureService.cs
+using Azure.Core;
 using Azure.Identity;
 
-namespace Azure.Sdk.Tools.Cli.Services
+namespace Azure.Sdk.Tools.Cli.Services;
+
+public interface IAzureService
 {
-    public interface IAzureService
+    TokenCredential GetCredential(string? tenantId = null);
+}
+
+public class AzureService : IAzureService
+{
+    public TokenCredential GetCredential(string? tenantId = null)
     {
-        DefaultAzureCredential GetCredential(string? tenantId = null);
+        // We don't bother checking for a cached credential because this may be
+        // called as part of a token refresh flow.
+        // Currently this isn't used enough across one instance of the app
+        // that we need to optimize for a cached credential.
+        if (IsRunningInPipeline())
+        {
+            return new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId });
+        }
+
+        try
+        {
+            return new ChainedTokenCredential(
+                new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
+                new AzurePowerShellCredential(new AzurePowerShellCredentialOptions { TenantId = tenantId }),
+                new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions { TenantId = tenantId }),
+                new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId })
+            );
+        }
+        catch (CredentialUnavailableException)
+        {
+            return new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = tenantId });
+        }
     }
 
-    public class AzureService : IAzureService
+    private static bool IsRunningInPipeline()
     {
-        private DefaultAzureCredential? credential;
-        private string? lastTenantId;
-
-        public DefaultAzureCredential GetCredential(string? tenantId = null)
-        {
-            // Return cached credential if it exists and tenant ID hasn't changed
-            if (this.credential != null && this.lastTenantId == tenantId)
-            {
-                return this.credential;
-            }
-
-            try
-            {
-                // Create new credential and cache it
-                this.credential = tenantId == null
-                    ? new DefaultAzureCredential()
-                    : new DefaultAzureCredential(new DefaultAzureCredentialOptions { TenantId = tenantId });
-                this.lastTenantId = tenantId;
-
-                return this.credential;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to get credential: {ex.Message}", ex);
-            }
-        }
+        return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
+               Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
     }
 }

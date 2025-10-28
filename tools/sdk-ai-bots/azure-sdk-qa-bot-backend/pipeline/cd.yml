@@ -86,16 +86,22 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -e  # Exit immediately if a command exits with a non-zero status
+                
                 # Login to ACR
+                echo "Logging into Azure Container Registry..."
                 az acr login --name $(ACR_NAME)
                 
                 # Build Docker image
+                echo "Building Docker image..."
                 docker build -t $(imageName):$(imageTag) -f $(workingDirectory)/Dockerfile $(workingDirectory)
                 
                 # Tag image for ACR
+                echo "Tagging image for ACR..."
                 docker tag $(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)
                 
                 # Push image to ACR
+                echo "Pushing image to ACR..."
                 docker push $(acrLoginServer)/$(imageName):$(imageTag)
                 
                 echo "✓ Image built and pushed successfully"

@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             var fullChat = json.ChatHistory.Append(json.NextMessage);
 
             // 2. Get chat response
-            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(json.ExpectedOutcome, s_toolNames);
+            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(json.ExpectedOutcome, s_toolNames!);
             var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
 
             // 3. Custom Evaluator to check tool inputs
@@ -36,15 +36,11 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
 
             // Pass the expected outcome through the additional context. 
             var checkInputs = true;
-            var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames, checkInputs);
+            var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames!, checkInputs);
             var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 
             // 4. Assert the results
-            EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];
-            BooleanMetric expectedToolInput = result.Get<BooleanMetric>(ExpectedToolInputEvaluator.ExpectedToolInputMetricName);
-            expectedToolInput.Interpretation!.Failed.Should().BeFalse(because: expectedToolInput.Interpretation.Reason);
-            expectedToolInput.Interpretation.Rating.Should().BeOneOf(expectedRatings, because: expectedToolInput.Reason);
-            expectedToolInput.ContainsDiagnostics(d => d.Severity >= EvaluationDiagnosticSeverity.Warning).Should().BeFalse();
+            EvaluationHelper.ValidateToolInputsEvaluator(result);
         }
     }
 }

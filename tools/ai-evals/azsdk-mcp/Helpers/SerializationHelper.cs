@@ -10,6 +10,14 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
     public static class SerializationHelper
     {
+
+        /// <summary>
+        /// Loads scenario data from a JSON file containing a list of chat messages.
+        /// The last user message becomes the NextMessage, everything before it becomes ChatHistory,
+        /// and everything after it becomes ExpectedOutcome.
+        /// </summary>
+        /// <param name="jsonPath">Path to the JSON file containing an array of chat messages</param>
+        /// <returns>ScenarioData with parsed chat messages</returns>
         public static async Task<ScenarioData> LoadScenarioFromChatMessagesAsync(string jsonPath)
         {
             var jsonContent = await File.ReadAllTextAsync(jsonPath);
@@ -34,6 +42,11 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             return ChatMessageHelper.ParseChatMessagesIntoScenarioData(fixedChatMessages);
         }
 
+        /// <summary>
+        /// Rebuilds attachments in the first chat message by replacing attachment content
+        /// with files from the configured instruction directories.
+        /// </summary>
+        /// <param name="chatMessages">The chat messages to process</param>
         public static async Task RebuildAttachmentsInChatMessagesAsync(List<ChatMessage> chatMessages)
         {
             // Only process the first message (typically the system message)
@@ -47,6 +60,9 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             }
         }
 
+        /// <summary>
+        /// Rebuilds attachment sections in text content by loading files from instruction directories.
+        /// </summary>
         private static async Task<string> RebuildAttachmentsInTextAsync(string text)
         {
             // Find the last <instructions>...</instructions> block
@@ -88,15 +104,11 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             }
         }
 
-        public static string NormalizeFunctionName(string functionName, IEnumerable<string> toolNames)
+        public static string? NormalizeFunctionName(string functionName, IEnumerable<string> toolNames)
         {
             // Copilot often prefixes tool names with "mcp_" or similar. 
             // Normalize by looking for tool names that end with the function name. 
             var match = toolNames.FirstOrDefault(name => functionName.EndsWith(name, StringComparison.OrdinalIgnoreCase));
-            if (match == null)
-            {
-                throw new InvalidOperationException($"No matching tool name found for function '{functionName}'");
-            }
             return match;
         }
     }

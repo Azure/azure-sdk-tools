@@ -42,4 +42,12 @@
     .p-tree-container {
         padding-left: 0px !important;
     }
+
+    .client-type {
+        font-weight: bold !important;
+        color: var(--primary-color) !important;
+        background-color: var(--client-type-bg);
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
 }

@@ -5,12 +5,12 @@
 ### Features Added
 
 - Add support for generating samples for Azure client libraries across all languages
-
-### Breaking Changes
+- Add tool status in response
+- Disable telemetry in debug mode.
 
 ### Bugs Fixed
 
-### Other Changes
+- Fixed issue when linking .NET PR to release plan
 
 ## 0.5.4 (2025-10-21)
 

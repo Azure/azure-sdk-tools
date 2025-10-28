@@ -124,6 +124,7 @@ namespace APIViewWeb
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<UserProfileCache>();
+            services.AddSingleton<GitHubClientFactory>();
 
             // Background services
             // TODO: Re-enable when auto-approval feature is needed

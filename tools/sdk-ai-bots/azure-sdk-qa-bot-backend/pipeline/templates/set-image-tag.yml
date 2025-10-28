@@ -1,0 +1,23 @@
+parameters:
+  - name: environment
+    type: string
+  - name: workingDirectory
+    type: string
+
+steps:
+  - bash: |
+      # For dev environment, use short commit ID
+      if [ "${{ parameters.environment }}" == "dev" ]; then
+        COMMIT_ID=$(git rev-parse --short HEAD)
+        IMAGE_TAG="$COMMIT_ID"
+        echo "Using short commit ID for dev: $IMAGE_TAG"
+      else
+        # For preview/prod, extract version from version.go
+        VERSION=$(grep 'moduleVersion' ${{ parameters.workingDirectory }}/version.go | sed 's/.*"\(.*\)".*/\1/')
+        IMAGE_TAG="$VERSION"
+        echo "Using version from version.go for ${{ parameters.environment }}: $IMAGE_TAG"
+      fi
+      
+      echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
+      echo "Image tag set to: $IMAGE_TAG"
+    displayName: 'Setup Image Tag'

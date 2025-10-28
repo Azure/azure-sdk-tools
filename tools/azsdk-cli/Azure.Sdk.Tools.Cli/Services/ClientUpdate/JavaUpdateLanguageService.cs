@@ -29,27 +29,28 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override string GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct)
+    public override string GetCustomizationRoot(string generationRoot, CancellationToken ct)
     {
         try
         {
             // In azure-sdk-for-java layout, generated code lives under:
             //   <pkgRoot>/azure-<package>-<service>/src
-            // Customizations (single root) live under parallel directory:
+            // Customizations live under parallel directory:
             //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
             // Example (document intelligence):
             //   generated root: .../azure-ai-documentintelligence/src
             //   customization root: .../azure-ai-documentintelligence/customization/src/main/java
             _logger.LogInformation("Trying to resolve Java customization root from generationRoot '{GenerationRoot}'", generationRoot);
+
             var customizationSourceRoot = Path.Combine(generationRoot, CustomizationDirName, "src", "main", "java");
             var exists = Directory.Exists(customizationSourceRoot);
-            _logger.LogInformation("Directory exists check result: {Exists}", exists);
+            _logger.LogInformation("Checking customization path: {CustomizationPath}, exists: {Exists}", customizationSourceRoot, exists);
 
             if (exists)
             {
                 return customizationSourceRoot;
             }
-            _logger.LogInformation("No customization directory found at either level, returning null");
+            _logger.LogInformation("No customization directory found, returning null");
         }
         catch (Exception ex)
         {
@@ -61,16 +62,14 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
     public override async Task<bool> ApplyPatchesAsync(
         string commitSha,
         string customizationRoot,
-        string newGeneratedPath,
-        string oldGeneratedPath,
+        string packagePath,
         CancellationToken ct)
     {
         try
         {
             _logger.LogInformation("Generating automated patches for customization files");
             _logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
-            _logger.LogInformation("New generated path: {NewGeneratedPath}", newGeneratedPath);
-            _logger.LogInformation("Old generated path: {OldGeneratedPath}", oldGeneratedPath);
+            _logger.LogInformation("Package path: {PackagePath}", packagePath);
             _logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
 
             // Read all .java files under customizationRoot and concatenate their contents into customizationContent
@@ -88,7 +87,9 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
                     _logger.LogInformation("File {File} has {Lines} lines and {Characters} characters",
                         Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
 
-                    customizationContentBuilder.AppendLine($"// File: {file}");
+                    // Use relative path from customizationRoot for the LLM to reference
+                    var relativePath = Path.GetRelativePath(customizationRoot, file);
+                    customizationContentBuilder.AppendLine($"// File: {relativePath}");
                     customizationContentBuilder.AppendLine(fileContent);
                     customizationContentBuilder.AppendLine();
                 }
@@ -102,18 +103,17 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
             var customizationContent = customizationContentBuilder.ToString();
 
             // For now, using placeholder generated code - TODO: implement proper old/new code comparison  
-            // oldGeneratedPath contains the backup of old generated code
-            // newGeneratedPath contains the newly generated code
-            var oldGeneratedCode = $"// Placeholder old generated code from: {oldGeneratedPath}";
-            var newGeneratedCode = $"// Placeholder new generated code from: {newGeneratedPath}";
+            // Future enhancement: read actual generated files and compare them
+            var oldGeneratedCode = "// TODO: Read actual old generated code for comparison";
+            var newGeneratedCode = "// TODO: Read actual new generated code for comparison";
 
             // Build prompt for direct patch application using the java patch template
             var prompt = new JavaPatchGenerationTemplate(
                 oldGeneratedCode,
                 newGeneratedCode,
+                packagePath,
                 customizationContent,
                 customizationRoot,
-                newGeneratedPath,
                 commitSha).BuildPrompt();
             _logger.LogInformation("Generated prompt for patch analysis with {ContentLength} characters", prompt.Length);
 
@@ -122,7 +122,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
                 Instructions = prompt,
                 Tools =
                 [
-                    new ReadFileTool(newGeneratedPath)
+                    new ReadFileTool(packagePath)
                     {
                         Name = "ReadFile",
                         Description = "Read files from the package directory (generated code, customization files, etc.)"

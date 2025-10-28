@@ -41,35 +41,33 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// <param name="generationRoot">Root path of the generated client currently under consideration.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The absolute path to the customization root directory, or <c>null</c> if no customization area exists / is required.</returns>
-    public abstract string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+    public abstract string? GetCustomizationRoot(string generationRoot, CancellationToken ct);
     
     /// <summary>
     /// Applies automated patches directly to customization code using intelligent analysis.
     /// </summary>
     /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
     /// <param name="customizationRoot">Path to the customization root directory</param>
-    /// <param name="newGeneratedPath">Path to the newly generated code (current packagePath)</param>
-    /// <param name="oldGeneratedPath">Path to the old generated code (backup directory)</param>
+    /// <param name="packagePath">Path to the package directory containing generated code</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>True if patches were successfully applied; false otherwise</returns>
-    public abstract Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct);
+    public abstract Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct);
 
     /// <summary>
-    /// Performs language-specific generation validation (typically dependency / build / type checks) against <see cref="ClientUpdateSessionState.NewGeneratedPath"/>.
+    /// Performs language-specific generation validation (typically dependency / build / type checks) against the specified package path.
     /// </summary>
-    /// <param name="session">Active update session containing the path of the newly generated client code.</param>
+    /// <param name="packagePath">Path to the package directory containing generated code.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// <see cref="ValidationResult"/> indicating success if validation passes or the language has no checks registered.
     /// On failure, contains one or more human-readable error messages describing the root cause (e.g., dependency conflicts).
     /// </returns>
     /// <remarks>Default implementation runs <c>AnalyzeDependenciesAsync</c> if a resolver returns checks; implementations may override for richer validation.</remarks>
-    public virtual async Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct)
+    public virtual async Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
     {
-        string? packagePath = session.NewGeneratedPath;
         if (string.IsNullOrWhiteSpace(packagePath))
         {
-            return ValidationResult.CreateFailure("Package path not specified (session.NewGeneratedPath is empty)");
+            return ValidationResult.CreateFailure("Package path not specified");
         }
         if (!Directory.Exists(packagePath))
         {

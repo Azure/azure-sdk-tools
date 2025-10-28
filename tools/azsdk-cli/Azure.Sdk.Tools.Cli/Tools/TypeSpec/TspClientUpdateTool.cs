@@ -99,36 +99,25 @@ public class TspClientUpdateTool(
 
     private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct)
     {
-        var session = new ClientUpdateSessionState { SpecPath = commitSha };
-
-        // Create backup directory to preserve old generation for diff
-        var backupDir = FileHelper.CreateTimestampedBackupDirectory(packagePath);
-        BackupCurrentGeneration(packagePath, backupDir, ct);
-
         try
         {
-            session.NewGeneratedPath = packagePath;
-
             var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
             logger.LogInformation("Regenerating code...");
             var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
             if (!regenResult.IsSuccessful)
             {
-                session.LastStage = UpdateStage.Failed;
                 return new TspClientUpdateResponse
                 {
-                    Session = session,
                     ErrorCode = "RegenerateFailed",
                     ResponseError = regenResult.ResponseError
                 };
             }
-            session.LastStage = UpdateStage.Regenerated;
 
-            var customizationRoot = languageService.GetCustomizationRootAsync(session, packagePath, ct);
+            var customizationRoot = languageService.GetCustomizationRoot(packagePath, ct);
             logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
 
             // Use automated analysis and patch application for customization updates
-            var (guidance, patchesApplied, requiresReview) = await GenerateGuidanceAndApplyPatchesAsync(commitSha, customizationRoot, packagePath, backupDir, languageService, ct);
+            var (guidance, patchesApplied, requiresReview) = await GenerateGuidanceAndApplyPatchesAsync(commitSha, customizationRoot, packagePath, languageService, ct);
 
             // If patches were applied, regenerate the code to ensure customizations are properly integrated
             if (patchesApplied)
@@ -142,52 +131,29 @@ public class TspClientUpdateTool(
                     guidance.Insert(1, $"Error: {regenAfterPatchResult.ErrorMessage}");
                     guidance.Insert(2, "");
                     requiresReview = true;
-                    session.RequiresManualIntervention = true;
                 }
                 else
                 {
                     logger.LogInformation("Regeneration successful, validating...");
-                    var (validationSuccess, validationRequiresReview) = await ValidateAndUpdateGuidanceAsync(session, languageService, guidance, ct);
+                    var (validationSuccess, validationRequiresReview) = await ValidateAndUpdateGuidanceAsync(packagePath, languageService, guidance, ct);
                     if (!validationSuccess)
                     {
                         requiresReview = true;
-                        session.RequiresManualIntervention = true;
                     }
                     requiresReview = requiresReview || validationRequiresReview;
                 }
             }
 
-            session.LastStage = patchesApplied ? UpdateStage.Applied : UpdateStage.Mapped;
-            session.RequiresManualIntervention = requiresReview;
-
             return new TspClientUpdateResponse
             {
-                Session = session,
                 NextSteps = guidance
             };
         }
-        finally
+        catch (Exception ex)
         {
-            // Clean up backup directory - it was only needed for automated patch reference during generation
-            if (Directory.Exists(backupDir))
-            {
-                Directory.Delete(backupDir, recursive: true);
-                logger.LogDebug("Cleaned up backup directory: {BackupDir}", backupDir);
-            }
+            logger.LogError(ex, "Core update failed");
+            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = ex.GetType().Name };
         }
-    }
-
-    private static void BackupCurrentGeneration(string packagePath, string backupDir, CancellationToken ct)
-    {
-        // Copy the entire directory structure to maintain complete backup
-        var sourceDir = new DirectoryInfo(packagePath);
-        if (!sourceDir.Exists)
-        {
-            return;
-        }
-
-        // Copy the complete directory structure starting from package root
-        FileHelper.CopyDirectory(sourceDir, new DirectoryInfo(backupDir), ct);
     }
 
     private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, string commitSha, CancellationToken ct)
@@ -211,12 +177,12 @@ public class TspClientUpdateTool(
         }
     }
     private async Task<(bool Success, bool RequiresReview)> ValidateAndUpdateGuidanceAsync(
-        ClientUpdateSessionState session,
+        string packagePath,
         IClientUpdateLanguageService languageService,
         List<string> guidance,
         CancellationToken ct)
     {
-        var validationResult = await languageService.ValidateAsync(session, ct);
+        var validationResult = await languageService.ValidateAsync(packagePath, ct);
 
         if (validationResult.Success)
         {
@@ -238,8 +204,7 @@ public class TspClientUpdateTool(
     private async Task<(List<string> guidance, bool patchesApplied, bool requiresReview)> GenerateGuidanceAndApplyPatchesAsync(
         string commitSha,
         string? customizationRoot,
-        string newGeneratedPath,
-        string oldGeneratedPath,
+        string packagePath,
         IClientUpdateLanguageService languageService,
         CancellationToken ct)
     {
@@ -257,7 +222,7 @@ public class TspClientUpdateTool(
             }
 
             logger.LogInformation("Applying patches...");
-            var patchesApplied = await languageService.ApplyPatchesAsync(commitSha, customizationRoot, newGeneratedPath, oldGeneratedPath, ct);
+            var patchesApplied = await languageService.ApplyPatchesAsync(commitSha, customizationRoot, packagePath, ct);
             logger.LogDebug("Patch application result: {Success}", patchesApplied);
 
             var guidance = new List<string>();

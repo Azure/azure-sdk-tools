@@ -78,42 +78,40 @@ export class NavBarComponent implements OnInit {
   }
 
   private checkApproverStatus() {
-    if (this.userProfile?.userName) {
-      // Call the API to get allowed approvers
-      const apiUrl = this.configService.apiUrl;
-      const endpoint = '/Reviews/allowedApprovers';
-      const url = `${apiUrl}${endpoint}`;
-
-      console.log('=== Approver Check Debug Info ===');
-      console.log('apiUrl length:', apiUrl?.length);
-      console.log('apiUrl value:', apiUrl);
-      console.log('endpoint:', endpoint);
-      console.log('Full URL length:', url.length);
-      console.log('Full URL (relative):', url);
-      console.log('Resolved absolute URL:', new URL(url, window.location.origin).href);
-      console.log('window.location.href:', window.location.href);
-      console.log('================================');
-
-      this.http.get<string>(url).subscribe({
-        next: (allowedApprovers) => {
-          console.log('Raw allowedApprovers response:', allowedApprovers);
-
-          if (allowedApprovers) {
-            // Split comma-separated string and check if current user is in the list
-            const approversList = allowedApprovers.split(',').map(username => username.trim());
-            console.log('Parsed approversList:', approversList);
-            console.log('Current username:', this.userProfile?.userName);
-
-            this.isApprover = approversList.includes(this.userProfile?.userName || '');
-            console.log('isApprover result:', this.isApprover);
-          }
-        },
-        error: (error) => {
-          console.error('Failed to fetch allowed approvers:', error);
-          this.isApprover = false;
-          // Optionally, notify the user here if desired
-        }
-      });
+    // Use preferredApprovers endpoint which works (requires reviewId)
+    if (!this.userProfile?.userName || !this.isLoggedIn) {
+      this.isApprover = false;
+      console.log('User not logged in, hiding Requested Reviews link');
+      return;
     }
+
+    // Only check if we have a reviewId in the current route
+    if (!this.reviewId) {
+      this.isApprover = false;
+      console.log('No reviewId in route, hiding Requested Reviews link');
+      return;
+    }
+
+    // Call preferredApprovers API for this specific review
+    const apiUrl = this.configService.apiUrl;
+    const endpoint = `reviews/${this.reviewId}/preferredApprovers`;
+    const url = `${apiUrl}${endpoint}`;
+
+    console.log('Fetching preferred approvers for review:', this.reviewId);
+
+    this.http.get<string[]>(url).subscribe({
+      next: (preferredApprovers) => {
+        console.log('Preferred approvers response:', preferredApprovers);
+        console.log('Current username:', this.userProfile?.userName);
+
+        // Check if current user is in the preferred approvers list
+        this.isApprover = preferredApprovers.includes(this.userProfile?.userName || '');
+        console.log('isApprover result:', this.isApprover);
+      },
+      error: (error) => {
+        console.error('Failed to fetch preferred approvers:', error);
+        this.isApprover = false;
+      }
+    });
   }
 }

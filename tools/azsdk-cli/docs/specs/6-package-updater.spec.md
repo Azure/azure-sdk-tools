@@ -301,57 +301,61 @@ azsdk package update-metadata --package-path /abs/sdk/path
 azsdk package update-version --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
 ```
 
-## Proposed Approaches for the Intergration between language-specific logic and tools
+## Proposed approaches for intergrating language-specific logic and tools
 
-1.CLI class-based integration
+### 1. Class-based (CLI) integration
 
-Implement language-specific behavior inside the CLI (C# classes / services), e.g. DotNetLanguageSpecificChecks.cs style.
-CLI performs discovery, normalization, and calls language-specific logic directly (possibly invoking lower-level commands like msbuild/tools).
-
-Pros:
-Centralized logic: all language integrations live inside the CLI — easier to reason about and test in one place.
-Leverages shared helpers, BCL types.
-Avoids an extra layer of script indirection (fewer wrappers).
-Easier to integrate complex cross-language logic (normalization, LLM hooks, common result schema).
-
-Cons:
-Tight coupling to language repo layout and script parameters → brittle when files/params move.
-CLI releases must be coordinated with language repo changes (versioning friction).
-Harder to change language-specific behavior quickly — needs a CLI release or pinned CLI in each repo.
-Some repo-specific tasks (exact file locations, repo branching differences) are easier in scripts that live next to the source.
-
-2.Repo-hosted script integration (script-first)
-
-Keep the authoritative implementation in each language repo as scripts (PowerShell or other).
-CLI calls those scripts (or a small wrapper script living in the language repo) as the integration point. Example: Export-API.ps1 or update-metadata.ps1 inside the language repo.
+Description:
+Implement language-specific behavior inside the C# classes, e.g. DotNetLanguageSpecificChecks.cs style.
+C# code performs discovery, normalization, and calls language-specific logic directly (possibly invoking lower-level commands like msbuild/tools).
 
 Pros:
-Locality: the code that knows repo layout and tool invocation lives with the repo it affects; easy to update in one repo PR.
-Versioning: language repo can change its script and tune parameters without requiring immediate CLI updates.
-Enables running the same script locally, in CI, and via the CLI — fewer surprises across environments.
+
+- Centralized logic: all language integrations live inside the azsdk-cli — easier to reason about and test in one place.
+- Leverages shared helpers, and BCL types.
+- Avoids an extra layer of script indirection.
 
 Cons:
-Indirection: multiple wrapper scripts across repos can become confusing (many layers: CLI -> wrapper -> script -> tool).
-Harder to reason about platform-wide behavior if each repo varies.
-CLI must handle fragility: script might be missing on branch, parameters may differ, behavior may drift.
-Harder to apply shared validations/normalization or to test language-agnostic logic centrally.
 
-3.Hybrid / Contract-based approach
+- Tight coupling to language repo layout and script parameters → brittle when files/params move.
+- Versioning friction: behavior changes require a CLI release.
+- Slower iteration for repo-specific changes since modifications need a CLI code change and release.
 
-Define a small, well-documented contract/API (parameters, expected inputs/outputs, exit codes, JSON schema).
-Language repo implements the contract (script or program). CLI does normalization, validation, and invokes the repo-side contract.
-Optionally implement language-specific logic in CLI for cases where shared helpers or BCL types are beneficial; otherwise call the repo script.
+### 2. Repo-hosted script/tool integration
+
+Description:
+Keep the implementation in each language repo as scripts or stand-alone tools.
+azsdk-cli tool calls those scripts as the integration point. Example: Export-API.ps1 inside the language repo.
 
 Pros:
-Best of both worlds: a small, stable contract (parameters, exit codes, JSON output) that CLI depends on while letting repo implement details.
-Repo can evolve implementation without breaking consumers so long as contract remains stable.
-CLI can provide shared normalization, validation, telemetry, and orchestration, while repo scripts handle repo-local tasks (file paths, tool variants).
-Easier to test and mock (CLI tests against a known contract; repo tests ensure script adheres to contract).
+
+- Locality: implementation that knows the repo layout and toolchain lives next to the source and can be updated in a single PR.
+- Faster iteration: language owners can change behavior without immediate CLI releases..
+- Enables running the same script locally, in CI, and via the CLI.
 
 Cons:
-Requires upfront design of the contract and discipline to keep it stable.
-Still requires versioning decisions (how to roll out contract changes across repos).
-Some duplication of wrapper code may persist (but minimized if contract is well-designed).
+
+- Indirection: multiple wrapper scripts across repos can become confusing (many layers: azsdk-cli (-> wrapper) -> script -> tool).
+- Harder to apply shared validations/normalization or to central testing across languages.
+- Branch/versioning fragility: script parameters or locations may differ across branches, which the CLI must handle or fail gracefully.
+
+### 3. Hybrid / Contract-based approach (recommended)
+
+Description:
+Define a small, well-documented contract/API (expected inputs/outputs). The default implementation in the azsdk-cli tool will look-up a configuration file defined in the language repo to see if there is an entrypoint for the given tool. If there is one the azsdk-cli tool will call that but if there is not and there is an implementation for the given language in the azsdk-cli tool then it will call that implemeption. If there is no implementation found for the given languae in either place the tool will be a no-op.
+
+Pros:
+
+- Best of both worlds: a small, stable contract that azsdk-cli tool depends on while letting language owner implement the details.
+- Flexibility: the language repo will always have the ability to override the implementation in the CLI tool if a given branch or change in the repo needs this tool to be updated.
+- Centralized cross-language logic (normalization, telemetry, orchestration) can still live in the CLI.
+- Language repo can change its implementation logic without requiring immediate CLI tool updates.
+
+Cons:
+
+- Requires upfront design of the contract and discipline to keep it stable.
+- Needs a rollout/versioning strategy for contract changes across many repos..
+- Some duplication of wrapper code may persist (but minimized if contract is well-designed).
 
 ### Architecture Diagram
 

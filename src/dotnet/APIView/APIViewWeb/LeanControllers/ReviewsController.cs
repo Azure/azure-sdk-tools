@@ -175,6 +175,27 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
+        /// Endpoint to approve a review (sets IsApproved=true and NamespaceReviewStatus=Approved)
+        /// </summary>
+        /// <param name="reviewId">The review ID to approve</param>
+        /// <returns></returns>
+        [HttpPost("{reviewId}/approve", Name = "ApproveReview")]
+        public async Task<ActionResult> ApproveReviewAsync(string reviewId)
+        {
+            try
+            {
+                await _reviewManager.ApproveReviewAsync(User, reviewId);
+                var updatedReview = await _reviewManager.GetReviewAsync(User, reviewId);
+                return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error approving review: {ReviewId}", reviewId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Endpoint used by Client SPA toggling Subscription to a review
         /// </summary>
         /// <param name="reviewId"></param>

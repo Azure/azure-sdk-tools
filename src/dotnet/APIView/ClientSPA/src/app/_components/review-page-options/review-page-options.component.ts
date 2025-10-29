@@ -464,9 +464,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
           // Re-evaluate namespace review states after associated reviews are loaded
           this.setNamespaceReviewStates();
+        },
+        error: (error) => {
+          console.error('Failed to fetch pullRequestsOfAssociatedAPIRevisions:', error);
         }
       });
-
     }
   }
 
@@ -693,12 +695,40 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     ).pipe(take(1)).subscribe({
       next: (reviews: any[]) => {
         const sdkLanguageReviews = reviews.filter(review => SDK_LANGUAGES.includes(review?.language));
+        const wasApproved = this.allAssociatedReviewsApproved;
         this.allAssociatedReviewsApproved = sdkLanguageReviews.length > 0 &&
                                              sdkLanguageReviews.every(review => review?.isApproved === true);
+
+        // If all SDK reviews just became approved and TypeSpec review is not already approved, update DB
+        if (this.allAssociatedReviewsApproved && !wasApproved &&
+            this.review?.language === 'TypeSpec' && !this.review?.isApproved) {
+          this.autoApproveTypeSpecReview();
+        }
+
         this.updateNamespaceReviewButtonState();
       },
-      error: () => {
+      error: (error) => {
+        console.error('Failed to fetch associated reviews:', error);
         this.allAssociatedReviewsApproved = false;
+      }
+    });
+  }
+
+  /**
+   * Auto-approve TypeSpec review when all associated SDK language reviews are approved
+   */
+  private autoApproveTypeSpecReview() {
+    if (!this.review?.id) return;
+
+    this.reviewsService.approveReview(this.review.id).pipe(take(1)).subscribe({
+      next: (updatedReview: Review) => {
+        // Update local review object
+        this.review = updatedReview;
+        this.setReviewApprovalStatus();
+        this.updateNamespaceReviewButtonState();
+      },
+      error: (error: any) => {
+        console.error('Failed to auto-approve TypeSpec review:', error);
       }
     });
   }

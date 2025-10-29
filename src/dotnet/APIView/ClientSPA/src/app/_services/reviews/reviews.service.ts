@@ -127,6 +127,17 @@ export class ReviewsService {
     });
   }
 
+  approveReview(reviewId: string, notes: string = '') : Observable<Review> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/approve`, { notes },
+    {
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+
   toggleReviewSubscriptionByUser(reviewId: string, state: boolean) {
     let params = new HttpParams();
     params = params.append('state', state.toString());

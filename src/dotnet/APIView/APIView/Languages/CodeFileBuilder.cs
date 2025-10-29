@@ -308,7 +308,7 @@ namespace ApiView
             builder.IncrementIndent();
             builder.NewLine();
 
-            // Check if this type contains C# 15 extension members
+            // Check if this type contains extension members (proposed C# feature)
             // Extension members are compiler-generated and appear as nested types with names like <G>$...
             var extensionContainers = namedType.GetTypeMembers()
                 .Where(t => IsExtensionMemberContainer(t))

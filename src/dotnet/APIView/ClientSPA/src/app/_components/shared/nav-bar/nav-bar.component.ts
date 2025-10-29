@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { combineLatest } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { NotificationsFilter, SiteNotification } from 'src/app/_models/notificationsModel';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -38,17 +39,18 @@ export class NavBarComponent implements OnInit {
 
   ngOnInit(): void {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
-    this.authService.isLoggedIn().subscribe(isLoggedIn => {
-      this.isLoggedIn = isLoggedIn;
-    });
 
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
-        // Check if user is an approver
+    // Use combineLatest to wait for both isLoggedIn and userProfile before checking approver status
+    combineLatest([
+      this.authService.isLoggedIn(),
+      this.userProfileService.getUserProfile()
+    ]).subscribe(([isLoggedIn, userProfile]) => {
+      this.isLoggedIn = isLoggedIn;
+      this.userProfile = userProfile;
+      if (isLoggedIn && userProfile) {
         this.checkApproverStatus();
       }
-    );
+    });
 
     this.notificationsService.notifications$.subscribe(notifications => {
       this.notifications = notifications;
@@ -79,6 +81,7 @@ export class NavBarComponent implements OnInit {
 
   private checkApproverStatus() {
     if (!this.userProfile?.userName || !this.isLoggedIn) {
+      this.isApprover = false;
       return;
     }
 
@@ -93,6 +96,8 @@ export class NavBarComponent implements OnInit {
           // Split comma-separated string and check if current user is in the list
           const approversList = allowedApprovers.split(',').map(username => username.trim());
           this.isApprover = approversList.includes(this.userProfile?.userName || '');
+        } else {
+          this.isApprover = false;
         }
       },
       error: (error) => {

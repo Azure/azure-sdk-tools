@@ -32,6 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IRepositoryScriptService, RepositoryScriptService>();
 
             // Language Check Services (Composition-based)
             services.AddScoped<ILanguageChecks, LanguageChecks>();

@@ -7,28 +7,23 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// .NET-specific implementation of language repository service.
 /// Uses tools like dotnet CLI, MSBuild, NuGet, etc. for .NET development workflows.
 /// </summary>
-public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
+public class DotNetLanguageSpecificChecks(
+    ILogger<DotNetLanguageSpecificChecks> logger,
+    IProcessHelper processHelper,
+    IPowershellHelper powershellHelper,
+    IGitHelper gitHelper,
+    IRepositoryScriptService repositoryScriptService
+) : ILanguageSpecificChecks
 {
-    private readonly IProcessHelper _processHelper;
-    private readonly IGitHelper _gitHelper;
-    private readonly IPowershellHelper _powershellHelper;
-    private readonly ILogger<DotNetLanguageSpecificChecks> _logger;
+    private readonly IProcessHelper _processHelper = processHelper;
+    private readonly IGitHelper _gitHelper = gitHelper;
+    private readonly IPowershellHelper _powershellHelper = powershellHelper;
+    private readonly IRepositoryScriptService _repositoryScriptService = repositoryScriptService;
+    private readonly ILogger<DotNetLanguageSpecificChecks> _logger = logger;
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
-
-    public DotNetLanguageSpecificChecks(
-        IProcessHelper processHelper,
-        IPowershellHelper powershellHelper,
-        IGitHelper gitHelper,
-        ILogger<DotNetLanguageSpecificChecks> logger)
-    {
-        _processHelper = processHelper;
-        _powershellHelper = powershellHelper;
-        _gitHelper = gitHelper;
-        _logger = logger;
-    }
 
     public async Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
@@ -50,28 +45,15 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return new CLICheckResponse(1, "", "Failed to determine service directory from the provided package path.");
             }
 
-            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "CodeChecks.ps1");
-            if (!File.Exists(scriptPath))
-            {
-                _logger.LogError("Code checks script not found at: {ScriptPath}", scriptPath);
-                return new CLICheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
-            }
+            var (invoked, result) = await _repositoryScriptService.TryInvoke("CodeChecks", packagePath, new()
+                {
+                    { "ServiceDirectory", serviceDirectory },
+                    { "SpellCheckPublicApiSurface", true }
+                }, ct);
 
-            var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
-            var options = new PowershellOptions(scriptPath, args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
-            var result = await _powershellHelper.Run(options, ct);
-
-            if (result.ExitCode == 0)
-            {
-                _logger.LogInformation("Generated code checks completed successfully");
-                return new CLICheckResponse(result.ExitCode, result.Output);
-            }
-            else
-            {
-                _logger.LogWarning("Generated code checks for package at {PackagePath} failed with exit code {ExitCode}", packagePath, result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Generated code checks failed");
-            }
+            return invoked ?
+                new CLICheckResponse(result.ExitCode, result.Output) :
+                new CLICheckResponse(1, "", "No implementation found for CodeChecks in repository.");
         }
         catch (Exception ex)
         {
@@ -224,10 +206,10 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var csprojFiles = Directory.GetFiles(packagePath, "*.csproj", SearchOption.AllDirectories);
-            var mainCsprojFile = csprojFiles.FirstOrDefault(f => 
+            var mainCsprojFile = csprojFiles.FirstOrDefault(f =>
                 Path.GetFileNameWithoutExtension(f).Equals(packageName, StringComparison.OrdinalIgnoreCase));
             var csprojFile = mainCsprojFile ?? csprojFiles.FirstOrDefault();
-            
+
             if (csprojFile == null)
             {
                 _logger.LogDebug("No .csproj file found in package path: {PackagePath}", packagePath);
@@ -235,15 +217,15 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             var projectContent = await File.ReadAllTextAsync(csprojFile, ct);
-            
+
             var hasAotOptOut = projectContent.Contains("<AotCompatOptOut>true</AotCompatOptOut>", StringComparison.OrdinalIgnoreCase);
-            
+
             if (hasAotOptOut)
             {
                 _logger.LogInformation("Found AotCompatOptOut=true in project file: {CsprojFile}", csprojFile);
                 return true;
             }
-            
+
             return false;
         }
         catch (Exception ex)

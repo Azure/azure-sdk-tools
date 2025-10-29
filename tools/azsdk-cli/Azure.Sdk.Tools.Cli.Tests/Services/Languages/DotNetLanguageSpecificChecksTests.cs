@@ -1,6 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Logging.Abstractions;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
@@ -11,6 +11,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
+    private Mock<IRepositoryScriptService> _repositoryScriptServiceMock = null!;
     private DotNetLanguageSpecificChecks _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -22,12 +23,15 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
         _powerShellHelperMock = new Mock<IPowershellHelper>();
+        _repositoryScriptServiceMock = new Mock<IRepositoryScriptService>();
 
         _languageChecks = new DotNetLanguageSpecificChecks(
+            new TestLogger<DotNetLanguageSpecificChecks>(),
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
             _gitHelperMock.Object,
-            NullLogger<DotNetLanguageSpecificChecks>.Instance);
+            _repositoryScriptServiceMock.Object
+        );
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
         _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");
@@ -296,10 +300,10 @@ internal class DotNetLanguageSpecificChecksTests
         var errorMessage = "ILLink : Trim analysis warning IL2026: Azure.Storage.Blobs.BlobClient.Upload: " +
             "Using member 'System.Reflection.Assembly.GetTypes()' which has 'RequiresUnreferencedCodeAttribute' " +
             "can break functionality when trimming application code.";
-        
+
         var processResult = new ProcessResult { ExitCode = 1 };
         processResult.AppendStdout(errorMessage);
-        
+
         _powerShellHelperMock
             .Setup(x => x.Run(
                 It.Is<PowershellOptions>(p => p.ScriptPath != null &&
@@ -403,12 +407,12 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            try 
-            { 
+            try
+            {
                 Directory.Delete(testPackagePath, true);
-                File.Delete(scriptPath); 
-                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
-            } 
+                File.Delete(scriptPath);
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true);
+            }
             catch { }
         }
     }
@@ -489,12 +493,12 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            try 
-            { 
+            try
+            {
                 Directory.Delete(testPackagePath, true);
-                File.Delete(scriptPath); 
-                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
-            } 
+                File.Delete(scriptPath);
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true);
+            }
             catch { }
         }
     }

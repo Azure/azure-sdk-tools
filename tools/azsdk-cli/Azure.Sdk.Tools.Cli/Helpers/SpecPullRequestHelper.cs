@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         if (m is Match match)
                         {
                             var matchValue = match.Value;
-                            _logger.LogDebug($"Found API view match: {matchValue}");
+                            _logger.LogDebug("Found API view match: {MatchValue}", matchValue);
                             if(match.Groups.Count == 4)
                             {
                                 apiviewLinks.Add(

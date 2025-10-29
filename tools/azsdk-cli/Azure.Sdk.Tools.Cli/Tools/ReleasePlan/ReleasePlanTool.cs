@@ -424,8 +424,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-                logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
-                logger.LogDebug($"SDK details to update: {sdkDetails}");
+                logger.LogInformation("Updating SDK details in release plan work item ID: {ReleasePlanWorkItemId}", releasePlanWorkItemId);
+                logger.LogDebug("SDK details to update: {SdkDetails}", sdkDetails);
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization
                 var options = new JsonSerializerOptions
                 {

@@ -103,7 +103,10 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode != 0)
             {
-                _logger.LogError($"'pnpm run {subcommand}' failed with exit code {result.ExitCode}");
+                _logger.LogError(
+                    "'pnpm run {Subcommand}' failed with exit code {ExitCode}",
+                    subcommand,
+                    result.ExitCode);
 
                 var nextSteps = fix ? "Review the linting errors and fix them manually." : "Run this tool in fix mode to automatically fix some of the errors.";
 
@@ -137,7 +140,10 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode != 0)
             {
-                _logger.LogError($"'pnpm run {subcommand}' failed with exit code {result.ExitCode}");
+                _logger.LogError(
+                    "'pnpm run {Subcommand}' failed with exit code {ExitCode}",
+                    subcommand,
+                    result.ExitCode);
                 var nextSteps = fix ? "Review the error output and attempt to resolve the issue." : "Run this tool in fix mode to fix the formatting.";
                 return new CLICheckResponse(result)
                 {

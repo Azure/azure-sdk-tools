@@ -54,7 +54,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var specToSdkConfigFilePath = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
 
-            _logger.LogInformation($"Reading configuration from: {specToSdkConfigFilePath} at path: {jsonPath}");
+            _logger.LogInformation(
+                "Reading configuration from: {ConfigFilePath} at path: {JsonPath}",
+                specToSdkConfigFilePath,
+                jsonPath);
 
             if (!File.Exists(specToSdkConfigFilePath))
             {

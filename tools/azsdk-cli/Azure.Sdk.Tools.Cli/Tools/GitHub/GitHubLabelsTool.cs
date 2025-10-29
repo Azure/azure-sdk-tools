@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 }
                 else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
                 {
-                    logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
+                    logger.LogWarning("Label '{Label}' exists but is not a service label. No action taken.", label);
                     return new ServiceLabelResponse
                     {
                         Status = "NotAServiceLabel",

@@ -147,7 +147,11 @@ public class GitConnection
 
         public async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
-            logger.LogInformation($"Searching for pull request in repository {repoOwner}/{repoName} for branch {remoteBranch}");
+            logger.LogInformation(
+                "Searching for pull request in repository {RepoOwner}/{RepoName} for branch {RemoteBranch}",
+                repoOwner,
+                repoName,
+                remoteBranch);
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
@@ -156,7 +160,11 @@ public class GitConnection
         {
             try
             {
-                logger.LogInformation($"Searching for pull requests with title containing '{titleSearchTerm}' in {repoOwner}/{repoName}");
+                logger.LogInformation(
+                    "Searching for pull requests with title containing '{TitleSearchTerm}' in {RepoOwner}/{RepoName}",
+                    titleSearchTerm,
+                    repoOwner,
+                    repoName);
 
                 // Build the search query - remove quotes to enable case-insensitive matching
                 var searchQuery = $"repo:{repoOwner}/{repoName} is:pr {titleSearchTerm} in:title";
@@ -182,7 +190,9 @@ public class GitConnection
 
                 if (searchResult?.Items == null || !searchResult.Items.Any())
                 {
-                    logger.LogInformation($"No pull requests found with title containing '{titleSearchTerm}'");
+                    logger.LogInformation(
+                        "No pull requests found with title containing '{TitleSearchTerm}'",
+                        titleSearchTerm);
                     return new List<PullRequest>();
                 }
 
@@ -200,14 +210,20 @@ public class GitConnection
                         }
                         catch (Exception ex)
                         {
-                            logger.LogWarning($"Failed to get full details for PR #{issue.Number}: {ex.Message}");
+                            logger.LogWarning(
+                                ex,
+                                "Failed to get full details for PR #{PullRequestNumber}",
+                                issue.Number);
                             // Still add the basic info if we can't get full details
                             pullRequests.Add(null);
                         }
                     }
                 }
 
-                logger.LogInformation($"Found {pullRequests.Count} pull requests with title containing '{titleSearchTerm}'.");
+                logger.LogInformation(
+                    "Found {PullRequestCount} pull requests with title containing '{TitleSearchTerm}'.",
+                    pullRequests.Count,
+                    titleSearchTerm);
                 return pullRequests;
             }
             catch (Exception ex)
@@ -221,7 +237,7 @@ public class GitConnection
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
-            logger.LogInformation($"Comparison: {comparison.Status}");
+            logger.LogInformation("Comparison: {ComparisonStatus}", comparison.Status);
             return comparison?.MergeBaseCommit != null;
         }
 
@@ -343,7 +359,7 @@ public class GitConnection
                 var pr = await GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
                 if (pr == null)
                 {
-                    logger.LogError($"Pull request {pullRequestNumber} not found");
+                    logger.LogError("Pull request {PullRequestNumber} not found", pullRequestNumber);
                     throw new NotFoundException($"Pull request {pullRequestNumber} not found.", System.Net.HttpStatusCode.NotFound);
                 }
 
@@ -399,7 +415,11 @@ public class GitConnection
             }
             catch (NotFoundException)
             {
-                logger.LogInformation($"Path {path} not found in {owner}/{repoName}");
+                logger.LogInformation(
+                    "Path {Path} not found in {Owner}/{RepoName}",
+                    path,
+                    owner,
+                    repoName);
                 return null;
             }
             catch (Exception ex)

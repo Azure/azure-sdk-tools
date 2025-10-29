@@ -308,9 +308,28 @@ namespace ApiView
             builder.IncrementIndent();
             builder.NewLine();
 
+            // Check if this type contains C# 15 extension members
+            // Extension members are compiler-generated and appear as nested types with names like <G>$...
+            var extensionContainers = namedType.GetTypeMembers()
+                .Where(t => IsExtensionMemberContainer(t))
+                .ToList();
+
+            if (extensionContainers.Any())
+            {
+                // Build extension member blocks
+                foreach (var extensionContainer in extensionContainers)
+                {
+                    BuildExtensionMemberBlock(builder, extensionContainer, inHiddenScope);
+                }
+            }
+
+            // Build regular nested types (excluding extension member containers)
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
-                BuildType(builder, namedTypeSymbol, navigationBuilder, inHiddenScope || isHidden);
+                if (!IsExtensionMemberContainer(namedTypeSymbol))
+                {
+                    BuildType(builder, namedTypeSymbol, navigationBuilder, inHiddenScope || isHidden);
+                }
             }
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
@@ -536,6 +555,7 @@ namespace ApiView
                 case "EditorBrowsableAttribute":
                 case "NullableAttribute":
                 case "NullableContextAttribute":
+                case "CompilerGeneratedAttribute":
                     return true;
                 default:
                     return false;
@@ -781,6 +801,109 @@ namespace ApiView
                 IPropertySymbol propertySymbol => propertySymbol.ExplicitInterfaceImplementations.Any(i => IsAccessible(i.ContainingType)),
                 _ => false
             };
+        }
+
+        /// <summary>
+        /// Checks if a type is a compiler-generated container for C# 15 extension members.
+        /// Extension members compile to nested classes with names starting with <G>$
+        /// </summary>
+        private bool IsExtensionMemberContainer(INamedTypeSymbol type)
+        {
+            // Extension member containers have compiler-generated names starting with <G>$
+            // and contain nested classes with names starting with <M>$
+            if (!type.Name.StartsWith("<G>$"))
+            {
+                return false;
+            }
+
+            // Verify it has the expected structure - sealed class with nested types
+            if (!type.IsSealed || type.TypeKind != TypeKind.Class)
+            {
+                return false;
+            }
+
+            // Should have CompilerGenerated attribute
+            if (!type.GetAttributes().Any(a => a.AttributeClass?.Name == "CompilerGeneratedAttribute"))
+            {
+                return false;
+            }
+
+            // Check if it contains the characteristic <M>$ nested types
+            return type.GetTypeMembers().Any(t => t.Name.StartsWith("<M>$"));
+        }
+
+        /// <summary>
+        /// Builds an extension member block in the C# 15 syntax.
+        /// Extracts extension methods from the compiler-generated structure and renders them
+        /// using the extension (Type param) { ... } syntax.
+        /// </summary>
+        private void BuildExtensionMemberBlock(CodeFileTokensBuilder builder, INamedTypeSymbol extensionContainer, bool inHiddenScope)
+        {
+            // Find the <M>$ nested type that contains the actual extension methods
+            var methodContainers = extensionContainer.GetTypeMembers().Where(t => t.Name.StartsWith("<M>$")).ToList();
+            
+            foreach (var methodContainer in methodContainers)
+            {
+                // Find the <Extension>$ method that defines the extended type parameter
+                var extensionMethod = methodContainer.GetMembers()
+                    .OfType<IMethodSymbol>()
+                    .FirstOrDefault(m => m.Name == "<Extension>$");
+
+                if (extensionMethod == null || extensionMethod.Parameters.IsEmpty)
+                {
+                    continue;
+                }
+
+                // The first parameter of <Extension>$ is the type being extended
+                var extendedType = extensionMethod.Parameters[0];
+
+                // Get the actual extension methods (non-compiler-generated public methods)
+                var actualExtensionMethods = extensionContainer.GetMembers()
+                    .Where(m => m.Kind == SymbolKind.Method && 
+                                !m.IsImplicitlyDeclared && 
+                                IsAccessible(m) &&
+                                !m.Name.StartsWith("<"))
+                    .OfType<IMethodSymbol>()
+                    .ToList();
+
+                if (actualExtensionMethods.Any())
+                {
+                    bool isHidden = IsHiddenFromIntellisense(extensionContainer);
+                    
+                    if (isHidden && !inHiddenScope)
+                    {
+                        builder.Append(null, CodeFileTokenKind.HiddenApiRangeStart);
+                    }
+
+                    // Write the extension block header: extension (Type param)
+                    builder.WriteIndent();
+                    builder.Keyword("extension");
+                    builder.Space();
+                    builder.Punctuation(SyntaxKind.OpenParenToken);
+                    DisplayName(builder, extendedType.Type);
+                    builder.Space();
+                    builder.Append(extendedType.Name, CodeFileTokenKind.Text);
+                    builder.Punctuation(SyntaxKind.CloseParenToken);
+                    builder.Space();
+                    builder.Punctuation(SyntaxKind.OpenBraceToken);
+                    builder.IncrementIndent();
+                    builder.NewLine();
+
+                    // Write each extension method
+                    foreach (var method in actualExtensionMethods)
+                    {
+                        BuildMember(builder, method, inHiddenScope);
+                    }
+
+                    // Close the extension block
+                    CloseBrace(builder);
+
+                    if (isHidden && !inHiddenScope)
+                    {
+                        builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
+                    }
+                }
+            }
         }
 
         internal class CodeFileBuilderEnumFormatter : AbstractSymbolDisplayVisitor

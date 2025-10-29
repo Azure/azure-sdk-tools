@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         public SdkType SdkType {
             get
             {
-                return IsManagementPlane ? SdkType.Management: SdkType.Dataplane;
+                return IsManagementPlane ? SdkType.Management : SdkType.Dataplane;
             }
         }
 

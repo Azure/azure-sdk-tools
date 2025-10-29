@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Test]
         public async Task Evaluate_GetPullRequestLinkForCurrentBranch()
         {
-            const string prompt = "My typespec changes are already validated lets check if the current branch has an open pull request and get the link to it. Path to my repository root: C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs";
+            const string prompt = "I have submitted a spec PR. What's the status of it? Path to my repository root: C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs";
             string[] expectedTools =
             [
                 "azsdk_get_pull_request_link_for_current_branch",

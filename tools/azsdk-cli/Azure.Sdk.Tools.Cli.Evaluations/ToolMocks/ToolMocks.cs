@@ -25,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                 new GetModifiedTypespecProjects(),
                 new GetPullRequestLinkForCurrentBranch(),
                 new CreatePullRequest(),
+                new CreateReleasePlan(),
             };
 
             foreach (var mock in mockInstances)

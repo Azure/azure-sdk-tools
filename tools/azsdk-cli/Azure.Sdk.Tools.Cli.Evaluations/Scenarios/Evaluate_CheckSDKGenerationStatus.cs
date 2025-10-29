@@ -9,20 +9,16 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
     public partial class Scenario
     {
         [Test]
-        public async Task Evaluate_ValidateTypespec()
+        public async Task Evaluate_CheckSDKGenerationStatus()
         {
-            const string prompt = "Validate my typespec project. It is already confirmed we are in a public repository. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
-            string[] expectedTools =
-            [
-                "azsdk_run_typespec_validation",
-            ];
+            var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example2.json");
 
-            // Build scenario data from prompt
-            var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
+            // Load scenario data from JSON
+            var scenarioData = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
 
-            // External contexts (no deep input checking for this one)
-            bool checkInputs = false;
+            // This test enables deeper input checking
+            bool checkInputs = true;
             var additionalContexts = new EvaluationContext[]
             {
                 new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)

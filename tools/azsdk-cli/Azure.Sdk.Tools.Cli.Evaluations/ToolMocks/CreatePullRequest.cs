@@ -4,8 +4,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
 {
     public class CreatePullRequest : IToolMock
     {
-        public string ToolName => "azsdk_get_pull_request";
-        public string CallId => "tooluse_l1vP7asdasdsadasd543gf";
+        public string ToolName => "azsdk_create_pull_request";
+        public string CallId => "tooluse_l1vP7afmgopxyd543gf";
         private string ToolResult => """{"result":"No pull request found for branch jeo02:testing-contoso-sdk-gen in repository Azure/azure-rest-api-specs. Proceeding to create a new pull request.\r\nChecking if changes are mergeable to main branch in repository [Azure/azure-rest-api-specs]...\r\nChanges are mergeable. Proceeding to create pull request for changes in jeo02:testing-contoso-sdk-gen.\r\nPull request created successfully as draft PR.\r\nOnce you have successfully generated the SDK transition the PR to review ready.\r\nPull request created successfully."}""";
 
         public ChatMessage GetMockResponse(string callid)

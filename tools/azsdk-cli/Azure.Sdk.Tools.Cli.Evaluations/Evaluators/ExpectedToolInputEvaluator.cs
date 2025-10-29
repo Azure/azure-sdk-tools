@@ -29,8 +29,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
             }
 
             // Get tool calls to compare them
-            var expectedToolCalls = Helpers.ChatMessageHelper.GetToolContent(context.ChatMessages, context.ToolNames, true);
-            var actualToolCalls = Helpers.ChatMessageHelper.GetToolContent(modelResponse.Messages, context.ToolNames, false);
+            var expectedToolCalls = Helpers.ChatMessageHelper.GetToolContent(context.ChatMessages, context.ToolNames);
+            var actualToolCalls = Helpers.ChatMessageHelper.GetToolContent(modelResponse.Messages, context.ToolNames);
 
             // Make sure we have tool calls to compare
             if (!expectedToolCalls.Any())

@@ -78,8 +78,7 @@ export class NavBarComponent implements OnInit {
   }
 
   private checkApproverStatus() {
-    if (!this.userProfile?.userName) {
-      this.isApprover = false;
+    if (!this.userProfile?.userName || !this.isLoggedIn) {
       return;
     }
 

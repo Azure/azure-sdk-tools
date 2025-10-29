@@ -33,7 +33,6 @@ namespace APIViewWeb.Managers
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IGitHubClientFactory _gitHubClientFactory;
         private readonly int _pullRequestCleanupDays;
-        private readonly bool _isGitHubAppAvailable;
 
         public PullRequestManager(ICosmosPullRequestsRepository pullRequestsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
@@ -56,11 +55,6 @@ namespace APIViewWeb.Managers
             _languageServices = languageServices;
             _logger = logger;
             _gitHubClientFactory = gitHubClientFactory;
-
-            string appId = _configuration["GitHubApp:Id"];
-            string keyVaultUrl = _configuration["GitHubApp:KeyVaultUrl"];
-            string keyName = _configuration["GitHubApp:KeyName"];
-            _isGitHubAppAvailable = !string.IsNullOrEmpty(appId) && !string.IsNullOrEmpty(keyVaultUrl) && !string.IsNullOrEmpty(keyName);
 
             string pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
@@ -239,10 +233,7 @@ namespace APIViewWeb.Managers
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
         {
-            if (!_isGitHubAppAvailable)
-                return false;
-
-            var repoInfo = prModel.RepoName.Split("/");
+            string[] repoInfo = prModel.RepoName.Split("/");
             GitHubClient githubClient = await _gitHubClientFactory.CreateGitHubClientAsync(repoInfo[0], repoInfo[1]);
             if (githubClient == null)
             {

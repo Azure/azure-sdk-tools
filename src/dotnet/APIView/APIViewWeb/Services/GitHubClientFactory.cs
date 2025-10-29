@@ -21,12 +21,17 @@ public class GitHubClientFactory: IGitHubClientFactory
     private readonly IConfiguration _configuration;
     private readonly ILogger<GitHubClientFactory> _logger;
     private readonly ProductHeaderValue _productHeaderValue;
+    private readonly ChainedTokenCredential _credential;
 
     public GitHubClientFactory(IConfiguration configuration, ILogger<GitHubClientFactory> logger)
     {
         _configuration = configuration;
         _logger = logger;
         _productHeaderValue = new ProductHeaderValue("apiview");
+        _credential = new ChainedTokenCredential(
+            new ManagedIdentityCredential(),    
+            new AzureCliCredential(),
+            new AzureDeveloperCliCredential());
     }
 
     public async Task<GitHubClient> CreateGitHubClientAsync(string owner, string repository)
@@ -104,10 +109,10 @@ public class GitHubClientFactory: IGitHubClientFactory
             string encodedPayload = Base64UrlEncode(payloadJson);
             string unsignedToken = $"{encodedHeader}.{encodedPayload}";
 
-            KeyClient keyClient = new(new Uri(keyVaultUrl), new DefaultAzureCredential());
+            KeyClient keyClient = new(new Uri(keyVaultUrl), _credential);
             Response<KeyVaultKey> key = await keyClient.GetKeyAsync(keyName);
 
-            CryptographyClient cryptoClient = new(key.Value.Id, new DefaultAzureCredential());
+            CryptographyClient cryptoClient = new(key.Value.Id, _credential);
 
             byte[] unsignedTokenBytes = Encoding.ASCII.GetBytes(unsignedToken);
             byte[] hash = SHA256.HashData(unsignedTokenBytes);

@@ -833,7 +833,7 @@ namespace ApiView
         }
 
         /// <summary>
-        /// Builds an extension member block in the C# 15 syntax.
+        /// Builds an extension member block using extension member syntax.
         /// Extracts extension methods from the compiler-generated structure and renders them
         /// using the extension (Type param) { ... } syntax.
         /// </summary>

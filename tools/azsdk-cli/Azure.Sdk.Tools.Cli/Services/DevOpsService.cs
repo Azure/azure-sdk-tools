@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to get release plans for product id {productTreeId}. Error: {ex.Message}");
+                logger.LogError(ex, $"Failed to get release plans for product id {productTreeId}");
                 throw new Exception($"Failed to get release plans for product id {productTreeId}. Error: {ex.Message}");
             }
         }

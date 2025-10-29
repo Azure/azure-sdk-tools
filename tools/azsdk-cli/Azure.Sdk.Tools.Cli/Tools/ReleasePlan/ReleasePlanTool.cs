@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<bool> forceCreateReleasePlanOpt = new("--force-create-release")
+        private readonly Option<bool> forceCreateReleasePlanOpt = new("--force")
         {
             Description = "Force creation of release plan even if one already exists",
             Required = true,

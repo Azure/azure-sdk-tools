@@ -13,6 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Models
         public bool IsDataPlane { get;}
         public string SdkServicePath { get; set; }
 
+        public SdkType SdkType {
+            get
+            {
+                return IsManagementPlane ? SdkType.Management: SdkType.Dataplane;
+            }
+        }
 
         private TypeSpecProject()
         {

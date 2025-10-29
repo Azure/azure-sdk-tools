@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> sdkReleaseTypeOpt = new("--sdk-type")
         {
-            Description = "SDK release type: beta or preview",
+            Description = "SDK release type: beta or stable",
             Required = true,
         };
 
@@ -138,7 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},
+            new(getReleasePlanDetailsCommandName, "Get release plan details") { workItemIdOpt, releasePlanNumberOpt },
             new(createReleasePlanCommandName, "Create a release plan")
             {
                 typeSpecProjectPathOpt,
@@ -327,6 +327,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
+
+                // Check environment variable to determine if this should be a test release plan
+                var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
+                if (isAgentTesting)
+                {
+                    isTestReleasePlan = true;
+                    logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
+                }
                 
                 if (!forceCreateReleasePlan)
                 {
@@ -337,14 +345,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         return new ObjectCommandResponse
                         {
-                            Message = $"Release plan not created. Release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                            Result = existingReleasePlan
+                            Message = $"Release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                            Result = existingReleasePlan,
+                            NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
                         };
                     }
 
                     logger.LogInformation("Checking for existing release plans for product: {productTreeId}", productTreeId);
-                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, specApiVersion);
-                    existingReleasePlans = existingReleasePlans.Where(releasePlan => releasePlan.WorkItemId > 0).ToList();
+                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, specApiVersion, sdkReleaseType, isTestReleasePlan);
                     if (existingReleasePlans.Any())
                     {
                         return new ObjectCommandResponse
@@ -354,14 +362,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             Result = existingReleasePlans
                         };
                     }
-                }
-                
-                // Check environment variable to determine if this should be a test release plan
-                var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
-                if (isAgentTesting)
-                {
-                    isTestReleasePlan = true;
-                    logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
                 }
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";

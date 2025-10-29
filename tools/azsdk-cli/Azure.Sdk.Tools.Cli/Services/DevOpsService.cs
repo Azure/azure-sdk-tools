@@ -142,18 +142,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANER_APP_TEST}'";
                 query += $" AND [Custom.ProductServiceTreeID] = '{productTreeId}'";
                 query += $" AND [Custom.SDKtypetobereleased] = '{sdkReleaseType}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] IN ('New','Not Started','In Progress')";
-                if (isTestReleasePlan)
-                {
-                    query += $" AND [System.Tags] CONTAINS '{RELEASE_PLANER_APP_TEST}'";
-                }
-                else
-                {
-                    query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
-                }
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query);
                 if (releasePlanWorkItems.Count == 0)
                 {

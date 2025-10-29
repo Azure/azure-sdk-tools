@@ -359,7 +359,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         {
                             Message = $"An active release plan already exists for the product: {productTreeId}. " 
                             +  $"Release plan link(s): {string.Join("\n ", existingReleasePlans.Select(p => p.ReleasePlanLink))}",
-                            Result = existingReleasePlans
+                            Result = existingReleasePlans,
+                            NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
                         };
                     }
                 }

@@ -804,8 +804,8 @@ namespace ApiView
         }
 
         /// <summary>
-        /// Checks if a type is a compiler-generated container for C# 15 extension members.
-        /// Extension members compile to nested classes with names starting with <G>$
+        /// Checks if a type is a compiler-generated container for extension members.
+        /// Extension member syntax compiles to nested classes with names starting with <G>$
         /// </summary>
         private bool IsExtensionMemberContainer(INamedTypeSymbol type)
         {

@@ -104,7 +104,7 @@ The design proposal below removes some aspects of the contract initially propose
 
 ### Overview
 
-When a command/tool is invoked in `azsdk` that is known to be repository-specific (i.e. the command requires a package path or a call to get the repository root), it should first check a centralized config in that repository. If the config contains an override entry for the command, call the override specified. If not, fall back to the implementation in the CLI/MCP server (or fail if not implemented).
+When a command/tool is invoked in `azsdk` that is known to be repository-specific (i.e. the command requires a package path or a call to get the repository root), it should first check a centralized config in that repository. If the config contains an override entry for the command, call the override specified. If not, fall back to the implementation in the CLI/MCP server (or fail/no-op if not implemented).
 
 ### Detailed Design
 

@@ -310,23 +310,22 @@ namespace ApiView
 
             // Check if this type contains extension members (proposed C# feature)
             // Extension members are compiler-generated and appear as nested types with names like <G>$...
-            var extensionContainers = namedType.GetTypeMembers()
-                .Where(t => IsExtensionMemberContainer(t))
-                .ToList();
-
-            if (extensionContainers.Any())
+            var extensionContainers = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            
+            // Build extension member blocks and track containers to exclude from regular type processing
+            foreach (var namedTypeSymbol in namedType.GetTypeMembers())
             {
-                // Build extension member blocks
-                foreach (var extensionContainer in extensionContainers)
+                if (IsExtensionMemberContainer(namedTypeSymbol))
                 {
-                    BuildExtensionMemberBlock(builder, extensionContainer, inHiddenScope);
+                    extensionContainers.Add(namedTypeSymbol);
+                    BuildExtensionMemberBlock(builder, namedTypeSymbol, inHiddenScope);
                 }
             }
 
             // Build regular nested types (excluding extension member containers)
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
-                if (!IsExtensionMemberContainer(namedTypeSymbol))
+                if (!extensionContainers.Contains(namedTypeSymbol))
                 {
                     BuildType(builder, namedTypeSymbol, navigationBuilder, inHiddenScope || isHidden);
                 }
@@ -892,7 +891,7 @@ namespace ApiView
                     // Write each extension method
                     foreach (var method in actualExtensionMethods)
                     {
-                        BuildMember(builder, method, inHiddenScope);
+                        BuildMember(builder, method, inHiddenScope || isHidden);
                     }
 
                     // Close the extension block

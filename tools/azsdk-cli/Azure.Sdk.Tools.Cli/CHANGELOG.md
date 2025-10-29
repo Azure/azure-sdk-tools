@@ -7,6 +7,7 @@
 - Add support for generating samples for Azure client libraries across all languages
 - Add tool status in response
 - Disable telemetry in debug mode.
+- Allow forced creation when a release plan already exists
 
 ### Bugs Fixed
 

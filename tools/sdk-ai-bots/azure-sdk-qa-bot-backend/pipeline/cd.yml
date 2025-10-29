@@ -62,6 +62,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
                 echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
                 echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
@@ -75,6 +77,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "$ACR_RESOURCE_GROUP" --query "loginServer" --output tsv)
                 echo "##vso[task.setvariable variable=acrLoginServer]$ACR_LOGIN_SERVER"
                 echo "ACR Login Server: $ACR_LOGIN_SERVER"
@@ -89,7 +93,7 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                set -e
+                set -euo pipefail
                 
                 ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "$ACR_RESOURCE_GROUP" --query "loginServer" --output tsv)
                 
@@ -136,6 +140,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 echo "Checking if image ${IMAGE_NAME}:${IMAGE_TAG} exists in registry ${ACR_NAME}..."
                 
                 if az acr repository show-tags --name "$ACR_NAME" --repository "$IMAGE_NAME" --output tsv | grep -Fxq "$IMAGE_TAG"; then
@@ -181,6 +187,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "$ACR_RESOURCE_GROUP" --query "loginServer" --output tsv)
                 echo "##vso[task.setvariable variable=acrLoginServer]$ACR_LOGIN_SERVER"
                 echo "ACR Login Server: $ACR_LOGIN_SERVER"
@@ -195,16 +203,33 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "$ACR_RESOURCE_GROUP" --query "loginServer" --output tsv)
                 echo "Updating image in ${{ parameters.environment }} environment..."
                 echo "Image: ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}"
                 
-                az webapp config container set \
+                set +e
+                OUTPUT=$(az webapp config container set \
                   --name "$APP_NAME" \
                   --resource-group "$RESOURCE_GROUP" \
                   --container-image-name "${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}" \
-                  --container-registry-url "https://${ACR_LOGIN_SERVER}"
-                
+                  --container-registry-url "https://${ACR_LOGIN_SERVER}" 2>&1)
+                STATUS=$?
+                set -euo pipefail
+
+                echo "$OUTPUT"
+
+                if [ $STATUS -ne 0 ]; then
+                  echo "✗ Failed to update container image" >&2
+                  exit $STATUS
+                fi
+
+                if echo "$OUTPUT" | grep -q "ERROR:"; then
+                  echo "✗ Encountered Azure CLI error while updating container image" >&2
+                  exit 1
+                fi
+
                 echo "✓ Container image updated successfully"
             env:
               APP_NAME: $(APP_NAME)
@@ -221,6 +246,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 echo "Restarting webapp ${APP_NAME}..."
                 az webapp restart --name "$APP_NAME" --resource-group "$RESOURCE_GROUP"
                 echo "✓ Webapp restarted successfully"
@@ -235,6 +262,8 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
+                set -euo pipefail
+
                 echo "Verifying deployment status..."
                 
                 ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "$ACR_RESOURCE_GROUP" --query "loginServer" --output tsv)

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.McpEvals.ToolMocks
+namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
 {
     public static class ToolMocks
     {

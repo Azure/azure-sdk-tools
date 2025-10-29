@@ -1,4 +1,4 @@
-using Azure.Sdk.Tools.McpEvals.Models;
+using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Microsoft.Extensions.AI;
 using AssistantChatMessage = OpenAI.Chat.AssistantChatMessage;
 using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
@@ -6,7 +6,7 @@ using SystemChatMessage = OpenAI.Chat.SystemChatMessage;
 using ToolChatMessage = OpenAI.Chat.ToolChatMessage;
 using UserChatMessage = OpenAI.Chat.UserChatMessage;
 
-namespace Azure.Sdk.Tools.McpEvals.Helpers
+namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public static class ChatMessageHelper
     {

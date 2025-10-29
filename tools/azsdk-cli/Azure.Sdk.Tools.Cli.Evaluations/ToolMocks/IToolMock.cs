@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.AI;
 
-namespace Azure.Sdk.Tools.McpEvals.ToolMocks
+namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
 {
     public interface IToolMock
     {

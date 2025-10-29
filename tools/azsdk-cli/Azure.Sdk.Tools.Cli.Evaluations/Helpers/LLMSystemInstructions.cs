@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Extensions.Logging;
 
-namespace Azure.Sdk.Tools.McpEvals.Helpers
+namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public static class LLMSystemInstructions
     {

@@ -1,12 +1,12 @@
 using System.ClientModel.Primitives;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.McpEvals.Models;
+using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Microsoft.Extensions.AI;
 using MicrosoftExtensionsAIChatExtensions = OpenAI.Chat.MicrosoftExtensionsAIChatExtensions;
 using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
 
-namespace Azure.Sdk.Tools.McpEvals.Helpers
+namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public static class SerializationHelper
     {
@@ -51,7 +51,10 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         {
             // Only process the first message (typically the system message)
             if (chatMessages.Count == 0)
+            {
                 return;
+            }
+                
 
             var firstMessage = chatMessages[0];
             if (firstMessage.Contents[0] is TextContent textContent && !string.IsNullOrEmpty(textContent.Text))

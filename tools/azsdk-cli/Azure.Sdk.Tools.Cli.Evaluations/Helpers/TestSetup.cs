@@ -1,12 +1,11 @@
 using Azure.AI.OpenAI;
 using Azure.Core;
-using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 
-namespace Azure.Sdk.Tools.McpEvals.Helpers
+namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public static class TestSetup
     {

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.AI;
 
-namespace Azure.Sdk.Tools.McpEvals.ToolMocks
+namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
 {
     public class GetPullRequestLinkForCurrentBranch : IToolMock
     {

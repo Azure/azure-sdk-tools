@@ -1,10 +1,9 @@
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
-using Azure.Sdk.Tools.McpEvals.Models;
-using ModelContextProtocol.Client;
+using Azure.Sdk.Tools.Cli.Evaluations.Models;
 
-namespace Azure.Sdk.Tools.McpEvals.Evaluators
+namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 {
    public class ExpectedToolInputEvaluator : IEvaluator
    {

@@ -1,13 +1,10 @@
-using AwesomeAssertions;
-using Azure.Sdk.Tools.McpEvals.Evaluators;
-using Azure.Sdk.Tools.McpEvals.Helpers;
-using Azure.Sdk.Tools.McpEvals.Models;
+using Azure.Sdk.Tools.Cli.Evaluations.Evaluators;
+using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
+using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Microsoft.Extensions.AI.Evaluation;
-using Microsoft.Extensions.AI.Evaluation.Reporting;
-using Microsoft.Extensions.AI.Evaluation.Reporting.Storage;
 using NUnit.Framework;
 
-namespace Azure.Sdk.Tools.McpEvals.Scenarios
+namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     public partial class Scenario
     {
@@ -20,31 +17,29 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
                 "azsdk_run_typespec_validation",
             ];
 
-            // 1. Load Scenario Data from prompt
+            // Build scenario data from prompt
             var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-            var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
-
-            // 2. Get chat response
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
-            var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
 
-            // 3. Custom Evaluator to check tool inputs
-            // Layers the reporting configuration on top of it for a nice html report. 
-            // Could not make this static because each test will have to define what evaluators it wants to use.
-            var reportingConfiguration = DiskBasedReportingConfiguration.Create(
-                executionName: s_executionName,                     // Having a static execution name allows us to see all results in one report
-                storageRootPath: ReportingPath,
-                evaluators: [new ExpectedToolInputEvaluator()],     // In this test we only want to run the ExpectedToolInputEvaluator
-                chatConfiguration: s_chatConfig,
-                enableResponseCaching: true);
-            await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(this.ScenarioName);
+            // External contexts (no deep input checking for this one)
+            bool checkInputs = false;
+            var additionalContexts = new EvaluationContext[]
+            {
+                new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
+            };
 
-            // Pass the expected outcome through the additional context. 
-            var checkInputs = false;
-            var additionalContext = new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs);
-            var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
+            var result = await EvaluationHelper.RunScenarioAsync(
+                scenarioName: this.ScenarioName,
+                scenarioData: scenarioData,
+                expectedToolResults: expectedToolResults,
+                chatCompletion: s_chatCompletion!,
+                chatConfig: s_chatConfig!,
+                executionName: s_executionName,
+                reportingPath: ReportingPath,
+                evaluators: [new ExpectedToolInputEvaluator()],
+                enableResponseCaching: true,
+                additionalContexts: additionalContexts);
 
-            // 4. Assert the results
             EvaluationHelper.ValidateToolInputsEvaluator(result);
         }
     }

@@ -93,7 +93,6 @@ namespace APIViewWeb.Managers
                     return null;
                 }
 
-               
                 PullRequest pullRequest = await githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
                 pullRequestModel = new PullRequestModel()
                 {

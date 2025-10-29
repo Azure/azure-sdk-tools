@@ -78,38 +78,26 @@ export class NavBarComponent implements OnInit {
   }
 
   private checkApproverStatus() {
-    // Use preferredApprovers endpoint which works (requires reviewId)
-    if (!this.userProfile?.userName || !this.isLoggedIn) {
+    if (!this.userProfile?.userName) {
       this.isApprover = false;
-      console.log('User not logged in, hiding Requested Reviews link');
       return;
     }
 
-    // Only check if we have a reviewId in the current route
-    if (!this.reviewId) {
-      this.isApprover = false;
-      console.log('No reviewId in route, hiding Requested Reviews link');
-      return;
-    }
-
-    // Call preferredApprovers API for this specific review
+    // Call the API to get allowed approvers
     const apiUrl = this.configService.apiUrl;
-    const endpoint = `reviews/${this.reviewId}/preferredApprovers`;
+    const endpoint = '/Reviews/allowedApprovers';
     const url = `${apiUrl}${endpoint}`;
 
-    console.log('Fetching preferred approvers for review:', this.reviewId);
-
-    this.http.get<string[]>(url, { withCredentials: true }).subscribe({
-      next: (preferredApprovers) => {
-        console.log('Preferred approvers response:', preferredApprovers);
-        console.log('Current username:', this.userProfile?.userName);
-
-        // Check if current user is in the preferred approvers list
-        this.isApprover = preferredApprovers.includes(this.userProfile?.userName || '');
-        console.log('isApprover result:', this.isApprover);
+    this.http.get<string>(url, { withCredentials: true }).subscribe({
+      next: (allowedApprovers) => {
+        if (allowedApprovers) {
+          // Split comma-separated string and check if current user is in the list
+          const approversList = allowedApprovers.split(',').map(username => username.trim());
+          this.isApprover = approversList.includes(this.userProfile?.userName || '');
+        }
       },
       error: (error) => {
-        console.error('Failed to fetch preferred approvers:', error);
+        console.error('Failed to fetch allowed approvers:', error);
         this.isApprover = false;
       }
     });

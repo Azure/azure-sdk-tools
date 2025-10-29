@@ -212,7 +212,7 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error searching for pull requests with title '{titleSearchTerm}' in {repoOwner}/{repoName}");
+                logger.LogError(ex, "Error searching for pull requests with title '{TitleSearchTerm}' in {RepoOwner}/{RepoName}", titleSearchTerm, repoOwner, repoName);
                 throw;
             }
         }
@@ -242,7 +242,7 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Failed to check for existing pull request for branch {HeadBranch} in repository {RepoOwner}/{RepoName}", headBranch, repoOwner, repoName);
                 response.Messages.Add($"Failed to check for existing pull request for the branch. Error: {ex.Message}");
                 return response;
             }
@@ -404,7 +404,7 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
+                logger.LogError(ex, "Error fetching contents from {Owner}/{RepoName}/{Path}", owner, repoName, path);
                 throw;
             }
         }
@@ -489,7 +489,7 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
+                logger.LogError(ex, "Failed to create branch {BranchName} in {RepoOwner}/{RepoName}", branchName, repoOwner, repoName);
                 throw;
             }
         }
@@ -507,7 +507,7 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error getting branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}");
+                logger.LogError(ex, "Error getting branch '{BranchName}' in {RepoOwner}/{RepoName}", branchName, repoOwner, repoName);
                 return false;
             }
         }

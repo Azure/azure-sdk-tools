@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to get API review links from comments, Error: {ex.Message}");
+                _logger.LogError(ex, "Failed to get API review links from comments");
                 return [];
             }            
         }

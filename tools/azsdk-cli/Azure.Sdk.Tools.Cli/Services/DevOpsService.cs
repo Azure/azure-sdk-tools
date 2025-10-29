@@ -178,7 +178,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         {
                             Language = MapLanguageIdToName(lang),
                             GenerationPipelineUrl = sdkGenPipelineUrl,
-                            SdkPullRequestUrl = sdkPullRequestUrl,          
+                            SdkPullRequestUrl = sdkPullRequestUrl,
                             ReleaseStatus = releaseStatus,
                             PackageName = packageName,
                             ReleaseExclusionStatus = exclusionStatus
@@ -205,7 +205,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to get API spec work item for release plan work item {releasePlan.WorkItemId}. Error: {ex.Message}");
+                logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
             }
 
             return releasePlan;
@@ -250,8 +250,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to get release plan for pull request URL {pullRequestUrl}. Error: {ex.Message}");
-                throw new Exception($"Failed to get release plan for pull request URL {pullRequestUrl}. Error: {ex.Message}");
+                logger.LogError(ex, "Failed to get release plan for pull request URL {PullRequestUrl}", pullRequestUrl);
+                throw new Exception($"Failed to get release plan for pull request URL {pullRequestUrl}.", ex);
             }
 
         }
@@ -301,8 +301,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                var errorMessage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
-                logger.LogError(errorMessage);
+                const string errorMessage = "Failed to create release plan and API spec work items";
+                logger.LogError(ex, errorMessage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
                 {
@@ -312,7 +312,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     await workItemClient.DeleteWorkItemAsync(apiSpecWorkItemId);
                 }
-                throw new Exception(errorMessage);
+                throw new Exception(errorMessage, ex);
             }
         }
 
@@ -492,7 +492,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                             throw new Exception($"Failed to update DevOps work item after multiple retries. Error: {ex.Message}");
                         }
                         await Task.Delay(1000 * retryCount); // Exponential backoff
-                    }                    
+                    }
                 }
                 return false;
             }
@@ -523,7 +523,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get work item. Error: {ex.Message}");
+                throw new Exception($"Failed to get work item. Error: {ex.Message}", ex);
             }
 
         }

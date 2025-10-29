@@ -629,7 +629,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
+                logger.LogError(ex, "Failed to update release plan with language exclusion justification in release plan work item {ReleasePlanWorkItem}", releasePlanWorkItem);
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
             }
         }

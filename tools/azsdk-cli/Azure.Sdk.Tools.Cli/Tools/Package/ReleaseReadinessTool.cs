@@ -163,7 +163,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             catch (Exception ex)
             {
-                logger.LogError("Failed to get pipeline run details. Error: {exception}", ex.Message);
+                logger.LogError(ex, "Failed to get pipeline run details for URL {PipelineRunUrl}", pipelineRunUrl);
                 return $"Failed to get pipeline run details. Error: {ex.Message}";
             }
         }

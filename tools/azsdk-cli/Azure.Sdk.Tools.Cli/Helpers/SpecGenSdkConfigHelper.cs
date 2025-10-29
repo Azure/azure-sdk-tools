@@ -119,10 +119,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return (BuildConfigType.ScriptPath, path);
                 }
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // Path not found either
-                _logger.LogError("No build configuration found");
+                _logger.LogError(ex, "No build configuration found");
             }
 
             throw new InvalidOperationException($"Neither '{BuildCommandJsonPath}' nor '{BuildScriptPathJsonPath}' found in configuration.");

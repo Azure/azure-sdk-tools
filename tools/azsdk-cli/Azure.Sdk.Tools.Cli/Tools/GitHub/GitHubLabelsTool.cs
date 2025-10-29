@@ -174,7 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to create pull request for service label '{label}': {error}", label, ex.Message);
+                logger.LogError(ex, "Failed to create pull request for service label '{Label}'", label);
 
                 return new ServiceLabelResponse
                 {

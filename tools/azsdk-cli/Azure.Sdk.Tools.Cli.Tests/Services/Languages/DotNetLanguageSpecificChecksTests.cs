@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Specialized;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -121,34 +123,24 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
-        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
-        File.WriteAllText(scriptPath, "# Mock PowerShell script");
-
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("All checks passed successfully!");
 
-        _powerShellHelperMock
-            .Setup(x => x.Run(
-                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
-                    p.ScriptPath.Contains("CodeChecks.ps1")),
+        _repositoryScriptServiceMock
+            .Setup(x => x.TryInvoke(
+                "CodeChecks",
+                _packagePath,
+                It.Is<OrderedDictionary>(args => HasExpectedGeneratedCodeArgs(args)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(processResult);
+            .ReturnsAsync((true, processResult));
 
-        try
-        {
-            var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.ExitCode, Is.EqualTo(0));
-                Assert.That(result.CheckStatusDetails, Does.Contain("All checks passed successfully"));
-            });
-        }
-        finally
+        Assert.Multiple(() =>
         {
-            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
-        }
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.CheckStatusDetails, Does.Contain("All checks passed successfully"));
+        });
     }
 
     [TestCase(true)]
@@ -168,21 +160,16 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
-        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
-        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+        var processResult = new ProcessResult { ExitCode = 1 };
+        processResult.AppendStdout(errorMessage);
 
-        _powerShellHelperMock
-            .Setup(x => x.Run(
-                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
-                    p.ScriptPath.Contains("CodeChecks.ps1")),
+        _repositoryScriptServiceMock
+            .Setup(x => x.TryInvoke(
+                "CodeChecks",
+                _packagePath,
+                It.Is<OrderedDictionary>(args => HasExpectedGeneratedCodeServiceDirectory(args)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                var processResult = new ProcessResult { ExitCode = 1 };
-                processResult.AppendStdout(errorMessage);
-                return processResult;
-            });
+            .ReturnsAsync((true, processResult));
 
         var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
@@ -501,6 +488,34 @@ internal class DotNetLanguageSpecificChecksTests
             }
             catch { }
         }
+    }
+
+    private static bool HasExpectedGeneratedCodeArgs(OrderedDictionary args)
+    {
+        if (!HasExpectedGeneratedCodeServiceDirectory(args))
+        {
+            return false;
+        }
+
+        if (!args.Contains("SpellCheckPublicApiSurface"))
+        {
+            return false;
+        }
+
+        var value = args["SpellCheckPublicApiSurface"];
+        return value is bool boolValue && boolValue;
+    }
+
+    private static bool HasExpectedGeneratedCodeServiceDirectory(OrderedDictionary args)
+    {
+        if (args == null || !args.Contains("ServiceDirectory"))
+        {
+            return false;
+        }
+
+        var serviceDirectory = args["ServiceDirectory"];
+        return serviceDirectory != null &&
+            string.Equals(serviceDirectory.ToString(), "healthdataaiservices", StringComparison.Ordinal);
     }
 
     #region Helper Methods for Cross-Platform Command Validation

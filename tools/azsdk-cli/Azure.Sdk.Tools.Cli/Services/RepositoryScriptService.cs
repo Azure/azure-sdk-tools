@@ -141,7 +141,8 @@ public class RepositoryScriptService(
         }
 
         var paramJson = JsonSerializer.Serialize(args, jsonOptions);
-        var command = $"$params = ('{paramJson}' | ConvertFrom-Json -AsHashtable); & {scriptPath} @params";
+        var escapedScriptPath = scriptPath.Replace("'", "''");
+        var command = $"$params = @'\n{paramJson}\n'@ | ConvertFrom-Json -AsHashtable; & '{escapedScriptPath}' @params";
 
         var options = new PowershellOptions(args: [command], workingDirectory: workingDirectory);
         var result = await powershellHelper.Run(options, ct);

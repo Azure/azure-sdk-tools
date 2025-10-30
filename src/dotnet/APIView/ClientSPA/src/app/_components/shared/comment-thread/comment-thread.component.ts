@@ -126,28 +126,13 @@ export class CommentThreadComponent {
     this.menuItemAllUsers.push({
       label: 'Create Github Issue',
       items: [{
-          title: "csharp",
-          label: ".NET",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "java",
-          label: "Java",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "python",
-          label: "Python",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
           title: "c",
           label: "C",
           command: (event) => this.createGitHubIssue(event),
         },
         {
-          title: "javascript",
-          label: "JavaScript",
+          title: "cplusplus",
+          label: "C++",
           command: (event) => this.createGitHubIssue(event),
         },
         {
@@ -156,8 +141,28 @@ export class CommentThreadComponent {
           command: (event) => this.createGitHubIssue(event),
         },
         {
-          title: "cplusplus",
-          label: "C++",
+          title: "java",
+          label: "Java",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "javascript",
+          label: "JavaScript",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "csharp",
+          label: ".NET",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "python",
+          label: "Python",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "rust",
+          label: "Rust",
           command: (event) => this.createGitHubIssue(event),
         },
       ]
@@ -238,26 +243,29 @@ export class CommentThreadComponent {
   createGitHubIssue(event: MenuItemCommandEvent) {
     let repo = "";
     switch (event.item?.title) {
-      case "csharp":
-        repo = "azure-sdk-for-net";
-        break;
-      case "java":
-        repo = "azure-sdk-for-java";
-        break;
-      case "python":
-        repo = "azure-sdk-for-python";
-        break;
       case "c":
         repo = "azure-sdk-for-c";
         break;
-      case "javascript":
-        repo = "azure-sdk-for-js";
+      case "cplusplus":
+        repo = "azure-sdk-for-cpp";
         break;
       case "go":
         repo = "azure-sdk-for-go";
         break;
-      case "cplusplus":
-        repo = "azure-sdk-for-cpp";
+      case "java":
+        repo = "azure-sdk-for-java";
+        break;
+      case "javascript":
+        repo = "azure-sdk-for-js";
+        break;
+      case "csharp":
+        repo = "azure-sdk-for-net";
+        break;
+      case "python":
+        repo = "azure-sdk-for-python";
+        break;
+      case "rust":
+        repo = "azure-sdk-for-rust";
         break;
     }
 

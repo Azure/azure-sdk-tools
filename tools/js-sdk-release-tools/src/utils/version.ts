@@ -162,3 +162,12 @@ export async function isStableSDKReleaseType(apiVersionType: string, options: { 
     }
     return isStableRelease;
 }
+
+export async function isStableSDKReleaseTypeForCli(apiVersionType: string, sdkReleaseType: string | undefined ) {
+    let isStableRelease = apiVersionType != ApiVersionType.Preview;
+    if(sdkReleaseType ) {
+        logger.info(`Detected sdkReleaseType is ${sdkReleaseType}`);
+        isStableRelease = sdkReleaseType == 'stable'
+    }
+    return isStableRelease;
+}

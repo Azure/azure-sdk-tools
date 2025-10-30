@@ -20,14 +20,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var copilotInstructions = await GetCopilotInstructions();
             var linkRegex = new Regex(@"\[([^\]]+)\]\(([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
 
-            foreach (Match match in linkRegex.Matches(copilotInstructions))
+            var matches = linkRegex.Matches(copilotInstructions);
+            var instructionTasks = matches
+                .Select(match => GetMentionedInstructions(match.Groups[2].Value));
+            var instructions = await Task.WhenAll(instructionTasks);
+            foreach (var instruction in instructions)
             {
-                var relativePath = match.Groups[2].Value;
-                var instruction = await GetMentionedInstructions(relativePath);
-
                 copilotInstructions += "\n" + instruction;
             }
-
             return copilotInstructions;
         }
 

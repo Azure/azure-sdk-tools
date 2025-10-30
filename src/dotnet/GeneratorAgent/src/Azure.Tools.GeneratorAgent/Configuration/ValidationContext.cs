@@ -28,45 +28,26 @@ namespace Azure.Tools.GeneratorAgent.Configuration
             ValidatedSdkDir = outputPath;
         }
 
-        public static ValidationContext CreateFromValidatedInputs(string validatedTypeSpecPath, string validatedCommitId, string validatedOutputPath)
-        {
-            return new ValidationContext(validatedTypeSpecPath, validatedCommitId, validatedOutputPath);
-        }
-
         /// <summary>
         /// Checks if this is a GitHub-based workflow (has commit ID).
         /// </summary>
         public bool IsGitHubWorkflow => !string.IsNullOrWhiteSpace(ValidatedCommitId);
 
-        public static Result<ValidationContext> TryValidateAndCreate(
+        public static ValidationContext ValidateAndCreate(
             string? typespecPath, 
             string? commitId, 
             string sdkOutputPath)
         {
             bool isLocalPath = string.IsNullOrWhiteSpace(commitId);
 
-            Result<string> typespecValidation = InputValidator.ValidateTypeSpecDir(typespecPath, isLocalPath);
-            if (typespecValidation.IsFailure)
-            {
-                return Result<ValidationContext>.Failure(typespecValidation.Exception!);
-            }
+            var validatedTypeSpecPath = InputValidator.ValidateandNormalizeTypeSpecDir(typespecPath, isLocalPath);
+            var validatedCommitId = InputValidator.ValidateCommitId(commitId);
+            var validatedOutputPath = InputValidator.ValidateOutputDirectory(sdkOutputPath);
 
-            Result<string> commitValidation = InputValidator.ValidateCommitId(commitId);
-            if (commitValidation.IsFailure)
-            {
-                return Result<ValidationContext>.Failure(commitValidation.Exception!);
-            }
-
-            Result<string> outputValidation = InputValidator.ValidateOutputDirectory(sdkOutputPath);
-            if (outputValidation.IsFailure)
-            {
-                return Result<ValidationContext>.Failure(outputValidation.Exception!);
-            }
-
-            return Result<ValidationContext>.Success(new ValidationContext(
-                typespecValidation.Value!,
-                commitValidation.Value!,
-                outputValidation.Value!));
+            return new ValidationContext(
+                validatedTypeSpecPath,
+                validatedCommitId,
+                validatedOutputPath);
         }
     }
 }

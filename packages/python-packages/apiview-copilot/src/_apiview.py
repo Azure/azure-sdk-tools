@@ -1,12 +1,13 @@
 import asyncio
 import sys
+from dataclasses import dataclass
 from typing import Optional
 
 import httpx
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from src._credential import get_credential
-from src._utils import get_language_pretty_name, to_epoch_seconds
+from src._utils import get_language_pretty_name, to_iso8601
 
 _APIVIEW_COMMENT_SELECT_FIELDS = [
     "id",
@@ -21,15 +22,20 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
     "Upvotes",
     "Downvotes",
     "CommentType",
+    "CommentSource",
 ]
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
 
 
+@dataclass
 class ActiveReviewMetadata:
-    def __init__(self, review_id: str, name: Optional[str], language: str):
-        self.review_id = review_id
-        self.name = name
-        self.language = get_language_pretty_name(language)
+    review_id: str
+    name: Optional[str]
+    language: str
+
+    def __post_init__(self):
+        # Ensure pretty language name normalization
+        self.language = get_language_pretty_name(self.language)
 
 
 selection_type = {
@@ -145,13 +151,19 @@ def get_apiview_cosmos_client(container_name: str, environment: str = "productio
         sys.exit(1)
 
 
-def get_active_reviews(start_date: str, end_date: str, environment: str = "production") -> list[ActiveReviewMetadata]:
+def get_active_reviews(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    omit_languages: Optional[list[str]] = None,
+) -> list[ActiveReviewMetadata]:
     """
     Lists distinct active APIView review IDs in the specified environment during the specified period.
     The definition of "active" is any review that has comments created during the time period.
 
     Returns:
-        list[str] - list of unique ReviewId values considered "active" during the query window.
+        list[ActiveReviewMetadata] - list of metadata objects considered "active" during the query window.
     """
     metadata: list[ActiveReviewMetadata] = []
     active_review_ids = get_active_review_ids(start_date, end_date, environment=environment)
@@ -177,25 +189,13 @@ def get_active_reviews(start_date: str, end_date: str, environment: str = "produ
             # APIView does not distinguish between Java and Android at the review level, but we need to
             language = "Android"
         metadata.append(ActiveReviewMetadata(review_id=review_id, name=review_name, language=language))
+
+    # Filter out omitted languages if specified
+    if omit_languages:
+        omit_lower = {l.lower() for l in omit_languages}
+        metadata = [r for r in metadata if r.language.lower() not in omit_lower]
+
     return metadata
-
-
-def get_comments_in_date_range(start_date: str, end_date: str, environment: str = "production") -> list:
-    """
-    Retrieves all comments created within the specified date range in the given environment.
-    """
-    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
-    start_epoch = to_epoch_seconds(start_date)
-    end_epoch = to_epoch_seconds(end_date, end_of_day=True)
-    result = comments_client.query_items(
-        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
-        parameters=[
-            {"name": "@start_date", "value": start_epoch},
-            {"name": "@end_date", "value": end_epoch},
-        ],
-        enable_cross_partition_query=True,
-    )
-    return list(result)
 
 
 def get_active_review_ids(start_date: str, end_date: str, environment: str = "production") -> list:
@@ -219,3 +219,23 @@ def get_active_review_ids(start_date: str, end_date: str, environment: str = "pr
             review_ids.add(review_id)
 
     return list(review_ids)
+
+
+def get_comments_in_date_range(start_date: str, end_date: str, environment: str = "production") -> list:
+    """
+    Retrieves all comments created within the specified date range in the given environment.
+    Applies ISO8601 midnight/end-of-day formatting to start_date and end_date.
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    result = comments_client.query_items(
+        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
+        parameters=[
+            {"name": "@start_date", "value": start_iso},
+            {"name": "@end_date", "value": end_iso},
+        ],
+        enable_cross_partition_query=True,
+    )
+    return list(result)

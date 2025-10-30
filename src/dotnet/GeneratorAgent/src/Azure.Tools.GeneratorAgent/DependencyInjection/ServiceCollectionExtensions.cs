@@ -1,12 +1,12 @@
-using Azure.AI.Agents.Persistent;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenAI;
+using OpenAI.Chat;
 
 namespace Azure.Tools.GeneratorAgent.DependencyInjection
 {
@@ -36,7 +36,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             return services
                 .AddCredentialServices()
                 .AddHttpClientServices()
-                .AddAzureAIServices()
+                .AddAIServices()
                 .AddApplicationServices();
         }
 
@@ -89,15 +89,29 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         }
 
         /// <summary>
-        /// Adds Azure AI services to the service collection.
+        /// Adds AI services to the service collection.
         /// </summary>
-        private static IServiceCollection AddAzureAIServices(this IServiceCollection services)
+        private static IServiceCollection AddAIServices(this IServiceCollection services)
         {
-            services.AddSingleton<PersistentAgentsClient>(provider =>
+            services.AddSingleton<ChatClient>(provider =>
             {
                 var appSettings = provider.GetRequiredService<AppSettings>();
-                var credential = provider.GetRequiredService<TokenCredential>();
-                return new PersistentAgentsClient(appSettings.ProjectEndpoint, credential);
+                
+                if (!string.IsNullOrEmpty(appSettings.OpenAIApiKey) && !string.IsNullOrEmpty(appSettings.OpenAIEndpoint))
+                {
+                    var apiKeyCredential = new System.ClientModel.ApiKeyCredential(appSettings.OpenAIApiKey);
+                    var deploymentName = appSettings.OpenAIModel;
+                    
+                    return new ChatClient(
+                        credential: apiKeyCredential,
+                        model: deploymentName,
+                        options: new OpenAIClientOptions()
+                        {
+                            Endpoint = new Uri(appSettings.OpenAIEndpoint),
+                        });
+                }
+                
+                throw new InvalidOperationException("OpenAI API key and endpoint not found in configuration. Please set OpenAI:ApiKey and OpenAI:Endpoint in appsettings.json.");
             });
 
             return services;
@@ -110,21 +124,21 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         {
             services.AddSingleton<ProcessExecutionService>();
             services.AddSingleton<FormatPromptService>();
-
-            services.AddScoped<ToolExecutor>();
-            services.AddScoped<ConversationManager>();
-            services.AddScoped<ToolBasedAgent>();
-            services.AddScoped<ErrorAnalysisService>();
-
             services.AddSingleton<TypeSpecFileVersionManager>();
             services.AddSingleton<TypeSpecPatchApplicator>();
+            services.AddSingleton<KnowledgeBaseService>();
 
+            services.AddScoped<ErrorAnalysisService>();
+            services.AddScoped<GenerationOrchestrator>();
+            services.AddScoped<BuildWorkflow>();
             services.AddScoped<LocalLibraryGenerationService>();
             services.AddScoped<LibraryBuildService>();
-
+            services.AddScoped<ToolExecutor>();
             services.AddScoped<TypeSpecFileService>();
             services.AddScoped<GitHubFileService>();
-            services.AddScoped<ITypeSpecToolHandler, TypeSpecToolHandler>();
+            services.AddScoped<TypeSpecToolHandler>();
+
+            services.AddScoped<OpenAIService>();
 
             return services;
         }

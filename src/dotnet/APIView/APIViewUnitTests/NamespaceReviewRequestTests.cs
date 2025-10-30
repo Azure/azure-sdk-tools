@@ -46,7 +46,6 @@ namespace APIViewUnitTests
         private readonly UserProfileCache _userProfileCache;
         private readonly Mock<IHubContext<SignalRHub>> _mockSignalRHubContext;
         private readonly Mock<INotificationManager> _mockNotificationManager;
-        private readonly Mock<IWebHostEnvironment> _mockEnvironment;
         private readonly Mock<IAuthorizationService> _mockAuthorizationService;
         private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
@@ -71,7 +70,6 @@ namespace APIViewUnitTests
             _mockConfiguration = new Mock<IConfiguration>();
             _mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
             _mockNotificationManager = new Mock<INotificationManager>();
-            _mockEnvironment = new Mock<IWebHostEnvironment>();
             _mockAuthorizationService = new Mock<IAuthorizationService>();
             _mockCodeFileManager = new Mock<ICodeFileManager>();
             _mockHttpClientFactory = new Mock<IHttpClientFactory>();
@@ -120,8 +118,7 @@ namespace APIViewUnitTests
                 _userProfileCache,
                 mockLanguageServices,
                 _mockSignalRHubContext.Object,
-                _mockNotificationManager.Object,
-                _mockEnvironment.Object);
+                _mockNotificationManager.Object);
         }
 
         [Fact]

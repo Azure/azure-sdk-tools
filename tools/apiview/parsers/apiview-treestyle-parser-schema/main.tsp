@@ -5,7 +5,7 @@ using Azure.ClientGenerator.Core;
 using TypeSpec.JsonSchema;
 
 @usage(Usage.input | Usage.output)
-@service({title: "Schemas"})
+@service(#{title: "Schemas"})
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
@@ -18,8 +18,8 @@ model CodeFile {
   Language: "C"|"C++"|"C#"|"Go"|"Java"|"JavaScript"|"Kotlin"|"Python"|"Swagger"|"Swift"|"TypeSpec";
   /** Language variant is applicable only for java variants*/
   LanguageVariant?: "None" | "Spring" | "Android" = "None";
-  /** Id to identify Reviews for different languages generated from the same TypeSpec specification. */
-  CrossLanguagePackageId?: string;
+  /** Metadata for different languages generated from the same TypeSpec specification. */
+  CrossLanguageMetadata?: CrossLanguageMetadata;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
   Diagnostics?: Array<CodeDiagnostic>;
@@ -97,6 +97,11 @@ model CodeDiagnostic {
   HelpLinkUri?: string;
 }
 
+model CrossLanguageMetadata {
+  CrossLanguagePackageId: string;
+  CrossLanguageDefinitionId: LanguageIdMap;
+}
+
 enum TokenKind {
   /** Text: Token kind should be set as Text for any plan text token. for e.g documentation, namespace value, or attribute or decorator tokens **/
   Text: 0,
@@ -134,3 +139,10 @@ model NavigationItem {
   ChildItems: Array<NavigationItem>;
   Tags: Record<string>;
 }
+
+/**
+ * Maps a language-specific ID (key) to a TypeSpec ID (value).
+ * Key: Language-specific ID (e.g., 'en-US', 'fr-FR')
+ * Value: Cross-language TypeSpec ID
+ */
+model LanguageIdMap is Record<string>;

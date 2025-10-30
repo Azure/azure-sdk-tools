@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -24,41 +24,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string RunChecksCommandName = "run-checks";
 
-        private readonly Option<bool> fixOption = new(["--fix"], "Enable fix mode for supported checks (like spelling)") { IsRequired = false };
+        private readonly Option<bool> fixOption = new("--fix")
+        {
+            Description = "Enable fix mode for supported checks (like spelling)",
+            Required = false,
+        };
 
         protected override List<Command> GetCommands()
         {
-            var parentCommand = new Command(RunChecksCommandName, "Run validation checks for SDK packages");
             // Add the package path option to the parent command so it can be used without subcommands
-            parentCommand.AddOption(SharedOptions.PackagePath);
-            parentCommand.AddOption(fixOption);
-
-            var commands = new List<Command> { parentCommand };
+            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
 
             // Create sub-commands for each check type
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
             {
                 var checkName = checkType.ToString().ToLowerInvariant();
-                var subCommand = new Command(checkName, $"Run {checkName} validation check");
-                subCommand.AddOption(SharedOptions.PackagePath);
-                subCommand.AddOption(fixOption);
-
-                parentCommand.AddCommand(subCommand);
-                commands.Add(subCommand);
+                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
+                parentCommand.Subcommands.Add(subCommand);
             }
 
-            // Return all commands - parent and subcommands
-            return commands;
+            // Return all commands - parent and subcommands so the handlers get registered
+            return [parentCommand, .. parentCommand.Subcommands];
         }
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
-            var command = ctx.ParseResult.CommandResult.Command;
+            var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
-            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-            var fixCheckErrors = ctx.ParseResult.GetValueForOption(fixOption);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+            var fixCheckErrors = parseResult.GetValue(fixOption);
 
             // If this is the parent command (run-checks), default to All
             if (commandName == RunChecksCommandName)
@@ -100,6 +96,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.CheckAotCompat => await RunCheckAotCompat(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.GeneratedCodeChecks => await RunCheckGeneratedCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Samples => await RunSampleValidation(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -182,6 +181,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 overallSuccess = false;
                 failedChecks.Add("Format");
+            }
+
+            // Run AOT compatibility check
+            var aotCompatResult = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
+            results.Add(aotCompatResult);
+            if (aotCompatResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("AOT Compatibility");
+            }
+
+            // Run generated code check
+            var generatedCodeResult = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+            results.Add(generatedCodeResult);
+            if (generatedCodeResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Generated Code");
+            }
+
+            // Run sample validation
+            var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+            results.Add(sampleValidationResult);
+            if (sampleValidationResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Samples");
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
@@ -323,6 +349,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running code formatting");
 
             var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running generated code checks");
+
+            var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running AOT compatibility checks");
+
+            var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running sample validation");
+
+            var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
     }

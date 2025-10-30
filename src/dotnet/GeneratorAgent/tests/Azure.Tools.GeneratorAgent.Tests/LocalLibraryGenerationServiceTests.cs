@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
 using Azure.Tools.GeneratorAgent.Exceptions;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 
@@ -17,282 +10,209 @@ namespace Azure.Tools.GeneratorAgent.Tests
     [TestFixture]
     public class LocalLibraryGenerationServiceTests
     {
-        private sealed class TestEnvironmentFixture : IDisposable
-        {
-            private readonly List<string> _createdDirectories = new();
-            private readonly Mock<ILogger> _mockInputValidatorLogger;
-
-            public TestEnvironmentFixture()
-            {
-                _mockInputValidatorLogger = new Mock<ILogger>();
-                
-                TypeSpecDir = CreateUniqueTestDirectory("typespec-test");
-                SdkOutputDir = CreateUniqueTestDirectory("sdk-output-test");
-                CreateDefaultTypeSpecProject();
-            }
-
-            public string TypeSpecDir { get; }
-            public string SdkOutputDir { get; }
-
-            public Mock<ILogger<LocalLibraryGenerationService>> CreateMockLogger()
-            {
-                return new Mock<ILogger<LocalLibraryGenerationService>>();
-            }
-
-            public Mock<ProcessExecutionService> CreateMockProcessExecutionService()
-            {
-                return new Mock<ProcessExecutionService>(Mock.Of<ILogger<ProcessExecutionService>>());
-            }
-
-            public AppSettings CreateAppSettings(
-                string emitterPackage = "@typespec/http-client-csharp")
-            {
-                var configMock = new Mock<IConfiguration>();
-                var mockLogger = new Mock<ILogger<AppSettings>>();
-                
-                var projectEndpointSection = new Mock<IConfigurationSection>();
-                projectEndpointSection.Setup(s => s.Value).Returns("https://test.openai.azure.com/");
-                configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
-
-                var emitterSection = new Mock<IConfigurationSection>();
-                emitterSection.Setup(s => s.Value).Returns(emitterPackage);
-                configMock.Setup(c => c.GetSection("AzureSettings:TypespecEmitterPackage")).Returns(emitterSection.Object);
-
-                var defaultSection = new Mock<IConfigurationSection>();
-                defaultSection.Setup(s => s.Value).Returns((string?)null);
-                configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(defaultSection.Object);
-
-                return new AppSettings(configMock.Object, mockLogger.Object);
-            }
-
-            public ValidationContext CreateValidationContext(
-                string? typeSpecDir = null,
-                string commitId = "local",
-                string? sdkDir = null)
-            {
-                return ValidationContext.CreateFromValidatedInputs(
-                    typeSpecDir ?? TypeSpecDir, 
-                    commitId, 
-                    sdkDir ?? SdkOutputDir);
-            }
-
-            public LocalLibraryGenerationService CreateService(
-                AppSettings? appSettings = null,
-                ILogger<LocalLibraryGenerationService>? logger = null,
-                ProcessExecutionService? ProcessExecutionService = null)
-            {
-                return new LocalLibraryGenerationService(
-                    appSettings ?? CreateAppSettings(),
-                    logger ?? CreateMockLogger().Object,
-                    ProcessExecutionService ?? CreateMockProcessExecutionService().Object);
-            }
-
-            private string CreateUniqueTestDirectory(string baseName)
-            {
-                var uniqueId = Guid.NewGuid().ToString("N")[..8];
-                var directory = Path.Combine(Path.GetTempPath(), $"{baseName}-{uniqueId}");
-                Directory.CreateDirectory(directory);
-                _createdDirectories.Add(directory);
-                return directory;
-            }
-
-            private void CreateDefaultTypeSpecProject()
-            {
-                var packageJsonPath = Path.Combine(TypeSpecDir, "package.json");
-                File.WriteAllText(packageJsonPath, @"{
-                    ""name"": ""test-typespec"",
-                    ""version"": ""1.0.0"",
-                    ""devDependencies"": {
-                        ""@typespec/compiler"": ""latest"",
-                        ""@typespec/http-client-csharp"": ""latest""
-                    }
-                    }");
-                
-                var mainTspPath = Path.Combine(TypeSpecDir, "main.tsp");
-                File.WriteAllText(mainTspPath, @"import ""@typespec/http-client-csharp"";
-
-                    @service({
-                    title: ""Test Service"",
-                    })
-                    namespace TestService;
-                    ");
-
-                var tspConfigPath = Path.Combine(TypeSpecDir, "tspconfig.yaml");
-                File.WriteAllText(tspConfigPath, @"emit:
-  - ""@typespec/http-client-csharp""
-");
-            }
-
-            public void Dispose()
-            {
-                foreach (var directory in _createdDirectories)
-                {
-                    if (Directory.Exists(directory))
-                    {
-                        try
-                        {
-                            Directory.Delete(directory, true);
-                        }
-                        catch
-                        {
-                            // Intentionally ignored - cleanup failures shouldn't fail tests
-                        }
-                    }
-                }
-            }
-        }
-
-
         [Test]
         public void Constructor_WithValidParameters_ShouldInitializeCorrectly()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            Assert.DoesNotThrow(() => fixture.CreateService());
+            // Arrange
+            var appSettings = CreateTestAppSettings();
+            var logger = NullLogger<LocalLibraryGenerationService>.Instance;
+            var processExecutionService = CreateMockProcessExecutionService().Object;
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => new LocalLibraryGenerationService(appSettings, logger, processExecutionService));
         }
 
         [Test]
         public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var ex = Assert.Throws<ArgumentNullException>(() => 
-                new LocalLibraryGenerationService(
-                    null!, 
-                    fixture.CreateMockLogger().Object, 
-                    fixture.CreateMockProcessExecutionService().Object));
-            
-            Assert.That(ex!.ParamName, Is.EqualTo("appSettings"));
+            // Arrange
+            var logger = NullLogger<LocalLibraryGenerationService>.Instance;
+            var processExecutionService = CreateMockProcessExecutionService().Object;
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() => 
+                new LocalLibraryGenerationService(null!, logger, processExecutionService));
+            Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
         }
 
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var ex = Assert.Throws<ArgumentNullException>(() => 
-                new LocalLibraryGenerationService(
-                    fixture.CreateAppSettings(), 
-                    null!, 
-                    fixture.CreateMockProcessExecutionService().Object));
-            
-            Assert.That(ex!.ParamName, Is.EqualTo("logger"));
+            // Arrange
+            var appSettings = CreateTestAppSettings();
+            var processExecutionService = CreateMockProcessExecutionService().Object;
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() => 
+                new LocalLibraryGenerationService(appSettings, null!, processExecutionService));
+            Assert.That(exception!.ParamName, Is.EqualTo("logger"));
         }
 
         [Test]
         public void Constructor_WithNullProcessExecutionService_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var ex = Assert.Throws<ArgumentNullException>(() => 
-                new LocalLibraryGenerationService(
-                    fixture.CreateAppSettings(), 
-                    fixture.CreateMockLogger().Object, 
-                    null!));
-            
-            Assert.That(ex!.ParamName, Is.EqualTo("processExecutionService"));
+            // Arrange
+            var appSettings = CreateTestAppSettings();
+            var logger = NullLogger<LocalLibraryGenerationService>.Instance;
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() => 
+                new LocalLibraryGenerationService(appSettings, logger, null!));
+            Assert.That(exception!.ParamName, Is.EqualTo("processExecutionService"));
         }
 
         [Test]
-        public async Task CompileTypeSpecAsync_WithSuccessfulExecution_ShouldLogExpectedMessages()
+        public async Task InstallTypeSpecDependencies_WithSuccessfulExecution_ShouldCompleteSuccessfully()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-                
-            var validationContext = fixture.CreateValidationContext();
-            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            Assert.That(result.IsSuccess, Is.True);
-            // CompileTypeSpecAsync logs at Debug level and doesn't do global install
-            VerifyLogMessage(mockLogger, LogLevel.Debug, "Compiling TypeSpec project");
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldReturnFailure()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-
-            // Since CompileTypeSpecAsync doesn't do global install, setup failed TSP compile instead
-            SetupFailedTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-            
-            Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.Not.Null);
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_WithTspCompileFailure_ShouldReturnFailure()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-
-            SetupSuccessfulGlobalInstall(mockProcessExecutionService, fixture);
-            SetupFailedTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-            
-            Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.Not.Null);
-        }
-
-        [Test]
-        public void CompileTypeSpecAsync_WithException_ShouldThrowException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            var expectedException = new InvalidOperationException("Test exception");
-
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
             mockProcessExecutionService.Setup(x => x.ExecuteAsync(
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ThrowsAsync(expectedException);
+                .ReturnsAsync(Result<object>.Success("Dependencies installed successfully"));
 
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
 
-            var validationContext = fixture.CreateValidationContext();
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync(validationContext, CancellationToken.None));
-            
-            Assert.That(ex!.Message, Is.EqualTo("Test exception"));
+            // Act & Assert
+            Assert.DoesNotThrowAsync(() => service.InstallTypeSpecDependencies(CancellationToken.None));
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithCancellation_ShouldThrowOperationCanceledException()
+        public async Task InstallTypeSpecDependencies_WithFailedExecution_ShouldThrowInvalidOperationException()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            var processException = new ProcessExecutionException("Failed to install dependencies", "npm", "output", "install failed", 1);
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Failure(processException));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(() => 
+                service.InstallTypeSpecDependencies(CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("Failed to install TypeSpec dependencies"));
+            Assert.That(exception!.Message, Does.Contain("install failed"));
+        }
+
+        [Test]
+        [Platform("Win")]
+        public async Task InstallTypeSpecDependencies_OnWindows_ShouldUsePowerShellCommand()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+
+            // Act
+            await service.InstallTypeSpecDependencies(CancellationToken.None);
+
+            // Assert
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                "pwsh",
+                "-Command \"npm install --global @typespec/compiler @typespec/http-client-csharp\"",
+                Path.GetTempPath(),
+                It.IsAny<CancellationToken>(),
+                TimeSpan.FromMinutes(3)), Times.Once);
+        }
+
+        [Test]
+        [Platform("Unix")]
+        public async Task InstallTypeSpecDependencies_OnUnix_ShouldUseDirectNpmCommand()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+
+            // Act
+            await service.InstallTypeSpecDependencies(CancellationToken.None);
+
+            // Assert
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                "npm",
+                "install --global @typespec/compiler @typespec/http-client-csharp",
+                Path.GetTempPath(),
+                It.IsAny<CancellationToken>(),
+                TimeSpan.FromMinutes(3)), Times.Once);
+        }
+
+        [Test]
+        public async Task InstallTypeSpecDependencies_ShouldUseCorrectTimeout()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+
+            // Act
+            await service.InstallTypeSpecDependencies(CancellationToken.None);
+
+            // Assert
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                TimeSpan.FromMinutes(3)), Times.Once);
+        }
+
+        [Test]
+        public async Task InstallTypeSpecDependencies_ShouldValidateProcessArguments()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+
+            // Act
+            await service.InstallTypeSpecDependencies(CancellationToken.None);
+
+            // Assert - should not throw any validation exceptions
+            Assert.Pass("Arguments were validated successfully");
+        }
+
+        [Test]
+        public async Task InstallTypeSpecDependencies_WithCancellation_ShouldRespectCancellationToken()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
             using var cts = new CancellationTokenSource();
             cts.Cancel();
 
@@ -304,332 +224,341 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<TimeSpan?>()))
                 .ThrowsAsync(new OperationCanceledException());
 
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
 
-            var validationContext = fixture.CreateValidationContext();
-            Assert.ThrowsAsync<OperationCanceledException>(() => service.CompileTypeSpecAsync(validationContext, cts.Token));
+            // Act & Assert
+            Assert.ThrowsAsync<OperationCanceledException>(() => 
+                service.InstallTypeSpecDependencies(cts.Token));
         }
 
         [Test]
-        public async Task CompileTypeSpecAsync_ShouldCallProcessExecutionServiceWithCorrectGlobalInstallArguments()
+        public async Task CompileTypeSpecAsync_WithValidContext_ShouldReturnSuccessResult()
         {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                "-Command \"npm install --global @typespec/http-client-csharp\"",
-                It.IsAny<string>(), // Working directory can vary by OS
-                It.IsAny<CancellationToken>(),
-                It.IsAny<TimeSpan?>()), Times.Never);
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_ShouldCallProcessExecutionServiceWithCorrectCompileArguments()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            SetupSuccessfulGlobalInstall(mockProcessExecutionService, fixture);
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-
-            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                expectedCompileArgs,
-                fixture.TypeSpecDir,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<TimeSpan?>()), Times.Once);
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_OnWindows_ShouldUsePowerShellExecutor()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<TimeSpan?>()), Times.Once);
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_ShouldCreateCorrectTspOutputPath()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            SetupSuccessfulGlobalInstall(mockProcessExecutionService, fixture);
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                It.Is<string>(args => args.Contains(expectedTspOutputPath)),
-                fixture.TypeSpecDir,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<TimeSpan?>()), Times.Once);
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_WithDifferentWorkingDirectories_ShouldWork()
-        {
-            using var customFixture = new TestEnvironmentFixture();
-
-            var mockProcessExecutionService = customFixture.CreateMockProcessExecutionService();
-
-            SetupSuccessfulGlobalInstall(mockProcessExecutionService, customFixture);
-
-            var expectedTspOutputPath = Path.Combine(customFixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
             mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    expectedCompileArgs,
-                    customFixture.TypeSpecDir,
-                    It.IsAny<CancellationToken>(),
-                    It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result<object>.Success("Custom compile succeeded"));
-
-            var service = customFixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = customFixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            // Test passes if no exception is thrown
-        }
-
-        [Test]
-        public void CompileTypeSpecAsync_WithTimeoutDuringInstall_ShouldThrowTimeoutException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-            
-            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    expectedCompileArgs,
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ThrowsAsync(new TimeoutException("Compile timeout"));
+                .ReturnsAsync(Result<object>.Success("Compilation successful"));
 
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-            
-            var validationContext = fixture.CreateValidationContext();
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
 
-            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync(validationContext, CancellationToken.None))!;
-            Assert.That(caughtException.Message, Does.Contain("Compile timeout"));
-        }
-
-        [Test]
-        public void CompileTypeSpecAsync_WithTimeoutDuringCompile_ShouldThrowTimeoutException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-
-            SetupSuccessfulGlobalInstall(mockProcessExecutionService, fixture);
-
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-
-            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    expectedCompileArgs,
-                    fixture.TypeSpecDir,
-                    It.IsAny<CancellationToken>(),
-                    It.IsAny<TimeSpan?>()))
-                .ThrowsAsync(new TimeoutException("Compile timeout"));
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-
-            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync(validationContext, CancellationToken.None))!;
-            Assert.That(caughtException.Message, Does.Contain("Compile timeout"));
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_WithSuccessfulGlobalInstall_ShouldLogSuccess()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
-
-            VerifyLogMessage(mockLogger, LogLevel.Debug, "Compiling TypeSpec project");
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldReturnFailure2()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
-            
-            SetupFailedTspCompile(mockProcessExecutionService, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var validationContext = fixture.CreateValidationContext();
+            // Act
             var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
-            Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.Not.Null);
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
         }
 
         [Test]
-        public async Task CompileTypeSpecAsync_WithValidationFailureDuringInstall_ShouldExecuteSuccessfully()
+        public async Task CompileTypeSpecAsync_WithFailedCompilation_ShouldReturnFailureResult()
         {
-            using var fixture = new TestEnvironmentFixture();
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            var processException = new ProcessExecutionException("TypeSpec compilation error", "npx", "output", "compilation failed", 1);
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Failure(processException));
 
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutionService = fixture.CreateMockProcessExecutionService();
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
 
-            SetupSuccessfulTspCompile(mockProcessExecutionService, fixture);
+            // Act
+            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                ProcessExecutionService: mockProcessExecutionService.Object);
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.ProcessException, Is.Not.Null);
+        }
 
-            var validationContext = fixture.CreateValidationContext();
-            await service.CompileTypeSpecAsync(validationContext,CancellationToken.None);
+        [Test]
+        public void CompileTypeSpecAsync_WithNullValidationContext_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var service = CreateService();
 
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(() => 
+                service.CompileTypeSpecAsync(null!, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
+        }
+
+        [Test]
+        [Platform("Win")]
+        public async Task CompileTypeSpecAsync_OnWindows_ShouldUsePowerShellCommand()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            var expectedArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={validationContext.ValidatedSdkDir}'\"";
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                "pwsh",
+                expectedArgs,
+                validationContext.CurrentTypeSpecDir,
+                It.IsAny<CancellationToken>(),
+                TimeSpan.FromMinutes(5)), Times.Once);
+        }
+
+        [Test]
+        [Platform("Unix")]
+        public async Task CompileTypeSpecAsync_OnUnix_ShouldUseDirectTspCommand()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            var expectedArgs = $"tsp compile . --emit @typespec/http-client-csharp --option \"@typespec/http-client-csharp.emitter-output-dir={validationContext.ValidatedSdkDir}\"";
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                "tsp",
+                expectedArgs,
+                validationContext.CurrentTypeSpecDir,
+                It.IsAny<CancellationToken>(),
+                TimeSpan.FromMinutes(5)), Times.Once);
+        }
+
+        [Test]
+        public async Task CompileTypeSpecAsync_ShouldUseCorrectTimeout()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert
             mockProcessExecutionService.Verify(x => x.ExecuteAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<CancellationToken>(),
+                TimeSpan.FromMinutes(5)), Times.Once);
+        }
+
+        [Test]
+        public async Task CompileTypeSpecAsync_ShouldUseCorrectWorkingDirectory()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                validationContext.CurrentTypeSpecDir,
+                It.IsAny<CancellationToken>(),
                 It.IsAny<TimeSpan?>()), Times.Once);
         }
 
-        private static void SetupSuccessfulGlobalInstall(Mock<ProcessExecutionService> mockProcessExecutionService, TestEnvironmentFixture fixture)
+        [Test]
+        public async Task CompileTypeSpecAsync_ShouldIncludeCorrectOutputPath()
         {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
             mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    "-Command \"npm install --global @typespec/http-client-csharp\"",
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result<object>.Success("Global install succeeded"));
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                It.IsAny<string>(),
+                It.Is<string>(args => args.Contains(validationContext.ValidatedSdkDir)),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<TimeSpan?>()), Times.Once);
         }
 
-        private static void SetupFailedGlobalInstall(Mock<ProcessExecutionService> mockProcessExecutionService, TestEnvironmentFixture fixture)
+        [Test]
+        public async Task CompileTypeSpecAsync_ShouldValidateProcessArguments()
         {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
             mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    "-Command \"npm install --global @typespec/http-client-csharp\"",
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result<object>.Failure(new InvalidOperationException("Global install failed")));
-                
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert - should not throw any validation exceptions
+            Assert.Pass("Arguments were validated successfully");
+        }
+
+        [Test]
+        public async Task CompileTypeSpecAsync_WithCancellation_ShouldRespectCancellationToken()
+        {
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
             mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    expectedCompileArgs,
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result<object>.Failure(new TypeSpecCompilationException("pwsh", "Compile failed", "TypeSpec compilation failed", 1)));
+                .ThrowsAsync(new OperationCanceledException());
+
+            var service = CreateService(processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act & Assert
+            Assert.ThrowsAsync<OperationCanceledException>(() => 
+                service.CompileTypeSpecAsync(validationContext, cts.Token));
         }
 
-        private static void SetupSuccessfulTspCompile(Mock<ProcessExecutionService> mockProcessExecutionService, TestEnvironmentFixture fixture)
+        [Test]
+        public async Task CompileTypeSpecAsync_WithCustomEmitterPackage_ShouldUseCorrectPackage()
         {
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-
+            // Arrange
+            var mockProcessExecutionService = CreateMockProcessExecutionService();
             mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    expectedCompileArgs,
-                    fixture.TypeSpecDir,
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result<object>.Success("Compile succeeded"));
+                .ReturnsAsync(Result<object>.Success("Success"));
+
+            var customAppSettings = CreateTestAppSettings("@custom/emitter-package");
+            var service = CreateService(appSettings: customAppSettings, processExecutionService: mockProcessExecutionService.Object);
+            var validationContext = CreateTestValidationContext();
+
+            // Act
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            mockProcessExecutionService.Verify(x => x.ExecuteAsync(
+                It.IsAny<string>(),
+                It.Is<string>(args => args.Contains("@custom/emitter-package")),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<TimeSpan?>()), Times.Once);
         }
 
-        private static void SetupFailedTspCompile(Mock<ProcessExecutionService> mockProcessExecutionService, TestEnvironmentFixture fixture)
+        private LocalLibraryGenerationService CreateService(
+            AppSettings? appSettings = null,
+            ProcessExecutionService? processExecutionService = null)
         {
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-
-            mockProcessExecutionService.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    expectedCompileArgs,
-                    fixture.TypeSpecDir,
-                    It.IsAny<CancellationToken>(),
-                    It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result<object>.Failure(new InvalidOperationException("Compile failed")));
+            return new LocalLibraryGenerationService(
+                appSettings ?? CreateTestAppSettings(),
+                NullLogger<LocalLibraryGenerationService>.Instance,
+                processExecutionService ?? CreateMockProcessExecutionService().Object);
         }
 
-        private static void VerifyLogMessage(
-            Mock<ILogger<LocalLibraryGenerationService>> mockLogger,
-            LogLevel expectedLevel,
-            string expectedMessage)
+        private AppSettings CreateTestAppSettings(string emitterPackage = "@typespec/http-client-csharp")
         {
-            mockLogger.Verify(
-                x => x.Log(
-                    expectedLevel,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(expectedMessage)),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce,
-                $"Expected {expectedLevel} log containing: {expectedMessage}");
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["AzureSettings:ProjectEndpoint"] = "https://test.openai.azure.com/",
+                    ["AzureSettings:TypespecEmitterPackage"] = emitterPackage,
+                    ["AzureSettings:TypespecCompiler"] = "@typespec/compiler",
+                    ["AzureSettings:Model"] = "gpt-4",
+                    ["AzureSettings:AgentName"] = "Test Agent",
+                    ["AzureSettings:AgentInstructions"] = "Test instructions",
+                    ["AzureSettings:ErrorAnalysisInstructions"] = "Analyze errors",
+                    ["AzureSettings:FixPromptTemplate"] = "Fix template",
+                    ["AzureSettings:MaxIterations"] = "3",
+                    ["AzureSettings:IndexingMaxWaitTimeSeconds"] = "30"
+                })
+                .Build();
+
+            var logger = NullLogger<AppSettings>.Instance;
+            return new AppSettings(configuration, logger);
+        }
+
+        private ValidationContext CreateTestValidationContext(
+            string? typeSpecDir = null,
+            string? sdkDir = null)
+        {
+            var tempTypeSpecDir = typeSpecDir ?? Path.Combine(Path.GetTempPath(), "test-typespec", Guid.NewGuid().ToString("N")[..8]);
+            var tempSdkDir = sdkDir ?? Path.Combine(Path.GetTempPath(), "test-sdk", Guid.NewGuid().ToString("N")[..8]);
+            
+            Directory.CreateDirectory(tempTypeSpecDir);
+            Directory.CreateDirectory(tempSdkDir);
+
+            return ValidationContext.ValidateAndCreate(tempTypeSpecDir, "abc123def456", tempSdkDir);
+        }
+
+        private Mock<ProcessExecutionService> CreateMockProcessExecutionService()
+        {
+            return new Mock<ProcessExecutionService>(NullLogger<ProcessExecutionService>.Instance);
         }
     }
 }

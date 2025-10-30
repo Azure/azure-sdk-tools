@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -13,7 +12,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
-using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -51,12 +49,23 @@ namespace APIViewWeb.Managers
         private readonly ILogger<ReviewManager> _logger;
 
         public ReviewManager (
-            IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
-            IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
-            IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
+            IAuthorizationService authorizationService, 
+            ICosmosReviewRepository reviewsRepository,
+            IAPIRevisionsManager apiRevisionsManager, 
+            ICommentsManager commentManager,
+            IBlobCodeFileRepository codeFileRepository,
+            ICosmosCommentsRepository commentsRepository, 
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
-            IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager, ICosmosPullRequestsRepository pullRequestsRepository, ILogger<ReviewManager> logger)
+            IHubContext<SignalRHub> signalRHubContext,
+            IEnumerable<LanguageService> languageServices,
+            TelemetryClient telemetryClient, 
+            ICodeFileManager codeFileManager,
+            IConfiguration configuration, 
+            IHttpClientFactory httpClientFactory, 
+            IPollingJobQueueManager pollingJobQueueManager,
+            INotificationManager notificationManager,
+            ICosmosPullRequestsRepository pullRequestsRepository, 
+            ILogger<ReviewManager> logger)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -238,8 +247,9 @@ namespace APIViewWeb.Managers
         /// <param name="packageName"></param>
         /// <param name="language"></param>
         /// <param name="isClosed"></param>
+        /// <param name="packageType">Optional package type. If not provided, will be automatically classified.</param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed=true)
+        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null)
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(language)) 
             {
@@ -250,6 +260,7 @@ namespace APIViewWeb.Managers
             {
                 PackageName = packageName,
                 Language = language,
+                PackageType = packageType,
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,
@@ -263,6 +274,22 @@ namespace APIViewWeb.Managers
                     }
                 }
             };
+
+            await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
+        }
+
+        /// <summary>
+        /// Update an existing review
+        /// </summary>
+        /// <param name="review">The review to update</param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> UpdateReviewAsync(ReviewListItemModel review)
+        {
+            if (review == null)
+            {
+                throw new ArgumentNullException(nameof(review));
+            }
 
             await _reviewsRepository.UpsertReviewAsync(review);
             return review;

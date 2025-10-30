@@ -6,7 +6,7 @@
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
 - [Design Proposal](#design-proposal)
-- [Alternatives Considered](#alternatives-considered) _(optional)_
+- [Alternatives Considered](#alternatives-considered-optional) _(optional)_
 - [Open Questions](#open-questions)
 - [Success Criteria](#success-criteria)
 - [Agent Prompts](#agent-prompts)

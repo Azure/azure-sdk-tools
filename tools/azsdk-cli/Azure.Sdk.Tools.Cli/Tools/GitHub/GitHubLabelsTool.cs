@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -27,27 +27,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         private const string createServiceLabelCommandName = "create-service-label";
 
         // Command options
-        private readonly Option<string> serviceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
-        private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
+        private readonly Option<string> serviceLabelOpt = new("--service", "-s")
+        {
+            Description = "Proposed Service name used to create a PR for a new label.",
+            Required = true,
+        };
 
-        protected override List<Command> GetCommands() => [
-            new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
-            new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
+        private readonly Option<string> documentationLinkOpt = new("--link", "-l")
+        {
+            Description = "Brand documentation link used to create a PR for a new label.",
+            Required = true,
+        };
+
+        protected override List<Command> GetCommands() =>
+        [
+            new(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
+            new(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
         ];
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            var commandParser = ctx.ParseResult;
+            var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
             {
                 case checkServiceLabelCommandName:
-                    var serviceLabel = commandParser.GetValueForOption(serviceLabelOpt);
+                    var serviceLabel = parseResult.GetValue(serviceLabelOpt);
                     return await CheckServiceLabel(serviceLabel);
                 case createServiceLabelCommandName:
-                    var proposedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
-                    var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
+                    var proposedServiceLabel = parseResult.GetValue(serviceLabelOpt);
+                    var documentationLink = parseResult.GetValue(documentationLinkOpt);
                     return await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };

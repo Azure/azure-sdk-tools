@@ -17,13 +17,26 @@ gh auth status
 
 if ($LASTEXITCODE -ne 0) {
   Write-Error "Please login via gh auth login"
-  exit 1
+  exit $LASTEXITCODE
 }
 
 $ToolsRepo = "Azure/azure-sdk-tools"
 
 $ghloggedInUser = (gh api user -q .login)
 # Get a temp access token from the logged in az cli user for azure devops resource
+$account = (az account show -o json | ConvertFrom-Json)
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Az login failed, try logging in again."
+  exit $LASTEXITCODE
+}
+if ($account.homeTenantId -ne "72f988bf-86f1-41af-91ab-2d7cd011db47") {
+  Write-Host "Currently not logged into correct tenant so setting the subscription to EngSys sub in the correct tenant so token will be valid."
+  az account set -s "a18897a6-7e44-457d-9260-f2854c0aca42"
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to set Azure subscription. Please check your permissions and try again."
+    exit $LASTEXITCODE
+  }
+}
 $jwt_accessToken = (az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv)
 $headers = @{ Authorization = "Bearer $jwt_accessToken" }
 

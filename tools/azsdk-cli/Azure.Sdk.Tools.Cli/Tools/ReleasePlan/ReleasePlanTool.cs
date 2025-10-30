@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
@@ -35,18 +35,78 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string sdkBotEmail = "azuresdk@microsoft.com";
 
         // Options
-        private readonly Option<int> releasePlanNumberOpt = new(["--release-plan-id",], "Release Plan ID") { IsRequired = false };
-        private readonly Option<int> workItemIdOpt = new(["--work-item-id", "-w"], "Work Item ID") { IsRequired = false };
-        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-path"], "Path to TypeSpec project") { IsRequired = true };
-        private readonly Option<string> targetReleaseOpt = new(["--release-month"], "SDK release target month(Month YYYY)") { IsRequired = true };
-        private readonly Option<string> serviceTreeIdOpt = new(["--service-tree"], "Service tree ID") { IsRequired = true };
-        private readonly Option<string> productTreeIdOpt = new(["--product"], "Product service tree ID") { IsRequired = true };
-        private readonly Option<string> apiVersionOpt = new(["--api-version"], "API version") { IsRequired = true };
-        private readonly Option<string> pullRequestOpt = new(["--pull-request"], "Api spec pull request URL") { IsRequired = true };
-        private readonly Option<string> sdkReleaseTypeOpt = new(["--sdk-type"], "SDK release type: beta or preview") { IsRequired = true };
-        private readonly Option<bool> isTestReleasePlanOpt = new(["--test-release"], () => false, "Create release plan in test environment") { IsRequired = false };
-        private readonly Option<string> userEmailOpt = new(["--user-email"], "User email for release plan creation") { IsRequired = false };
-        private readonly Option<string> namespaceApprovalIssueOpt = new Option<string>(["--namespace-approval-issue"], "Namespace approval issue URL") { IsRequired = true };
+        private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id")
+        {
+            Description = "Release Plan ID",
+            Required = false,
+        };
+
+        private readonly Option<int> workItemIdOpt = new("--work-item-id", "-w")
+        {
+            Description = "Work Item ID",
+            Required = false,
+        };
+
+        private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-path")
+        {
+            Description = "Path to TypeSpec project",
+            Required = true,
+        };
+
+        private readonly Option<string> targetReleaseOpt = new("--release-month")
+        {
+            Description = "SDK release target month(Month YYYY)",
+            Required = true,
+        };
+
+        private readonly Option<string> serviceTreeIdOpt = new("--service-tree")
+        {
+            Description = "Service tree ID",
+            Required = true,
+        };
+
+        private readonly Option<string> productTreeIdOpt = new("--product")
+        {
+            Description = "Product service tree ID",
+            Required = true,
+        };
+
+        private readonly Option<string> apiVersionOpt = new("--api-version")
+        {
+            Description = "API version",
+            Required = true,
+        };
+
+        private readonly Option<string> pullRequestOpt = new("--pull-request")
+        {
+            Description = "Api spec pull request URL",
+            Required = true,
+        };
+
+        private readonly Option<string> sdkReleaseTypeOpt = new("--sdk-type")
+        {
+            Description = "SDK release type: beta or preview",
+            Required = true,
+        };
+
+        private readonly Option<bool> isTestReleasePlanOpt = new("--test-release")
+        {
+            Description = "Create release plan in test environment",
+            Required = false,
+            DefaultValueFactory = _ => false,
+        };
+
+        private readonly Option<string> userEmailOpt = new("--user-email")
+        {
+            Description = "User email for release plan creation",
+            Required = false,
+        };
+
+        private readonly Option<string> namespaceApprovalIssueOpt = new("--namespace-approval-issue")
+        {
+            Description = "Namespace approval issue URL",
+            Required = true,
+        };
 
         //Namespace approval repo details
         private const string namespaceApprovalRepoName = "azure-sdk";
@@ -64,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
-        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/[0-9]+\\/?")]
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-rest-api-specs\\/pull\\/[0-9]+\\/?")]
         private static partial Regex PullRequestUrlRegex();
 
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}(-preview)?$")]
@@ -72,36 +132,57 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},
-            new(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt, sdkReleaseTypeOpt, userEmailOpt, isTestReleasePlanOpt },
+            new(getReleasePlanDetailsCommandName, "Get release plan details") { workItemIdOpt, releasePlanNumberOpt },
+            new(createReleasePlanCommandName, "Create a release plan")
+            {
+                typeSpecProjectPathOpt,
+                targetReleaseOpt,
+                serviceTreeIdOpt,
+                productTreeIdOpt,
+                apiVersionOpt,
+                pullRequestOpt,
+                sdkReleaseTypeOpt,
+                userEmailOpt,
+                isTestReleasePlanOpt,
+            },
             new(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan") { workItemIdOpt, namespaceApprovalIssueOpt }
         ];
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var commandParser = ctx.ParseResult;
+            var commandParser = parseResult;
             var command = commandParser.CommandResult.Command.Name;
             switch (command)
             {
                 case getReleasePlanDetailsCommandName:
-                    var workItemId = commandParser.GetValueForOption(workItemIdOpt);
-                    var releasePlanNumber = commandParser.GetValueForOption(releasePlanNumberOpt);
+                    var workItemId = commandParser.GetValue(workItemIdOpt);
+                    var releasePlanNumber = commandParser.GetValue(releasePlanNumberOpt);
                     return await GetReleasePlan(workItem: workItemId, releasePlanId: releasePlanNumber);
 
                 case createReleasePlanCommandName:
-                    var typeSpecProjectPath = commandParser.GetValueForOption(typeSpecProjectPathOpt);
-                    var targetReleaseMonthYear = commandParser.GetValueForOption(targetReleaseOpt);
-                    var serviceTreeId = commandParser.GetValueForOption(serviceTreeIdOpt);
-                    var productTreeId = commandParser.GetValueForOption(productTreeIdOpt);
-                    var specApiVersion = commandParser.GetValueForOption(apiVersionOpt);
-                    var specPullRequestUrl = commandParser.GetValueForOption(pullRequestOpt);
-                    var sdkReleaseType = commandParser.GetValueForOption(sdkReleaseTypeOpt);
-                    var isTestReleasePlan = commandParser.GetValueForOption(isTestReleasePlanOpt);
-                    var userEmail = commandParser.GetValueForOption(userEmailOpt);
-                    return await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
+                    var typeSpecProjectPath = commandParser.GetValue(typeSpecProjectPathOpt);
+                    var targetReleaseMonthYear = commandParser.GetValue(targetReleaseOpt);
+                    var serviceTreeId = commandParser.GetValue(serviceTreeIdOpt);
+                    var productTreeId = commandParser.GetValue(productTreeIdOpt);
+                    var specApiVersion = commandParser.GetValue(apiVersionOpt);
+                    var specPullRequestUrl = commandParser.GetValue(pullRequestOpt);
+                    var sdkReleaseType = commandParser.GetValue(sdkReleaseTypeOpt);
+                    var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
+                    var userEmail = commandParser.GetValue(userEmailOpt);
+                    return await CreateReleasePlan(
+                        typeSpecProjectPath,
+                        targetReleaseMonthYear,
+                        serviceTreeId,
+                        productTreeId,
+                        specApiVersion,
+                        specPullRequestUrl,
+                        sdkReleaseType,
+                        userEmail: userEmail,
+                        isTestReleasePlan: isTestReleasePlan
+                    );
 
                 case linkNamespaceApprovalIssueCommandName:
-                    return await LinkNamespaceApprovalIssue(commandParser.GetValueForOption(workItemIdOpt), commandParser.GetValueForOption(namespaceApprovalIssueOpt));
+                    return await LinkNamespaceApprovalIssue(commandParser.GetValue(workItemIdOpt), commandParser.GetValue(namespaceApprovalIssueOpt));
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -170,7 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             if (!match.Success)
             {
-                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
+                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}'. It should be a valid GitHub pull request to azure-rest-api-specs repo.");
             }
 
         }

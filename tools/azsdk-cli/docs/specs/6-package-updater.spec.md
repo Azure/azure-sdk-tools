@@ -262,7 +262,7 @@ Execution Steps:
 Outputs:
 
 ```json
-{"result":"succeeded", "changed_files":["..\\pom.xml","C:\\dev\\repos\\azure-sdk-for-java\\pom.xml"], "changed_count": 2, "message":"All relevant pom.xml files have been updated."}
+{"result":"succeeded", "changed_files":["..\\pom.xml","C:\\dev\\repos\\azure-sdk-for-java\\pom.xml"], "changed_files_count": 2, "message":"All relevant pom.xml files have been updated."}
 ```
 
 ```json

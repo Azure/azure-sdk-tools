@@ -253,11 +253,16 @@ class EvalsRunner:
         all_results = {}
         evaluators = {}
         evaluator_config = {}
+        metrics = evaluator_filter if evaluator_filter is not None else self._evaluators.keys()
         for index, (key, value) in enumerate(self._evaluators.items()):
             if (evaluator_filter is None or key in evaluator_filter):
                 evaluators[key] = value.evaluator
                 evaluator_config[key] = value.evaluator_config
-
+        
+        if not evaluators or not evaluator_config:
+            logging.info("No evaluators. return empty result")
+            return {}
+        
         output_file_dir = asyncio.run(self._prepare_dataset(test_folder, prefix, need_retrieve_response))    
         for output_file in output_file_dir.glob("*.jsonl"):
             result = evaluate(
@@ -274,7 +279,7 @@ class EvalsRunner:
             )
             # print("✅ Evaluation completed. Results:", result)
             logging.info("✅ Evaluation completed.")
-            run_result = record_run_result(result)
+            run_result = record_run_result(result, metrics)
             all_results[output_file.name] = run_result
         
         return all_results

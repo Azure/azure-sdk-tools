@@ -5,7 +5,7 @@ import os
 import sys
 from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
 from _evals_result import build_output_table, establish_baseline, show_results, verify_results
 
@@ -62,6 +62,7 @@ if __name__ == "__main__":
             "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
             "api_version": os.environ["AZURE_API_VERSION"],
         }
+
         similarity_threshold = os.environ.get("SIMILARITY_THRESHOLD", 3)
         simialirty_evaluator = SimilarityEvaluator(model_config=model_config, threshold=similarity_threshold)
         groundedness_evaluator = GroundednessEvaluator(model_config=model_config)
@@ -72,15 +73,24 @@ if __name__ == "__main__":
             "testcase": "${data.testcase}"
         }})
 
-        groundedness_class = EvaluatorClass("similarity", groundedness_evaluator, {"column_mapping": {
+        groundedness_class = EvaluatorClass("groundedness", groundedness_evaluator, {"column_mapping": {
             "query": "${data.query}",
             "response": "${data.response}",
             "context": "${data.context}",
             "testcase": "${data.testcase}"
         }})
+
+        response_completion_evaluator = ResponseCompletenessEvaluator(model_config=model_config)
+        response_completion_class = EvaluatorClass("response_completeness", response_completion_evaluator, {"column_mapping": {
+            "response": "${data.response}",
+            "ground_truth": "${data.ground_truth}",
+            "testcase": "${data.testcase}"
+        }})
+
         evaluators = {
             "similarity": simiarity_class,
-            "groundedness": groundedness_class
+            "groundedness": groundedness_class,
+            "response_completeness": response_completion_class
         }
         # evaluators = {
         #     "similarity": EvaluatorClass("similarity", simialirty_evaluator, {"column_mapping": {
@@ -116,7 +126,9 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         sys.exit(1)
-    
+
+    metrics = args.evaluators if args.evaluators is not None else evals_runner.evaluators.keys()
+
     if (args.cache_result) :
         now = datetime.now()
         result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime("%Y-%m-%d-%H-%S")}"), 'a', encoding='utf-8')
@@ -139,13 +151,13 @@ if __name__ == "__main__":
             #         "groundedness_result": result["similarity_result"]
             #     }
             #     result_file.write(json.dumps(data, ensure_ascii=False) + '\n')
-            result_file.write(build_output_table(test_results))
+            result_file.write(build_output_table(test_results, metrics))
         result_file.flush()
         result_file.close()
     
-    show_results(all_results, args.baseline_check)
+    show_results(all_results, metrics, args.baseline_check)
     if args.baseline_check:
         establish_baseline(all_results, args.is_cli)
-    isPass = verify_results(all_results, args.baseline_check)
+    isPass = verify_results(all_results, metrics, args.baseline_check)
     if not isPass:
         sys.exit(1)

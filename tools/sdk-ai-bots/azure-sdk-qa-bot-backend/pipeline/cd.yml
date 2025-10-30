@@ -14,6 +14,8 @@ parameters:
       - prod
 
 variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
   - ${{ if eq(parameters.environment, 'dev') }}:
     - group: 'Azure SDK QA Bot Dev Variables'
   - ${{ if eq(parameters.environment, 'preview') }}:
@@ -32,9 +34,9 @@ stages:
       - job: RunDeploy
         displayName: 'Run Deploy Flow'
         pool:
-            name: $(LINUXPOOL)
-            image: $(LINUXVMIMAGE)
-            os: linux
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
         steps:
           # 1. Checkout
           - checkout: self

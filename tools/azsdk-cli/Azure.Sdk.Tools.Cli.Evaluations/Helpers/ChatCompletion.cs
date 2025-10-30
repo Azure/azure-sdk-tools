@@ -20,7 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var conversationMessages = chat.ToList();
             var chatOptions = new ChatOptions
             {
-                Tools = [.. tools]
+                Tools = [.. tools],
+                AllowMultipleToolCalls = false
             };
             var response = await _chatClient.GetResponseAsync(chat, chatOptions);
             var chatInitialIndex = conversationMessages.Count;

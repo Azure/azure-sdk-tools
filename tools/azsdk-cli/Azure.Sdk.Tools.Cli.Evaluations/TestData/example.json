@@ -70,7 +70,7 @@
       {
         "id": "tooluse_aDCFmvLOQi2o_aH7IpE_ug",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_typespec_check_project_in_public_repo",
+          "name": "azsdk_typespec_check_project_in_public_repo",
           "arguments": "{\"typeSpecProjectPath\": \"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\"}"
         },
         "type": "function"

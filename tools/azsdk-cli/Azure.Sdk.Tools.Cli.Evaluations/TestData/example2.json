@@ -83,7 +83,7 @@
       {
         "id": "call_7lBYHdh1PVXIh15lgIFbSHiG",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_typespec_check_project_in_public_repo",
+          "name": "azsdk_typespec_check_project_in_public_repo",
           "arguments": "{\"typeSpecProjectPath\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\"}"
         },
         "type": "function"
@@ -139,7 +139,7 @@
       {
         "id": "call_rx9loGDfo4sM9hhCc4eWPyAE",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_run_typespec_validation",
+          "name": "azsdk_run_typespec_validation",
           "arguments": "{\"typeSpecProjectRootPath\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\"}"
         },
         "type": "function"
@@ -158,7 +158,7 @@
       {
         "id": "call_ObOesBYKm6YNDL4v64oQD7Eb",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_run_typespec_validation",
+          "name": "azsdk_run_typespec_validation",
           "arguments": "{\"typeSpecProjectRootPath\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\"}"
         },
         "type": "function"
@@ -196,7 +196,7 @@
       {
         "id": "call_ZugfNs7d7PbVFhcbcgW4cWlA",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_get_modified_typespec_projects",
+          "name": "azsdk_get_modified_typespec_projects",
           "arguments": "{\"repoRootPath\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\"}"
         },
         "type": "function"
@@ -242,7 +242,7 @@
       {
         "id": "call_ZJyf5wvHyGGRp7p3QWDKG6EO",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_get_pull_request_link_for_current_branch",
+          "name": "azsdk_get_pull_request_link_for_current_branch",
           "arguments": "{\"repoPath\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\"}"
         },
         "type": "function"
@@ -288,7 +288,7 @@
       {
         "id": "call_NBOq7xPkJ4VzTyj7pV7dlDNe",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_run_generate_sdk",
+          "name": "azsdk_run_generate_sdk",
           "arguments": "{\"typespecProjectRoot\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\",\"apiVersion\":\"2022-11-01-preview\",\"sdkReleaseType\":\"beta\",\"language\":\"Python\",\"pullRequestNumber\":38387}"
         },
         "type": "function"
@@ -296,7 +296,7 @@
       {
         "id": "call_vFVpuz6a3OFQ9RJQosP1RMqc",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_run_generate_sdk",
+          "name": "azsdk_run_generate_sdk",
           "arguments": "{\"typespecProjectRoot\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\",\"apiVersion\":\"2022-11-01-preview\",\"sdkReleaseType\":\"beta\",\"language\":\".NET\",\"pullRequestNumber\":38387}"
         },
         "type": "function"
@@ -304,7 +304,7 @@
       {
         "id": "call_8Vt0eof9NmHx4pm13ofJxBlP",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_run_generate_sdk",
+          "name": "azsdk_run_generate_sdk",
           "arguments": "{\"typespecProjectRoot\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\",\"apiVersion\":\"2022-11-01-preview\",\"sdkReleaseType\":\"beta\",\"language\":\"JavaScript\",\"pullRequestNumber\":38387}"
         },
         "type": "function"
@@ -312,7 +312,7 @@
       {
         "id": "call_fzufuktnPmeHUyzLZmTaoPIP",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_run_generate_sdk",
+          "name": "azsdk_run_generate_sdk",
           "arguments": "{\"typespecProjectRoot\":\"c:\\\\Users\\\\juanospina\\\\source\\\\repos\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager\",\"apiVersion\":\"2022-11-01-preview\",\"sdkReleaseType\":\"beta\",\"language\":\"Java\",\"pullRequestNumber\":38387}"
         },
         "type": "function"
@@ -354,7 +354,7 @@
       {
         "id": "call_gw9oDtMgs8t6sPncktLBj7qf",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_get_pipeline_status",
+          "name": "azsdk_get_pipeline_status",
           "arguments": "{\"buildId\":5513110}"
         },
         "type": "function"
@@ -362,7 +362,7 @@
       {
         "id": "call_OyjZvuHsdkjCaEVUBxpQs8xN",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_get_pipeline_status",
+          "name": "azsdk_get_pipeline_status",
           "arguments": "{\"buildId\":5513111}"
         },
         "type": "function"
@@ -370,7 +370,7 @@
       {
         "id": "call_VxtN4PiaKFrniJGWdvfaS7o9",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_get_pipeline_status",
+          "name": "azsdk_get_pipeline_status",
           "arguments": "{\"buildId\":5513113}"
         },
         "type": "function"
@@ -378,7 +378,7 @@
       {
         "id": "call_TKMYWtPFUJoijMz4pUkaiiTS",
         "function": {
-          "name": "mcp_azure-sdk-mcp_azsdk_get_pipeline_status",
+          "name": "azsdk_get_pipeline_status",
           "arguments": "{\"buildId\":5513114}"
         },
         "type": "function"

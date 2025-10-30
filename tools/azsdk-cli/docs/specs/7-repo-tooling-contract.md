@@ -19,15 +19,7 @@
 
 _Define any terms that might be ambiguous or interpreted differently across teams. Establish shared understanding before diving into the design._
 
-**Example:**
-
-- **Generate SDK**: In this context, "generate SDK" means...
-- **Environment Setup**: Refers to...
-- **Tool**: A discrete unit of functionality that...
-
-**Your definitions:**
-
-- **[Splatting]**: [A powershell feature that allows a key/value object to be transformed into script parameters]
+- **[Splatting]**: A powershell feature that allows a key/value object to be transformed into script parameters
 
 ---
 

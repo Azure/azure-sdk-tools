@@ -75,28 +75,41 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, err
 	}
 
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+
 	// 1. Build messages from the openai request
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
-	// 2. Build query for search
-	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
+	// 2. Build query for search and recognize intention
+	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Run agentic search and knowledge search in parallel, then merge results
-	chunks, err := s.runParallelSearchAndMergeResults(ctx, req, query)
-	if err != nil {
-		log.Printf("Parallel search failed: %v", err)
-		return nil, model.NewSearchFailureError(err)
+	// 3. Check if we need RAG processing
+	var chunks []string
+	var prompt string
+
+	if intention != nil && !intention.NeedsRagProcessing {
+		// Skip RAG workflow for greetings/announcements
+		log.Printf("Skipping RAG workflow - non-technical message detected")
+		chunks = []string{}
+		prompt = "You are a helpful AI assistant. Respond naturally to the user's message."
+	} else {
+		// Run agentic search and knowledge search in parallel, then merge results
+		var err error
+		chunks, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+		if err != nil {
+			log.Printf("Parallel search failed: %v", err)
+			return nil, model.NewSearchFailureError(err)
+		}
+
+		// Build prompt with retrieved context
+		prompt, err = s.buildPrompt(intention, chunks, tenantConfig.PromptTemplate)
+		if err != nil {
+			log.Printf("Prompt building failed: %v", err)
+			return nil, err
+		}
 	}
 
-	// 4. Build prompt
-	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	prompt, err := s.buildPrompt(intension, chunks, tenantConfig.PromptTemplate)
-	if err != nil {
-		log.Printf("Prompt building failed: %v", err)
-		return nil, err
-	}
-
-	// 5. Get answer from LLM
+	// 4. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
 	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
@@ -104,22 +117,22 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 6. Process the result
+	// 5. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")
 		result.FullContext = &fullContext
 	}
-	result.Intension = intension
+	result.Intention = intention
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
 
-func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
-	promptParser := prompt.IntensionPromptParser{}
+func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+	promptParser := prompt.IntentionPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
 	if err != nil {
-		log.Printf("Failed to parse intension prompt: %v", err)
+		log.Printf("Failed to parse intention prompt: %v", err)
 		return nil, err
 	}
 
@@ -131,14 +144,14 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	}, nil)
 
 	if err != nil {
-		log.Printf("LLM intension recognition failed: %v", err)
+		log.Printf("LLM intention recognition failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
 	if len(resp.Choices) > 0 {
 		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
+			log.Printf("Failed to parse intention response: %v, content: %s", err, *resp.Choices[0].Message.Content)
 			return nil, err
 		}
 		return result, nil
@@ -347,14 +360,14 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	return llmMessages, reasoningModelMessages
 }
 
-func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntensionResult) {
+func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntentionResult) {
 	query := req.Message.Content
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
 	}
 	intentStart := time.Now()
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	intentResult, err := s.RecongnizeIntension(tenantConfig.IntensionPromptTemplate, messages)
+	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -377,7 +390,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intention *model.IntentionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
@@ -392,11 +405,11 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 			break
 		}
 	}
-	intensionStr, _ := json.Marshal(intension)
+	intentionStr, _ := json.Marshal(intention)
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
 		"context":   strings.Join(chunks, "-------------------------\n"),
-		"intension": string(intensionStr),
+		"intention": string(intentionStr),
 	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)

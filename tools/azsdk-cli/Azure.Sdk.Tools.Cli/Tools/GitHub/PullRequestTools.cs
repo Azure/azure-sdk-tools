@@ -137,7 +137,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
                 var repoName = gitHelper.GetRepoName(repoRootPath);
                 var headBranchName = gitHelper.GetBranchName(repoRootPath);
-                var headBranchRef = $"{repoOwner}:{headBranchName}";
                 var forkOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
                 var headBranchRef = $"{forkOwner}:{headBranchName}";
                 logger.LogInformation(

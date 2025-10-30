@@ -122,7 +122,7 @@ public class GitConnection
         {
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
-        }        
+        }
         public async Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
         {
             // This method now accepts title, body, and state directly, so caller must fetch the PR first if needed.
@@ -237,7 +237,7 @@ public class GitConnection
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
-            logger.LogInformation("Comparison: {ComparisonStatus}", comparison.Status);
+            logger.LogInformation("Comparison: {ComparisonStatus}", comparison?.Status);
             return comparison?.MergeBaseCommit != null;
         }
 

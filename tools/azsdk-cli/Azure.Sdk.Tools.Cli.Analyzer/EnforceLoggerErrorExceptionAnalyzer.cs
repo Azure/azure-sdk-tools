@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 return false;
             }
 
-            var containingType = symbol.ContainingType;
+            var containingType = symbol?.ContainingType;
             if (containingType == null)
             {
                 return false;

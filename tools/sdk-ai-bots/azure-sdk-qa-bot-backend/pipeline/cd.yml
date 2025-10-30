@@ -277,7 +277,7 @@ stages:
                 sleep 30
                 
                 # Check if the app is responding
-                HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://$APP_URL/health || echo "000")
+                HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://$APP_URL/ping || echo "000")
                 
                 if [ "$HTTP_STATUS" == "200" ]; then
                   echo "✓ Deployment verified successfully - Health check passed"

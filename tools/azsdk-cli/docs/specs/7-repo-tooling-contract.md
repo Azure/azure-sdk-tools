@@ -108,7 +108,7 @@ When a command/tool is invoked in `azsdk` that is known to be repository-specifi
 
 ### Detailed Design
 
-In `eng/azsdk-automation-contract.json` in a language repository, a set of mappings can be defined that
+In `eng/azsdk-cli-command-overrides.json` in a language repository, a set of mappings can be defined that
 correspond to CLI commands and/or MCP tools.
 
 ```

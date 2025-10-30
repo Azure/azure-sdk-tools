@@ -140,7 +140,7 @@ Outputs:
 Failure Modes:
 
 - Missing `CHANGELOG.md` → create template (mgmt-plane) or noop (data-plane).
-Note: we should consdier adding recovery support for the generation scenario after milestone 1.
+Note: we should consider adding recovery support for the generation scenario after milestone 1.
 - Script failure → `failed` with error output.
 
 ##### Update Changelog script

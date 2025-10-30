@@ -77,14 +77,14 @@
 # .NET Client Tools
 ###########
 /src/dotnet/                            @azure/azsdknet @jsquire
-/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu @maririos
+/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
 /tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu @maririos
+/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire

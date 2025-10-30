@@ -84,7 +84,7 @@ Implement four individual CLI + MCP tools. Each tool:
 1. Resolves package path & language.
 2. Loads configuration for the language repository.
 3. If a script is configured, executes the script.
-4. Otherwise falls back to run the code implementated inside the tool(CLI).
+4. Otherwise falls back to run the code implemented inside the tool(CLI).
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
 Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary (post milestone 1).

@@ -294,7 +294,6 @@ Tests to call sample scripts using different parameter types. Invoked from mcp, 
 - Test multi-alias references
 - Test sanitization of parameters
 - Test powershell execution
-- Test
 
 ### Integration Tests
 
@@ -306,7 +305,7 @@ Developers go through generation and release process using `azsdk` tooling with 
 
 ### Cross-Language Validation
 
-- Existing CI in langauge repos should catch issues as it is migrated to use `azsdk` as a pipeline entrypoint for tasks.
+- Existing CI in language repos should catch issues as it is migrated to use `azsdk` as a pipeline entrypoint for tasks.
 - Potential CI to validate that scripts referenced in the contract file support `Alias`, if applicable
 
 ---

@@ -82,9 +82,9 @@ Formalizing Stage 6 as cohesive tools improves reliability, supports automation-
 Implement four individual CLI + MCP tools. Each tool:
 
 1. Resolves package path & language.
-2. Loads the configuration for the language.
-3. Chooses inline command over script path if both present.
-4. Executes the relevant sub-script(s) in an ordered, fault-isolated manner.
+2. Loads configuration for the language repository.
+3. If a script is configured, executes the script.
+4. Otherwise falls back to run the code implementated inside the tool(CLI).
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
 Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary (post milestone 1).
@@ -97,11 +97,11 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 |--------|-------------------|
 | Invocation Mode | CLI and MCP (agent) alias; same semantics |
 | Input Path Validation | Must exist and contain a recognizable SDK language structure; errors early if not |
-| Config Resolution | Load `swagger_to_sdk_config.json`; prefer `inline command` over `script path` when both are configured |
+| Language Logic Routing | Use the [`repository service`](https://github.com/benbp/azure-sdk-tools/blob/3aeb49b0c9bde3c6752e369369245fb8c743a759/tools/azsdk-cli/docs/specs/7-repo-tooling-contract.md) to load the language repo configuration. If a script is configured, invoke it; otherwise fall back to the CLI's built-in implementation |
 | Timeout (default) | 5 minutes per tool invocation |
 | Output Schema | JSON with fields: result, message (see schema below) |
 | Idempotency | Multiple successive runs produce identical filesystem state except for timestamps/logs |
-| Script Implementation | MUST be PowerShell `.ps1`. SHOULD accept named parameters (e.g., `sdkRepoPath`). MUST use exit code `0` for success/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
+| Script Implementation if applicable | MUST be PowerShell `.ps1`. SHOULD accept alias parameters (e.g., `PackagePath`). MUST use exit code `0` for success/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
 | Script Execution Environment | All scripts are executed using PowerShell Core (`pwsh`) terminal |
 | Next Steps Hint | Plain language phrase embedded in `message` (e.g., `next_steps: update version`) |
 | Missing Required Tools | If a required external tool is not present (for example: `dotnet`, `gofmt`, `pwsh`), prompt the user to run the `verify-setup` tool which validates and documents missing prerequisites. |
@@ -147,7 +147,7 @@ Note: we should consdier adding recovery support for the generation scenario aft
 
 When the tool executes the language-specific `update-changelog` script it will pass the following parameters. All paths are absolute.
 
-| Parameter | Description | Type | Required |
+| Parameter & Alias | Description | Type | Required |
 |-----------|-------------|-----:|:--------:|
 | `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
 | `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
@@ -213,7 +213,7 @@ Idempotency: Re-running after success yields `succeeded` with `no changes` messa
 
 When the tool executes the language-specific `update-version` script it will pass the following parameters. All paths are absolute.
 
-| Parameter | Description | Type | Required |
+| Parameter & Alias | Description | Type | Required |
 |-----------|-------------|------:|:--------:|
 | `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
 | `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
@@ -277,7 +277,7 @@ Failure Modes:
 
 When the tool executes the language-specific `update-metadata` script it will pass the following parameters. All paths are absolute.
 
-| Parameter | Description | Type | Required |
+| Parameter & Alias | Description | Type | Required |
 |-----------|-------------|-----:|:--------:|
 | `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
 | `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
@@ -301,62 +301,6 @@ azsdk package update-metadata --package-path /abs/sdk/path
 azsdk package update-version --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
 ```
 
-## Proposed approaches for intergrating language-specific logic and tools
-
-### 1. Class-based (CLI) integration
-
-Description:
-Implement language-specific behavior inside the C# classes, e.g. DotNetLanguageSpecificChecks.cs style.
-C# code performs discovery, normalization, and calls language-specific logic directly (possibly invoking lower-level commands like msbuild/tools).
-
-Pros:
-
-- Centralized logic: all language integrations live inside the azsdk-cli — easier to reason about and test in one place.
-- Leverages shared helpers, and BCL types.
-- Avoids an extra layer of script indirection.
-
-Cons:
-
-- Tight coupling to language repo layout and script parameters → brittle when files/params move.
-- Versioning friction: behavior changes require a CLI release.
-- Slower iteration for repo-specific changes since modifications need a CLI code change and release.
-
-### 2. Repo-hosted script/tool integration
-
-Description:
-Keep the implementation in each language repo as scripts or stand-alone tools.
-azsdk-cli tool calls those scripts as the integration point. Example: Export-API.ps1 inside the language repo.
-
-Pros:
-
-- Locality: implementation that knows the repo layout and toolchain lives next to the source and can be updated in a single PR.
-- Faster iteration: language owners can change behavior without immediate CLI releases..
-- Enables running the same script locally, in CI, and via the CLI.
-
-Cons:
-
-- Indirection: multiple wrapper scripts across repos can become confusing (many layers: azsdk-cli (-> wrapper) -> script -> tool).
-- Harder to apply shared validations/normalization or to central testing across languages.
-- Branch/versioning fragility: script parameters or locations may differ across branches, which the CLI must handle or fail gracefully.
-
-### 3. Hybrid / Contract-based approach (recommended)
-
-Description:
-Define a small, well-documented contract/API (expected inputs/outputs). The default implementation in the azsdk-cli tool will look-up a configuration file defined in the language repo to see if there is an entrypoint for the given tool. If there is one the azsdk-cli tool will call that but if there is not and there is an implementation for the given language in the azsdk-cli tool then it will call that implemeption. If there is no implementation found for the given languae in either place the tool will be a no-op.
-
-Pros:
-
-- Best of both worlds: a small, stable contract that azsdk-cli tool depends on while letting language owner implement the details.
-- Flexibility: the language repo will always have the ability to override the implementation in the CLI tool if a given branch or change in the repo needs this tool to be updated.
-- Centralized cross-language logic (normalization, telemetry, orchestration) can still live in the CLI.
-- Language repo can change its implementation logic without requiring immediate CLI tool updates.
-
-Cons:
-
-- Requires upfront design of the contract and discipline to keep it stable.
-- Needs a rollout/versioning strategy for contract changes across many repos..
-- Some duplication of wrapper code may persist (but minimized if contract is well-designed).
-
 ### Architecture Diagram
 
 ```mermaid
@@ -366,13 +310,13 @@ flowchart TD
   subgraph azsdk_cli
     direction TB
     classifier[SDK Classifier]
-    resolver[Config Resolver]
-    executor[Script Executor]
+    service[Repository Service]
+    executor[Command Executor]
     serializer[Result Serializer]
   end
 
-  classifier --> resolver
-  resolver --> executor
+  classifier --> service
+  service --> executor
   executor --> serializer
 
   style azsdk_cli fill:#e3f2fd,stroke:#0277bd
@@ -400,10 +344,10 @@ flowchart TD
       I -->|No| J[Return failure: Failed to get update-changelog-script configuration] 
       I -->|Yes| K{Configuration type?}
     
-      K -->|Command| L[Prepare update-changelog command] 
-      K -->|ScriptPath| M[Prepare update-changelog script] 
+      K -->|Script| L[Run update-changelog script]
+      K -->|None| M[Run CLI built-in code] 
     
-      L --> N[Execute update-changelog command/script] 
+      L --> N[Prepare result] 
       M --> N
     
       N --> O{update-changelog process completed?} 
@@ -436,11 +380,11 @@ This tool set is complete when:
 - [ ] Data-plane run returns advisory for changelog and version.
 - [ ] Metadata files are updated accordingly.
 
-  | Language | Exception |
-  |---|---|
-  |Java|No additional files need updating|
-  |JavaScript|No additional files need updating|
-  |Go|No additional files need updating|
+    | Language | Exception |
+    |---|---|
+    |Java|No additional files need updating|
+    |JavaScript|No additional files need updating|
+    |Go|No additional files need updating|
 
 - [ ] Cross-language scripts execute without manual intervention.
 - [ ] Errors surface actionable mitigation text.

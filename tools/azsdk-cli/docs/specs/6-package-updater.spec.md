@@ -84,7 +84,7 @@ Implement four individual CLI + MCP tools. Each tool:
 1. Resolves package path & language.
 2. Loads configuration for the language repository.
 3. If a script is configured, executes the script.
-4. Otherwise falls back to run the code implemented inside the tool(CLI).
+4. Otherwise falls back the CLI's built-in implementation for that language.
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
 Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary (post milestone 1).
@@ -97,7 +97,7 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 |--------|-------------------|
 | Invocation Mode | CLI and MCP (agent) alias; same semantics |
 | Input Path Validation | Must exist and contain a recognizable SDK language structure; errors early if not |
-| Language Logic Routing | Use the [`repository service`](https://github.com/benbp/azure-sdk-tools/blob/3aeb49b0c9bde3c6752e369369245fb8c743a759/tools/azsdk-cli/docs/specs/7-repo-tooling-contract.md) to load the language repo configuration. If a script is configured, invoke it; otherwise fall back to the CLI's built-in implementation |
+| Language Logic Routing | Use the [`repository service`](https://github.com/Azure/azure-sdk-tools/pull/12696d) to load the language repo configuration. If a script is configured, invoke it; otherwise fall back to the CLI's built-in implementation |
 | Timeout (default) | 5 minutes per tool invocation |
 | Output Schema | JSON with fields: result, message (see schema below) |
 | Idempotency | Multiple successive runs produce identical filesystem state except for timestamps/logs |

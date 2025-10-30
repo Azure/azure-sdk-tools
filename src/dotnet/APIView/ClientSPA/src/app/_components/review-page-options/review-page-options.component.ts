@@ -695,12 +695,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     ).pipe(take(1)).subscribe({
       next: (reviews: any[]) => {
         const sdkLanguageReviews = reviews.filter(review => SDK_LANGUAGES.includes(review?.language));
-        const wasApproved = this.allAssociatedReviewsApproved;
         this.allAssociatedReviewsApproved = sdkLanguageReviews.length > 0 &&
                                              sdkLanguageReviews.every(review => review?.isApproved === true);
 
         // If all SDK reviews just became approved and TypeSpec review is not already approved, update DB
-        if (this.allAssociatedReviewsApproved && !wasApproved &&
+        if (this.allAssociatedReviewsApproved &&
             this.review?.language === 'TypeSpec' && !this.review?.isApproved) {
           this.autoApproveTypeSpecReview();
         }
@@ -725,7 +724,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
         // Update local review object
         this.review = updatedReview;
         this.setReviewApprovalStatus();
-        this.updateNamespaceReviewButtonState();
       },
       error: (error: any) => {
         console.error('Failed to auto-approve TypeSpec review:', error);

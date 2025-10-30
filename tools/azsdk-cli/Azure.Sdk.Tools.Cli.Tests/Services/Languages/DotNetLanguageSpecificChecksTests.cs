@@ -11,6 +11,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
+    private Mock<ICommonValidationHelpers> _commonValidationHelpersMock = null!;
     private DotNetLanguageSpecificChecks _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -22,12 +23,14 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
         _powerShellHelperMock = new Mock<IPowershellHelper>();
+        _commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
 
         _languageChecks = new DotNetLanguageSpecificChecks(
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
             _gitHelperMock.Object,
-            NullLogger<DotNetLanguageSpecificChecks>.Instance);
+            NullLogger<DotNetLanguageSpecificChecks>.Instance,
+            _commonValidationHelpersMock.Object);
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
         _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");

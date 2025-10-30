@@ -4,6 +4,7 @@ import sys
 import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -16,11 +17,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import evals._custom
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
-from src._settings import SettingsManager
 from evals._util import (
-    load_cache_lookup,
     append_results_to_cache,
+    load_cache_lookup,
 )
+from src._settings import SettingsManager
 
 DEFAULT_NUM_RUNS: int = 1
 
@@ -216,7 +217,7 @@ class EvaluationRunner:
             test_file_to_case = {}
             testcase_ids = []
             test_file_paths = []
-            
+
             for test_file in target.test_files:
                 test_case = self._context._load_test_file(test_file)
                 test_file_to_case[test_file] = test_case
@@ -224,54 +225,50 @@ class EvaluationRunner:
                 if testcase_id:
                     testcase_ids.append(testcase_id)
                     test_file_paths.append(test_file)
-            
+
             # Resolve cache strategy
             if self._use_cache:
                 cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
             else:
                 cache_lookup = {}
-            
+
             # Partition test data based on cache
             cached_azure_rows = []
             fresh_testcases = []
             fresh_test_file_paths = []
-            
+
             for test_file in target.test_files:
                 test_case = test_file_to_case[test_file]
                 testcase_id = test_case.get("testcase")
-                
+
                 if testcase_id and testcase_id in cache_lookup:
                     cached_azure_rows.append(cache_lookup[testcase_id])
                 else:
                     fresh_testcases.append(test_case)
                     fresh_test_file_paths.append(test_file)
-            
+
             # Execute fresh testcases if needed
             fresh_results = []
             if fresh_testcases:
                 fresh_results = self._run_azure_evaluation(fresh_testcases, target)
-                
-                if self._use_cache: 
+
+                if self._use_cache:
                     append_results_to_cache(fresh_test_file_paths, fresh_results)
-            
+
             # Combine all results
             cached_rows = [row for row in cached_azure_rows]
             fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
             all_cached_rows = cached_rows + fresh_rows
-            combined_result = {
-                "rows": all_cached_rows,
-                "metrics": {}, 
-                "studio_url": None
-            }
-            
+            combined_result = {"rows": all_cached_rows, "metrics": {}, "studio_url": None}
+
             all_passed = all(row.get("outputs.metrics.correct_action", False) for row in all_cached_rows)
-            
+
             return EvaluationResult(
                 target=target,
                 raw_results=[{f"{target.workflow_name}.jsonl": combined_result}],
                 success=all_passed,
             )
-            
+
         except Exception as e:
             return EvaluationResult(target=target, raw_results=[], success=False, error=str(e))
 
@@ -279,24 +276,24 @@ class EvaluationRunner:
         """Run Azure AI evaluation on a list of testcases."""
         if not testcases:
             return []
-        
+
         # Create temporary file for testcases
         tmp_dir = Path(tempfile.mkdtemp(prefix="evals_fresh_"))
         fresh_jsonl = tmp_dir / f"fresh_{target.workflow_name}.jsonl"
-        
+
         with fresh_jsonl.open("w", encoding="utf-8") as f:
             for test_case in testcases:
                 f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False) + "\n")
-        
+
         # Execute evaluation
         evaluator_class = get_evaluator_class(target.config.kind)
         evaluator = evaluator_class(target.config, jsonl_file=fresh_jsonl)
-        
+
         results = []
         for run in range(self.num_runs):
             if self.num_runs > 1:
                 print(f"  📋 Run {run + 1}/{self.num_runs}...")
-            
+
             result = evaluate(
                 data=str(fresh_jsonl),
                 evaluators={"metrics": evaluator},
@@ -306,14 +303,14 @@ class EvaluationRunner:
                 **self._context._credential_kwargs,
             )
             results.append(result)
-        
+
         # Cleanup
         try:
             fresh_jsonl.unlink()
             tmp_dir.rmdir()
         except OSError:
             pass
-        
+
         return results
 
     def show_results(self, results: list[EvaluationResult]):
@@ -396,11 +393,39 @@ class EvaluationRunner:
                 print(f"  • {result.workflow_name}")
             print()
 
-
     def cleanup(self):
         """Clean up resources."""
         if self._context:
             self._context.cleanup()
+
+    def generate_report(self, results: list[EvaluationResult]) -> list:
+        """Generate a flat list of eval_case dicts per test, matching the required schema."""
+        eval_timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        eval_date = eval_timestamp[:10]
+        cases = []
+        for result in results:
+            workflow_name = result.workflow_name
+            raw_results = list(result.raw_results[0].values())[0]["rows"] if result.raw_results else []
+            for row in raw_results:
+                testcase = row.get("inputs.testcase")
+                status = "pass" if row.get("outputs.metrics.correct_action") == True else "fail"
+                score = row.get("outputs.metrics.score")
+                case_id = f"{eval_timestamp}|{workflow_name}|{testcase}"
+                pk = eval_date.replace("-", "_")
+                cases.append(
+                    {
+                        "type": "eval_case",
+                        "id": case_id,
+                        "pk": pk,
+                        "eval_timestamp": eval_timestamp,
+                        "eval_date": eval_date,
+                        "workflow_name": workflow_name,
+                        "testcase": testcase,
+                        "status": status,
+                        "score": score,
+                    }
+                )
+        return cases
 
 
 __all__ = [

@@ -422,8 +422,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setNamespaceReviewStates() {
-    // Only show namespace review request for TypeSpec language AND if feature is enabled AND review is not already approved
-    // AND there are associated API revisions (SDK language reviews) AND namespace is not already approved
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
                                       this.namespaceReviewEnabled &&
                                       !this.review?.isApproved &&
@@ -451,18 +449,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
       this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
-          // Clear the array first to avoid duplicates
-          this.pullRequestsOfAssociatedAPIRevisions = [];
-          for (const pr of response) {
-            if (pr.reviewId != this.activeAPIRevision?.reviewId) {
-              this.pullRequestsOfAssociatedAPIRevisions.push(pr);
-            }
-          }
+          this.pullRequestsOfAssociatedAPIRevisions = response.filter(pr => pr.reviewId !== this.activeAPIRevision?.reviewId);
 
-          // Check if all associated reviews are approved
           this.checkAssociatedReviewsApprovalStatus();
-
-          // Re-evaluate namespace review states after associated reviews are loaded
           this.setNamespaceReviewStates();
         },
         error: (error) => {
@@ -670,7 +659,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    */
   resetNamespaceReviewLoadingState() {
     this.isNamespaceReviewInProgress = false;
-    // Re-check the namespace review states to update isNamespaceReviewRequested based on activeAPIRevision
     this.setNamespaceReviewStates();
   }
 
@@ -699,16 +687,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
                                              sdkLanguageReviews.every(review => review?.isApproved === true);
 
         // If all SDK reviews just became approved and TypeSpec review is not already approved, update DB
-        if (this.allAssociatedReviewsApproved &&
-            this.review?.language === 'TypeSpec' && !this.review?.isApproved) {
-          this.autoApproveTypeSpecReview();
+        if (this.allAssociatedReviewsApproved && this.review?.language === 'TypeSpec' && !this.review?.isApproved) {
+           this.autoApproveTypeSpecReview();
         }
 
         this.updateNamespaceReviewButtonState();
       },
       error: (error) => {
         console.error('Failed to fetch associated reviews:', error);
-        this.allAssociatedReviewsApproved = false;
       }
     });
   }
@@ -721,7 +707,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
     this.reviewsService.approveReview(this.review.id).pipe(take(1)).subscribe({
       next: (updatedReview: Review) => {
-        // Update local review object
+        // Update local review object with the approved version from server
         this.review = updatedReview;
         this.setReviewApprovalStatus();
       },

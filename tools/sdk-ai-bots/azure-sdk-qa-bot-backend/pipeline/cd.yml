@@ -49,7 +49,7 @@ stages:
           - checkout: self
             displayName: 'Checkout repository'
 
-          - template: templates/set-image-tag.yml
+          - template: templates/get-image-tag.yml
             parameters:
               environment: ${{ parameters.environment }}
               workingDirectory: $(workingDirectory)
@@ -128,7 +128,7 @@ stages:
           - checkout: self
             displayName: 'Checkout repository'
 
-          - template: templates/set-image-tag.yml
+          - template: templates/get-image-tag.yml
             parameters:
               environment: ${{ parameters.environment }}
               workingDirectory: $(workingDirectory)
@@ -175,7 +175,7 @@ stages:
           - checkout: self
             displayName: 'Checkout repository'
 
-          - template: templates/set-image-tag.yml
+          - template: templates/get-image-tag.yml
             parameters:
               environment: ${{ parameters.environment }}
               workingDirectory: $(workingDirectory)

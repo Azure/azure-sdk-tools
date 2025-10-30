@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -22,6 +23,13 @@ public class GitHubClientFactory: IGitHubClientFactory
     private readonly ILogger<GitHubClientFactory> _logger;
     private readonly ProductHeaderValue _productHeaderValue;
     private readonly ChainedTokenCredential _credential;
+    private readonly ConcurrentDictionary<string, CachedGitHubClient> _clientCache;
+
+    private class CachedGitHubClient
+    {
+        public GitHubClient Client { get; set; }
+        public DateTimeOffset ExpiresAt { get; set; }
+    }
 
     public GitHubClientFactory(IConfiguration configuration, ILogger<GitHubClientFactory> logger)
     {
@@ -32,10 +40,26 @@ public class GitHubClientFactory: IGitHubClientFactory
             new ManagedIdentityCredential(),    
             new AzureCliCredential(),
             new AzureDeveloperCliCredential());
+        _clientCache = new ConcurrentDictionary<string, CachedGitHubClient>();
     }
 
     public async Task<GitHubClient> CreateGitHubClientAsync(string owner, string repository)
     {
+        string cacheKey = $"{owner}/{repository}";
+
+        if (_clientCache.TryGetValue(cacheKey, out CachedGitHubClient cachedClient))
+        {
+            // Add a 5-minute buffer before expiration to ensure token remains valid during use
+            if (cachedClient.ExpiresAt > DateTimeOffset.UtcNow.AddMinutes(5))
+            {
+                return cachedClient.Client;
+            }
+            else
+            {
+                _clientCache.TryRemove(cacheKey, out _);
+            }
+        }
+
         string appId = _configuration["GitHubApp:Id"];
         string keyVaultUrl = _configuration["GitHubApp:KeyVaultUrl"];
         string keyName = _configuration["GitHubApp:KeyName"];
@@ -79,6 +103,13 @@ public class GitHubClientFactory: IGitHubClientFactory
             {
                 Credentials = new Credentials(accessToken.Token)
             };
+
+            var cachedClientEntry = new CachedGitHubClient
+            {
+                Client = installationClient,
+                ExpiresAt = accessToken.ExpiresAt
+            };
+            _clientCache.TryAdd(cacheKey, cachedClientEntry);
 
             return installationClient;
         }

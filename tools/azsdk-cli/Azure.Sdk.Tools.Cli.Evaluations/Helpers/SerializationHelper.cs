@@ -24,12 +24,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
             var jsonBinary = BinaryData.FromString(jsonContent);
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-
             var chatMessages = DeserializeMessages(jsonBinary);
 
             var translatedChatMessages = MicrosoftExtensionsAIChatExtensions.AsChatMessages(chatMessages);

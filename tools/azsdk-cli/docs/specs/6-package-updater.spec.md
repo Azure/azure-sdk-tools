@@ -22,7 +22,6 @@
 - **Stage 6**: The standardized SDK preparation stage after code/tests/samples validation and before creating the release preparation PR.
 - **Metadata and Documentation Update**: Consolidated set of actions to ensure non-source assets (README, changelog, CI config, version numbers, additional descriptors) are accurate and consistent.
 - **Tool**: A discrete CLI (and MCP agent-exposed) command implementing one cohesive post-generation preparation task.
-- **Inline Script Command**: A single shell command provided directly in config that overrides a script path.
 
 ---
 
@@ -71,7 +70,7 @@ Formalizing Stage 6 as cohesive tools improves reliability, supports automation-
 
 | Language   | Limitation | Impact | Workaround |
 |------------|------------|--------|------------|
-| JavaScript | Code formatting isn't hooked up to the emitter | Noisy diffs or linter failures | Run code formatting step in the `update-metadata.ps1` script |
+| JavaScript | Code formatting isn't hooked up to the emitter | Noisy diffs or linter failures | Run code formatting step in the `update-metadata` tool |
 
 ---
 
@@ -101,8 +100,6 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 | Timeout (default) | 5 minutes per tool invocation |
 | Output Schema | JSON with fields: result, message (see schema below) |
 | Idempotency | Multiple successive runs produce identical filesystem state except for timestamps/logs |
-| Script Implementation if applicable | MUST be PowerShell `.ps1`. SHOULD accept alias parameters (e.g., `PackagePath`). MUST use exit code `0` for success/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
-| Script Execution Environment | All scripts are executed using PowerShell Core (`pwsh`) terminal |
 | Next Steps Hint | Plain language phrase embedded in `message` (e.g., `next_steps: update version`) |
 | Missing Required Tools | If a required external tool is not present (for example: `dotnet`, `gofmt`, `pwsh`), prompt the user to run the `verify-setup` tool which validates and documents missing prerequisites. |
 
@@ -120,7 +117,7 @@ Inputs:
 
 Execution Steps (Mgmt-Plane):
 
-1. Invoke changelog generation script or tool.
+1. Generate changelog content.
 2. Normalize section ordering / formatting.
 
 Execution Steps (Data-Plane):
@@ -142,25 +139,6 @@ Failure Modes:
 - Missing `CHANGELOG.md` → create template (mgmt-plane) or noop (data-plane).
 Note: we should consider adding recovery support for the generation scenario after milestone 1.
 - Script failure → `failed` with error output.
-
-##### Update Changelog script
-
-When the tool executes the language-specific `update-changelog` script it will pass the following parameters. All paths are absolute.
-
-| Parameter & Alias | Description | Type | Required |
-|-----------|-------------|-----:|:--------:|
-| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
-
-Note: The script only needs to cover mgmt-plane.
-
-**Example invocations:**
-
-```powershell
-update-changelog.ps1 \
-      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
-```
 
 #### 2. Version Update Tool
 
@@ -209,30 +187,6 @@ Failure Modes:
 
 Idempotency: Re-running after success yields `succeeded` with `no changes` message when already at target version.
 
-##### Update Version script
-
-When the tool executes the language-specific `update-version` script it will pass the following parameters. All paths are absolute.
-
-| Parameter & Alias | Description | Type | Required |
-|-----------|-------------|------:|:--------:|
-| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
-| `SdkReleaseType` | Specifies whether the next version is `beta` or `stable`. | string | No |
-| `SdkVersion` | Specifies the next version to set (explicit version string). | string | No |
-| `SdkReleaseDate` | Release date to write into changelog (YYYY-MM-DD). | string | No |
-
-Note: For management-plane (mgmt) packages, at least one of `SdkVersion` or `SdkReleaseType` MUST be provided; the script will fail with an error if neither is supplied or validation fails.
-
-**Example invocations:**
-
-```powershell
-update-version.ps1 \
-      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice \
-      -SdkReleaseType stable \
-      -SdkReleaseDate 2025-10-17
-```
-
 #### 3. Metadata Update Tool
 
 Name (CLI): `azsdk package update-metadata`
@@ -272,23 +226,6 @@ Outputs:
 Failure Modes:
 
 - Missing expected file (e.g., `_metadata.json`) → report error.
-
-##### Update Metadata script
-
-When the tool executes the language-specific `update-metadata` script it will pass the following parameters. All paths are absolute.
-
-| Parameter & Alias | Description | Type | Required |
-|-----------|-------------|-----:|:--------:|
-| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
-
-**Example invocations:**
-
-```powershell
-update-metadata.ps1 \
-      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
-```
 
 ### User Experience
 
@@ -338,10 +275,10 @@ flowchart TD
     
       E --> F{Repository root found?}
       F -->|No| G[Return failure: Failed to discover SDK repo]
-      F -->|Yes| H[Get update-changelog-script configuration] 
+      F -->|Yes| H[Get update-changelog configuration] 
     
       H --> I{Configuration retrieval successful?}
-      I -->|No| J[Return failure: Failed to get update-changelog-script configuration] 
+      I -->|No| J[Return failure: Failed to get update-changelog configuration] 
       I -->|Yes| K{Configuration type?}
     
       K -->|Script| L[Run update-changelog script]
@@ -403,7 +340,7 @@ Update the package at /home/dev/sdk/healthdataaiservices/Azure.ResourceManager.H
 
 **Expected Agent Activity:**
 
-1. Run changelog update (auto-generation script).
+1. Run changelog update.
 2. Run version update with inferred `--release-type stable`.
 3. Run metadata update (README, API export, formatting if needed) and summarize JSON results.
 
@@ -438,30 +375,6 @@ Add initial CI configuration for a new SDK at /work/sdk/new-service/new-package.
 ---
 
 ## CLI Commands
-
-### package update ci
-
-**Command:**
-
-```bash
-azsdk package update-ci --package-path <absolute_folder_path_to_package>
-```
-
-**Options:**
-
-- `--package-path <path>`: Absolute path to the root of the SDK package (required).
-
-**Expected Output (example):**
-
-```text
-"succeeded, ../ci.yml, CI files created: ci.yml, next_steps: update changelog."
-```
-
-**Error Case (example):**
-
-```text
-"failed, script exited 1: missing pwsh"
-```
 
 ### package update changelog
 
@@ -542,9 +455,9 @@ azsdk package update-metadata --package-path <absolute_folder_path_to_package>
 
 ### Phase 1: Core Tooling (Milestone 1)
 
-- Milestone: Implement CLI + MCP entrypoints for three tools including update-changelog, update-version, and update-metadata; integrate configuration loader + executor; mgmt-plane happy path.
+- Milestone: Implement CLI + MCP entrypoints for three tools including update-changelog, update-version, and update-metadata; integrate repository service; mgmt-plane happy path.
 - Timeline: 1 sprint.
-- Dependencies: language-specific automation scripts.
+- Dependencies: language-specific logic implementation.
 
 ### Phase 2: Data-Plane Enhancements and the remained tools
 
@@ -564,7 +477,7 @@ azsdk package update-metadata --package-path <absolute_folder_path_to_package>
 
 ### Unit Tests
 
-- Config resolution precedence (inline command vs script path).
+- Config resolution precedence.
 - JSON result schema validation (success, failed).
 - Mgmt-plane vs data-plane branching logic for version/changelog.
 

@@ -61,7 +61,7 @@ these scripts will have the following benefits:
   - It will take time to centralize automation into `azsdk`. There needs to be a bridge between `azsdk` and existing scripts that can support a gradual migration while maintaining reliability.
 - New automation experiments can be made in language repositories, even if the desired end state is a generic interface in `azsdk`.
 - Language specific edge cases can exist without cluttering the cli/mcp tool list.
-- Depending on calling a script (i.e. Export-Apis.ps1) or command line (msbuild /p:ExportApis) that have a set of parameters unique to our repo will be fragile and make versioning `azsdk` with the source changes in the repo very difficult. It will also make this tool very difficult to use in other repo contexts (i.e. the openai or mcp repos).
+- Depending on calling a script (i.e. Export-Apis.ps1) that have a set of parameters unique to a repo will be fragile and make versioning `azsdk` with the source changes in the repo very difficult. It will also make this tool very difficult to use in other repo contexts (i.e. the openai or mcp repos).
 
 ---
 
@@ -84,7 +84,8 @@ these scripts will have the following benefits:
 
 Managing parameter mappings can still cause tight coupling or potential breakages.
 The design proposal below outlines the use of `[Alias]` for powershell cmdlets to address this.
-However, this approach means that direct calls to repository tools (e.g. `msbuild`) should be wrapped in repository scripts.
+However, this approach means that direct calls to repository tools (e.g. `msbuild`) should be made from the CLI, or in
+some special cases wrapped in a powershell script.
 
 Adding schemas for parameters could improve reliability but at the cost of requiring changes to `azsdk` and/or scripts to be coordinated.
 It would also require additional up front work to capture parameter schemas for existing scripts, along with CI checks to ensure the
@@ -174,18 +175,6 @@ public async Task<CLICheckResponse> Invoke(string commandName, OrderedDictionary
     return new CLICheckResponse(result.ExitCode, result.Output);
 }
 ```
-
-### Cross-Language Considerations
-
-_How does this design work across different SDK languages?_
-
-| Language   | Approach | Notes |
-|------------|----------|-------|
-| .NET       | [How it works in .NET] | [Any specific considerations] |
-| Java       | [How it works in Java] | [Any specific considerations] |
-| JavaScript | [How it works in JS] | [Any specific considerations] |
-| Python     | [How it works in Python] | [Any specific considerations] |
-| Go         | [How it works in Go] | [Any specific considerations] |
 
 ### User Experience
 

@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Extensions.Logging;
@@ -20,15 +21,18 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var copilotInstructions = await GetCopilotInstructions();
             var linkRegex = new Regex(@"\[([^\]]+)\]\(([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
 
-            foreach (Match match in linkRegex.Matches(copilotInstructions))
+            var matches = linkRegex.Matches(copilotInstructions);
+            var instructionTasks = matches
+                .Select(match => GetMentionedInstructions(match.Groups[2].Value));
+            var instructions = await Task.WhenAll(instructionTasks);
+            
+            var builder = new StringBuilder(copilotInstructions);
+            foreach (var instruction in instructions)
             {
-                var relativePath = match.Groups[2].Value;
-                var instruction = await GetMentionedInstructions(relativePath);
-
-                copilotInstructions += "\n" + instruction;
+                builder.AppendLine().Append(instruction);
             }
 
-            return copilotInstructions;
+            return builder.ToString();
         }
 
         private static async Task<string> GetCopilotInstructions()

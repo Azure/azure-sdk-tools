@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
 {
     public static class ToolMocks
     {
-        private static Dictionary<string, IToolMock> Mocks = new Dictionary<string, IToolMock>();
+        private static readonly Dictionary<string, IToolMock> Mocks = new Dictionary<string, IToolMock>();
 
         static ToolMocks()
         {

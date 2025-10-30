@@ -270,23 +270,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task Test()
+        public async Task Test_Update_SDK_Details_single_invalid_package_name()
         {
             var languagePackageMap = new Dictionary<string, string>
             {
-                { ".NET", "invalid.package.name" },
                 { "Javascript", "@invalid/package/name" },
-                { "Java", "invalid-package-name" },
                 { "Go", "invalid/package/name" },
-                { "Python", "invalid-package-name" }
             };
 
             foreach (var (language, package) in languagePackageMap)
             {
                 string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
                 var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
-                Assert.That(updateStatus.Message, Does.Contain("Unsupported package name"));
+                Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+                Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
             }
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_multiple_invalid_package_names()
+        {
+            string sdkDetails = "[{\"language\":\"JavaScript\",\"packageName\":\"@invalid/package\"}," +
+                        "{\"language\":\"Go\",\"packageName\":\"invalid/package\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("JavaScript -> @invalid/package"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("Go -> invalid/package"));
         }
         
         [Test]

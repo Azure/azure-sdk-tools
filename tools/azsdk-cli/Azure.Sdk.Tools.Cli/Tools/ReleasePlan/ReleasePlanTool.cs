@@ -452,19 +452,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Validate SDK Package names
-                var languagePrefixMap = new Dictionary<string, List<string>>
+                var languagePrefixMap = new Dictionary<string, string>
                 (StringComparer.OrdinalIgnoreCase)
                 {
-                    { ".NET", new List<string> { "Azure." } },
-                    { "JavaScript", new List<string> { "@azure/" } },
-                    { "Java", new List<string> { "azure-", "com.azure." } },
-                    { "Go", new List<string> { "sdk/" } },
-                    { "Python", new List<string> { "azure-" } }
+                    { "JavaScript", "@azure/" },
+                    { "Go", "sdk/" },
                 };
-                if (SdkInfos.Any(sdk => languagePrefixMap.TryGetValue(sdk.Language, out var prefixes) && !prefixes.Any( prefix => sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
+
+                var invalidSdks = SdkInfos.Where(sdk => languagePrefixMap.TryGetValue(sdk.Language, out var prefix) && !sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                if (invalidSdks.Any())
                 {
-                    var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {string.Join(" or ", kvp.Value)}"));
-                    return $"Unsupported package name. Package names must follow these rules: ${prefixRules}";
+                    var errorDetails = string.Join("; ", invalidSdks.Select(sdk => $"{sdk.Language} -> {sdk.PackageName}"));
+                    var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {kvp.Value}"));
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = $"Unsupported package name(s) detected: {errorDetails}. Package names must follow these rules: {prefixRules}",
+                        NextSteps = ["Prompt the user to update the package name to match the required prefix for its language."]
+                    };
                 }
                 
                 StringBuilder sb = new();

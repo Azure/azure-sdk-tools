@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Models;
+using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
 /// Plain data model representing inferred information about an Azure SDK package.
@@ -59,4 +59,9 @@ public class PackageInfo
     /// The absolute path to the directory containing runnable samples for the package.
     /// </summary>
     public required string SamplesDirectory { get; init; }
+
+    /// <summary>
+    /// SDK type : management plane or data plane.
+    /// </summary>
+    public SdkType SdkType { get; set; } = SdkType.Unknown;
 }

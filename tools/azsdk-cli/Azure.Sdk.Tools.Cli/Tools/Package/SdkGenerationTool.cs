@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             tspConfigPath = tspConfigPath.Trim();
 
             // Validate inputs
-            logger.LogInformation($"Generating SDK at repo: {localSdkRepoPath}");
+            logger.LogInformation("Generating SDK at repo: {LocalSdkRepoPath}", localSdkRepoPath);
             if (string.IsNullOrEmpty(localSdkRepoPath) || !Directory.Exists(localSdkRepoPath))
             {
                 return CreateFailureResponse($"The directory for the local sdk repo does not provide or exist at the specified path: {localSdkRepoPath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             else
             {
                 // specRepoFullName doesn't need to be set in this case
-                logger.LogInformation($"Remote 'tspconfig.yaml' URL detected: {tspConfigPath}.");
+                logger.LogInformation("Remote 'tspconfig.yaml' URL detected: {TspConfigPath}.", tspConfigPath);
                 if (!IsValidRemoteGitHubUrlWithCommit(tspConfigPath))
                 {
                     return CreateFailureResponse($"Invalid remote GitHub URL with commit: {tspConfigPath}. The URL must include a valid commit SHA. Example: https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml");
@@ -154,9 +154,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateFailureResponse($"The 'tsp-location.yaml' file does not exist at the specified path: {tspLocationPath}");
             }
 
-            logger.LogInformation($"Running tsp-client update command in directory: {Path.GetDirectoryName(tspLocationPath)}");
-
             var tspLocationDirectory = Path.GetDirectoryName(tspLocationPath);
+            logger.LogInformation("Running tsp-client update command in directory: {TspLocationDirectory}", tspLocationDirectory);
             var npxOptions = new NpxOptions(
                 "@azure-tools/typespec-client-generator-cli",
                 ["tsp-client", "update"],
@@ -178,7 +177,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Run tsp-client init command to re-generate the SDK code
         private async Task<DefaultCommandResponse> RunTspInit(string localSdkRepoPath, string tspConfigPath, string specRepoFullName, string emitterOptions, CancellationToken ct)
         {
-            logger.LogInformation($"Running tsp-client init command.");
+            logger.LogInformation("Running tsp-client init command.");
 
             // Build arguments list dynamically
             var arguments = new List<string> { "tsp-client", "init", "--update-if-exists", "--tsp-config", tspConfigPath };

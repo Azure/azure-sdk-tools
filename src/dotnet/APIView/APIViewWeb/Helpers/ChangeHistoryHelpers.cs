@@ -1,13 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using APIViewWeb.Repositories;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Octokit;
-using MongoDB.Driver;
-using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Helpers
 {
@@ -15,7 +8,7 @@ namespace APIViewWeb.Helpers
     {
         /// <summary>
         /// Given a List of ChangeHistory, and a ChangeAction, update the ChangeHistory with the ChangeAction
-        /// depending on the entries already present in the changeHistroy. Return updated ChangeHistory and the ChangeStatus 
+        /// depending on the entries already present in the changeHistory. Return updated ChangeHistory and the ChangeStatus 
         /// which is the overall status of the change Action based on all changes in the changeHistory i.e true if added, false if reverted
         /// Should be used for ChangeActions that are Binary (Added/Reverted) Approved, Delete e.t.c
         /// </summary>
@@ -90,7 +83,7 @@ namespace APIViewWeb.Helpers
 
             var actionsAddedByUser = GetActionsAdded(changeHistory, actionAdded, user);
             var actionsRevertedByUser = GetActionsReverted(changeHistory, actionReverted, user);
-            return (actionsAddedByUser.Count() > actionsRevertedByUser.Count()) ? true : false;
+            return (actionsAddedByUser.Count() > actionsRevertedByUser.Count());
         }
         /// <summary>
         /// From a list of changeHistory get the creator

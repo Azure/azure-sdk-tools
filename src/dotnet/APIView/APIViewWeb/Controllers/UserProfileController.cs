@@ -1,21 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
-using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using APIViewWeb.Managers;
 using APIViewWeb.DTOs;
 
 namespace APIViewWeb.Controllers
 {
     public class UserProfileController : Controller
     {
-        private readonly IUserProfileManager _userProfileManager;
         private readonly UserProfileCache _userProfileCache;
 
-        public UserProfileController(IUserProfileManager userProfileManager, UserProfileCache userProfileCache)
+        public UserProfileController(UserProfileCache userProfileCache)
         {
-            _userProfileManager = userProfileManager;
             _userProfileCache = userProfileCache;
         }
 

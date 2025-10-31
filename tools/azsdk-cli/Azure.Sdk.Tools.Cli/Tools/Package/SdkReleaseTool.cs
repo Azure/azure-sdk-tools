@@ -144,7 +144,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageName = packageName,
                     Language = language,
                     ReleasePipelineStatus = "Failed",
-                    ReleaseStatusDetails = $"Error: {ex.Message}"
+                    ResponseError = $"Error: {ex.Message}"
                 };
                 return response;
             }

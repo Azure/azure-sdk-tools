@@ -98,6 +98,9 @@ def get_metrics_report(
         db_manager = get_database_manager()
         cosmos_client = db_manager.get_container_client("metrics")
         for doc in data.values():
+            # do not save language-agnostic overall metrics to CosmosDB. PowerBI will calculate these.
+            if not doc.dimension.get("language", None):
+                continue
             try:
                 cosmos_client.upsert(doc.id, data=doc.to_dict())
             except Exception as e:
@@ -165,11 +168,13 @@ def _build_metrics_segment(
     # get the active number of reviews with copilot comments
     metrics.active_copilot_review_count = len(active_review_ids_with_ai_comments)
 
-    # sort AI comments by sentiment
+    # Only consider non-deleted AI comments
     upvoted_ai_comments = []
     neutral_ai_comments = []
     downvoted_ai_comments = []
     for comment in ai_comments:
+        if comment.is_deleted:
+            continue
         if comment.downvotes:
             downvoted_ai_comments.append(comment)
         elif comment.upvotes:

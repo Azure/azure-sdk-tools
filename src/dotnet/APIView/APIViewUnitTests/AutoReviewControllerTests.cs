@@ -22,7 +22,6 @@ namespace APIViewUnitTests
 {
     public class AutoReviewControllerTests
     {
-        private readonly Mock<IAuthorizationService> _mockAuthorizationService;
         private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly Mock<IReviewManager> _mockReviewManager;
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
@@ -33,7 +32,6 @@ namespace APIViewUnitTests
 
         public AutoReviewControllerTests()
         {
-            _mockAuthorizationService = new Mock<IAuthorizationService>();
             _mockCodeFileManager = new Mock<ICodeFileManager>();
             _mockReviewManager = new Mock<IReviewManager>();
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
@@ -45,7 +43,6 @@ namespace APIViewUnitTests
             };
 
             _controller = new AutoReviewController(
-                _mockAuthorizationService.Object,
                 _mockCodeFileManager.Object,
                 _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
@@ -428,6 +425,182 @@ namespace APIViewUnitTests
             string errorDetails = objectResult.Value.ToString();
             errorDetails.Should().Contain("Invalid API revision data: Missing required field 'Version'");
         }
+
+        [Theory]
+        [InlineData("12.27.0", "12.28.0b1", true, false, "revision-stable-12-27")] // Different versions → Create new
+        [InlineData("12.27.0", "12.28", true, false, "revision-stable-12-28")] // Different versions → Create new
+        [InlineData("12.28.0b1", "12.28.0b1", false, true, "revision-prerelease-12-28-b1")] // Same version → Reuse
+        [InlineData("12.27.0", "12.27.0", false, true, "revision-stable-12-27")] // Same version → Reuse
+        public async Task CreateApiReview_WithDifferentVersions_CreatesNewRevision_WithSameVersion_ReusesRevision(
+            string existingVersion,
+            string newVersion,
+            bool shouldCreateNewRevision,
+            bool shouldReuseRevision,
+            string revisionId)
+        {
+            string packageName = "azure-storage-file-test";
+            APIRevisionListItemModel existingRevision = SetupPreReleaseTestScenario(
+                existingVersion,
+                newVersion,
+                packageName,
+                revisionId);
+
+            _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
+                    It.IsAny<APIRevisionListItemModel>(),
+                    It.IsAny<RenderedCodeFile>(),
+                    true))
+                .ReturnsAsync(existingVersion == newVersion);
+
+            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<APIRevisionType>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<int?>()))
+                .ReturnsAsync(new APIRevisionListItemModel
+                {
+                    Id = "new-revision-id", ReviewId = "review-id", Language = "Python", IsApproved = false
+                });
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(
+                    It.IsAny<APIRevisionListItemModel>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((APIRevisionListItemModel r, string v, string l, bool s) =>
+                {
+                    r.Label = l;
+                    if (shouldCreateNewRevision)
+                    {
+                        r.Files = [new APICodeFileModel { PackageVersion = v }];
+                    }
+
+                    return r;
+                });
+
+            await _controller.CreateApiReview(
+                "12345",
+                "packages",
+                $"{packageName}-{newVersion}.whl",
+                $"{packageName}_python.json",
+                "CI Build",
+                "Azure/azure-sdk-for-python",
+                packageName,
+                false,
+                "internal",
+                newVersion,
+                false,
+                "client"
+            );
+
+            if (shouldCreateNewRevision)
+            {
+                // Scenario 1: Different versions → Should create new revision
+                _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<APIRevisionType>(),
+                        It.IsAny<string>(),
+                        It.IsAny<MemoryStream>(),
+                        It.IsAny<CodeFile>(),
+                        It.IsAny<string>(),
+                        It.IsAny<int?>()),
+                    Times.Once,
+                    $"Expected new revision to be created when version differs ({existingVersion} → {newVersion})");
+
+                _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                        It.Is<APIRevisionListItemModel>(r => r.Id == "new-revision-id"),
+                        newVersion,
+                        It.IsAny<string>(),
+                        It.IsAny<bool>()),
+                    Times.Once,
+                    "New revision should have metadata updated");
+            }
+
+            if (shouldReuseRevision)
+            {
+                // Scenario 2: Same version → Should reuse existing revision
+                _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<APIRevisionType>(),
+                        It.IsAny<string>(),
+                        It.IsAny<MemoryStream>(),
+                        It.IsAny<CodeFile>(),
+                        It.IsAny<string>(),
+                        It.IsAny<int?>()),
+                    Times.Never,
+                    $"Should NOT create new revision when version and code are the same ({newVersion})");
+
+                _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                        It.Is<APIRevisionListItemModel>(r => r.Id == existingRevision.Id),
+                        newVersion,
+                        It.IsAny<string>(),
+                        It.IsAny<bool>()),
+                    Times.Once,
+                    "Existing revision should have metadata updated (e.g., label)");
+            }
+        }
+
+        private APIRevisionListItemModel SetupPreReleaseTestScenario(string existingVersion, string newVersion,
+            string packageName, string revisionId)
+        {
+            const string language = "Python";
+
+            CodeFile newCodeFile = new()
+            {
+                Name = "test", Language = language, PackageName = packageName, PackageVersion = newVersion
+            };
+
+            APICodeFileModel existingCodeFile = new()
+            {
+                Name = "test", Language = language, PackageName = packageName, PackageVersion = existingVersion
+            };
+
+            APIRevisionListItemModel existingRevision = new()
+            {
+                Id = revisionId,
+                ReviewId = "review-id",
+                Language = language,
+                IsApproved = false,
+                IsReleased = false,
+                CreatedOn = DateTime.UtcNow.AddDays(-1),
+                APIRevisionType = APIRevisionType.Automatic,
+                Files = new List<APICodeFileModel> { existingCodeFile }
+            };
+
+            ReviewListItemModel existingReview = new()
+            {
+                Id = "review-id",
+                PackageName = packageName,
+                Language = language,
+                IsApproved = false,
+                PackageType = PackageType.client
+            };
+
+            _mockCodeFileManager.Setup(m => m.GetCodeFileAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null))
+                .ReturnsAsync(newCodeFile);
+
+            _mockReviewManager.Setup(m => m.GetReviewAsync(language, packageName, null))
+                .ReturnsAsync(existingReview);
+
+            _mockApiRevisionsManager.Setup(m =>
+                    m.GetAPIRevisionsAsync(existingReview.Id, It.IsAny<string>(), It.IsAny<APIRevisionType>()))
+                .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
+
+            _mockCommentsManager.Setup(m =>
+                    m.GetCommentsAsync(existingReview.Id, It.IsAny<bool>(), It.IsAny<CommentType>()))
+                .ReturnsAsync(new List<CommentItemModel>());
+
+            return existingRevision;
+        }
+
 
         private Mock<IFormFile> CreateMockFormFile(string fileName, string content)
         {

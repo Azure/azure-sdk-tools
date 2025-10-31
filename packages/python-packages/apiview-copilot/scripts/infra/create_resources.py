@@ -285,7 +285,7 @@ def create_cosmosdb_database(v: Variables):
 
 def create_cosmosdb_containers(v: Variables):
     """Create the CosmosDB containers."""
-    containers = ["guidelines", "examples", "memories", "review-jobs"]
+    containers = ["guidelines", "examples", "memories", "metrics", "evals", "review-jobs"]
     client = CosmosDBManagementClient(credential, v.subscription_id)
     try:
         for container in containers:

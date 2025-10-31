@@ -46,7 +46,23 @@ class ContainerNames(Enum):
 class DatabaseManager:
     """Manager for Azure Cosmos DB operations."""
 
-    def __init__(self, endpoint: str, db_name: str, credential: ChainedTokenCredential):
+    _instance: "DatabaseManager" = None
+
+    @classmethod
+    def get_instance(cls, force_new: bool = False) -> "DatabaseManager":
+        """
+        Returns a singleton instance of DatabaseManager.
+        """
+        if cls._instance is None or force_new:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        settings = SettingsManager()
+        db_name = settings.get("COSMOS_DB_NAME")
+        endpoint = settings.get("COSMOS_ENDPOINT")
+        credential = get_credential()
+
         self.client = CosmosClient(endpoint, credential=credential)
         self.database = self.client.get_database_client(db_name)
         self.containers = {}

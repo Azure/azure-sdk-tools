@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     if (args.cache_result) :
         now = datetime.now()
-        result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime("%Y-%m-%d-%H-%S")}"), 'a', encoding='utf-8')
+        result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}"), 'a', encoding='utf-8')
         logging.info(f"all_results:{len(all_results.keys())}")
         for name, test_results in all_results.items():
             result_file.write(f"\n-----------{name}----------------------\n")

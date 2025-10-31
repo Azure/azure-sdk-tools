@@ -248,7 +248,7 @@ class EvalsRunner:
         logging.info("Processing complete. Results written to output directory.")
         return output_dir.absolute()
 
-    def evaluate_run(self, test_folder:str, prefix: Optional[str] = None, need_retrieve_response: bool = True, evaluator_filter: Optional[list] = None, evaluation_name_prefix: Optional[str] = None, ai_project_endpoint: Optional[str] = None, kwargs:dict[str, any] = {}):
+    def evaluate_run(self, test_folder:str, prefix: Optional[str] = None, need_retrieve_response: bool = True, evaluator_filter: Optional[list] = None, evaluation_name_prefix: Optional[str] = None, ai_project_endpoint: Optional[str] = None, **kwargs):
 
         all_results = {}
         evaluators = {}

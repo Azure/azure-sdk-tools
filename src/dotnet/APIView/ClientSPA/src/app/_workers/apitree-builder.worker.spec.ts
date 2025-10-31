@@ -33,7 +33,7 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
           const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(29);
+          expect(codePanelRowData.length).toBe(27);
           const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
           expect(linesWithDiff.length).toBe(6);
         }

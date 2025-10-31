@@ -138,9 +138,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
       if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
-        if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of top token codeLines
-          codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicator node has diagnostic comments
-        }
         codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
         appendToggleDocumentationClass(node, codeLine, index);
         setLineNumber(codeLine);
@@ -151,16 +148,8 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
       }
     });
   }
-
-  if (buildNode && node.diagnostics) {
-    node.diagnostics.forEach((diag, index) => {
-      if (shouldAppendIfRowIsHiddenAPI(diag)) {
-        diag.rowClasses = new Set<string>(diag.rowClasses); // Ensure that the rowClasses is a Set
-        codePanelRowData.push(diag);
-      }
-    });
-  }
-
+  
+  
   if (buildNode && node.commentThread && apiTreeBuilderData?.showComments) {
     Object.keys(node.commentThread).map(Number).forEach((key) => {
       const comment: CodePanelRowData = node.commentThread[key];

@@ -156,8 +156,11 @@ def build_output_table(eval_results: list[dict[str, Any]], metrics: list[str], b
             for metric in metrics:
                 metric_score = result[f"{metric}"] if f"{metric}" in result else -1
                 metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
-                base_score = base[f"{metric}"]
-                values.append(f"{metric_score:.1f}{format_terminal_diff(metric_score, base_score)}")
+                base_score = base[f"{metric}"] if f"{metric}" in base else None
+                if base_score is not None:
+                    values.append(f"{metric_score:.1f}{format_terminal_diff(metric_score, base_score)}")
+                else:
+                    values.append(f"{metric_score:.1f}")
                 values.append(f"{metric_result}")
             values.append(f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}")
         else:

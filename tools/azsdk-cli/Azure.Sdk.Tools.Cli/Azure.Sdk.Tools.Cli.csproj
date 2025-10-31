@@ -67,8 +67,4 @@
     <None Include="CHANGELOG.md" Pack="true" PackagePath="CHANGELOG.md" />
     <None Include="../README.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Responses\TypeSpec\" />
-  </ItemGroup>
 </Project>

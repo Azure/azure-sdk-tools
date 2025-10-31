@@ -22,9 +22,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         {
             //Create an output string with all the properties of the package release
             StringBuilder output = new StringBuilder();
-            output.AppendLine($"### Package PackageName: {PackageName}");
+            output.AppendLine($"### Package Name: {PackageName}");
             output.AppendLine($"### Version: {Version}");
-            output.AppendLine($"### Language: {Language.ToString()}");
+            output.AppendLine($"### Language: {Language}");
             output.AppendLine($"### Release Pipeline Run: {ReleasePipelineRunUrl}");
             output.AppendLine($"### Release Build Id: {PipelineBuildId}");
             output.AppendLine($"### Release Pipeline Status: {ReleasePipelineStatus}");

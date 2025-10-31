@@ -6,9 +6,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
     public class TypeSpecBaseResponse
     {
         [Telemetry]
-        [JsonPropertyName("typeSpecProject")]
+        [JsonPropertyName("typespec_project")]
         public string? TypeSpecProject { get; set; }
-        [JsonPropertyName("packageType")]
+        [JsonPropertyName("package_type")]
         [Telemetry]
         public SdkType PackageType { get; set; }
         }

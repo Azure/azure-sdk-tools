@@ -11,17 +11,17 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         [JsonPropertyName("language")]
         public SdkLanguage Language { get; set; }
         [Telemetry]
-        [JsonPropertyName("packageName")]
+        [JsonPropertyName("package_name")]
         public string? PackageName { get; set; }
-        [JsonPropertyName("packageDisplayName")]
+        [JsonPropertyName("package_display_name")]
         public string? DisplayName { get; set; }
         [JsonPropertyName("version")]
         public string? Version { get; set; }
         [Telemetry]
-        [JsonPropertyName("packageType")]
+        [JsonPropertyName("package_type")]
         public SdkType PackageType { get; set; }
         [Telemetry]
-        [JsonPropertyName("typeSpecProject")]
+        [JsonPropertyName("typespec_project")]
         public string? TypeSpecProject { get; set; }
 
         public void SetLanguage(string language)

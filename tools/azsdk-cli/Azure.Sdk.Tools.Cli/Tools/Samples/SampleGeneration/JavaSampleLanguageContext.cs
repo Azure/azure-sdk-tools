@@ -110,10 +110,5 @@ public class HelloWorld {
     }
 }
 ";
-    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
-    {
-        var provider = new JavaSourceInputProvider();
-        var inputs = provider.Create(packagePath);
-        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
-    }
+    protected override ILanguageSourceInputProvider GetSourceInputProvider() => new JavaSourceInputProvider();
 }

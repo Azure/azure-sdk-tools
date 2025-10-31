@@ -59,10 +59,5 @@ namespace Azure.Template.Tests.Samples
     }
 }";
 
-    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
-    {
-        var provider = new DotNetSourceInputProvider();
-        var inputs = provider.Create(packagePath);
-        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
-    }
+    protected override ILanguageSourceInputProvider GetSourceInputProvider() => new DotNetSourceInputProvider();
 }

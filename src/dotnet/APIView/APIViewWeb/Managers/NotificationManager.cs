@@ -395,46 +395,10 @@ namespace APIViewWeb.Managers
                 var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
                     review.PackageName,
                     typeSpecUrl,
-                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
-                    isAutoApproved: false);
+                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>());
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 
-                await SendEmailAsync(emailToList, subject, emailContent);
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-        }
-
-        public async Task NotifyStakeholdersOfAutoApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)
-        {
-            try
-            {
-                // Get all email recipients (approvers + original requester)
-                var emailAddresses = await GetNamespaceReviewEmailRecipientsAsync(review);
-                
-                if (!emailAddresses.Any())
-                {
-                    return;
-                }
-                
-                var subject = $"Namespace Review Auto-Approved: {review.PackageName}";
-                
-                // Build TypeSpec URL
-                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
-                
-                // Use the unified approval email template for auto-approval
-                var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
-                    review.PackageName,
-                    typeSpecUrl,
-                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
-                    isAutoApproved: true,
-                    originalRequestDate: review.NamespaceApprovalRequestedOn,
-                    autoApprovedDate: DateTime.UtcNow);
-                
-                var emailToList = string.Join("; ", emailAddresses);
                 await SendEmailAsync(emailToList, subject, emailContent);
             }
             catch (Exception ex)

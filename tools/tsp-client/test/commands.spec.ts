@@ -634,9 +634,7 @@ describe.sequential("Verify commands", () => {
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
       assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
       assert.isUndefined(emitterJson["overrides"]);
-      assert.isTrue(
-        await doesFileExist(joinPaths(tmpDir, "alternate-emitter-package-lock.json")),
-      );
+      assert.isTrue(await doesFileExist(joinPaths(tmpDir, "alternate-emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     } finally {

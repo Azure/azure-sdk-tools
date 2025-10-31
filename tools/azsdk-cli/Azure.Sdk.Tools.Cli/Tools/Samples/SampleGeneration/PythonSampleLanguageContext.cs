@@ -16,7 +16,7 @@ public sealed class PythonSampleLanguageContext : SampleLanguageContext
     protected override string GetLanguageSpecificInstructions() => @"
 Language-specific instructions for Python:
 - Filenames must be descriptive without file extension (e.g., ""create_key"", ""retrieve_key"")
-- IMPORTANT: When relevant, generate TWO separate samples for each scenario: one ending with 'sync' (synchronous) and one ending with 'async' (asynchronous) under a nested async_samples folder
+- IMPORTANT: When relevant, generate TWO separate samples for each scenario: one ending with 'sync' (synchronous) and one ending with 'async' (asynchronous)
 - Follow this template:
 ";
     public override string GetSampleExample() => @"# ------------------------------------

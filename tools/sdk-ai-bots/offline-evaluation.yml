@@ -92,7 +92,7 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - script: |
-                  python run.py --evaluation_name_prefix $(Build.BuildId)
+                  python evals_run.py --evaluation_name_prefix $(Build.BuildId)
                 displayName: 'Run Evals'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                 env:

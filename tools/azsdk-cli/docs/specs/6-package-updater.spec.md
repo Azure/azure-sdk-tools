@@ -78,7 +78,7 @@ Formalizing Stage 6 as cohesive tools improves reliability, supports automation-
 
 ### Overview
 
-Implement four individual CLI + MCP tools. Each tool:
+Implement three individual CLI + MCP tools. Each tool:
 
 1. Resolves package path & language.
 2. Loads configuration for the language repository.
@@ -87,8 +87,6 @@ Implement four individual CLI + MCP tools. Each tool:
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
 Note: see the [repo-tooling-contract](./specs/99-repo-tooling-contract.md) spec for more details.
-
-Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary (post milestone 1).
 
 ### Detailed Design
 
@@ -234,7 +232,6 @@ Failure Modes:
 Typical CLI workflow:
 
 ```bash
-azsdk package update-ci --package-path /abs/sdk/path
 azsdk package update-changelog-content --package-path /abs/sdk/path
 azsdk package update-metadata --package-path /abs/sdk/path
 azsdk package update-version --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
@@ -301,7 +298,7 @@ flowchart TD
       style P fill:#ffcdd2
 ```
 
-> **Note:** Other tools (version update, metadata update, CI update) follow a similar flowchart pattern.
+> **Note:** Other tools (version update, metadata update) follow a similar flowchart pattern.
 
 ---
 

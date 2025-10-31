@@ -129,7 +129,7 @@ public class VerifySetupTool : MCPTool
         }
         catch (Exception ex)
         {
-            logger.LogError("Error verifying setup for {input}: {ex}", langs, ex);
+            logger.LogError(ex, "Error verifying setup for {input}", langs);
             return new ()
             {
                 ResponseError = $"Error processing request: {ex.Message}"
@@ -176,7 +176,7 @@ public class VerifySetupTool : MCPTool
         }
         catch (Exception ex)
         {
-            logger.LogError("Command {Command} failed to execute. Exception: {Exception}", string.Join(' ', command), ex);
+            logger.LogError(ex, "Command {Command} failed to execute.", string.Join(' ', command));
             return new DefaultCommandResponse
             {
                 ResponseError = $"Command {string.Join(' ', command)} failed to execute. Exception: {ex.Message}"

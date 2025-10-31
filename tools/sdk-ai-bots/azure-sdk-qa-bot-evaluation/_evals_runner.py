@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import threading
 import time
 from typing import Any, Dict, Optional, Type
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
@@ -66,7 +67,8 @@ class EvaluatorClass:
     
 
 class EvalsRunner:
-    channel_to_tenant_id_dict: dict[str, str] = {}
+    _tenant_ids_lock = threading.Lock()
+    channel_to_tenant_id_dict: dict[str, str] | None = None
 
     scenario_to_channel: dict[str, str] = {
         "typespec": "TypeSpec Discussion",
@@ -82,10 +84,20 @@ class EvalsRunner:
         "javascript": "Language - JavaScript"
     }
 
-    def __init__(self, evaluators: dict[str, EvaluatorClass] = {}, num_to_run: int = 1):
-        self._evaluators = evaluators
+    def __init__(self, evaluators: dict[str, EvaluatorClass] | None = None, num_to_run: int = 1):
+        self._evaluators = evaluators or {}
         self._num_to_run = num_to_run
-        EvalsRunner.channel_to_tenant_id_dict = EvalsRunner._retrieve_tenant_ids()
+        # Initialize the shared cache lazily once
+        if EvalsRunner.channel_to_tenant_id_dict is None:
+            with EvalsRunner._tenant_ids_lock:
+                if EvalsRunner.channel_to_tenant_id_dict is None:
+                    EvalsRunner.channel_to_tenant_id_dict = EvalsRunner._retrieve_tenant_ids()
+
+
+    @property
+    def evaluators(self):
+        """Read-only view of evaluators."""
+        return self._evaluators
 
     def registerEvaluator(self, name: str, evaluator: EvaluatorClass):
         self._evaluators[name] = evaluator

@@ -1,25 +1,17 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses
+namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
-    public class PackageResponse : CommandResponse
+    public class PackageResponse : PackageResponseBase
     {
         [JsonPropertyName("Work item Id")]
         public int WorkItemId { get; set; }
         public string WorkItemUrl { get; set; } = string.Empty;
         [JsonPropertyName("Package work item status")]
         public string State { get; set; } = string.Empty;
-        [JsonPropertyName("Package name")]
-        public string Name { get; set; } = string.Empty;
-        [JsonPropertyName("Version")]
-        public string Version { get; set; } = string.Empty;
-        [JsonPropertyName("Language")]
-        public string Language { get; set; } = string.Empty;
-        [JsonPropertyName("Package display name")]
-        public string DisplayName { get; set; } = string.Empty;
-        [JsonPropertyName("Package type")]
-        public string PackageType { get; set; } = string.Empty;
         [JsonPropertyName("Package root path")]
         public string PackageRepoPath { get; set; } = string.Empty;
         [JsonPropertyName("Latest pipeline run url")]
@@ -83,12 +75,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Work Item ID: {WorkItemId}");
             output.AppendLine($"### Work Item URL: {WorkItemUrl}");
             output.AppendLine($"### Package Work Item Status: {State}");
-            output.AppendLine($"### Package Name: {Name}");
+            output.AppendLine($"### Package PackageName: {PackageName}");
             output.AppendLine($"### Version: {Version}");
-            output.AppendLine($"### Language: {Language}");
-            output.AppendLine($"### Package Display Name: {DisplayName}");
-            output.AppendLine($"### Package Type: {PackageType}");
+            output.AppendLine($"### Language: {Language.ToString()}");
+            output.AppendLine($"### Package Display PackageName: {DisplayName}");
+            output.AppendLine($"### Package Type: {PackageType.ToString()}");
             output.AppendLine($"### Package Repo Path: {PackageRepoPath}");
+            output.AppendLine($"### TypeSpec Project: {TypeSpecProject}");
             output.AppendLine($"### Latest Pipeline Run URL: {LatestPipelineRun}");
             output.AppendLine($"### Latest Pipeline Run Status: {LatestPipelineStatus}");
             output.AppendLine($"### Release Pipeline URL: {PipelineDefinitionUrl}");
@@ -97,9 +90,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Is API View Approved: {IsApiViewApproved}");
             output.AppendLine($"### API View Status: {APIViewStatus}");
             output.AppendLine($"### API View Validation Details: {ApiViewValidationDetails}");
-            output.AppendLine($"### Is Package Name Approved: {IsPackageNameApproved}");
-            output.AppendLine($"### Package Name Status: {PackageNameStatus}");
-            output.AppendLine($"### Package Name Approval Details: {PackageNameApprovalDetails}");
+            output.AppendLine($"### Is Package PackageName Approved: {IsPackageNameApproved}");
+            output.AppendLine($"### Package PackageName Status: {PackageNameStatus}");
+            output.AppendLine($"### Package PackageName Approval Details: {PackageNameApprovalDetails}");
             output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
             output.AppendLine($"### Is Package Ready for Release: {IsPackageReady}");
             output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");

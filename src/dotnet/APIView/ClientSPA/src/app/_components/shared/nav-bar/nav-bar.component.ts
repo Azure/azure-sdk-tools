@@ -85,15 +85,9 @@ export class NavBarComponent implements OnInit {
       return;
     }
 
-    // Call the API to get allowed approvers
-
-
-
-
     this.http.get<string>(`${this.configService.apiUrl}/Reviews/allowedApprovers`, { withCredentials: true }).subscribe({
       next: (allowedApprovers) => {
         if (allowedApprovers) {
-          // Split comma-separated string and check if current user is in the list
           const approversList = allowedApprovers.split(',').map(username => username.trim());
           this.isApprover = approversList.includes(this.userProfile?.userName || '');
         } else {

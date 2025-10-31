@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, SDK_LANGUAGES, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -107,6 +107,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   namespaceReviewBtnLabel: string = '';
   namespaceReviewMessage: string = '';
   namespaceReviewEnabled: boolean = false; // Feature flag from Azure App Configuration
+  allAssociatedReviewsApproved: boolean = false; // Track if all associated SDK reviews are approved
 
   codeLineSearchText: FormControl = new FormControl('');
 
@@ -421,11 +422,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setNamespaceReviewStates() {
-    // Only show namespace review request for TypeSpec language AND if feature is enabled
-    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
-    console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
-    // Always keep the button available for requesting namespace review
-    this.isNamespaceReviewRequested = false;
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
+                                      this.namespaceReviewEnabled &&
+                                      !this.review?.isApproved &&
+                                      this.review?.namespaceReviewStatus !== 'approved' &&
+                                      this.pullRequestsOfAssociatedAPIRevisions.length > 0;
+
+    // Check if namespace review has been requested for this revision
+    this.isNamespaceReviewRequested = this.activeAPIRevision?.hasRequestedNamespaceReview || false;
 
     if (this.isNamespaceReviewInProgress && (this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved')) {
       this.isNamespaceReviewInProgress = false;
@@ -445,11 +449,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
       this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
-          for (const pr of response) {
-            if (pr.reviewId != this.activeAPIRevision?.reviewId) {
-              this.pullRequestsOfAssociatedAPIRevisions.push(pr);
-            }
-          }
+          this.pullRequestsOfAssociatedAPIRevisions = response.filter(pr => pr.reviewId !== this.activeAPIRevision?.reviewId);
+
+          this.checkAssociatedReviewsApprovalStatus();
+          this.setNamespaceReviewStates();
+        },
+        error: (error) => {
+          console.error('Failed to fetch pullRequestsOfAssociatedAPIRevisions:', error);
         }
       });
     }
@@ -625,14 +631,18 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   updateNamespaceReviewButtonState() {
-    if (this.isNamespaceReviewInProgress) {
+    if (this.review?.isApproved && this.review?.language === 'TypeSpec') {
+      this.namespaceReviewBtnClass = "btn btn-outline-success disabled";
+      this.namespaceReviewBtnLabel = "Review Approved";
+      this.namespaceReviewMessage = "This review has already been approved - namespace review is not needed.";
+    } else if (this.isNamespaceReviewInProgress) {
       this.namespaceReviewBtnClass = "btn btn-outline-primary";
       this.namespaceReviewBtnLabel = "Requesting...";
       this.namespaceReviewMessage = "";
     } else if (this.isNamespaceApproved()) {
       this.namespaceReviewBtnClass = "btn btn-outline-success";
       this.namespaceReviewBtnLabel = "Namespace Review Approved";
-      this.namespaceReviewMessage = "";
+      this.namespaceReviewMessage = "All associated SDK language reviews have been approved.";
     } else if (this.isNamespaceReviewRequested) {
       this.namespaceReviewBtnClass = "btn btn-secondary disabled";
       this.namespaceReviewBtnLabel = "Namespace Review Requested";
@@ -645,15 +655,66 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Reset the namespace review loading state (called when request fails)
+   * Reset the namespace review loading state (called when request completes)
    */
   resetNamespaceReviewLoadingState() {
     this.isNamespaceReviewInProgress = false;
-    this.updateNamespaceReviewButtonState();
+    this.setNamespaceReviewStates();
   }
 
   isNamespaceApproved(): boolean {
-    return this.review?.namespaceReviewStatus === 'approved' || false;
+    return this.review?.namespaceReviewStatus === 'approved' || this.allAssociatedReviewsApproved || false;
+  }
+
+  /**
+   * Check if all associated SDK language reviews are approved
+   */
+  private checkAssociatedReviewsApprovalStatus() {
+    if (this.pullRequestsOfAssociatedAPIRevisions.length === 0) {
+      this.allAssociatedReviewsApproved = false;
+      return;
+    }
+
+    // Fetch and check approval status for SDK language reviews only
+    combineLatest(
+      this.pullRequestsOfAssociatedAPIRevisions.map(pr =>
+        this.reviewsService.getReview(pr.reviewId).pipe(take(1))
+      )
+    ).pipe(take(1)).subscribe({
+      next: (reviews: any[]) => {
+        const sdkLanguageReviews = reviews.filter(review => SDK_LANGUAGES.includes(review?.language));
+        this.allAssociatedReviewsApproved = sdkLanguageReviews.length > 0 &&
+                                             sdkLanguageReviews.every(review => review?.isApproved === true);
+
+        // If all SDK reviews just became approved and TypeSpec review is not already approved, update DB
+        if (this.allAssociatedReviewsApproved && this.review?.language === 'TypeSpec' && !this.review?.isApproved) {
+           this.autoApproveTypeSpecReview();
+        }
+
+        this.updateNamespaceReviewButtonState();
+      },
+      error: (error) => {
+        console.error('Failed to fetch associated reviews:', error);
+      }
+    });
+  }
+
+  /**
+   * Auto-approve TypeSpec review when all associated SDK language reviews are approved
+   */
+  private autoApproveTypeSpecReview() {
+    if (!this.review?.id) return;
+
+    this.reviewsService.approveReview(this.review.id).pipe(take(1)).subscribe({
+      next: (updatedReview: Review) => {
+        // Update local review object with the approved version from server
+        this.review = updatedReview;
+        this.setReviewApprovalStatus();
+      },
+      error: (error: any) => {
+        console.error('Failed to auto-approve TypeSpec review:', error);
+      }
+    });
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
@@ -704,7 +765,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     const isJavaScript = this.review.language == "JavaScript";
 
     const isTypeSpec = this.review.language === "TypeSpec";
-    
+
     return !(isAzureRestPackage && isJavaScript) && !isTypeSpec;
   }
 }

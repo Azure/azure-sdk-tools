@@ -32,6 +32,7 @@ export class APIRevision {
   isDeleted: boolean
   approvers: string[]
   viewedBy: string[]
+  hasRequestedNamespaceReview: boolean
 
   constructor() {
     this.id = ''
@@ -57,6 +58,7 @@ export class APIRevision {
     this.isDeleted = false,
     this.approvers = [],
     this.viewedBy = []
+    this.hasRequestedNamespaceReview = false
   }
 }
 

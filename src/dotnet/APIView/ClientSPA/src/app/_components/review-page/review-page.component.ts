@@ -19,7 +19,7 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
-import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { SamplesRevision } from 'src/app/_models/samples';
@@ -259,7 +259,6 @@ export class ReviewPageComponent implements OnInit {
               diffStyle: this.diffStyle!,
               showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
               showComments: this.userProfile?.preferences.showComments ?? true,
-              showSystemComments: this.userProfile?.preferences.showSystemComments ?? true,
               showHiddenApis: this.userProfile?.preferences.showHiddenApis ?? false
             };
             // Passing ArrayBufer to worker is way faster than passing object
@@ -426,21 +425,6 @@ export class ReviewPageComponent implements OnInit {
         }
         else {
           this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
-        }
-      }
-    });
-  }
-
-  handleShowSystemCommentsEmitter(state: boolean) {
-    let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.showSystemComments = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        if (userPreferenceModel!.showSystemComments) {
-          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
-        }
-        else {
-          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
         }
       }
     });

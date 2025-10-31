@@ -20,44 +20,6 @@
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
         width: 500% !important;
-
-        &.diagnostics {
-            padding-left: calc(var(--max-line-number-width) + 50px);
-
-            &.error {
-                background-color: var(--alert-error-bg);
-                color: var(--alert-error-color);
-                border-top: 1px solid var(--alert-error-border-color);
-                border-bottom: 1px solid var(--alert-error-border-color);
-                a {
-                    font-weight: bold;
-                    text-decoration: underline;
-                    color: var(--alert-error-link-color);
-                }
-            }
-            &.warning {
-                background-color: var(--alert-warn-bg);
-                color: var(--alert-warn-color);
-                border-top: 1px solid var(--alert-warn-border-color);
-                border-bottom: 1px solid var(--alert-warn-border-color);
-                a {
-                    font-weight: bold;
-                    text-decoration: underline;
-                    color: var(--alert-warn-link-color);
-                }
-            }
-            &.info {
-                background-color: var(--alert-info-bg);
-                color: var(--alert-info-color);
-                border-top: 1px solid var(--alert-info-border-color);
-                border-bottom: 1px solid var(--alert-info-border-color);
-                a {
-                    font-weight: bold;
-                    text-decoration: underline;
-                    color: var(--alert-info-link-color);
-                }
-            }
-        }
         
         &.user-comment-thread, &.cross-language-view {
             padding-left: calc(var(--max-line-number-width) + 20px);

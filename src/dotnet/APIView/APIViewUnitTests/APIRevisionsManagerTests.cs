@@ -1,10 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
 using APIView.Model;
 using APIViewWeb;
+using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
@@ -77,6 +80,7 @@ public class APIRevisionsManagerTests
     private readonly Mock<INotificationManager> _mockNotificationManager;
     private readonly Mock<IBlobOriginalsRepository> _mockOriginalsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
+    private readonly Mock<ICosmosCommentsRepository> _mockCommentsRepository;
     private readonly TelemetryClient _telemetryClient;
     private readonly TestLanguageService _testLanguageService;
 
@@ -85,6 +89,7 @@ public class APIRevisionsManagerTests
         _mockReviewsRepository = new Mock<ICosmosReviewRepository>();
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockAPIRevisionsRepository = new Mock<ICosmosAPIRevisionsRepository>();
+        _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockAuthorizationService = new Mock<IAuthorizationService>();
         _mockHubContext = new Mock<IHubContext<SignalRHub>>();
@@ -104,6 +109,7 @@ public class APIRevisionsManagerTests
             _mockAuthorizationService.Object,
             _mockReviewsRepository.Object,
             _mockAPIRevisionsRepository.Object,
+            _mockCommentsRepository.Object,
             _mockHubContext.Object,
             languageServices,
             _mockDevopsArtifactRepository.Object,
@@ -254,5 +260,114 @@ public class APIRevisionsManagerTests
             VersionString = "2.0.0",
             CrossLanguageMetadata = crossLanguageMetadata
         };
+    }
+
+    [Fact]
+    public async Task ConvertDiagnosticsToCommentsAsync_WithNoDiagnostics_SetsConversionFlagOnly()
+    {
+        APIRevisionListItemModel apiRevision = CreateTestRevision();
+        apiRevision.DiagnosticsConvertedToComments = false;
+        CodeFile codeFile = CreateCodeFile("test.json");
+        codeFile.Diagnostics = Array.Empty<CodeDiagnostic>();
+
+        await _manager.ConvertDiagnosticsToCommentsAsync(apiRevision, codeFile);
+
+        Assert.True(apiRevision.DiagnosticsConvertedToComments);
+        _mockCommentsRepository.Verify(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+        _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(apiRevision), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConvertDiagnosticsToCommentsAsync_WithDiagnostics_CreatesCommentsWithCorrectProperties()
+    {
+        APIRevisionListItemModel apiRevision = CreateTestRevision();
+        apiRevision.DiagnosticsConvertedToComments = false;
+        CodeFile codeFile = CreateCodeFile("test.json");
+        codeFile.Diagnostics =
+        [
+            new CodeDiagnostic
+            {
+                TargetId = "test-element-id",
+                Text = "This is a warning diagnostic",
+                Level = CodeDiagnosticLevel.Warning
+            }
+        ];
+
+        await _manager.ConvertDiagnosticsToCommentsAsync(apiRevision, codeFile);
+
+        _mockCommentsRepository.Verify(x => x.UpsertCommentAsync(It.Is<CommentItemModel>(c =>
+            c.ElementId == "test-element-id" &&
+            c.CommentText == "This is a warning diagnostic" &&
+            c.CommentSource == CommentSource.Diagnostic &&
+            c.Severity == CommentSeverity.ShouldFix &&
+            c.CreatedBy == ApiViewConstants.AzureSdkBotName &&
+            c.CommentType == CommentType.APIRevision &&
+            c.ResolutionLocked == false
+        )), Times.Once);
+        Assert.True(apiRevision.DiagnosticsConvertedToComments);
+    }
+
+    [Fact]
+    public async Task ConvertDiagnosticsToCommentsAsync_AlreadyConverted_DoesNothing()
+    {
+        APIRevisionListItemModel apiRevision = CreateTestRevision();
+        apiRevision.DiagnosticsConvertedToComments = true;
+        CodeFile codeFile = CreateCodeFile("test.json");
+        codeFile.Diagnostics =
+        [
+            new CodeDiagnostic { TargetId = "id", Text = "text", Level = CodeDiagnosticLevel.Error }
+        ];
+
+        await _manager.ConvertDiagnosticsToCommentsAsync(apiRevision, codeFile);
+
+        _mockCommentsRepository.Verify(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+        _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(CodeDiagnosticLevel.Fatal, CommentSeverity.MustFix)]
+    [InlineData(CodeDiagnosticLevel.Error, CommentSeverity.MustFix)]
+    [InlineData(CodeDiagnosticLevel.Warning, CommentSeverity.ShouldFix)]
+    [InlineData(CodeDiagnosticLevel.Info, CommentSeverity.Suggestion)]
+    public async Task ConvertDiagnosticsToCommentsAsync_MapsDiagnosticLevelToSeverityCorrectly(
+        CodeDiagnosticLevel diagnosticLevel,
+        CommentSeverity expectedSeverity)
+    {
+        APIRevisionListItemModel apiRevision = CreateTestRevision();
+        apiRevision.DiagnosticsConvertedToComments = false;
+        CodeFile codeFile = CreateCodeFile("test.json");
+        codeFile.Diagnostics =
+        [
+            new CodeDiagnostic
+            {
+                TargetId = "test-id", Text = $"Diagnostic with {diagnosticLevel} level", Level = diagnosticLevel
+            }
+        ];
+
+        await _manager.ConvertDiagnosticsToCommentsAsync(apiRevision, codeFile);
+
+        _mockCommentsRepository.Verify(x => x.UpsertCommentAsync(It.Is<CommentItemModel>(c =>
+            c.Severity == expectedSeverity
+        )), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConvertDiagnosticsToCommentsAsync_WithMultipleDiagnostics_CreatesMultipleComments()
+    {
+        APIRevisionListItemModel apiRevision = CreateTestRevision();
+        apiRevision.DiagnosticsConvertedToComments = false;
+        CodeFile codeFile = CreateCodeFile("test.json");
+        codeFile.Diagnostics =
+        [
+            new CodeDiagnostic { TargetId = "id1", Text = "Diagnostic 1", Level = CodeDiagnosticLevel.Error },
+            new CodeDiagnostic { TargetId = "id2", Text = "Diagnostic 2", Level = CodeDiagnosticLevel.Warning },
+            new CodeDiagnostic { TargetId = "id3", Text = "Diagnostic 3", Level = CodeDiagnosticLevel.Info }
+        ];
+
+        await _manager.ConvertDiagnosticsToCommentsAsync(apiRevision, codeFile);
+
+        _mockCommentsRepository.Verify(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Exactly(3));
+        Assert.True(apiRevision.DiagnosticsConvertedToComments);
     }
 }

@@ -100,7 +100,6 @@ describe('ReviewPageOptionsComponent', () => {
       component.ngOnInit();
       expect(component.userProfile).toBeUndefined();
       expect(component.showCommentsSwitch).toEqual(true);
-      expect(component.showSystemCommentsSwitch).toEqual(true);
       expect(component.showDocumentationSwitch).toEqual(true);
       expect(component.showHiddenAPISwitch).toEqual(false);
       expect(component.showLeftNavigationSwitch).toEqual(true);

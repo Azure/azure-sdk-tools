@@ -4,7 +4,7 @@ import { CommentThreadComponent } from './comment-thread.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSource, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { MessageService } from 'primeng/api';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -204,6 +204,51 @@ describe('CommentThreadComponent', () => {
           resolvedBy: 'test-user'
         })
       );
+    });
+  });
+
+  describe('diagnostic comment badge', () => {
+    it('should identify diagnostic comments correctly', () => {
+      const diagnosticComment = new CommentItemModel();
+      diagnosticComment.commentSource = CommentSource.Diagnostic;
+      
+      const regularComment = new CommentItemModel();
+      regularComment.commentSource = CommentSource.UserGenerated;
+      
+      expect(component.isDiagnostic(diagnosticComment)).toBe(true);
+      expect(component.isDiagnostic(regularComment)).toBe(false);
+    });
+
+    it('should show diagnostic badge for diagnostic comments', () => {
+      const diagnosticComment = new CommentItemModel();
+      diagnosticComment.id = '1';
+      diagnosticComment.createdBy = 'azure-sdk';
+      diagnosticComment.createdOn = new Date().toISOString();
+      diagnosticComment.commentText = 'Diagnostic comment';
+      diagnosticComment.commentSource = CommentSource.Diagnostic;
+      diagnosticComment.severity = CommentSeverity.ShouldFix;
+      
+      component.codePanelRowData!.comments = [diagnosticComment];
+      fixture.detectChanges();
+      
+      const diagnosticBadge = fixture.nativeElement.querySelector('.diagnostic-badge-custom');
+      expect(diagnosticBadge).toBeTruthy();
+      expect(diagnosticBadge?.textContent?.trim()).toBe('Diagnostic');
+    });
+
+    it('should not show diagnostic badge for non-diagnostic comments', () => {
+      const regularComment = new CommentItemModel();
+      regularComment.id = '1';
+      regularComment.createdBy = 'user';
+      regularComment.createdOn = new Date().toISOString();
+      regularComment.commentText = 'Regular comment';
+      regularComment.commentSource = CommentSource.UserGenerated;
+      
+      component.codePanelRowData!.comments = [regularComment];
+      fixture.detectChanges();
+      
+      const diagnosticBadge = fixture.nativeElement.querySelector('.diagnostic-badge-custom');
+      expect(diagnosticBadge).toBeFalsy();
     });
   });
 });

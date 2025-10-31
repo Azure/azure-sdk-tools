@@ -16,7 +16,6 @@ export class UserPreferenceModel {
     showHiddenApis: boolean
     showDocumentation: boolean
     showComments: boolean
-    showSystemComments: boolean
     useBetaIndexPage: boolean
     disableCodeLinesLazyLoading: boolean
     scrollBarSize: ScrollBarSize
@@ -34,7 +33,6 @@ export class UserPreferenceModel {
         this.showHiddenApis = false
         this.showDocumentation = false;
         this.showComments = true;
-        this.showSystemComments = true;
         this.useBetaIndexPage = false;
         this.disableCodeLinesLazyLoading = false;
         this.scrollBarSize = ScrollBarSize.Small;

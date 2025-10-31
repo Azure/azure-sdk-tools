@@ -90,7 +90,6 @@ export interface ApiTreeBuilderData {
   diffStyle: string,
   showDocumentation: boolean,
   showComments: boolean,
-  showSystemComments: boolean,
   showHiddenApis: boolean
 }
 

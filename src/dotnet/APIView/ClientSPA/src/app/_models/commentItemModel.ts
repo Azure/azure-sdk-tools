@@ -6,10 +6,10 @@ export enum CommentType {
 }
 
 export enum CommentSeverity {
-    Question = 0,
-    Suggestion = 1,
-    ShouldFix = 2,
-    MustFix = 3
+    Question = 'question',
+    Suggestion = 'suggestion',
+    ShouldFix = 'shouldFix',
+    MustFix = 'mustFix'
 }
 
 export enum CommentSource {

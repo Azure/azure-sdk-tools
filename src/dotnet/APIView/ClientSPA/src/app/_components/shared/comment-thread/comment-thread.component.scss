@@ -18,6 +18,38 @@
         .pi { font-size: .8rem; margin: .2rem 0 0 .25rem; }
     }
 
+    .diagnostic-badge-custom {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 12px;
+        padding: .125rem .5rem;
+        font-size: .75rem;
+        font-weight: 500;
+        white-space: nowrap;
+        
+        background-color: #e7f3ff;
+        border: 1px solid #4dabf7;
+        color: #1971c2;
+        
+        &.severity-suggestion {
+            background-color: #e7f3ff;
+            border: 1px solid #4dabf7;
+            color: #1971c2;
+        }
+        
+        &.severity-shouldfix {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        
+        &.severity-mustfix {
+            background-color: #ffe0e0;
+            border: 1px solid #ff6b6b;
+            color: #c92a2a;
+        }
+    }
+
     .related-comments-btn {
         background: none;
         border: none;

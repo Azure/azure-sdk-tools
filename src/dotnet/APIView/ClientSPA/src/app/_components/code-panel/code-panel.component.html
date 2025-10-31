@@ -27,11 +27,6 @@
           [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
       </div>
     </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">
-      <div class="code-line-content">
-        <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
-      </div>
-    </ng-container>
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
       <app-comment-thread
         [codePanelRowData]="item"

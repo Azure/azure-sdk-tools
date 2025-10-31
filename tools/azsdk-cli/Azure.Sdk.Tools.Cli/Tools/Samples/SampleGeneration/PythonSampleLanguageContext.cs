@@ -104,10 +104,5 @@ client.begin_delete_key(rsa_key.name)
 print(f""Deleted key '{ec_key.name}'"")
 print(f""Deleted key '{rsa_key.name}'"")
 ";
-    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
-    {
-        var provider = new PythonSourceInputProvider();
-        var inputs = provider.Create(packagePath);
-        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
-    }
+    protected override ILanguageSourceInputProvider GetSourceInputProvider() => new PythonSourceInputProvider();
 }

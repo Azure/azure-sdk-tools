@@ -3,10 +3,12 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
-using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -17,7 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType]
     public class PackageCheckTool(
         ILogger<PackageCheckTool> logger,
-        ILanguageChecks languageChecks
+        ILanguageChecks languageChecks,
+        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoHelpers
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
@@ -86,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
-                return checkType switch
+                var response = checkType switch
                 {
                     PackageCheckType.All => await RunAllChecks(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, fixCheckErrors, ct),
@@ -104,6 +107,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         checkType,
                         $"Unknown check type. Valid values are: {string.Join(", ", Enum.GetNames(typeof(PackageCheckType)))}")
                 };
+                await AddPackageDetailsInResponse(response, packagePath, ct);
+                return response;
             }
             catch (Exception ex)
             {
@@ -374,6 +379,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             return result;
+        }
+
+        private async Task AddPackageDetailsInResponse(CLICheckResponse response, string packagePath, CancellationToken ct)
+        {
+            try
+            {
+                var packageInfoHelper = await packageInfoHelpers.Resolve(packagePath);
+                if (packageInfoHelper != null)
+                {
+                    var info = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
+                    response.PackageName = info.PackageName;
+                    response.Version = info.PackageVersion;
+                    response.PackageType = info.SdkType;
+                    response.Language = info.Language;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddPackageDetailsInResponse");
+            }
         }
     }
 }

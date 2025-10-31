@@ -168,7 +168,7 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(test_paths: list[str], num_runs: int = 1):
+def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
     """
     Runs the specified test case(s).
     """
@@ -179,6 +179,16 @@ def run_test_case(test_paths: list[str], num_runs: int = 1):
     runner = EvaluationRunner(num_runs=num_runs)
     try:
         results = runner.run(targets)
+        if save:
+            report = runner.generate_report(results)
+            for doc in report:
+                db = get_database_manager()
+                try:
+                    db.evals.upsert(doc["id"], data=doc)
+                except Exception as exc:
+                    print(f"Error saving eval document to database: {exc}")
+                    raise exc
+
         runner.show_results(results)
         runner.show_summary(results)
     finally:
@@ -891,7 +901,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
-            g.command("run", "run_test_case")
+            g.command("run", "run_evals")
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
@@ -1012,6 +1022,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The full path to the txt file containing the APIView text",
             )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
+            )
+
         with ArgumentsContext(self, "eval extract-section") as ac:
             ac.argument("size", type=int, help="The size of the section to extract.")
             ac.argument(

@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             try
             {
                 var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
-                logger.LogInformation($"GitHub repo root path: {repoRootPath}");
+                logger.LogInformation("GitHub repo root path: {RepoRootPath}", repoRootPath);
                 if (string.IsNullOrEmpty(repoRootPath))
                 {
                     return new DefaultCommandResponse { ResponseError = "Failed to get repo root path. Please make sure to provide a valid repository path." };
@@ -137,14 +137,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
                 var repoName = gitHelper.GetRepoName(repoRootPath);
                 var headBranchName = gitHelper.GetBranchName(repoRootPath);
-                var headBranchRef = $"{repoOwner}:{headBranchName}";
-                logger.LogInformation($"Repo name: {repoName}, Repo owner: {repoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
+                var forkOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
+                var headBranchRef = $"{forkOwner}:{headBranchName}";
+                logger.LogInformation(
+                    "Repo name: {RepoName}, Repo owner: {RepoOwner}, Head branch name: {HeadBranchName}, Head branch ref: {HeadBranchRef}",
+                    repoName,
+                    repoOwner,
+                    headBranchName,
+                    headBranchRef);
                 if (string.IsNullOrEmpty(repoOwner))
                 {
                     return new DefaultCommandResponse { ResponseError = "Failed to get repo details. Please make sure to provide a valid repository path and try again." };
                 }
 
-                logger.LogInformation("Getting pull request for branch {headBranchRef}...", headBranchRef);
+                logger.LogInformation("Getting pull request for branch {HeadBranchRef}...", headBranchRef);
                 var pullRequest = await gitHubService.GetPullRequestForBranchAsync(repoOwner, repoName, headBranchRef);
                 if (pullRequest == null)
                 {

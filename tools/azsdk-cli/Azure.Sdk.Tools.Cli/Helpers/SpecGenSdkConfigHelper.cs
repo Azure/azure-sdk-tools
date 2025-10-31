@@ -54,7 +54,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var specToSdkConfigFilePath = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
 
-            _logger.LogInformation($"Reading configuration from: {specToSdkConfigFilePath} at path: {jsonPath}");
+            _logger.LogInformation(
+                "Reading configuration from: {ConfigFilePath} at path: {JsonPath}",
+                specToSdkConfigFilePath,
+                jsonPath);
 
             if (!File.Exists(specToSdkConfigFilePath))
             {
@@ -119,10 +122,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return (BuildConfigType.ScriptPath, path);
                 }
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // Path not found either
-                _logger.LogError("No build configuration found");
+                _logger.LogError(ex, "No build configuration found");
             }
 
             throw new InvalidOperationException($"Neither '{BuildCommandJsonPath}' nor '{BuildScriptPathJsonPath}' found in configuration.");

@@ -30,6 +30,7 @@ class ContainerNames(Enum):
     EXAMPLES = "examples"
     REVIEW_JOBS = "review-jobs"
     METRICS = "metrics"
+    EVALS = "evals"
 
     @classmethod
     def values(cls) -> list[str]:
@@ -58,6 +59,8 @@ class DatabaseManager:
                 self.containers[name] = ReviewJobsContainer(self, name)
             elif name == ContainerNames.METRICS.value:
                 self.containers[name] = MetricsContainer(self, name)
+            elif name == ContainerNames.EVALS.value:
+                self.containers[name] = EvalsContainer(self, name)
             elif name == ContainerNames.GUIDELINES.value:
                 self.containers[name] = GuidelinesContainer(self, name)
             else:
@@ -88,6 +91,11 @@ class DatabaseManager:
     def metrics(self):
         """Get the metrics container client."""
         return self.get_container_client(ContainerNames.METRICS.value)
+
+    @property
+    def evals(self):
+        """Get the evaluations container client."""
+        return self.get_container_client(ContainerNames.EVALS.value)
 
 
 class BasicContainer:
@@ -212,6 +220,14 @@ class MetricsContainer(BasicContainer):
 
     def run_indexer(self):
         # metrics container does not have an indexer
+        pass
+
+
+class EvalsContainer(BasicContainer):
+    """Container client for evaluations operations."""
+
+    def run_indexer(self):
+        # evaluations container does not have an indexer
         pass
 
 

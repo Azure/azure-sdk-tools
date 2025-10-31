@@ -67,9 +67,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode == 0)
             {
-                var message = fixCheckErrors ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
-                _logger.LogInformation(message);
-                return new CLICheckResponse(result.ExitCode, message);
+                var successMessage = fixCheckErrors
+                    ? "Code formatting applied successfully"
+                    : "Code formatting check passed - all files are properly formatted";
+                _logger.LogInformation("{Message}", successMessage);
+                return new CLICheckResponse(result.ExitCode, successMessage);
             }
             else
             {
@@ -152,11 +154,17 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (failedTools.Count == 0)
             {
-                var message = result.ExitCode == 0
-                    ? $"Code linting passed - All tools successful: {string.Join(", ", passedTools.Select(t => t.Tool))}"
-                    : "Code linting completed, but build had other issues. Check Maven output for details.";
-                _logger.LogInformation(message);
-                return new CLICheckResponse(result.ExitCode, message);
+                if (result.ExitCode == 0)
+                {
+                    var passedToolNames = string.Join(", ", passedTools.Select(t => t.Tool));
+                    var successMessage = $"Code linting passed - All tools successful: {passedToolNames}";
+                    _logger.LogInformation("Code linting passed - All tools successful: {PassedToolNames}", passedToolNames);
+                    return new CLICheckResponse(result.ExitCode, successMessage);
+                }
+
+                const string otherIssuesMessage = "Code linting completed, but build had other issues. Check Maven output for details.";
+                _logger.LogInformation("Code linting completed, but build had other issues. Check Maven output for details.");
+                return new CLICheckResponse(result.ExitCode, otherIssuesMessage);
             }
             else
             {
@@ -164,7 +172,10 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 var passedToolNames = passedTools.Count > 0 ? string.Join(", ", passedTools.Select(t => t.Tool)) : "None";
 
                 var errorMessage = $"Code linting found issues - Tools with issues: {failedToolNames}. Clean tools: {passedToolNames}";
-                _logger.LogWarning(errorMessage);
+                _logger.LogWarning(
+                    "Code linting found issues - Tools with issues: {FailedToolNames}. Clean tools: {PassedToolNames}",
+                    failedToolNames,
+                    passedToolNames);
 
                 var nextSteps = new List<string>();
                 if (failedTools.Any(t => t.Tool == "Checkstyle"))
@@ -296,24 +307,22 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         // Simple check - if Maven succeeded and no conflict indicators, it's success
         if (output.Contains("[INFO] BUILD SUCCESS", StringComparison.OrdinalIgnoreCase))
         {
-            var message = "Dependency analysis completed - no conflicts detected";
-            _logger.LogInformation(message);
-            return new CLICheckResponse(0, message);
+            const string successMessage = "Dependency analysis completed - no conflicts detected";
+            _logger.LogInformation("Dependency analysis completed - no conflicts detected");
+            return new CLICheckResponse(0, successMessage);
         }
-        else
-        {
-            var errorMessage = "Dependency analysis found issues - check Maven output for conflicts or build errors";
-            _logger.LogWarning(errorMessage);
 
-            return new CLICheckResponse(1, output, errorMessage)
-            {
-                NextSteps = [
-                    "Add Azure SDK BOM to dependencyManagement section in pom.xml: https://github.com/Azure/azure-sdk-for-java/tree/main/sdk/boms/azure-sdk-bom",
-                    "Remove version numbers from Azure SDK dependencies - let BOM manage versions",
-                    "Review verbose dependency tree output to identify specific conflicts"
-                ]
-            };
-        }
+        const string errorMessage = "Dependency analysis found issues - check Maven output for conflicts or build errors";
+        _logger.LogWarning("Dependency analysis found issues - check Maven output for conflicts or build errors");
+
+        return new CLICheckResponse(1, output, errorMessage)
+        {
+            NextSteps = [
+                "Add Azure SDK BOM to dependencyManagement section in pom.xml: https://github.com/Azure/azure-sdk-for-java/tree/main/sdk/boms/azure-sdk-bom",
+                "Remove version numbers from Azure SDK dependencies - let BOM manage versions",
+                "Review verbose dependency tree output to identify specific conflicts"
+            ]
+        };
     }
 
     /// <summary>

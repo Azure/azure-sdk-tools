@@ -96,10 +96,9 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
                 tryPrintSeparator(options.LogOutputStream);
             }
             // Insert a more descriptive error message when the task times out
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (timeoutCts.IsCancellationRequested)
             {
-                logger.LogError("Process '{command}' timed out after {timeout}ms", options.ShortName, options.Timeout.TotalMilliseconds);
-                throw new OperationCanceledException($"Process '{options.ShortName}' timed out after {options.Timeout.TotalMilliseconds}ms");
+                throw new OperationCanceledException($"Process '{options.ShortName}' timed out after {options.Timeout.TotalMilliseconds}ms", ex);
             }
 
             result.ExitCode = process.ExitCode;

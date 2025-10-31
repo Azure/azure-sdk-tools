@@ -150,7 +150,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     var pipelineRun = await devopsService.GetPipelineRunAsync(buildId);
                     if (pipelineRun != null)
                     {
-                        logger.LogInformation($"Pipeline status: {pipelineRun.Status}, Result: {pipelineRun.Result}");
+                        logger.LogInformation(
+                            "Pipeline status: {PipelineStatus}, Result: {PipelineResult}",
+                            pipelineRun.Status,
+                            pipelineRun.Result);
                         var status = (pipelineRun.Status == BuildStatus.Completed ? pipelineRun.Result?.ToString() : pipelineRun.Status.ToString()) ?? "Unknown";
                         if (!status.Contains(Pipeline_Success_Status))
                         {
@@ -163,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             catch (Exception ex)
             {
-                logger.LogError("Failed to get pipeline run details. Error: {exception}", ex.Message);
+                logger.LogError(ex, "Failed to get pipeline run details for URL {PipelineRunUrl}", pipelineRunUrl);
                 return $"Failed to get pipeline run details. Error: {ex.Message}";
             }
         }

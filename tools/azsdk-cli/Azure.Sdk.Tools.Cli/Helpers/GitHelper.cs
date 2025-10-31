@@ -40,7 +40,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 // Find the merge base (common ancestor) (git merge-base main HEAD)
                 var mergeBaseCommit = repo.ObjectDatabase.FindMergeBase(currentBranch.Tip, targetBranch.Tip);
-                logger.LogDebug($"Git merge base analysis - Current branch: {currentBranch.FriendlyName}, Target branch SHA: {mergeBaseCommit?.Sha}");
+                logger.LogDebug(
+                    "Git merge base analysis - Current branch: {currentBranch}, Target branch SHA: {mergeBaseCommitSha}",
+                    currentBranch.FriendlyName,
+                    mergeBaseCommit?.Sha);
                 return mergeBaseCommit?.Sha ?? "";
             }
         }
@@ -130,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 // Check if the repo is a fork and get the parent repo
                 var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrlAsync(repoOwner, repoName);
-                logger.LogDebug($"Parent repo URL: {parentRepoUrl}");
+                logger.LogDebug("Parent repo URL: {parentRepoUrl}", parentRepoUrl);
                 if (!string.IsNullOrEmpty(parentRepoUrl))
                 {
                     var parentSegments = new Uri(parentRepoUrl).Segments;

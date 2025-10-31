@@ -43,7 +43,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
         {
             try
             {
-
                 logger.LogError("Echoing message: {message}", message);
 
                 return new()

@@ -3,6 +3,7 @@
 ## 0.5.6 (Unreleased)
 
 ### Features Added
+- Validate package names before adding to release plan
 
 ### Breaking Changes
 

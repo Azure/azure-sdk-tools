@@ -244,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
 
-            sdkDetails = "[{\"Language\":\".NET\",\"PackageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"com.azure.resourcemanager.contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
+            sdkDetails = "[{\"Language\":\".NET\",\"PackageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"azure-resourcemanager-contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
             updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
         }
@@ -259,7 +259,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.True(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
         }
 
-
         [Test]
         public async Task Test_Update_SDK_Details_Data_language_excl()
         {
@@ -271,11 +270,39 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public  async Task Test_update_language_exclusion_justification()
+        public async Task Test_Update_SDK_Details_single_invalid_package_name()
+        {
+            var languagePackageMap = new Dictionary<string, string>
+            {
+                { "Javascript", "@invalid/package/name" },
+                { "Go", "invalid/package/name" },
+            };
+
+            foreach (var (language, package) in languagePackageMap)
+            {
+                string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
+                var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+                Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+                Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
+            }
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_multiple_invalid_package_names()
+        {
+            string sdkDetails = "[{\"language\":\"JavaScript\",\"packageName\":\"@invalid/package\"}," +
+                        "{\"language\":\"Go\",\"packageName\":\"invalid/package\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("JavaScript -> @invalid/package"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("Go -> invalid/package"));
+        }
+        
+        [Test]
+        public async Task Test_update_language_exclusion_justification()
         {
             var updateStatus = await releasePlanTool.UpdateLanguageExclusionJustification(100, "This is a test justification for excluding certain languages.");
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
         }
-
     }
 }

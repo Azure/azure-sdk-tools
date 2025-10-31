@@ -8,3 +8,6 @@ output/
 test/examples/specification/convert/examples/*
 .tmp-test-*
 TempTypeSpecFiles/
+# Ignore generated SDK files in test examples (except tsp-location.yaml)
+test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/package.json
+test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/src/

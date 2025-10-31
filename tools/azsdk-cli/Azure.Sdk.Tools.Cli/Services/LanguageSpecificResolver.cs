@@ -23,8 +23,12 @@ public class LanguageSpecificResolver<T>(
     public async Task<T?> Resolve(string packagePath, CancellationToken ct = default)
     {
         var language = await DetectLanguageAsync(packagePath, ct);
+        return await Resolve(language ?? default, ct);
+    }
 
-        return language switch
+    public Task<T?> Resolve(SdkLanguage language, CancellationToken ct = default)
+    {
+        var service = language switch
         {
             SdkLanguage.DotNet => dotnetService,
             SdkLanguage.Java => javaService,
@@ -34,6 +38,7 @@ public class LanguageSpecificResolver<T>(
             // If adding languages in future, add a corresponding entry here.
             _ => default,
         };
+        return Task.FromResult(service);
     }
 
     private async Task<SdkLanguage?> DetectLanguageAsync(string packagePath, CancellationToken ct)

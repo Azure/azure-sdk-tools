@@ -57,6 +57,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Verify = new(
+            Verb: "verify",
+            Description: "Tools for verifying project environments.",
+            Options: []
+        );
+
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

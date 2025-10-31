@@ -247,14 +247,14 @@ flowchart TD
   subgraph azsdk_cli
     direction TB
     classifier[SDK Classifier]
-    service[Repository Service]
-    executor[Command Executor]
+    languageService[Language Service]
+    repoService[Repository Service]    
     serializer[Result Serializer]
   end
 
-  classifier --> service
-  service --> executor
-  executor --> serializer
+  classifier --> languageService
+  languageService --> repoService
+  repoService --> serializer
 
   style azsdk_cli fill:#e3f2fd,stroke:#0277bd
   style Agent fill:#e1f5fe,stroke:#0288d1

@@ -127,7 +127,7 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
     }
 
     /// <summary>
-    /// Finds the samples directory by looking for folders under tests that contain files with "sample" or "snippet" in their name
+    /// Finds the samples directory by looking for folders under tests that contain files with "#region Snippet:" in their content
     /// </summary>
     /// <param name="packagePath">The package path to search under</param>
     /// <returns>The path to the samples directory, or a default path if not found</returns>
@@ -147,19 +147,25 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
             
             foreach (var directory in testSubdirectories)
             {
-                // Look for .cs files containing "sample" or "snippet" in their name (case-insensitive)
+                // Look for .cs files containing "#region Snippet:" in their content
                 var sampleFiles = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly)
                     .Where(file =>
                     {
-                        var fileName = Path.GetFileNameWithoutExtension(file);
-                        return fileName.Contains("sample", StringComparison.OrdinalIgnoreCase) ||
-                            fileName.Contains("snippet", StringComparison.OrdinalIgnoreCase);
+                        try
+                        {
+                            var content = File.ReadAllText(file);
+                            return content.Contains("#region Snippet:", StringComparison.Ordinal);
+                        }
+                        catch
+                        {
+                            return false;
+                        }
                     })
                     .ToArray();
                 
                 if (sampleFiles.Length > 0)
                 {
-                    logger.LogTrace("Found samples directory at {directory} with {count} sample/snippet files", 
+                    logger.LogTrace("Found samples directory at {directory} with {count} files containing snippet regions", 
                         directory, sampleFiles.Length);
                     return directory;
                 }

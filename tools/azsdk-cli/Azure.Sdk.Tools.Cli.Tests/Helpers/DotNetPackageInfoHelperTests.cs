@@ -48,8 +48,8 @@ public class DotNetPackageInfoHelperTests
         // Arrange
         var (packagePath, gitHelper) = CreateTestPackage();
         
-        CreateTestFile(packagePath, "tests/samples/Sample01_Basic.cs", "namespace Test; public class Sample01_Basic { }");
-        CreateTestFile(packagePath, "tests/samples/BasicSample.cs", "namespace Test; public class BasicSample { }");
+        CreateTestFile(packagePath, "tests/samples/Sample01_Basic.cs", "#region Snippet:BasicSample\nnamespace Test; public class Sample01_Basic { }\n#endregion");
+        CreateTestFile(packagePath, "tests/samples/BasicSample.cs", "#region Snippet:AnotherSample\nnamespace Test; public class BasicSample { }\n#endregion");
         
         // Create non-sample files
         CreateTestFile(packagePath, "tests/unit/other.cs", "namespace Test; public class NotASample { }");
@@ -70,8 +70,8 @@ public class DotNetPackageInfoHelperTests
         var (packagePath, gitHelper) = CreateTestPackage();
         
         // Create snippet files that should be detected
-        CreateTestFile(packagePath, "tests/snippets/Snippet01_Basic.cs", "namespace Test; public class Snippet01_Basic { }");
-        CreateTestFile(packagePath, "tests/snippets/BasicSnippet.cs", "namespace Test; public class BasicSnippet { }");
+        CreateTestFile(packagePath, "tests/snippets/Snippet01_Basic.cs", "#region Snippet:BasicSnippet\nnamespace Test; public class Snippet01_Basic { }\n#endregion");
+        CreateTestFile(packagePath, "tests/snippets/BasicSnippet.cs", "#region Snippet:AnotherSnippet\nnamespace Test; public class BasicSnippet { }\n#endregion");
         
         // Create non-sample files
         CreateTestFile(packagePath, "tests/unit/UnitTest.cs", "namespace Test; public class UnitTest { }");
@@ -119,14 +119,14 @@ public class DotNetPackageInfoHelperTests
     }
 
     [Test]
-    public async Task FindSamplesDirectory_WithCaseInsensitiveSampleFiles_ReturnsCorrectDirectory()
+    public async Task FindSamplesDirectory_WithSnippetRegions_ReturnsCorrectDirectory()
     {
         // Arrange
         var (packagePath, gitHelper) = CreateTestPackage();
         
-        // Create sample files with different casing
-        CreateTestFile(packagePath, "tests/examples/SAMPLE_Basic.cs", "namespace Test; public class SAMPLE_Basic { }");
-        CreateTestFile(packagePath, "tests/examples/ExampleSNIPPET.cs", "namespace Test; public class ExampleSNIPPET { }");
+        // Create files with snippet regions
+        CreateTestFile(packagePath, "tests/examples/SAMPLE_Basic.cs", "#region Snippet:ExampleSnippet\nnamespace Test; public class SAMPLE_Basic { }\n#endregion");
+        CreateTestFile(packagePath, "tests/examples/ExampleSNIPPET.cs", "#region Snippet:AnotherExample\nnamespace Test; public class ExampleSNIPPET { }\n#endregion");
         
         var helper = new DotNetPackageInfoHelper(gitHelper, new TestLogger<DotNetPackageInfoHelper>());
         
@@ -138,14 +138,14 @@ public class DotNetPackageInfoHelperTests
     }
 
     [Test]
-    public async Task FindSamplesDirectory_WithMixedSampleAndSnippetFiles_ReturnsFirstFoundDirectory()
+    public async Task FindSamplesDirectory_WithMultipleDirectories_ReturnsFirstFoundDirectory()
     {
         // Arrange
         var (packagePath, gitHelper) = CreateTestPackage();
         
-        // Create both sample and snippet files (first directory alphabetically should be returned)
-        CreateTestFile(packagePath, "tests/examples/BasicSample.cs", "namespace Test; public class BasicSample { }");
-        CreateTestFile(packagePath, "tests/snippets/BasicSnippet.cs", "namespace Test; public class BasicSnippet { }");
+        // Create files with snippet regions in multiple directories
+        CreateTestFile(packagePath, "tests/examples/BasicSample.cs", "#region Snippet:ExampleSnippet\nnamespace Test; public class BasicSample { }\n#endregion");
+        CreateTestFile(packagePath, "tests/snippets/BasicSnippet.cs", "#region Snippet:AnotherSnippet\nnamespace Test; public class BasicSnippet { }\n#endregion");
         
         var helper = new DotNetPackageInfoHelper(gitHelper, new TestLogger<DotNetPackageInfoHelper>());
         

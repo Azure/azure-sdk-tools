@@ -157,7 +157,7 @@ if __name__ == "__main__":
     
     show_results(all_results, metrics, args.baseline_check)
     if args.baseline_check:
-        establish_baseline(all_results, args.is_cli)
+        establish_baseline(all_results, args.is_ci)
     isPass = verify_results(all_results, metrics, args.baseline_check)
     if not isPass:
         sys.exit(1)

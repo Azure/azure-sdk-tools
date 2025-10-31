@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.5 (Unreleased)
+## 0.5.6 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,18 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.5.5 (2025-10-28)
+
+### Features Added
+
+- Add support for generating samples for Azure client libraries across all languages
+- Add tool status in response
+- Disable telemetry in debug mode.
+
+### Bugs Fixed
+
+- Fixed issue when linking .NET PR to release plan
 
 ## 0.5.4 (2025-10-21)
 
@@ -25,7 +37,6 @@
 ### Features
 
 - Updated System.CommandLine dependency to 2.5 beta
-
 ### Bugs Fixed
 
 - Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)

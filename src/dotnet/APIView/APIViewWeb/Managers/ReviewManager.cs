@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -13,7 +12,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
-using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -51,12 +49,23 @@ namespace APIViewWeb.Managers
         private readonly ILogger<ReviewManager> _logger;
 
         public ReviewManager (
-            IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
-            IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
-            IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
+            IAuthorizationService authorizationService, 
+            ICosmosReviewRepository reviewsRepository,
+            IAPIRevisionsManager apiRevisionsManager, 
+            ICommentsManager commentManager,
+            IBlobCodeFileRepository codeFileRepository,
+            ICosmosCommentsRepository commentsRepository, 
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
-            IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager, ICosmosPullRequestsRepository pullRequestsRepository, ILogger<ReviewManager> logger)
+            IHubContext<SignalRHub> signalRHubContext,
+            IEnumerable<LanguageService> languageServices,
+            TelemetryClient telemetryClient, 
+            ICodeFileManager codeFileManager,
+            IConfiguration configuration, 
+            IHttpClientFactory httpClientFactory, 
+            IPollingJobQueueManager pollingJobQueueManager,
+            INotificationManager notificationManager,
+            ICosmosPullRequestsRepository pullRequestsRepository, 
+            ILogger<ReviewManager> logger)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;

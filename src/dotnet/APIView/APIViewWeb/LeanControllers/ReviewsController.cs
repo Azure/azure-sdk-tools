@@ -11,7 +11,6 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -33,15 +32,17 @@ namespace APIViewWeb.LeanControllers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
         private readonly IEnumerable<LanguageService> _languageServices;
-        private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
-            IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
-            ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
-            IConfiguration configuration, UserProfileCache userProfileCache,
+            IAPIRevisionsManager reviewRevisionsManager, 
+            IReviewManager reviewManager,
+            ICommentsManager commentManager,
+            IBlobCodeFileRepository codeFileRepository,
+            IConfiguration configuration, 
+            UserProfileCache userProfileCache,
             IEnumerable<LanguageService> languageServices,
-            IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
-            IWebHostEnvironment env)
+            IHubContext<SignalRHub> signalRHub, 
+            INotificationManager notificationManager)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
@@ -53,7 +54,6 @@ namespace APIViewWeb.LeanControllers
             _languageServices = languageServices;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
-            _env = env;
         }
 
         /// <summary>

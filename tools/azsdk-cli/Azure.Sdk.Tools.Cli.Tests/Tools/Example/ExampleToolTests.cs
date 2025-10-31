@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools;
 

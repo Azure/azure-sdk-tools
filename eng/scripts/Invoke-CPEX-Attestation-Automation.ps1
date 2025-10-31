@@ -111,10 +111,6 @@ function BuildSuccessEmailBody {
 }
 
 function BuildFailureEmailBody {
-    if ($failedAttestations.Count -eq 0) {
-        return "No errors occurred during the latest CPEX KPI attestation automated run. All entries were processed sucessfully."
-    }
-
     $body = "The following errors occurred during the latest CPEX KPI attestation automated run: `n`n"
     $body += "<table border='1' cellpadding='5' cellspacing='0'>"
     $body += "<tr><th>Product Name</th><th>Product ID</th><th>Service Tree Product Link</th><th>Affected KPI</th><th>Work Item ID</th><th>Error</th></tr>"
@@ -285,4 +281,6 @@ foreach ($releasePlan in $releasePlans) {
 }
 
 SendEmailNotification -emailTo $EMAIL_TO -emailCC $EMAIL_CC -emailSubject "CPEX Attestation Summary - Successful KPI Entries" -emailBody (BuildSuccessEmailBody)
-SendEmailNotification -emailTo $EMAIL_TO -emailCC $EMAIL_CC -emailSubject "CPEX Attestation Summary - Failed KPI Entries" -emailBody (BuildFailureEmailBody)
+if ($failedAttestations.Count -ne 0) {
+    SendEmailNotification -emailTo $EMAIL_TO -emailCC $EMAIL_CC -emailSubject "CPEX Attestation Summary - Failed KPI Entries" -emailBody (BuildFailureEmailBody)
+}

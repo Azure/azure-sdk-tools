@@ -1,5 +1,6 @@
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -30,7 +31,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            _logger.LogInformation($"Starting dependency analysis for Python project at: {packagePath}");
+            _logger.LogInformation("Starting dependency analysis for Python project at: {PackagePath}", packagePath);
 
             // Find the repository root from the package path using GitHelper
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);

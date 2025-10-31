@@ -70,8 +70,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to process TRX file {trxFilePath}: {exception}", trxFilePath, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError(ex, "Failed to process TRX file {TrxFilePath}", trxFilePath);
             return new();
         }
     }
@@ -94,8 +93,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to process TRX file {trxFilePath}: {exception}", trxFilePath, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError(ex, "Failed to process TRX file {TrxFilePath}", trxFilePath);
             return new FailedTestRunResponse
             {
                 ResponseError = $"Failed to process TRX file {trxFilePath}: {ex.Message}"
@@ -112,8 +110,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to process TRX file {trxFilePath}: {exception}", trxFilePath, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError(ex, "Failed to process TRX file {TrxFilePath}", trxFilePath);
             return new() { ResponseError = $"Failed to process TRX file {trxFilePath}: {ex.Message}" };
         }
     }

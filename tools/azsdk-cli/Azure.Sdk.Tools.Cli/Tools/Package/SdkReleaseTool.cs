@@ -53,9 +53,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 SdkReleaseResponse response = new()
                 {
-                    PackageName = packageName,
-                    Language = language
+                    PackageName = packageName
                 };
+                response.SetLanguage(language);
 
                 bool isValidParams = true;
                 if (string.IsNullOrWhiteSpace(packageName))
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleasePipelineStatus = "Failed";
                     isValidParams = false;
                 }
-
+                response.PackageType = package?.PackageType ?? SdkType.Unknown;
                 if (string.IsNullOrEmpty(package?.PipelineDefinitionUrl))
                 {
                     response.ReleaseStatusDetails += $"No release pipeline found for package '{packageName}' in language '{language}'. Please check the package name and language.";
@@ -142,10 +142,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 SdkReleaseResponse response = new()
                 {
                     PackageName = packageName,
-                    Language = language,
                     ReleasePipelineStatus = "Failed",
-                    ReleaseStatusDetails = $"Error: {ex.Message}"
+                    ResponseError = $"Error: {ex.Message}"
                 };
+                response.SetLanguage(language);
                 return response;
             }
         }

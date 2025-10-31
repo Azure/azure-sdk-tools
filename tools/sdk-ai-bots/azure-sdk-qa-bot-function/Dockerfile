@@ -1,5 +1,6 @@
 # Use the official Azure Functions Node.js runtime as the base image
-FROM mcr.microsoft.com/azure-functions/node:4-node18
+# Using the latest tag ensures we get the most recent security patches
+FROM mcr.microsoft.com/azure-functions/node:4.0-node20-appservice
 
 # Set the working directory inside the container
 WORKDIR /home/site/wwwroot
@@ -21,6 +22,10 @@ COPY . .
 
 # Build the TypeScript code
 RUN npm run build
+
+# Set required environment variables for Node.js Functions runtime
+ENV FUNCTIONS_WORKER_RUNTIME=node
+ENV AzureWebJobsFeatureFlags=EnableWorkerIndexing
 
 # Expose the port that Azure Functions uses
 EXPOSE 80

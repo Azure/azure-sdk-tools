@@ -424,8 +424,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-                logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
-                logger.LogDebug($"SDK details to update: {sdkDetails}");
+                logger.LogInformation("Updating SDK details in release plan work item ID: {ReleasePlanWorkItemId}", releasePlanWorkItemId);
+                logger.LogDebug("SDK details to update: {SdkDetails}", sdkDetails);
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization
                 var options = new JsonSerializerOptions
                 {
@@ -629,7 +629,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
+                logger.LogError(ex, "Failed to update release plan with language exclusion justification in release plan work item {ReleasePlanWorkItem}", releasePlanWorkItem);
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
             }
         }

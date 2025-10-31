@@ -60,7 +60,7 @@ extends:
 
                   python download-md-dataset.py
                   python convert-md-to-jsonl.py --source_md_path "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-qa-tests" --dest_jsonl_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests"
-                  python evals_run.py --evaluation_name_prefix "performance-evaluation-$current_date" --test_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests" --baseline_check False
+                  python evals_run.py --evaluation_name_prefix "performance-evaluation-$current_date" --test_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests" --baseline_check False --evaluators "similarity,response_completeness"
                 displayName: 'Run Evals'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                 env:

@@ -15,6 +15,8 @@ internal class MicroagentHostServiceTests
     private Mock<AzureOpenAIClient> openAIClientMock;
     private Mock<Microsoft.Extensions.Logging.ILogger<MicroagentHostService>> loggerMock;
     private Mock<ChatClient> chatClientMock;
+    private Mock<Microsoft.Extensions.Logging.ILogger<ConversationLogger>> conversationLoggerLoggerMock;
+    private ConversationLogger conversationLogger;
     private MicroagentHostService microagentHostService;
 
     [SetUp]
@@ -23,10 +25,17 @@ internal class MicroagentHostServiceTests
         openAIClientMock = new Mock<AzureOpenAIClient>();
         loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<MicroagentHostService>>();
         chatClientMock = new Mock<ChatClient>();
+        conversationLoggerLoggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<ConversationLogger>>();
+        
+        // Setup conversation logger to be disabled by default (Debug logging disabled)
+        conversationLoggerLoggerMock.Setup(l => l.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+            .Returns(false);
+        conversationLogger = new ConversationLogger(conversationLoggerLoggerMock.Object);
+        
         openAIClientMock.Setup(client => client.GetChatClient(It.IsAny<string>()))
             .Returns(chatClientMock.Object);
         var tokenUsageHelper = new TokenUsageHelper(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.IRawOutputHelper>());
-        microagentHostService = new MicroagentHostService(openAIClientMock.Object, loggerMock.Object, tokenUsageHelper);
+        microagentHostService = new MicroagentHostService(openAIClientMock.Object, loggerMock.Object, tokenUsageHelper, conversationLogger);
     }
 
     [Test]

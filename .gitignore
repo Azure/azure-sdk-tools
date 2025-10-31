@@ -550,3 +550,6 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/*env
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/output
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/data
 tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generated.json
+
+# Azure SDK CLI Tool logs
+*.logs

@@ -1,0 +1,4 @@
+# Ignore tsp-client emitter package files that are generated during tests
+emitter-package.json
+emitter-package-lock.json
+tspclientconfig.yaml

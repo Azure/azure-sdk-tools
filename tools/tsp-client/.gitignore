@@ -6,3 +6,5 @@ temp
 tsp-output/
 output/
 test/examples/specification/convert/examples/*
+.tmp-test-*
+TempTypeSpecFiles/

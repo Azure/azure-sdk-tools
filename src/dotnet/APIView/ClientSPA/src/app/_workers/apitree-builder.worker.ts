@@ -152,7 +152,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     });
   }
 
-  if (buildNode && node.diagnostics && apiTreeBuilderData?.showSystemComments) {
+  if (buildNode && node.diagnostics) {
     node.diagnostics.forEach((diag, index) => {
       if (shouldAppendIfRowIsHiddenAPI(diag)) {
         diag.rowClasses = new Set<string>(diag.rowClasses); // Ensure that the rowClasses is a Set

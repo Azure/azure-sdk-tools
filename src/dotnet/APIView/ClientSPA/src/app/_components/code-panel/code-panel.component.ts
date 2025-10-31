@@ -381,47 +381,7 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  async filterDiagnosticCommentThreads(show: boolean) {
-    await this.codePanelRowSource?.adapter?.relax();
 
-    if (show) {
-      const updatedData: CodePanelRowData[] = [];
-      
-      for (const row of this.codePanelRowData) {
-        updatedData.push(row);
-        
-        if (row.type === CodePanelRowDatatype.CodeLine && row.nodeIdHashed! in this.codePanelData?.nodeMetaData!) {
-          const commentThread = this.codePanelData?.nodeMetaData[row.nodeIdHashed!]
-            ?.commentThread?.[row.rowPositionInGroup];
-          
-          if (commentThread && this.isDiagnosticCommentThread(commentThread)) {
-            updatedData.push(commentThread);
-          }
-        }
-      }
-
-      this.isLoading = true;
-      this.codePanelRowSource = undefined;
-      this.codePanelRowData = updatedData;
-      this.changeDetectorRef.detectChanges();
-      this.loadCodePanelViewPort();
-    } else {
-      const indexesToRemove: number[] = [];
-      const filteredData = this.codePanelRowData.filter((row, index) => {
-        const isRemoved = row.type === CodePanelRowDatatype.CommentThread && this.isDiagnosticCommentThread(row);
-        if (isRemoved) indexesToRemove.push(index);
-        return !isRemoved;
-      });
-
-      this.codePanelRowData = filteredData;
-      await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
-    }
-  }
-
-  private isDiagnosticCommentThread(commentThread: CodePanelRowData): boolean {
-    return commentThread?.comments?.length > 0 && 
-           commentThread.comments.every(comment => comment.commentSource === CommentSource.Diagnostic);
-  }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
     let filterdData = this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&

@@ -48,7 +48,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'trees',
         showDocumentation: false,
         showComments: true,
-        showSystemComments: true,
         showHiddenApis: false
       };
 
@@ -79,7 +78,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: false,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -110,7 +108,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: true,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -141,7 +138,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: false,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -172,7 +168,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: true,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -203,7 +198,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'trees',
         showDocumentation: false,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -234,7 +228,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: false,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -265,7 +258,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: false,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
 
@@ -300,7 +292,6 @@ describe('API Tree Builder', () => {
         diffStyle: 'full',
         showDocumentation: false,
         showComments: false,
-        showSystemComments: false,
         showHiddenApis: false
       };
       const jsonString = JSON.stringify(contentWithAttributeDiff);

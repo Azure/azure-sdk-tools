@@ -473,6 +473,7 @@ export class CommentThreadComponent {
     switch (severity) {
       case 'question': return 'Question';
       case CommentSeverity.Question: return 'Suggestion';
+      case CommentSeverity.Suggestion: return 'Suggestion';
       case CommentSeverity.ShouldFix: return 'Should fix';
       case CommentSeverity.MustFix: return 'Must fix';
       default: return '';

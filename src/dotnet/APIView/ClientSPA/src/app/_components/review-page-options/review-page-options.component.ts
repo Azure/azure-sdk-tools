@@ -48,7 +48,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showHiddenAPIEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -71,7 +70,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   assetsPath : string = environment.assetsPath;
 
   showCommentsSwitch : boolean = true;
-  showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
   showHiddenAPISwitch : boolean = false;
   showLeftNavigationSwitch : boolean = true;
@@ -234,14 +232,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.showCommentsEmitter.emit(event.checked);
   }
 
-   /**
-  * Callback for systemCommentSwitch Change
-  * @param event the Filter event
-  */
-  onShowSystemCommentsSwitchChange(event: InputSwitchChangeEvent) {
-    this.updateRoute();
-    this.showSystemCommentsEmitter.emit(event.checked);
-  }
+ 
 
   /**
   * Callback for showDocumentationSwitch Change
@@ -361,7 +352,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setPageOptionValues() {
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
-    this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
     this.disableCodeLinesLazyLoading = this.userProfile?.preferences.disableCodeLinesLazyLoading ?? this.disableCodeLinesLazyLoading;
     this.showLineNumbersSwitch = (this.userProfile?.preferences.hideLineNumbers) ? false : this.showLineNumbersSwitch;

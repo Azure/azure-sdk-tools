@@ -218,13 +218,6 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
         this.codePanelRowData = data.payload as CodePanelRowData[];
-        
-        if (this.userProfile?.preferences?.showSystemComments === false) {
-          this.codePanelRowData = this.codePanelRowData.filter(row => 
-            !(row.type === CodePanelRowDatatype.CommentThread && this.isDiagnosticCommentThread(row))
-          );
-        }
-        
         this.checkForFatalDiagnostics();
       }
 
@@ -266,7 +259,6 @@ export class ReviewPageComponent implements OnInit {
               diffStyle: this.diffStyle!,
               showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
               showComments: this.userProfile?.preferences.showComments ?? true,
-              showSystemComments: this.userProfile?.preferences.showSystemComments ?? true,
               showHiddenApis: this.userProfile?.preferences.showHiddenApis ?? false
             };
             // Passing ArrayBufer to worker is way faster than passing object
@@ -438,17 +430,6 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
-  handleShowSystemCommentsEmitter(state: boolean) {
-    let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.showSystemComments = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        // Filter diagnostic comment threads
-        this.codePanelComponent?.filterDiagnosticCommentThreads(state);
-      }
-    });
-  }
-
   handleShowDocumentationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showDocumentation = state;
@@ -462,11 +443,6 @@ export class ReviewPageComponent implements OnInit {
         }
       }
     });
-  }
-
-  private isDiagnosticCommentThread(commentThread: CodePanelRowData): boolean {
-    return commentThread?.comments?.length > 0 && 
-           commentThread.comments.every(comment => comment.commentSource === CommentSource.Diagnostic);
   }
 
   handleShowLeftNavigationEmitter(state: boolean) {

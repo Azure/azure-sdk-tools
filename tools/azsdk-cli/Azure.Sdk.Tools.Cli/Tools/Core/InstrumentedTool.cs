@@ -46,6 +46,24 @@ public class InstrumentedTool(
             activity?.SetTag(TagName.ToolResponse, content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 
+            if (result.Content?.FirstOrDefault() is TextContentBlock contentBlock)
+            {
+                try
+                {
+                    var responseDict = JsonSerializer.Deserialize<Dictionary<string, object>>(contentBlock.Text);
+                    if (responseDict != null)
+                    {
+                        foreach (var kvp in responseDict)
+                        {
+                            activity?.SetCustomProperty(kvp.Key, kvp.Value?.ToString() ?? string.Empty);
+                        }
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    logger.LogWarning($"Failed to deserialize contentBlock.Text for telemetry properties: {jsonEx.Message}");
+                }
+            }
             return result;
         }
         catch (Exception ex)

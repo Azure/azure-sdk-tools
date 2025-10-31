@@ -64,10 +64,20 @@ tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/dee71463cb
 
 The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library. The update flow calls the `sync` and `generate` commands internally, so if you need to separate these steps, use the `sync` and `generate` commands separately instead.
 
-Example:
+Examples:
 
 ```bash
+# Basic update using existing tsp-location.yaml
 tsp-client update
+
+# Update with custom emitter options
+tsp-client update --emitter-options '@azure-tools/typespec-python.package-name="azure-widget"'
+
+# Update to a specific commit
+tsp-client update --commit abc123def456
+
+# Update with a specific repository and commit
+tsp-client update --repo Azure/azure-rest-api-specs --commit abc123def456
 ```
 
 ### sync
@@ -76,35 +86,63 @@ Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
 
 By default the `sync` command will look for a tsp-location.yaml to get the project details and sync them to a temporary directory called `TempTypeSpecFiles`. Alternately, you can pass in the `--local-spec-repo` flag with the path to your local TypeSpec project to pull those files into your temporary directory.
 
-Example:
+Examples:
 
 ```bash
+# Sync from remote repository using tsp-location.yaml
 tsp-client sync
+
+# Sync from a local TypeSpec project directory
+tsp-client sync --local-spec-repo /path/to/local/typespec/project
 ```
 
 ### generate
 
 Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
 
-Example:
+Examples:
 
 ```bash
+# Basic generation from synced TypeSpec project
 tsp-client generate
+
+# Generate with custom emitter options
+tsp-client generate --emitter-options '@azure-tools/typespec-python.package-name="azure-widget"'
+
+# Generate while saving input files for debugging
+tsp-client generate --save-inputs
 ```
 
 ### convert
 
 Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag. By default, the converted TypeSpec project will leverage TypeSpec built-in libraries with standard patterns and templates (highly recommended), which will cause discrepancies between the generated TypeSpec and original swagger. If you really don't want this intended discrepancy, add `--fully-compatible` flag to generate a TypeSpec project that is fully compatible with the swagger.
 
-Example:
+Examples:
 
 ```bash
-tsp-client convert -o ./Contoso.WidgetManager --swagger-readme < path-to > /readme.md
+# Convert with optimized TypeSpec patterns (recommended)
+tsp-client convert --swagger-readme ./swagger/readme.md
+
+# Convert from a GitHub URL
+tsp-client convert --swagger-readme https://github.com/Azure/azure-rest-api-specs/blob/.../readme.md
+
+# Convert ARM swagger to ARM TypeSpec
+tsp-client convert --swagger-readme ./swagger/readme.md --arm
+
+# Convert maintaining full swagger compatibility
+tsp-client convert --swagger-readme ./swagger/readme.md --fully-compatible
 ```
 
 ### sort-swagger
 
 Sort an existing swagger specification to be the same content order with TypeSpec generated swagger. This will allow you to easily compare and identify differences between the existing swagger and TypeSpec generated one. You should run this command on existing swagger files and check them in prior to creating converted TypeSpec PRs.
+
+Examples:
+
+```bash
+# Sort a swagger JSON file
+tsp-client sort-swagger ./swagger/api-spec.json
+```
 
 ### generate-config-files
 
@@ -215,8 +253,68 @@ Install the dependencies pinned in emitter-package.json and emitter-package-lock
 
 > IMPORTANT: The node_modules/ directory needs to be installed in a path where basic npm commands will be able to use it. Typically within the same directory path as the target TypeSpec project to compile.
 
+Examples:
+
 ```bash
-tsp-client install-dependencies [optional install path]
+# Install dependencies in repository root
+tsp-client install-dependencies
+
+# Install dependencies in a specific project directory
+tsp-client install-dependencies ./my-typespec-project
+```
+
+## Common Workflows
+
+### New Client Library from TypeSpec
+
+If you're starting a new client library from an existing TypeSpec project:
+
+```bash
+# 1. Initialize the project from TypeSpec configuration
+tsp-client init --tsp-config https://github.com/Azure/azure-rest-api-specs/blob/.../tspconfig.yaml
+```
+
+### Converting from Swagger to TypeSpec
+
+If you're migrating from an existing swagger specification:
+
+```bash
+# 1. Convert swagger to TypeSpec
+tsp-client convert --swagger-readme ./swagger/readme.md
+
+# 2. Sort existing swagger for easier comparison with typespec generated swagger
+tsp-client sort-swagger ./swagger/existing-spec.json
+
+# 3. Review and optimize the generated TypeSpec
+
+# 4. Initialize client library from the converted TypeSpec
+tsp-client init --tsp-config ./converted-typespec/tspconfig.yaml
+```
+
+### Development and Update Cycle
+
+When working on an existing TypeSpec-based client library:
+
+```bash
+# 1. Update the project which syncs remote typespec and then generates the client library
+tsp-client update
+
+# OR if you have a more complex development scenario and want to debug you can run the sync and generate steps separately
+
+# 1. Sync the remote typespec project based on tsp-location.yaml
+tsp-client sync
+
+# 2. Generate updated client library
+tsp-client generate
+```
+
+### Local Development
+
+When developing with a local TypeSpec project:
+
+```bash
+# Update using a local TypeSpec project
+tsp-client update --local-spec-repo /path/to/local/typespec
 ```
 
 ## Important concepts

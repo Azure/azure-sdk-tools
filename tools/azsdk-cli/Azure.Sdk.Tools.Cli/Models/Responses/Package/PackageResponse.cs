@@ -7,20 +7,20 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
     public class PackageResponse : PackageResponseBase
     {
-        [JsonPropertyName("Work item Id")]
+        [JsonPropertyName("work_item_id")]
         public int WorkItemId { get; set; }
         public string WorkItemUrl { get; set; } = string.Empty;
-        [JsonPropertyName("Package work item status")]
+        [JsonPropertyName("package_work_item_status")]
         public string State { get; set; } = string.Empty;
-        [JsonPropertyName("Package root path")]
+        [JsonPropertyName("package_root_path")]
         public string PackageRepoPath { get; set; } = string.Empty;
-        [JsonPropertyName("Latest pipeline run url")]
+        [JsonPropertyName("latest_pipeline_run_url")]
         public string LatestPipelineRun { get; set; } = string.Empty;
-        [JsonPropertyName("Latest pipeline run status")]
+        [JsonPropertyName("latest_pipeline_run_status")]
         public string LatestPipelineStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Release pipeline URL")]
+        [JsonPropertyName("release_pipeline_url")]
         public string PipelineDefinitionUrl { get; set; } = string.Empty;
-        [JsonPropertyName("Change log verified")]
+        [JsonPropertyName("change_log_verified")]
         public bool IsChangeLogReady
         {
             get
@@ -30,9 +30,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         }
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public string changeLogStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Change log verification details")]
+        [JsonPropertyName("change_log_verification_details")]
         public string ChangeLogValidationDetails { get; set; } = string.Empty;
-        [JsonPropertyName("Is API view approved")]
+        [JsonPropertyName("is_apiview_approved")]
         public bool IsApiViewApproved
         {
             get
@@ -40,11 +40,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 return APIViewStatus.Equals("Approved") || APIViewStatus.Equals("Not required");
             }
         }
-        [JsonPropertyName("API view status")]
+        [JsonPropertyName("apiview_status")]
         public string APIViewStatus { get; set; } = string.Empty;
-        [JsonPropertyName("API view validation details")]
+        [JsonPropertyName("apiview_validation_details")]
         public string ApiViewValidationDetails { get; set; } = string.Empty;
-        [JsonPropertyName("Is package name approved")]
+        [JsonPropertyName("is_package_name_approved")]
         public bool IsPackageNameApproved
         {
             get
@@ -53,19 +53,19 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             }
         }
 
-        [JsonPropertyName("Package name status")]
+        [JsonPropertyName("package_name_status")]
         public string PackageNameStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Package name approval details")]
+        [JsonPropertyName("package_name_approval_details")]
         public string PackageNameApprovalDetails { get; set; } = string.Empty;
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public List<SDKReleaseInfo> PlannedReleases = [];
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public List<SDKReleaseInfo> ReleasedVersions = [];
-        [JsonPropertyName("Is package ready for release")]
+        [JsonPropertyName("is_package_ready_for_release")]
         public bool IsPackageReady = false;
-        [JsonPropertyName("Planned release date")]
+        [JsonPropertyName("planned_release_date")]
         public string PlannedReleaseDate { get; set; } = string.Empty;
-        [JsonPropertyName("Package readiness details")]
+        [JsonPropertyName("package_readiness_details")]
         public string PackageReadinessDetails { get; set; } = string.Empty;
 
         protected override string Format()

@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                logger.LogInformation($"Building SDK for project path: {packagePath}");
+                logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
 
                 // Validate inputs
                 if (string.IsNullOrEmpty(packagePath))
@@ -60,10 +60,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
                 }
 
-                logger.LogInformation($"Repository root path: {sdkRepoRoot}");
+                logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
 
                 string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
-                logger.LogInformation($"Repository name: {sdkRepoName}");
+                logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
 
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Run the build script or command
-                logger.LogInformation($"Executing build process...");
+                logger.LogInformation("Executing build process...");
                 var buildResult = await processHelper.Run(options, ct);
                 var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
                 if (buildResult.ExitCode != 0)
@@ -135,7 +135,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 };
 
                 var substitutedCommand = specGenSdkConfigHelper.SubstituteCommandVariables(configValue, variables);
-                logger.LogInformation($"Executing build command: {substitutedCommand}");
+                logger.LogInformation("Executing build command: {SubstitutedCommand}", substitutedCommand);
 
                 var commandParts = specGenSdkConfigHelper.ParseCommand(substitutedCommand);
                 if (commandParts.Length == 0)
@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     throw new FileNotFoundException($"Build script not found at: {fullBuildScriptPath}");
                 }
 
-                logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
+                logger.LogInformation("Executing build script file: {BuildScriptPath}", fullBuildScriptPath);
 
                 return new PowershellOptions(
                     fullBuildScriptPath,

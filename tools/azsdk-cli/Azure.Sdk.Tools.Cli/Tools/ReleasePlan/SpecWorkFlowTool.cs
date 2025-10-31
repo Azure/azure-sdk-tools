@@ -333,7 +333,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     Status = "Success"
                 };
                 language = inputSanitizer.SanitizeName(language);
-                logger.LogInformation($"Generating SDK for TypeSpec project: {typespecProjectRoot}, API Version: {apiVersion}, SDK Release Type: {sdkReleaseType}, Language: {language}, Pull Request Number: {pullRequestNumber}, Work Item ID: {workItemId}");
+                logger.LogInformation(
+                    "Generating SDK for TypeSpec project: {TypespecProjectRoot}, API Version: {ApiVersion}, SDK Release Type: {SdkReleaseType}, Language: {Language}, Pull Request Number: {PullRequestNumber}, Work Item ID: {WorkItemId}",
+                    typespecProjectRoot,
+                    apiVersion,
+                    sdkReleaseType,
+                    language,
+                    pullRequestNumber,
+                    workItemId);
                 // Is language supported for SDK generation
                 if (!DevOpsService.IsSDKGenerationSupported(language))
                 {
@@ -381,7 +388,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
                 {
-                    logger.LogInformation($"SDK generation failed with details: [{string.Join(",", response.Details)}]");
+                    var failureDetails = string.Join(",", response.Details);
+                    logger.LogInformation("SDK generation failed with details: [{FailureDetails}]", failureDetails);
                     return response;
                 }
 

@@ -217,7 +217,7 @@ Scenarios description:
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error running microagent: {message}", ex.Message);
+                logger.LogError(ex, "Error running microagent");
                 throw;
             }
 

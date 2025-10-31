@@ -360,20 +360,6 @@ Update the version and release date for package at /repo/sdk/healthdataaiservice
 2. Run version update with the confirmed version.
 3. Report the result.
 
-### Scenario 3: Create CI Config for New SDK
-
-**Prompt:**
-
-```text
-Add initial CI configuration for a new SDK at /work/sdk/new-service/new-package.
-```
-
-**Expected Agent Activity:**
-
-1. Run CI update tool.
-2. Report the created configuration file.
-3. Suggest running update-changelog tool next.
-
 ---
 
 ## CLI Commands

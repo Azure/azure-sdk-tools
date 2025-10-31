@@ -289,7 +289,7 @@ export async function generateRLCInPipeline(options: {
                 try {
                     execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
                 } catch (error) {
-                    logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
+                    logger.warn(`Failed to build package due to: ${(error as Error)?.stack ?? error}`);
                     buildStatus = `failed`;
                 }
             } else {

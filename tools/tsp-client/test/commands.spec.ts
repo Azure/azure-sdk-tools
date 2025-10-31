@@ -732,4 +732,45 @@ describe.sequential("Verify commands", () => {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
   }, 360000);
+
+  it("Generate config files preserves all existing fields", async () => {
+    try {
+      const emitterPackageJsonPath = joinPaths(
+        repoRoot,
+        "tools/tsp-client/test/utils/emitter-package-with-extra-fields.json",
+      );
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "emitter-package-json-path": emitterPackageJsonPath,
+      };
+      repoRoot = await getRepoRoot(cwd());
+      await generateConfigFilesCommand(args);
+      const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
+      
+      // Check that dependencies and devDependencies are updated
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      
+      // Check that all other fields are preserved
+      assert.equal(emitterJson["name"], "test-emitter");
+      assert.equal(emitterJson["version"], "1.0.0");
+      assert.equal(emitterJson["description"], "Test emitter package with extra fields");
+      assert.equal(emitterJson["author"], "Test Author");
+      assert.equal(emitterJson["license"], "MIT");
+      assert.equal(emitterJson["customField"], "customValue");
+      assert.exists(emitterJson["scripts"]);
+      assert.equal(emitterJson["scripts"]["build"], "tsc");
+      assert.equal(emitterJson["scripts"]["test"], "vitest");
+      
+      // Check that main field is always set correctly
+      assert.equal(emitterJson["main"], "dist/src/index.js");
+      
+      // Clean up the generated files
+      await rm(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-with-extra-fields-lock.json"),
+      );
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  }, 360000);
 });

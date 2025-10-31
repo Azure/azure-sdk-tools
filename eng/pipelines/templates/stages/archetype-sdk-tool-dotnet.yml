@@ -65,6 +65,9 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
+  - name: customJob
+    type: jobList
+    default: []
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -213,6 +216,11 @@ extends:
                     mergeTestResults: true
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
+
+          
+          - ${{ if ne(length(parameters.customJob), 0) }}:
+            - ${{ each job in parameters.customJob }}:
+              - ${{ job }}
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml

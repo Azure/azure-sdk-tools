@@ -1,6 +1,6 @@
 using Microsoft.Extensions.AI;
 
-namespace Azure.Sdk.Tools.McpEvals.Models
+namespace Azure.Sdk.Tools.Cli.Evaluations.Models
 {
     public class ScenarioData
     {

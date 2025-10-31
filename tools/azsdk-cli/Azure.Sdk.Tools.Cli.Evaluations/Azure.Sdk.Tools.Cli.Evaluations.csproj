@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>Azure.Sdk.Tools.McpEvals</RootNamespace>
+    <RootNamespace>Azure.Sdk.Tools.Cli.Evaluations</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsTestProject>true</IsTestProject>
@@ -26,6 +26,10 @@
 
   <ItemGroup>
     <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj" />
   </ItemGroup>
 
 </Project>

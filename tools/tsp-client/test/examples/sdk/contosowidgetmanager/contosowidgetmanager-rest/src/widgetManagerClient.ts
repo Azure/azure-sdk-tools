@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
+// Licensed under the MIT license.
 
-import type { ClientOptions } from "@azure-rest/core-client";
-import { getClient } from "@azure-rest/core-client";
+import { getClient, ClientOptions } from "@azure-rest/core-client";
 import { logger } from "./logger.js";
-import type { TokenCredential } from "@azure/core-auth";
-import type { WidgetManagerClient } from "./clientDefinitions.js";
+import { TokenCredential } from "@azure/core-auth";
+import { WidgetManagerClient } from "./clientDefinitions.js";
 
 /** The optional parameters for the client */
 export interface WidgetManagerClientOptions extends ClientOptions {
@@ -22,7 +21,10 @@ export interface WidgetManagerClientOptions extends ClientOptions {
 export default function createClient(
   endpointParam: string,
   credentials: TokenCredential,
-  { apiVersion = "2022-12-01", ...options }: WidgetManagerClientOptions = {},
+  {
+    apiVersion = "2022-11-01-preview",
+    ...options
+  }: WidgetManagerClientOptions = {},
 ): WidgetManagerClient {
   const endpointUrl = options.endpoint ?? options.baseUrl ?? `${endpointParam}`;
   const userAgentInfo = `azsdk-js-contoso-widgetmanager-rest/1.0.0-beta.1`;

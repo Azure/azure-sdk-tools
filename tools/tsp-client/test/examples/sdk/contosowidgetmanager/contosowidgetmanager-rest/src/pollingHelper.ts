@@ -1,17 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
+// Licensed under the MIT license.
 
-import type { Client, HttpResponse } from "@azure-rest/core-client";
-import type { AbortSignalLike } from "@azure/abort-controller";
-import type {
+import { Client, HttpResponse } from "@azure-rest/core-client";
+import { AbortSignalLike } from "@azure/abort-controller";
+import {
   CancelOnProgress,
   CreateHttpPollerOptions,
   RunningOperation,
   OperationResponse,
   OperationState,
+  createHttpPoller,
 } from "@azure/core-lro";
-import { createHttpPoller } from "@azure/core-lro";
-import type {
+import {
   CreateOrUpdateWidget200Response,
   CreateOrUpdateWidget201Response,
   CreateOrUpdateWidgetDefaultResponse,

@@ -90,7 +90,6 @@ public class VerifySetupTool : MCPTool
 
             VerifySetupResponse response = new VerifySetupResponse
             {
-                AllRequirementsSatisfied = true,
                 Results = new List<RequirementCheckResult>()
             };
 
@@ -114,7 +113,6 @@ public class VerifySetupTool : MCPTool
                 {
                     logger.LogWarning("Requirement check failed for {Requirement}. Suggested install command: {Instruction}", req.requirement, req.instructions);
 
-                    response.AllRequirementsSatisfied = false;
                     response.ResponseErrors ??= new List<string>() ;
                     response.ResponseErrors.Add($"Requirement check failed for {req.requirement}. Error: {result.ResponseError}");
 

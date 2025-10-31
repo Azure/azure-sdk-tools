@@ -6,16 +6,12 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public class VerifySetupResponse : CommandResponse
 {
-    [JsonPropertyName("all_requirements_satisfied")]
-    public bool AllRequirementsSatisfied { get; set; }
-
     [JsonPropertyName("results")]
     public List<RequirementCheckResult>? Results { get; set; } // all checks with details
 
     protected override string Format()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"AllRequirementsSatisfied: {AllRequirementsSatisfied}");
         sb.AppendLine("Results:");
 
         if (Results != null)

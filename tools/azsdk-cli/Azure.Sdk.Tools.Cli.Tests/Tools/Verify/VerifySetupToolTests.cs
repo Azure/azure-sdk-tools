@@ -119,7 +119,6 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
-        Assert.That(result.AllRequirementsSatisfied, Is.True);
         Assert.That(result.Results, Is.Empty);
         Assert.That(result.ResponseError, Is.Null);
     }
@@ -139,7 +138,6 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
-        Assert.That(result.AllRequirementsSatisfied, Is.False);
         Assert.That(result.Results, Is.Not.Empty);
         Assert.That(result.Results.Any(r => r.Requirement.Contains("Node.js")), Is.True);
         Assert.That(result.ResponseError, Is.Null);
@@ -158,7 +156,6 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
-        Assert.That(result.AllRequirementsSatisfied, Is.False);
         Assert.That(result.Results, Is.Not.Empty);
         Assert.That(result.Results.Any(r => r.Requirement.Contains("Python")), Is.True);
         Assert.That(result.ResponseError, Is.Null);
@@ -182,7 +179,6 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
-        Assert.That(result.AllRequirementsSatisfied, Is.True);
         Assert.That(result.ResponseError, Is.Null);
 
         // Verify that only Python language resolver was called, not Java or .NET
@@ -215,7 +211,6 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python, SdkLanguage.Java }, "/test/path");
 
         // Assert
-        Assert.That(result.AllRequirementsSatisfied, Is.True);
         Assert.That(result.ResponseError, Is.Null);
 
         // Verify that resolver was called for both languages
@@ -240,7 +235,6 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { (SdkLanguage)(-1) }, "/test/path");
 
         // Assert - Should succeed with just core requirements
-        Assert.That(result.AllRequirementsSatisfied, Is.True);
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Results, Is.Empty);
     }

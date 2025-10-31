@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/go:1.23
+FROM mcr.microsoft.com/devcontainers/go:1.24
 
 WORKDIR /app
 

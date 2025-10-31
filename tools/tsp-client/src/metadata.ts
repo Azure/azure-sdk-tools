@@ -3,6 +3,7 @@ import { Logger } from "./log.js";
 import { joinPaths } from "@typespec/compiler";
 import { readFile } from "fs/promises";
 import { getPackageJson } from "./utils.js";
+import * as yaml from "yaml";
 
 /**
  * Interface representing the metadata information for a tsp-client command run.
@@ -17,7 +18,7 @@ interface TspClientMetadata {
 }
 
 /**
- * Creates a tsp_client_metadata.json file with information about the tsp-client command run.
+ * Creates a tsp_client_metadata.yaml file with information about the tsp-client command run.
  *
  * @param outputDir - The directory where the metadata file will be created
  * @param emitterPackageJsonPath - Optional path to the emitter-package.json file
@@ -27,7 +28,7 @@ export async function createTspClientMetadata(
   emitterPackageJsonPath?: string,
 ): Promise<void> {
   try {
-    Logger.info("Creating tsp_client_metadata.json file...");
+    Logger.info("Creating tsp_client_metadata.yaml file...");
 
     // Get package.json information
     const packageJson = await getPackageJson();
@@ -43,24 +44,23 @@ export async function createTspClientMetadata(
         await readFile(emitterPackageJsonPath, "utf8"),
       );
     }
-    // Convert the metadata to JSON format with proper formatting
-    const jsonContent = JSON.stringify(
-      {
-        version: metadata.version,
-        "date-created-or-modified": metadata.dateCreatedOrModified,
-        "emitter-package-json-content": metadata.emitterPackageJsonContent,
-      },
-      null,
-      2, // 2-space indentation for pretty formatting
-    );
+    // Create the YAML metadata object with kebab-case keys
+    const yamlMetadata = {
+      version: metadata.version,
+      "date-created-or-modified": metadata.dateCreatedOrModified,
+      "emitter-package-json-content": metadata.emitterPackageJsonContent,
+    };
+
+    // Convert the metadata to YAML format
+    const yamlContent = yaml.stringify(yamlMetadata);
 
     // Write the metadata file
-    const metadataFilePath = joinPaths(outputDir, "tsp_client_metadata.json");
-    await writeFile(metadataFilePath, jsonContent, "utf8");
+    const metadataFilePath = joinPaths(outputDir, "tsp_client_metadata.yaml");
+    await writeFile(metadataFilePath, yamlContent, "utf8");
 
-    Logger.info(`Successfully created tsp_client_metadata.json at ${metadataFilePath}`);
+    Logger.info(`Successfully created tsp_client_metadata.yaml at ${metadataFilePath}`);
   } catch (error) {
-    Logger.error(`Error creating tsp_client_metadata.json: ${error}`);
+    Logger.error(`Error creating tsp_client_metadata.yaml: ${error}`);
     throw error;
   }
 }

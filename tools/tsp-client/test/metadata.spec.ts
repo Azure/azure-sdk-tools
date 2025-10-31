@@ -4,6 +4,7 @@ import { removeDirectory, ensureDirectory } from "../src/fs.js";
 import { assert } from "chai";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { joinPaths } from "@typespec/compiler";
+import * as yaml from "yaml";
 
 describe("tsp-client metadata generation", function () {
   const testOutputDir = "./test/test-output-metadata";
@@ -34,12 +35,12 @@ describe("tsp-client metadata generation", function () {
     await removeDirectory(testOutputDir).catch(() => {});
   });
 
-  it("should create tsp_client_metadata.json with correct structure", async function () {
+  it("should create tsp_client_metadata.yaml with correct structure", async function () {
     await createTspClientMetadata(testOutputDir, testEmitterPackageJsonPath);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.json");
+    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
-    const metadata = JSON.parse(metadataContent);
+    const metadata = yaml.parse(metadataContent);
 
     // Verify structure matches the template
     assert.exists(metadata.version);
@@ -61,9 +62,9 @@ describe("tsp-client metadata generation", function () {
   it("should handle date format correctly", async function () {
     await createTspClientMetadata(testOutputDir, testEmitterPackageJsonPath);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.json");
+    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
-    const metadata = JSON.parse(metadataContent);
+    const metadata = yaml.parse(metadataContent);
 
     // Verify date is valid ISO string
     const dateString = metadata["date-created-or-modified"];
@@ -74,9 +75,9 @@ describe("tsp-client metadata generation", function () {
   it("should create metadata without emitter-package.json content if path not provided", async function () {
     await createTspClientMetadata(testOutputDir);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.json");
+    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
-    const metadata = JSON.parse(metadataContent);
+    const metadata = yaml.parse(metadataContent);
 
     // Verify structure
     assert.exists(metadata.version);

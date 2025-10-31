@@ -142,8 +142,8 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
                 return GetDefaultSamplesDirectory(packagePath);
             }
 
-            // Get all subdirectories under tests
-            var testSubdirectories = Directory.GetDirectories(testsPath);
+            // Get all subdirectories under tests (sorted for consistent behavior across platforms)
+            var testSubdirectories = Directory.GetDirectories(testsPath).OrderBy(d => d).ToArray();
             
             foreach (var directory in testSubdirectories)
             {

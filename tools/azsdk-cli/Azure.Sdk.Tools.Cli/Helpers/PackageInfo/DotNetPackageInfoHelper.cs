@@ -9,6 +9,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// </summary>
 public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNetPackageInfoHelper> logger) : IPackageInfoHelper
 {
+    /// <summary>
+    /// Gets the default samples directory path relative to the package path.
+    /// </summary>
+    /// <param name="packagePath">The package path</param>
+    /// <returns>The default samples directory path</returns>
+    private static string GetDefaultSamplesDirectory(string packagePath) => Path.Combine(packagePath, "tests", "samples");
     public async Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving .NET package info for path: {packagePath}", packagePath);
@@ -24,6 +30,8 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
             logger.LogWarning("Could not determine package version for .NET package at {fullPath}", fullPath);
         }
         
+        var samplesDirectory = FindSamplesDirectory(fullPath);
+        
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -33,7 +41,7 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
             PackageVersion = packageVersion,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.DotNet,
-            SamplesDirectory = Path.Combine(fullPath, "tests", "samples")
+            SamplesDirectory = samplesDirectory
         };
         
         logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath}", 
@@ -115,6 +123,55 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
         {
             logger.LogError(ex, "Error reading .NET package info from {packagePath}", packagePath);
             return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// Finds the samples directory by looking for folders under tests that contain files with "sample" or "snippet" in their name
+    /// </summary>
+    /// <param name="packagePath">The package path to search under</param>
+    /// <returns>The path to the samples directory, or a default path if not found</returns>
+    private string FindSamplesDirectory(string packagePath)
+    {
+        try
+        {
+            var testsPath = Path.Combine(packagePath, "tests");
+            if (!Directory.Exists(testsPath))
+            {
+                logger.LogTrace("Tests directory not found at {testsPath}", testsPath);
+                return GetDefaultSamplesDirectory(packagePath);
+            }
+
+            // Get all subdirectories under tests
+            var testSubdirectories = Directory.GetDirectories(testsPath);
+            
+            foreach (var directory in testSubdirectories)
+            {
+                // Look for .cs files containing "sample" or "snippet" in their name (case-insensitive)
+                var sampleFiles = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly)
+                    .Where(file =>
+                    {
+                        var fileName = Path.GetFileNameWithoutExtension(file);
+                        return fileName.Contains("sample", StringComparison.OrdinalIgnoreCase) ||
+                            fileName.Contains("snippet", StringComparison.OrdinalIgnoreCase);
+                    })
+                    .ToArray();
+                
+                if (sampleFiles.Length > 0)
+                {
+                    logger.LogTrace("Found samples directory at {directory} with {count} sample/snippet files", 
+                        directory, sampleFiles.Length);
+                    return directory;
+                }
+            }
+            
+            logger.LogTrace("No samples directory found under {testsPath}, using default", testsPath);
+            return GetDefaultSamplesDirectory(packagePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for samples directory under {packagePath}, using default", packagePath);
+            return GetDefaultSamplesDirectory(packagePath);
         }
     }
 }

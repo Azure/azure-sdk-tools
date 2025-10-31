@@ -53,23 +53,23 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
+    public async Task<PackageCheckResponse> CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
     {
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "init", moduleName], compilerNameWindows, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
-            return new CLICheckResponse(1, "", $"{nameof(CreateEmptyPackage)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"{nameof(CreateEmptyPackage)} failed with an exception: {ex.Message}");
         }
     }
 
     #endregion
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -77,20 +77,20 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             var updateResult = await _processHelper.Run(new ProcessOptions(compilerName, ["get", "-u", "all"], compilerNameWindows, ["get", "-u", "all"], workingDirectory: packagePath), ct);
             if (updateResult.ExitCode != 0)
             {
-                return new CLICheckResponse(updateResult);
+                return new PackageCheckResponse(updateResult);
             }
 
             // Now tidy, to cleanup any deps that aren't needed
             var tidyResult = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "tidy"], compilerNameWindows, ["mod", "tidy"], workingDirectory: packagePath), ct);
-            return new CLICheckResponse(tidyResult);
+            return new PackageCheckResponse(tidyResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
-            return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -99,54 +99,54 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
                 formatterNameWindows, ["-w", "."],
                 workingDirectory: packagePath
             ), ct);
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(linterName, ["run"], linterNameWindows, ["run"], workingDirectory: packagePath), ct);
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
+    public async Task<PackageCheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
     {
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
-            return new CLICheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> BuildProjectAsync(string packagePath, CancellationToken ct)
+    public async Task<PackageCheckResponse> BuildProjectAsync(string packagePath, CancellationToken ct)
     {
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["build"], compilerNameWindows, ["build"], workingDirectory: packagePath), ct);
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
-            return new CLICheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -163,8 +163,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(new CLICheckResponse());
+        return await Task.FromResult(new PackageCheckResponse());
     }
 }

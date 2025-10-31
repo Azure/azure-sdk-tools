@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 /// <summary>
 /// Base class for CLI check responses with exit code and output.
 /// </summary>
-public class CLICheckResponse : PackageResponseBase
+public class PackageCheckResponse : PackageResponseBase
 {
     // Map ExitCode to CliExitCode for JSON serialization
     [JsonPropertyName("exit_code")]
@@ -16,9 +16,9 @@ public class CLICheckResponse : PackageResponseBase
     [JsonPropertyName("check_status_details")]
     public string CheckStatusDetails { get; set; }
 
-    public CLICheckResponse() { }
+    public PackageCheckResponse() { }
 
-    public CLICheckResponse(int exitCode, string checkStatusDetails, string error = null)
+    public PackageCheckResponse(int exitCode, string checkStatusDetails, string error = null)
     {
         ExitCode = exitCode;
         CheckStatusDetails = checkStatusDetails;
@@ -28,7 +28,7 @@ public class CLICheckResponse : PackageResponseBase
         }
     }
 
-    public CLICheckResponse(ProcessResult processResult)
+    public PackageCheckResponse(ProcessResult processResult)
     {
         ExitCode = processResult.ExitCode;
         CheckStatusDetails = processResult.Output;
@@ -45,14 +45,14 @@ public class CLICheckResponse : PackageResponseBase
 }
 
 /// <summary>
-/// CLI check response for cookbook/documentation reference responses.
+/// Package check response for cookbook/documentation reference responses.
 /// </summary>
-public class CookbookCLICheckResponse : CLICheckResponse
+public class CookbookPackageCheckResponse : PackageCheckResponse
 {
     [JsonPropertyName("cookbook_reference")]
     public string CookbookReference { get; set; }
 
-    public CookbookCLICheckResponse(int exitCode, string checkStatusDetails, string cookbookReference) : base(exitCode, checkStatusDetails)
+    public CookbookPackageCheckResponse(int exitCode, string checkStatusDetails, string cookbookReference) : base(exitCode, checkStatusDetails)
     {
         CookbookReference = cookbookReference;
     }

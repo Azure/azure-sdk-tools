@@ -31,7 +31,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -48,7 +48,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (serviceDirectory == null)
             {
                 _logger.LogError("Failed to determine service directory from package path: {PackagePath}", packagePath);
-                return new CLICheckResponse(1, "", "Failed to determine service directory from the provided package path.");
+                return new PackageCheckResponse(1, "", "Failed to determine service directory from the provided package path.");
             }
 
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
@@ -56,7 +56,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (!File.Exists(scriptPath))
             {
                 _logger.LogError("Code checks script not found at: {ScriptPath}", scriptPath);
-                return new CLICheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
             }
 
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
@@ -66,22 +66,22 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (result.ExitCode == 0)
             {
                 _logger.LogInformation("Generated code checks completed successfully");
-                return new CLICheckResponse(result.ExitCode, result.Output);
+                return new PackageCheckResponse(result.ExitCode, result.Output);
             }
             else
             {
                 _logger.LogWarning("Generated code checks for package at {PackagePath} failed with exit code {ExitCode}", packagePath, result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Generated code checks failed");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Generated code checks failed");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running generated code checks at {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error running generated code checks: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running generated code checks: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -99,14 +99,14 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (serviceDirectory == null || packageName == null)
             {
                 _logger.LogError("Failed to determine service directory or package name from package path: {PackagePath}", packagePath);
-                return new CLICheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
+                return new PackageCheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
 
             var isAotOptedOut = await CheckAotCompatOptOut(packagePath, packageName, ct);
             if (isAotOptedOut)
             {
                 _logger.LogInformation("AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
-                return new CLICheckResponse(0, "AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
+                return new PackageCheckResponse(0, "AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
             }
 
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
@@ -114,7 +114,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (!File.Exists(scriptPath))
             {
                 _logger.LogError("AOT compatibility script not found at: {ScriptPath}", scriptPath);
-                return new CLICheckResponse(1, "", $"AOT compatibility script not found at: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"AOT compatibility script not found at: {scriptPath}");
             }
 
             var workingDirectory = Path.Combine(repoRoot, "eng", "scripts", "compatibility");
@@ -126,28 +126,28 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (result.ExitCode == 0)
             {
                 _logger.LogInformation("AOT compatibility check completed successfully");
-                return new CLICheckResponse(result.ExitCode, result.Output);
+                return new PackageCheckResponse(result.ExitCode, result.Output);
             }
             else
             {
                 _logger.LogWarning("AOT compatibility check failed with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "AOT compatibility check failed");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "AOT compatibility check failed");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running AOT compatibility check at {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error running AOT compatibility check: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running AOT compatibility check: {ex.Message}");
         }
     }
 
-    private async ValueTask<CLICheckResponse> VerifyDotnetVersion()
+    private async ValueTask<PackageCheckResponse> VerifyDotnetVersion()
     {
         var dotnetSDKCheck = await _processHelper.Run(new ProcessOptions(DotNetCommand, ["--list-sdks"]), CancellationToken.None);
         if (dotnetSDKCheck.ExitCode != 0)
         {
             _logger.LogError(".NET SDK is not installed or not available in PATH");
-            return new CLICheckResponse(dotnetSDKCheck.ExitCode, $"dotnet --list-sdks failed with an error: {dotnetSDKCheck.Output}");
+            return new PackageCheckResponse(dotnetSDKCheck.ExitCode, $"dotnet --list-sdks failed with an error: {dotnetSDKCheck.Output}");
         }
 
         var dotnetVersions = dotnetSDKCheck.Output.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -159,18 +159,18 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             if (installedVersion >= minimumVersion)
             {
                 _logger.LogInformation(".NET SDK version {InstalledVersion} meets minimum requirement of {RequiredVersion}", latestVersionNumber, RequiredDotNetVersion);
-                return new CLICheckResponse(0, $".NET SDK version {latestVersionNumber} meets minimum requirement of {RequiredDotNetVersion}");
+                return new PackageCheckResponse(0, $".NET SDK version {latestVersionNumber} meets minimum requirement of {RequiredDotNetVersion}");
             }
             else
             {
                 _logger.LogError(".NET SDK version {InstalledVersion} is below minimum requirement of {RequiredVersion}", latestVersionNumber, RequiredDotNetVersion);
-                return new CLICheckResponse(1, "", $".NET SDK version {latestVersionNumber} is below minimum requirement of {RequiredDotNetVersion}");
+                return new PackageCheckResponse(1, "", $".NET SDK version {latestVersionNumber} is below minimum requirement of {RequiredDotNetVersion}");
             }
         }
         else
         {
             _logger.LogError("Failed to parse .NET SDK version: {VersionString}", latestVersionNumber);
-            return new CLICheckResponse(1, "", $"Failed to parse .NET SDK version: {latestVersionNumber}");
+            return new PackageCheckResponse(1, "", $"Failed to parse .NET SDK version: {latestVersionNumber}");
         }
     }
 

@@ -28,7 +28,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -43,22 +43,22 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             if (result.ExitCode != 0)
             {
                 _logger.LogError("'pnpm run build:samples' failed with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result)
+                return new PackageCheckResponse(result)
                 {
                     NextSteps = ["Review the error output and attempt to resolve the issue."]
                 };
             }
 
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating samples for JavaScript project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error validating samples: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error validating samples: {ex.Message}");
         }
     }
     
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -73,22 +73,22 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             if (result.ExitCode != 0)
             {
                 _logger.LogError("'pnpm run update-snippets' failed with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result)
+                return new PackageCheckResponse(result)
                 {
                     NextSteps = ["Review the error output and attempt to resolve the issue."]
                 };
             }
 
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating snippets for JavaScript project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -111,22 +111,22 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
                 var nextSteps = fix ? "Review the linting errors and fix them manually." : "Run this tool in fix mode to automatically fix some of the errors.";
 
-                return new CLICheckResponse(result)
+                return new PackageCheckResponse(result)
                 {
                     NextSteps = [nextSteps]
                 };
             }
 
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error linting JavaScript project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error linting code: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error linting code: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -146,18 +146,18 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
                     subcommand,
                     result.ExitCode);
                 var nextSteps = fix ? "Review the error output and attempt to resolve the issue." : "Run this tool in fix mode to fix the formatting.";
-                return new CLICheckResponse(result)
+                return new PackageCheckResponse(result)
                 {
                     NextSteps = [nextSteps]
                 };
             }
 
-            return new CLICheckResponse(result);
+            return new PackageCheckResponse(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error formatting JavaScript project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error formatting code: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error formatting code: {ex.Message}");
         }
     }
 

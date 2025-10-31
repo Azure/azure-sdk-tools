@@ -63,7 +63,7 @@ if __name__ == "__main__":
             "api_version": os.environ["AZURE_API_VERSION"],
         }
 
-        similarity_threshold = os.environ.get("SIMILARITY_THRESHOLD", 3)
+        similarity_threshold = int(os.environ.get("SIMILARITY_THRESHOLD", "3"))
         simialirty_evaluator = SimilarityEvaluator(model_config=model_config, threshold=similarity_threshold)
         groundedness_evaluator = GroundednessEvaluator(model_config=model_config)
         simiarity_class = EvaluatorClass("similarity", simialirty_evaluator, {"column_mapping": {

@@ -589,9 +589,7 @@ export async function generateConfigFilesCommand(argv: any) {
     emitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
     Logger.debug(`Updating existing ${basename(emitterPath)}`);
   } catch (err) {
-    Logger.debug(
-      `Couldn't read ${basename(emitterPath)}. Creating a new file. Error: ${err}`,
-    );
+    Logger.debug(`Couldn't read ${basename(emitterPath)}. Creating a new file. Error: ${err}`);
     emitterPackageJson = {};
   }
 
@@ -637,7 +635,7 @@ export async function generateConfigFilesCommand(argv: any) {
       ...devDependencies,
     };
   }
-  
+
   if (Object.keys(overrideJson).length > 0) {
     emitterPackageJson["overrides"] = overrideJson;
   }

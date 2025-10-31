@@ -1,6 +1,8 @@
+using System;
+using System.Collections.Specialized;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Logging.Abstractions;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
@@ -11,6 +13,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
+    private Mock<IRepositoryScriptService> _repositoryScriptServiceMock = null!;
     private DotNetLanguageSpecificChecks _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -22,12 +25,15 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
         _powerShellHelperMock = new Mock<IPowershellHelper>();
+        _repositoryScriptServiceMock = new Mock<IRepositoryScriptService>();
 
         _languageChecks = new DotNetLanguageSpecificChecks(
+            new TestLogger<DotNetLanguageSpecificChecks>(),
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
             _gitHelperMock.Object,
-            NullLogger<DotNetLanguageSpecificChecks>.Instance);
+            _repositoryScriptServiceMock.Object
+        );
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
         _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");
@@ -117,34 +123,24 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
-        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
-        File.WriteAllText(scriptPath, "# Mock PowerShell script");
-
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("All checks passed successfully!");
 
-        _powerShellHelperMock
-            .Setup(x => x.Run(
-                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
-                    p.ScriptPath.Contains("CodeChecks.ps1")),
+        _repositoryScriptServiceMock
+            .Setup(x => x.TryInvoke(
+                "CodeChecks",
+                _packagePath,
+                It.Is<OrderedDictionary>(args => HasExpectedGeneratedCodeArgs(args)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(processResult);
+            .ReturnsAsync((true, processResult));
 
-        try
-        {
-            var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.ExitCode, Is.EqualTo(0));
-                Assert.That(result.CheckStatusDetails, Does.Contain("All checks passed successfully"));
-            });
-        }
-        finally
+        Assert.Multiple(() =>
         {
-            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
-        }
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.CheckStatusDetails, Does.Contain("All checks passed successfully"));
+        });
     }
 
     [TestCase(true)]
@@ -164,21 +160,16 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
-        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
-        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+        var processResult = new ProcessResult { ExitCode = 1 };
+        processResult.AppendStdout(errorMessage);
 
-        _powerShellHelperMock
-            .Setup(x => x.Run(
-                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
-                    p.ScriptPath.Contains("CodeChecks.ps1")),
+        _repositoryScriptServiceMock
+            .Setup(x => x.TryInvoke(
+                "CodeChecks",
+                _packagePath,
+                It.Is<OrderedDictionary>(args => HasExpectedGeneratedCodeServiceDirectory(args)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                var processResult = new ProcessResult { ExitCode = 1 };
-                processResult.AppendStdout(errorMessage);
-                return processResult;
-            });
+            .ReturnsAsync((true, processResult));
 
         var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
@@ -296,10 +287,10 @@ internal class DotNetLanguageSpecificChecksTests
         var errorMessage = "ILLink : Trim analysis warning IL2026: Azure.Storage.Blobs.BlobClient.Upload: " +
             "Using member 'System.Reflection.Assembly.GetTypes()' which has 'RequiresUnreferencedCodeAttribute' " +
             "can break functionality when trimming application code.";
-        
+
         var processResult = new ProcessResult { ExitCode = 1 };
         processResult.AppendStdout(errorMessage);
-        
+
         _powerShellHelperMock
             .Setup(x => x.Run(
                 It.Is<PowershellOptions>(p => p.ScriptPath != null &&
@@ -403,12 +394,12 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            try 
-            { 
+            try
+            {
                 Directory.Delete(testPackagePath, true);
-                File.Delete(scriptPath); 
-                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
-            } 
+                File.Delete(scriptPath);
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true);
+            }
             catch { }
         }
     }
@@ -489,14 +480,42 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            try 
-            { 
+            try
+            {
                 Directory.Delete(testPackagePath, true);
-                File.Delete(scriptPath); 
-                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
-            } 
+                File.Delete(scriptPath);
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true);
+            }
             catch { }
         }
+    }
+
+    private static bool HasExpectedGeneratedCodeArgs(OrderedDictionary args)
+    {
+        if (!HasExpectedGeneratedCodeServiceDirectory(args))
+        {
+            return false;
+        }
+
+        if (!args.Contains("SpellCheckPublicApiSurface"))
+        {
+            return false;
+        }
+
+        var value = args["SpellCheckPublicApiSurface"];
+        return value is bool boolValue && boolValue;
+    }
+
+    private static bool HasExpectedGeneratedCodeServiceDirectory(OrderedDictionary args)
+    {
+        if (args == null || !args.Contains("ServiceDirectory"))
+        {
+            return false;
+        }
+
+        var serviceDirectory = args["ServiceDirectory"];
+        return serviceDirectory != null &&
+            string.Equals(serviceDirectory.ToString(), "healthdataaiservices", StringComparison.Ordinal);
     }
 
     #region Helper Methods for Cross-Platform Command Validation

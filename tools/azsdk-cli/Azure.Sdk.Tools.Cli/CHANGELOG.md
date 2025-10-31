@@ -3,6 +3,7 @@
 ## 0.5.6 (Unreleased)
 
 ### Features Added
+- Allow forced creation when a release plan already exists
 
 ### Breaking Changes
 

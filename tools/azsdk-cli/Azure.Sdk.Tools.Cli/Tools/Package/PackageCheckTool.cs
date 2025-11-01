@@ -79,14 +79,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
+        public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
             {
                 logger.LogInformation("Starting {checkType} check for package at: {packagePath}", checkType, packagePath);
                 if (!Directory.Exists(packagePath))
                 {
-                    return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                    return new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 var response = checkType switch
@@ -113,15 +113,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package check");
-                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
+                return new PackageCheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
             }
         }
 
-        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running all validation checks");
 
-            var results = new List<CLICheckResponse>();
+            var results = new List<PackageCheckResponse>();
             var overallSuccess = true;
             var failedChecks = new List<string>();
 
@@ -239,11 +239,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             return overallSuccess
-                ? new CLICheckResponse(0, combinedOutput) { NextSteps = nextSteps }
-                : new CLICheckResponse(1, combinedOutput, message) { NextSteps = nextSteps };
+                ? new PackageCheckResponse(0, combinedOutput) { NextSteps = nextSteps }
+                : new PackageCheckResponse(1, combinedOutput, message) { NextSteps = nextSteps };
         }
 
-        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunChangelogValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running changelog validation");
 
@@ -258,7 +258,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Check that version numbers and release dates are correctly formatted",
                     "Refer to the Azure SDK changelog guidelines for proper formatting"
                 };
-                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
+                return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
             }
             else
             {
@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunDependencyCheck(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running dependency check");
 
@@ -298,7 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunReadmeValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running README validation");
 
@@ -325,7 +325,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunSpellingValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
@@ -333,7 +333,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSnippetUpdate(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunSnippetUpdate(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running snippet update");
 
@@ -341,7 +341,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunLintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunLintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running code linting");
 
@@ -349,7 +349,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunFormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunFormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running code formatting");
 
@@ -357,7 +357,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running generated code checks");
 
@@ -365,7 +365,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running AOT compatibility checks");
 
@@ -373,7 +373,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running sample validation");
 
@@ -381,7 +381,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task AddPackageDetailsInResponse(CLICheckResponse response, string packagePath, CancellationToken ct)
+        private async Task AddPackageDetailsInResponse(PackageCheckResponse response, string packagePath, CancellationToken ct)
         {
             try
             {

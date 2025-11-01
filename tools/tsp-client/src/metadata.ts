@@ -13,6 +13,8 @@ interface TspClientMetadata {
   version: string;
   /** Date when the metadata file was created or last modified */
   dateCreatedOrModified: string;
+  /** Path to the emitter-package.json file used to generate */
+  emitterPackageJsonPath?: string;
   /** Optional: Content of the emitter-package.json file used to generate */
   emitterPackageJsonContent?: object;
 }
@@ -21,11 +23,11 @@ interface TspClientMetadata {
  * Creates a tsp_client_metadata.yaml file with information about the tsp-client command run.
  *
  * @param outputDir - The directory where the metadata file will be created
- * @param emitterPackageJsonPath - Optional path to the emitter-package.json file
+ * @param emitterPackageJsonPath - Path to the emitter-package.json file
  */
 export async function createTspClientMetadata(
   outputDir: string,
-  emitterPackageJsonPath?: string,
+  emitterPackageJsonPath: string,
 ): Promise<void> {
   try {
     Logger.info("Creating tsp_client_metadata.yaml file...");
@@ -37,22 +39,12 @@ export async function createTspClientMetadata(
     const metadata: TspClientMetadata = {
       version: packageJson.version,
       dateCreatedOrModified: new Date().toISOString(),
-    };
-
-    if (emitterPackageJsonPath) {
-      metadata.emitterPackageJsonContent = JSON.parse(
-        await readFile(emitterPackageJsonPath, "utf8"),
-      );
-    }
-    // Create the YAML metadata object with kebab-case keys
-    const yamlMetadata = {
-      version: metadata.version,
-      "date-created-or-modified": metadata.dateCreatedOrModified,
-      "emitter-package-json-content": metadata.emitterPackageJsonContent,
+      emitterPackageJsonPath,
+      emitterPackageJsonContent: JSON.parse(await readFile(emitterPackageJsonPath, "utf8")),
     };
 
     // Convert the metadata to YAML format
-    const yamlContent = yaml.stringify(yamlMetadata);
+    const yamlContent = yaml.stringify(metadata);
 
     // Write the metadata file
     const metadataFilePath = joinPaths(outputDir, "tsp_client_metadata.yaml");

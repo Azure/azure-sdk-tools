@@ -44,16 +44,17 @@ describe("tsp-client metadata generation", function () {
 
     // Verify structure matches the template
     assert.exists(metadata.version);
-    assert.exists(metadata["date-created-or-modified"]);
-    assert.exists(metadata["emitter-package-json-content"]);
+    assert.exists(metadata["dateCreatedOrModified"]);
+    assert.exists(metadata["emitterPackageJsonPath"]);
+    assert.exists(metadata["emitterPackageJsonContent"]);
 
     // Verify content - version comes from packageJson now
     assert.isString(metadata.version);
-    assert.isString(metadata["date-created-or-modified"]);
-    assert.isObject(metadata["emitter-package-json-content"]);
+    assert.isString(metadata["dateCreatedOrModified"]);
+    assert.isObject(metadata["emitterPackageJsonContent"]);
 
     // Verify emitter package content structure
-    const emitterContent = metadata["emitter-package-json-content"];
+    const emitterContent = metadata["emitterPackageJsonContent"];
     assert.strictEqual(emitterContent.name, "test-emitter");
     assert.strictEqual(emitterContent.version, "1.0.0");
     assert.exists(emitterContent.dependencies);
@@ -67,21 +68,8 @@ describe("tsp-client metadata generation", function () {
     const metadata = yaml.parse(metadataContent);
 
     // Verify date is valid ISO string
-    const dateString = metadata["date-created-or-modified"];
+    const dateString = metadata["dateCreatedOrModified"];
     const parsedDate = new Date(dateString);
     assert.isFalse(isNaN(parsedDate.getTime()), "Date should be valid ISO string");
-  });
-
-  it("should create metadata without emitter-package.json content if path not provided", async function () {
-    await createTspClientMetadata(testOutputDir);
-
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
-    const metadataContent = await readFile(metadataPath, "utf8");
-    const metadata = yaml.parse(metadataContent);
-
-    // Verify structure
-    assert.exists(metadata.version);
-    assert.exists(metadata["date-created-or-modified"]);
-    assert.notExists(metadata["emitter-package-json-content"]);
   });
 });

@@ -11,6 +11,18 @@ import { getRepoRoot } from "./git.js";
 
 const defaultTspClientConfigPath = joinPaths("eng", "tspclientconfig.yaml");
 
+/**
+ * Reads and returns the package.json content.
+ */
+export async function getPackageJson(): Promise<any> {
+  return JSON.parse(
+    await readFile(
+      joinPaths(dirname(fileURLToPath(import.meta.url)), "..", "package.json"),
+      "utf8",
+    ),
+  );
+}
+
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
   for (const dir of additionalDirectories ?? []) {

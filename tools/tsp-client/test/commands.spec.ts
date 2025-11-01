@@ -74,7 +74,7 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Generate lock file with altername package path", async () => {
+  it("Generate lock file with alternate package path", async () => {
     const tmpDir = joinPaths(cwd(), ".tmp-test-lock-file-alt");
     try {
       // Create temporary directory and copy the package.json

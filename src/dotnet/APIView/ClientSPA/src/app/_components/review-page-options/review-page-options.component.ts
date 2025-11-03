@@ -181,6 +181,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
+      this.setNamespaceReviewStates();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = 'Generating review...';
@@ -197,7 +198,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (changes['review'] && changes['review'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
-      this.setNamespaceReviewStates();
       this.updateDiffStyle();
 
       // Reset loading state when review data is updated (indicating the request completed)
@@ -422,7 +422,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setNamespaceReviewStates() {
     // Only show namespace review request for TypeSpec language AND if feature is enabled
-    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
+    // AND there are associated API revisions (SDK language reviews) AND namespace is not already approved
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled &&
+                                      !this.review?.isApproved &&
+                                      this.review?.namespaceReviewStatus !== 'approved' &&
+                                      this.pullRequestsOfAssociatedAPIRevisions.length > 0;;
     console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
@@ -445,11 +449,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
       this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
+          // Clear the array first to avoid duplicates
+          this.pullRequestsOfAssociatedAPIRevisions = [];
           for (const pr of response) {
             if (pr.reviewId != this.activeAPIRevision?.reviewId) {
               this.pullRequestsOfAssociatedAPIRevisions.push(pr);
             }
           }
+          // Re-evaluate namespace review states after associated reviews are loaded
+          this.setNamespaceReviewStates();
         }
       });
     }

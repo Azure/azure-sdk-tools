@@ -5,6 +5,9 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -13,7 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IGitHelper gitHelper,
         ILogger<SdkBuildTool> logger,
         IProcessHelper processHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
@@ -33,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_package_build_code"), Description("Build/compile SDK code for a specified project locally.")]
-        public async Task<DefaultCommandResponse> BuildSdkAsync(
+        public async Task<PackageBuildResponse> BuildSdkAsync(
             [Description("Absolute path to the SDK project.")]
             string packagePath,
             CancellationToken ct = default)
@@ -102,19 +106,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        // Helper method to create failure responses along with setting the failure state
-        private DefaultCommandResponse CreateFailureResponse(string message)
+        private async Task<PackageInfo> GetPackageInfo(string packagePath)
         {
-            return new DefaultCommandResponse
+            try
+            {
+                var packageInfo = await packageInfoHelper.Resolve(packagePath);
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        // Helper method to create failure responses along with setting the failure state
+        private PackageBuildResponse CreateFailureResponse(string message)
+        {
+            return new PackageBuildResponse
             {
                 ResponseErrors = [message]
             };
         }
 
         // Helper method to create success responses (no SetFailure needed)
-        private DefaultCommandResponse CreateSuccessResponse(string message)
+        private PackageBuildResponse CreateSuccessResponse(string message)
         {
-            return new DefaultCommandResponse
+            return new PackageBuildResponse
             {
                 Result = "succeeded",
                 Message = message

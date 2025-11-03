@@ -4,6 +4,8 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public enum SdkLanguage
 {
+    [JsonPropertyName("")]
+    Unknown,
     [JsonPropertyName(".NET")]
     DotNet,
     [JsonPropertyName("Java")]

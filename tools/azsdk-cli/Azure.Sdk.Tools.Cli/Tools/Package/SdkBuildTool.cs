@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_package_build_code"), Description("Build/compile SDK code for a specified project locally.")]
-        public async Task<PackageBuildResponse> BuildSdkAsync(
+        public async Task<PackageOperationResponse> BuildSdkAsync(
             [Description("Absolute path to the SDK project.")]
             string packagePath,
             CancellationToken ct = default)
@@ -49,31 +49,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Validate inputs
                 if (string.IsNullOrEmpty(packagePath))
                 {
-                    return CreateFailureResponse("Package path is required.");
+                    return CreateFailureResponse("Package path is required.", null);
                 }
 
                 if (!Directory.Exists(packagePath))
                 {
-                    return CreateFailureResponse($"Path does not exist: {packagePath}");
+                    return CreateFailureResponse($"Path does not exist: {packagePath}", null);
                 }
 
                 // Get repository root path from project path
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
-                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
+                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.", null);
                 }
 
                 logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
-
                 string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
                 logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
 
+                PackageInfo packageInfo = await GetPackageInfo(packagePath, ct);
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
                     logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo);
                 }
 
                 // Get the build configuration (command or script path)
@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
                 catch (Exception ex)
                 {
-                    return CreateFailureResponse($"Failed to get build configuration: {ex.Message}");
+                    return CreateFailureResponse($"Failed to get build configuration: {ex.Message}", packageInfo);
                 }
 
                 // Run the build script or command
@@ -93,47 +93,59 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
                 if (buildResult.ExitCode != 0)
                 {
-                    return CreateFailureResponse($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}");
+                    return CreateFailureResponse($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}", packageInfo);
                 }
 
                 logger.LogInformation("Build process execution completed");
-                return CreateSuccessResponse($"Build completed successfully. Output:\n{trimmedBuildResult}");
+                return CreateSuccessResponse($"Build completed successfully. Output:\n{trimmedBuildResult}", packageInfo);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return CreateFailureResponse($"An error occurred: {ex.Message}");
+                return CreateFailureResponse($"An error occurred: {ex.Message}", null);
             }
         }
 
-        private async Task<PackageInfo> GetPackageInfo(string packagePath)
+        private async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
         {
+            PackageInfo? packageInfo = null;            
             try
             {
-                var packageInfo = await packageInfoHelper.Resolve(packagePath);
+                var packageInfoHelper = await packageInfoResolver.Resolve(packagePath, ct);
+                if (packageInfoHelper != null)
+                {
+                    packageInfo = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
+                }                
             }
             catch (Exception ex)
             {
-
+                logger.LogError(ex, "Error occurred while parsing package path");
             }
+            return packageInfo;
         }
 
         // Helper method to create failure responses along with setting the failure state
-        private PackageBuildResponse CreateFailureResponse(string message)
+        private PackageOperationResponse CreateFailureResponse(string message, PackageInfo? packageInfo)
         {
-            return new PackageBuildResponse
+            return new PackageOperationResponse
             {
-                ResponseErrors = [message]
+                ResponseErrors = [message],
+                PackageName = packageInfo?.PackageName ?? string.Empty,
+                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
+                PackageType = packageInfo?.SdkType ?? SdkType.Unknown
             };
         }
 
         // Helper method to create success responses (no SetFailure needed)
-        private PackageBuildResponse CreateSuccessResponse(string message)
+        private PackageOperationResponse CreateSuccessResponse(string message, PackageInfo? packageInfo)
         {
-            return new PackageBuildResponse
+            return new PackageOperationResponse
             {
                 Result = "succeeded",
-                Message = message
+                Message = message,
+                PackageName = packageInfo?.PackageName ?? string.Empty,
+                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
+                PackageType = packageInfo?.SdkType ?? SdkType.Unknown
             };
         }
 

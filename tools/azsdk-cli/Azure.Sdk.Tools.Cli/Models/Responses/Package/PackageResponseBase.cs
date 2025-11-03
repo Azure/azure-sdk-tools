@@ -7,9 +7,25 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
     public abstract class PackageResponseBase : CommandResponse
     {
+        private SdkLanguage _language = SdkLanguage.Unknown;
+
         [Telemetry]
         [JsonPropertyName("language")]
-        public SdkLanguage Language { get; set; }
+        public SdkLanguage Language
+        {
+            get
+            {
+                if (_language != SdkLanguage.Unknown)
+                {
+                    return _language;
+                }
+               return GetLanguageFromRepo(SdkRepoName);
+            }
+            set
+            {
+                _language = value;
+            }
+        }
         [Telemetry]
         [JsonPropertyName("package_name")]
         public string? PackageName { get; set; }
@@ -23,6 +39,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         [Telemetry]
         [JsonPropertyName("typespec_project")]
         public string? TypeSpecProject { get; set; }
+        [JsonPropertyName("sdk_repo")]
+        public string? SdkRepoName { get; set; }
+
 
         public void SetLanguage(string language)
         {
@@ -37,6 +56,24 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             {
                 PackageType = type;
             }
+        }
+
+        public static SdkLanguage GetLanguageFromRepo(string? repoName)
+        {
+            if (string.IsNullOrEmpty(repoName))
+            {
+                return SdkLanguage.Unknown;
+            }
+            repoName = repoName.ToLower();
+            return repoName switch
+            {
+                "azure-sdk-for-net" => SdkLanguage.DotNet,
+                "azure-sdk-for-java" => SdkLanguage.Java,
+                "azure-sdk-for-python" => SdkLanguage.Python,
+                "azure-sdk-for-js" => SdkLanguage.JavaScript,
+                "azure-sdk-for-go" => SdkLanguage.Go,
+                _ => SdkLanguage.Unknown
+            };           
         }
     }
 }

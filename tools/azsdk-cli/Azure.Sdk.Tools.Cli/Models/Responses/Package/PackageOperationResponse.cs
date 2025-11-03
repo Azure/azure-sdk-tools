@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
-    public class PackageBuildResponse: PackageResponseBase
+    public class PackageOperationResponse: PackageResponseBase
     {
         private static readonly JsonSerializerOptions serializerOptions = new()
         {
@@ -71,6 +71,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             return output.ToString();
         }
 
-        public static implicit operator PackageBuildResponse(string s) => new() { Message = s };
+        public static implicit operator PackageOperationResponse(string s) => new() { Message = s };
     }
 }

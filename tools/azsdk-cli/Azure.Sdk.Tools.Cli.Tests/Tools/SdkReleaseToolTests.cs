@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.Multiple(() =>
             {
                 Assert.That(result.PackageName, Is.EqualTo(packageName));
-                Assert.That(result.Language, Is.EqualTo(SdkLanguage.DotNet));
+                Assert.That(result.Language, Is.EqualTo(SdkLanguage.Unknown));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Language must be one of the following"));
             });
         }

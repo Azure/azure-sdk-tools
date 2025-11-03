@@ -428,7 +428,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
                                       !this.review?.isApproved &&
                                       this.review?.namespaceReviewStatus !== 'approved' &&
                                       this.pullRequestsOfAssociatedAPIRevisions.length > 0;
-    console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
+    console.log("Namespace review request can be made:", this.namespaceReviewEnabled);
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
 

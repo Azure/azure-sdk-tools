@@ -43,7 +43,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             foreach (Match refMatch in refMatches)
             {
                 var refName = refMatch.Groups[1].Value.Trim();
-                var refPath = refMatch.Groups[2].Value.Trim();
+                // Handle both angle bracket URLs and bare URLs
+                var refPath = !string.IsNullOrEmpty(refMatch.Groups[2].Value) 
+                    ? refMatch.Groups[2].Value.Trim()  // <url> format
+                    : refMatch.Groups[3].Value.Trim(); // bare url format
                 referenceDefinitions[refName] = refPath;
             }
             
@@ -63,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var match = matches[i];
                 string linkText, linkPath;
 
-                // Determine if this is an inline link [text](path) or reference link [text][ref]
+                // Determine link type based on which groups are captured
                 if (!string.IsNullOrEmpty(match.Groups[2].Value))
                 {
                     // Inline link: [text](path)
@@ -88,15 +91,61 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         continue;
                     }
                 }
+                else if (!string.IsNullOrEmpty(match.Groups[5].Value))
+                {
+                    // Shortcut reference link: [text][]
+                    linkText = match.Groups[5].Value;
+                    var refName = linkText.Trim();
+                    
+                    // Look up the reference definition using the link text as reference name
+                    if (referenceDefinitions.TryGetValue(refName, out var refPath))
+                    {
+                        linkPath = refPath;
+                    }
+                    else
+                    {
+                        // Reference not found, skip this link
+                        logger.LogWarning("Reference definition not found for: {refName}", refName);
+                        continue;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(match.Groups[6].Value))
+                {
+                    // Implicit reference link: [text]
+                    linkText = match.Groups[6].Value;
+                    var refName = linkText.Trim();
+                    
+                    // Look up the reference definition using the link text as reference name
+                    if (referenceDefinitions.TryGetValue(refName, out var refPath))
+                    {
+                        linkPath = refPath;
+                    }
+                    else
+                    {
+                        // Reference not found, skip this link
+                        logger.LogWarning("Reference definition not found for: {refName}", refName);
+                        continue;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(match.Groups[7].Value))
+                {
+                    // Autolink: <url> - replace with just the URL
+                    var autoUrl = match.Groups[7].Value;
+                    result = result.Substring(0, match.Index) + autoUrl + result.Substring(match.Index + match.Length);
+                    continue;
+                }
                 else
                 {
                     // This shouldn't happen with our regex, but just in case
                     continue;
                 }
 
-                // Skip if it looks like a URL (starts with http/https)
+                // Skip if it looks like a URL (starts with http/https/mailto/etc.)
                 if (linkPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
-                    linkPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    linkPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                    linkPath.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ||
+                    linkPath.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase) ||
+                    linkPath.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -153,10 +202,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return result;
         }
 
-        [GeneratedRegex(@"\[([^\]]+)\]\(([^)]+)\)|\[([^\]]+)\]\[([^\]]+)\]", RegexOptions.Compiled)]
+        [GeneratedRegex(@"\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\(([^\s)]+)(?:\s+[""'][^""']*[""'])?\)|\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\[([^\[\]]*)\]|\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\[\]|\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\](?!\[)(?!\()|\<([^<>\s]+)\>", RegexOptions.Compiled | RegexOptions.Singleline)]
         private static partial Regex MarkdownLinkRegex();
 
-        [GeneratedRegex(@"^\s*\[([^\]]+)\]:\s*(.+)$", RegexOptions.Compiled | RegexOptions.Multiline)]
+        [GeneratedRegex(@"^\s*\[([^\[\]]+)\]:\s*(?:<([^<>]+)>|([^\s]+))(?:\s+(""[^""]*""|'[^']*'|\([^)]*\)))?\s*$", RegexOptions.Compiled | RegexOptions.Multiline)]
         private static partial Regex ReferenceDefinitionRegex();
     }
 }

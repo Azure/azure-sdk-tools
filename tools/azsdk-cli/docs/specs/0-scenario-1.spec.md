@@ -281,7 +281,7 @@ _Direct command-line interface usage for [CLI mode](#cli-mode):_
 
 **Command:**
 ```bash
-azsdk verify setup --languages .NET Java JavaScript Python Go
+azsdk verify setup --languages Dotnet Java JavaScript Python Go
 ```
 
 **Options:**

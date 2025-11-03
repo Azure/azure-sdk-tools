@@ -13,6 +13,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// </summary>
 public static class AzureOpenAIClientHelper
 {
+    private const string PlaceholderApiKey = "not-used";
+
     /// <summary>
     /// Creates an OpenAI client configured for Azure OpenAI with TokenCredential (Entra ID) authentication
     /// </summary>
@@ -30,7 +32,7 @@ public static class AzureOpenAIClientHelper
         options.AddPolicy(new BearerTokenAuthenticationPolicy(credential, new[] { "https://cognitiveservices.azure.com/.default" }), PipelinePosition.PerCall);
 
         // Create client with a placeholder API key (required by constructor but not used due to our custom auth policy)
-        return new OpenAIClient(new ApiKeyCredential("not-used"), options);
+        return new OpenAIClient(new ApiKeyCredential(PlaceholderApiKey), options);
     }
 
     /// <summary>
@@ -49,7 +51,9 @@ public static class AzureOpenAIClientHelper
 
         public override void Process(PipelineMessage message, IReadOnlyList<PipelinePolicy> pipeline, int currentIndex)
         {
-            ProcessAsync(message, pipeline, currentIndex).GetAwaiter().GetResult();
+            // The synchronous path is required by the PipelinePolicy base class
+            // In practice, the OpenAI client predominantly uses async paths
+            ProcessAsync(message, pipeline, currentIndex).AsTask().GetAwaiter().GetResult();
         }
 
         public override async ValueTask ProcessAsync(PipelineMessage message, IReadOnlyList<PipelinePolicy> pipeline, int currentIndex)

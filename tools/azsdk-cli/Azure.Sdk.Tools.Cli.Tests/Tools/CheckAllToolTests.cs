@@ -18,7 +18,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ILogger<PythonLanguageSpecificChecks>> _mockPythonLogger;
-        private Mock<IMicroagentHostService> _mockMicroagentHostService;
         private Mock<ICommonValidationHelpers> _mockCommonValidationHelpers;
         private PackageCheckTool _packageCheckTool;
         private TempDirectory _testProjectPath;
@@ -31,11 +30,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
             _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificChecks>>();
-            _mockMicroagentHostService = new Mock<IMicroagentHostService>();
             _mockCommonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
             // Create language-specific check implementations with mocked dependencies
-            var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockMicroagentHostService.Object, _mockCommonValidationHelpers.Object);
+            var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object);
 
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
@@ -245,8 +243,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var mockSpellingFixResult = new CommonValidationHelpers.SpellingFixResult(
                 "Successfully fixed 4 spelling errors and added 0 words to cspell.json. Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
             );
-            _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<CommonValidationHelpers.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
-                                     .ReturnsAsync(mockSpellingFixResult);
 
             // Setup CommonValidationHelpers mock to return appropriate results
             // For fixCheckErrors = false, return the error result

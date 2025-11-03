@@ -15,7 +15,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
-    private readonly IMicroagentHostService _microagentHostService;
     private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     public PythonLanguageSpecificChecks(
@@ -23,14 +22,12 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<PythonLanguageSpecificChecks> logger,
-        IMicroagentHostService microagentHostService,
         ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
-        _microagentHostService = microagentHostService;
         _commonValidationHelpers = commonValidationHelpers;
     }
 

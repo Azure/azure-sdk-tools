@@ -53,7 +53,7 @@ Formalizing Stage 6 as cohesive tools improves reliability, supports automation-
 
 ### Goals
 
-- [ ] Provide four composable, idempotent tools exposed via CLI and MCP agent: CI Update, Changelog Update, Version Update, Metadata Update.
+- [ ] Provide three composable, idempotent tools exposed via CLI and MCP agent: Changelog Update, Version Update, Metadata Update.
 - [ ] Normalize execution order and expected outputs across all supported languages.
 - [ ] Encode management-plane vs data-plane behavioral differences explicitly (especially version & changelog logic).
 - [ ] Emit structured JSON results (status + message + next steps hints) enabling orchestration by AI agents and pipelines.
@@ -86,11 +86,11 @@ Implement three individual CLI + MCP tools. Each tool:
 4. Otherwise falls back the CLI's built-in implementation for that language.
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
-Note: see the [repo-tooling-contract](./specs/99-repo-tooling-contract.md) spec for more details.
+Note: see the [repo-tooling-contract](./99-repo-tooling-contract.md) spec for more details.
 
 ### Detailed Design
 
-The four tools are intentionally small, composable units. Each emits a machine-readable JSON payload to enable deterministic chaining by an agent or CI workflow. All tools share common behaviors:
+The three tools are intentionally small, composable units. Each emits a machine-readable JSON payload to enable deterministic chaining by an agent or CI workflow. All tools share common behaviors:
 
 | Area | Expected Behavior |
 |--------|-------------------|
@@ -310,7 +310,7 @@ flowchart TD
 
 This tool set is complete when:
 
-- [ ] All four tools emit structured JSON with consistent schema.
+- [ ] All three tools emit structured JSON with consistent schema.
 - [ ] Management-plane package run updates version + changelog automatically.
       Exception: Java returns `no-op` for `update-version` tool.
 - [ ] Data-plane run returns advisory for changelog and version.

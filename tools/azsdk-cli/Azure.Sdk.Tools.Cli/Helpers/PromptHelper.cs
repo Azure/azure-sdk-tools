@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var result = text;
             var expandedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Track to prevent infinite loops
 
-            logger.LogDebug($"Found {matches.Count} potential file links in prompt");
+            logger.LogDebug("Found {linkCount} potential file links in prompt", matches.Count);
             // Process matches in reverse order to maintain string positions
             for (int i = matches.Count - 1; i >= 0; i--)
             {

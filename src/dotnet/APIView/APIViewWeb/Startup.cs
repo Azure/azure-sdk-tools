@@ -123,11 +123,8 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
-
-            // Background services
-            // TODO: Re-enable when auto-approval feature is needed
-            // services.AddHostedService<NamespaceAutoApprovalService>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

@@ -1,10 +1,11 @@
 using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -23,8 +24,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockDevOpsService.Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new PackageResponse
                 {
-                    Name = "azure-template",
-                    Language = "Python",
+                    PackageName = "azure-template",
+                    Language = SdkLanguage.Python,
                     ResponseError = null,
                     PipelineDefinitionUrl = "https://dev.azure.com/fake-org/fake-project/_build?definitionId=1",
                     WorkItemId = 12345,
@@ -84,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.Multiple(() =>
             {
                 Assert.That(result.PackageName, Is.EqualTo(packageName));
-                Assert.That(result.Language, Is.EqualTo(language));
+                Assert.That(result.Language, Is.EqualTo(SdkLanguage.Python));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Release pipeline triggered successfully for package 'azure-template'"));
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1"));
             });
@@ -101,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.Multiple(() =>
             {
                 Assert.That(result.PackageName, Is.EqualTo(packageName));
-                Assert.That(result.Language, Is.EqualTo(language));
+                Assert.That(result.Language, Is.EqualTo(SdkLanguage.DotNet));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Language must be one of the following"));
             });
         }

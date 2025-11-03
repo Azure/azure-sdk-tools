@@ -16,6 +16,7 @@ model:
     presence_penalty: 0
     max_completion_tokens: 80000
     reasoning_effort: "medium"
+    response_format: ${file:analyze_comment_themes_result_schema.json}
 ---
 # Analyze and Bucket Comment Themes
 
@@ -25,7 +26,19 @@ You are an expert API reviewer. Given a list of review comments, analyze them fo
 Comments:
 {{ comments }}
 
+
 ## Output
-- List each theme/bucket with a summary and the comments that fit.
-- If a comment fits multiple themes, include it in all relevant buckets.
-- Use clear, concise markdown formatting.
+Return a JSON object matching the following schema:
+
+{
+  "themes": [
+    {
+      "name": "Theme Name",
+      "summary": "Short summary of the theme.",
+      "comment_indices": [0, 2, 5]
+    },
+    ...
+  ]
+}
+
+Each theme should have a descriptive name, a short summary, and a list of indices (0-based) for comments that fit the theme. If a comment fits multiple themes, include its index in all relevant buckets.

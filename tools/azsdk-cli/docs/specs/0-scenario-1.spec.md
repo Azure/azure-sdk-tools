@@ -158,7 +158,7 @@ _If you create a PR to compare the generated library with the existing library a
 ### 1. Environment Setup
 
 **Tool**: `verify-setup` ([#12287](https://github.com/Azure/azure-sdk-tools/issues/12287))  
-**Action**: Check requirements upfront for the working repository, or user-specified languages  
+**Action**: Check requirements upfront for the working repository, or user-specified language(s)  
 **Success**: All tools/SDKs installed, user knows what's missing
 
 ### 2. Generating

@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -14,9 +15,9 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix dependency issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the dependency analysis</returns>
-    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -26,9 +27,9 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix snippet issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the snippet update operation</returns>
-    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -38,9 +39,9 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to automatically fix linting issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the code linting operation</returns>
-    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -50,9 +51,9 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the code formatting operation</returns>
-    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// Validate samples for the specific package.
@@ -60,9 +61,9 @@ public interface ILanguageSpecificChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the sample validation</returns>
-    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -71,9 +72,9 @@ public interface ILanguageSpecificChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the AOT compatibility check</returns>
-    Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -82,9 +83,9 @@ public interface ILanguageSpecificChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the generated code check</returns>
-    Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>

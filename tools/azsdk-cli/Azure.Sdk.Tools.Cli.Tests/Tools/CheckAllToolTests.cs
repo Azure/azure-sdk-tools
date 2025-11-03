@@ -40,9 +40,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
             var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
-            
+            var packageInfoHelper = Mock.Of<ILanguageSpecificResolver<IPackageInfoHelper>>();
+
             _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks, packageInfoHelper);
 
             // Setup default mock responses
             var defaultProcessResult = new ProcessResult { ExitCode = 0, OutputDetails = new List<(StdioLevel, string)>() };

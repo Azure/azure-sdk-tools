@@ -135,7 +135,7 @@ _If you create a PR to compare the generated library with the existing library a
 
 ```text
 1. Environment Setup → verify-setup
-   └─ Check requirements for the user's working repository, or for user-specified language(s).
+   └─ Check requirements for the user's working repository, or for user-specified language(s)
 
 2. Generating → generate-sdk
    └─ Generate SDK code, tests, samples from TypeSpec

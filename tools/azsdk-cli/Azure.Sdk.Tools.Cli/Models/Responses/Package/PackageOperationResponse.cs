@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             }
             if (!string.IsNullOrEmpty(PackageName))
             {
-                output.AppendLine($"Package PackageName: {PackageName}");
+                output.AppendLine($"Package: {PackageName}");
             }
             if (Language != SdkLanguage.Unknown)
             {

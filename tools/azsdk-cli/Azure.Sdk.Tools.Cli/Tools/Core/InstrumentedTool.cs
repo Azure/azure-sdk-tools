@@ -46,23 +46,33 @@ public class InstrumentedTool(
             activity?.SetTag(TagName.ToolResponse, content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 
-            if (result.Content?.FirstOrDefault() is TextContentBlock contentBlock)
+            try
             {
-                try
+                foreach (var c in result.Content)
                 {
-                    var responseDict = JsonSerializer.Deserialize<Dictionary<string, object>>(contentBlock.Text);
-                    if (responseDict != null)
+                    // Process only TextContentBlock for custom properties
+                    // Other content types are binary, audiio etc.
+                    if (c is TextContentBlock contentBlock)
                     {
-                        foreach (var kvp in responseDict)
+                        var responseDict = JsonSerializer.Deserialize<Dictionary<string, object>>(contentBlock.Text);
+                        if (responseDict != null)
                         {
-                            activity?.SetCustomProperty(kvp.Key, kvp.Value?.ToString() ?? string.Empty);
+                            foreach (var kvp in responseDict)
+                            {
+                                if (kvp.Value != null)
+                                {
+                                    activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
+                                }
+                            }                  
                         }
                     }
                 }
-                catch (JsonException jsonEx)
-                {
-                    logger.LogWarning($"Failed to deserialize contentBlock.Text for telemetry properties: {jsonEx.Message}");
-                }
+            }
+            catch (JsonException ex)
+            {
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                logger.LogError(ex, "Failed to deserialize contentBlock.Text for telemetry properties");
             }
             return result;
         }

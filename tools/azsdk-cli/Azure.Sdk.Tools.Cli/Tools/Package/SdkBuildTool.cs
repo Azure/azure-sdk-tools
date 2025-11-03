@@ -108,14 +108,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
         {
-            PackageInfo? packageInfo = null;            
+            PackageInfo? packageInfo = null;
             try
             {
                 var packageInfoHelper = await packageInfoResolver.Resolve(packagePath, ct);
                 if (packageInfoHelper != null)
                 {
                     packageInfo = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
-                }                
+                }
             }
             catch (Exception ex)
             {

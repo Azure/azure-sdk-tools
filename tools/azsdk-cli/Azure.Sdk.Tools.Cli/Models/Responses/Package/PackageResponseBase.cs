@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 "azure-sdk-for-js" => SdkLanguage.JavaScript,
                 "azure-sdk-for-go" => SdkLanguage.Go,
                 _ => SdkLanguage.Unknown
-            };           
+            };
         }
     }
 }

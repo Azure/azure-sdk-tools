@@ -22,7 +22,6 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.1",
     "bootstrap-icons": "^1.10.5",
-    "class-transformer": "^0.5.1",
     "idb": "^8.0.3",
     "jquery": "^3.7.1",
     "ngx-cookie-service": "17.1",

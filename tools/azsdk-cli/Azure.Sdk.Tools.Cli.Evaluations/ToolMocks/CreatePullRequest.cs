@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                         new Dictionary<string, object?>
                         {
                             { "description", "This PR adds the TypeSpec specification for Contoso Widget Manager service.\n\n## Changes\n- Added TypeSpec project for Contoso Widget Manager\n- Includes management plane API definitions\n- TypeSpec validation has been completed successfully\n\n## Review Notes\n- This is a new service specification\n- All TypeSpec validation checks have passed\n- Ready for API design review" },
-                            { "repoPath", "c:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs" },
+                            { "repoPath", "c:\\azure-rest-api-specs" },
                             { "title", "Add Contoso Widget Manager TypeSpec specification" },
                             { "draft", true }
                         }

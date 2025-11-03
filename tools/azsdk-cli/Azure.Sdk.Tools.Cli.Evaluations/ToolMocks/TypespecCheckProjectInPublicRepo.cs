@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                         ToolName,
                         new Dictionary<string, object?>
                         {
-                            { "typeSpecProjectPath", "C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager" }
+                            { "typeSpecProjectPath", "C:\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager" }
                         }
                     )
                 ]

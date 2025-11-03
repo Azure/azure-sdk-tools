@@ -193,12 +193,12 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         return Path.GetFileName(packagePath);
     }
 
-    public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await _commonValidationHelpers.ValidateReadmeCommon(packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);

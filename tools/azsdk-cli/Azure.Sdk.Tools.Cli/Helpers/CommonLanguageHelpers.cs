@@ -4,11 +4,8 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Prompts;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Protocol;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -25,7 +22,7 @@ public interface ICommonValidationHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> ValidateChangelogCommon(
+    Task<PackageCheckResponse> ValidateChangelogCommon(
         string packageName,
         string packagePath,
         bool fixCheckErrors = false,
@@ -38,7 +35,7 @@ public interface ICommonValidationHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> ValidateReadmeCommon(
+    Task<PackageCheckResponse> ValidateReadmeCommon(
         string packagePath,
         bool fixCheckErrors = false,
         CancellationToken ct = default);
@@ -51,7 +48,7 @@ public interface ICommonValidationHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> CheckSpellingCommon(
+    Task<PackageCheckResponse> CheckSpellingCommon(
         string spellingCheckPath,
         string packagePath,
         bool fixCheckErrors = false,
@@ -61,8 +58,8 @@ public interface ICommonValidationHelpers
     /// Validates package path and discovers repository root.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <returns>Repository root path if successful, or CLICheckResponse with error if validation fails</returns>
-    (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath);
+    /// <returns>Repository root path if successful, or PackageCheckResponse with error if validation fails</returns>
+    (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath);
 }
 
 /// <summary>
@@ -90,7 +87,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         _microagentHostService = microagentHostService ?? throw new ArgumentNullException(nameof(microagentHostService));
     }
 
-    public async Task<CLICheckResponse> ValidateChangelogCommon(
+    public async Task<PackageCheckResponse> ValidateChangelogCommon(
         string packageName,
         string packagePath, 
         bool fixCheckErrors = false, 
@@ -108,7 +105,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             var command = "pwsh";
@@ -117,16 +114,16 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var timeout = TimeSpan.FromMinutes(5);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
-            return new CLICheckResponse(processResult);
+            return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateChangelogCommon");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> ValidateReadmeCommon(
+    public async Task<PackageCheckResponse> ValidateReadmeCommon(
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
@@ -143,14 +140,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             var settingsPath = Path.Combine(packageRepoRoot, "eng", ".docsettings.yml");
 
             if (!File.Exists(settingsPath))
             {
-                return new CLICheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
+                return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
             var command = "pwsh";
@@ -163,16 +160,16 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
-            return new CLICheckResponse(processResult);
+            return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateReadmeCommon");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> CheckSpellingCommon(
+    public async Task<PackageCheckResponse> CheckSpellingCommon(
         string spellingCheckPath,
         string packagePath, 
         bool fixCheckErrors = false, 
@@ -190,7 +187,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(cspellConfigPath))
             {
-                return new CLICheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
+                return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
             var npxOptions = new NpxOptions(
@@ -203,7 +200,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             // If cspell checked 0 files, treat as success
             if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
             {
-                return new CLICheckResponse(0, processResult.Output);
+                return new PackageCheckResponse(0, processResult.Output);
             }
 
             // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
@@ -212,35 +209,35 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 try
                 {
                     var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
-                    return new CLICheckResponse(0, fixResult.Summary);
+                    return new PackageCheckResponse(0, fixResult.Summary);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running spelling fix microagent");
-                    return new CLICheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
+                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
 
-            return new CLICheckResponse(processResult);
+            return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpellingCommon");
-            return new CLICheckResponse(1, "", ex.Message);
+            return new PackageCheckResponse(1, "", ex.Message);
         }
     }
 
-    public (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
+    public (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
     {
         if (!Directory.Exists(packagePath))
         {
-            return (null, new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}"));
+            return (null, new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
         var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {
-            return (null, new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
+            return (null, new PackageCheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
         }
 
         return (packageRepoRoot, null);

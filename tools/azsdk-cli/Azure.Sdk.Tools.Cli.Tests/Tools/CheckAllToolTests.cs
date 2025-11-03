@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Microagents;
@@ -44,7 +45,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockResolver.Setup(x => x.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(pythonCheck);
             
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, mockResolver.Object);
+            var mockPackageInfoResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
+            
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, mockResolver.Object, mockPackageInfoResolver.Object);
 
             // Setup default mock responses
             var defaultProcessResult = new ProcessResult { ExitCode = 0, OutputDetails = new List<(StdioLevel, string)>() };
@@ -248,11 +251,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Setup CommonValidationHelpers mock to return appropriate results
             // For fixCheckErrors = false, return the error result
             _mockCommonValidationHelpers.Setup(x => x.CheckSpellingCommon(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
-                                       .ReturnsAsync(new CLICheckResponse(cspellErrorResult));
+                                       .ReturnsAsync(new PackageCheckResponse(cspellErrorResult));
             
             // For fixCheckErrors = true, return success result
             _mockCommonValidationHelpers.Setup(x => x.CheckSpellingCommon(It.IsAny<string>(), It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
-                                       .ReturnsAsync(new CLICheckResponse(0, mockSpellingFixResult.Summary));
+                                       .ReturnsAsync(new PackageCheckResponse(0, mockSpellingFixResult.Summary));
 
             try
             {

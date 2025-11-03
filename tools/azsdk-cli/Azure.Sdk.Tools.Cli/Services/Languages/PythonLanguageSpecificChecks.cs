@@ -176,19 +176,19 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await _commonValidationHelpers.ValidateReadmeCommon(packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-        var packageName = Path.GetFileName(packagePath);
+        var packageName = Path.GetFileName(packagePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         return await _commonValidationHelpers.ValidateChangelogCommon(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public async Task<CLICheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var relativePath = Path.GetRelativePath(repoRoot, packagePath);

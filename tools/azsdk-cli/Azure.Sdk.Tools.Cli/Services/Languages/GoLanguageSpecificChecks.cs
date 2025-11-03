@@ -89,8 +89,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependencies));
+            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
         }
     }
     public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
@@ -106,8 +106,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCode));
+            return new PackageCheckResponse(1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -120,8 +120,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCode));
+            return new PackageCheckResponse(1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -134,8 +134,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTests));
+            return new PackageCheckResponse(1, "", $"{nameof(RunTests)} failed with an exception: {ex.Message}");
         }
     }
 

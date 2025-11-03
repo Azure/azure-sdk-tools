@@ -758,7 +758,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedMavenVersionCheck();
 
             // Act
-            var result = await LangService.UpdateSnippets(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -778,7 +778,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenVersionCheck();
 
             // Act
-            var result = await LangService.UpdateSnippets(emptyDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(emptyDir, false, CancellationToken.None);
             
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
@@ -800,7 +800,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSnippetUpdate();
 
             // Act
-            var result = await LangService.UpdateSnippets(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -818,7 +818,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedSnippetUpdate();
 
             // Act
-            var result = await LangService.UpdateSnippets(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -839,7 +839,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .Throws(new Exception("Process execution failed"));
 
             // Act
-            var result = await LangService.UpdateSnippets(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -858,7 +858,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSnippetUpdate();
 
             // Act
-            await LangService.UpdateSnippets(JavaPackageDir, CancellationToken.None);
+            await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called with -am flag
             MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 

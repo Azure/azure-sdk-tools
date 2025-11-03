@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType]
     public class PackageCheckTool(
         ILogger<PackageCheckTool> logger,
-        ILanguageChecks languageChecks,
+        ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks,
         ILanguageSpecificResolver<IPackageInfoHelper> packageInfoHelpers
     ) : MCPMultiCommandTool
     {
@@ -313,7 +313,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 successfulChecks.Add("Generated Code");
             }
             // Run sample validation
-            var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+            var sampleValidationResult = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
             results.Add(sampleValidationResult);
             if (sampleValidationResult.ExitCode != 0)
             {
@@ -365,7 +365,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 
                 if (notImplementedChecks.Any())
                 {
-                    logger.LogDebug($"Note: The following checks are not implemented for this language: {string.Join(", ", notImplementedChecks)}");
+                    logger.LogDebug("Note: The following checks are not implemented for this language: {NotImplementedChecks}", string.Join(", ", notImplementedChecks));
                 }
 
                 // Add specific guidance from individual check failures (exclude not implemented ones)
@@ -571,7 +571,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -593,10 +593,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
+        }
         
         private async Task<ILanguageSpecificChecks?> ResolveLanguageChecks(string packagePath, CancellationToken ct)
         {
-            return await languageSpecificResolver.Resolve(packagePath, ct);
+            return await languageSpecificChecks.Resolve(packagePath, ct);
         }
 
         private static PackageCheckResponse CreateUnsupportedLanguageResponse(string packagePath)
@@ -606,6 +607,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
             );
+        }
+
+        private static bool IsNotImplemented(PackageCheckResponse response)
+        {
+            return response.ResponseError != null && response.ResponseError.Contains("not implemented", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

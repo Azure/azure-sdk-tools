@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
@@ -115,19 +115,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection
                 var service = new AzureService();
                 clientBuilder.UseCredential(service.GetCredential());
+            });
 
-                // Azure OpenAI client does not, for some reason, have an
-                // in-package facade for this, so register manually.
-                clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
-                    (options, credential, _) =>
-                    {
-                        var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-                        var ep = string.IsNullOrWhiteSpace(endpointEnvVar) ?
-                            "https://openai-shared.openai.azure.com"
-                            : endpointEnvVar;
+            // Register OpenAI client with Azure endpoint and Entra ID authentication
+            services.AddSingleton<OpenAIClient>(sp =>
+            {
+                var azureService = sp.GetRequiredService<IAzureService>();
+                var credential = azureService.GetCredential();
 
-                        return new AzureOpenAIClient(new Uri(ep), credential, options);
-                    });
+                var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+                var endpoint = string.IsNullOrWhiteSpace(endpointEnvVar) ?
+                    new Uri("https://openai-shared.openai.azure.com")
+                    : new Uri(endpointEnvVar);
+
+                return AzureOpenAIClientHelper.CreateAzureOpenAIClient(endpoint, credential);
             });
         }
 

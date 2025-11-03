@@ -1,16 +1,16 @@
 using System.ComponentModel;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
 using OpenAI.Chat;
 using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Microagents;
 
-public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentHostService> logger, TokenUsageHelper tokenUsageHelper, ConversationLogger conversationLogger) : IMicroagentHostService
+public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostService> logger, TokenUsageHelper tokenUsageHelper, ConversationLogger conversationLogger) : IMicroagentHostService
 {
     private const string ExitToolName = "Exit";
 
-    private AzureOpenAIClient openAI = openAI;
+    private OpenAIClient openAI = openAI;
     private ILogger logger = logger;
     private ConversationLogger conversationLogger = conversationLogger;
 

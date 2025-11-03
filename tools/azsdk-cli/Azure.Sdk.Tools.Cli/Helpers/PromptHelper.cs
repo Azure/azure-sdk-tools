@@ -1,15 +1,26 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     /// <summary>
     /// Helper class for processing and manipulating prompt content.
     /// </summary>
-    public static class PromptHelper
+    public static partial class PromptHelper
     {
+        // Maximum file size to read (1 MB)
+        private const long MaxFileSizeBytes = 1024 * 1024;
+        
+        // Compiled regex for better performance when matching markdown links: [text](path)
+        private static readonly Regex markdownLinkRegex =
+            MarkdownLinkRegex();
+
+        // Regex for matching reference definitions: [ref]: path
+        private static readonly Regex referenceDefinitionRegex =
+            ReferenceDefinitionRegex();
+
         /// <summary>
         /// Expands relative file links in markdown-style text by inlining their content.
         /// Supports links in the format [text](relative/path/to/file.ext)
@@ -25,12 +36,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 return text;
             }
-
-            // Regex to match markdown links: [text](path)
-            var linkPattern = @"\[([^\]]*)\]\(([^)]+)\)";
-            var regex = new System.Text.RegularExpressions.Regex(linkPattern);
             
-            var matches = regex.Matches(text);
+            // First, parse all reference definitions in the text
+            var referenceDefinitions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var refMatches = referenceDefinitionRegex.Matches(text);
+            foreach (Match refMatch in refMatches)
+            {
+                var refName = refMatch.Groups[1].Value.Trim();
+                var refPath = refMatch.Groups[2].Value.Trim();
+                referenceDefinitions[refName] = refPath;
+            }
+            
+            var matches = markdownLinkRegex.Matches(text);
             if (matches.Count == 0)
             {
                 return text;
@@ -39,14 +56,43 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var result = text;
             var expandedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Track to prevent infinite loops
 
-            logger.LogDebug("Found {linkCount} potential file links in prompt", matches.Count);
-
+            logger.LogDebug($"Found {matches.Count} potential file links in prompt");
             // Process matches in reverse order to maintain string positions
             for (int i = matches.Count - 1; i >= 0; i--)
             {
                 var match = matches[i];
-                var linkText = match.Groups[1].Value;
-                var linkPath = match.Groups[2].Value.Trim();
+                string linkText, linkPath;
+
+                // Determine if this is an inline link [text](path) or reference link [text][ref]
+                if (!string.IsNullOrEmpty(match.Groups[2].Value))
+                {
+                    // Inline link: [text](path)
+                    linkText = match.Groups[1].Value;
+                    linkPath = match.Groups[2].Value.Trim();
+                }
+                else if (!string.IsNullOrEmpty(match.Groups[4].Value))
+                {
+                    // Reference link: [text][ref]
+                    linkText = match.Groups[3].Value;
+                    var refName = match.Groups[4].Value.Trim();
+                    
+                    // Look up the reference definition
+                    if (referenceDefinitions.TryGetValue(refName, out var refPath))
+                    {
+                        linkPath = refPath;
+                    }
+                    else
+                    {
+                        // Reference not found, skip this link
+                        logger.LogWarning("Reference definition not found for: {refName}", refName);
+                        continue;
+                    }
+                }
+                else
+                {
+                    // This shouldn't happen with our regex, but just in case
+                    continue;
+                }
 
                 // Skip if it looks like a URL (starts with http/https)
                 if (linkPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
@@ -61,27 +107,28 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     continue;
                 }
 
-                try
-                {
-                    // Resolve relative path
-                    string fullPath;
-                    if (Path.IsPathRooted(linkPath))
-                    {
-                        fullPath = linkPath;
-                    }
-                    else
-                    {
-                        fullPath = Path.GetFullPath(Path.Combine(basePath, linkPath));
-                    }
+                string fullPath = Path.IsPathRooted(linkPath)
+                        ? linkPath
+                        : Path.GetFullPath(Path.Combine(basePath, linkPath));
 
-                    // Check if file exists and we haven't already processed it
-                    if (File.Exists(fullPath) && !expandedFiles.Contains(fullPath))
-                    {
+                // Check if file exists and we haven't already processed it
+                if (File.Exists(fullPath))
+                {
+                    if (!expandedFiles.Contains(fullPath)) {
+                        // Check file size before reading
+                        var fileInfo = new FileInfo(fullPath);
+                        if (fileInfo.Length > MaxFileSizeBytes)
+                        {
+                            logger.LogWarning("File '{filePath}' is too large ({fileSize} bytes, max: {maxSize} bytes). Skipping expansion.", 
+                                linkPath, fileInfo.Length, MaxFileSizeBytes);
+                            continue;
+                        }
+                        
                         expandedFiles.Add(fullPath);
                         logger.LogDebug("Expanding file link: {linkPath} -> {fullPath}", linkPath, fullPath);
 
                         var fileContent = await File.ReadAllTextAsync(fullPath, ct);
-                        
+                    
                         // Create expanded content with clear boundaries
                         var expandedContent = $@"
 
@@ -96,18 +143,20 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         // Replace the link with the expanded content
                         result = result.Substring(0, match.Index) + expandedContent + result.Substring(match.Index + match.Length);
                     }
-                    else if (!File.Exists(fullPath))
-                    {
-                        logger.LogWarning("Referenced file not found: {linkPath} (resolved to {fullPath})", linkPath, fullPath);
-                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    logger.LogWarning(ex, "Failed to expand file link: {linkPath}", linkPath);
+                    logger.LogWarning("Referenced file not found: {linkPath} (resolved to {fullPath})", linkPath, fullPath);
                 }
             }
 
             return result;
         }
+
+        [GeneratedRegex(@"\[([^\]]+)\]\(([^)]+)\)|\[([^\]]+)\]\[([^\]]+)\]", RegexOptions.Compiled)]
+        private static partial Regex MarkdownLinkRegex();
+
+        [GeneratedRegex(@"^\s*\[([^\]]+)\]:\s*(.+)$", RegexOptions.Compiled | RegexOptions.Multiline)]
+        private static partial Regex ReferenceDefinitionRegex();
     }
 }

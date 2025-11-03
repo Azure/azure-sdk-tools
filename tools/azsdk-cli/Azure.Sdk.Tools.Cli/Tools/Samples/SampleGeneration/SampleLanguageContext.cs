@@ -49,14 +49,13 @@ public abstract class SampleLanguageContext
     /// <returns>Concatenated structured context string.</returns>
     public virtual async Task<string> LoadContextAsync(IEnumerable<string> paths, int totalBudget, int perFileLimit, CancellationToken ct = default)
     {
-        var pathList = paths.ToList();
-        if (pathList.Count == 0)
+        if (!paths.Any())
         {
             throw new ArgumentException("At least one path must be provided", nameof(paths));
         }
 
-        var packagePath = pathList[0]; // First path is the package path
-        var additionalPaths = pathList.Skip(1); // Remaining paths are additional context
+        var packagePath = paths.First(); // First path is the package path
+        var additionalPaths = paths.Skip(1); // Remaining paths are additional context
 
         var sourceInputProvider = GetSourceInputProvider();
         var sourceInputs = sourceInputProvider.Create(packagePath).ToList();
@@ -68,7 +67,7 @@ public abstract class SampleLanguageContext
             {
                 var fullPath = Path.GetFullPath(path.Trim());
                 sourceInputs.Add(new SourceInput(fullPath, 
-                    IncludeExtensions: Array.Empty<string>(), // Include all files for additional context
+                    IncludeExtensions: Array.Empty<string>(),
                     ExcludeGlobPatterns: Array.Empty<string>()));
             }
         }

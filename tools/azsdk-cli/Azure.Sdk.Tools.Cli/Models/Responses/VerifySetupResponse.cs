@@ -4,10 +4,13 @@ using System.Text.Json.Serialization;
 using System.Text;
 namespace Azure.Sdk.Tools.Cli.Models;
 
+/// <summary>
+/// Response model for setup verification operations
+/// </summary>
 public class VerifySetupResponse : CommandResponse
 {
     [JsonPropertyName("results")]
-    public List<RequirementCheckResult>? Results { get; set; } // all checks with details
+    public List<RequirementCheckResult>? Results { get; set; }
 
     protected override string Format()
     {
@@ -31,9 +34,21 @@ public class VerifySetupResponse : CommandResponse
     }
 }
 
+/// <summary>
+/// Represents the result of a requirement check during setup verification.
+/// </summary>
 public class RequirementCheckResult
 {
+    /// <summary>
+    /// The requirement that was checked.
+    /// </summary>
     public string Requirement { get; set; }
-    public List<String> Instructions { get; set; }
+    /// <summary>
+    /// Instructions for resolving issues found during the requirement check.
+    /// </summary>
+    public List<string> Instructions { get; set; }
+    /// <summary>
+    /// Output from running the requirement check.
+    /// </summary>
     public string? Output { get; set; }
 }

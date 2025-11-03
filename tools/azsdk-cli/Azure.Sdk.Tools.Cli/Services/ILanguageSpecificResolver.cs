@@ -20,6 +20,6 @@ public interface ILanguageSpecificResolver<T> where T : class
     /// </summary>
     /// <param name="language">A language identifier.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>A list of resolved service instances (null for languages that could not be resolved).</returns>
+    /// <returns>The resolved service instance, or null if no matching service is found.</returns>
     public Task<T?> Resolve(SdkLanguage language, CancellationToken ct = default);
 }

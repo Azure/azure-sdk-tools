@@ -37,6 +37,8 @@ public class VerifySetupTool : MCPTool
     }
 
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
+    private const string REQ_VERSION_PATTERN = @"(>=|<=|>|<|=)\s*([\d\.]+)";
+    private const string OUTPUT_VERSION_PATTERN = @"[\d\.]+";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [
         SharedCommandGroups.Verify,
@@ -265,10 +267,9 @@ public class VerifySetupTool : MCPTool
 
     private string CheckVersion(string output, SetupRequirements.Requirement req)
     {
-        // Return empty string if version requirement is satisfied, else return version to upgrade to
-        string versionPattern = @"(>=|<=|>|<|=)\s*([\d\.]+)";
+        // Return empty string if version requirement is satisfied, else return version to upgrade to        
+        var match = System.Text.RegularExpressions.Regex.Match(req.requirement, REQ_VERSION_PATTERN);
         
-        var match = System.Text.RegularExpressions.Regex.Match(req.requirement, versionPattern);
         if (!match.Success)
         {
             // No version specified in the requirement
@@ -281,7 +282,7 @@ public class VerifySetupTool : MCPTool
         logger.LogInformation("Requires version: {requiredVersion}", requiredVersion);
 
         // Parse the output version
-        var outputVersionMatch = System.Text.RegularExpressions.Regex.Match(output, @"[\d\.]+");
+        var outputVersionMatch = System.Text.RegularExpressions.Regex.Match(output, OUTPUT_VERSION_PATTERN);
         if (!outputVersionMatch.Success)
         {
             // Unable to parse the version from the output

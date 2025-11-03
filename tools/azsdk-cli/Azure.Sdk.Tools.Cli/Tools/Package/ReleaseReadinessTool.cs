@@ -8,8 +8,8 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -54,10 +54,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     package = new PackageResponse
                     {
-                        Name = packageName,
-                        Language = language,
+                        PackageName = packageName,   
                         ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language."
                     };
+                    package.SetLanguage(language);
                     return package;
                 }
 
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
                 bool isPreviewRelease = releaseType.Equals("Beta");
-                bool isDataPlanePackage = !package.PackageType.Equals("mgmt");
+                bool isDataPlanePackage = package.PackageType != SdkType.Management;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -129,11 +129,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 var package = new PackageResponse
                 {
-                    Name = packageName,
-                    Language = language,
+                    PackageName = packageName,
                     IsPackageReady = false,
                     ResponseError = $"Failed to check package readiness for '{packageName}' in language '{language}'. Error {ex.Message}"
                 };
+                package.SetLanguage(language);
                 return package;
             }
         }

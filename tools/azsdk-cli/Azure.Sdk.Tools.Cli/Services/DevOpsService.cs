@@ -14,7 +14,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -952,16 +952,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new ArgumentNullException(nameof(workItem), "Work item cannot be null.");
             }
-
             PackageResponse packageModel = new()
             {
-                Name = GetWorkItemValue(workItem, "Custom.Package"),
+                PackageName = GetWorkItemValue(workItem, "Custom.Package"),
                 Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),
-                Language = GetWorkItemValue(workItem, "Custom.Language"),
                 WorkItemId = workItem.Id ?? 0,
                 WorkItemUrl = workItem.Url,
                 State = GetWorkItemValue(workItem, "System.State"),
-                PackageType = GetWorkItemValue(workItem, "Custom.PackageType"),
                 DisplayName = GetWorkItemValue(workItem, "Custom.PackageDisplayName"),
                 PackageRepoPath = GetWorkItemValue(workItem, "Custom.PackageRepoPath"),
                 changeLogStatus = GetWorkItemValue(workItem, "Custom.ChangeLogStatus"),
@@ -973,7 +970,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
                 LatestPipelineRun = GetWorkItemValue(workItem, "Custom.LatestPipelineRun")
             };
-
+            packageModel.SetLanguage(GetWorkItemValue(workItem, "Custom.Language"));
+            packageModel.SetPackageType(GetWorkItemValue(workItem, "Custom.PackageType"));
             var plannedPackages = GetWorkItemValue(workItem, "Custom.PlannedPackages");
             packageModel.PlannedReleases = ParseHtmlPackageData(plannedPackages);
             var releasedPackages = GetWorkItemValue(workItem, "Custom.ShippedPackages");

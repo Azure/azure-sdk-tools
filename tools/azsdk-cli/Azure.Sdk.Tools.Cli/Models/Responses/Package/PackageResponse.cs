@@ -1,34 +1,26 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses
+namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
-    public class PackageResponse : CommandResponse
+    public class PackageResponse : PackageResponseBase
     {
-        [JsonPropertyName("Work item Id")]
+        [JsonPropertyName("work_item_id")]
         public int WorkItemId { get; set; }
         public string WorkItemUrl { get; set; } = string.Empty;
-        [JsonPropertyName("Package work item status")]
+        [JsonPropertyName("package_work_item_status")]
         public string State { get; set; } = string.Empty;
-        [JsonPropertyName("Package name")]
-        public string Name { get; set; } = string.Empty;
-        [JsonPropertyName("Version")]
-        public string Version { get; set; } = string.Empty;
-        [JsonPropertyName("Language")]
-        public string Language { get; set; } = string.Empty;
-        [JsonPropertyName("Package display name")]
-        public string DisplayName { get; set; } = string.Empty;
-        [JsonPropertyName("Package type")]
-        public string PackageType { get; set; } = string.Empty;
-        [JsonPropertyName("Package root path")]
+        [JsonPropertyName("package_root_path")]
         public string PackageRepoPath { get; set; } = string.Empty;
-        [JsonPropertyName("Latest pipeline run url")]
+        [JsonPropertyName("latest_pipeline_run_url")]
         public string LatestPipelineRun { get; set; } = string.Empty;
-        [JsonPropertyName("Latest pipeline run status")]
+        [JsonPropertyName("latest_pipeline_run_status")]
         public string LatestPipelineStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Release pipeline URL")]
+        [JsonPropertyName("release_pipeline_url")]
         public string PipelineDefinitionUrl { get; set; } = string.Empty;
-        [JsonPropertyName("Change log verified")]
+        [JsonPropertyName("change_log_verified")]
         public bool IsChangeLogReady
         {
             get
@@ -38,9 +30,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         }
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public string changeLogStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Change log verification details")]
+        [JsonPropertyName("change_log_verification_details")]
         public string ChangeLogValidationDetails { get; set; } = string.Empty;
-        [JsonPropertyName("Is API view approved")]
+        [JsonPropertyName("is_apiview_approved")]
         public bool IsApiViewApproved
         {
             get
@@ -48,11 +40,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
                 return APIViewStatus.Equals("Approved") || APIViewStatus.Equals("Not required");
             }
         }
-        [JsonPropertyName("API view status")]
+        [JsonPropertyName("apiview_status")]
         public string APIViewStatus { get; set; } = string.Empty;
-        [JsonPropertyName("API view validation details")]
+        [JsonPropertyName("apiview_validation_details")]
         public string ApiViewValidationDetails { get; set; } = string.Empty;
-        [JsonPropertyName("Is package name approved")]
+        [JsonPropertyName("is_package_name_approved")]
         public bool IsPackageNameApproved
         {
             get
@@ -61,19 +53,19 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             }
         }
 
-        [JsonPropertyName("Package name status")]
+        [JsonPropertyName("package_name_status")]
         public string PackageNameStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Package name approval details")]
+        [JsonPropertyName("package_name_approval_details")]
         public string PackageNameApprovalDetails { get; set; } = string.Empty;
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public List<SDKReleaseInfo> PlannedReleases = [];
         [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
         public List<SDKReleaseInfo> ReleasedVersions = [];
-        [JsonPropertyName("Is package ready for release")]
+        [JsonPropertyName("is_package_ready_for_release")]
         public bool IsPackageReady = false;
-        [JsonPropertyName("Planned release date")]
+        [JsonPropertyName("planned_release_date")]
         public string PlannedReleaseDate { get; set; } = string.Empty;
-        [JsonPropertyName("Package readiness details")]
+        [JsonPropertyName("package_readiness_details")]
         public string PackageReadinessDetails { get; set; } = string.Empty;
 
         protected override string Format()
@@ -83,12 +75,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Work Item ID: {WorkItemId}");
             output.AppendLine($"### Work Item URL: {WorkItemUrl}");
             output.AppendLine($"### Package Work Item Status: {State}");
-            output.AppendLine($"### Package Name: {Name}");
+            output.AppendLine($"### Package PackageName: {PackageName}");
             output.AppendLine($"### Version: {Version}");
-            output.AppendLine($"### Language: {Language}");
-            output.AppendLine($"### Package Display Name: {DisplayName}");
-            output.AppendLine($"### Package Type: {PackageType}");
+            output.AppendLine($"### Language: {Language.ToString()}");
+            output.AppendLine($"### Package Display PackageName: {DisplayName}");
+            output.AppendLine($"### Package Type: {PackageType.ToString()}");
             output.AppendLine($"### Package Repo Path: {PackageRepoPath}");
+            output.AppendLine($"### TypeSpec Project: {TypeSpecProject}");
             output.AppendLine($"### Latest Pipeline Run URL: {LatestPipelineRun}");
             output.AppendLine($"### Latest Pipeline Run Status: {LatestPipelineStatus}");
             output.AppendLine($"### Release Pipeline URL: {PipelineDefinitionUrl}");
@@ -97,9 +90,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Is API View Approved: {IsApiViewApproved}");
             output.AppendLine($"### API View Status: {APIViewStatus}");
             output.AppendLine($"### API View Validation Details: {ApiViewValidationDetails}");
-            output.AppendLine($"### Is Package Name Approved: {IsPackageNameApproved}");
-            output.AppendLine($"### Package Name Status: {PackageNameStatus}");
-            output.AppendLine($"### Package Name Approval Details: {PackageNameApprovalDetails}");
+            output.AppendLine($"### Is Package PackageName Approved: {IsPackageNameApproved}");
+            output.AppendLine($"### Package PackageName Status: {PackageNameStatus}");
+            output.AppendLine($"### Package PackageName Approval Details: {PackageNameApprovalDetails}");
             output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
             output.AppendLine($"### Is Package Ready for Release: {IsPackageReady}");
             output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");

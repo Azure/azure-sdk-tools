@@ -4,7 +4,7 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
-using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using ModelContextProtocol.Protocol;
@@ -23,7 +23,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix dependency issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the dependency analysis</returns>
-    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Validates the changelog for the specific package.
@@ -32,7 +32,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the changelog validation</returns>
-    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Validates the README for the specific package.
@@ -41,7 +41,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the README validation</returns>
-    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Checks spelling in the specific package.
@@ -50,7 +50,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Updates code snippets in the specific package.
@@ -59,7 +59,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix snippet issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the snippet update operation</returns>
-    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Lints code in the specific package.
@@ -68,7 +68,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to automatically fix linting issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the code linting operation</returns>
-    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Formats code in the specific package.
@@ -77,7 +77,7 @@ public interface ILanguageChecks
     /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the code formatting operation</returns>
-    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Checks AOT compatibility for the specific package.
@@ -85,7 +85,7 @@ public interface ILanguageChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the AOT compatibility check</returns>
-    Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Checks generated code for the specific package.
@@ -93,7 +93,7 @@ public interface ILanguageChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the generated code check</returns>
-    Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
     
     /// <summary>
     /// Validates samples for the specific package.
@@ -101,7 +101,7 @@ public interface ILanguageChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the sample validation</returns>
-    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<PackageCheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -130,32 +130,32 @@ public class LanguageChecks : ILanguageChecks
     /// Validates package path and discovers repository root.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <returns>Repository root path if successful, or CLICheckResponse with error if validation fails</returns>
-    private (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
+    /// <returns>Repository root path if successful, or PackageCheckResponse with error if validation fails</returns>
+    private (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
     {
         if (!Directory.Exists(packagePath))
         {
-            return (null, new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}"));
+            return (null, new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
         // Find the SDK repository root by looking for common repository indicators
         var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {
-            return (null, new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
+            return (null, new PackageCheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
         }
 
         return (packageRepoRoot, null);
     }
 
-    public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -165,29 +165,29 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         return await ValidateChangelogCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         return await ValidateReadmeCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -197,14 +197,14 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -214,14 +214,14 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.LintCodeAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -231,14 +231,14 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.FormatCodeAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -247,14 +247,14 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -263,14 +263,14 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.CheckAotCompat(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
             _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
+            return new PackageCheckResponse(
                 exitCode: 1,
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
@@ -288,7 +288,7 @@ public class LanguageChecks : ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    protected async Task<PackageCheckResponse> ValidateChangelogCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -303,7 +303,7 @@ public class LanguageChecks : ILanguageChecks
             var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
             if (languageSpecificCheck == null)
             {
-                return new CLICheckResponse(1, "", $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.");
+                return new PackageCheckResponse(1, "", $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.");
             }
 
             // Construct the path to the PowerShell script in the SDK repository
@@ -311,7 +311,7 @@ public class LanguageChecks : ILanguageChecks
 
             if (!File.Exists(scriptPath))
             {
-                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             var command = "pwsh";
@@ -322,12 +322,12 @@ public class LanguageChecks : ILanguageChecks
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
             stopwatch.Stop();
 
-            return new CLICheckResponse(processResult);
+            return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateChangelogCommonAsync");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
@@ -339,7 +339,7 @@ public class LanguageChecks : ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> ValidateReadmeCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    protected async Task<PackageCheckResponse> ValidateReadmeCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -354,7 +354,7 @@ public class LanguageChecks : ILanguageChecks
 
             if (!File.Exists(scriptPath))
             {
-                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             // Construct the path to the doc settings file
@@ -362,7 +362,7 @@ public class LanguageChecks : ILanguageChecks
 
             if (!File.Exists(settingsPath))
             {
-                return new CLICheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
+                return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
             var command = "pwsh";
@@ -375,12 +375,12 @@ public class LanguageChecks : ILanguageChecks
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct: ct);
 
-            return new CLICheckResponse(processResult);
+            return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateReadmeCommonAsync");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
@@ -391,7 +391,7 @@ public class LanguageChecks : ILanguageChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    protected async Task<PackageCheckResponse> CheckSpellingCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -406,7 +406,7 @@ public class LanguageChecks : ILanguageChecks
 
             if (!File.Exists(cspellConfigPath))
             {
-                return new CLICheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
+                return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
             // Convert absolute path to relative path from repo root
@@ -425,21 +425,21 @@ public class LanguageChecks : ILanguageChecks
                 try
                 {
                     var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
-                    return new CLICheckResponse(0, fixResult.Summary);
+                    return new PackageCheckResponse(0, fixResult.Summary);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running spelling fix microagent");
-                    return new CLICheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
+                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
 
-            return new CLICheckResponse(processResult);
+            return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
-            return new CLICheckResponse(1, "", ex.Message);
+            return new PackageCheckResponse(1, "", ex.Message);
         }
     }
 

@@ -28,16 +28,6 @@ def calculate_overall_score(row: dict[str, Any], metrics: list[str]) -> float:
     
     return overall_score
 
-    # if ("outputs.similarity.similarity" not in row) or ( "outputs.groundedness.groundedness" not in row):
-    #     return 0.0
-    
-    # similarity = float(row["outputs.similarity.similarity"])
-    # groundedness = float(row["outputs.groundedness.groundedness"])
-    # if math.isnan(similarity) or math.isnan(groundedness):
-    #     return 0.0
-    # else:
-    #     return similarity * weights["similarity_weight"] + groundedness * weights["groundedness_weight"]
-
 def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[str, Any]]:
     run_result = []
     total_score = 0
@@ -70,40 +60,11 @@ def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[s
         row_result["overall_score"] = score
         run_result.append(row_result)
 
-    # similarity_pass_rate = 0
-    # groundedness_pass_rate = 0
-    # for row in result["rows"]:
-    #     score = calculate_overall_score(row)
-    #     total_score += score
-
-    #     if "outputs.similarity.similarity_result" in row and row["outputs.similarity.similarity_result"] == "pass":
-    #         similarity_pass_rate += 1
-
-    #     if "outputs.groundedness.groundedness_result" in row and row["outputs.groundedness.groundedness_result"] == "pass":
-    #         groundedness_pass_rate += 1
-
-    #     run_result.append(
-    #         {
-    #             "testcase": row["inputs.testcase"],
-    #             "expected": row["inputs.ground_truth"],
-    #             "actual": row["inputs.response"],
-    #             "similarity": float(row["outputs.similarity.similarity"]) if "outputs.similarity.similarity" in row else -1,
-    #             "gpt_similarity": float(row["outputs.similarity.gpt_similarity"]) if "outputs.similarity.gpt_similarity" in row else -1,
-    #             "similarity_threshold": float(row["outputs.similarity.similarity_threshold"]) if "outputs.similarity.similarity_threshold" in row else 3,
-    #             "similarity_result": row["outputs.similarity.similarity_result"] if "outputs.similarity.similarity_result" in row else "N/A",
-    #             "groundedness": float(row["outputs.groundedness.groundedness"]) if "outputs.groundedness.groundedness" in row else -1,
-    #             "gpt_groundedness": float(row["outputs.groundedness.gpt_groundedness"]) if "outputs.groundedness.gpt_groundedness" in row else -1,
-    #             "groundedness_threshold": float(row["outputs.groundedness.groundedness_threshold"]) if "outputs.groundedness.groundedness_threshold" in row else 3,
-    #             "groundedness_result": row["outputs.groundedness.groundedness_result"] if "outputs.groundedness.groundedness_result" in row else "N/A",
-    #             "overall_score": score,
-    #         }
-    #     )
-
     if result:
         average_score = total_score / len(result["rows"])
     else:
         average_score = 0
-    # run_result.append({"average_score": average_score, "total_evals": len(result["rows"]), "similarity_pass_rate": similarity_pass_rate, "groundedness_pass_rate": groundedness_pass_rate})
+
     summary_result = {"average_score": average_score, "total_evals": len(result["rows"])}
     for index, (key, value) in enumerate(pass_rates.items()):
         summary_result[f"{key}_pass_rate"] = value
@@ -134,14 +95,7 @@ def build_output_table(eval_results: list[dict[str, Any]], metrics: list[str], b
         headers.append(f"{metric} Result")
     
     headers.append("Score")
-    # headers = [
-    #     "Test Case",
-    #     "Similarity",
-    #     "Similarity Result",
-    #     "Groundedness",
-    #     "Groundedness Result",
-    #     "Score"
-    # ]
+
     terminal_rows = []
 
     for result in eval_results[: -1]: # Skip summary object
@@ -174,42 +128,10 @@ def build_output_table(eval_results: list[dict[str, Any]], metrics: list[str], b
         terminal_row.extend(values)
         terminal_rows.append(terminal_row)
 
-    # for result in eval_results[:-1]:  # Skip summary object
-    #     testcase = result["testcase"]
-    #     score = result["overall_score"]
-    #     sim = result["similarity"]
-    #     sim_result = result["similarity_result"]
-
-    #     groundedness = result['groundedness']
-    #     groundedness_result = result['groundedness_result']
-        
-    #     terminal_row = [testcase]
-    #     if baseline_results is not None and testcase in baseline_results:
-    #         base = baseline_results[testcase]
-    #         values =[
-    #             f"{sim:.1f}{format_terminal_diff(sim, base['similarity'])}",
-    #             f"{sim_result}",
-    #             f"{groundedness}{format_terminal_diff(groundedness, base['groundedness'])}",
-    #             f"{groundedness_result}",
-    #             f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
-    #         ]
-    #     else:
-    #         values = [
-    #             f"{sim:.1f}",
-    #             f"{sim_result}",
-    #             f"{groundedness}",
-    #             f"{groundedness_result}",
-    #             f"{score:.1f}"
-    #         ]
-    #     terminal_row.extend(values)
-    #     terminal_rows.append(terminal_row)
-
     return tabulate(terminal_rows, headers, tablefmt="simple")
 
 def output_table(eval_results: list[dict[str, Any]], file_name: str, metrics: list[str], baseline_results: Optional[dict[str, Any]] = None) -> None:
     # logging.info(json.dumps(eval_results[-1], ensure_ascii=False))
-    # similarity_pass_rate = eval_results[-1]['similarity_pass_rate']
-    # groundedness_pass_rate = eval_results[-1]['groundedness_pass_rate']
 
     logging.info("====================================================")
     logging.info(f"\n\n✨ {file_name} results:\n")
@@ -220,13 +142,6 @@ def output_table(eval_results: list[dict[str, Any]], file_name: str, metrics: li
         for metric in metrics:
             pass_rate = eval_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in eval_results[-1] else 0
             print(f" {metric}: pass({pass_rate}) fail({len(eval_results)-1 - pass_rate})",)
-    # if baseline_results:
-    #     print(
-    #         f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}",
-    #         f" similarity: pass({similarity_pass_rate}) fail({len(eval_results)-1 - similarity_pass_rate})",
-    #         f" groundedness: pass({groundedness_pass_rate}) fail({len(eval_results)-1 - groundedness_pass_rate})"
-    #         "\n\n"
-    #     )
 
 def show_results(all_results: dict[str, Any], metrics: list[str], with_baseline: bool = True) -> None:
     """Display results in a table format."""

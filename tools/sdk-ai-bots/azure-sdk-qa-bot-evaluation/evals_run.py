@@ -92,20 +92,7 @@ if __name__ == "__main__":
             "groundedness": groundedness_class,
             "response_completeness": response_completion_class
         }
-        # evaluators = {
-        #     "similarity": EvaluatorClass("similarity", simialirty_evaluator, {"column_mapping": {
-        #                                                                                         "query": "${data.query}",
-        #                                                                                         "response": "${data.response}",
-        #                                                                                         "ground_truth": "${data.ground_truth}",
-        #                                                                                         "testcase": "${data.testcase}"
-        #                                                                                     }}),
-        #     "groundedness": EvaluatorClass("groundedness", groundedness_evaluator, {"column_mapping": {
-        #                                                                                             "query": "${data.query}",
-        #                                                                                             "response": "${data.response}",
-        #                                                                                             "context": "${data.context}",
-        #                                                                                             "testcase": "${data.testcase}"
-        #                                                                                         }})
-        #     }
+
         evals_runner = EvalsRunner(evaluators)
 
         kwargs = {}
@@ -135,22 +122,6 @@ if __name__ == "__main__":
         logging.info(f"all_results:{len(all_results.keys())}")
         for name, test_results in all_results.items():
             result_file.write(f"\n-----------{name}----------------------\n")
-            # for result in test_results[:-1]:  # Skip summary object
-            #     testcase = result["testcase"]
-            #     score = result["overall_score"]
-            #     sim = result["similarity"]
-            #     sim_result = result["similarity_result"]
-
-            #     groundedness = result['groundedness']
-            #     groundedness_result = result['groundedness_result']
-            #     data = {
-            #         "testcase": result["testcase"],
-            #         "similarity": result["similarity"],
-            #         "similarity_result": result["similarity_result"],
-            #         "groundedness": result['groundedness'],
-            #         "groundedness_result": result["similarity_result"]
-            #     }
-            #     result_file.write(json.dumps(data, ensure_ascii=False) + '\n')
             result_file.write(build_output_table(test_results, metrics))
         result_file.flush()
         result_file.close()

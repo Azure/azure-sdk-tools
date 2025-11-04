@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     public partial class Scenario
     {
-    [Test]
+        [Test]
         public async Task AzsdkTypeSpecGeneration_Step02_TypespecValidation()
         {
             var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");

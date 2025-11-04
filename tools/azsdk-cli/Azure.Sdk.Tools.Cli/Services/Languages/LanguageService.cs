@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         public static SdkLanguage GetLanguageForRepo(string repoName)
         {
-            if (RepoToLanguageMap.TryGetValue(repoName, out SdkLanguage language))
+            if (RepoToLanguageMap.TryGetValue(repoName.ToLower(), out SdkLanguage language))
             {
                 return language;
             }

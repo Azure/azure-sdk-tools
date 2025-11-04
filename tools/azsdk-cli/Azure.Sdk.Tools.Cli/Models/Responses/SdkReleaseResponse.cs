@@ -4,7 +4,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses
 {
-    public class SdkReleaseResponse : PackageResponse
+    public class SdkReleaseResponse : PackageResponseBase
     {
         [JsonPropertyName("Release pipeline URL")]
         public string ReleasePipelineRunUrl { get; set; } = string.Empty;

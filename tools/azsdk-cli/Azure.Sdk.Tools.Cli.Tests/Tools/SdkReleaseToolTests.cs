@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             logger = new TestLogger<SdkReleaseTool>();
             var mockDevOpsService = new Mock<IDevOpsService>();
             mockDevOpsService.Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(new PackageResponse
+                .ReturnsAsync(new PackageWorkitemResponse
                 {
                     PackageName = "azure-template",
                     Language = SdkLanguage.Python,

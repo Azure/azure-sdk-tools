@@ -12,11 +12,15 @@ import {
   syncCommand,
   updateCommand,
 } from "./commands.js";
-import { normalizePath, resolvePath } from "@typespec/compiler";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import PromptSync from "prompt-sync";
-import { getPackageJson } from "./utils.js";
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
-const packageJson = await getPackageJson();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
 
 /**
  * Prints the command preamble, including the version and banner.

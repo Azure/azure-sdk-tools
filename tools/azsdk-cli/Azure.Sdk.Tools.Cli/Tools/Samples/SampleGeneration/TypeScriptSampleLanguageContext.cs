@@ -47,5 +47,10 @@ async function main(): Promise<void> {
 main().catch((err) => {
   console.error(""The sample encountered an error:"", err);
 });";
-    protected override ILanguageSourceInputProvider GetSourceInputProvider() => new TypeScriptSourceInputProvider();
+    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
+    {
+        var provider = new TypeScriptSourceInputProvider();
+        var inputs = provider.Create(packagePath);
+        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
+    }
 }

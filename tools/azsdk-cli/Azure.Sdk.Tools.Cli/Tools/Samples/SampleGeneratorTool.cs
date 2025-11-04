@@ -50,20 +50,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             Required = false
         };
 
-        private readonly Option<string[]> extraContextOption = new("--extra-context")
-        {
-            Description = "Path to a file or folder containing additional context to include in the prompt. Can be specified multiple times.",
-            Required = false,
-            AllowMultipleArgumentsPerToken = true
-        };
-
         protected override Command GetCommand() => new("generate", "Generates sample files")
         {
             SharedOptions.PackagePath,
             promptOption,
             overwriteOption,
-            modelOption,
-            extraContextOption
+            modelOption
         };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -87,9 +79,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
                         {
                             logger.LogInformation("Loading prompt content from file: {promptFile}", fullPath);
                             prompt = await File.ReadAllTextAsync(fullPath, ct);
-                            
-                            // Expand any relative file links in the loaded prompt
-                            prompt = await PromptHelper.ExpandRelativeFileLinksAsync(prompt, Path.GetDirectoryName(fullPath)!, logger, ct);
                         }
                     }
                 }
@@ -99,19 +88,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
                     prompt = rawPrompt; // fallback
                 }
             }
-            else
-            {
-                // For direct text prompts, expand any relative file links using current directory as base
-                prompt = await PromptHelper.ExpandRelativeFileLinksAsync(rawPrompt, Directory.GetCurrentDirectory(), logger, ct);
-            }
             string packagePath = parseResult.GetValue(SharedOptions.PackagePath) ?? ".";
             bool overwrite = parseResult.GetValue(overwriteOption);
             var model = parseResult.GetValue(modelOption);
-            var extraContextPaths = parseResult.GetValue(extraContextOption);
 
             try
             {
-                await GenerateSampleAsync(prompt, packagePath, overwrite, model, extraContextPaths, ct);
+                await GenerateSampleAsync(prompt, packagePath, overwrite, model, ct);
                 return new DefaultCommandResponse { Message = "Sample generation completed successfully" };
             }
             catch (ArgumentException ex)
@@ -126,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             }
         }
 
-        private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, string[]? extraContextPaths, CancellationToken ct)
+        private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, CancellationToken ct)
         {
             IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
@@ -141,25 +124,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             logger.LogDebug("Package info: {packageName} at {repoRoot}", packageInfo.PackageName, packageInfo.RepoRoot);
             logger.LogDebug("Samples directory: {outputDirectory}", resolvedOutputDirectory);
 
-            var allPaths = new List<string> { packageInfo.PackagePath };
-            if (extraContextPaths != null && extraContextPaths.Length > 0)
-            {
-                foreach (var extraContextPath in extraContextPaths)
-                {
-                    if (!string.IsNullOrWhiteSpace(extraContextPath))
-                    {
-                        var fullPath = Path.GetFullPath(extraContextPath.Trim());
-                        allPaths.Add(fullPath);
-                        logger.LogDebug("Will include extra context from path: {path}", fullPath);
-                    }
-                }
-            }
+            var sourceContext = await sampleContext.GetClientLibrarySourceCodeAsync(packageInfo.PackagePath, totalBudget: 3000000, perFileLimit: 50000, ct);
+            logger.LogDebug("Loaded source context: {length} characters", sourceContext.Length);
 
-            var context = await sampleContext.LoadContextAsync(allPaths, 4000000, 50000, ct);
-            
-            logger.LogDebug("Loaded context: {length} characters", context.Length);
-
-            if (string.IsNullOrWhiteSpace(context))
+            if (string.IsNullOrWhiteSpace(sourceContext))
             {
                 throw new InvalidOperationException($"No source code content could be loaded from the package path '{packageInfo.PackagePath}'. Please verify the path contains valid source files for language '{language}'.");
             }
@@ -174,12 +142,13 @@ Generate samples for the {packageInfo.PackageName} client library in {language} 
 Scenarios description:
 {prompt}
 
-<context>
-{context}
-</context>
+<source_context>
+{sourceContext}
+</source_context>
 
 ";
-            logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", context.Length);
+            logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of source context", sourceContext.Length);
+
             logger.LogDebug("Starting microagent with model: {model}", model);
             logger.LogDebug("Enhanced prompt length: {promptLength} characters", enhancedPrompt.Length);
 

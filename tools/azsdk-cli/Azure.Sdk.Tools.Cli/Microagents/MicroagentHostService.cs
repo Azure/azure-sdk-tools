@@ -10,7 +10,7 @@ public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostSe
 {
     private const string ExitToolName = "Exit";
 
-    private OpenAIClient openAI = openAI;
+    private readonly OpenAIClient openAI = openAI;
     private ILogger logger = logger;
     private ConversationLogger conversationLogger = conversationLogger;
 

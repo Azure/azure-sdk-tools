@@ -2,7 +2,7 @@
 
 ## Unreleased - 0.29.1
 
-- Output a tsp_client_metadata.json file during code generation with information like tsp-client version, date created or modified, and emitter-package.json content. The metadata file will be outputted when using the following commands: `init`, `update`, `generate`.
+- Output a tsp_client_metadata.yaml file during code generation with information like tsp-client version, date created or modified, and emitter-package.json content. The metadata file will be outputted when using the following commands: `init`, `update`, `generate`.
 
 ## 2025-09-29 - 0.29.0
 

@@ -36,8 +36,10 @@ def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[s
     total_score = 0
 
     pass_rates: dict[str, int] = {}
+    fail_rates: dict[str, int] = {}
     for metric in metrics:
         pass_rates[metric] = 0
+        fail_rates[metric] = 0
     
     for row in result["rows"]:
         score = calculate_overall_score(row, metrics)
@@ -60,12 +62,12 @@ def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[s
                 metric = match.group(1)
                 metric_name = match.group(2)
                 # logging.info(f"Metric: {metric}, Name: {metric_name}")
-                if key == f"outputs.{metric}.{metric}_result" and value == "pass":
-                    pass_rates[metric] += 1
-                
-                # workaround: accept nan as success for groundedness
-                if key == f"outputs.groundedness.groundedness_result" and value == "nan":
-                    pass_rates[metric] += 1
+                # count no {metric}_result as success
+                if key == f"outputs.{metric}.{metric}_result":
+                    if value == "fail":
+                        fail_rates[metric] += 1
+                    if value == "pass":
+                        pass_rates[metric] += 1
 
                 if key == f"outputs.{metric}.{metric}":
                     row_result[metric_name] = float(value)
@@ -82,6 +84,8 @@ def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[s
     summary_result = {"average_score": average_score, "total_evals": len(result["rows"])}
     for index, (key, value) in enumerate(pass_rates.items()):
         summary_result[f"{key}_pass_rate"] = value
+    for index, (key, value) in enumerate(fail_rates.items()):
+        summary_result[f"{key}_fail_rate"] = value
 
     run_result.append(summary_result)
     return run_result
@@ -155,7 +159,8 @@ def output_table(eval_results: list[dict[str, Any]], file_name: str, metrics: li
         print(f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}")
         for metric in metrics:
             pass_rate = eval_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in eval_results[-1] else 0
-            print(f" {metric}: pass({pass_rate}) fail({len(eval_results)-1 - pass_rate})",)
+            fail_rate = eval_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in eval_results[-1] else 0
+            print(f" {metric}: pass({pass_rate}) fail({fail_rate})",)
 
 def show_results(all_results: dict[str, Any], metrics: list[str], with_baseline: bool = True) -> None:
     """Display results in a table format."""
@@ -198,10 +203,14 @@ def verify_results(all_results: dict[str, Any], metrics: list[str], with_baselin
         
         for metric in metrics:
             pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
-            if pass_rate < test_results[-1]["total_evals"]:
-                scenario_ret = False
-        # if test_results[-1]["similarity_pass_rate"] < test_results[-1]["total_evals"] or test_results[-1]["groundedness_pass_rate"] < test_results[-1]["total_evals"]:
-        #     scenario_ret = False
+            fail_rate = test_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in test_results[-1] else 0
+            # workaround: for groundedness, only caculate the `fail`
+            if metric == "groundedness":
+                if fail_rate > 0:
+                    scenario_ret = False
+            else:
+                if pass_rate < test_results[-1]["total_evals"]:
+                    scenario_ret = False
 
         if not scenario_ret:
             failed_scenarios.append(name)

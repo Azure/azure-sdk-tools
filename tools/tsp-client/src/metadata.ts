@@ -16,8 +16,8 @@ interface TspClientMetadata {
   dateCreatedOrModified: string;
   /** Path to the emitter-package.json file used to generate */
   emitterPackageJsonPath?: string;
-  /** Optional: Content of the emitter-package.json file used to generate */
-  emitterPackageJsonContent?: object;
+  /** Optional: Content of the emitter-package.json file used to generate as JSON string */
+  emitterPackageJsonContent?: string;
 }
 
 /**
@@ -42,7 +42,7 @@ export async function createTspClientMetadata(
       version: packageJson.version,
       dateCreatedOrModified: new Date().toISOString(),
       emitterPackageJsonPath: normalizeSlashes(relative(repoRoot, emitterPackageJsonPath)),
-      emitterPackageJsonContent: JSON.parse(await readFile(emitterPackageJsonPath, "utf8")),
+      emitterPackageJsonContent: JSON.stringify(JSON.parse(await readFile(emitterPackageJsonPath, "utf8")), null, 2),
     };
 
     // Convert the metadata to YAML format

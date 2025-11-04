@@ -55,10 +55,10 @@ describe("tsp-client metadata generation", function () {
     // Verify content - version comes from packageJson now
     assert.isString(metadata.version);
     assert.isString(metadata["dateCreatedOrModified"]);
-    assert.isObject(metadata["emitterPackageJsonContent"]);
+    assert.isString(metadata["emitterPackageJsonContent"]);
 
-    // Verify emitter package content structure
-    const emitterContent = metadata["emitterPackageJsonContent"];
+    // Verify emitter package content structure (parse the JSON string)
+    const emitterContent = JSON.parse(metadata["emitterPackageJsonContent"]);
     assert.strictEqual(emitterContent.name, "test-emitter");
     assert.strictEqual(emitterContent.version, "1.0.0");
     assert.exists(emitterContent.dependencies);

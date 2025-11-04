@@ -53,7 +53,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             StringBuilder outputBuilder = null,
             StringBuilder errorBuilder = null,
             bool throwOnError = true,
-            bool trackStatistics = false
+            bool trackStatistics = false,
+            bool log = true
             )
         {
             if (IsWindows && _requiresShellOnWindows.Contains(filename))
@@ -73,7 +74,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 workingDirectory: workingDirectory,
                 environmentVariables: environmentVariables,
                 throwOnError: false,
-                log: true,
+                log: log,
                 captureOutput: true,
                 captureError: true,
                 trackStatistics: trackStatistics);

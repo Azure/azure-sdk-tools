@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
-        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/[0-9]+\\/?")]
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-rest-api-specs\\/pull\\/[0-9]+\\/?")]
         private static partial Regex PullRequestUrlRegex();
 
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}(-preview)?$")]
@@ -251,7 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             if (!match.Success)
             {
-                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
+                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}'. It should be a valid GitHub pull request to azure-rest-api-specs repo.");
             }
 
         }
@@ -424,8 +424,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-                logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
-                logger.LogDebug($"SDK details to update: {sdkDetails}");
+                logger.LogInformation("Updating SDK details in release plan work item ID: {ReleasePlanWorkItemId}", releasePlanWorkItemId);
+                logger.LogDebug("SDK details to update: {SdkDetails}", sdkDetails);
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization
                 var options = new JsonSerializerOptions
                 {
@@ -629,7 +629,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
+                logger.LogError(ex, "Failed to update release plan with language exclusion justification in release plan work item {ReleasePlanWorkItem}", releasePlanWorkItem);
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
             }
         }

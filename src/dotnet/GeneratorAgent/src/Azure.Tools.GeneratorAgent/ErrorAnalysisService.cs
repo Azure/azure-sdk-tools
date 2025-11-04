@@ -28,31 +28,39 @@ namespace Azure.Tools.GeneratorAgent
         /// <summary>
         /// Analyzes errors from a compilation/build result using regex parsing with AI fallback for unparsed content.
         /// Note: This method assumes the result contains a ProcessException (recoverable build/compilation errors).
-        /// General exceptions (unrecoverable errors) should be handled by the caller before reaching this method.
         /// </summary>
-        public async Task<Result<IEnumerable<Fix>>> GenerateFixesFromResultAsync(string errorOutput, ValidationContext validationContext, CancellationToken cancellationToken)
+        public async Task<List<Fix>> GenerateFixesFromFailureLogsAsync(string errorOutput, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrWhiteSpace(errorOutput))
+            {
+               return new List<Fix>();
+            }
+
+            Logger.LogDebug("Generating fixes from failure logs");
+            
             var allErrors = new List<RuleError>();
 
             // Step 1: Parse with regex first and get unparsed content
             var (regexErrors, unparsedContent) = ParseWithRegex(errorOutput);
 
-            var regexErrorsList = regexErrors.ToList();
-            allErrors.AddRange(regexErrorsList);
+            var regexErrorCount = 0;
+            foreach (var error in regexErrors)
+            {
+                allErrors.Add(error);
+                regexErrorCount++;
+            }
 
             // Step 2: Use AI service to analyze unparsed content
             if (!string.IsNullOrWhiteSpace(unparsedContent))
             {
-                Logger.LogDebug("Analyzing unparsed content with AI service - found {Length} characters", unparsedContent.Length);
-
-                var aiErrors = await OpenAIService.AnalyzeErrorsAsync(unparsedContent, validationContext, cancellationToken);
+                var aiErrors = await OpenAIService.AnalyzeErrorsAsync(unparsedContent, cancellationToken);
                 allErrors.AddRange(aiErrors);
             }
 
             Logger.LogDebug("Total errors found: {TotalErrorCount} (Regex: {RegexCount}, AI: {AICount})",
-                allErrors.Count, regexErrorsList.Count, allErrors.Count - regexErrorsList.Count);
+                allErrors.Count, regexErrorCount, allErrors.Count - regexErrorCount);
 
-            return TransformErrorsToFixes(allErrors);
+            return TransformErrorsToFixes(allErrors).ToList();
         }
 
         /// <summary>
@@ -108,15 +116,10 @@ namespace Azure.Tools.GeneratorAgent
         /// <summary>
         /// Generates fixes from parsed error information using the ErrorAnalyzerService.
         /// </summary>
-        private Result<IEnumerable<Fix>> TransformErrorsToFixes(IEnumerable<RuleError> errors)
+        private IEnumerable<Fix> TransformErrorsToFixes(IEnumerable<RuleError> errors)
         {
             ArgumentNullException.ThrowIfNull(errors);
-
-            var errorList = errors.ToList();
-            var fixes = ErrorAnalyzerService.GetFixes(errorList);
-            var materializedFixes = fixes.ToList();
-
-            return Result<IEnumerable<Fix>>.Success(materializedFixes);
+            return  ErrorAnalyzerService.GetFixes(errors) ?? Enumerable.Empty<Fix>();
         }
     }
 }

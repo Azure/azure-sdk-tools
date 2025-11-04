@@ -430,8 +430,7 @@ public class PipelineAnalysisTool(
         }
         catch (JsonException ex)
         {
-            logger.LogError(ex, "Failed to deserialize log analysis response");
-            logger.LogError("Response:\n{result}", result);
+            logger.LogError(ex, "Failed to deserialize log analysis response. Raw response: {Response}", result);
             throw;
         }
     }

@@ -18,7 +18,7 @@ namespace APIViewWeb
         public abstract string VersionString { get; }
         public virtual bool IsSupportedFile(string name) => Extensions.Any(x => name.EndsWith(x, StringComparison.OrdinalIgnoreCase));
         public abstract bool CanUpdate(string versionString);
-        public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis);
+        public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null);
         public virtual bool IsReviewGenByPipeline { get; set; } = false;
         public virtual bool UsesTreeStyleParser { get; } = true;
         public virtual string ReviewGenerationPipelineUrl { get; } = String.Empty;

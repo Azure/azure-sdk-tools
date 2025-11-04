@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class TypeSpecInitTool(
         INpxHelper npxHelper,
         ITypeSpecHelper typespecHelper,
+        IFileHelper fileHelper,
         ILogger<TypeSpecInitTool> logger
     ) : MCPTool
     {
@@ -168,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 Directory.CreateDirectory(fullOutputDirectory);
             }
 
-            if (FileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
+            if (fileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
             {
                 return new TspToolResponse
                 {

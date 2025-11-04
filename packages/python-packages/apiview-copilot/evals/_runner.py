@@ -4,8 +4,9 @@ import sys
 import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import yaml
 from azure.ai.evaluation import evaluate
@@ -16,6 +17,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import evals._custom
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
+from evals._util import (
+    append_results_to_cache,
+    load_cache_lookup,
+)
 from src._settings import SettingsManager
 
 DEFAULT_NUM_RUNS: int = 1
@@ -126,12 +131,17 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS):
+    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_cache: bool = False):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._results_lock = threading.Lock()
+        self._use_cache = use_cache
 
-    def run(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+    def _ensure_context(self):
+        if self._context is None:
+            self._context = ExecutionContext()
+
+    def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Execute all targets in the discovery result.
 
         Args:
@@ -151,7 +161,7 @@ class EvaluationRunner:
         finally:
             self.cleanup()
 
-    def _run_parallel(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+    def _run_parallel(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Parallel execution using ThreadPoolExecutor."""
         cpu_count = os.cpu_count() or 4
         max_workers = min(cpu_count * 2, len(discovery_result.targets))
@@ -197,54 +207,113 @@ class EvaluationRunner:
 
         return results
 
-    def _ensure_context(self):
-        """Lazy initialize execution context."""
-        if self._context is None:
-            print("🔧 Initializing shared execution context...")
-            self._context = ExecutionContext()
-
     def _execute_target_with_progress(self, target: EvaluationTarget, index: int, total: int) -> EvaluationResult:
         print(f"[{index}/{total}] Started {target.workflow_name}...")
         return self._execute_target(target)
 
     def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
         try:
-            # Create evaluator for target, passing jsonl_file as argument
-            jsonl_file = self._context.create_temporary_jsonl_file(target)
-            evaluator_class = get_evaluator_class(target.config.kind)
-            evaluator = evaluator_class(target.config, jsonl_file=jsonl_file)
+            # Load each test file once and reuse parsed data
+            test_file_to_case = {}
+            testcase_ids = []
+            test_file_paths = []
 
-            # Execute runs
-            all_run_results = []
-            for run in range(self.num_runs):
-                if self.num_runs > 1:
-                    print(f"  📋 Run {run + 1}/{self.num_runs}...")
-                result = evaluate(
-                    data=str(jsonl_file),
-                    evaluators={"metrics": evaluator},
-                    evaluator_config={"metrics": evaluator.evaluator_config},
-                    target=evaluator.target_function,
-                    fail_on_evaluator_errors=False,
-                    # FIXME: Enable this?
-                    # azure_ai_project=azure_ai_project,
-                    **self._context._credential_kwargs,
-                )
-                all_run_results.append({jsonl_file.name: result})
+            for test_file in target.test_files:
+                test_case = self._context._load_test_file(test_file)
+                test_file_to_case[test_file] = test_case
+                testcase_id = test_case.get("testcase")
+                if testcase_id:
+                    testcase_ids.append(testcase_id)
+                    test_file_paths.append(test_file)
 
-            # Process results with evaluator
-            guideline_ids = set()
-            processed_results = evaluator.process_results(all_run_results, guideline_ids)
+            # Resolve cache strategy
+            if self._use_cache:
+                cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
+            else:
+                cache_lookup = {}
+
+            # Partition test data based on cache
+            cached_azure_rows = []
+            fresh_testcases = []
+            fresh_test_file_paths = []
+
+            for test_file in target.test_files:
+                test_case = test_file_to_case[test_file]
+                testcase_id = test_case.get("testcase")
+
+                if testcase_id and testcase_id in cache_lookup:
+                    cached_azure_rows.append(cache_lookup[testcase_id])
+                else:
+                    fresh_testcases.append(test_case)
+                    fresh_test_file_paths.append(test_file)
+
+            # Execute fresh testcases if needed
+            fresh_results = []
+            if fresh_testcases:
+                fresh_results = self._run_azure_evaluation(fresh_testcases, target)
+
+                if self._use_cache:
+                    append_results_to_cache(fresh_test_file_paths, fresh_results)
+
+            # Combine all results
+            cached_rows = [row for row in cached_azure_rows]
+            fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
+            all_cached_rows = cached_rows + fresh_rows
+            combined_result = {"rows": all_cached_rows, "metrics": {}, "studio_url": None}
+
+            all_passed = all(row.get("outputs.metrics.correct_action", False) for row in all_cached_rows)
 
             return EvaluationResult(
                 target=target,
-                raw_results=all_run_results,
-                success=True,
+                raw_results=[{f"{target.workflow_name}.jsonl": combined_result}],
+                success=all_passed,
             )
 
         except Exception as e:
             return EvaluationResult(target=target, raw_results=[], success=False, error=str(e))
 
-    def show_results(self, results: List[EvaluationResult]):
+    def _run_azure_evaluation(self, testcases: list[dict], target: EvaluationTarget) -> list[dict]:
+        """Run Azure AI evaluation on a list of testcases."""
+        if not testcases:
+            return []
+
+        # Create temporary file for testcases
+        tmp_dir = Path(tempfile.mkdtemp(prefix="evals_fresh_"))
+        fresh_jsonl = tmp_dir / f"fresh_{target.workflow_name}.jsonl"
+
+        with fresh_jsonl.open("w", encoding="utf-8") as f:
+            for test_case in testcases:
+                f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False) + "\n")
+
+        # Execute evaluation
+        evaluator_class = get_evaluator_class(target.config.kind)
+        evaluator = evaluator_class(target.config, jsonl_file=fresh_jsonl)
+
+        results = []
+        for run in range(self.num_runs):
+            if self.num_runs > 1:
+                print(f"  📋 Run {run + 1}/{self.num_runs}...")
+
+            result = evaluate(
+                data=str(fresh_jsonl),
+                evaluators={"metrics": evaluator},
+                evaluator_config={"metrics": evaluator.evaluator_config},
+                target=evaluator.target_function,
+                fail_on_evaluator_errors=False,
+                **self._context._credential_kwargs,
+            )
+            results.append(result)
+
+        # Cleanup
+        try:
+            fresh_jsonl.unlink()
+            tmp_dir.rmdir()
+        except OSError:
+            pass
+
+        return results
+
+    def show_results(self, results: list[EvaluationResult]):
         """Display detailed results from all evaluations."""
         print("=" * 60)
         print("📈 EVALUATION RESULTS")
@@ -252,35 +321,50 @@ class EvaluationRunner:
         print()
 
         successful = [r for r in results if r.success and r.raw_results]
-        failed = [r for r in results if not r.success]
+        failed = [r for r in results if not r.success and r.raw_results and r.error is None]
+        errored = [r for r in results if r.error is not None]
 
         if successful:
             for result in successful:
-                print(f"✅ {result.workflow_name}")
+                print(f"  ✅ {result.workflow_name}")
                 raw_results = result.raw_results[0]
                 for filename, eval_result in raw_results.items():
-                    print(f"  == {filename} ==")
+                    print(f"    == {filename} ==")
                     for res in eval_result["rows"]:
                         success = res["outputs.metrics.correct_action"]
                         testcase_name = res["inputs.testcase"]
                         score = res["outputs.metrics.score"]
-                        print(f"    -  {'✅' if success else '❌'} {score} - {testcase_name}")
-                print()
+                        print(f"      -  {'✅' if success else '❌'} {score} - {testcase_name}")
+                    print()
 
         if failed:
-            print("❌ FAILED EVALUATIONS:")
             for result in failed:
-                print(f"  • {result.workflow_name}: {result.error}")
+                print(f"  ❌ {result.workflow_name}")
+                raw_results = result.raw_results[0]
+                for filename, eval_result in raw_results.items():
+                    print(f"    == {filename} ==")
+                    for res in eval_result["rows"]:
+                        success = res["outputs.metrics.correct_action"]
+                        testcase_name = res["inputs.testcase"]
+                        score = res["outputs.metrics.score"]
+                        print(f"      -  {'✅' if success else '❌'} {score} - {testcase_name}")
             print()
 
-        if not successful and not failed:
+        if errored:
+            print("💥 ERRORED EVALUATIONS:")
+            for result in errored:
+                print(f"  💥 {result.workflow_name}: {result.error}")
+            print()
+
+        if not successful and not failed and not errored:
             print("No evaluation results to display.")
             print()
 
-    def show_summary(self, results: List[EvaluationResult]):
+    def show_summary(self, results: list[EvaluationResult]):
         """Display aggregated results from all evaluations."""
-        successful = [r for r in results if r.success]
-        failed = [r for r in results if not r.success]
+        successful = [r for r in results if r.success and r.raw_results]
+        failed = [r for r in results if not r.success and r.raw_results and r.error is None]
+        errored = [r for r in results if r.error is not None]
 
         print("=" * 60)
         print("📈 EVALUATION SUMMARY")
@@ -288,32 +372,60 @@ class EvaluationRunner:
         print(f"Total targets: {len(results)}")
         print(f"✅ Successful: {len(successful)}")
         print(f"❌ Failed: {len(failed)}")
+        print(f"💥 Errored: {len(errored)}")
         print()
+
+        if errored:
+            print("💥 ERRORED EVALUATIONS:")
+            for result in errored:
+                print(f"  • {result.workflow_name}: {result.error}")
+            print()
 
         if failed:
             print("❌ FAILED EVALUATIONS:")
             for result in failed:
-                print(f"  • {result.workflow_name}: {result.error}")
+                print(f"  • {result.workflow_name}")
             print()
 
         if successful:
             print("✅ SUCCESSFUL EVALUATIONS:")
-            total_test_files = sum(r.num_test_files for r in successful)
-            print(f"  • Processed {total_test_files} test files across {len(successful)} workflows")
-
-            # Group by workflow type
-            by_type = {}
             for result in successful:
-                workflow_type = result.target.config.kind
-                by_type.setdefault(workflow_type, []).append(result)
-
-            for workflow_type, type_results in by_type.items():
-                print(f"  • {workflow_type}: {len(type_results)} workflows")
+                print(f"  • {result.workflow_name}")
+            print()
 
     def cleanup(self):
         """Clean up resources."""
         if self._context:
             self._context.cleanup()
+
+    def generate_report(self, results: list[EvaluationResult]) -> list:
+        """Generate a flat list of eval_case dicts per test, matching the required schema."""
+        eval_timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        eval_date = eval_timestamp[:10]
+        cases = []
+        for result in results:
+            workflow_name = result.workflow_name
+            raw_results = list(result.raw_results[0].values())[0]["rows"] if result.raw_results else []
+            for row in raw_results:
+                testcase = row.get("inputs.testcase")
+                status = "pass" if row.get("outputs.metrics.correct_action") == True else "fail"
+                score = row.get("outputs.metrics.score")
+                case_id = f"{eval_timestamp}|{workflow_name}|{testcase}"
+                pk = eval_date.replace("-", "_")
+                cases.append(
+                    {
+                        "type": "eval_case",
+                        "id": case_id,
+                        "pk": pk,
+                        "eval_timestamp": eval_timestamp,
+                        "eval_date": eval_date,
+                        "workflow_name": workflow_name,
+                        "testcase": testcase,
+                        "status": status,
+                        "score": score,
+                    }
+                )
+        return cases
 
 
 __all__ = [

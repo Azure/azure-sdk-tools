@@ -56,9 +56,21 @@
         <ng-template pTemplate="content" let-comment>
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
                 <ng-template pTemplate="header">
-                    <div class="flex align-items-center gap-2">
+                    <div class="d-flex align-items-center">
                         <span class="fw-bold">{{ comment.createdBy }}</span>
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                        <!-- AI-generated Badge - Simple custom design -->
+                        <span *ngIf="isAIGenerated(comment) && hasAIInfo(comment)"
+                              class="ai-badge-custom ms-2"
+                              (click)="showAIInfo($event, comment)"
+                              title="Click to view AI information">
+                            AI-generated <i class="pi pi-info-circle"></i>
+                        </span>
+                        <!-- AI-generated Badge without icon - when no AI info available -->
+                        <span *ngIf="isAIGenerated(comment) && !hasAIInfo(comment)"
+                              class="ai-badge-custom ms-2">
+                            AI-generated
+                        </span>
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
@@ -84,7 +96,7 @@
                         </ng-template>
                         <ng-template pTemplate="item" let-item>
                             <a pRipple [attr.data-item-id]="comment.id" [attr.data-element-id]="comment.elementId" class="flex align-items-center p-menuitem-link">
-                                <img *ngIf="item?.title" src="{{assetsPath}}/images/{{ item?.title! | languageNames }}-original.svg" width="25" height="25" class="ms-2">
+                                <img *ngIf="item?.title" src="{{assetsPath}}/images/{{ item?.title! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25" class="ms-2">
                                 <i *ngIf="item?.icon" class="ms-2 {{item?.icon}}"></i>
                                 <span class="ms-2">{{ item.label }}</span>
                             </a>
@@ -169,3 +181,34 @@
   [(visible)]="showRelatedCommentsDialog"
   (resolveSelectedComments)="onResolveSelectedComments($event)">
 </app-related-comments-dialog>
+
+<!-- AI Information Overlay Panel -->
+<p-overlayPanel #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
+    <ng-template pTemplate="content">
+        <div class="ai-info-content" *ngIf="currentAIInfoStructured">
+            <div class="ai-info-body">
+                <div class="ai-info-item" *ngFor="let item of currentAIInfoStructured.items">
+                    <i class="pi ai-info-icon" [ngClass]="item.icon"></i>
+                    <div class="ai-info-details">
+                        <span class="ai-info-label">{{ item.label }}</span>
+                        <span class="ai-info-value" [ngClass]="item.valueClass || ''">
+                            <ng-container *ngIf="item.valueList && item.valueList.length > 0; else singleValue">
+                                <code *ngFor="let id of item.valueList; let last = last">
+                                    {{ id }}<ng-container *ngIf="!last">, </ng-container>
+                                </code>
+                            </ng-container>
+                            <ng-template #singleValue>
+                                <ng-container *ngIf="item.valueClass; else codeValue">
+                                    {{ item.value }}
+                                </ng-container>
+                                <ng-template #codeValue>
+                                    <code>{{ item.value }}</code>
+                                </ng-template>
+                            </ng-template>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</p-overlayPanel>

@@ -1,15 +1,84 @@
+import json
+import prompty
 from src._github_manager import GithubManager
-
+from src._utils import get_prompt_path
 from ._base import MentionWorkflow
 
 
 class OpenParserIssueWorkflow(MentionWorkflow):
     prompty_filename = "parse_conversation_to_github_issue.prompty"
     summarize_prompt_file = "summarize_github_actions.prompty"
+    deduplication_prompt_file = "deduplicate_parser_issue.prompty"
+    
+    REPO_OWNER = "tjprescott"
+    REPO_NAME = "azure-sdk-tools"
 
     def execute_plan(self, plan: dict):
+        """Execute the parser issue workflow"""
+        recent_issues = self._fetch_recent_parser_issues()
+        dedup_result = self._check_for_duplicate_issue(plan, recent_issues)
+        
+        if dedup_result["action"] == "no-op":
+            return {
+                "action": "no-op",
+                "existing_issue": dedup_result["existing"],
+            }
+        
+        issue = self._create_parser_issue(plan)
+        return {
+            "action": "created",
+            "issue": issue
+        }
+
+    def _fetch_recent_parser_issues(self):
+        """Fetch recent open parser issues from GitHub."""
         client = GithubManager.get_instance()
-        issue = client.create_issue(
-            owner="tjprescott", repo="azure-sdk-tools", title=plan.get("title"), body=plan.get("body")
+        issues = client.search_issues(
+            owner=self.REPO_OWNER,
+            repo=self.REPO_NAME,
+            query="label:parser is:issue state:open"
         )
-        return issue
+        return issues
+
+    def _check_for_duplicate_issue(self, plan: dict, recent_issues: list) -> dict:
+        """Check if the issue already exists with deduplication prompt."""
+        dedup_prompt_path = get_prompt_path(folder="mention", filename=self.deduplication_prompt_file)
+        error_context = f"{plan.get('title')}\n\n{plan.get('body')}"
+        dedup_inputs = {
+            "language": self.language,
+            "package_name": self.package_name,
+            "code": self.code,
+            "error_context": error_context,
+            "existing_issues": self._format_issues_for_dedup(recent_issues)
+        }
+        raw_dedup = prompty.execute(dedup_prompt_path, inputs=dedup_inputs)
+        
+        try:
+            return json.loads(raw_dedup)
+        except json.JSONDecodeError:
+            # Default to creating new issue if we can't parse the response
+            return {"action": "create", "existing": None}
+
+    def _format_issues_for_dedup(self, issues: list) -> str:
+        """Format issues for deduplication prompt input."""
+        formatted_issues = [
+            {
+                "number": issue["number"],
+                "title": issue["title"],
+                "body": issue.get("body", "")[:500],  # truncate
+                "created_at": issue["created_at"]
+            }
+            for issue in issues
+        ]
+        return json.dumps(formatted_issues)
+
+    def _create_parser_issue(self, plan: dict):
+        """Create a new parser issue on GitHub."""
+        client = GithubManager.get_instance()
+        return client.create_issue(
+            owner=self.REPO_OWNER,
+            repo=self.REPO_NAME,
+            title=plan.get("title"),
+            body=plan.get("body"),
+            labels=["parser"]
+        )

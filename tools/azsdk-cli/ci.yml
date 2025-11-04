@@ -42,7 +42,7 @@ extends:
         framework: net8.0
         assembly: azsdk
     ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
-      customJob: 
+      CustomJobs:
       - template: /tools/azsdk-cli/run-ai-eval.yml
         parameters:
           EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations

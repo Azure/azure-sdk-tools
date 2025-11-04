@@ -65,7 +65,7 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
-  - name: customJob
+  - name: CustomJobs
     type: jobList
     default: []
 
@@ -217,10 +217,9 @@ extends:
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
-          
-          - ${{ if ne(length(parameters.customJob), 0) }}:
-            - ${{ each job in parameters.customJob }}:
-              - ${{ job }}
+
+          - ${{ each job in parameters.CustomJobs }}:
+            - ${{ job }}
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml

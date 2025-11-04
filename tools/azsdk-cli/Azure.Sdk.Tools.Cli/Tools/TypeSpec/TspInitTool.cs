@@ -3,11 +3,11 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -231,7 +231,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             return new TspToolResponse
             {
                 IsSuccessful = true,
-                TypeSpecProjectPath = outputDirectory,
+                TypeSpecProject = outputDirectory,
                 NextSteps = [
                     $"Your project has been generated at {outputDirectory}. From here you can build and edit the project using these commands:",
                     $"  1. cd {outputDirectory}",

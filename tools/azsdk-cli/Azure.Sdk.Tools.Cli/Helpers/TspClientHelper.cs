@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -51,7 +51,7 @@ public class TspClientHelper : ITspClientHelper
         return new TspToolResponse
         {
             IsSuccessful = true,
-            TypeSpecProjectPath = outputDirectory
+            TypeSpecProject = outputDirectory
         };
     }
 
@@ -88,7 +88,7 @@ public class TspClientHelper : ITspClientHelper
         return new TspToolResponse
         {
             IsSuccessful = true,
-            TypeSpecProjectPath = outputDirectory
+            TypeSpecProject = outputDirectory
         };
     }
 }

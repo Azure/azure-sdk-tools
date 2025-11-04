@@ -65,14 +65,20 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var deduplicated = new List<(Match match, MarkdownLinkType type)>();
             foreach (var item in allMatches.OrderBy(m => m.match.Index).ThenByDescending(m => m.match.Length))
             {
-                // Check if this match overlaps with any already added match
-                bool overlaps = deduplicated.Any(existing => 
-                    (item.match.Index >= existing.match.Index && item.match.Index < existing.match.Index + existing.match.Length) ||
-                    (existing.match.Index >= item.match.Index && existing.match.Index < item.match.Index + item.match.Length));
-                
-                if (!overlaps)
+                // Only check overlap with the last added match, since matches are sorted by start index
+                if (deduplicated.Count == 0)
                 {
                     deduplicated.Add(item);
+                }
+                else
+                {
+                    var last = deduplicated[deduplicated.Count - 1];
+                    // If this match starts after the end of the last added match, add it
+                    if (item.match.Index >= last.match.Index + last.match.Length)
+                    {
+                        deduplicated.Add(item);
+                    }
+                    // Otherwise, skip (overlaps with previous)
                 }
             }
             

@@ -10,13 +10,21 @@ import base64
 import hashlib
 import json
 import logging
+import os
 import time
 from typing import Iterable, Optional
 
 import httpx
+from azure.identity import (
+    AzureCliCredential,
+    AzureDeveloperCliCredential,
+    AzurePipelinesCredential,
+    ChainedTokenCredential,
+    ManagedIdentityCredential,
+)
 from azure.keyvault.keys import KeyClient
 from azure.keyvault.keys.crypto import CryptographyClient, SignatureAlgorithm
-from src._credential import get_credential
+from src._credential import in_ci
 from src._settings import SettingsManager
 
 logger = logging.getLogger(__name__)
@@ -78,7 +86,7 @@ class GithubManager:
             payload["assignees"] = list(assignees)
         token = self._get_installation_token(owner)
         return self._request_json("POST", url, token, json=payload)
-    
+
     def search_issues(
         self,
         *,
@@ -174,6 +182,23 @@ class GithubManager:
             raise RuntimeError(f"GitHub API error {last_exc.response.status_code}: {detail}") from last_exc
         raise last_exc or RuntimeError("Unknown GitHub request failure")
 
+    def _get_credential(self):
+        """Get Azure credentials based on the environment."""
+        if in_ci():
+            # These are used by Azure Pipelines and should not be changed
+            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+            system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+            return AzurePipelinesCredential(
+                service_connection_id=service_connection_id,
+                client_id=client_id,
+                tenant_id=tenant_id,
+                system_access_token=system_access_token,
+            )
+
+        return ChainedTokenCredential(ManagedIdentityCredential(), AzureCliCredential(), AzureDeveloperCliCredential())
+
     def _create_app_jwt(self) -> str:
         """
         Mint a GitHub App JWT using Azure Key Vault's asymmetric signing key.
@@ -190,7 +215,7 @@ class GithubManager:
         key_name = settings.get("github_app_key_name")
         app_id = settings.get("github_app_id")
 
-        credential = get_credential()
+        credential = self._get_credential()
         key_client = KeyClient(vault_url=keyvault_url, credential=credential)
         key = key_client.get_key(key_name)
         crypto_client = CryptographyClient(key, credential=credential)

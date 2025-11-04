@@ -20,6 +20,7 @@ jobs:
     - template: /eng/pipelines/templates/steps/install-dotnet.yml
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
+        SkipCheckoutNone: true
         Repositories:
           - Name: ${{ parameters.RepoOwner }}/${{ parameters.RepoName }}
             Commitish: ${{ parameters.RepoCommit }}

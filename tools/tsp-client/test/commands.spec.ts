@@ -735,15 +735,19 @@ describe.sequential("Verify commands", () => {
 
   it("Generate config files preserves all existing fields", async () => {
     try {
-      const emitterPackageJsonPath = joinPaths(
-        repoRoot,
-        "tools/tsp-client/test/utils/emitter-package-with-extra-fields.json",
+      // Create a temp directory and copy the test file
+      const tempDir = joinPaths(repoRoot, "tools/tsp-client/test/utils/temp-preserve-fields");
+      await mkdir(tempDir, { recursive: true });
+      const emitterPackageJsonPath = joinPaths(tempDir, "emitter-package-with-extra-fields.json");
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-with-extra-fields.json"),
+        emitterPackageJsonPath,
       );
+
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         "emitter-package-json-path": emitterPackageJsonPath,
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
 
@@ -765,13 +769,8 @@ describe.sequential("Verify commands", () => {
       // Check that main field is always set correctly
       assert.equal(emitterJson["main"], "dist/src/index.js");
 
-      // Clean up the generated files
-      await rm(
-        joinPaths(
-          repoRoot,
-          "tools/tsp-client/test/utils/emitter-package-with-extra-fields-lock.json",
-        ),
-      );
+      // Clean up the temp directory
+      await removeDirectory(tempDir);
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }

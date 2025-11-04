@@ -1,7 +1,0 @@
-directory: specification/contosowidgetmanager/Contoso.WidgetManager
-commit: 45924e49834c4e01c0713e6b7ca21f94be17e396
-repo: Azure/azure-rest-api-specs
-additionalDirectories: 
-- tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared
-
-emitterPackageJsonPath: tools/tsp-client/test/utils/emitter-package.json

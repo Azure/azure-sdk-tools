@@ -14,8 +14,8 @@ import json
 
 import prompty
 from src._utils import get_prompt_path
-from src.mention.open_parser_issue_workflow import OpenParserIssueWorkflow
-from src.mention.update_kb_workflow import UpdateKnowledgeBaseWorkflow
+from src.mention._open_parser_issue_workflow import OpenParserIssueWorkflow
+from src.mention._update_kb_workflow import UpdateKnowledgeBaseWorkflow
 
 # Add any new workflows here
 WORKFLOW_REGISTRY = {

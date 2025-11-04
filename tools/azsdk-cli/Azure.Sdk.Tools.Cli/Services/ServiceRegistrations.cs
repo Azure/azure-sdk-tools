@@ -117,16 +117,36 @@ namespace Azure.Sdk.Tools.Cli.Services
                 clientBuilder.UseCredential(service.GetCredential());
             });
 
-            // Register OpenAI client with Azure endpoint and Entra ID authentication
+            // Register OpenAI client with endpoint and authentication
             services.AddSingleton<OpenAIClient>(sp =>
             {
                 var azureService = sp.GetRequiredService<IAzureService>();
                 var credential = azureService.GetCredential();
 
-                var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-                var endpoint = string.IsNullOrWhiteSpace(endpointEnvVar) ?
-                    new Uri("https://openai-shared.openai.azure.com")
-                    : new Uri(endpointEnvVar);
+                // Check for OPENAI_BASE_URL first, then fall back to AZURE_OPENAI_ENDPOINT
+                var openAIBaseUrl = Environment.GetEnvironmentVariable("OPENAI_BASE_URL");
+                Uri endpoint;
+
+                if (!string.IsNullOrWhiteSpace(openAIBaseUrl))
+                {
+                    // Use OPENAI_BASE_URL if defined
+                    endpoint = new Uri(openAIBaseUrl);
+                }
+                else
+                {
+                    // Fall back to AZURE_OPENAI_ENDPOINT
+                    var azureEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+                    var baseEndpoint = string.IsNullOrWhiteSpace(azureEndpoint) ?
+                        "https://openai-shared.openai.azure.com" : azureEndpoint;
+
+                    // Ensure the endpoint ends with /openai/v1
+                    if (!baseEndpoint.EndsWith("/openai/v1"))
+                    {
+                        baseEndpoint = baseEndpoint.TrimEnd('/') + "/openai/v1";
+                    }
+
+                    endpoint = new Uri(baseEndpoint);
+                }
 
                 return AzureOpenAIClientHelper.CreateAzureOpenAIClient(endpoint, credential);
             });

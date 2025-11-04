@@ -27,8 +27,8 @@ jobs:
             WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ parameters.RepoName }}
         Paths:
           - '.github'
-          - '.vscode'
-          - 'eng/common'
+          - '.vscode/**'
+          - 'eng/common/**'
 
     - task: AzureCLI@2
       displayName: 'Run eval'

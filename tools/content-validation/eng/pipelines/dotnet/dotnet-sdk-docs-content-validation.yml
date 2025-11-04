@@ -108,7 +108,7 @@ stages:
     displayName: RunTest_All
     condition: eq('${{ parameters.packages }}', 'all')
     dependsOn: FetchLastMonthReleasedPackages
-    timeoutInMinutes: 180
+    timeoutInMinutes: 240
     strategy:
       matrix: $[ dependencies.FetchLastMonthReleasedPackages.outputs['generateMatrix.matrix'] ]
       maxParallel: ${{ parameters.maxParallel }}
@@ -134,7 +134,7 @@ stages:
   - job: content_validation_matrix_not_all
     displayName: RunTest_Not_All
     condition: ne('${{ parameters.packages }}', 'all')
-    timeoutInMinutes: 180
+    timeoutInMinutes: 240
     strategy:
       matrix:
         ${{ each pkg in split(parameters.packages, ',') }}:

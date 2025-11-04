@@ -21,7 +21,7 @@ jobs:
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Repositories:
-          - Name: ${{ parameters.RepoName }}
+          - Name: ${{ parameters.RepoOwner }}/${{ parameters.RepoName }}
             Commitish: ${{ parameters.RepoCommit }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ parameters.RepoName }}
         Paths:

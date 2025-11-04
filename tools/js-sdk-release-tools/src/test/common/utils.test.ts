@@ -367,6 +367,97 @@ describe("cleanUpPackageDirectory", () => {
             await remove(tempBaseDir);
         }
     });
+
+    test("removes all files for HighLevelClient to Modular conversion", async () => {
+        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        
+        try {
+            // Create package.json with proper package name for getSDKType to work
+            await writeFile(
+                path.join(tempPackageDir, "package.json"),
+                JSON.stringify({ name: "@azure/test-hlc-package" }),
+                "utf8"
+            );
+            
+            // Create parameters.ts to make it a HighLevelClient package
+            await ensureDir(path.join(tempPackageDir, "src", "models"));
+            await writeFile(
+                path.join(tempPackageDir, "src", "models", "parameters.ts"),
+                "// parameters file for HLC",
+                "utf8"
+            );
+            
+            // Run the function with isToModularConversion=true
+            await cleanUpPackageDirectory(tempPackageDir, RunMode.Release, true);
+
+            // Check if everything is removed (including test directory and assets.json)
+            const entries = await readdir(tempPackageDir);
+            expect(entries.length).toBe(0);
+        } finally {
+            await remove(tempPackageDir);
+        }
+    });
+
+    test("preserves test directory for ModularClient to Modular conversion in Release mode", async () => {
+        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        
+        try {
+            // Create package.json with proper package name for getSDKType to work
+            await writeFile(
+                path.join(tempPackageDir, "package.json"),
+                JSON.stringify({ name: "@azure/test-modular-package" }),
+                "utf8"
+            );
+            
+            // Do not create parameters.ts, so it will be detected as ModularClient
+            
+            // Run the function with isToModularConversion=true
+            await cleanUpPackageDirectory(tempPackageDir, RunMode.Release, true);
+
+            // Check if test directory and assets.json are preserved
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            
+            expect(testDirExists).toBe(true);
+            expect(assetsFileExists).toBe(true);
+            expect(srcDirExists).toBe(false);
+        } finally {
+            await remove(tempPackageDir);
+        }
+    });
+
+    test("removes all files for HighLevelClient to Modular conversion even when directory doesn't exist initially", async () => {
+        const tempBaseDir = path.join(
+            __dirname,
+            `tmp/base-${getRandomInt(10000)}`
+        );
+        
+        const nonExistentPackageDir = path.join(
+            tempBaseDir,
+            "non-existent-package"
+        );
+        
+        try {
+            // Ensure the base directory exists but not the package directory
+            await ensureDir(tempBaseDir);
+            
+            // Verify the package directory doesn't exist yet
+            const existsBeforeCleanup = await pathExists(nonExistentPackageDir);
+            expect(existsBeforeCleanup).toBe(false);
+            
+            // Should not throw exception even with isToModularConversion=true
+            await expect(
+                cleanUpPackageDirectory(nonExistentPackageDir, RunMode.Release, true)
+            ).resolves.not.toThrow();
+            
+            // Verify the directory still doesn't exist after cleanup
+            const existsAfterCleanup = await pathExists(nonExistentPackageDir);
+            expect(existsAfterCleanup).toBe(false);
+        } finally {
+            await remove(tempBaseDir);
+        }
+    });
 });
 
 describe("getPackageNameFromTspConfig", () => {

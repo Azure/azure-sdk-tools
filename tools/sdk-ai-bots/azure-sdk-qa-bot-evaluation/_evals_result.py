@@ -9,7 +9,7 @@ from tabulate import tabulate
 weights: dict[str, float] = {
     "similarity_weight": 0.6,  # Similarity between expected and actual
     "groundedness_weight": 0.4,  # Staying grounded in guidelines
-    "response_completeness_weight": 0.4
+    "response_completeness_weight": 0.4,
 }
 
 def calculate_overall_score(row: dict[str, Any], metrics: list[str]) -> float:
@@ -24,7 +24,10 @@ def calculate_overall_score(row: dict[str, Any], metrics: list[str]) -> float:
             score = float(row[metric_key])
             if math.isnan(score):
                 return 0.0
-            overall_score += score * weights[f"{metric}_weight"]
+            if f"{metric}_weight" in weights:
+                overall_score += score * weights[f"{metric}_weight"]
+            else:
+                overall_score += score
     
     return overall_score
 
@@ -42,8 +45,14 @@ def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[s
 
         row_result = {}
         row_result["testcase"] = row["inputs.testcase"]
-        row_result["expected"] = row["inputs.ground_truth"]
-        row_result["actual"] = row["inputs.response"]
+        row_result["expected"] = {
+            "answer": row["inputs.ground_truth"],
+            "reference_urls": row["inputs.expected_reference_urls"]
+        },
+        row_result["actual"] = {
+            "answer": row["inputs.response"],
+            "reference_urls": row["inputs.reference_urls"]
+        },
         pattern = r"^outputs\.(\w+)\.(\w+)$"
         for index, (key, value) in enumerate(row.items()):
             match = re.match(pattern, key)

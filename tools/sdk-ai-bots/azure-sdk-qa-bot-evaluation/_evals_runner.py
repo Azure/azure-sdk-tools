@@ -9,13 +9,35 @@ import re
 import shutil
 import threading
 import time
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, List, Union
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
 from _evals_result import record_run_result
 from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
+
+def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]:
+    """
+    Map an array of reference objects to a string array of their 'link' properties.
+    
+    Args:
+        references: List of reference objects, each containing a 'link' field
+        
+    Returns:
+        List of link strings extracted from the reference objects
+    """
+    if not references:
+        return []
+    
+    links = []
+    for ref in references:
+        if isinstance(ref, dict) and 'link' in ref and ref['link']:
+            links.append(ref['link'])
+        elif isinstance(ref, dict) and 'Link' in ref and ref['Link']:  # Handle capitalized version
+            links.append(ref['Link'])
+    
+    return links
 
 class EvaluatorConfig:
     """Configuration for an evaluator"""
@@ -148,6 +170,8 @@ class EvalsRunner:
                         api_response = await self._call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
                         answer = api_response.get("answer", "")
                         full_context = api_response.get("full_context", "")
+                        references = api_response.get("references", [])
+                        reference_urls = extract_links_from_references(references)
                         latency = time.time() - start_time
                         processed_test_data = {
                             "query": record["query"],
@@ -156,6 +180,8 @@ class EvalsRunner:
                             "context": full_context,
                             "latency": latency,
                             "response_length": len(answer),
+                            "expected_reference_urls": record["expected_reference_urls"] if "expected_reference_urls" in record else [],
+                            "reference_urls": reference_urls,
                             "testcase": record.get("testcase", "unknown"),
                         }
                         if processed_test_data:

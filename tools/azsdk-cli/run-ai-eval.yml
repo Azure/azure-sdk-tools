@@ -40,6 +40,13 @@ jobs:
         inlineScript: |
           echo "Logged in to Azure"
           echo "Running eval in project ${{ parameters.EvalProject }}"
+          echo "Current working directory: $(pwd)"
+          echo "Contents of current directory:"
+          ls -la
+          echo "Contents of parent directory:"
+          ls -la ..
+          echo "Looking for project file:"
+          find . -name "*.csproj" -o -name "*.sln"
           dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx
       env:
         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1

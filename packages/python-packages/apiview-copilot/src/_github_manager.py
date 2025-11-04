@@ -78,6 +78,24 @@ class GithubManager:
             payload["assignees"] = list(assignees)
         token = self._get_installation_token(owner)
         return self._request_json("POST", url, token, json=payload)
+    
+    def search_issues(
+        self,
+        *,
+        owner: str,
+        repo: str,
+        query: str,
+        max_results: int = 30,
+    ) -> list[dict]:
+        """
+        Search for issues using GitHub's search API.
+        Returns list of issue dicts with number, title, body, created_at, etc.
+        """
+        search_query = f"repo:{owner}/{repo} {query}"
+        url = f"https://api.github.com/search/issues?q={search_query}&per_page={max_results}&sort=updated&order=desc"
+        token = self._get_installation_token(owner)
+        result = self._request_json("GET", url, token)
+        return result.get("items", [])
 
     def post_comment_on_issue(self, *, owner: str, repo: str, issue_number: int, body: str) -> dict:
         """

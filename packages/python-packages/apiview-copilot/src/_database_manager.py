@@ -15,7 +15,6 @@ from typing import Any
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from azure.identity import ChainedTokenCredential
 from azure.search.documents.indexes import SearchIndexerClient
 from pydantic import BaseModel
 from src._credential import get_credential
@@ -250,7 +249,4 @@ class EvalsContainer(BasicContainer):
 @lru_cache()
 def get_database_manager():
     """Get a singleton instance of the DatabaseManager."""
-    settings = SettingsManager()
-    db_name = settings.get("COSMOS_DB_NAME")
-    endpoint = settings.get("COSMOS_ENDPOINT")
-    return DatabaseManager(endpoint, db_name, get_credential())
+    return DatabaseManager.get_instance()

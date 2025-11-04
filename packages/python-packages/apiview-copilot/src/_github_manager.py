@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
 import logging
 import os
 import time
@@ -133,7 +132,6 @@ class GithubManager:
         token: str,
         *,
         json: Optional[dict] = None,
-        as_app: bool = False,
     ) -> dict | list:
         """
         Perform an HTTP request to the GitHub API and return parsed JSON.
@@ -178,7 +176,9 @@ class GithubManager:
             try:
                 detail = last_exc.response.json()
             except Exception:
+                # pylint: disable=no-member
                 detail = last_exc.response.text
+            # pylint: disable=no-member
             raise RuntimeError(f"GitHub API error {last_exc.response.status_code}: {detail}") from last_exc
         raise last_exc or RuntimeError("Unknown GitHub request failure")
 
@@ -225,6 +225,8 @@ class GithubManager:
         payload = {"iat": now, "exp": now + 600, "iss": app_id}
 
         def b64url(data):
+            import json
+
             raw = json.dumps(data, separators=(",", ":")).encode("utf-8")
             b64 = base64.urlsafe_b64encode(raw).rstrip(b"=")
             return b64.decode("utf-8")

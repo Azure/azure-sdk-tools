@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased
+
+- Updated `generate-config-files` command to preserve all existing fields in emitter-package.json when updating. Previously, only dependencies and devDependencies were retained; now all fields (name, version, scripts, author, license, and custom properties) are preserved.
+
 ## 2025-09-29 - 0.29.0
 
 - When running the `init` command with the `update-if-exists` flag, if there is an existing tsp-location.yaml do not add or modify the `emitterPackageJsonPath` option, unless the `emitter-package-json-path` flag is passed to the command.

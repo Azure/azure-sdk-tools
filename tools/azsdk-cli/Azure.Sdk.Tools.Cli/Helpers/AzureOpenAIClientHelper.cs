@@ -9,17 +9,17 @@ using System.ClientModel.Primitives;
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
-/// Helper class to create OpenAI clients configured for Azure endpoints with Entra ID authentication
+/// Helper class to create OpenAI clients configured for Azure endpoints with authentication
 /// </summary>
 public static class AzureOpenAIClientHelper
 {
     private const string PlaceholderApiKey = "not-used";
 
     /// <summary>
-    /// Creates an OpenAI client configured for Azure OpenAI with TokenCredential (Entra ID) authentication
+    /// Creates an OpenAI client configured for Azure OpenAI with API key or TokenCredential (Entra ID) authentication
     /// </summary>
     /// <param name="endpoint">Azure OpenAI endpoint</param>
-    /// <param name="credential">Azure TokenCredential for Entra ID authentication</param>
+    /// <param name="credential">Azure TokenCredential for Entra ID authentication (used if no API key is available)</param>
     /// <returns>Configured OpenAIClient instance</returns>
     public static OpenAIClient CreateAzureOpenAIClient(Uri endpoint, TokenCredential credential)
     {
@@ -28,7 +28,16 @@ public static class AzureOpenAIClientHelper
             Endpoint = endpoint
         };
 
-        // Use System.ClientModel's BearerTokenPolicy for Azure authentication
+        // Check for API key from environment variable first
+        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        
+        if (!string.IsNullOrWhiteSpace(apiKey))
+        {
+            // Use API key authentication if available
+            return new OpenAIClient(new ApiKeyCredential(apiKey), options);
+        }
+
+        // Fall back to bearer token (Entra ID) authentication
         BearerTokenPolicy tokenPolicy = new(credential, "https://cognitiveservices.azure.com/.default");
         options.AddPolicy(tokenPolicy, PipelinePosition.PerCall);
 

@@ -41,31 +41,18 @@ jobs:
         inlineScript: |
           echo "Logged in to Azure"
           echo "Running eval in project ${{ parameters.EvalProject }}"
-          echo "Current working directory: $(pwd)"
-          echo "Contents of current directory:"
-          ls -la
-          echo "Contents of parent directory:"
-          ls -la ..
-          echo "Looking for project file:"
-          find . -name "*.csproj" -o -name "*.sln"
-          echo "=== Checking .github directories ==="
-          echo "System.DefaultWorkingDirectory contents:"
-          ls -la "$(System.DefaultWorkingDirectory)"
-          echo "Looking for .github directories:"
-          find "$(System.DefaultWorkingDirectory)" -name ".github" -type d
-          echo "Contents of azure-rest-api-specs .github directory:"
-          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/.github/" || echo "Directory not found"
-          echo "All files in azure-rest-api-specs .github:"
-          find "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/.github/" -type f || echo "No files found"
-          echo "Checking COPILOT_INSTRUCTIONS_PATH:"
-          echo "COPILOT_INSTRUCTIONS_PATH = $COPILOT_INSTRUCTIONS_PATH"
-          if [ -f "$COPILOT_INSTRUCTIONS_PATH" ]; then
-            echo "✓ Copilot instructions file exists"
-          else
-            echo "✗ Copilot instructions file NOT found"
-            echo "Listing contents of $(dirname "$COPILOT_INSTRUCTIONS_PATH"):"
-            ls -la "$(dirname "$COPILOT_INSTRUCTIONS_PATH")" || echo "Directory does not exist"
-          fi
+          echo "=== Checking eng/common directory ==="
+          echo "Does eng/common directory exist?"
+          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/" || echo "eng directory not found"
+          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/" || echo "eng/common directory not found"
+          echo "Looking for instruction files in eng/common:"
+          find "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/" -name "*.md" -o -name "*instruction*" || echo "No instruction files found"
+          echo "=== Checking eng/common/instructions specifically ==="
+          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/instructions/" || echo "instructions directory not found"
+          echo "Checking for azsdk-tools subdirectory:"
+          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/instructions/azsdk-tools/" || echo "azsdk-tools directory not found"
+          echo "Looking for the specific file:"
+          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/instructions/azsdk-tools/typespec-to-sdk.instructions.md" || echo "typespec-to-sdk.instructions.md not found"
           dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx
       env:
         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1

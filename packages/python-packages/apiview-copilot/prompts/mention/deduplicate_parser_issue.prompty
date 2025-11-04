@@ -1,0 +1,98 @@
+---
+name: Deduplicate Parser Issue
+description: A prompt that determines if a new parser issue is a duplicate of existing issues.
+authors: 
+  - marcarro
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 4096
+sample:
+  language: python
+  package_name: azure.widget
+  code: "Literal[foo]"
+  error_context: "Parser fails to handle unquoted string in Literal type annotation"
+  existing_issues: |
+    [
+      {
+        "number": 456,
+        "title": "Parser error on Literal types with bare strings",
+        "body": "The Python parser crashes when encountering `Literal[bar]` without quotes. Expected: `Literal['bar']`\n\n**Package:** azure.other\n**Code:** `Literal[bar]`",
+        "created_at": "2025-10-15"
+      },
+      {
+        "number": 789,
+        "title": "Missing quotes in type hints cause parse failure",
+        "body": "Type annotations like `Dict[str, baz]` are not parsed correctly when the value is unquoted.\n\n**Package:** azure.storage\n**Code:** `Dict[str, baz]`",
+        "created_at": "2025-10-20"
+      },
+      {
+        "number": 234,
+        "title": "APIView crashes on complex generic types",
+        "body": "Parser fails on deeply nested generics like `Optional[Union[List[Tuple[int, str]], Dict[str, Any]]]`\n\n**Package:** azure.compute\n**Code:** complex nested generic",
+        "created_at": "2025-09-12"
+      }
+    ]
+---
+system:
+You are an agent that detects duplicate parser issues for apiview.
+
+# Instructions
+
+- You will be given a NEW parser issue with its language, package, code snippet, and error context.
+- You will also be given a list of EXISTING recent parser issues.
+- Your job is to determine if the NEW issue is a duplicate of ANY existing issue.
+- Focus on the UNDERLYING BUG, not the specific package or code snippet. Multiple different code examples can have the same root cause.
+- Your response MUST be valid json (DO NOT include the ```json at the start or ``` at the end of your response!):
+```json
+{
+  "action": "<no-op|create>",
+  "existing": issue_number_or_null,
+}
+```
+
+# Guidelines
+
+**Duplicates** have the same ROOT CAUSE even if the specific code differs:
+- "Literal[foo]" vs "Literal[bar]" = DUPLICATE (both unquoted literals)
+- "missing quotes in Literal" vs "bare string in type hint" = DUPLICATE (same underlying issue)
+- "parser crashes on Union types" vs "parser crashes on Optional types" = MIGHT BE DUPLICATE (check if same parse failure mode)
+
+**Not duplicates** have different root causes:
+- "unquoted Literal" vs "deeply nested generics" = NOT DUPLICATE (different parser failures)
+- "missing import statement" vs "incorrect type annotation" = NOT DUPLICATE (different error types)
+
+# Example
+
+`no-op` means the new issue is a duplicate of an existing issue.
+
+## no-op
+- NEW issue: "Literal[foo]" causes parse error due to unquoted string
+- EXISTING issues: "Literal[bar]" causes parse error due to unquoted string 
+
+`create` means the new issue is NOT a duplicate of any existing issue.
+
+## create
+- NEW issue: "Literal[foo]" causes parse error due to unquoted string
+- EXISTING issues: none address unquoted literals
+
+user:
+**NEW ISSUE:**
+language: {{language}}
+package: {{package_name}}
+code: `{{code}}`
+error context: {{error_context}}
+
+**EXISTING ISSUES:**
+{{existing_issues}}
+
+Is this new issue a duplicate of any existing issue?

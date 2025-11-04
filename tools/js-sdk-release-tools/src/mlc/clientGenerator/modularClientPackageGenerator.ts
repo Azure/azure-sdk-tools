@@ -32,7 +32,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
-        await cleanUpPackageDirectory(packageDirectory, options.runMode);
+        await cleanUpPackageDirectory(packageDirectory, options.runMode, true);
         if (options.apiVersion) {
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }

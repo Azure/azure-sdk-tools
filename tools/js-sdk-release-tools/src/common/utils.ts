@@ -413,15 +413,33 @@ export async function cleanUpDirectory(
 }
 
 /**
- * Cleans up a package directory based on the run mode
+ * Cleans up a package directory based on the run mode and SDK type
  * @param packageDirectory - Package directory to clean up
  * @param runMode - Current run mode determining what to preserve
+ * @param isToModularConversion - Whether this is a conversion to Modular
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
+    isToModularConversion: boolean = false
 ): Promise<void> {
+    if (isToModularConversion) {
+        // Check if directory exists first - if not, nothing to clean up
+        if (!fs.existsSync(packageDirectory)) {
+            logger.info(`Package directory ${packageDirectory} doesn't exist, nothing to clean up.`);
+            return;
+        }
+
+        // For HighLevelClient, always remove everything
+        const sdkType = getSDKType(packageDirectory);
+        if (sdkType === SDKType.HighLevelClient) {
+            logger.info(`Detected HighLevelClient To Modular, removing all files from ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+            return;
+        }
+    }
+
     // Preserve test directory and assets.json file only in Release and Local modes
     // In SpecPullRequest and Batch modes, remove everything
     const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;

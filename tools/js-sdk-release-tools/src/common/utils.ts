@@ -347,7 +347,7 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
         tspConfig = yamlLoad(tspConfigContent);
     } catch (error) {
         throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
-    }    
+    }
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {
@@ -377,15 +377,15 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpDirectory(
-    directory: string, 
+    directory: string,
     entriesToPreserve: string[] = []
-): Promise<void> {      
+): Promise<void> {
     // Check if directory exists first
     if (!fs.existsSync(directory)) {
         logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
         return;
     }
-    
+
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
@@ -393,13 +393,13 @@ export async function cleanUpDirectory(
         await mkdir(directory, { recursive: true });
         return;
     }
-    
+
     // If we need to preserve some entries, selectively remove others
     logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
-    
+
     // Get all subdirectories and files
     const entries = await readdir(directory);
-    
+
     // Filter entries to exclude those that should be preserved
     const filteredEntries = entries.filter(entry => !entriesToPreserve.includes(entry));
 
@@ -411,7 +411,7 @@ export async function cleanUpDirectory(
 }
 
 /**
- * Cleans up a package directory based on the run mode
+ * Cleans up a package directory based on the run mode and SDK type
  * @param packageDirectory - Package directory to clean up
  * @param runMode - Current run mode determining what to preserve
  * @returns Promise that resolves when cleanup is complete
@@ -419,7 +419,24 @@ export async function cleanUpDirectory(
 export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
+    isToModularConversion: boolean = false
 ): Promise<void> {
+    if (isToModularConversion) {
+        // Check if directory exists first - if not, nothing to clean up
+        if (!fs.existsSync(packageDirectory)) {
+            logger.info(`Package directory ${packageDirectory} doesn't exist, nothing to clean up.`);
+            return;
+        }
+
+        // For HighLevelClient, always remove everything
+        const sdkType = getSDKType(packageDirectory);
+        if (sdkType === SDKType.HighLevelClient) {
+            logger.info(`Detected HighLevelClient To Modular, removing all files from ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+            return;
+        }
+    }
+
     // Preserve test directory and assets.json file only in Release and Local modes
     // In SpecPullRequest and Batch modes, remove everything
     const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
@@ -431,12 +448,12 @@ export async function cleanUpPackageDirectory(
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
-    
+
     // Get from package-details.name which is the actual NPM package name
     if (emitterOptions?.['package-details']?.name) {
         return emitterOptions['package-details'].name;
     }
-    
+
     return undefined;
 }
 

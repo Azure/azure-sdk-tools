@@ -120,7 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         
                         if (!referenceDefinitions.TryGetValue(shortcutRefName, out var shortcutRefPath))
                         {
-                            logger.LogWarning("Reference definition not found for: {refName}", shortcutRefName);
+                            logger.LogWarning("Reference definition not found for: {shortcutRefName}", shortcutRefName);
                             continue;
                         }
                         linkPath = shortcutRefPath;
@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         
                         if (!referenceDefinitions.TryGetValue(implicitRefName, out var implicitRefPath))
                         {
-                            logger.LogWarning("Reference definition not found for: {refName}", implicitRefName);
+                            logger.LogWarning("Reference definition not found for: {implicitRefName}", implicitRefName);
                             continue;
                         }
                         linkPath = implicitRefPath;

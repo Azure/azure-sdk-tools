@@ -86,6 +86,20 @@ def _filter_existing_comment(testcase: str, response: str, language: str, existi
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
+def _deduplicate_parser_issue(testcase: str, response: str, language: str, package_name: str, code: str, error_context: str, existing_issues: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "deduplicate_parser_issue.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "package_name": package_name,
+        "code": code,
+        "error_context": error_context,
+        "existing_issues": existing_issues,
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
 
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
@@ -662,6 +676,7 @@ class PromptyEvaluator(BaseEvaluator):
             "thread_resolution_action": _thread_resolution_action_workflow,
             "filter_comment_metadata": _filter_comment_metadata,
             "filter_existing_comment": _filter_existing_comment,
+            "deduplicate_parser_issue": _deduplicate_parser_issue,
             # Add more workflows as needed
         }
 

@@ -71,6 +71,28 @@ You are an agent that detects duplicate parser issues for apiview.
 - "unquoted Literal" vs "deeply nested generics" = NOT DUPLICATE (different parser failures)
 - "missing import statement" vs "incorrect type annotation" = NOT DUPLICATE (different error types)
 
+**Pay attention to these distinctions:**
+- Identify the SUBJECT of the bug: is it about string values, type names, structural nesting, imports, or display/formatting?
+- Bugs affecting different subjects are NOT duplicates even if they use similar words.
+- Parser CRASHES (implementation bug) vs parser MISINTERPRETS (logic error)  
+- STRUCTURE issues (nesting, generics) vs CONTENT issues (specific values/names)
+
+# Reasoning Process
+
+Before making your decision, follow these steps:
+
+1. **Categorize the NEW issue**: What type of parser bug is this?
+   - Syntax error (malformed code, missing quotes/delimiters)
+   - Semantic error (undefined names, type mismatches, import issues)
+   - Crash/implementation bug (parser fails completely)
+   - Display/rendering issue (parser succeeds but output is wrong)
+
+2. **Categorize EXISTING issues**: For each existing issue, what category does it fall into?
+
+3. **Match within categories**: Only compare the new issue to existing issues in the SAME category. Issues in different categories are NOT duplicates even if descriptions sound similar.
+
+4. **Compare root causes**: Within the same category, do the issues share the same underlying bug? Consider the specific parsing behavior, not just symptom descriptions.
+
 # Example
 
 `no-op` means the new issue is a duplicate of an existing issue.

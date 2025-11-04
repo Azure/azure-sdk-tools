@@ -1,0 +1,18 @@
+testcase: empty_existing_issues_should_create
+language: python
+package_name: azure.identity
+code: "Literal[admin]"
+error_context: |
+  [Python APIView] Unquoted literal value not handled
+  
+  The parser is not properly handling unquoted strings in Literal type annotations.
+  
+  **Bad code:**
+  ```python
+  Literal[admin]
+  ```
+existing_issues: |
+  []
+response:
+  action: create
+  existing: null

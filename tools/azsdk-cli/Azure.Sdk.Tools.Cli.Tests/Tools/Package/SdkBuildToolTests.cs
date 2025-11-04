@@ -4,6 +4,7 @@ using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 
@@ -31,6 +32,7 @@ public class SdkBuildToolTests
     private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
     private TestLogger<SdkBuildTool> _logger;
     private TempDirectory _tempDirectory;
+    private ILanguageSpecificResolver<IPackageInfoHelper> _packageInfoHelper;
 
     [SetUp]
     public void Setup()
@@ -43,13 +45,15 @@ public class SdkBuildToolTests
 
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
+        _packageInfoHelper = Mock.Of<ILanguageSpecificResolver<IPackageInfoHelper>>();
 
         // Create the tool instance
         _tool = new SdkBuildTool(
             _mockGitHelper.Object,
             _logger,
             _mockProcessHelper.Object,
-            _mockSpecGenSdkConfigHelper.Object
+            _mockSpecGenSdkConfigHelper.Object,
+            _packageInfoHelper
         );
     }
 

@@ -414,6 +414,7 @@ export async function cleanUpDirectory(
  * Cleans up a package directory based on the run mode and SDK type
  * @param packageDirectory - Package directory to clean up
  * @param runMode - Current run mode determining what to preserve
+ * @param isToModularConversion - Whether this is a conversion to Modular
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpPackageDirectory(

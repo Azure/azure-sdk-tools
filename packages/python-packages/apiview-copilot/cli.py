@@ -168,7 +168,7 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
+def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_cache: bool = False):
     """
     Runs the specified test case(s).
     """
@@ -176,13 +176,13 @@ def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs)
+    runner = EvaluationRunner(num_runs=num_runs, use_cache=use_cache)
     try:
         results = runner.run(targets)
         if save:
             report = runner.generate_report(results)
             for doc in report:
-                db = get_database_manager()
+                db = DatabaseManager.get_instance()
                 try:
                     db.evals.upsert(doc["id"], data=doc)
                 except Exception as exc:
@@ -1047,6 +1047,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--test-paths", "-p"],
                 default=[],
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
+            )
+            ac.argument(
+                "use_cache",
+                options_list=["--use-cache"],
+                action="store_true",
+                help="Use cached results for testcases when available.",
             )
 
         with ArgumentsContext(self, "search") as ac:

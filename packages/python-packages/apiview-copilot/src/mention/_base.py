@@ -78,7 +78,13 @@ class MentionWorkflow(ABC):
         if not os.path.exists(prompt_path):
             print(f"Prompt file {prompt_path} does not exist.")
             return "No prompt file found."
-        inputs = {"results": results}
+        properties_to_keep = ["url", "repository_url", "title", "created_at", "body"]
+        filtered_results = (
+            [{k: item.get(k) for k in properties_to_keep} for item in results]
+            if isinstance(results, list)
+            else {k: results.get(k) for k in properties_to_keep}
+        )
+        inputs = {"results": filtered_results}
         try:
             summary = prompty.execute(prompt_path, inputs=inputs)
             return summary

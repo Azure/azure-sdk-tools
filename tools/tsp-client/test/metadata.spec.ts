@@ -5,12 +5,16 @@ import { assert } from "chai";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import * as yaml from "yaml";
+import { getRepoRoot } from "../src/git.js";
+import { cwd } from "process";
 
 describe("tsp-client metadata generation", function () {
   const testOutputDir = "./test/test-output-metadata";
   const testEmitterPackageJsonPath = "./test/test-output-metadata/test-emitter-package.json";
+  let repoRoot = "";
 
   beforeAll(async function () {
+    repoRoot = await getRepoRoot(cwd());
     // Create test directory and emitter-package.json
     await ensureDirectory(testOutputDir);
 
@@ -36,7 +40,7 @@ describe("tsp-client metadata generation", function () {
   });
 
   it("should create tsp_client_metadata.yaml with correct structure", async function () {
-    await createTspClientMetadata(testOutputDir, testEmitterPackageJsonPath);
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
     const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
@@ -58,10 +62,14 @@ describe("tsp-client metadata generation", function () {
     assert.strictEqual(emitterContent.name, "test-emitter");
     assert.strictEqual(emitterContent.version, "1.0.0");
     assert.exists(emitterContent.dependencies);
+    assert.equal(
+      metadata.emitterPackageJsonPath,
+      "tools/tsp-client/test/test-output-metadata/test-emitter-package.json",
+    );
   });
 
   it("should handle date format correctly", async function () {
-    await createTspClientMetadata(testOutputDir, testEmitterPackageJsonPath);
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
     const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
@@ -71,5 +79,9 @@ describe("tsp-client metadata generation", function () {
     const dateString = metadata["dateCreatedOrModified"];
     const parsedDate = new Date(dateString);
     assert.isFalse(isNaN(parsedDate.getTime()), "Date should be valid ISO string");
+    assert.equal(
+      metadata.emitterPackageJsonPath,
+      "tools/tsp-client/test/test-output-metadata/test-emitter-package.json",
+    );
   });
 });

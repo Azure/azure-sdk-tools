@@ -1,9 +1,10 @@
 import { writeFile } from "fs/promises";
 import { Logger } from "./log.js";
-import { joinPaths } from "@typespec/compiler";
+import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { readFile } from "fs/promises";
 import { getPackageJson } from "./utils.js";
 import * as yaml from "yaml";
+import { relative } from "path";
 
 /**
  * Interface representing the metadata information for a tsp-client command run.
@@ -27,6 +28,7 @@ interface TspClientMetadata {
  */
 export async function createTspClientMetadata(
   outputDir: string,
+  repoRoot: string,
   emitterPackageJsonPath: string,
 ): Promise<void> {
   try {
@@ -39,7 +41,7 @@ export async function createTspClientMetadata(
     const metadata: TspClientMetadata = {
       version: packageJson.version,
       dateCreatedOrModified: new Date().toISOString(),
-      emitterPackageJsonPath,
+      emitterPackageJsonPath: normalizeSlashes(relative(repoRoot, emitterPackageJsonPath)),
       emitterPackageJsonContent: JSON.parse(await readFile(emitterPackageJsonPath, "utf8")),
     };
 

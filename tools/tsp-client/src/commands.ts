@@ -293,7 +293,11 @@ export async function initCommand(argv: any) {
     // If skip-sync-and-generate is set, just create the tsp_client_metadata.json file. Otherwise, the metadata file
     // will be created during the generateCommand step.
     const tspLocation: TspLocation = await readTspLocation(outputDir);
-    await createTspClientMetadata(outputDir, getEmitterPackageJsonPath(repoRoot, tspLocation));
+    await createTspClientMetadata(
+      outputDir,
+      repoRoot,
+      getEmitterPackageJsonPath(repoRoot, tspLocation),
+    );
   }
   return outputDir;
 }
@@ -415,7 +419,7 @@ export async function generateCommand(argv: any) {
   }
 
   // Create tsp_client_metadata.yaml file
-  await createTspClientMetadata(outputDir, emitterPackageJsonPath);
+  await createTspClientMetadata(outputDir, repoRoot, emitterPackageJsonPath);
 
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);

@@ -1,7 +1,6 @@
-import { writeFile } from "fs/promises";
+import { writeFile, readFile } from "fs/promises";
 import { Logger } from "./log.js";
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
-import { readFile } from "fs/promises";
 import { getPackageJson } from "./utils.js";
 import * as yaml from "yaml";
 import { relative } from "path";

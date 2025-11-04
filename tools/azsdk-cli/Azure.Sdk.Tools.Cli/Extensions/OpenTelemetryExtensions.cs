@@ -8,8 +8,6 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -31,13 +29,9 @@ public static class OpenTelemetryExtensions
                 {
                     options.Version = assemblyName.Version.ToString();
                 }
-#if !DEBUG
                 var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_COLLECT_TELEMETRY");
                 options.IsTelemetryEnabled = string.IsNullOrEmpty(collectTelemetry)
                     || (bool.TryParse(collectTelemetry, out var shouldCollect) && shouldCollect);
-#else
-                options.IsTelemetryEnabled = false;
-#endif
             });
 
         services.AddSingleton<ITelemetryService, TelemetryService>();

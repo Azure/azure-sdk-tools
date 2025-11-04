@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.6 (Unreleased)
+## 0.5.7 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,14 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.5.6 (2025-11-03)
+
+### Features Added
+
+- Sample generator: Add support for user-defined additional context
+- Sample generator: Add support for input prompts with local links
+- Updated responses to include language and package name in telemetry.
 
 ## 0.5.5 (2025-10-28)
 

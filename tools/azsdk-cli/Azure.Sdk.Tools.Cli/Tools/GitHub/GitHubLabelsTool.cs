@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 }
                 else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
                 {
-                    logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
+                    logger.LogWarning("Label '{Label}' exists but is not a service label. No action taken.", label);
                     return new ServiceLabelResponse
                     {
                         Status = "NotAServiceLabel",
@@ -174,7 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to create pull request for service label '{label}': {error}", label, ex.Message);
+                logger.LogError(ex, "Failed to create pull request for service label '{Label}'", label);
 
                 return new ServiceLabelResponse
                 {

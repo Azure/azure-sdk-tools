@@ -1,19 +1,11 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses
 {
-    public class SdkReleaseResponse : CommandResponse
+    public class SdkReleaseResponse : PackageResponse
     {
-        [JsonPropertyName("Package name")]
-        public string PackageName { get; set; } = string.Empty;
-
-        [JsonPropertyName("Version")]
-        public string Version { get; set; } = string.Empty;
-
-        [JsonPropertyName("Language")]
-        public string Language { get; set; } = string.Empty;
-
         [JsonPropertyName("Release pipeline URL")]
         public string ReleasePipelineRunUrl { get; set; } = string.Empty;
 

@@ -7,6 +7,9 @@
         </button>
         <div class="navbar-collapse collapse">
             <ul class="navbar-nav ms-auto">
+                <li *ngIf="isLoggedIn && isApprover" class="nav-item">
+                    <a href="{{RequestReviewPageUrl}}" class="nav-link">Requested Reviews</a>
+                </li>
                 <li *ngIf="isLoggedIn"  class="nav-item">
                     <a class="nav-link position-relative" (click)="notificationsSidePanel = !notificationsSidePanel">
                         <i class="bi bi-bell"></i>
@@ -23,9 +26,6 @@
                         <li><a class="dropdown-item" [routerLink]="['/profile', userProfile?.userName]" target="_blank">Profile</a></li>
                         <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}">Log Out</a></li>
                     </ul>
-                </li>
-                <li *ngIf="isLoggedIn && isApprover" class="nav-item">
-                    <a href="{{RequestReviewPageUrl}}" class="nav-link">Requested Reviews</a>
                 </li>
                 <li class="nav-item">
                     <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link">Help</a>

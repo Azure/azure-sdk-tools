@@ -42,7 +42,11 @@ export async function createTspClientMetadata(
       version: packageJson.version,
       dateCreatedOrModified: new Date().toISOString(),
       emitterPackageJsonPath: normalizeSlashes(relative(repoRoot, emitterPackageJsonPath)),
-      emitterPackageJsonContent: JSON.stringify(JSON.parse(await readFile(emitterPackageJsonPath, "utf8")), null, 2),
+      emitterPackageJsonContent: JSON.stringify(
+        JSON.parse(await readFile(emitterPackageJsonPath, "utf8")),
+        null,
+        2,
+      ),
     };
 
     // Convert the metadata to YAML format

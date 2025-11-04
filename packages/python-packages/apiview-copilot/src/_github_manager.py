@@ -172,8 +172,10 @@ class GithubManager:
                 if attempt == self._max_retries:
                     break
                 time.sleep(self._backoff_s * attempt)
+        # pylint: disable=no-member
         if isinstance(last_exc, httpx.HTTPStatusError) and last_exc.response is not None:
             try:
+                # pylint: disable=no-member
                 detail = last_exc.response.json()
             except Exception:
                 # pylint: disable=no-member

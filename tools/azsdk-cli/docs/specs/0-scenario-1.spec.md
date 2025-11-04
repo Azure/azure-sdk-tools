@@ -135,7 +135,7 @@ _If you create a PR to compare the generated library with the existing library a
 
 ```text
 1. Environment Setup → verify-setup
-   └─ Check all requirements for all 5 languages
+   └─ Check requirements for the user's working repository, or for user-specified language(s)
 
 2. Generating → generate-sdk
    └─ Generate SDK code, tests, samples from TypeSpec
@@ -158,7 +158,7 @@ _If you create a PR to compare the generated library with the existing library a
 ### 1. Environment Setup
 
 **Tool**: `verify-setup` ([#12287](https://github.com/Azure/azure-sdk-tools/issues/12287))  
-**Action**: Check all requirements upfront for all languages  
+**Action**: Check requirements upfront for the working repository, or user-specified language(s)  
 **Success**: All tools/SDKs installed, user knows what's missing
 
 ### 2. Generating
@@ -279,15 +279,15 @@ _Direct command-line interface usage for [CLI mode](#cli-mode):_
 
 ### 1. Verify Setup
 
-> Sample: will be changed when the spec for this tool is added
-
 **Command:**
 ```bash
-azsdk verify-setup --languages .NET,Java,JavaScript,Python,Go
+azsdk verify setup --languages Dotnet Java JavaScript Python Go
 ```
 
 **Options:**
-- `--languages <list>`: Comma-separated list of languages to check (default: all)
+- `--languages <list>`: Space-separated list of languages to check (default: language of current repository)
+- `--packagePath <string>`: Path to package to use
+- `--venvPath <string>`: Path to virtual environment to use (for Python requirements)
 - `--verbose`: Show detailed output for each check
 - `--fix`: Attempt to automatically install missing dependencies
 

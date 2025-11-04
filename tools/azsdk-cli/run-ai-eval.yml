@@ -48,6 +48,24 @@ jobs:
           ls -la ..
           echo "Looking for project file:"
           find . -name "*.csproj" -o -name "*.sln"
+          echo "=== Checking .github directories ==="
+          echo "System.DefaultWorkingDirectory contents:"
+          ls -la "$(System.DefaultWorkingDirectory)"
+          echo "Looking for .github directories:"
+          find "$(System.DefaultWorkingDirectory)" -name ".github" -type d
+          echo "Contents of azure-rest-api-specs .github directory:"
+          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/.github/" || echo "Directory not found"
+          echo "All files in azure-rest-api-specs .github:"
+          find "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/.github/" -type f || echo "No files found"
+          echo "Checking COPILOT_INSTRUCTIONS_PATH:"
+          echo "COPILOT_INSTRUCTIONS_PATH = $COPILOT_INSTRUCTIONS_PATH"
+          if [ -f "$COPILOT_INSTRUCTIONS_PATH" ]; then
+            echo "✓ Copilot instructions file exists"
+          else
+            echo "✗ Copilot instructions file NOT found"
+            echo "Listing contents of $(dirname "$COPILOT_INSTRUCTIONS_PATH"):"
+            ls -la "$(dirname "$COPILOT_INSTRUCTIONS_PATH")" || echo "Directory does not exist"
+          fi
           dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx
       env:
         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1

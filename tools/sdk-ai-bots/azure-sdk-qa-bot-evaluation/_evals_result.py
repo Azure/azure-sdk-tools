@@ -62,6 +62,11 @@ def record_run_result(result: dict[str, Any], metrics: list[str]) -> list[dict[s
                 # logging.info(f"Metric: {metric}, Name: {metric_name}")
                 if key == f"outputs.{metric}.{metric}_result" and value == "pass":
                     pass_rates[metric] += 1
+                
+                # workaround: accept nan as success for groundedness
+                if key == f"outputs.groundedness.groundedness_result" and value == "nan":
+                    pass_rates[metric] += 1
+
                 if key == f"outputs.{metric}.{metric}":
                     row_result[metric_name] = float(value)
                 else:

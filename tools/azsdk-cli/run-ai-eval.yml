@@ -26,9 +26,9 @@ jobs:
             Commitish: ${{ parameters.RepoCommit }}
             WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ parameters.RepoName }}
         Paths:
-          - '.github/**/'
-          - '.vscode/**/'
-          - 'eng/common/**/'
+          - '.github'
+          - '.vscode'
+          - 'eng/common'
 
     - task: AzureCLI@2
       displayName: 'Run eval'

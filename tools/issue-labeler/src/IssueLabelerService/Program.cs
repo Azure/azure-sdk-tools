@@ -76,6 +76,7 @@ var host = new HostBuilder()
         services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();
         services.AddSingleton<AnswerFactory>();
+        services.AddSingleton<IssueGeneratorFactory>();
     })
     .Build();
 

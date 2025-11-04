@@ -62,6 +62,9 @@ namespace IssueLabelerService
         public string KnowledgeAgentInstruction => GetItem("KnowledgeAgentInstruction");
         public string KnowledgeAgentMessage => GetItem("KnowledgeAgentMessage");
         public string KnowledgeAgentModelName => GetItem("KnowledgeAgentModelName");
+        public string IssueGeneratorInstruction => GetItem("IssueGeneratorInstruction");
+        public string IssueGeneratorMessage => GetItem("IssueGeneratorMessage");
+
 
         public string GetItem(string name)
         {

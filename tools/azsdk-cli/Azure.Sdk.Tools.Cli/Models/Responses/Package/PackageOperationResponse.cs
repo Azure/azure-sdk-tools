@@ -51,23 +51,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             {
                 output.AppendLine($"Duration: {Duration}ms");
             }
-            if (!string.IsNullOrEmpty(PackageName))
-            {
-                output.AppendLine($"Package: {PackageName}");
-            }
-            if (Language != SdkLanguage.Unknown)
-            {
-                output.AppendLine($"Language: {Language}");
-            }
-            if (!string.IsNullOrEmpty(Version))
-            {
-                output.AppendLine($"Version: {Version}");
-            }
-            if (PackageType != SdkType.Unknown)
-            {
-                output.AppendLine($"Package Type: {PackageType}");
-            }
-
+            output.AppendLine($"Package: {PackageName}");
+            output.AppendLine($"Language: {Language}");
+            output.AppendLine($"Version: {Version}");
+            output.AppendLine($"Package Type: {PackageType}");
             return output.ToString();
         }
 

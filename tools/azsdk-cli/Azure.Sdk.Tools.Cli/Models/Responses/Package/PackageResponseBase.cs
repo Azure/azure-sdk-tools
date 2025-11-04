@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Attributes;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
@@ -19,7 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 {
                     return _language;
                 }
-               return GetLanguageFromRepo(SdkRepoName);
+                _language = LanguageService.GetLanguageForRepo(SdkRepoName);
+                return _language;
             }
             set
             {
@@ -56,24 +58,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             {
                 PackageType = type;
             }
-        }
-
-        public static SdkLanguage GetLanguageFromRepo(string? repoName)
-        {
-            if (string.IsNullOrEmpty(repoName))
-            {
-                return SdkLanguage.Unknown;
-            }
-            repoName = repoName.ToLower();
-            return repoName switch
-            {
-                "azure-sdk-for-net" => SdkLanguage.DotNet,
-                "azure-sdk-for-java" => SdkLanguage.Java,
-                "azure-sdk-for-python" => SdkLanguage.Python,
-                "azure-sdk-for-js" => SdkLanguage.JavaScript,
-                "azure-sdk-for-go" => SdkLanguage.Go,
-                _ => SdkLanguage.Unknown
-            };
         }
     }
 }

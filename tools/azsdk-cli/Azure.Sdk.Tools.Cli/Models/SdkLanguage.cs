@@ -16,4 +16,6 @@ public enum SdkLanguage
     Python,
     [JsonPropertyName("Go")]
     Go,
+    [JsonPropertyName("Rust")]
+    Rust
 }

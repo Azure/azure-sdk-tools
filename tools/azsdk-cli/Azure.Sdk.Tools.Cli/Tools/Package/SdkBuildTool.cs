@@ -49,19 +49,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Validate inputs
                 if (string.IsNullOrEmpty(packagePath))
                 {
-                    return CreateFailureResponse("Package path is required.", null);
+                    return CreateFailureResponse("Package path is required.");
                 }
 
                 if (!Directory.Exists(packagePath))
                 {
-                    return CreateFailureResponse($"Path does not exist: {packagePath}", null);
+                    return CreateFailureResponse($"Path does not exist: {packagePath}");
                 }
 
                 // Get repository root path from project path
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
-                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.", null);
+                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.",);
                 }
 
                 logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return CreateFailureResponse($"An error occurred: {ex.Message}", null);
+                return CreateFailureResponse($"An error occurred: {ex.Message}");
             }
         }
 
@@ -116,16 +116,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     packageInfo = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
                 }
+                else
+                {
+                    logger.LogError("No package info helper found for package path: {packagePath}", packagePath);
+                }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error occurred while parsing package path");
+                logger.LogError(ex, "Error occurred while parsing package path: {packagePath}", packagePath);
             }
             return packageInfo;
         }
 
         // Helper method to create failure responses along with setting the failure state
-        private PackageOperationResponse CreateFailureResponse(string message, PackageInfo? packageInfo)
+        private PackageOperationResponse CreateFailureResponse(string message, PackageInfo? packageInfo = null)
         {
             return new PackageOperationResponse
             {

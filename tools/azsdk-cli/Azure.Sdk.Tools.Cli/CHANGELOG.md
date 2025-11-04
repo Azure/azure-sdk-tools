@@ -4,6 +4,9 @@
 
 ### Features Added
 
+- Sample generator: Add support for user-defined additional context
+- Sample generator: Add support for input prompts with local links
+
 ### Breaking Changes
 
 ### Bugs Fixed

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, it } from "vitest";
 import { createTspClientMetadata } from "../src/metadata.js";
 import { removeDirectory, ensureDirectory } from "../src/fs.js";
 import { assert } from "chai";
-import { readFile, writeFile, mkdir } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import * as yaml from "yaml";
 import { getRepoRoot } from "../src/git.js";

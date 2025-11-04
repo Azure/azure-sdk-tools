@@ -13,13 +13,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Maximum file size to read (1 MB)
         private const long MaxFileSizeBytes = 1024 * 1024;
         
-        // Compiled regex for better performance when matching markdown links: [text](path)
-        private static readonly Regex markdownLinkRegex =
-            MarkdownLinkRegex();
-
-        // Regex for matching reference definitions: [ref]: path
-        private static readonly Regex referenceDefinitionRegex =
-            ReferenceDefinitionRegex();
+        // Individual regex patterns for each markdown link type for better readability
+        private static readonly Regex inlineLinkRegex = InlineLinkRegex();
+        private static readonly Regex referenceLinkRegex = ReferenceLinkRegex();
+        private static readonly Regex shortcutReferenceLinkRegex = ShortcutReferenceLinkRegex();
+        private static readonly Regex implicitReferenceLinkRegex = ImplicitReferenceLinkRegex();
+        private static readonly Regex autolinkRegex = AutolinkRegex();
+        private static readonly Regex referenceDefinitionRegex = ReferenceDefinitionRegex();
 
         /// <summary>
         /// Expands relative file links in markdown-style text by inlining their content.
@@ -50,8 +50,33 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 referenceDefinitions[refName] = refPath;
             }
             
-            var matches = markdownLinkRegex.Matches(text);
-            if (matches.Count == 0)
+            // Find all markdown links using multiple specific patterns
+            var allMatches = new List<(Match match, MarkdownLinkType type)>();
+            
+            // Collect all link types with their positions
+            allMatches.AddRange(inlineLinkRegex.Matches(text).Cast<Match>().Select(m => (m, MarkdownLinkType.Inline)));
+            allMatches.AddRange(referenceLinkRegex.Matches(text).Cast<Match>().Select(m => (m, MarkdownLinkType.Reference)));
+            allMatches.AddRange(shortcutReferenceLinkRegex.Matches(text).Cast<Match>().Select(m => (m, MarkdownLinkType.ShortcutReference)));
+            allMatches.AddRange(implicitReferenceLinkRegex.Matches(text).Cast<Match>().Select(m => (m, MarkdownLinkType.ImplicitReference)));
+            allMatches.AddRange(autolinkRegex.Matches(text).Cast<Match>().Select(m => (m, MarkdownLinkType.Autolink)));
+            
+            // Remove overlapping matches - prefer more specific patterns (longer matches)
+            // When matches overlap, keep the one that starts first and is longest
+            var deduplicated = new List<(Match match, MarkdownLinkType type)>();
+            foreach (var item in allMatches.OrderBy(m => m.match.Index).ThenByDescending(m => m.match.Length))
+            {
+                // Check if this match overlaps with any already added match
+                bool overlaps = deduplicated.Any(existing => 
+                    (item.match.Index >= existing.match.Index && item.match.Index < existing.match.Index + existing.match.Length) ||
+                    (existing.match.Index >= item.match.Index && existing.match.Index < item.match.Index + item.match.Length));
+                
+                if (!overlaps)
+                {
+                    deduplicated.Add(item);
+                }
+            }
+            
+            if (deduplicated.Count == 0)
             {
                 return text;
             }
@@ -59,85 +84,69 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var result = text;
             var expandedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Track to prevent infinite loops
 
-            logger.LogDebug("Found {linkCount} potential file links in prompt", matches.Count);
+            logger.LogDebug("Found {linkCount} potential file links in prompt", deduplicated.Count);
+            
             // Process matches in reverse order to maintain string positions
-            for (int i = matches.Count - 1; i >= 0; i--)
+            foreach (var (match, linkType) in deduplicated.OrderByDescending(m => m.match.Index))
             {
-                var match = matches[i];
                 string linkText, linkPath;
 
-                // Determine link type based on which groups are captured
-                if (!string.IsNullOrEmpty(match.Groups[2].Value))
+                switch (linkType)
                 {
-                    // Inline link: [text](path)
-                    linkText = match.Groups[1].Value;
-                    linkPath = match.Groups[2].Value.Trim();
-                }
-                else if (!string.IsNullOrEmpty(match.Groups[4].Value))
-                {
-                    // Reference link: [text][ref]
-                    linkText = match.Groups[3].Value;
-                    var refName = match.Groups[4].Value.Trim();
-                    
-                    // Look up the reference definition
-                    if (referenceDefinitions.TryGetValue(refName, out var refPath))
-                    {
+                    case MarkdownLinkType.Inline:
+                        // Inline link: [text](path)
+                        linkText = match.Groups[1].Value;
+                        linkPath = match.Groups[2].Value.Trim();
+                        break;
+                        
+                    case MarkdownLinkType.Reference:
+                        // Reference link: [text][ref]
+                        linkText = match.Groups[1].Value;
+                        var refName = match.Groups[2].Value.Trim();
+                        
+                        // Look up the reference definition
+                        if (!referenceDefinitions.TryGetValue(refName, out var refPath))
+                        {
+                            logger.LogWarning("Reference definition not found for: {refName}", refName);
+                            continue;
+                        }
                         linkPath = refPath;
-                    }
-                    else
-                    {
-                        // Reference not found, skip this link
-                        logger.LogWarning("Reference definition not found for: {refName}", refName);
+                        break;
+                        
+                    case MarkdownLinkType.ShortcutReference:
+                        // Shortcut reference link: [text][]
+                        linkText = match.Groups[1].Value;
+                        var shortcutRefName = linkText.Trim();
+                        
+                        if (!referenceDefinitions.TryGetValue(shortcutRefName, out var shortcutRefPath))
+                        {
+                            logger.LogWarning("Reference definition not found for: {refName}", shortcutRefName);
+                            continue;
+                        }
+                        linkPath = shortcutRefPath;
+                        break;
+                        
+                    case MarkdownLinkType.ImplicitReference:
+                        // Implicit reference link: [text]
+                        linkText = match.Groups[1].Value;
+                        var implicitRefName = linkText.Trim();
+                        
+                        if (!referenceDefinitions.TryGetValue(implicitRefName, out var implicitRefPath))
+                        {
+                            logger.LogWarning("Reference definition not found for: {refName}", implicitRefName);
+                            continue;
+                        }
+                        linkPath = implicitRefPath;
+                        break;
+                        
+                    case MarkdownLinkType.Autolink:
+                        // Autolink: <url> - replace with just the URL
+                        var autoUrl = match.Groups[1].Value;
+                        result = result.Substring(0, match.Index) + autoUrl + result.Substring(match.Index + match.Length);
                         continue;
-                    }
-                }
-                else if (!string.IsNullOrEmpty(match.Groups[5].Value))
-                {
-                    // Shortcut reference link: [text][]
-                    linkText = match.Groups[5].Value;
-                    var refName = linkText.Trim();
-                    
-                    // Look up the reference definition using the link text as reference name
-                    if (referenceDefinitions.TryGetValue(refName, out var refPath))
-                    {
-                        linkPath = refPath;
-                    }
-                    else
-                    {
-                        // Reference not found, skip this link
-                        logger.LogWarning("Reference definition not found for: {refName}", refName);
+                        
+                    default:
                         continue;
-                    }
-                }
-                else if (!string.IsNullOrEmpty(match.Groups[6].Value))
-                {
-                    // Implicit reference link: [text]
-                    linkText = match.Groups[6].Value;
-                    var refName = linkText.Trim();
-                    
-                    // Look up the reference definition using the link text as reference name
-                    if (referenceDefinitions.TryGetValue(refName, out var refPath))
-                    {
-                        linkPath = refPath;
-                    }
-                    else
-                    {
-                        // Reference not found, skip this link
-                        logger.LogWarning("Reference definition not found for: {refName}", refName);
-                        continue;
-                    }
-                }
-                else if (!string.IsNullOrEmpty(match.Groups[7].Value))
-                {
-                    // Autolink: <url> - replace with just the URL
-                    var autoUrl = match.Groups[7].Value;
-                    result = result.Substring(0, match.Index) + autoUrl + result.Substring(match.Index + match.Length);
-                    continue;
-                }
-                else
-                {
-                    // This shouldn't happen with our regex, but just in case
-                    continue;
                 }
 
                 // Skip if it looks like a URL (starts with http/https/mailto/etc.)
@@ -202,9 +211,39 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return result;
         }
 
-        [GeneratedRegex(@"\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\(([^\s)]+)(?:\s+[""'][^""']*[""'])?\)|\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\[([^\[\]]*)\]|\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\[\]|\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\](?!\[)(?!\()|\<([^<>\s]+)\>", RegexOptions.Compiled | RegexOptions.Singleline)]
-        private static partial Regex MarkdownLinkRegex();
+        /// <summary>
+        /// Enum representing different types of markdown links
+        /// </summary>
+        private enum MarkdownLinkType
+        {
+            Inline,              // [text](path)
+            Reference,           // [text][ref]
+            ShortcutReference,   // [text][]
+            ImplicitReference,   // [text]
+            Autolink             // <url>
+        }
 
+        // Inline link: [text](path) with optional title
+        [GeneratedRegex(@"\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\(([^\s)]+)(?:\s+[""'][^""']*[""'])?\)", RegexOptions.Compiled | RegexOptions.Singleline)]
+        private static partial Regex InlineLinkRegex();
+
+        // Reference link: [text][ref]
+        [GeneratedRegex(@"\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\[([^\[\]]+)\]", RegexOptions.Compiled | RegexOptions.Singleline)]
+        private static partial Regex ReferenceLinkRegex();
+
+        // Shortcut reference link: [text][]
+        [GeneratedRegex(@"\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\]\[\]", RegexOptions.Compiled | RegexOptions.Singleline)]
+        private static partial Regex ShortcutReferenceLinkRegex();
+
+        // Implicit reference link: [text] (not followed by [ or ()
+        [GeneratedRegex(@"\[([^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*)\](?!\[)(?!\()", RegexOptions.Compiled | RegexOptions.Singleline)]
+        private static partial Regex ImplicitReferenceLinkRegex();
+
+        // Autolink: <url>
+        [GeneratedRegex(@"\<([^<>\s]+)\>", RegexOptions.Compiled | RegexOptions.Singleline)]
+        private static partial Regex AutolinkRegex();
+
+        // Reference definition: [ref]: url
         [GeneratedRegex(@"^\s*\[([^\[\]]+)\]:\s*(?:<([^<>]+)>|([^\s]+))(?:\s+(""[^""]*""|'[^']*'|\([^)]*\)))?\s*$", RegexOptions.Compiled | RegexOptions.Multiline)]
         private static partial Regex ReferenceDefinitionRegex();
     }

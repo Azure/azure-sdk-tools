@@ -28,43 +28,11 @@ public static class AzureOpenAIClientHelper
             Endpoint = endpoint
         };
 
-        // Add Azure Bearer Token authentication policy
-        options.AddPolicy(new BearerTokenAuthenticationPolicy(credential, new[] { "https://cognitiveservices.azure.com/.default" }), PipelinePosition.PerCall);
+        // Use System.ClientModel's BearerTokenPolicy for Azure authentication
+        BearerTokenPolicy tokenPolicy = new(credential, "https://cognitiveservices.azure.com/.default");
+        options.AddPolicy(tokenPolicy, PipelinePosition.PerCall);
 
-        // Create client with a placeholder API key (required by constructor but not used due to our custom auth policy)
+        // Create client with a placeholder API key (required by constructor but not used due to our bearer token policy)
         return new OpenAIClient(new ApiKeyCredential(PlaceholderApiKey), options);
-    }
-
-    /// <summary>
-    /// Pipeline policy that adds Bearer token authentication for Azure OpenAI
-    /// </summary>
-    private class BearerTokenAuthenticationPolicy : PipelinePolicy
-    {
-        private readonly TokenCredential _credential;
-        private readonly string[] _scopes;
-
-        public BearerTokenAuthenticationPolicy(TokenCredential credential, string[] scopes)
-        {
-            _credential = credential;
-            _scopes = scopes;
-        }
-
-        public override void Process(PipelineMessage message, IReadOnlyList<PipelinePolicy> pipeline, int currentIndex)
-        {
-            // The synchronous path is required by the PipelinePolicy base class
-            // In practice, the OpenAI client predominantly uses async paths
-            ProcessAsync(message, pipeline, currentIndex).AsTask().GetAwaiter().GetResult();
-        }
-
-        public override async ValueTask ProcessAsync(PipelineMessage message, IReadOnlyList<PipelinePolicy> pipeline, int currentIndex)
-        {
-            var token = await _credential.GetTokenAsync(new TokenRequestContext(_scopes), message.CancellationToken);
-            message.Request.Headers.Set("Authorization", $"Bearer {token.Token}");
-
-            if (currentIndex < pipeline.Count - 1)
-            {
-                await pipeline[currentIndex + 1].ProcessAsync(message, pipeline, currentIndex + 1);
-            }
-        }
     }
 }

@@ -246,11 +246,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Setup CommonValidationHelpers mock to return appropriate results
             // For fixCheckErrors = false, return the error result
-            _mockCommonValidationHelpers.Setup(x => x.CheckSpellingCommon(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
                                        .ReturnsAsync(new PackageCheckResponse(cspellErrorResult));
             
             // For fixCheckErrors = true, return success result
-            _mockCommonValidationHelpers.Setup(x => x.CheckSpellingCommon(It.IsAny<string>(), It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
                                        .ReturnsAsync(new PackageCheckResponse(0, mockSpellingFixResult.Summary));
 
             try

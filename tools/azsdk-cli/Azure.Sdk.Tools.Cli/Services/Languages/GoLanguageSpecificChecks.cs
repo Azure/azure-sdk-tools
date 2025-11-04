@@ -176,7 +176,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
-        return await _commonValidationHelpers.ValidateChangelogCommon(packageName, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }
 

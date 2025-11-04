@@ -175,14 +175,14 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return await _commonValidationHelpers.ValidateReadmeCommon(packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
     }
 
     public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = Path.GetFileName(packagePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        return await _commonValidationHelpers.ValidateChangelogCommon(packageName, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
     public async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -190,6 +190,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var relativePath = Path.GetRelativePath(repoRoot, packagePath);
         var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
-        return await _commonValidationHelpers.CheckSpellingCommon(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.CheckSpelling(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);
     }
 }

@@ -22,7 +22,7 @@ public interface ICommonValidationHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<PackageCheckResponse> ValidateChangelogCommon(
+    Task<PackageCheckResponse> ValidateChangelog(
         string packageName,
         string packagePath,
         bool fixCheckErrors = false,
@@ -35,7 +35,7 @@ public interface ICommonValidationHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<PackageCheckResponse> ValidateReadmeCommon(
+    Task<PackageCheckResponse> ValidateReadme(
         string packagePath,
         bool fixCheckErrors = false,
         CancellationToken ct = default);
@@ -48,7 +48,7 @@ public interface ICommonValidationHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<PackageCheckResponse> CheckSpellingCommon(
+    Task<PackageCheckResponse> CheckSpelling(
         string spellingCheckPath,
         string packagePath,
         bool fixCheckErrors = false,
@@ -87,7 +87,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         _microagentHostService = microagentHostService ?? throw new ArgumentNullException(nameof(microagentHostService));
     }
 
-    public async Task<PackageCheckResponse> ValidateChangelogCommon(
+    public async Task<PackageCheckResponse> ValidateChangelog(
         string packageName,
         string packagePath, 
         bool fixCheckErrors = false, 
@@ -118,12 +118,12 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in ValidateChangelogCommon");
+            _logger.LogError(ex, "Error in ValidateChangelog");
             return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
-    public async Task<PackageCheckResponse> ValidateReadmeCommon(
+    public async Task<PackageCheckResponse> ValidateReadme(
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
@@ -164,12 +164,12 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in ValidateReadmeCommon");
+            _logger.LogError(ex, "Error in ValidateReadme");
             return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
-    public async Task<PackageCheckResponse> CheckSpellingCommon(
+    public async Task<PackageCheckResponse> CheckSpelling(
         string spellingCheckPath,
         string packagePath, 
         bool fixCheckErrors = false, 
@@ -222,7 +222,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in CheckSpellingCommon");
+            _logger.LogError(ex, "Error in CheckSpelling");
             return new PackageCheckResponse(1, "", ex.Message);
         }
     }

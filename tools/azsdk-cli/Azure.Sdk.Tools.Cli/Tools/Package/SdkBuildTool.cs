@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
-                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.",);
+                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
                 }
 
                 logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);

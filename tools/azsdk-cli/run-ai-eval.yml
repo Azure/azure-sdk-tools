@@ -29,7 +29,6 @@ jobs:
           - '.github'
           - '.vscode/**'
           - 'eng/common/**'
-
     - task: AzureCLI@2
       displayName: 'Run eval'
       condition: and(succeeded(), ne(variables['Skip.Eval'], 'true'))
@@ -41,18 +40,6 @@ jobs:
         inlineScript: |
           echo "Logged in to Azure"
           echo "Running eval in project ${{ parameters.EvalProject }}"
-          echo "=== Checking eng/common directory ==="
-          echo "Does eng/common directory exist?"
-          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/" || echo "eng directory not found"
-          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/" || echo "eng/common directory not found"
-          echo "Looking for instruction files in eng/common:"
-          find "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/" -name "*.md" -o -name "*instruction*" || echo "No instruction files found"
-          echo "=== Checking eng/common/instructions specifically ==="
-          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/instructions/" || echo "instructions directory not found"
-          echo "Checking for azsdk-tools subdirectory:"
-          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/instructions/azsdk-tools/" || echo "azsdk-tools directory not found"
-          echo "Looking for the specific file:"
-          ls -la "$(System.DefaultWorkingDirectory)/azure-rest-api-specs/eng/common/instructions/azsdk-tools/typespec-to-sdk.instructions.md" || echo "typespec-to-sdk.instructions.md not found"
           dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx
       env:
         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1

@@ -5,8 +5,6 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public class LanguageSpecificResolver<T>(
     IGitHelper _gitHelper,
-    IPowershellHelper _powershellHelper,
-    ILogger<LanguageSpecificResolver<T>> _logger,
     [FromKeyedServices(SdkLanguage.DotNet)]
     T? dotnetService = default,
     [FromKeyedServices(SdkLanguage.Java)]

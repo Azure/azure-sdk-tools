@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.7 (Unreleased)
+## 0.5.8 (Unreleased)
 
 ### Features Added
 
@@ -8,7 +8,23 @@
 
 ### Bugs Fixed
 
+- Sample generator: Fix integer overflow when calculating file sizes
+- Sample generator: Fix stopping loading when an empty file is encountered
+- Sample generator: Fix not giving enough priority to files in the input package folder
+
 ### Other Changes
+
+## 0.5.7 (2025-11-05)
+
+### Features Added
+
+- Updated responses for release plan, TypeSpec, generate and build SDK tools to include language, TypeSpec path and package name.
+- Added verify setup tool
+
+### Bugs Fixed
+
+- Validation workflow fixes
+- Fix issue in telemetry service when setting string properties
 
 ## 0.5.6 (2025-11-03)
 

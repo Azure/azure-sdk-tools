@@ -2,11 +2,16 @@
 // Licensed under the MIT License.
 using System.Text;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Attributes;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 
-namespace Azure.Sdk.Tools.Cli.Models;
+namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 
-public class SDKWorkflowResponse : CommandResponse
+public class ReleaseWorkflowResponse : ReleasePlanBaseResponse
 {
+    [Telemetry]
+    [JsonPropertyName("language")]
+    public SdkLanguage Language { get; set; }
     [JsonPropertyName("status")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Status { get; set; }
@@ -24,5 +29,12 @@ public class SDKWorkflowResponse : CommandResponse
             result.AppendLine($"- {detail}");
         }
         return result.ToString();
+    }
+    public void SetLanguage(string language)
+    {
+        if (Enum.TryParse<SdkLanguage>(language, true, out var lang))
+        {
+            Language = lang;
+        }
     }
 }

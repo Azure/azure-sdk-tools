@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var releasePlanResults = await Task.WhenAll(releasePlanTasks);
 
             var releasePlans = releasePlanResults
-                .Select(r => r.Result as ReleasePlanDetails)
+                .Select(r => r.ReleasePlanDetails as ReleasePlanDetails)
                 .ToList();
 
             foreach (var plan in releasePlans)
@@ -154,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 isTestReleasePlan: false); // This should be overridden to true by environment variable
 
             // Assert
-            var releaseplanObj = releaseplan.Result as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);
@@ -193,7 +193,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 isTestReleasePlan: false);
 
             // Assert
-            var releaseplanObj = releaseplan.Result as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);

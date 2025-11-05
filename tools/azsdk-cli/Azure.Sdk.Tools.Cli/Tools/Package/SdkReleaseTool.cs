@@ -3,8 +3,8 @@ using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {

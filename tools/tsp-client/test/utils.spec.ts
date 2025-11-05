@@ -128,13 +128,13 @@ describe("Verify other utils functions", function () {
 describe("Verify fs functions", function () {
   beforeAll(async () => {
     await cp(
-      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+      joinPaths(cwd(), "test/utils/tsp-client-config.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
     );
   });
 
   afterAll(async () => {
-    await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+    await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
   });
 
   it("Check parseTspClientRepoConfig", async function () {

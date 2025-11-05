@@ -3,12 +3,12 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models;
+namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 /// <summary>
 /// Response payload for TspClientUpdateTool MCP / CLI operations.
 /// </summary>
-public class TspClientUpdateResponse : CommandResponse
+public class TspClientUpdateResponse : PackageResponseBase
 {
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

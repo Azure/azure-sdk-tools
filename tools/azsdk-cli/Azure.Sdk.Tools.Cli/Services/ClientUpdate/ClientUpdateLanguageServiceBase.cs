@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
@@ -80,7 +81,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
         }
         try
         {
-            var depResult = await checks.AnalyzeDependenciesAsync(packagePath, false, ct);
+            var depResult = await checks.AnalyzeDependencies(packagePath, false, ct);
             if (depResult.ExitCode == 0)
             {
                 return ValidationResult.CreateSuccess();

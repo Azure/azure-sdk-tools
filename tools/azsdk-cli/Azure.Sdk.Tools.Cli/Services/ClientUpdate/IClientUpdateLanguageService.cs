@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
 /// <summary>

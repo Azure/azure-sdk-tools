@@ -1,14 +1,16 @@
 # Release History
 
-## 0.5.7 (Unreleased)
+## 0.5.7 (2025-11-05)
 
 ### Features Added
 
-### Breaking Changes
+- Updated responses for release plan, TypeSpec, generate and build SDK tools to include language, TypeSpec path and package name.
+- Added verify setup tool
 
 ### Bugs Fixed
 
-### Other Changes
+- Validation workflow fixes
+- Fix issue in telemetry service when setting string properties
 
 ## 0.5.6 (2025-11-03)
 

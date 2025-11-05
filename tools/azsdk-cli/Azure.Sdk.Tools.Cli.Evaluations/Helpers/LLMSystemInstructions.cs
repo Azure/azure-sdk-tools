@@ -55,6 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             if (!string.IsNullOrEmpty(TestSetup.GetCopilotInstructionsPath))
             {
                 var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.GetCopilotInstructionsPath!)!;
+                instructionRelativePath = instructionRelativePath.Replace('\\', '/');
 
                 // Use Uri + Path APIs to normalize the relative path
                 var instructionUri = new Uri(Path.Combine(copilotBaseDirectory, instructionRelativePath));

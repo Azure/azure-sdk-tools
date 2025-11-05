@@ -166,8 +166,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks, Tests.ITestRunn
     {
         try
         {
-            await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return true;
+            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            return result.ExitCode == 0;
         }
         catch (Exception ex)
         {

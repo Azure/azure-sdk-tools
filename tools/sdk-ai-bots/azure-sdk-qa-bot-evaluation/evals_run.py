@@ -7,7 +7,8 @@ from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
-from _evals_result import build_output_table, establish_baseline, show_results, verify_results
+from _evals_result import EvalsResult
+from eval.evaluator import AzureBotEvaluator
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -87,13 +88,40 @@ if __name__ == "__main__":
             "testcase": "${data.testcase}"
         }})
 
+        qa_evaluator = AzureBotEvaluator(model_config=model_config, threshold = similarity_threshold)
+        qa_evaluator_class = EvaluatorClass("bot_evals", qa_evaluator, {"column_mapping": {
+            "response": "${data.response}",
+            "ground_truth": "${data.ground_truth}",
+            "expected_reference_urls": "${data.expected_reference_urls}",
+            "reference_urls": "${data.reference_urls}",
+            "testcase": "${data.testcase}"
+        }})
+
         evaluators = {
             "similarity": simiarity_class,
             "groundedness": groundedness_class,
-            "response_completeness": response_completion_class
+            "response_completeness": response_completion_class,
+            "bot_evals": qa_evaluator_class
         }
 
-        evals_runner = EvalsRunner(evaluators)
+        
+        metrics = {}
+        evals = {}
+        if args.evaluators:
+            evals = {eval_key: evaluators[eval_key] for eval_key in args.evaluators}
+            metrics = {eval_key: evaluators[eval_key].output_fileds for eval_key in args.evaluators}
+        else:
+            evals = evaluators
+            metrics = {eval_key: evaluators[eval_key].output_fileds for eval_key in evaluators.keys()}
+
+        weights: dict[str, float] = {
+            "similarity_weight": 0.6,  # Similarity between expected and actual
+            "groundedness_weight": 0.4,  # Staying grounded in guidelines
+            "response_completeness_weight": 0.4,
+        }
+        eval_result = EvalsResult(weights=weights, metrics=metrics)
+        
+        evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result)
 
         kwargs = {}
         if args.send_result:
@@ -107,28 +135,26 @@ if __name__ == "__main__":
                     "credential": AzureCliCredential()
                 }
         
-        all_results = evals_runner.evaluate_run(args.test_folder, args.prefix, args.retrieve_response, args.evaluators, args.evaluation_name_prefix, azure_ai_project_endpoint if args.send_result else None, **kwargs)
+        all_results = evals_runner.evaluate_run(args.test_folder, args.prefix, args.retrieve_response, args.evaluation_name_prefix, azure_ai_project_endpoint if args.send_result else None, **kwargs)
+
+        if (args.cache_result) :
+            now = datetime.now()
+            result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}"), 'a', encoding='utf-8')
+            logging.info(f"all_results:{len(all_results.keys())}")
+            for name, test_results in all_results.items():
+                result_file.write(f"\n-----------{name}----------------------\n")
+                result_file.write(evals_runner.evals_result.build_output_table(test_results))
+            result_file.flush()
+            result_file.close()
+
+        evals_runner.evals_result.show_results(all_results, args.baseline_check)
+        if args.baseline_check:
+            evals_runner.evals_result.establish_baseline(all_results, args.is_ci)
+        isPass = evals_runner.evals_result.verify_results(all_results, args.baseline_check)
+        if not isPass:
+            sys.exit(1)
     except Exception as e:
         logging.info(f"❌ Error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
-
-    metrics = args.evaluators if args.evaluators is not None else evals_runner.evaluators.keys()
-
-    if (args.cache_result) :
-        now = datetime.now()
-        result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}"), 'a', encoding='utf-8')
-        logging.info(f"all_results:{len(all_results.keys())}")
-        for name, test_results in all_results.items():
-            result_file.write(f"\n-----------{name}----------------------\n")
-            result_file.write(build_output_table(test_results, metrics))
-        result_file.flush()
-        result_file.close()
-    
-    show_results(all_results, metrics, args.baseline_check)
-    if args.baseline_check:
-        establish_baseline(all_results, args.is_ci)
-    isPass = verify_results(all_results, metrics, args.baseline_check)
-    if not isPass:
         sys.exit(1)

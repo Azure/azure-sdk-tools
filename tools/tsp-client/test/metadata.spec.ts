@@ -12,9 +12,14 @@ describe.sequential("tsp-client metadata generation", function () {
   const testOutputDir = "./test/test-output-metadata";
   const testEmitterPackageJsonPath = "./test/test-output-metadata/test-emitter-package.json";
   let repoRoot = "";
+  let defaultTspClientConfigPath = "";
+
+  beforeAll(async function () {
+    repoRoot = await getRepoRoot(cwd());
+    defaultTspClientConfigPath = joinPaths(repoRoot, "eng", "tsp-client-config.yaml");
+  });
 
   beforeEach(async function () {
-    repoRoot = await getRepoRoot(cwd());
     // Create test directory and emitter-package.json
     await ensureDirectory(testOutputDir);
 
@@ -42,7 +47,7 @@ describe.sequential("tsp-client metadata generation", function () {
   it("should create tsp-client-metadata.yaml with correct structure", async function () {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
+      defaultTspClientConfigPath,
     );
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
@@ -75,7 +80,7 @@ describe.sequential("tsp-client metadata generation", function () {
   it("should handle date format correctly", async function () {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
+      defaultTspClientConfigPath,
     );
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
@@ -94,7 +99,7 @@ describe.sequential("tsp-client metadata generation", function () {
   });
 
   it("verify that metadata file isnt created if there's no tsp-client-config.yaml", async function () {
-    await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
+    await rm(defaultTspClientConfigPath).catch(() => {});
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
@@ -110,10 +115,7 @@ describe.sequential("tsp-client metadata generation", function () {
   });
 
   it("verify that the metadata file isnt created if generateMetadata doesnt exist in tsp-client-config.yaml", async function () {
-    await cp(
-      joinPaths(cwd(), "test/utils/tsp-client-config.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
-    );
+    await cp(joinPaths(cwd(), "test/utils/tsp-client-config.yaml"), defaultTspClientConfigPath);
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
@@ -131,7 +133,7 @@ describe.sequential("tsp-client metadata generation", function () {
   it("verify that metadata file isnt created if generateMetadata is set to false in tsp-client-config.yaml", async function () {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata-false.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
+      defaultTspClientConfigPath,
     );
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
@@ -150,7 +152,7 @@ describe.sequential("tsp-client metadata generation", function () {
   it('verify that metadata file isnt created if generateMetadata is set to \"false\" in tsp-client-config.yaml', async function () {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata-false-string.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
+      defaultTspClientConfigPath,
     );
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
@@ -169,7 +171,7 @@ describe.sequential("tsp-client metadata generation", function () {
   it("verify that metadata file isnt created if generateMetadata is set to random string in tsp-client-config.yaml", async function () {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata-random-string.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
+      defaultTspClientConfigPath,
     );
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);

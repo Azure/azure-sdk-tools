@@ -983,6 +983,20 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
 
 
+def list_reviews(environment: str = "production"):
+    """
+    Lists the total number of reviews and their PackageName from APIViewV2.Reviews.
+    """
+    from src._apiview import get_apiview_cosmos_client
+
+    container = get_apiview_cosmos_client(container_name="Reviews", environment=environment, db_name="APIViewV2")
+    query = "SELECT c.id, c.PackageName FROM c"
+    items = list(container.query_items(query=query, enable_cross_partition_query=True))
+    print(f"Total reviews: {len(items)}")
+    for item in items:
+        print(f"{item.get('id')}: {item.get('PackageName')}")
+
+
 def _build_auth_header():
     """
     Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
@@ -1012,6 +1026,8 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
             g.command("analyze-comments", "analyze_comments")
+        with CommandGroup(self, "db", "__main__#{}") as g:
+            g.command("list-reviews", "list_reviews")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")

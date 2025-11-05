@@ -691,7 +691,7 @@ namespace CSharpAPIParser.TreeToken
             reviewLines.Add(new ReviewLine()
             {
                 Tokens = [
-                    ReviewToken.CreateStringLiteralToken("}")
+                    ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken)
                 ],
                 IsHidden = isHidden,
                 IsContextEndLine = true

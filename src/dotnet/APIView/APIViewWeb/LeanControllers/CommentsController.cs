@@ -251,6 +251,20 @@ namespace APIViewWeb.LeanControllers
             return Ok();
         }
 
+        /// <summary>
+        /// Submit feedback for comment
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <param name="feedback"></param>
+        /// <returns></returns>
+        [HttpPost("{reviewId}/{commentId}/feedback", Name = "SubmitCommentFeedback")]
+        public async Task<ActionResult> SubmitCommentFeedbackAsync(string reviewId, string commentId, [FromBody] CommentFeedbackRequest feedback)
+        {
+            await _commentsManager.AddCommentFeedbackAsync(User, reviewId, commentId, feedback);
+            return Ok();
+        }
+
 
         /// <summary>
         /// Soft Delete a Comment

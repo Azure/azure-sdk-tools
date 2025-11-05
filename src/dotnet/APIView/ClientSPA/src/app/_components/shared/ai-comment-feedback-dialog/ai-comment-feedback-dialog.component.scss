@@ -1,0 +1,119 @@
+.dialog-content {
+  .feedback-description {
+    color: var(--base-text-color);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+
+  .feedback-reasons {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
+    background-color: var(--base-fg-color);
+
+    .reason-item {
+      padding: 0.5rem 0;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      ::ng-deep .reason-checkbox {
+        .p-checkbox {
+          margin-right: 0.5rem;
+        }
+
+        .p-checkbox-label {
+          color: var(--base-text-color);
+          font-size: 0.9rem;
+          cursor: pointer;
+          user-select: none;
+        }
+      }
+    }
+  }
+
+  .additional-comments {
+    label {
+      color: var(--base-text-color);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      resize: vertical;
+      min-height: 80px;
+      background-color: var(--base-bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--base-text-color);
+      
+      &:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+      }
+
+      &::placeholder {
+        color: var(--text-muted-color);
+      }
+    }
+  }
+
+  .info-message {
+    padding: 0.75rem;
+    background-color: var(--base-fg-color);
+    border-left: 3px solid var(--primary-color);
+    border-radius: 4px;
+
+    small {
+      color: var(--base-text-color);
+      font-size: 0.85rem;
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+::ng-deep {
+  .p-dialog {
+    .p-dialog-header {
+      background-color: var(--base-fg-color);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--base-text-color);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+      background-color: var(--base-bg-color);
+      color: var(--base-text-color);
+    }
+
+    .p-dialog-footer {
+      background-color: var(--base-fg-color);
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+    }
+  }
+
+  .p-checkbox {
+    .p-checkbox-box {
+      border: 2px solid var(--border-color);
+      background-color: var(--base-bg-color);
+      
+      &.p-highlight {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      &:hover {
+        border-color: var(--primary-color);
+      }
+    }
+  }
+}

@@ -212,3 +212,12 @@
         </div>
     </ng-template>
 </p-overlayPanel>
+
+<!-- AI Comment Feedback Dialog -->
+<app-ai-comment-feedback-dialog
+    [(visible)]="showAIFeedbackDialog"
+    [commentId]="pendingDownvoteCommentId"
+    [isDeleting]="isDeletingAIComment"
+    (feedbackSubmit)="onAIFeedbackSubmit($event)"
+    (dialogHide)="onAIFeedbackCancel()">
+</app-ai-comment-feedback-dialog>

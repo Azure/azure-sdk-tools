@@ -466,6 +466,28 @@ namespace APIViewWeb.Managers
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
+        public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment == null)
+            {
+                _logger.LogWarning($"Comment {commentId} not found for feedback submission");
+                return;
+            }
+
+            string userName = user.GetGitHubLogin();
+            comment.Feedback.Add(new CommentFeedback
+            {
+                Reasons = feedback.Reasons ?? [],
+                AdditionalComments = feedback.AdditionalComments ?? string.Empty,
+                SubmittedBy = userName,
+                SubmittedOn = DateTime.UtcNow
+            });
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+        }
+
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentItemModel commentModel)
         {

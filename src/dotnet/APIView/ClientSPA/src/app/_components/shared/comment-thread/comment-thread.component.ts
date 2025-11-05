@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, S
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { OverlayPanel } from 'primeng/overlaypanel';
+import { take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
@@ -13,6 +14,7 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
+import { AICommentFeedback } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
 
 interface AICommentInfoItem {
   icon: string;
@@ -88,6 +90,18 @@ export class CommentThreadComponent {
   showRelatedCommentsDialog: boolean = false;
   relatedComments: CommentItemModel[] = [];
   selectedCommentId: string = ''; 
+
+  showAIFeedbackDialog: boolean = false;
+  pendingDownvoteAction: CommentUpdatesDto | null = null;
+  pendingDeleteAction: CommentUpdatesDto | null = null;
+
+  get isDeletingAIComment(): boolean {
+    return this.pendingDeleteAction !== null;
+  }
+
+  get pendingDownvoteCommentId(): string {
+    return this.pendingDownvoteAction?.commentId || this.pendingDeleteAction?.commentId || '';
+  }
 
   private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
 
@@ -298,15 +312,26 @@ export class CommentThreadComponent {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
     const title = target.getAttribute("data-element-id");
-    this.deleteCommentActionEmitter.emit(
-      {
-        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-        title: title // Used for Sample Instance of CommentThread
-      } as CommentUpdatesDto
-    );
+
+    const deleteAction = {
+      commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      commentId: commentId,
+      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+      title: title // Used for Sample Instance of CommentThread
+    } as CommentUpdatesDto;
+    
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    if (comment?.commentSource === CommentSource.AIGenerated) {
+      this.pendingDeleteAction = deleteAction;
+      
+      setTimeout(() => {
+        this.showAIFeedbackDialog = true;
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+    } else {
+      this.deleteCommentActionEmitter.emit(deleteAction);
+    }
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
@@ -424,14 +449,72 @@ export class CommentThreadComponent {
   toggleDownVoteAction(event: Event) {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
-    this.commentDownvoteActionEmitter.emit(
-      { 
-        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      } as CommentUpdatesDto
-    );
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
+    
+    const downvoteAction = { 
+      commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
+      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      commentId: commentId,
+      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+    } as CommentUpdatesDto;
+    
+    const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
+    if (isAIComment && !hasDownvote) {
+      this.pendingDownvoteAction = downvoteAction;
+      
+      setTimeout(() => {
+        this.showAIFeedbackDialog = true;
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+    } else {
+      this.commentDownvoteActionEmitter.emit(downvoteAction);
+    }
+  }
+
+  onAIFeedbackSubmit(feedback: AICommentFeedback) {
+    this.showAIFeedbackDialog = false;
+    
+    this.executePendingAction();
+    
+    if (feedback.reasons.length > 0 || feedback.additionalComments.trim().length > 0) {
+      this.commentsService.submitAICommentFeedback(
+        this.reviewId,
+        feedback.commentId,
+        feedback.reasons,
+        feedback.additionalComments
+      ).pipe(take(1)).subscribe({
+        next: () => {
+        },
+        error: (error: any) => {
+          console.error('Failed to submit feedback:', error);
+        }
+      });
+    }
+    
+    this.resetFeedbackState();
+  }
+
+  onAIFeedbackCancel() {
+    this.showAIFeedbackDialog = false;
+    
+    this.executePendingAction();
+    this.resetFeedbackState();
+  }
+
+  private executePendingAction() {
+    if (this.pendingDownvoteAction) {
+      this.commentDownvoteActionEmitter.emit(this.pendingDownvoteAction);
+    }
+    
+    if (this.pendingDeleteAction) {
+      this.deleteCommentActionEmitter.emit(this.pendingDeleteAction);
+    }
+  }
+
+  private resetFeedbackState() {
+    this.pendingDownvoteAction = null;
+    this.pendingDeleteAction = null;
   }
 
   toggleResolvedCommentExpandState() {

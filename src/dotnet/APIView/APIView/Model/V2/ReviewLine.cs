@@ -22,6 +22,12 @@ namespace APIView.Model.V2
     /// </summary>
     public class ReviewLine
     {
+        public ReviewLine() { }
+
+        public ReviewLine(string id)
+        {
+            LineId = id;
+        }
         /// <summary>
         /// LineId is only required if we need to support commenting on a line that contains this token. 
         /// Usually code line for documentation or just punctuation is not required to have lineId.lineId should be a unique value within
@@ -70,6 +76,11 @@ namespace APIView.Model.V2
         public void AddToken(ReviewToken token)
         {
             Tokens.Add(token);
+        }
+
+        public void AddTokenRange(IEnumerable<ReviewToken> tokens)
+        {
+            Tokens.AddRange(tokens);
         }
 
         public void AppendApiTextToBuilder<T>(T builder, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4, TokensFilter filter = TokensFilter.All) where T : class

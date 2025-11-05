@@ -138,5 +138,31 @@ namespace APIView.Model.V2
             token.HasSuffixSpace = hasSuffixSpace;
             return token;
         }
+
+        public static List<ReviewToken> CreateKeyValueToken(string key, string value = null, string keyTokenClass = null, string valueTokenClass = null)
+        {
+            var results = new List<ReviewToken>();
+            var keyToken = new ReviewToken(key, TokenKind.Text);
+            if (keyTokenClass != null)
+            {
+                keyToken.RenderClasses.Add(keyTokenClass);
+            }
+            results.Add(keyToken);
+
+            var colonToken = new ReviewToken(":", TokenKind.Punctuation);
+            colonToken.HasSuffixSpace = true;
+            results.Add(colonToken);
+
+            if (value != null)
+            {
+                var valueToken = new ReviewToken(value, TokenKind.Text);
+                if (valueTokenClass != null)
+                {
+                    valueToken.RenderClasses.Add(valueTokenClass);
+                }
+                results.Add(valueToken);
+            }
+            return results;
+        }
     }
 }

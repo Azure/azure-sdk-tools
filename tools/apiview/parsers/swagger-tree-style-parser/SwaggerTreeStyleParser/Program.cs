@@ -105,7 +105,8 @@ public class Program
             }
 
             Console.WriteLine(swaggerFilePath);
-            var (openApiDocument, yada) = await OpenApiDocument.LoadAsync(swaggerFilePath);
+            var (openApiDocument, openApiDiagnostic) = await OpenApiDocument.LoadAsync(swaggerFilePath);
+            var codeFile = new CodeFileBuilder().Build(openApiDocument!, openApiDiagnostic!, packageName ?? "swagger");
             Console.WriteLine();
         }
 

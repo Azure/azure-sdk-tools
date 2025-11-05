@@ -219,8 +219,10 @@ describe("getReleaseStatus", () => {
 });
 
 describe("cleanUpPackageDirectory", () => {
-    async function createTestDirectoryStructure(baseDir: string): Promise<string> {
-        const tempPackageDir = path.join(baseDir, `tmp/package-${getRandomInt(10000)}`);
+    async function createTestDirectoryStructure(baseDir: string, packageType: 'management' | 'dataplane' = 'management'): Promise<string> {
+        // Create different directory names based on package type to trigger correct logic
+        const dirName = packageType === 'management' ? `tmp/arm-package-${getRandomInt(10000)}` : `tmp/package-${getRandomInt(10000)}`;
+        const tempPackageDir = path.join(baseDir, dirName);
         
         // Create main directories
         await ensureDir(tempPackageDir);
@@ -249,25 +251,29 @@ describe("cleanUpPackageDirectory", () => {
     }
     
     test("preserves test directory and assets.json in non-SpecPullRequest mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        // Create a management plane package (arm-*) to test the preservation logic
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management');
         
         try {            
-            // Run the function with Release mode
+            // Run the function with Release mode (non-SpecPullRequest mode)
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
-            // Check if test directory and assets.json are preserved
+            // Verify that test directory and its contents are preserved (Management Plane logic)
             const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
-            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
-            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
-            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
-            
-            // Check if test subfolders and files are preserved
             const testCommonDirExists = await pathExists(path.join(tempPackageDir, "test", "common"));
             const testUtilsDirExists = await pathExists(path.join(tempPackageDir, "test", "utils"));
             const testIndexFileExists = await pathExists(path.join(tempPackageDir, "test", "index.test.ts"));
             const testUtilsFileExists = await pathExists(path.join(tempPackageDir, "test", "common", "utils.test.ts"));
             
-            // Assertions for directories and files
+            // Verify that assets.json is preserved (Management Plane logic)
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            
+            // Verify that other files and directories are removed
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
+            
+            // Assert preserved files/directories for Management Plane
             expect(testDirExists).toBe(true);
             expect(testCommonDirExists).toBe(true);
             expect(testUtilsDirExists).toBe(true);
@@ -275,8 +281,9 @@ describe("cleanUpPackageDirectory", () => {
             expect(testUtilsFileExists).toBe(true);
             expect(assetsFileExists).toBe(true);
 
-            // Verify removed directories and files
+            // Assert removed files/directories
             expect(srcDirExists).toBe(false);
+            expect(distDirExists).toBe(false);
             expect(packageJsonExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
@@ -284,30 +291,62 @@ describe("cleanUpPackageDirectory", () => {
     });
     
     test("removes all files and directories in SpecPullRequest mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        // Test with management plane package first
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management');
         
         try {
+            // Verify initial structure exists
+            const initialEntries = await readdir(tempPackageDir);
+            expect(initialEntries.length).toBeGreaterThan(0);
+            
             // Run the function with SpecPullRequest mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.SpecPullRequest);
 
-            // Check if everything is removed
-            const entries = await readdir(tempPackageDir);
-            expect(entries.length).toBe(0);
+            // Verify all files and directories are removed
+            const finalEntries = await readdir(tempPackageDir);
+            expect(finalEntries.length).toBe(0);
+            
+            // Explicitly verify that test directory and assets.json are also removed
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            
+            expect(testDirExists).toBe(false);
+            expect(assetsFileExists).toBe(false);
+            expect(srcDirExists).toBe(false);
+            expect(distDirExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
         }
     });
     
     test("removes all files and directories in Batch mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        // Test with management plane package first
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management');
         
         try {
+            // Verify initial structure exists
+            const initialEntries = await readdir(tempPackageDir);
+            expect(initialEntries.length).toBeGreaterThan(0);
+            
             // Run the function with Batch mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Batch);
 
-            // Check if everything is removed
-            const entries = await readdir(tempPackageDir);
-            expect(entries.length).toBe(0);
+            // Verify all files and directories are removed
+            const finalEntries = await readdir(tempPackageDir);
+            expect(finalEntries.length).toBe(0);
+            
+            // Explicitly verify that test directory and assets.json are also removed
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            
+            expect(testDirExists).toBe(false);
+            expect(assetsFileExists).toBe(false);
+            expect(srcDirExists).toBe(false);
+            expect(distDirExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
         }

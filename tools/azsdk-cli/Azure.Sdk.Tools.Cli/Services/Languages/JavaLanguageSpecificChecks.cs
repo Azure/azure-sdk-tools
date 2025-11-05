@@ -11,7 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 {
     private readonly IProcessHelper _processHelper;
+    private readonly IGitHelper _gitHelper;
     private readonly ILogger<JavaLanguageSpecificChecks> _logger;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     // Maven operation timeouts
     private static readonly TimeSpan MavenFormatTimeout = TimeSpan.FromMinutes(10);
@@ -38,13 +40,17 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public JavaLanguageSpecificChecks(
         IProcessHelper processHelper,
-        ILogger<JavaLanguageSpecificChecks> logger)
+        IGitHelper gitHelper,
+        ILogger<JavaLanguageSpecificChecks> logger,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
+        _gitHelper = gitHelper;
         _logger = logger;
+        _commonValidationHelpers = commonValidationHelpers;
     }
 
-    public async Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -52,7 +58,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
@@ -100,7 +106,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -108,7 +114,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
@@ -215,7 +221,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false,  CancellationToken cancellationToken = default)
     {
         try
         {
@@ -223,7 +229,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
@@ -261,7 +267,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -269,14 +275,14 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
             }
 
             // Azure SDK for Java uses BOM-based dependency management
-            return await AnalyzeDependencyTreeAsync(packagePath, pomPath, cancellationToken);
+            return await AnalyzeDependencyTree(packagePath, pomPath, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -296,7 +302,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <param name="pomPath">The path to the pom.xml file</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Analysis results</returns>
-    private async Task<PackageCheckResponse> AnalyzeDependencyTreeAsync(string packagePath, string pomPath, CancellationToken cancellationToken)
+    private async Task<PackageCheckResponse> AnalyzeDependencyTree(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
         var command = "mvn";
         var args = new[] { "dependency:tree", "-Dverbose", "-f", pomPath };
@@ -333,7 +339,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <param name="pomPath">The path to the pom.xml file</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>PackageCheckResponse with error details if validation fails, null if validation passes</returns>
-    private async Task<PackageCheckResponse?> ValidateMavenPrerequisitesAsync(string packagePath, string pomPath, CancellationToken cancellationToken)
+    private async Task<PackageCheckResponse?> ValidateMavenPrerequisites(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
         // Check if Maven is available
         var mavenCheckResult = await _processHelper.Run(new("mvn", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
@@ -397,4 +403,16 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
          output.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase) &&
          !output.Contains("Building jar:", StringComparison.OrdinalIgnoreCase) && 
          !output.Contains("-javadoc.jar", StringComparison.OrdinalIgnoreCase));
+
+    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageName = Path.GetFileName(packagePath);
+        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+    }
 }

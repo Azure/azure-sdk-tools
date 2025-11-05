@@ -4,7 +4,8 @@ import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 import fs from 'fs';
 import * as path from 'path';
 import { getSDKType} from "../utils.js";
-import { SDKType } from "../types.js";
+import { SDKType, ModularSDKType } from "../types.js";
+import { getModularSDKType } from "../../utils/generateInputUtils.js";
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');
 const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -78,11 +79,21 @@ export async function makeChangesForReleasingTrack2(packageFolderPath: string, p
     if(packageVersion.includes("beta")){
         pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
     }
+    
+    const modularSDKType = getModularSDKType(packageFolderPath);
+    let finalChangeLog: string;
+    
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        finalChangeLog = `// TODO: Please manually update the changelog with the appropriate changes.\n`;
+    } else {
+        finalChangeLog = changeLog;
+    }
+    
     const modifiedChangelogContent = `# Release History
 
 ${pacakgeVersionDetail}
 
-${changeLog}
+${finalChangeLog}
 ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
 
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), modifiedChangelogContent, {encoding: 'utf-8'});

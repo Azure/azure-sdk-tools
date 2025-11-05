@@ -1,14 +1,10 @@
 using System.Text.Json.Serialization;
 
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses
+namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
 {
-    public class TspToolResponse : CommandResponse
+    public class TspToolResponse : TypeSpecBaseResponse
     {
-        [JsonPropertyName("typespec_project_path")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public string TypeSpecProjectPath { get; set; } = string.Empty;
-
         [JsonPropertyName("is_successful")]
         public bool IsSuccessful { get; set; }
 
@@ -23,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
                 return string.Join(
                     Environment.NewLine,
                     [
-                        $"### TypeSpec Project Path: {TypeSpecProjectPath}",
+                        $"### TypeSpec Project Path: {TypeSpecProject}",
                         string.Empty,
                         ..this.NextSteps ?? Enumerable.Empty<string>()
                     ]

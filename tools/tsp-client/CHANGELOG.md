@@ -1,5 +1,11 @@
 # Release
 
+## 2025-11-05 - 0.30.0
+
+- Make metadata generation for tsp-client an opt-in feature. If you want to generate `tsp-client-metadata.yaml`, set `generateMetadata: true` in `tspclientconfig.yaml`.
+- Rename `tsp_client_metadata.yaml` to `tsp-client-metadata.yaml`.
+- Rename `tspclientconfig.yaml` to `tsp-client-config.yaml`.
+
 ## 2025-11-04 - 0.29.1
 
 - Updated `generate-config-files` command to preserve all existing fields in emitter-package.json when updating. Previously, only dependencies and devDependencies were retained; now all extra fields are preserved.

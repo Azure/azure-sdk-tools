@@ -65,7 +65,7 @@ async function initProcessDataAndWriteTspLocation(
   tspLocationData: TspLocation,
   argv: any,
 ): Promise<string> {
-  // Read the global tspclientconfig.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
+  // Read the global tsp-client-config.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
   const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
 
   // Read tspconfig.yaml contents
@@ -156,7 +156,7 @@ async function initProcessDataAndWriteTspLocation(
  *
  * @param repoRoot - The root directory of the repository.
  * @param tspConfigData - The parsed tspconfig.yaml data.
- * @param globalConfigFile - Optional global tspclientconfig.yaml configuration.
+ * @param globalConfigFile - Optional global tsp-client-config.yaml configuration.
  * @param emitterPackageJsonOverride - Optional explicit override path to an emitter-package.json file.
  * @returns An object containing the emitter name and an optional relative path to the emitter package.json file.
  * @throws If no valid emitter can be resolved or if the default emitter-package.json is missing or invalid.
@@ -290,8 +290,7 @@ export async function initCommand(argv: any) {
     await syncCommand(argv);
     await generateCommand(argv);
   } else {
-    // If skip-sync-and-generate is set, just create the tsp_client_metadata.yaml file. Otherwise, the metadata file
-    // will be created during the generateCommand step.
+    // If skip-sync-and-generate is set, just check if we should create the tsp-client-metadata.yaml file.
     const tspLocation: TspLocation = await readTspLocation(outputDir);
     await createTspClientMetadata(
       outputDir,
@@ -418,7 +417,7 @@ export async function generateCommand(argv: any) {
     throw new Error("emitter is undefined");
   }
 
-  // Create tsp_client_metadata.yaml file
+  // Check if we should create tsp-client-metadata.yaml file
   await createTspClientMetadata(outputDir, repoRoot, emitterPackageJsonPath);
 
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);

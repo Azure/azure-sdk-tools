@@ -39,10 +39,10 @@ describe("tsp-client metadata generation", function () {
     await removeDirectory(testOutputDir).catch(() => {});
   });
 
-  it("should create tsp_client_metadata.yaml with correct structure", async function () {
+  it("should create tsp-client-metadata.yaml with correct structure", async function () {
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
+    const metadataPath = joinPaths(testOutputDir, "tsp-client-metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
     const metadata = yaml.parse(metadataContent);
 
@@ -71,7 +71,7 @@ describe("tsp-client metadata generation", function () {
   it("should handle date format correctly", async function () {
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
+    const metadataPath = joinPaths(testOutputDir, "tsp-client-metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
     const metadata = yaml.parse(metadataContent);
 

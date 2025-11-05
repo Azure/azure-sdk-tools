@@ -9,7 +9,7 @@ import { normalizeDirectory, readTspLocation } from "./fs.js";
 import { parse as parseYaml } from "yaml";
 import { getRepoRoot } from "./git.js";
 
-const defaultTspClientConfigPath = joinPaths("eng", "tspclientconfig.yaml");
+const defaultTspClientConfigPath = joinPaths("eng", "tsp-client-config.yaml");
 
 /**
  * Reads and returns the package.json content.
@@ -172,6 +172,7 @@ export async function updateExistingTspLocation(
 
 export interface TspClientConfig {
   supportedEmitters?: Array<{ name: string; path: string }>;
+  generateMetadata?: boolean;
 }
 
 export async function parseTspClientRepoConfig(
@@ -182,7 +183,7 @@ export async function parseTspClientRepoConfig(
     const data = await readFile(configPath, "utf8");
     return parseYaml(data) as TspClientConfig;
   } catch (err) {
-    Logger.debug(`Did not find a tspclientconfig.yaml at ${configPath}. Error: ${err}`);
+    Logger.debug(`Did not find a tsp-client-config.yaml at ${configPath}. Error: ${err}`);
     return undefined;
   }
 }

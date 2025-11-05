@@ -533,7 +533,6 @@ namespace TestNamespace
             var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
 
             // Debug: Print all line IDs to see what's available
-            var allLineIds = codeFile.ReviewLines.Where(l => !string.IsNullOrEmpty(l.LineId)).Select(l => l.LineId).ToList();
             
             // Find the ResponsesServerExtensions class - try multiple search patterns
             var extensionsClass = codeFile.ReviewLines

@@ -166,12 +166,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks, Tests.ITestRunn
     {
         try
         {
-            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTests));
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunAllTests));
             return false;
         }
     }

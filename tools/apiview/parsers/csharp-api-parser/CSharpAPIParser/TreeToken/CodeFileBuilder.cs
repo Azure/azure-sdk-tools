@@ -311,7 +311,7 @@ namespace CSharpAPIParser.TreeToken
             reviewLine.Tokens.Last().HasSuffixSpace = true;
             BuildBaseType(reviewLine, namedType);
             reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
-            
+
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
                 try
@@ -563,10 +563,10 @@ namespace CSharpAPIParser.TreeToken
         {
             if (namedType == null)
                 return false;
-                
+
             // Extension member containers are compiler-generated nested classes
             // They have specific name patterns like <G>$ or <M>$ and contain extension marker methods
-            
+
             // Check if the name matches the compiler-generated pattern for extension containers
             if (!(namedType.Name.StartsWith("<G>$") || namedType.Name.StartsWith("<M>$")))
                 return false;
@@ -582,7 +582,7 @@ namespace CSharpAPIParser.TreeToken
         {
             if (method == null)
                 return false;
-                
+
             // Extension marker methods are compiler-generated methods with specific characteristics:
             // - They are named exactly "<Extension>$" 
             // - They have void return type and take the extension target as parameter
@@ -595,15 +595,17 @@ namespace CSharpAPIParser.TreeToken
         private void BuildExtensionMember(List<ReviewLine> reviewLines, INamedTypeSymbol extensionContainer, bool inHiddenScope)
         {
             if (extensionContainer == null)
+            {
                 return;
-                
+            }
+
             bool isHidden = IsHiddenFromIntellisense(extensionContainer) || inHiddenScope;
-            
+
             // Find the extension marker method to get the extension target type
             // Check both direct methods and methods in nested types
             var extensionMarker = extensionContainer.GetMembers().OfType<IMethodSymbol>()
                 .FirstOrDefault(m => IsExtensionMarkerMethod(m));
-            
+
             if (extensionMarker == null)
             {
                 // Check nested types for extension markers
@@ -612,17 +614,23 @@ namespace CSharpAPIParser.TreeToken
                     extensionMarker = nestedType.GetMembers().OfType<IMethodSymbol>()
                         .FirstOrDefault(m => IsExtensionMarkerMethod(m));
                     if (extensionMarker != null)
+                    {
                         break;
+                    }
                 }
             }
-            
+
             if (extensionMarker == null || extensionMarker.Parameters.Length == 0)
+            {
                 return;
+            }
 
             var targetType = extensionMarker.Parameters[0].Type;
             if (targetType == null)
+            {
                 return;
-            
+            }
+
             // Create the extension declaration line
             var extensionLine = new ReviewLine()
             {
@@ -634,7 +642,7 @@ namespace CSharpAPIParser.TreeToken
             extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenParenToken, false));
             DisplayName(extensionLine, targetType);
             extensionLine.Tokens.Last().HasSuffixSpace = true;
-            
+
             // Add parameter name (usually the target type name in lowercase)
             var parameterName = extensionMarker.Parameters[0].Name;
             extensionLine.Tokens.Add(ReviewToken.CreateTextToken(parameterName, hasSuffixSpace: false));
@@ -645,12 +653,12 @@ namespace CSharpAPIParser.TreeToken
             // Add all non-extension-marker members to the extension block
             // Include members from both the container and any nested types
             var membersToProcess = new List<ISymbol>();
-            membersToProcess.AddRange(extensionContainer.GetMembers().Where(m => 
+            membersToProcess.AddRange(extensionContainer.GetMembers().Where(m =>
                 m.Kind != SymbolKind.NamedType && !m.IsImplicitlyDeclared && IsAccessible(m)));
-            
+
             foreach (var nestedType in extensionContainer.GetTypeMembers())
             {
-                membersToProcess.AddRange(nestedType.GetMembers().Where(m => 
+                membersToProcess.AddRange(nestedType.GetMembers().Where(m =>
                     m.Kind != SymbolKind.NamedType && !m.IsImplicitlyDeclared && IsAccessible(m)));
             }
 
@@ -658,7 +666,7 @@ namespace CSharpAPIParser.TreeToken
             {
                 // Skip extension marker methods
                 if (member is IMethodSymbol method && IsExtensionMarkerMethod(method)) continue;
-                
+
                 // Skip property/event accessors
                 if (member is IMethodSymbol m)
                 {

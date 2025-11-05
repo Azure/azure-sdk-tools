@@ -15,6 +15,8 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Services.VerifySetup;
+
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -74,6 +76,15 @@ namespace Azure.Sdk.Tools.Cli.Services
                 JavaScript = typeof(JavaScriptTestRunner),
                 Python = typeof(PythonTestRunner),
                 DotNet = typeof(DotNetTestRunner),
+            });
+
+            services.AddLanguageSpecific<IEnvRequirementsCheck>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonRequirementsCheck),
+                Java = typeof(JavaRequirementsCheck),
+                JavaScript = typeof(JavaScriptRequirementsCheck),
+                DotNet = typeof(DotNetRequirementsCheck),
+                Go = typeof(GoRequirementsCheck),
             });
 
             // Helper classes

@@ -72,7 +72,32 @@ public abstract class SampleLanguageContext
             }
         }
         
-        return await FileHelper.LoadFilesAsync(sourceInputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
+        return await FileHelper.LoadFilesAsync(sourceInputs, packagePath, totalBudget, perFileLimit, f => GetContextAwarePriority(f, packagePath), ct);
+    }
+
+    /// <summary>
+    /// Priority function that gives much higher priority to files from the main package path
+    /// versus files from extra context paths.
+    /// </summary>
+    /// <param name="f">File metadata.</param>
+    /// <param name="packagePath">The main package path.</param>
+    /// <returns>Smaller numbers indicate higher priority.</returns>
+    protected virtual int GetContextAwarePriority(FileMetadata f, string packagePath)
+    {
+        var isFromMainPackage = f.FilePath.StartsWith(packagePath, StringComparison.OrdinalIgnoreCase);
+        var name = Path.GetFileNameWithoutExtension(f.FilePath);
+        var hasClient = name.Contains("client", StringComparison.OrdinalIgnoreCase);
+        
+        if (isFromMainPackage)
+        {
+            // Files from main package get priority 1-10
+            return hasClient ? 1 : 5;
+        }
+        else
+        {
+            // Files from extra context get priority 20-50
+            return hasClient ? 20 : 50;
+        }
     }
 
     /// <summary>
@@ -81,17 +106,5 @@ public abstract class SampleLanguageContext
     protected virtual ILanguageSourceInputProvider GetSourceInputProvider()
     {
         throw new NotImplementedException($"Language '{Language}' must override GetSourceInputProvider() method.");
-    }
-
-    /// <summary>
-    /// Shared priority calculator for source inputs. Languages may override if needed, but most use the
-    /// heuristic: filenames containing "client" get highest priority.
-    /// </summary>
-    /// <param name="f">File metadata.</param>
-    /// <returns>Smaller numbers indicate higher priority.</returns>
-    protected virtual int GetSourcePriority(FileMetadata f)
-    {
-        var name = Path.GetFileNameWithoutExtension(f.FilePath);
-        return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
     }
 }

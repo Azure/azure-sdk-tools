@@ -1,119 +1,142 @@
-.dialog-content {
-  .feedback-description {
-    color: var(--base-text-color);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin-bottom: 0;
-  }
+.primer-text-secondary {
+  color: var(--text-muted-color);
+  font-size: 14px;
+}
 
-  .feedback-reasons {
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 1rem;
-    background-color: var(--base-fg-color);
+.primer-fieldset {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  background-color: var(--base-fg-color);
+}
 
-    .reason-item {
-      padding: 0.5rem 0;
+.primer-legend {
+  font-weight: 600;
+  color: var(--base-text-color);
+}
 
-      &:not(:last-child) {
-        border-bottom: 1px solid var(--border-color);
-      }
+.primer-label-required {
+  color: #cf222e;
+}
 
-      ::ng-deep .reason-checkbox {
-        .p-checkbox {
-          margin-right: 0.5rem;
-        }
+.primer-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-        .p-checkbox-label {
-          color: var(--base-text-color);
-          font-size: 0.9rem;
-          cursor: pointer;
-          user-select: none;
-        }
-      }
-    }
-  }
+.primer-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  .additional-comments {
-    label {
-      color: var(--base-text-color);
-      font-size: 0.9rem;
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-    }
+.primer-checkbox-label {
+  cursor: pointer;
+}
 
-    textarea {
-      width: 100%;
-      resize: vertical;
-      min-height: 80px;
-      background-color: var(--base-bg-color);
-      border: 1px solid var(--border-color);
-      color: var(--base-text-color);
-      
-      &:focus {
-        border-color: var(--primary-color);
-        outline: none;
-        box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
-      }
-
-      &::placeholder {
-        color: var(--text-muted-color);
-      }
-    }
-  }
-
-  .info-message {
-    padding: 0.75rem;
-    background-color: var(--base-fg-color);
-    border-left: 3px solid var(--primary-color);
-    border-radius: 4px;
-
-    small {
-      color: var(--base-text-color);
-      font-size: 0.85rem;
-    }
-
-    i {
-      font-size: 1rem;
-    }
+.primer-validation-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #9a6700;
+  background-color: #fff8c5;
+  border: 1px solid #d4a72c;
+  border-radius: 6px;
+  
+  [data-theme="dark"] & {
+    color: #e09b13;
+    background-color: rgba(187, 128, 9, 0.15);
+    border-color: rgba(187, 128, 9, 0.4);
   }
 }
 
-::ng-deep {
+.primer-label {
+  font-weight: 600;
+}
+
+.primer-label-optional {
+  font-weight: 400;
+  color: var(--text-muted-color);
+}
+
+.primer-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  color: var(--base-text-color);
+  background-color: var(--base-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  resize: vertical;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+}
+
+.primer-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primer-btn {
+  padding: 5px 16px;
+  font-weight: 500;
+  border-radius: 6px;
+  
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.primer-btn-primary {
+  color: #ffffff;
+  background-color: #1f883d;
+  border: 1px solid rgba(31, 136, 61, 0.4);
+  
+  &:hover:not(:disabled) {
+    background-color: #1a7f37;
+  }
+  
+  &:disabled {
+    background-color: #94d3a2;
+  }
+}
+
+.primer-btn-invisible {
+  color: var(--base-text-color);
+  background-color: transparent;
+  border: 1px solid transparent;
+  
+  &:hover:not(:disabled) {
+    background-color: var(--base-bg-color);
+  }
+}
+
+::ng-deep .primer-dialog {
   .p-dialog {
-    .p-dialog-header {
-      background-color: var(--base-fg-color);
-      border-bottom: 1px solid var(--border-color);
-      color: var(--base-text-color);
-      padding: 1.25rem 1.5rem;
-    }
-
-    .p-dialog-content {
-      padding: 1.5rem;
-      background-color: var(--base-bg-color);
-      color: var(--base-text-color);
-    }
-
-    .p-dialog-footer {
-      background-color: var(--base-fg-color);
-      border-top: 1px solid var(--border-color);
-      padding: 1rem 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .p-dialog-header {
+    background-color: var(--base-fg-color);
+    border-bottom: 1px solid var(--border-color);
+    
+    .p-dialog-title {
+      font-weight: 600;
     }
   }
-
-  .p-checkbox {
-    .p-checkbox-box {
-      border: 2px solid var(--border-color);
-      background-color: var(--base-bg-color);
-      
-      &.p-highlight {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-      }
-
-      &:hover {
-        border-color: var(--primary-color);
-      }
-    }
+  
+  .p-dialog-content {
+    background-color: var(--base-bg-color);
+  }
+  
+  .p-dialog-footer {
+    background-color: var(--base-fg-color);
+    border-top: 1px solid var(--border-color);
   }
 }

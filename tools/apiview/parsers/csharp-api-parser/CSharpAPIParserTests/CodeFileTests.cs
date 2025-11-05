@@ -43,7 +43,7 @@ namespace CSharpAPIParserTests
         {
             new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 9},
             new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 15},
-            new object[] { coreCodeFile, "Azure.Core", "1.44.1.0", 27},
+            new object[] { coreCodeFile, "Azure.Core", "1.47.3.0", 27},
         };
 
         [Theory]
@@ -526,9 +526,9 @@ namespace TestNamespace
         [Fact]
         public void CodeFile_Has_ExtensionMember_Rendered_Correctly()
         {
-            // Load our test extension library
-            Assembly testAssembly = Assembly.Load("TestExtensionsLib");
-            var dllStream = testAssembly.GetFile("TestExtensionsLib.dll");
+            // Load our test extension library from the scratch nupkg
+            Assembly testAssembly = Assembly.Load("scratch");
+            var dllStream = testAssembly.GetFile("scratch.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
             var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
 

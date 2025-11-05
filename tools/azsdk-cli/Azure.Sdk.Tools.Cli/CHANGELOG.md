@@ -1,5 +1,19 @@
 # Release History
 
+## 5.8.0 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Sample generator: Fix integer overflow when calculating file sizes
+- Sample generator: Fix stopping loading when an empty file is encountered
+- Sample generator: Fix not giving enough priority to files in the input package folder
+
+### Other Changes
+
 ## 0.5.7 (2025-11-05)
 
 ### Features Added

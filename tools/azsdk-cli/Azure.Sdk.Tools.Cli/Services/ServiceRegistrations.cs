@@ -74,6 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 Java = typeof(JavaTestRunner),
                 JavaScript = typeof(JavaScriptTestRunner),
+                Go = typeof(GoLanguageSpecificChecks),
                 Python = typeof(PythonTestRunner),
                 DotNet = typeof(DotNetTestRunner),
             });

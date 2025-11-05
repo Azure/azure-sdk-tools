@@ -34,7 +34,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddScoped<ILanguageChecks, LanguageChecks>();
             services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
             {
                 Python = typeof(PythonLanguageSpecificChecks),
@@ -104,6 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Services depending on other scoped services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+            services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
 
             // Telemetry

@@ -14,6 +14,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly IGitHelper _gitHelper;
     private readonly IPowershellHelper _powershellHelper;
     private readonly ILogger<DotNetLanguageSpecificChecks> _logger;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
@@ -23,12 +24,14 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         IProcessHelper processHelper,
         IPowershellHelper powershellHelper,
         IGitHelper gitHelper,
-        ILogger<DotNetLanguageSpecificChecks> logger)
+        ILogger<DotNetLanguageSpecificChecks> logger,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _powershellHelper = powershellHelper;
         _gitHelper = gitHelper;
         _logger = logger;
+        _commonValidationHelpers = commonValidationHelpers;
     }
 
     public async Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
@@ -252,5 +255,17 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogWarning(ex, "Failed to check AotCompatOptOut in project file for package: {PackageName}", packageName);
             return false;
         }
+    }
+
+    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
+    }
+
+
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var packageName = GetPackageNameFromPath(packagePath);
+        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }

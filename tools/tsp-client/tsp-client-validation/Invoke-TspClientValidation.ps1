@@ -6,7 +6,7 @@
 
 .DESCRIPTION
     This script helps automate the process of running SDK validation pipelines across all languages
-    when a new tsp-client version.
+    when a new tsp-client version is released.
 
 .PARAMETER PRNumber
     The PR number from azure-sdk-tools that updates the tsp-client version (e.g., 12360)

@@ -40,14 +40,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Constants
         private const string BuildCommandJsonPath = "packageOptions/buildScript/command";
         private const string BuildScriptPathJsonPath = "packageOptions/buildScript/path";
-        private const string UpdateChangelogCommandJsonPath = "packageOptions/updateChangelogScript/command";
-        private const string UpdateChangelogScriptPathJsonPath = "packageOptions/updateChangelogScript/path";
+        private const string UpdateChangelogContentCommandJsonPath = "packageOptions/UpdateChangelogContentScript/command";
+        private const string UpdateChangelogContentScriptPathJsonPath = "packageOptions/UpdateChangelogContentScript/path";
         private const string UpdateVersionCommandJsonPath = "packageOptions/updateVersionScript/command";
         private const string UpdateVersionScriptPathJsonPath = "packageOptions/updateVersionScript/path";
         private const string UpdateMetadataCommandJsonPath = "packageOptions/updateMetadataScript/command";
         private const string UpdateMetadataScriptPathJsonPath = "packageOptions/updateMetadataScript/path";
-        private const string UpdateCiCommandJsonPath = "packageOptions/updateCiScript/command";
-        private const string UpdateCiScriptPathJsonPath = "packageOptions/updateCiScript/path";
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
 
         private readonly ILogger<SpecGenSdkConfigHelper> _logger;
@@ -186,10 +184,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return configType switch
             {
                 SpecGenSdkConfigType.Build => (BuildCommandJsonPath, BuildScriptPathJsonPath),
-                SpecGenSdkConfigType.UpdateChangelog => (UpdateChangelogCommandJsonPath, UpdateChangelogScriptPathJsonPath),
+                SpecGenSdkConfigType.UpdateChangelogContent => (UpdateChangelogContentCommandJsonPath, UpdateChangelogContentScriptPathJsonPath),
                 SpecGenSdkConfigType.UpdateVersion => (UpdateVersionCommandJsonPath, UpdateVersionScriptPathJsonPath),
                 SpecGenSdkConfigType.UpdateMetadata => (UpdateMetadataCommandJsonPath, UpdateMetadataScriptPathJsonPath),
-                SpecGenSdkConfigType.UpdateCi => (UpdateCiCommandJsonPath, UpdateCiScriptPathJsonPath),
                 _ => throw new ArgumentException($"Unsupported config type: {configType}")
             };
         }
@@ -233,9 +230,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public enum SpecGenSdkConfigType
     {
         Build,
-        UpdateChangelog,
+        UpdateChangelogContent,
         UpdateVersion,
-        UpdateMetadata,
-        UpdateCi
+        UpdateMetadata
     }
 }

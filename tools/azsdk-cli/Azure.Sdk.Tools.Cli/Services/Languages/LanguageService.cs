@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return SdkLanguage.Unknown;
         }
 
-        public async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
+        public async Task<PackageInfo?> GetPackageInfo(string packagePath, CancellationToken ct)
         {
             PackageInfo? packageInfo = null;
             try

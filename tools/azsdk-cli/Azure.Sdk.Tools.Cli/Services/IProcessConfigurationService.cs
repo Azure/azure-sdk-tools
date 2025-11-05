@@ -25,7 +25,7 @@ public interface IProcessConfigurationService
         string sdkRepoRoot,
         string workingDirectory, 
         Dictionary<string, string> parameters,
-        int timeoutMinutes = 30);
+        int timeoutMinutes = 5);
 
     /// <summary>
     /// Executes a process with common error handling and response formatting.

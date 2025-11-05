@@ -40,10 +40,13 @@ public class ProcessConfigurationService : IProcessConfigurationService
         {
             return CreateCommandProcessOptions(configValue, workingDirectory, parameters, timeoutMinutes);
         }
-        else
+        else if (configContentType == SpecGenSdkConfigContentType.ScriptPath)
         {
             return CreateScriptProcessOptions(sdkRepoRoot, configValue, workingDirectory, parameters, timeoutMinutes);
         }
+
+        logger.LogWarning("Unsupported configuration content type: {ConfigContentType}, configValue: {ConfigValue}", configContentType, configValue);
+        return null;
     }
 
     /// <inheritdoc />

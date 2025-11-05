@@ -25,20 +25,20 @@ public class JavaPackageUpdate : ILanguagePackageUpdate
     public async Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
-        throw new NotImplementedException("Java metadata update is not yet implemented.");
+        return _responseFactory.CreateSuccessResponse("noop for language-specific update metadata step", null);
     }
 
     /// <inheritdoc />
     public async Task<PackageOperationResponse> UpdateChangelogContentAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
-        throw new NotImplementedException("Java changelog update is not yet implemented.");
+        return _responseFactory.CreateSuccessResponse("noop for language-specific update changelog content step", null);
     }
 
     /// <inheritdoc />
     public async Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
-        throw new NotImplementedException("Java version update is not yet implemented.");
+        return _responseFactory.CreateSuccessResponse("noop for language-specific update version step", null);
     }
 }

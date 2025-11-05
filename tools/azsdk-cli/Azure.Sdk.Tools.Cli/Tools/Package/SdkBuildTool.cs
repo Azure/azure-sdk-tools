@@ -156,9 +156,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Create process options for building the SDK based on configuration
         private async Task<ProcessOptions> CreateProcessOptions(string sdkRepoRoot, string packagePath)
         {
-            var (configType, configValue) = await specGenSdkConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
+            var (configType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
 
-            if (configType == BuildConfigType.Command)
+            if (configType == SpecGenSdkConfigContentType.Command)
             {
                 // Execute as command
                 var variables = new Dictionary<string, string>

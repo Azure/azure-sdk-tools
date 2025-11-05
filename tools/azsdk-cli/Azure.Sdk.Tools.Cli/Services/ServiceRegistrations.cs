@@ -77,6 +77,15 @@ namespace Azure.Sdk.Tools.Cli.Services
                 DotNet = typeof(DotNetTestRunner),
             });
 
+            services.AddLanguageSpecific<ILanguagePackageUpdate>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageUpdate),
+                Java = typeof(JavaPackageUpdate),
+                Python = typeof(PythonPackageUpdate),
+                JavaScript = typeof(JavaScriptPackageUpdate),
+                Go = typeof(GoPackageUpdate),
+            });
+
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
@@ -91,6 +100,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
+            services.AddSingleton<IResponseFactory, ResponseFactory>();
+            services.AddSingleton<IProcessConfigurationService, ProcessConfigurationService>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();

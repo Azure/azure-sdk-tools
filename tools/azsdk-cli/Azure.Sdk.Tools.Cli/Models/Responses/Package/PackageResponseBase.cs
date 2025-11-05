@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Attributes;
-using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {

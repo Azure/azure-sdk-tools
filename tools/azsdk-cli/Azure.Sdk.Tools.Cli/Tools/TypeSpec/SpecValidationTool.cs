@@ -62,7 +62,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         {
             try
             {
-                var response = new TypeSpecValidationResponse();
+                var response = new TypeSpecValidationResponse()
+                {
+                    TypeSpecProject = typeSpecProjectRootPath
+                };
                 logger.LogInformation("TypeSpec project root path: {typeSpecProjectRootPath}", typeSpecProjectRootPath);
                 if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
                 {
@@ -101,7 +104,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception in TypeSpec validation");
-                return new() { ResponseError = $"Unhandled exception: {ex.Message}" };
+                return new()
+                {
+                    ResponseError = $"Unhandled exception: {ex.Message}",
+                    TypeSpecProject = typeSpecProjectRootPath
+                };
             }
         }
 

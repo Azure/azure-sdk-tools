@@ -117,7 +117,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --template, '{template}'. Must be one of: {string.Join(", ", templateMap.Keys)}."
+                        ResponseError = $"Failed: Invalid --template, '{template}'. Must be one of: {string.Join(", ", templateMap.Keys)}.",
+                        TypeSpecProject = outputDirectory
                     };
                 }
 
@@ -133,7 +134,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --service-namespace, '{serviceNamespace}'."
+                        ResponseError = $"Failed: Invalid --service-namespace, '{serviceNamespace}'.",
+                        TypeSpecProject = outputDirectory
                     };
                 }
 
@@ -151,7 +153,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 logger.LogError(ex, "Error occurred while initializing TypeSpec project: {outputDirectory}, {template}, {serviceNamespace}", outputDirectory, template, serviceNamespace);
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}"
+                    ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}",
+                    TypeSpecProject = outputDirectory
                 };
             }
         }
@@ -173,7 +176,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             {
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
+                    ResponseError = $"Failed: Invalid --output-directory, {validationResult}",
+                    TypeSpecProject = string.Empty
                 };
             }
 
@@ -181,7 +185,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             {
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo",
+                    TypeSpecProject = string.Empty
                 };
             }
 
@@ -189,7 +194,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             {
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification",
+                    TypeSpecProject = string.Empty
                 };
             }
 
@@ -217,14 +223,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed to initialize TypeSpec project, see details in the above logs."
+                        ResponseError = $"Failed to initialize TypeSpec project, see details in the above logs.",
+                        TypeSpecProject = string.Empty
                     };
                 }
                 return new TspToolResponse
                 {
                     ResponseError = $"Failed to initialize TypeSpec project, see generator output below" +
                                     Environment.NewLine +
-                                    result.Output
+                                    result.Output,
+                    TypeSpecProject = string.Empty
                 };
             }
 

@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         [Telemetry]
         [JsonPropertyName("typespec_project")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public string TypeSpecProject { get; set; } = string.Empty;
+        public required string TypeSpecProject { get; set; } = string.Empty;
         [JsonPropertyName("package_type")]
         [Telemetry]
         public SdkType PackageType { get; set; }

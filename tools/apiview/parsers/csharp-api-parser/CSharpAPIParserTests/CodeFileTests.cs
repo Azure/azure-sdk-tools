@@ -540,13 +540,7 @@ namespace TestNamespace
                            l.LineId?.Contains("TestExtensions") == true)
                 .FirstOrDefault();
 
-            if (extensionsClass == null)
-            {
-                // Try finding any class in the TestExtensions namespace
-                extensionsClass = codeFile.ReviewLines
-                    .Where(l => l.LineId?.Contains("TestExtensions") == true)
-                    .FirstOrDefault();
-            }
+            // Redundant fallback search removed as initial query already covers "TestExtensions"
 
             // For debugging, at least verify that the codeFile has some content
             Assert.True(codeFile.ReviewLines.Any(), "CodeFile should have some review lines");

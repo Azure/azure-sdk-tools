@@ -1,8 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-namespace Azure.Sdk.Tools.Cli.Models.Responses
+namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
     public class SdkReleaseResponse : PackageResponseBase
     {

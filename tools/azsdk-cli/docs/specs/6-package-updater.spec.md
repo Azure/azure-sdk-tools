@@ -86,7 +86,28 @@ Implement three individual CLI + MCP tools. Each tool:
 4. Otherwise falls back the CLI's built-in implementation for that language.
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
-Note: see the [repo-tooling-contract](./99-repo-tooling-contract.md) spec for more details.
+#### Configuration for the language respository
+
+Each language repository includes a `swagger_to_sdk_config.json` under its `eng` folder. Per-language script entrypoints are declared in the `packageOptions` section using repository-root–relative paths. The CLI will resolve those paths against the discovered repo root, convert them to absolute paths before invoking, and validate file existence before execution.
+
+Example configuration,
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/spec-gen-sdk/src/types/SwaggerToSdkConfigSchema.json",
+  "packageOptions": {
+    "updateChangelogContentScript": {
+      "path": "./eng/scripts/Automation-Sdk-UpdateChangelogContent.ps1"
+    },
+    "updateVersionScript": {
+      "path": "./eng/scripts/Automation-Sdk-UpdateVersion.ps1"
+    },
+    "updateMetadataScript": {
+      "path": "./eng/scripts/Automation-Sdk-UpdateMetadata.ps1"
+    }
+  }
+}
+```
 
 ### Detailed Design
 

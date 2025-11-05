@@ -97,7 +97,7 @@ Monitor the status of already-running pipelines:
 
 ## Workflow
 
-The script follows the process from `tspclient-automation-check.prompt.md`:
+The script follows this process:
 
 1. **Validates Prerequisites** - Checks Azure CLI and DevOps extension
 2. **Maps Sync Branches** - Associates PR numbers with sync branch names

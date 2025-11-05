@@ -1,9 +1,9 @@
 # Release
 
-## Unreleased - 0.29.1
+## 2025-11-04 - 0.29.1
 
-- Updated `generate-config-files` command to preserve all existing fields in emitter-package.json when updating. Previously, only dependencies and devDependencies were retained; now all fields (name, version, scripts, author, license, and custom properties) are preserved.
-- Output a tsp_client_metadata.yaml file during code generation with information like tsp-client version, date created or modified, and emitter-package.json content. The metadata file will be outputted when using the following commands: `init`, `update`, `generate`.
+- Updated `generate-config-files` command to preserve all existing fields in emitter-package.json when updating. Previously, only dependencies and devDependencies were retained; now all extra fields are preserved.
+- Output a tsp_client_metadata.yaml file during code generation with information like tsp-client version, date created or modified, and emitter-package.json content. The metadata file will be outputted when using the following commands: `init`, `update`, `generate`. NOTE: This file can and will change format and is for tsp-client usage.
 
 ## 2025-09-29 - 0.29.0
 

@@ -38,7 +38,7 @@ public static class SdkLanguageExtensions
     public static SdkLanguage GetLanguageForRepo(IGitHelper gitHelper, string pathInRepo)
     {
         string repoName = gitHelper.GetRepoName(pathInRepo);
-        return GetLanguageForRepo(pathInRepo);
+        return GetLanguageForRepo(repoName);
     }
 
     public static SdkLanguage GetLanguageForRepo(string repoName)

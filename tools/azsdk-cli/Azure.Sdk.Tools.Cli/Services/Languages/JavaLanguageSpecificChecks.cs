@@ -118,8 +118,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 return prerequisiteCheck;
             }
 
-            // Use Azure SDK approach: mvn install with linting properties (based on run-and-validate-linting.yml)
-            // This matches the Azure SDK for Java pipeline which runs linting during install phase
+            // Use mvn install with ALL linting tools in fail-safe mode
             // This follows the "accumulate all errors" pattern instead of failing fast
             // The -am flag ensures parent POMs are built/resolved automatically
             var args = new List<string>
@@ -138,13 +137,16 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             };
 
             // Configure ALL linting tools in fail-safe mode - accumulate errors instead of failing fast
-            args.AddRange([
-                "-Dcheckstyle.failOnViolation=false",
-                "-Dcheckstyle.failsOnError=false",
-                "-Dspotbugs.failOnError=false",
-                "-Drevapi.failBuildOnProblemsFound=false"
-                // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
-            ]);
+            if (fixCheckErrors)
+            {
+                args.AddRange([
+                    "-Dcheckstyle.failOnViolation=false",
+                    "-Dcheckstyle.failsOnError=false",
+                    "-Dspotbugs.failOnError=false",
+                    "-Drevapi.failBuildOnProblemsFound=false"
+                    // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
+                ]);
+            }
 
             var result = await _mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
 
@@ -152,16 +154,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             var output = result.Output;
             var lintingResults = ParseLintingResults(output);
 
-            // Run javadoc validation as separate step (following Azure SDK pipeline pattern)
-            _logger.LogInformation("Running javadoc validation");
-            var javadocResult = await _mavenHelper.Run(new("javadoc:jar", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
-            
-            // Add javadoc results to linting results
-            var javadocHasIssues = javadocResult.ExitCode != 0;
-            lintingResults.Add(("Javadoc", javadocHasIssues));
-            
-            // Combine outputs for comprehensive reporting
-            var combinedOutput = $"{output}\n\n--- Javadoc Validation ---\n{javadocResult.Output}";
             var failedTools = lintingResults.Where(r => r.HasIssues).ToList();
             var passedTools = lintingResults.Where(r => !r.HasIssues).ToList();
 
@@ -211,7 +203,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 nextSteps.Add("Review the linting errors and fix them manually - no auto-fix available");
                 nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true to skip specific tools during development");
 
-                return new PackageCheckResponse(result.ExitCode, combinedOutput, errorMessage)
+                return new PackageCheckResponse(result.ExitCode, output, errorMessage)
                 {
                     NextSteps = nextSteps
                 };

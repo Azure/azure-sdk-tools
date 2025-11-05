@@ -54,9 +54,13 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         {
             if (!string.IsNullOrEmpty(TestSetup.GetCopilotInstructionsPath))
             {
-                var baseUri = new Uri(TestSetup.GetCopilotInstructionsPath!);
-                var resolvedUri = new Uri(baseUri, instructionRelativePath);
-                return File.ReadAllText(resolvedUri.LocalPath);
+                var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.GetCopilotInstructionsPath!)!;
+
+                // Use Uri + Path APIs to normalize the relative path
+                var instructionUri = new Uri(Path.Combine(copilotBaseDirectory, instructionRelativePath));
+                string instructionPath = Path.GetFullPath(instructionUri.LocalPath);
+                Console.WriteLine($"Loading instructions from local path: {instructionPath}");
+                return File.ReadAllText(instructionPath);
             }
             else
             {

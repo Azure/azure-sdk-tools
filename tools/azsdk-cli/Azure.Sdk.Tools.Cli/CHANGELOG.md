@@ -10,6 +10,7 @@
 ### Bugs Fixed
 
 - Validation workflow fixes
+- Fix issue in telemetry service when setting string properties
 
 ## 0.5.6 (2025-11-03)
 

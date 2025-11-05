@@ -39,7 +39,7 @@ public static class AzureOpenAIClientHelper
 
         // Fall back to bearer token (Entra ID) authentication
         BearerTokenPolicy tokenPolicy = new(credential, "https://cognitiveservices.azure.com/.default");
-        options.AddPolicy(tokenPolicy, PipelinePosition.PerCall);
+        options.AddPolicy(tokenPolicy, PipelinePosition.BeforeTransport);
 
         // Create client with a placeholder API key (required by constructor but not used due to our bearer token policy)
         return new OpenAIClient(new ApiKeyCredential(PlaceholderApiKey), options);

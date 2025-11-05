@@ -527,7 +527,7 @@ namespace TestNamespace
         public void CodeFile_Has_ExtensionMember_Rendered_Correctly()
         {
             // Load our test extension library
-            Assembly testAssembly = Assembly.LoadFrom("/Users/christopherscott/src/azure-sdk-tools/artifacts/bin/TestExtensionsLib/Debug/net9.0/TestExtensionsLib.dll");
+            Assembly testAssembly = Assembly.Load("TestExtensionsLib");
             var dllStream = testAssembly.GetFile("TestExtensionsLib.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
             var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);

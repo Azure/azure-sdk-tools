@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, it } from "vitest";
 import { createTspClientMetadata } from "../src/metadata.js";
 import { removeDirectory, ensureDirectory } from "../src/fs.js";
 import { assert } from "chai";

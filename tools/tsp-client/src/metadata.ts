@@ -1,7 +1,7 @@
 import { writeFile, readFile } from "fs/promises";
 import { Logger } from "./log.js";
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
-import { getPackageJson } from "./utils.js";
+import { getPackageJson, parseTspClientRepoConfig } from "./utils.js";
 import * as yaml from "yaml";
 import { relative } from "path";
 
@@ -20,7 +20,8 @@ interface TspClientMetadata {
 }
 
 /**
- * Creates a tsp_client_metadata.yaml file with information about the tsp-client command run.
+ * Creates a tsp-client-metadata.yaml file with information about the tsp-client command run.
+ * This is an opt-in feature. To get tsp-client-metadata.yaml generated, set generateMetadata: true in tsp-client-config.yaml.
  *
  * @param outputDir - The directory where the metadata file will be created
  * @param emitterPackageJsonPath - Path to the emitter-package.json file
@@ -31,7 +32,17 @@ export async function createTspClientMetadata(
   emitterPackageJsonPath: string,
 ): Promise<void> {
   try {
-    Logger.info("Creating tsp_client_metadata.yaml file...");
+    // Read the global tsp-client-config.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
+    const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
+
+    if (
+      tspclientGlobalConfigData === undefined ||
+      tspclientGlobalConfigData?.generateMetadata !== true
+    ) {
+      Logger.info("Skipping creation of tsp-client-metadata.yaml file.");
+      return;
+    }
+    Logger.info("Creating tsp-client-metadata.yaml file...");
 
     // Get package.json information
     const packageJson = await getPackageJson();
@@ -52,12 +63,12 @@ export async function createTspClientMetadata(
     const yamlContent = yaml.stringify(metadata);
 
     // Write the metadata file
-    const metadataFilePath = joinPaths(outputDir, "tsp_client_metadata.yaml");
+    const metadataFilePath = joinPaths(outputDir, "tsp-client-metadata.yaml");
     await writeFile(metadataFilePath, yamlContent, "utf8");
 
-    Logger.info(`Successfully created tsp_client_metadata.yaml at ${metadataFilePath}`);
+    Logger.info(`Successfully created tsp-client-metadata.yaml at ${metadataFilePath}`);
   } catch (error) {
-    Logger.error(`Error creating tsp_client_metadata.yaml: ${error}`);
+    Logger.error(`Error creating tsp-client-metadata.yaml: ${error}`);
     throw error;
   }
 }

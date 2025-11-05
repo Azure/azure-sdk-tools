@@ -477,7 +477,7 @@ export class CommentThreadComponent {
     
     this.executePendingAction();
     
-    if (feedback.reasons.length > 0 || feedback.additionalComments.trim().length > 0) {
+    if (feedback.reasons.length > 0) {
       this.commentsService.submitAICommentFeedback(
         this.reviewId,
         feedback.commentId,

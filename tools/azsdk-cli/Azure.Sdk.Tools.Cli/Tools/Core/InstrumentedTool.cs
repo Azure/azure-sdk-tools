@@ -59,10 +59,25 @@ public class InstrumentedTool(
                         {
                             foreach (var kvp in responseDict)
                             {
-                                if (kvp.Value != null)
+                                if (kvp.Value is JsonElement value)
+                                {
+                                    switch (value.ValueKind)
+                                    {
+                                        // Add custom properties based on the value kind. Otherwise string type is url escaped in telemetry
+                                        // like \"python\" instead of python
+                                        case JsonValueKind.String:
+                                            activity?.SetCustomProperty(kvp.Key, value.GetString() ?? string.Empty);
+                                            break;
+                                        default:
+                                            activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
+                                            break;
+                                    }                                    
+                                }
+                                else
                                 {
                                     activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
                                 }
+
                             }                  
                         }
                     }

@@ -21,7 +21,7 @@
 
 - **Stage 6**: The standardized SDK preparation stage after code/tests/samples validation and before creating the release preparation PR.
 - **Metadata and Documentation Update**: Consolidated set of actions to ensure non-source assets (README, changelog, CI config, version numbers, additional descriptors) are accurate and consistent.
-- **Tool**: A discrete CLI (and MCP agent-exposed) command implementing one cohesive post-generation preparation task.
+- **Tool**: A discrete CLI and MCP agent-exposed command implementing one cohesive post-generation preparation task.
 
 ---
 

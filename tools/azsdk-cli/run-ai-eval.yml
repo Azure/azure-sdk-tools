@@ -1,6 +1,6 @@
 parameters:
   EvalProject: ''
-  OpenAIEndPoint: $(azsdk-eval-openai-url)
+  OpenAIEndPoint: 'https://ai-prmarottai3149546654251245.openai.azure.com/'
   Model: 'gpt-5'
   RepoName: 'azure-rest-api-specs'
   RepoOwner: 'Azure'

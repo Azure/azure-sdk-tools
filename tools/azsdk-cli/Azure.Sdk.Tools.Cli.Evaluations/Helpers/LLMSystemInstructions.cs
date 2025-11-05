@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 // Use Uri + Path APIs to normalize the relative path
                 var instructionUri = new Uri(Path.Combine(copilotBaseDirectory, instructionRelativePath));
                 string instructionPath = Path.GetFullPath(instructionUri.LocalPath);
-                Console.WriteLine($"Loading instructions from local path: {instructionPath}");
+                Console.WriteLine($"Loading instructions from local path: {instructionPath}, {instructionRelativePath}");
                 return File.ReadAllText(instructionPath);
             }
             else

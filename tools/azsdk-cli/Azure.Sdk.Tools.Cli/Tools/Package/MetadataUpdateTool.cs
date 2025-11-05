@@ -120,7 +120,7 @@ public class MetadataUpdateTool : MCPTool
                 return await languagePackageUpdateService.UpdateMetadataAsync(packagePath, ct);
             }
 
-            _logger.LogError("Fail to resolve language package update service for package path: {packagePath}", packagePath);
+            _logger.LogError("Failed to resolve language package update service for package path: {packagePath}", packagePath);
             return _responseFactory.CreateFailureResponse("Failed to resolve language package update service.");
         }
         catch (Exception ex)

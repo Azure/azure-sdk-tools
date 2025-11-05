@@ -64,7 +64,7 @@ Formalizing Stage 6 as cohesive tools improves reliability, supports automation-
 | Exception | Description | Impact | Workaround |
 |---|---|---|---|
 | Data‑Plane Deferred Version Bump | Data‑plane packages typically defer version adjustment and release‑date updates until the release‑preparedness phase. | The `update-version` tool may be a no‑op for data‑plane flows during Stage 6. | Keep version changes manually for milestone 1. |
-| Changelog Auto‑Generation (Data‑Plane) | Automatic changelog generation is not performed for data‑plane packages; manual editing is expected. | The `update-changelog` tool should not auto‑generate entries for data‑plane packages and should instead surface guidance. | Return a `noop` result with `next_steps` prompting manual edits. Consider future LLM integration to automate this post milestone 1. |
+| Changelog Auto‑Generation (Data‑Plane) | Automatic changelog generation is not performed for data‑plane packages; manual editing is expected. | The `update-changelog-content` tool should not auto‑generate entries for data‑plane packages and should instead surface guidance. | Return a `noop` result with `next_steps` prompting manual edits. Consider future LLM integration to automate this post milestone 1. |
 
 ### Language-Specific Limitations
 
@@ -107,7 +107,7 @@ The three tools are intentionally small, composable units. Each emits a machine-
 
 Name (CLI): `azsdk package update-changelog-content`
 
-Name (MCP): `azsdk_package_update_changelog`
+Name (MCP): `azsdk_package_update_changelog-content`
 
 Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected. This tool only modifies changelog content and does not change release date or version numbers.
 
@@ -263,7 +263,7 @@ flowchart TD
 
 ### Workflow Diagram
 
-#### Update-Changelog (mgmt-plane)
+#### Update-Changelog-Content (mgmt-plane)
 
 ```mermaid
 flowchart TD
@@ -274,19 +274,19 @@ flowchart TD
     
       E --> F{Repository root found?}
       F -->|No| G[Return failure: Failed to discover SDK repo]
-      F -->|Yes| H[Get update-changelog configuration] 
+      F -->|Yes| H[Get update-changelog-content configuration] 
     
       H --> I{Configuration retrieval successful?}
-      I -->|No| J[Return failure: Failed to get update-changelog configuration] 
+      I -->|No| J[Return failure: Failed to get update-changelog-content configuration] 
       I -->|Yes| K{Configuration type?}
     
-      K -->|Script| L[Run update-changelog script]
+      K -->|Script| L[Run update-changelog-content script]
       K -->|None| M[Run CLI built-in code] 
     
       L --> N[Prepare result] 
       M --> N
     
-      N --> O{update-changelog process completed?} 
+      N --> O{update-changelog-content process completed?} 
       O -->|Failed| P[Return failure with exit code and output]
       O -->|Success| Q[Return success]
     
@@ -440,7 +440,7 @@ azsdk package update-metadata --package-path <absolute_folder_path_to_package>
 
 ### Phase 1: Core Tooling (Milestone 1)
 
-- Milestone: Implement CLI + MCP entrypoints for three tools including update-changelog, update-version, and update-metadata; integrate repository script service; mgmt-plane happy path.
+- Milestone: Implement CLI + MCP entrypoints for three tools including update-changelog-content, update-version, and update-metadata; integrate repository script service; mgmt-plane happy path.
 - Timeline: 1 sprint.
 - Dependencies: language-specific logic implementation.
 

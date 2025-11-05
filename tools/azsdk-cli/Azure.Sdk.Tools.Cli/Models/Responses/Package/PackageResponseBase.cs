@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Attributes;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
@@ -20,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 {
                     return _language;
                 }
-                _language = LanguageService.GetLanguageForRepo(SdkRepoName);
+                _language = SdkLanguageExtensions.GetLanguageForRepo(SdkRepoName);
                 return _language;
             }
             set

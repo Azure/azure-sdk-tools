@@ -3,19 +3,20 @@
 using System.IO.Enumeration;
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.Extensions.Azure;
-using ModelContextProtocol.Server;
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
-using Azure.Sdk.Tools.Cli.Telemetry;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Services.Tests;
 using Azure.Sdk.Tools.Cli.Services.VerifySetup;
+using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Tools;
+using Microsoft.Extensions.Azure;
+using ModelContextProtocol.Server;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -36,56 +37,50 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
-            {
-                Python = typeof(PythonLanguageSpecificChecks),
-                Java = typeof(JavaLanguageSpecificChecks),
-                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
-                DotNet = typeof(DotNetLanguageSpecificChecks),
-                Go = typeof(GoLanguageSpecificChecks),
-            });
+            services.AddLanguageSpecific<ILanguageSpecificChecks>(
+                python: typeof(PythonLanguageSpecificChecks),
+                java: typeof(JavaLanguageSpecificChecks),
+                javascript: typeof(JavaLanguageSpecificChecks),
+                dotnet: typeof(DotNetLanguageSpecificChecks),
+                go: typeof(GoLanguageSpecificChecks)
+            );
 
             // Client update language services
-            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
-            {
-                Java = typeof(JavaUpdateLanguageService),
-                // Future: Python = typeof(PythonUpdateLanguageService), etc
-            });
+            services.AddLanguageSpecific<IClientUpdateLanguageService>(
+                java: typeof(JavaUpdateLanguageService)
+                // Future: python: typeof(PythonUpdateLanguageService), etc
+            );
 
-            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetPackageInfoHelper),
-                Java = typeof(JavaPackageInfoHelper),
-                Python = typeof(PythonPackageInfoHelper),
-                JavaScript = typeof(JavaScriptPackageInfoHelper),
-                Go = typeof(GoPackageInfoHelper),
-            });
+            services.AddLanguageSpecific<IPackageInfoHelper>(
+                dotnet: typeof(DotNetPackageInfoHelper),
+                java: typeof(JavaPackageInfoHelper),
+                python: typeof(PythonPackageInfoHelper),
+                javascript: typeof(JavaScriptPackageInfoHelper),
+                go: typeof(GoPackageInfoHelper)
+            );
 
-            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetSampleLanguageContext),
-                Java = typeof(JavaSampleLanguageContext),
-                Python = typeof(PythonSampleLanguageContext),
-                JavaScript = typeof(TypeScriptSampleLanguageContext),
-                Go = typeof(GoSampleLanguageContext),
-            });
+            services.AddLanguageSpecific<SampleLanguageContext>(
+                dotnet: typeof(DotNetSampleLanguageContext),
+                java: typeof(JavaSampleLanguageContext),
+                python: typeof(PythonSampleLanguageContext),
+                javascript: typeof(TypeScriptSampleLanguageContext),
+                go: typeof(GoSampleLanguageContext)
+            );
 
-            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
-            {
-                Java = typeof(JavaTestRunner),
-                JavaScript = typeof(JavaScriptTestRunner),
-                Python = typeof(PythonTestRunner),
-                DotNet = typeof(DotNetTestRunner),
-            });
+            services.AddLanguageSpecific<ITestRunner>(
+                java: typeof(JavaTestRunner),
+                javascript: typeof(JavaScriptTestRunner),
+                python: typeof(PythonTestRunner),
+                dotnet: typeof(DotNetTestRunner)
+            );
 
-            services.AddLanguageSpecific<IEnvRequirementsCheck>(new LanguageSpecificImplementations
-            {
-                Python = typeof(PythonRequirementsCheck),
-                Java = typeof(JavaRequirementsCheck),
-                JavaScript = typeof(JavaScriptRequirementsCheck),
-                DotNet = typeof(DotNetRequirementsCheck),
-                Go = typeof(GoRequirementsCheck),
-            });
+            services.AddLanguageSpecific<IEnvRequirementsCheck>(
+                python: typeof(PythonRequirementsCheck),
+                java: typeof(JavaRequirementsCheck),
+                javascript: typeof(JavaScriptRequirementsCheck),
+                dotnet: typeof(DotNetRequirementsCheck),
+                go: typeof(GoRequirementsCheck)
+            );
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
@@ -183,6 +178,36 @@ namespace Azure.Sdk.Tools.Cli.Services
                         return new InstrumentedTool(telemetryService, logger, innerTool);
                     }));
                 }
+            }
+        }
+
+        public static void AddLanguageSpecific<T>(this IServiceCollection services,
+            Type dotnet = default,
+            Type go = default,
+            Type java = default,
+            Type javascript = default,
+            Type python = default) where T : class
+        {
+            services.AddScoped<ILanguageSpecificResolver<T>, LanguageSpecificResolver<T>>();
+            if (dotnet != null)
+            {
+                services.AddKeyedScoped(typeof(T), SdkLanguage.DotNet, dotnet);
+            }
+            if (go != null)
+            {
+                services.AddKeyedScoped(typeof(T), SdkLanguage.Go, go);
+            }
+            if (java != null)
+            {
+                services.AddKeyedScoped(typeof(T), SdkLanguage.Java, java);
+            }
+            if (javascript != null)
+            {
+                services.AddKeyedScoped(typeof(T), SdkLanguage.JavaScript, javascript);
+            }
+            if (python != null)
+            {
+                services.AddKeyedScoped(typeof(T), SdkLanguage.Python, python);
             }
         }
     }

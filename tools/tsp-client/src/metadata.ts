@@ -35,7 +35,10 @@ export async function createTspClientMetadata(
     // Read the global tsp-client-config.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
     const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
 
-    if (tspclientGlobalConfigData === undefined || !tspclientGlobalConfigData?.generateMetadata) {
+    if (
+      tspclientGlobalConfigData === undefined ||
+      tspclientGlobalConfigData?.generateMetadata !== true
+    ) {
       Logger.info("Skipping creation of tsp-client-metadata.yaml file.");
       return;
     }

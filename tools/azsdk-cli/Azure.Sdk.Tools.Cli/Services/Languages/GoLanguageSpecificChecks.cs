@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Go-specific implementation of language repository service.
 /// Uses tools like go build, go test, go mod, gofmt, etc. for Go development workflows.
 /// </summary>
-public class GoLanguageSpecificChecks : ILanguageSpecificChecks
+public class GoLanguageSpecificChecks : ILanguageSpecificChecks, Tests.ITestRunner
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;
@@ -125,20 +125,6 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> RunTests(string packagePath, CancellationToken ct)
-    {
-        try
-        {
-            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTests));
-            return new PackageCheckResponse(1, "", $"{nameof(RunTests)} failed with an exception: {ex.Message}");
-        }
-    }
-
     public async Task<PackageCheckResponse> BuildProject(string packagePath, CancellationToken ct)
     {
         try
@@ -177,6 +163,20 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
         return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    {
+        try
+        {
+            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTests));
+            return false;
+        }
     }
 }
 

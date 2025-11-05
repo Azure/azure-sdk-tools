@@ -88,16 +88,10 @@ public abstract class SampleLanguageContext
         var name = Path.GetFileNameWithoutExtension(f.FilePath);
         var hasClient = name.Contains("client", StringComparison.OrdinalIgnoreCase);
         
-        if (isFromMainPackage)
-        {
-            // Files from main package get priority 1-10
-            return hasClient ? 1 : 5;
-        }
-        else
-        {
-            // Files from extra context get priority 20-50
-            return hasClient ? 20 : 50;
-        }
+        // Files from main package get priority 1-10, extra context get 20-50
+        return isFromMainPackage
+            ? (hasClient ? 1 : 5)
+            : (hasClient ? 20 : 50);
     }
 
     /// <summary>

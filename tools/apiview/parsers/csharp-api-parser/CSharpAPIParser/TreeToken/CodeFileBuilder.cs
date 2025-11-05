@@ -326,11 +326,14 @@ namespace CSharpAPIParser.TreeToken
                         BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // If extension member detection fails, fall back to regular type building
+                    // Log the exception before falling back to regular type building
+                    System.Console.Error.WriteLine($"Exception in extension member detection for type '{namedTypeSymbol?.Name}': {ex}");
                     if (namedTypeSymbol != null)
+                    {
                         BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
                 }
             }
 
@@ -562,7 +565,9 @@ namespace CSharpAPIParser.TreeToken
         private bool IsExtensionMemberContainer(INamedTypeSymbol namedType)
         {
             if (namedType == null)
+            {
                 return false;
+            }
                 
             // Extension member containers are compiler-generated nested classes
             // They have specific name patterns like <G>$ or <M>$ and contain extension marker methods

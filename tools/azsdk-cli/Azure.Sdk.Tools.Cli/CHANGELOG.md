@@ -8,6 +8,10 @@
 
 ### Bugs Fixed
 
+- Sample generator: Fix integer overflow when calculating file sizes
+- Sample generator: Fix stopping loading when an empty file is encountered
+- Sample generator: Fix not giving enough priority to files in the input package folder
+
 ### Other Changes
 
 ## 0.5.6 (2025-11-03)

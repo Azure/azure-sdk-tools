@@ -4,6 +4,10 @@ using System.IO.Enumeration;
 using System.Reflection;
 using System.Text.Json;
 using Azure.AI.OpenAI;
+using System.ClientModel;
+using Microsoft.Extensions.Azure;
+using ModelContextProtocol.Server;
+using OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -122,19 +126,46 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection
                 var service = new AzureService();
                 clientBuilder.UseCredential(service.GetCredential());
+            });
 
-                // Azure OpenAI client does not, for some reason, have an
-                // in-package facade for this, so register manually.
-                clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
-                    (options, credential, _) =>
-                    {
-                        var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-                        var ep = string.IsNullOrWhiteSpace(endpointEnvVar) ?
-                            "https://openai-shared.openai.azure.com"
-                            : endpointEnvVar;
+            // Register OpenAI client with endpoint and authentication
+            services.AddSingleton<OpenAIClient>(sp =>
+            {
+                var azureService = sp.GetRequiredService<IAzureService>();
+                var credential = azureService.GetCredential();
 
-                        return new AzureOpenAIClient(new Uri(ep), credential, options);
-                    });
+                var openAiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                var openAiBaseUrl = Environment.GetEnvironmentVariable("OPENAI_BASE_URL");
+                var azureOpenAiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+
+                Uri? endpoint = null;
+
+                // Priority 1: Use OPENAI_BASE_URL if it exists
+                if (!string.IsNullOrWhiteSpace(openAiBaseUrl))
+                {
+                    endpoint = new Uri(openAiBaseUrl);
+                }
+                // Priority 2: Use AZURE_OPENAI_ENDPOINT with /openai/v1 postfix if it exists
+                else if (!string.IsNullOrWhiteSpace(azureOpenAiEndpoint))
+                {
+                    var baseEndpoint = azureOpenAiEndpoint.TrimEnd('/') + "/openai/v1";
+                    endpoint = new Uri(baseEndpoint);
+                }
+                // Priority 3: If no OPENAI_API_KEY but no Azure endpoint, use openai-shared
+                else if (string.IsNullOrWhiteSpace(openAiApiKey))
+                {
+                    endpoint = new Uri("https://openai-shared.openai.azure.com/openai/v1");
+                }
+                // Priority 4: OPENAI_API_KEY exists but no Azure endpoint - use standard OpenAI (no endpoint)
+
+                // If we have an endpoint, use the Azure helper which handles bearer token vs API key
+                if (endpoint != null)
+                {
+                    return AzureOpenAIClientHelper.CreateAzureOpenAIClient(endpoint, credential);
+                }
+
+                // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)
+                return new OpenAIClient(new ApiKeyCredential(openAiApiKey!));
             });
         }
 

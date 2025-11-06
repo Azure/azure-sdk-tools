@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 {
                     return _language;
                 }
-                _language = SdkLanguageExtensions.GetLanguageForRepo(SdkRepoName);
+                _language = SdkLanguageHelpers.GetLanguageForRepo(SdkRepoName);
                 return _language;
             }
             set

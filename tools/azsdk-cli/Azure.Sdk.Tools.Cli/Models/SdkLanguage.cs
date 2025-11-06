@@ -22,7 +22,7 @@ public enum SdkLanguage
     Rust
 }
 
-public static class SdkLanguageExtensions
+public static class SdkLanguageHelpers
 {
 
     private static readonly ImmutableDictionary<string, SdkLanguage> RepoToLanguageMap = new Dictionary<string, SdkLanguage>()
@@ -46,6 +46,11 @@ public static class SdkLanguageExtensions
         if (string.IsNullOrEmpty(repoName))
         {
             return SdkLanguage.Unknown;
+        }
+        if (repoName.EndsWith("-pr"))
+        {
+            // Our private repos end with "-pr" so strip that off for the context of determining the language.
+            repoName = repoName.Substring(0, repoName.Length - "-pr".Length);
         }
         if (RepoToLanguageMap.TryGetValue(repoName.ToLower(), out SdkLanguage language))
         {

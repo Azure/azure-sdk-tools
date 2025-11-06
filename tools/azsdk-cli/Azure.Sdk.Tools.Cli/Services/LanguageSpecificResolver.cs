@@ -41,6 +41,6 @@ public class LanguageSpecificResolver<T>(
 
     private SdkLanguage DetectLanguage(string pathInRepo, CancellationToken ct)
     {
-        return SdkLanguageExtensions.GetLanguageForRepo(_gitHelper, pathInRepo);
+        return SdkLanguageHelpers.GetLanguageForRepo(_gitHelper, pathInRepo);
     }
 }

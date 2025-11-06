@@ -70,6 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddLanguageSpecific<ITestRunner>(
                 java: typeof(JavaTestRunner),
                 javascript: typeof(JavaScriptTestRunner),
+                go: typeof(GoLanguageSpecificChecks),
                 python: typeof(PythonTestRunner),
                 dotnet: typeof(DotNetTestRunner)
             );

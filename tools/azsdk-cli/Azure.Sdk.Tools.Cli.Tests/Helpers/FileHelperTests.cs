@@ -437,6 +437,158 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
         #endregion
 
+        #region Empty File Handling Tests
+
+        [Test]
+        public void CreateLoadingPlanFromMetadata_WithEmptyFiles_ShouldSkipAndContinueProcessing()
+        {
+            // Arrange - Mix of empty and non-empty files
+            var files = new List<FileMetadata>
+            {
+                new("file1.cs", "file1.cs", 100, 1),     // Normal file
+                new("empty1.cs", "empty1.cs", 0, 2),     // Empty file
+                new("file2.cs", "file2.cs", 200, 3),     // Normal file
+                new("empty2.cs", "empty2.cs", 0, 4),     // Another empty file
+                new("file3.cs", "file3.cs", 150, 5)      // Normal file
+            };
+
+            // Act
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 1000, perFileLimit: 500);
+
+            // Assert
+            Assert.That(plan.TotalFilesFound, Is.EqualTo(5), "Should count all files including empty ones");
+            Assert.That(plan.TotalFilesIncluded, Is.EqualTo(3), "Should only include non-empty files");
+            Assert.That(plan.Items.Count, Is.EqualTo(3), "Should only have loading items for non-empty files");
+            
+            // Verify only non-empty files are included
+            var includedFiles = plan.Items.Select(i => i.RelativePath).ToList();
+            Assert.That(includedFiles, Does.Contain("file1.cs"));
+            Assert.That(includedFiles, Does.Contain("file2.cs"));
+            Assert.That(includedFiles, Does.Contain("file3.cs"));
+            Assert.That(includedFiles, Does.Not.Contain("empty1.cs"));
+            Assert.That(includedFiles, Does.Not.Contain("empty2.cs"));
+            
+            // Verify budget calculation excludes empty files
+            var expectedBudget = 100 + 50 + 200 + 50 + 150 + 50; // file sizes + header overhead each
+            Assert.That(plan.BudgetUsed, Is.EqualTo(expectedBudget));
+        }
+
+        [Test]
+        public void CreateLoadingPlanFromMetadata_WithOnlyEmptyFiles_ShouldReturnEmptyPlan()
+        {
+            // Arrange - Only empty files
+            var files = new List<FileMetadata>
+            {
+                new("empty1.cs", "empty1.cs", 0, 1),
+                new("empty2.cs", "empty2.cs", 0, 2),
+                new("empty3.cs", "empty3.cs", 0, 3)
+            };
+
+            // Act
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 1000, perFileLimit: 500);
+
+            // Assert
+            Assert.That(plan.TotalFilesFound, Is.EqualTo(3), "Should count all files");
+            Assert.That(plan.TotalFilesIncluded, Is.EqualTo(0), "Should include no files");
+            Assert.That(plan.Items.Count, Is.EqualTo(0), "Should have no loading items");
+            Assert.That(plan.BudgetUsed, Is.EqualTo(0), "Should use no budget");
+        }
+
+        [Test]
+        public void CreateLoadingPlanFromMetadata_WithEmptyFilesAtBeginning_ShouldProcessRemainingFiles()
+        {
+            // Arrange - Empty files at the beginning (the original issue scenario)
+            var files = new List<FileMetadata>
+            {
+                new("empty1.cs", "empty1.cs", 0, 1),     // Empty file first
+                new("empty2.cs", "empty2.cs", 0, 2),     // Another empty file
+                new("file1.cs", "file1.cs", 300, 3),     // Normal file
+                new("file2.cs", "file2.cs", 400, 4)      // Normal file
+            };
+
+            // Act
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 1000, perFileLimit: 500);
+
+            // Assert
+            Assert.That(plan.TotalFilesFound, Is.EqualTo(4));
+            Assert.That(plan.TotalFilesIncluded, Is.EqualTo(2), "Should include both non-empty files");
+            Assert.That(plan.Items.Count, Is.EqualTo(2));
+            
+            // Verify the correct files were included
+            var includedFiles = plan.Items.Select(i => i.RelativePath).ToList();
+            Assert.That(includedFiles, Does.Contain("file1.cs"));
+            Assert.That(includedFiles, Does.Contain("file2.cs"));
+        }
+
+        [Test]
+        public void CreateLoadingPlanFromMetadata_WithManyEmptyFiles_ShouldUseFullBudgetOnValidFiles()
+        {
+            // Arrange - Simulate the original issue: many empty files mixed with valid ones
+            var files = new List<FileMetadata>();
+            
+            // Add some valid files at the beginning
+            files.Add(new("good1.cs", "good1.cs", 100, 1));
+            files.Add(new("good2.cs", "good2.cs", 200, 2));
+            
+            // Add many empty files (simulating the node_modules issue)
+            for (int i = 0; i < 1000; i++)
+            {
+                files.Add(new($"empty{i}.d.ts", $"empty{i}.d.ts", 0, i + 3));
+            }
+            
+            // Add more valid files after the empty ones
+            files.Add(new("good3.cs", "good3.cs", 150, 1003));
+            files.Add(new("good4.cs", "good4.cs", 250, 1004));
+
+            // Act - Use a larger budget to accommodate all valid files
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 1000, perFileLimit: 500);
+
+            // Assert
+            Assert.That(plan.TotalFilesFound, Is.EqualTo(1004), "Should count all files");
+            Assert.That(plan.TotalFilesIncluded, Is.EqualTo(4), "Should include only the 4 non-empty files");
+            Assert.That(plan.Items.Count, Is.EqualTo(4));
+            
+            // Verify all good files are included
+            var includedFiles = plan.Items.Select(i => i.RelativePath).ToList();
+            Assert.That(includedFiles, Does.Contain("good1.cs"));
+            Assert.That(includedFiles, Does.Contain("good2.cs"));
+            Assert.That(includedFiles, Does.Contain("good3.cs"));
+            Assert.That(includedFiles, Does.Contain("good4.cs"));
+            
+            // Verify no empty files are included
+            Assert.That(includedFiles.Any(f => f.Contains("empty")), Is.False);
+            
+            // Verify budget is used efficiently for valid files
+            var expectedBudget = (100 + 200 + 150 + 250) + (4 * 50); // files + headers
+            Assert.That(plan.BudgetUsed, Is.EqualTo(expectedBudget));
+        }
+
+        [Test]
+        public void CreateLoadingPlanFromMetadata_EmptyFilesDontConsumebudget()
+        {
+            // Arrange
+            var files = new List<FileMetadata>
+            {
+                new("file1.cs", "file1.cs", 100, 1),
+                new("empty.cs", "empty.cs", 0, 2),       // This should not consume budget
+                new("file2.cs", "file2.cs", 100, 3)
+            };
+
+            // Act - Set budget to exactly fit the two non-empty files
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 300, perFileLimit: 500);
+
+            // Assert
+            Assert.That(plan.TotalFilesIncluded, Is.EqualTo(2), "Should include both non-empty files");
+            Assert.That(plan.BudgetUsed, Is.EqualTo(300), "Should use exact budget for non-empty files");
+            
+            var includedFiles = plan.Items.Select(i => i.RelativePath).ToList();
+            Assert.That(includedFiles, Does.Contain("file1.cs"));
+            Assert.That(includedFiles, Does.Contain("file2.cs"));
+            Assert.That(includedFiles, Does.Not.Contain("empty.cs"));
+        }
+
+        #endregion
+
         #region Regex Patterns for Tests
 
         /// <summary>

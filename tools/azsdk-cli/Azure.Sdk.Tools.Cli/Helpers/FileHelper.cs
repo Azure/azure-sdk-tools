@@ -342,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             _logger.LogDebug("File discovery completed. Found {fileCount} files, total size: {totalSize:N0} bytes",
                 fileInfos.Count,
-                fileInfos.Count > 0 ? fileInfos.Sum(f => f.FileSize) : 0);
+                fileInfos.Count > 0 ? fileInfos.Sum(f => (long)f.FileSize) : 0);
 
             if (fileInfos.Count > 0 && _logger.IsEnabled(LogLevel.Debug))
             {
@@ -423,7 +423,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (contentToLoad <= 0)
                 {
-                    break;
+                    continue; // Skip empty files and continue processing
                 }
 
                 // Rough token estimation: ~4 characters per token for code

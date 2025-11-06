@@ -517,10 +517,10 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Init with global tspclientconfig.yaml", async () => {
+  it("Init with global tsp-client-config.yaml", async () => {
     await cp(
-      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+      joinPaths(cwd(), "test/utils/tsp-client-config.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
     );
     try {
       const args = {
@@ -541,16 +541,16 @@ describe.sequential("Verify commands", () => {
         ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       });
-      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }
   });
 
-  it("Init with global tspclientconfig.yaml with no emitter matches", async () => {
+  it("Init with global tsp-client-config.yaml with no emitter matches", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tspclientconfig-no-match.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
     );
     try {
       const args = {
@@ -572,7 +572,7 @@ describe.sequential("Verify commands", () => {
           "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
         ],
       });
-      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

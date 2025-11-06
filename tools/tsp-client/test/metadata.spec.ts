@@ -1,20 +1,25 @@
-import { afterAll, beforeAll, describe, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, it } from "vitest";
 import { createTspClientMetadata } from "../src/metadata.js";
 import { removeDirectory, ensureDirectory } from "../src/fs.js";
 import { assert } from "chai";
-import { readFile, writeFile } from "fs/promises";
+import { cp, readFile, rm, stat, writeFile } from "fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import * as yaml from "yaml";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "process";
 
-describe("tsp-client metadata generation", function () {
+describe.sequential("tsp-client metadata generation", function () {
   const testOutputDir = "./test/test-output-metadata";
   const testEmitterPackageJsonPath = "./test/test-output-metadata/test-emitter-package.json";
   let repoRoot = "";
+  let defaultTspClientConfigPath = "";
 
   beforeAll(async function () {
     repoRoot = await getRepoRoot(cwd());
+    defaultTspClientConfigPath = joinPaths(repoRoot, "eng", "tsp-client-config.yaml");
+  });
+
+  beforeEach(async function () {
     // Create test directory and emitter-package.json
     await ensureDirectory(testOutputDir);
 
@@ -34,15 +39,19 @@ describe("tsp-client metadata generation", function () {
     await writeFile(testEmitterPackageJsonPath, JSON.stringify(sampleEmitterPackageJson, null, 2));
   });
 
-  afterAll(async function () {
+  afterEach(async function () {
     // Clean up test files
     await removeDirectory(testOutputDir).catch(() => {});
   });
 
-  it("should create tsp_client_metadata.yaml with correct structure", async function () {
+  it("should create tsp-client-metadata.yaml with correct structure", async function () {
+    await cp(
+      joinPaths(cwd(), "test/utils/tsp-client-config-metadata.yaml"),
+      defaultTspClientConfigPath,
+    );
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
+    const metadataPath = joinPaths(testOutputDir, "tsp-client-metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
     const metadata = yaml.parse(metadataContent);
 
@@ -69,9 +78,13 @@ describe("tsp-client metadata generation", function () {
   });
 
   it("should handle date format correctly", async function () {
+    await cp(
+      joinPaths(cwd(), "test/utils/tsp-client-config-metadata.yaml"),
+      defaultTspClientConfigPath,
+    );
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
 
-    const metadataPath = joinPaths(testOutputDir, "tsp_client_metadata.yaml");
+    const metadataPath = joinPaths(testOutputDir, "tsp-client-metadata.yaml");
     const metadataContent = await readFile(metadataPath, "utf8");
     const metadata = yaml.parse(metadataContent);
 
@@ -83,5 +96,94 @@ describe("tsp-client metadata generation", function () {
       metadata.emitterPackageJsonPath,
       "tools/tsp-client/test/test-output-metadata/test-emitter-package.json",
     );
+  });
+
+  it("verify that metadata file isnt created if there's no tsp-client-config.yaml", async function () {
+    await rm(defaultTspClientConfigPath).catch(() => {});
+
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
+
+    // Verify that the metadata file was NOT created
+    try {
+      await stat(joinPaths(testOutputDir, "tsp-client-metadata.yaml"));
+      // If stat succeeds, the file exists - this should fail the test
+      assert.fail("Expected metadata file to not exist, but it was found");
+    } catch (error: any) {
+      // If stat throws an error, the file doesn't exist - this is what we expect
+      assert.isTrue(error.code === "ENOENT", "Expected file not found error");
+    }
+  });
+
+  it("verify that the metadata file isnt created if generateMetadata doesnt exist in tsp-client-config.yaml", async function () {
+    await cp(joinPaths(cwd(), "test/utils/tsp-client-config.yaml"), defaultTspClientConfigPath);
+
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
+
+    // Verify that the metadata file was NOT created
+    try {
+      await stat(joinPaths(testOutputDir, "tsp-client-metadata.yaml"));
+      // If stat succeeds, the file exists - this should fail the test
+      assert.fail("Expected metadata file to not exist, but it was found");
+    } catch (error: any) {
+      // If stat throws an error, the file doesn't exist - this is what we expect
+      assert.isTrue(error.code === "ENOENT", "Expected file not found error");
+    }
+  });
+
+  it("verify that metadata file isnt created if generateMetadata is set to false in tsp-client-config.yaml", async function () {
+    await cp(
+      joinPaths(cwd(), "test/utils/tsp-client-config-metadata-false.yaml"),
+      defaultTspClientConfigPath,
+    );
+
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
+
+    // Verify that the metadata file was NOT created
+    try {
+      await stat(joinPaths(testOutputDir, "tsp-client-metadata.yaml"));
+      // If stat succeeds, the file exists - this should fail the test
+      assert.fail("Expected metadata file to not exist, but it was found");
+    } catch (error: any) {
+      // If stat throws an error, the file doesn't exist - this is what we expect
+      assert.isTrue(error.code === "ENOENT", "Expected file not found error");
+    }
+  });
+
+  it('verify that metadata file isnt created if generateMetadata is set to \"false\" in tsp-client-config.yaml', async function () {
+    await cp(
+      joinPaths(cwd(), "test/utils/tsp-client-config-metadata-false-string.yaml"),
+      defaultTspClientConfigPath,
+    );
+
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
+
+    // Verify that the metadata file was NOT created
+    try {
+      await stat(joinPaths(testOutputDir, "tsp-client-metadata.yaml"));
+      // If stat succeeds, the file exists - this should fail the test
+      assert.fail("Expected metadata file to not exist, but it was found");
+    } catch (error: any) {
+      // If stat throws an error, the file doesn't exist - this is what we expect
+      assert.isTrue(error.code === "ENOENT", "Expected file not found error");
+    }
+  });
+
+  it("verify that metadata file isnt created if generateMetadata is set to random string in tsp-client-config.yaml", async function () {
+    await cp(
+      joinPaths(cwd(), "test/utils/tsp-client-config-metadata-random-string.yaml"),
+      defaultTspClientConfigPath,
+    );
+
+    await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
+
+    // Verify that the metadata file was NOT created
+    try {
+      await stat(joinPaths(testOutputDir, "tsp-client-metadata.yaml"));
+      // If stat succeeds, the file exists - this should fail the test
+      assert.fail("Expected metadata file to not exist, but it was found");
+    } catch (error: any) {
+      // If stat throws an error, the file doesn't exist - this is what we expect
+      assert.isTrue(error.code === "ENOENT", "Expected file not found error");
+    }
   });
 });

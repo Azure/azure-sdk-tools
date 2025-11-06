@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -23,8 +23,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly ILogger<AiCompletionTool> _logger;
 
         // Command line options and arguments
-        private readonly Argument<string> _questionArgument = new("question", "The question to ask the AI agent");
-
+        private readonly Argument<string> _questionArgument = new("question") {
+            Description = "The question to ask the AI agent"
+        };
         public AiCompletionTool(
             IAiCompletionService aiCompletionService,
             ILogger<AiCompletionTool> logger)
@@ -35,20 +36,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         protected override Command GetCommand()
         {
-            var command = new Command("ai-completion", "Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines");
-            command.AddArgument(_questionArgument);
+            var command = new Command("ai-completion", "Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines")
+            {
+                _questionArgument
+            };
 
             return command;
         }
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var question = ctx.ParseResult.GetValueForArgument(_questionArgument);
+            var question = parseResult.GetValue(_questionArgument);
 
             if (string.IsNullOrWhiteSpace(question))
             {
                 _logger.LogError("Question cannot be empty");
-                return new() { ResponseError = "Question cannot be empty" };
+                return new DefaultCommandResponse() { ResponseError = "Question cannot be empty" };
             }
 
             try
@@ -63,15 +66,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 if (!response.IsSuccessful)
                 {
                     _logger.LogError("AI query failed: {Error}", response.ResponseError);
-                    return new() { ResponseError = $"AI query failed: {response.ResponseError}" };
+                    return new DefaultCommandResponse() { ResponseError = $"AI query failed: {response.ResponseError}" };
                 }
-                _logger.LogDebug(response.ToString());
+                _logger.LogDebug("AI response: {Response}", response.ToString());
                 return response;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to query AI agent via CLI");
-                return new() { ResponseError = $"Failed to query AI agent: {ex.Message}" };
+                return new DefaultCommandResponse() { ResponseError = $"Failed to query AI agent: {ex.Message}" };
             }
         }
 
@@ -203,13 +206,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public QueryIntension? QueryIntension { get; set; }
 
-        public override string ToString()
+        protected override string Format()
         {
             if (!IsSuccessful || !string.IsNullOrEmpty(ResponseError))
             {
-                return ToString(string.Empty);
+                return string.Empty;
             }
-
             var result = new StringBuilder();
             result.AppendLine($"**Answer:** {Answer}");
 

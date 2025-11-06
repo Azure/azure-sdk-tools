@@ -1,16 +1,30 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren, ViewChild } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
+import { OverlayPanel } from 'primeng/overlaypanel';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
-import { CommentSeverity } from 'src/app/_models/commentItemModel';
+import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
+import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
+
+interface AICommentInfoItem {
+  icon: string;
+  label: string;
+  value: string;
+  valueList?: string[];
+  valueClass?: string;
+}
+
+interface AICommentInfo {
+  items: AICommentInfoItem[];
+}
 
 @Component({
   selector: 'app-comment-thread',
@@ -38,11 +52,14 @@ export class CommentThreadComponent {
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
+  @ViewChild('aiInfoPanel') aiInfoPanel!: OverlayPanel;
   
   assetsPath : string = environment.assetsPath;
+  currentAIInfoStructured: AICommentInfo | null = null;
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
   menuItemsLoggedInArchitects: MenuItem[] = [];
@@ -109,28 +126,13 @@ export class CommentThreadComponent {
     this.menuItemAllUsers.push({
       label: 'Create Github Issue',
       items: [{
-          title: "csharp",
-          label: ".NET",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "java",
-          label: "Java",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "python",
-          label: "Python",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
           title: "c",
           label: "C",
           command: (event) => this.createGitHubIssue(event),
         },
         {
-          title: "javascript",
-          label: "JavaScript",
+          title: "cplusplus",
+          label: "C++",
           command: (event) => this.createGitHubIssue(event),
         },
         {
@@ -139,8 +141,28 @@ export class CommentThreadComponent {
           command: (event) => this.createGitHubIssue(event),
         },
         {
-          title: "cplusplus",
-          label: "C++",
+          title: "java",
+          label: "Java",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "javascript",
+          label: "JavaScript",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "csharp",
+          label: ".NET",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "python",
+          label: "Python",
+          command: (event) => this.createGitHubIssue(event),
+        },
+        {
+          title: "rust",
+          label: "Rust",
           command: (event) => this.createGitHubIssue(event),
         },
       ]
@@ -221,26 +243,29 @@ export class CommentThreadComponent {
   createGitHubIssue(event: MenuItemCommandEvent) {
     let repo = "";
     switch (event.item?.title) {
-      case "csharp":
-        repo = "azure-sdk-for-net";
-        break;
-      case "java":
-        repo = "azure-sdk-for-java";
-        break;
-      case "python":
-        repo = "azure-sdk-for-python";
-        break;
       case "c":
         repo = "azure-sdk-for-c";
         break;
-      case "javascript":
-        repo = "azure-sdk-for-js";
+      case "cplusplus":
+        repo = "azure-sdk-for-cpp";
         break;
       case "go":
         repo = "azure-sdk-for-go";
         break;
-      case "cplusplus":
-        repo = "azure-sdk-for-cpp";
+      case "java":
+        repo = "azure-sdk-for-java";
+        break;
+      case "javascript":
+        repo = "azure-sdk-for-js";
+        break;
+      case "csharp":
+        repo = "azure-sdk-for-net";
+        break;
+      case "python":
+        repo = "azure-sdk-for-python";
+        break;
+      case "rust":
+        repo = "azure-sdk-for-rust";
         break;
     }
 
@@ -592,22 +617,151 @@ export class CommentThreadComponent {
     this.showRelatedCommentsDialog = true;
   }
 
-  onResolveSelectedComments(commentIds: string[]) {
+  onResolveSelectedComments(resolutionData: CommentResolutionData) {
+    const { commentIds, batchVote, resolutionComment } = resolutionData;
+    
+    if (commentIds.length === 0) {
+      this.showRelatedCommentsDialog = false;
+      return;
+    }
+
+    this.commentsService.resolveBatchComments(this.reviewId, {
+      commentIds: commentIds,
+      vote: batchVote || 'none',
+      commentReply: resolutionComment || undefined
+    }).subscribe({
+      next: (response) => {
+        const createdComments = response.body || [];
+        
+        if (batchVote && batchVote !== 'none' && this.userProfile?.userName) {
+          this.applyBatchVotes(commentIds, batchVote, this.userProfile.userName);
+        }
+        this.emitResolutionEvents(commentIds);
+        this.emitCreationEvents(createdComments);
+        
+        this.showRelatedCommentsDialog = false;
+      },
+      error: (error) => {
+        console.error('Failed to resolve batch comments:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Resolution Failed',
+          detail: 'Failed to resolve comments. Please try again.',
+          key: 'bc',
+          life: 5000
+        });
+      }
+    });
+  }
+
+  private applyBatchVotes(commentIds: string[], voteType: 'up' | 'down', userName: string): void {
+    commentIds.forEach(commentId => {
+      const commentCodeRow = this.allCodePanelRowData?.find(row => 
+        row.comments?.some(c => c.id === commentId)
+      );
+      
+      if (commentCodeRow) {
+        const voteAction = voteType === 'up' 
+          ? CommentThreadUpdateAction.CommentUpVoteToggled 
+          : CommentThreadUpdateAction.CommentDownVoteToggled;
+          
+        this.batchResolutionActionEmitter.emit({
+          commentThreadUpdateAction: voteAction,
+          commentId: commentId,
+          nodeIdHashed: commentCodeRow.nodeIdHashed,
+          associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
+        } as CommentUpdatesDto);
+      }
+    });
+  }
+
+  private emitResolutionEvents(commentIds: string[]): void {
     commentIds.forEach(commentId => {
       const comment = this.relatedComments.find(c => c.id === commentId);
       if (comment) {
         const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === comment.elementId);
         
-        this.commentResolutionActionEmitter.emit({
+        this.batchResolutionActionEmitter.emit({
           commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
           elementId: comment.elementId,
+          commentId: comment.id,
           nodeIdHashed: commentCodeRow?.nodeIdHashed ?? this.codePanelRowData?.nodeIdHashed,
           associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup ?? this.codePanelRowData?.associatedRowPositionInGroup,
-          resolvedBy: this.userProfile?.userName,
-          commentId: commentId
+          resolvedBy: this.userProfile?.userName
         } as CommentUpdatesDto);
       }
     });
-    this.showRelatedCommentsDialog = false;
+  }
+
+  private emitCreationEvents(createdComments: CommentItemModel[]): void {
+    createdComments.forEach(createdComment => {
+      const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === createdComment.elementId);
+      
+      this.batchResolutionActionEmitter.emit({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+        comment: createdComment,
+        elementId: createdComment.elementId,
+        nodeIdHashed: commentCodeRow?.nodeIdHashed,
+        associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup,
+        reviewId: this.reviewId
+      } as CommentUpdatesDto);
+    });
+  }
+
+  isAIGenerated(comment: CommentItemModel): boolean {
+    return comment.commentSource === CommentSource.AIGenerated;
+  }
+
+  hasAIInfo(comment: CommentItemModel): boolean {
+    if (!this.isAIGenerated(comment)) {
+      return false;
+    }
+    const info = this.getAICommentInfoStructured(comment);
+    return info.items.length > 0;
+  }
+
+  getAICommentInfoStructured(comment: CommentItemModel): AICommentInfo {
+    const items: AICommentInfoItem[] = [];
+    items.push({
+        icon: 'pi-id-card',
+        label: 'Id',
+        value: comment.id,
+      });
+
+    if (comment.confidenceScore && comment.confidenceScore > 0) {
+      const score = Math.round(comment.confidenceScore * 100);
+      const scoreClass = score >= 80 ? 'high-confidence' : score >= 60 ? 'medium-confidence' : 'low-confidence';
+      items.push({
+        icon: 'pi-chart-bar',
+        label: 'Confidence Score',
+        value: `${score}%`,
+        valueClass: scoreClass
+      });
+    }
+    
+    if (comment.guidelineIds && comment.guidelineIds.length > 0) {
+      items.push({
+        icon: 'pi-book',
+        label: 'Guidelines Referenced',
+        value: '',
+        valueList: comment.guidelineIds
+      });
+    }
+    
+    if (comment.memoryIds && comment.memoryIds.length > 0) {
+      items.push({
+        icon: 'pi-database',
+        label: 'Memory References',
+        value: '',
+        valueList: comment.memoryIds
+      });
+    }
+    
+    return { items };
+  }
+
+  showAIInfo(event: Event, comment: CommentItemModel): void {
+    this.currentAIInfoStructured = this.getAICommentInfoStructured(comment);
+    this.aiInfoPanel.toggle(event);
   }
 }

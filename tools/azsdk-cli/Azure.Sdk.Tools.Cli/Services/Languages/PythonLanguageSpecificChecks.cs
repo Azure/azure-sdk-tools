@@ -1,6 +1,8 @@
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -13,69 +15,23 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     public PythonLanguageSpecificChecks(
-        IProcessHelper processHelper, 
-        INpxHelper npxHelper, 
-        IGitHelper gitHelper, 
-        ILogger<PythonLanguageSpecificChecks> logger)
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
+        ILogger<PythonLanguageSpecificChecks> logger,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
-    }
-    public string SupportedLanguage => "Python";
-
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation($"Starting dependency analysis for Python project at: {packagePath}");
-
-            // Find the repository root from the package path using GitHelper
-            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            _logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
-
-            // Construct path to tox.ini from repository root
-            var toxConfigPath = Path.Combine(repoRoot, "eng", "tox", "tox.ini");
-
-            // Verify the tox.ini file exists
-            if (!File.Exists(toxConfigPath))
-            {
-                _logger.LogError("Tox configuration file not found at: {ToxConfigPath}", toxConfigPath);
-                return new CLICheckResponse(1, "", $"Tox configuration file not found at: {toxConfigPath}");
-            }
-
-            _logger.LogInformation("Using tox configuration file: {ToxConfigPath}", toxConfigPath);
-
-            // Run tox for dependency analysis
-            var command = "tox";
-            var args = new[] { "run", "-e", "mindependency", "-c", toxConfigPath, "--root", "." };
-
-            _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
-            var timeout = TimeSpan.FromMinutes(5);
-            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), ct);
-
-            if (result.ExitCode == 0)
-            {
-                _logger.LogInformation("Dependency analysis completed successfully with exit code 0");
-                return new CLICheckResponse(result.ExitCode, result.Output);
-            }
-            else
-            {
-                _logger.LogWarning("Dependency analysis failed with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Exception occurred during dependency analysis");
-            return new CookbookCLICheckResponse(0, $"Failed to run dependency analysis. Ensure tox is installed. Error: {ex.Message}", "https://docs.python.org/3/tutorial/venv.html");
-        }
+        _commonValidationHelpers = commonValidationHelpers;
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -92,7 +48,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             if (!File.Exists(scriptPath))
             {
                 _logger.LogError("Python snippet updater script not found at: {ScriptPath}", scriptPath);
-                return new CLICheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
             }
 
             _logger.LogInformation("Using Python snippet updater script: {ScriptPath}", scriptPath);
@@ -102,7 +58,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             if (pythonCheckResult.ExitCode != 0)
             {
                 _logger.LogError("Python is not installed or not available in PATH");
-                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
+                return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
             }
 
             _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
@@ -118,32 +74,122 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             if (result.ExitCode == 0)
             {
                 _logger.LogInformation("Snippet update completed successfully - all snippets are up to date");
-                return new CLICheckResponse(result.ExitCode, "All snippets are up to date");
+                return new PackageCheckResponse(result.ExitCode, "All snippets are up to date");
             }
             else
             {
                 _logger.LogWarning("Snippet update detected out-of-date snippets with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating snippets for Python project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for linting code in a Python project
-        // Could use pylint, flake8, black --check, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code linting not yet implemented for Python", ""));
+        try
+        {
+            _logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
+            var timeout = TimeSpan.FromMinutes(10); 
+
+            // Run multiple linting tools
+            var lintingTools = new[]
+            {
+                ("pylint", new[] { "azpysdk", "pylint", "--isolate", packagePath }),
+                ("mypy", new[] { "azpysdk", "mypy", "--isolate", packagePath }),
+            };
+
+            _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
+
+            // Create tasks for all linting tools to run in parallel
+            var lintingTasks = lintingTools.Select(async tool =>
+            {
+                var (toolName, command) = tool;
+                var result = await _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
+                return (toolName, result);
+            });
+
+            // Wait for all linting tools to complete
+            var allResults = await Task.WhenAll(lintingTasks);
+
+            // Analyze results
+            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
+
+            if (failedTools.Count == 0)
+            {
+                _logger.LogInformation("All linting tools completed successfully - no issues found");
+                return new PackageCheckResponse(0, "All linting tools completed successfully - no issues found");
+            }
+            else
+            {
+                var failedToolNames = string.Join(", ", failedTools.Select(t => t.toolName));
+                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
+                
+                _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
+                    failedTools.Count, allResults.Length, failedToolNames);
+                
+                return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}");
+        }
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for formatting code in a Python project
-        // Could use black, autopep8, yapf, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code formatting not yet implemented for Python", ""));
+        try
+        {
+            _logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
+            // Run azpysdk black
+            var command = "azpysdk";
+            var args = new[] { "black", "--isolate", packagePath };
+
+            _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
+            var timeout = TimeSpan.FromMinutes(10);
+            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                _logger.LogInformation("Code formatting completed successfully - no issues found");
+                return new PackageCheckResponse(result.ExitCode, "Code formatting completed successfully - no issues found");
+            }
+            else
+            {
+                _logger.LogWarning("Code formatting found issues with exit code {ExitCode}", result.ExitCode);
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Code formatting found issues that need attention");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}");
+        }
+    }
+
+    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageName = Path.GetFileName(packagePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var relativePath = Path.GetRelativePath(repoRoot, packagePath);
+        var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
+        return await _commonValidationHelpers.CheckSpelling(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);
     }
 }

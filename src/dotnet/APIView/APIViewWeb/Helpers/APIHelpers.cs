@@ -12,7 +12,7 @@ namespace APIViewWeb.Helpers
 {
     public class PageParams
     {
-        private const int MaxPageSize = 50;
+        private const int MaxPageSize = 200;
         public int NoOfItemsRead { get; set; } = 0;
         private int _pageSize = 5;
 
@@ -86,6 +86,7 @@ namespace APIViewWeb.Helpers
     public class CreateAPIRevisionAPIResponse
     {
         public string APIRevisionUrl { get; set; }
+        public string Message { get; set; }
         public List<string> ActionsTaken { get; set; } = new List<string>();
     }
 

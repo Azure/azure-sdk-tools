@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.IO.Enumeration;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Azure;
@@ -12,6 +13,10 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Services.VerifySetup;
+
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -32,20 +37,60 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAiCompletionService, AiCompletionService>();
 
             // Language Check Services (Composition-based)
-            services.AddScoped<ILanguageChecks, LanguageChecks>();
-            services.AddScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonLanguageSpecificChecks),
+                Java = typeof(JavaLanguageSpecificChecks),
+                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
+                DotNet = typeof(DotNetLanguageSpecificChecks),
+                Go = typeof(GoLanguageSpecificChecks),
+            });
 
             // Client update language services
-            services.AddScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>();
-            services.AddScoped<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
-            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
+            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
+            {
+                Java = typeof(JavaUpdateLanguageService),
+                // Future: Python = typeof(PythonUpdateLanguageService), etc
+            });
+
+            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageInfoHelper),
+                Java = typeof(JavaPackageInfoHelper),
+                Python = typeof(PythonPackageInfoHelper),
+                JavaScript = typeof(JavaScriptPackageInfoHelper),
+                Go = typeof(GoPackageInfoHelper),
+            });
+
+            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetSampleLanguageContext),
+                Java = typeof(JavaSampleLanguageContext),
+                Python = typeof(PythonSampleLanguageContext),
+                JavaScript = typeof(TypeScriptSampleLanguageContext),
+                Go = typeof(GoSampleLanguageContext),
+            });
+
+            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
+            {
+                Java = typeof(JavaTestRunner),
+                JavaScript = typeof(JavaScriptTestRunner),
+                Go = typeof(GoLanguageSpecificChecks),
+                Python = typeof(PythonTestRunner),
+                DotNet = typeof(DotNetTestRunner),
+            });
+
+            services.AddLanguageSpecific<IEnvRequirementsCheck>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonRequirementsCheck),
+                Java = typeof(JavaRequirementsCheck),
+                JavaScript = typeof(JavaScriptRequirementsCheck),
+                DotNet = typeof(DotNetRequirementsCheck),
+                Go = typeof(GoRequirementsCheck),
+            });
 
             // Helper classes
+            services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();
@@ -67,9 +112,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
+            services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+            services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
 
             // Telemetry
@@ -104,7 +151,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
         {
             JsonSerializerOptions? serializerOptions = null;
-            var toolTypes = SharedOptions.GetFilteredToolTypes(args);
+            var toolTypes = SharedOptions.ToolsList;
+            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
 
             foreach (var toolType in toolTypes)
             {
@@ -113,23 +161,32 @@ namespace Azure.Sdk.Tools.Cli.Services
                     continue;
                 }
 
-                foreach (var toolMethod in toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
-                {
-                    if (toolMethod.GetCustomAttribute<McpServerToolAttribute>() is not null)
-                    {
-                        services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
-                        {
-                            var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
-                            var innerTool = toolMethod.IsStatic
-                                ? McpServerTool.Create(toolMethod, options: options)
-                                : McpServerTool.Create(toolMethod, r => ActivatorUtilities.CreateInstance(r.Services, toolType), options);
+                var toolMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+                                    .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null);
 
-                            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-                            var logger = loggerFactory.CreateLogger(toolType);
-                            var telemetryService = services.GetRequiredService<ITelemetryService>();
-                            return new InstrumentedTool(telemetryService, logger, innerTool);
-                        }));
-                    }
+                if (toolMatchList.Length > 0)
+                {
+                    toolMethods = toolMethods.Where(m =>
+                    {
+                        var attr = m.GetCustomAttribute<McpServerToolAttribute>();
+                        return attr?.Name is not null && toolMatchList.Any(glob => FileSystemName.MatchesSimpleExpression(glob, attr.Name));
+                    });
+                }
+
+                foreach (var toolMethod in toolMethods)
+                {
+                    services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
+                    {
+                        var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
+                        var innerTool = toolMethod.IsStatic
+                            ? McpServerTool.Create(toolMethod, options: options)
+                            : McpServerTool.Create(toolMethod, r => ActivatorUtilities.CreateInstance(r.Services, toolType), options);
+
+                        var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+                        var logger = loggerFactory.CreateLogger(toolType);
+                        var telemetryService = services.GetRequiredService<ITelemetryService>();
+                        return new InstrumentedTool(telemetryService, logger, innerTool);
+                    }));
                 }
             }
         }

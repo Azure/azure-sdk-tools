@@ -1,10 +1,10 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -12,19 +12,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
     {
         private readonly string commandName = "sdk-release";
-        private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
-        private readonly Option<string> branchOpt = new(["--branch"], () => "main", "Branch to release the package from") { IsRequired = false };
+        private readonly Option<string> packageNameOpt = new("--package")
+        {
+            Description = "Package name",
+            Required = true,
+        };
+
+        private readonly Option<string> languageOpt = new("--language")
+        {
+            Description = "Language of the package",
+            Required = true,
+        };
+
+        private readonly Option<string> branchOpt = new("--branch")
+        {
+            Description = "Branch to release the package from",
+            Required = false,
+            DefaultValueFactory = _ => "main",
+        };
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
-            new(commandName, "Run the release pipeline for the package") { packageNameOpt, languageOpt, branchOpt };
+            new(commandName, "Run the release pipeline for the package")
+            {
+                packageNameOpt, languageOpt, branchOpt,
+            };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
-            var branch = ctx.ParseResult.GetValueForOption(branchOpt);
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
+            var branch = parseResult.GetValue(branchOpt);
             return await ReleasePackageAsync(packageName, language, branch);
         }
 
@@ -35,9 +53,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 SdkReleaseResponse response = new()
                 {
-                    PackageName = packageName,
-                    Language = language
+                    PackageName = packageName
                 };
+                response.SetLanguage(language);
 
                 bool isValidParams = true;
                 if (string.IsNullOrWhiteSpace(packageName))
@@ -59,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleasePipelineStatus = "Failed";
                     isValidParams = false;
                 }
-
+                response.PackageType = package?.PackageType ?? SdkType.Unknown;
                 if (string.IsNullOrEmpty(package?.PipelineDefinitionUrl))
                 {
                     response.ReleaseStatusDetails += $"No release pipeline found for package '{packageName}' in language '{language}'. Please check the package name and language.";
@@ -124,10 +142,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 SdkReleaseResponse response = new()
                 {
                     PackageName = packageName,
-                    Language = language,
                     ReleasePipelineStatus = "Failed",
-                    ReleaseStatusDetails = $"Error: {ex.Message}"
+                    ResponseError = $"Error: {ex.Message}"
                 };
+                response.SetLanguage(language);
                 return response;
             }
         }

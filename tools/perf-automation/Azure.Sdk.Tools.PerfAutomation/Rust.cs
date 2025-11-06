@@ -3,6 +3,8 @@ using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -45,8 +47,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         private const string _sdkDirectory = "sdk";
-        private const string _cargoName = "cargo";
         private string _resultsDirectory = "testResults";
+        private string _executablePath = "";
         private string _targetResultsDirectory;
         public bool IsTest { get; set; } = false;
         public bool IsWindows { get; set; } = Util.IsWindows;
@@ -60,10 +62,54 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             bool debug)
         {
+
             // just make sure we have the target directory cleaned up of previous results in case of a test issue in a previous test / run
             _targetResultsDirectory = await CleanupAsync(project);
             Directory.CreateDirectory(_targetResultsDirectory);
-            return (String.Empty, String.Empty, String.Empty);
+
+            string flavor = debug ? "debug" : "release";
+            string testCommand = $"--{flavor} --package {primaryPackage} --bench perf ";
+            var result = await Util.RunAsync("cargo", $"build {testCommand} --message-format=json", WorkingDirectory, log: false);
+            // Look for errors in the build.
+            if (result.ExitCode != 0)
+            {
+                return (result.StandardOutput, result.StandardError, null);
+            }
+
+            Console.WriteLine("Parsing build output to find test executables...");
+            string[] json_elements = result.StandardOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string[] executables = new string[0];
+            foreach (string element in json_elements)
+            {
+                try
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(element))
+                    {
+                        if (doc.RootElement.TryGetProperty("executable", out JsonElement executableElement) && executableElement.ValueKind == JsonValueKind.String)
+                        {
+                            Console.WriteLine($"Found executable: {executableElement.GetString()}");
+                            executables = executables.Append(executableElement.GetString()).ToArray();
+                        }
+                    }
+                }
+                catch (JsonException e)
+                {
+                    Console.WriteLine($"Exception {e} parsing line as JSON, skipping line.");
+                    // Ignore lines that are not valid JSON
+                }
+            }
+            if (executables.Length != 1)
+            {
+                Console.WriteLine($"Found {executables.Length} test executables after building the project.");
+                foreach (var exe in executables)
+                {
+                    Console.WriteLine($"Executable: {exe}");
+                }
+                throw new Exception($"No test executables were found after building the project");
+            }
+            _executablePath = executables[0];
+
+            return (result.ToString(), result.ToString(), null);
         }
         public override async Task<IterationResult> RunAsync(
             string project,
@@ -76,24 +122,44 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string profilerOptions,
             object context)
         {
-            // Set AZURE_TEST_MODE environment variable to "live" before invoking the compiler
-            Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
-            // set up the params for cargo
-            string finalParams = $"test --release --package {primaryPackage} --test perf -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
-            ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
-            if (IsTest)
+            // The Rust SDK uses environment variables to determine if the tests should run in playback or live mode.
+            // If --test-proxy is in the command line arguments, set AZURE_TEST_MODE environment variable to "playback" to indicate that we are going to use the test proxy.
+            // Otherwise set test mode to `live`.
+            if (arguments.Contains("test-proxy"))
             {
-                UtilMethodCall(this, new UtilEventArgs(
-                    "RunAsync",
-                    new string[] {
-                        _cargoName,
-                        finalParams,
-                        WorkingDirectory}));
-                result = new ProcessResult(0, "cargo bench result", "error");
+                Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "playback");
             }
             else
             {
-                result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
+                Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
+            }
+            ProcessResult result = null;
+            string testParams = $" --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+            if (_executablePath != String.Empty)
+            {
+                if (IsTest)
+                {
+                    UtilMethodCall(this, new UtilEventArgs(
+                        "RunAsync",
+                        new string[] {
+                        _executablePath,
+                        testParams,
+                        WorkingDirectory}));
+                    result = new ProcessResult(0, "cargo bench result", "error");
+                }
+                else
+                {
+                    result = await Util.RunAsync(_executablePath, testParams, WorkingDirectory);
+                }
+            }
+            else
+            {
+                throw new Exception("No test executable found to run the benchmark.");
+            }
+
+            if (result.ExitCode != 0)
+            {
+                throw new Exception($"Error running the benchmark test {testName} in project {project}. Error: {result.StandardError}");
             }
 
             //parse the samples file for the test and calculate the ops per second

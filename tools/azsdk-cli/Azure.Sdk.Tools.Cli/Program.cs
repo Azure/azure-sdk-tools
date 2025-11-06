@@ -74,7 +74,7 @@ public class Program
             "plain" => OutputHelper.OutputModes.Plain,
             "json" => OutputHelper.OutputModes.Json,
             "hidden" => OutputHelper.OutputModes.Hidden,  // Used for test, don't include in help text
-            _ => throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json, ben")
+            _ => throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json")
         };
 
         // register common services

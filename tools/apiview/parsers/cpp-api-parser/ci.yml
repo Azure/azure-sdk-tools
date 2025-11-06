@@ -25,7 +25,7 @@ variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - template: /eng/pipelines/templates/variables/globals.yml
   - name: VcpkgRelease
-    value: '2024.08.23'
+    value: '2025.09.17'
 
 resources:
   repositories:
@@ -72,17 +72,7 @@ stages:
             displayName: Create cmake build directory.
             workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
             condition: succeeded()
-          - task: AzurePowerShell@5
-            displayName: Set Vcpkg Write-mode Cache
-            inputs:
-              azureSubscription: 'Azure SDK Artifacts'
-              ScriptType: FilePath
-              ScriptPath: eng/scripts/Set-VcpkgWriteModeCache.ps1
-              azurePowerShellVersion: LatestVersion
-              pwsh: true
-            # This step is idempotent and can be run multiple times in cases of
-            # failure and partial execution.
-            retryCountOnTaskFailure: 3
+          - template: /eng/common/pipelines/templates/steps/set-vcpkg-cache-vars.yml
           - pwsh: |
               cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: Cmake Generate.

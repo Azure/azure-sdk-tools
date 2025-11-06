@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Web;
@@ -33,31 +33,62 @@ public class PipelineAnalysisTool(
 {
     // Options
     private readonly Argument<string> pipelineArg = new("Pipeline link or Build ID");
-    private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log");
-    private readonly Option<string> projectOpt = new(["--project", "-p"], "Pipeline project name");
-    private readonly Option<bool> analyzeWithAgentOpt = new(["--agent", "-a"], () => false, "Analyze logs with RAG via upstream ai agent");
-    private readonly Option<string> projectEndpointOpt = new(["--ai-endpoint", "-e"], "The ai foundry project endpoint for the Azure AI Agent service");
-    private readonly Option<string> aiModelOpt = new(["--ai-model"], "The model to use for the Azure AI Agent");
-    private readonly Option<string> queryOpt = new(["--query"], () => "Why did this pipeline fail?", "Log analysis query for agent mode");
+    private readonly Option<int> logIdOpt = new("--log-id")
+    {
+        Description = "ID of the pipeline task log",
+        Required = false,
+    };
+
+    private readonly Option<string> projectOpt = new("--project", "-p")
+    {
+        Description = "Pipeline project name",
+        Required = false,
+    };
+
+    private readonly Option<bool> analyzeWithAgentOpt = new("--agent", "-a")
+    {
+        Description = "Analyze logs with RAG via upstream ai agent",
+        Required = false,
+        DefaultValueFactory = _ => false,
+    };
+
+    private readonly Option<string> projectEndpointOpt = new("--ai-endpoint", "-e")
+    {
+        Description = "The ai foundry project endpoint for the Azure AI Agent service",
+        Required = false,
+    };
+
+    private readonly Option<string> aiModelOpt = new("--ai-model")
+    {
+        Description = "The model to use for the Azure AI Agent",
+        Required = false,
+    };
+
+    private readonly Option<string> queryOpt = new("--query")
+    {
+        Description = "Log analysis query for agent mode",
+        Required = false,
+        DefaultValueFactory = _ => "Why did this pipeline fail?",
+    };
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     protected override Command GetCommand() =>
         new("analyze", "Analyze a pipeline run")
         {
-            pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt, queryOpt
+            pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt, queryOpt,
         };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var pipelineIdentifier = ctx.ParseResult.GetValueForArgument(pipelineArg);
-        var project = ctx.ParseResult.GetValueForOption(projectOpt);
+        var pipelineIdentifier = parseResult.GetValue(pipelineArg);
+        var project = parseResult.GetValue(projectOpt);
 
-        var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
-        var analyzeWithAgent = ctx.ParseResult.GetValueForOption(analyzeWithAgentOpt);
-        var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
-        var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
-        var query = ctx.ParseResult.GetValueForOption(queryOpt);
+        var logId = parseResult.GetValue(logIdOpt);
+        var analyzeWithAgent = parseResult.GetValue(analyzeWithAgentOpt);
+        var projectEndpoint = parseResult.GetValue(projectEndpointOpt);
+        var aiModel = parseResult.GetValue(aiModelOpt);
+        var query = parseResult.GetValue(queryOpt);
 
         var (buildId, projectFromLink) = getBuildIdFromPipelineIdentifier(pipelineIdentifier);
         logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
@@ -399,8 +430,7 @@ public class PipelineAnalysisTool(
         }
         catch (JsonException ex)
         {
-            logger.LogError(ex, "Failed to deserialize log analysis response");
-            logger.LogError("Response:\n{result}", result);
+            logger.LogError(ex, "Failed to deserialize log analysis response. Raw response: {Response}", result);
             throw;
         }
     }

@@ -113,6 +113,7 @@ namespace APIViewWeb.LeanModels
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
         public bool IsApproved { get; set; } // TODO: Deprecate in the future - redundant with NamespaceReviewStatus
+        public PackageType? PackageType { get; set; } // Nullable - null means not yet classified
         public NamespaceReviewStatus NamespaceReviewStatus { get; set; } = NamespaceReviewStatus.NotStarted;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }

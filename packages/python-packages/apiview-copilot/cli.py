@@ -168,15 +168,31 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(test_paths: list[str], num_runs: int = 1):
+def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
     """
     Runs the specified test case(s).
     """
-    from evals._runner import EvalRunner
+    from evals._discovery import discover_targets
+    from evals._runner import EvaluationRunner
 
-    runners = [EvalRunner(test_path=x, num_runs=num_runs) for x in test_paths]
-    for runner in runners:
-        runner.run()
+    targets = discover_targets(test_paths)
+    runner = EvaluationRunner(num_runs=num_runs)
+    try:
+        results = runner.run(targets)
+        if save:
+            report = runner.generate_report(results)
+            for doc in report:
+                db = get_database_manager()
+                try:
+                    db.evals.upsert(doc["id"], data=doc)
+                except Exception as exc:
+                    print(f"Error saving eval document to database: {exc}")
+                    raise exc
+
+        runner.show_results(results)
+        runner.show_summary(results)
+    finally:
+        runner.cleanup()
 
 
 def deploy_flask_app():
@@ -690,9 +706,12 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
-def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
+def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    return get_metrics_report(start_date, end_date, environment, markdown)
+    environment = os.getenv("ENVIRONMENT_NAME", None)
+    if environment not in ("production", "staging"):
+        raise ValueError(f"ENVIRONMENT_NAME must be 'production' or 'staging', got '{environment}'.")
+    return get_metrics_report(start_date, end_date, environment, markdown, save)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -741,7 +760,7 @@ def grant_permissions(assignee_id: str = None):
             principal_type=PrincipalType.USER,
             subscription_id=subscription_id,
             rg_name=rg_name,
-            role_kind="readOnly",
+            role_kind="readWrite",
             cosmos_account_name=cosmos_name,
         )
 
@@ -882,7 +901,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
-            g.command("run", "run_test_case")
+            g.command("run", "run_evals")
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
@@ -1003,6 +1022,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The full path to the txt file containing the APIView text",
             )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
+            )
+
         with ArgumentsContext(self, "eval extract-section") as ac:
             ac.argument("size", type=int, help="The size of the section to extract.")
             ac.argument(
@@ -1019,9 +1043,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "test_paths",
                 type=str,
-                nargs="+",
+                nargs="*",
                 options_list=["--test-paths", "-p"],
-                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file.",
+                default=[],
+                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
 
         with ArgumentsContext(self, "search") as ac:
@@ -1046,6 +1071,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
             )
             ac.argument(
                 "ids",

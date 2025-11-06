@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     }
                     catch (MsalUiRequiredException ex)
                     {
-                        _logger.LogError("Silent authentication failed, will use interactive: {Message}", ex.Message);
+                        _logger.LogError(ex, "Silent authentication failed, will use interactive: {Message}", ex.Message);
                     }
                 }
                 else

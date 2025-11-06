@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Text;
+using System.Text.RegularExpressions;
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,14 +12,14 @@ namespace Azure.Tools.GeneratorAgent
     /// </summary>
     internal class FormatPromptService
     {
-        private readonly ILogger<FormatPromptService> Logger;
         private readonly AppSettings AppSettings;
+        
+        private static readonly ConcurrentDictionary<string, string> RuleIdCache = new();
+        private static readonly Regex RuleIdRegex = new(@"(AZC\d{4}|FALLBACK)", RegexOptions.Compiled);
 
-        public FormatPromptService(ILogger<FormatPromptService> logger, AppSettings appSettings)
+        public FormatPromptService(AppSettings appSettings)
         {
-            ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(appSettings);
-            Logger = logger;
             AppSettings = appSettings;
         }
 
@@ -29,41 +32,111 @@ namespace Azure.Tools.GeneratorAgent
                 throw new ArgumentException("Fixes list cannot be empty", nameof(fixes));
             }
 
-            // Build combined fix instructions
-            var combinedFixInstructions = new List<string>();
-            var combinedContexts = new List<string>();
+            var prompt = new StringBuilder(4096);
+            var solutionLookup = new Dictionary<string, string>();
+            var ruleGroups = new List<(string ruleId, List<AgentPromptFix> fixes)>();
 
-            for (int i = 0; i < fixes.Count; i++)
+            foreach (var fix in fixes)
             {
-                var fix = fixes[i];
-                
-                if (fix is AgentPromptFix promptFix)
+                if (fix is AgentPromptFix agentFix)
                 {
-                    combinedFixInstructions.Add($"Fix {i + 1}: {promptFix.Prompt}");
+                    var ruleId = ExtractRuleId(agentFix.Context);
                     
-                    if (!string.IsNullOrEmpty(promptFix.Context))
+                    if (!solutionLookup.ContainsKey(ruleId))
                     {
-                        combinedContexts.Add($"Context for Fix {i + 1}: {promptFix.Context}");
+                        solutionLookup[ruleId] = agentFix.Prompt;
                     }
-                }
-                else
-                {
-                    string fixTypeName = fix.GetType().Name;
-                    combinedFixInstructions.Add($"Fix {i + 1}: Fix Type: {fixTypeName}\nAction Required: {fix.Action}");
-                    combinedContexts.Add($"Context for Fix {i + 1}: Generic fix - apply appropriate changes to resolve the compilation error.");
+
+                    var existingGroup = ruleGroups.FirstOrDefault(g => g.ruleId == ruleId);
+                    if (existingGroup.fixes != null)
+                    {
+                        existingGroup.fixes.Add(agentFix);
+                    }
+                    else
+                    {
+                        ruleGroups.Add((ruleId, new List<AgentPromptFix> { agentFix }));
+                    }
                 }
             }
 
-            // Combine all fix instructions
-            string allFixInstructions = string.Join("\n\n", combinedFixInstructions);
+            prompt.AppendLine(AppSettings.AgentInstructions);
+            prompt.AppendLine();
+            prompt.AppendLine("=== ERRORS TO FIX ===");
             
-            // Combine all contexts
-            string allContexts = combinedContexts.Count > 0 
-                ? string.Join("\n\n", combinedContexts)
-                : "No additional context provided.";
+            foreach (var (ruleId, fixList) in ruleGroups)
+            {
+                prompt.AppendLine(BuildErrorSummary(ruleId, fixList));
+                prompt.AppendLine();
+            }
 
-            // Format using the template with combined instructions and contexts
-            return AppSettings.AgentInstructions + string.Format(AppSettings.FixPromptTemplate, allFixInstructions, allContexts);
+            prompt.AppendLine("=== HOW TO FIX ===");
+            foreach (var (ruleId, _) in ruleGroups)
+            {
+                prompt.AppendLine($"{ruleId}: {solutionLookup[ruleId]}");
+                prompt.AppendLine();
+            }
+
+            prompt.AppendLine("=== WORKFLOW ===");
+            prompt.AppendLine("1. Call list_typespec_files() to get ALL TypeSpec files with complete content for comprehensive analysis");
+            prompt.AppendLine("2. Analyze available types and identifiers from all files to understand the complete context");
+            prompt.AppendLine("3. Apply the solutions above to fix the specific errors listed using only existing identifiers");
+            prompt.AppendLine("4. Return JSON patch with exact changes needed");
+            prompt.AppendLine();
+            prompt.AppendLine("=== CRITICAL RESTRICTION ===");
+            prompt.AppendLine("ONLY modify 'client.tsp' file - DO NOT modify main.tsp, routes.tsp, models.tsp or any other files");
+            prompt.AppendLine("The 'file' field in your JSON patch MUST be 'client.tsp' only");
+            prompt.AppendLine("If errors appear to be in other files, create the fix in client.tsp using imports/references");
+            prompt.AppendLine();
+            prompt.AppendLine("=== RETURN JSON PATCH ===");
+            prompt.AppendLine("Respond with ONLY the JSON patch - no explanations or markdown formatting.");
+
+            return prompt.ToString();
+        }
+
+        private string ExtractRuleId(string? context)
+        {
+            if (string.IsNullOrEmpty(context)) return "UNKNOWN";
+            
+            return RuleIdCache.GetOrAdd(context, ctx =>
+            {
+                var match = RuleIdRegex.Match(ctx);
+                return match.Success ? match.Value : "GENERIC";
+            });
+        }
+
+        private string BuildErrorSummary(string ruleId, List<AgentPromptFix> fixList)
+        {
+            var summary = new StringBuilder();
+            var count = fixList.Count;
+            
+            summary.AppendLine(count == 1 ? $"{ruleId}:" : $"{ruleId} ({count} instances):");
+            
+            for (int i = 0; i < count; i++)
+            {
+                var actualError = ExtractActualErrorMessage(fixList[i].Context);
+                summary.AppendLine($"  {i + 1}. {actualError}");
+            }
+            
+            return summary.ToString().TrimEnd();
+        }
+
+        private string ExtractActualErrorMessage(string? context)
+        {
+            if (string.IsNullOrEmpty(context)) return "Unknown error";
+
+            var lines = context.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Look for the actual error message line
+            var errorLine = lines.FirstOrDefault(l => l.StartsWith("ERROR:"));
+            if (errorLine != null)
+            {
+                var message = errorLine.Replace("ERROR: ", "").Trim();
+                return message == "{0}" ? "Specific error details will be provided" : message;
+            }
+
+            // Extract rule description as fallback
+            var ruleLine = lines.FirstOrDefault(l => l.Contains(" - "));
+            return ruleLine?.Split(" - ").LastOrDefault()?.Trim() ?? "Error requiring analysis";
         }
     }
 }

@@ -39,6 +39,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Samples = new(
+            Verb: "samples",
+            Description: "Sample generation and management commands",
+            Options: []
+        );
+
         public static readonly CommandGroup SourceCode = new(
             Verb: "source-code",
             Description: "Source code generation and build commands",
@@ -48,6 +54,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
             Description: "Tools for setting up or working with TypeSpec projects",
+            Options: []
+        );
+
+        public static readonly CommandGroup Verify = new(
+            Verb: "verify",
+            Description: "Tools for verifying project environments.",
             Options: []
         );
 

@@ -40,8 +40,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Constants
         private const string BuildCommandJsonPath = "packageOptions/buildScript/command";
         private const string BuildScriptPathJsonPath = "packageOptions/buildScript/path";
-        private const string UpdateChangelogContentCommandJsonPath = "packageOptions/UpdateChangelogContentScript/command";
-        private const string UpdateChangelogContentScriptPathJsonPath = "packageOptions/UpdateChangelogContentScript/path";
+        private const string UpdateChangelogContentCommandJsonPath = "packageOptions/updateChangelogContentScript/command";
+        private const string UpdateChangelogContentScriptPathJsonPath = "packageOptions/updateChangelogContentScript/path";
         private const string UpdateVersionCommandJsonPath = "packageOptions/updateVersionScript/command";
         private const string UpdateVersionScriptPathJsonPath = "packageOptions/updateVersionScript/path";
         private const string UpdateMetadataCommandJsonPath = "packageOptions/updateMetadataScript/command";

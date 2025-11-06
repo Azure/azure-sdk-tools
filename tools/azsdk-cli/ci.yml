@@ -23,7 +23,7 @@ extends:
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
-    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests    
     VerifyChangelog: true
     StandaloneExeMatrix:
       - rid: linux-x64
@@ -41,3 +41,8 @@ extends:
       - rid: win-x64
         framework: net8.0
         assembly: azsdk
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
+      CustomJobs:
+      - template: /tools/azsdk-cli/run-ai-eval.yml
+        parameters:
+          EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations

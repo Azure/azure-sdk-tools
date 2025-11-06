@@ -987,14 +987,15 @@ def list_reviews(environment: str = "production"):
     """
     Lists the total number of reviews and their PackageName from APIViewV2.Reviews.
     """
-    from src._apiview import get_apiview_cosmos_client
-
-    container = get_apiview_cosmos_client(container_name="Reviews", environment=environment, db_name="APIViewV2")
+    container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
     query = "SELECT c.id, c.PackageName FROM c"
     items = list(container.query_items(query=query, enable_cross_partition_query=True))
-    print(f"Total reviews: {len(items)}")
-    for item in items:
+    filter = "blob"
+
+    filtered = [item for item in items if filter in item.get("PackageName", "").lower()]
+    for item in filtered:
         print(f"{item.get('id')}: {item.get('PackageName')}")
+    print(f"Total filtered reviews: {len(filtered)}")
 
 
 def _build_auth_header():

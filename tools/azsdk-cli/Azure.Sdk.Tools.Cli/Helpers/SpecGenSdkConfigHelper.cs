@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var specToSdkConfigFilePath = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
 
-            _logger.LogInformation("Reading configuration from: {SpecToSdkConfigFilePath} at path: {JsonPath}", specToSdkConfigFilePath, jsonPath);
+            _logger.LogInformation("Reading configuration from: {specToSdkConfigFilePath} at path: {jsonPath}", specToSdkConfigFilePath, jsonPath);
 
             if (!File.Exists(specToSdkConfigFilePath))
             {
@@ -111,10 +111,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return (SpecGenSdkConfigContentType.Command, command);
                 }
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // Command not found, continue to try path
-                _logger.LogDebug("No {ConfigType} command found, trying script path", configType);
+                _logger.LogDebug("No {configType} configuration found, trying script path. Error: {errorMessage}", configType, ex.Message);
             }
 
             // Try path
@@ -127,13 +127,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return (SpecGenSdkConfigContentType.ScriptPath, path);
                 }
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // Path not found either
-                _logger.LogError("No {ConfigType} configuration found", configType);
+                _logger.LogDebug("No {configType} configuration found. Error: {errorMessage}", configType, ex.Message);
             }
 
-            _logger.LogWarning("Neither '{CommandPath}' nor '{ScriptPath}' found in configuration for {ConfigType}", commandPath, scriptPath, configType);
+            _logger.LogWarning("Neither '{commandPath}' nor '{scriptPath}' found in configuration for {configType}", commandPath, scriptPath, configType);
             return (SpecGenSdkConfigContentType.Unknown, string.Empty);
         }
 
@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 result = result.Replace(placeholder, variable.Value, StringComparison.OrdinalIgnoreCase);
             }
 
-            _logger.LogDebug("Command after variable substitution: {Result}", result);
+            _logger.LogDebug("Command after variable substitution: {result}", result);
             return result;
         }
 

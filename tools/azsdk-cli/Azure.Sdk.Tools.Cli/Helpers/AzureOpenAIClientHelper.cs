@@ -13,8 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// </summary>
 public static class AzureOpenAIClientHelper
 {
-    private const string PlaceholderApiKey = "not-used";
-
     /// <summary>
     /// Creates an OpenAI client configured for Azure OpenAI with API key or TokenCredential (Entra ID) authentication
     /// </summary>
@@ -42,6 +40,6 @@ public static class AzureOpenAIClientHelper
         options.AddPolicy(tokenPolicy, PipelinePosition.BeforeTransport);
 
         // Create client with a placeholder API key (required by constructor but not used due to our bearer token policy)
-        return new OpenAIClient(new ApiKeyCredential(PlaceholderApiKey), options);
+        return new OpenAIClient(new ApiKeyCredential("not-used"), options);
     }
 }

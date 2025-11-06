@@ -68,7 +68,7 @@ public class ExtraLabelValidation : IValidation
                 if (ignoreList.Any(ignore => htmlText.Contains(ignore.IgnoreText)))
                 {
                     // If the label is in the ignore list, skip it
-                    index += label.Length; // 必须更新index避免死循环
+                    index += label.Length;
                     continue;
                 }
 

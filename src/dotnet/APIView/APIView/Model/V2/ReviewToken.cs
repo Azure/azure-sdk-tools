@@ -139,7 +139,7 @@ namespace APIView.Model.V2
             return token;
         }
 
-        public static List<ReviewToken> CreateKeyValueToken(string key, string value = null, string keyTokenClass = null, string valueTokenClass = null)
+        public static List<ReviewToken> CreateKeyValueToken(string key, string value = null, bool addPuctuation = true,  string keyTokenClass = null, string valueTokenClass = null)
         {
             var results = new List<ReviewToken>();
             var keyToken = new ReviewToken(key, TokenKind.Text);
@@ -149,9 +149,12 @@ namespace APIView.Model.V2
             }
             results.Add(keyToken);
 
-            var colonToken = new ReviewToken(":", TokenKind.Punctuation);
-            colonToken.HasSuffixSpace = true;
-            results.Add(colonToken);
+            if (addPuctuation)
+            {
+                var colonToken = new ReviewToken(":", TokenKind.Punctuation);
+                colonToken.HasSuffixSpace = true;
+                results.Add(colonToken);
+            }
 
             if (value != null)
             {

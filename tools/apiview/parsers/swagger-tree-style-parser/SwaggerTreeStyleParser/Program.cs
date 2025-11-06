@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Microsoft.OpenApi;
+using NSwag;
 
 namespace SwaggerTreeStyleParser;
 
@@ -105,9 +105,13 @@ public class Program
             }
 
             Console.WriteLine(swaggerFilePath);
-            var (openApiDocument, openApiDiagnostic) = await OpenApiDocument.LoadAsync(swaggerFilePath);
-            var codeFile = new CodeFileBuilder().Build(openApiDocument!, openApiDiagnostic!, packageName ?? "swagger");
-            Console.WriteLine();
+            OpenApiDocument openApiDocument = await OpenApiDocument.FromFileAsync(swaggerFilePath);
+            var codeFile = new CodeFileBuilder().Build(openApiDocument!, packageName ?? "swagger");
+
+            var outputFilePath = Path.GetFullPath(outputFile);
+            await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+            Console.WriteLine($"Generate codefile {outputFile} successfully.");
+            await codeFile.SerializeAsync(writer);
         }
 
         return;

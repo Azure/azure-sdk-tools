@@ -57,9 +57,17 @@ extends:
                   else
                     VERSION_FILE="$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/version.go"
                     [ -f "$VERSION_FILE" ] || { echo "version.go missing" >&2; exit 1; }
-                    IMAGE_TAG=$(grep -m1 moduleVersion "$VERSION_FILE" | sed -n 's/.*moduleVersion.*"\(.*\)".*/\1/p')
-                    [ -n "$IMAGE_TAG" ] || { echo "moduleVersion not found" >&2; exit 1; }
-                    echo "${{ parameters.environment }}: tag=$IMAGE_TAG"
+                    MODULE_VERSION=$(grep -m1 moduleVersion "$VERSION_FILE" | sed -n 's/.*moduleVersion.*"\(.*\)".*/\1/p')
+                    [ -n "$MODULE_VERSION" ] || { echo "Failed to determine module version" >&2; exit 1; }
+                    if [ "${{ parameters.environment }}" = "prod" ]; then
+                      COMMIT_ID=$(git rev-parse --short HEAD)
+                      [ -n "$COMMIT_ID" ] || { echo "Failed to determine commit id" >&2; exit 1; }
+                      IMAGE_TAG="${MODULE_VERSION}_${COMMIT_ID}"
+                    else
+                      IMAGE_TAG="$MODULE_VERSION"
+                    fi
+                    echo "Resolved image tag: $IMAGE_TAG"
+                    fi
                   fi
                   echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
                   echo "Resolved image tag: $IMAGE_TAG"
@@ -97,6 +105,9 @@ extends:
                       echo "Image found"
                     else
                       echo "Image $(imageName):$(imageTag) not found in $(ACR_NAME)" >&2
+                      if [ "${{ parameters.environment }}" = "prod" ]; then
+                        echo "You should make sure the current version is already deployed to the preview environment before release to production." >&2
+                      fi
                       exit 1
                     fi
 

@@ -1,13 +1,34 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Microsoft.Extensions.Logging;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
-public sealed partial class PythonPackageInfoHelper(IGitHelper gitHelper, ILogger<PythonPackageInfoHelper> logger) : IPackageInfoHelper
+public sealed partial class PythonLanguageService : LanguageService
 {
-    public async Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
+    private readonly INpxHelper npxHelper;
+
+    public PythonLanguageService(
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
+        ILogger<LanguageService> logger,
+        ICommonValidationHelpers commonValidationHelpers)
+    {
+        this.npxHelper = npxHelper;
+        base.processHelper = processHelper;
+        base.gitHelper = gitHelper;
+        base.logger = logger;
+        base.commonValidationHelpers = commonValidationHelpers;
+    }
+    public override SdkLanguage Language { get; } = SdkLanguage.Python;
+
+    public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Python package info for path: {packagePath}", packagePath);
         var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
@@ -113,4 +134,74 @@ public sealed partial class PythonPackageInfoHelper(IGitHelper gitHelper, ILogge
     
     [GeneratedRegex(@"^\s*VERSION\s*=\s*['""]([^'""]+)['""]", RegexOptions.Compiled | RegexOptions.Multiline, "")]
     private static partial Regex VersionFieldRegex();
+
+    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    {
+        var result = await processHelper.Run(new ProcessOptions(
+                command: "pytest",
+                args: ["tests"],
+                workingDirectory: packagePath
+            ),
+            ct
+        );
+
+        return result.ExitCode == 0;
+    }
+    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
+    {
+        return GetRequirements(packagePath, categories, null, ct);
+    }
+
+    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, string venvPath, CancellationToken ct = default)
+    {
+        var reqs = categories.TryGetValue("python", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+
+        if (string.IsNullOrWhiteSpace(venvPath))
+        {
+            venvPath = FindVenv(packagePath);
+        }
+
+        if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
+        {
+            logger.LogWarning("Provided venv path is invalid or does not exist: {VenvPath}", venvPath);
+            return reqs;
+        }
+
+        logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
+        return UpdateChecksWithVenv(reqs, venvPath);
+    }
+
+    private List<SetupRequirements.Requirement> UpdateChecksWithVenv(List<SetupRequirements.Requirement> reqs, string venvPath)
+    {
+        foreach (var req in reqs)
+        {
+            // Update checks to use venv path
+            var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
+        }
+
+        return reqs;
+    }
+
+    private string FindVenv(string packagePath)
+    {
+        // try to find existing venv in package path if none was provided
+        if (string.IsNullOrWhiteSpace(packagePath))
+        {
+            packagePath = Environment.CurrentDirectory;
+        }
+
+        var candidates = new[] { ".venv", "venv", ".env", "env" };
+
+        foreach (var c in candidates)
+        {
+            var path = Path.Combine(packagePath, c);
+            if (Directory.Exists(path))
+            {
+                return Path.GetFullPath(path);
+            }
+        }
+
+        return null;
+    }
 }

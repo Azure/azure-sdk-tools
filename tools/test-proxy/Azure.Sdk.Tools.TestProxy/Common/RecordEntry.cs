@@ -155,6 +155,47 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        /// <summary>
+        /// Normalizes multipart form data bodies for cross-platform compatibility.
+        /// Converts all path separators to Windows-style backslashes to match recording format.
+        /// </summary>
+        public static void NormalizeMultipartBody(RequestOrResponse requestOrResponse)
+        {
+            if (requestOrResponse.TryGetContentType(out string contentType) && 
+                ContentTypeUtilities.IsMultiPart(contentType, out var boundary))
+            {
+                try
+                {
+                    var bodyText = Encoding.UTF8.GetString(requestOrResponse.Body);
+                    
+                    // Normalize to Windows-style backslashes to match recording format
+                    var normalized = NormalizeMultipartPathSeparators(bodyText);
+                    
+                    if (bodyText != normalized)
+                    {
+                        requestOrResponse.Body = Encoding.UTF8.GetBytes(normalized);
+                        RecordedTestSanitizer.UpdateSanitizedContentLength(requestOrResponse);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Silently fail like NormalizeJsonBody does
+                }
+            }
+        }
+
+        private static string NormalizeMultipartPathSeparators(string multipartBody)
+        {
+            // Replace forward slashes with backslashes to match Windows format
+            var normalized = multipartBody.Replace("/", "\\");
+            
+            // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
+            normalized = normalized.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
+            normalized = normalized.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
+            
+            return normalized;
+        }
+
         private static void DeserializeHeaders(IDictionary<string, string[]> headers, in JsonElement property)
         {
             foreach (JsonProperty item in property.EnumerateObject())

@@ -189,6 +189,27 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             jsonWriter.WriteEndArray();
         }
 
+        /// <summary>
+        /// Normalizes path separators in Content-Disposition headers to Windows-style backslashes.
+        /// This ensures recordings are platform-independent by using a consistent format.
+        /// </summary>
+        /// <param name="headerValue">The Content-Disposition header value</param>
+        /// <returns>Normalized header value with Windows-style path separators</returns>
+        private static string NormalizeContentDispositionToWindows(string headerValue)
+        {
+            if (!headerValue.Contains("filename", StringComparison.OrdinalIgnoreCase))
+                return headerValue;
+            
+            // Replace forward slashes with backslashes in quoted filenames
+            var normalized = headerValue.Replace("/", "\\");
+            
+            // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
+            normalized = normalized.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
+            normalized = normalized.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
+            
+            return normalized;
+        }
+
         public static void WriteMultipartLines(
             Utf8JsonWriter jsonWriter,
             Stream stream,
@@ -208,7 +229,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteStringValue(open);
 
                     foreach (var h in part.Headers)
-                        jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
+                    {
+                        var headerValue = h.Value.ToString();
+                        
+                        // Normalize Content-Disposition headers to use Windows-style backslashes for consistency
+                        if (h.Key.Equals("Content-Disposition", StringComparison.OrdinalIgnoreCase))
+                        {
+                            headerValue = NormalizeContentDispositionToWindows(headerValue);
+                        }
+                        
+                        jsonWriter.WriteStringValue($"{h.Key}: {headerValue}\r\n");
+                    }
                     jsonWriter.WriteStringValue("\r\n");
 
                     if (IsNestedMultipart(part.Headers, out var childBoundary))

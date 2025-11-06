@@ -45,6 +45,7 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
                 persistCredentials: true
+                continueOnError: false
               - ${{ if ne(parameters.environment, 'dev') }}:
                 - bash: |
                     set -euo pipefail
@@ -53,6 +54,7 @@ extends:
                     git reset --hard origin/release/qa-bot
                     echo "Checked out release/qa-bot"
                   displayName: 'Switch to release branch'
+                  continueOnError: false
 
               # 2. Resolve image tag
               - bash: |
@@ -71,11 +73,14 @@ extends:
                   echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
                   echo "Resolved image tag: $IMAGE_TAG"
                 displayName: 'Resolve Image Tag'
+                failOnStderr: true
+                continueOnError: false
 
               # 3. Build & push (prod reuse existing image)
               - task: AzureCLI@2
                 condition: ne('${{ parameters.environment }}','prod')
                 displayName: 'Build & Push Image'
+                continueOnError: false
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
                   scriptType: bash
@@ -93,6 +98,7 @@ extends:
               # 4. Validate image exists
               - task: AzureCLI@2
                 displayName: 'Validate Image Exists'
+                continueOnError: false
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
                   scriptType: bash
@@ -113,6 +119,7 @@ extends:
               # 5. Deploy App Service
               - task: AzureCLI@2
                 displayName: 'Update App Service'
+                continueOnError: false
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
                   scriptType: bash
@@ -145,6 +152,7 @@ extends:
               # 6. Health check
               - task: AzureCLI@2
                 displayName: 'Health Check'
+                continueOnError: false
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
                   scriptType: bash

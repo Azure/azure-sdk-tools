@@ -33,10 +33,11 @@ public class SpecGenSdkConfigHelperTests
         _tempDirectory = TempDirectory.Create("SpecGenSdkConfigHelperTests");
 
         // Create the swagger_to_sdk_config.json file at the expected location
-    var engDir = Path.Combine(_tempDirectory.DirectoryPath, "eng");
+        var engDir = Path.Combine(_tempDirectory.DirectoryPath, "eng");
         Directory.CreateDirectory(engDir);
         _configFilePath = Path.Combine(engDir, "swagger_to_sdk_config.json");
-        _helper = new SpecGenSdkConfigHelper(_logger);
+        var mockProcessHelper = new Mock<IProcessHelper>();
+        _helper = new SpecGenSdkConfigHelper(_logger, mockProcessHelper.Object);
     }
 
     [TearDown]

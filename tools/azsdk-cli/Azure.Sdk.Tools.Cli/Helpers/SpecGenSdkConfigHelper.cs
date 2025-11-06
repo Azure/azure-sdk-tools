@@ -4,6 +4,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.CommandLine.Parsing;
+using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
@@ -20,6 +23,23 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Command processing methods
         string SubstituteCommandVariables(string command, Dictionary<string, string> variables);
         string[] ParseCommand(string command);
+
+        // Process creation methods
+        ProcessOptions? CreateProcessOptions(
+            SpecGenSdkConfigContentType configType,
+            string configValue,
+            string sdkRepoRoot,
+            string workingDirectory,
+            Dictionary<string, string> parameters,
+            int timeoutMinutes = 5);
+
+        // Process execution methods
+        Task<PackageOperationResponse> ExecuteProcessAsync(
+            ProcessOptions processOptions,
+            CancellationToken ct,
+            PackageInfo? packageInfo = null,
+            string successMessage = "Process completed successfully.",
+            string[]? nextSteps = null);
     }
 
     /// <summary>
@@ -49,10 +69,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
 
         private readonly ILogger<SpecGenSdkConfigHelper> _logger;
+        private readonly IProcessHelper _processHelper;
 
-        public SpecGenSdkConfigHelper(ILogger<SpecGenSdkConfigHelper> logger)
+        public SpecGenSdkConfigHelper(ILogger<SpecGenSdkConfigHelper> logger, IProcessHelper processHelper)
         {
             this._logger = logger;
+            this._processHelper = processHelper;
         }
 
         // Gets a configuration value from the swagger_to_sdk_config.json file
@@ -211,6 +233,126 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             return (true, current);
+        }
+
+        /// <summary>
+        /// Creates ProcessOptions for the specified configuration.
+        /// </summary>
+        public ProcessOptions? CreateProcessOptions(
+            SpecGenSdkConfigContentType configType,
+            string configValue,
+            string sdkRepoRoot,
+            string workingDirectory,
+            Dictionary<string, string> parameters,
+            int timeoutMinutes = 5)
+        {
+            if (configType == SpecGenSdkConfigContentType.Command)
+            {
+                return CreateCommandProcessOptions(configValue, workingDirectory, parameters, timeoutMinutes);
+            }
+            else if (configType == SpecGenSdkConfigContentType.ScriptPath)
+            {
+                return CreateScriptProcessOptions(sdkRepoRoot, configValue, workingDirectory, parameters, timeoutMinutes);
+            }
+
+            _logger.LogWarning("Unsupported configuration content type: {ConfigContentType}, configValue: {ConfigValue}", configType, configValue);
+            return null;
+        }
+
+        /// <summary>
+        /// Executes a process using the provided ProcessOptions.
+        /// </summary>
+        public async Task<PackageOperationResponse> ExecuteProcessAsync(
+            ProcessOptions processOptions,
+            CancellationToken ct,
+            PackageInfo? packageInfo = null,
+            string successMessage = "Process completed successfully.",
+            string[]? nextSteps = null)
+        {
+            try
+            {
+                var result = await _processHelper.Run(processOptions, ct);
+                var trimmedOutput = (result.Output ?? string.Empty).Trim();
+
+                if (result.ExitCode != 0)
+                {
+                    return PackageOperationResponse.CreateFailure($"Process failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}", packageInfo);
+                }
+
+                return PackageOperationResponse.CreateSuccess($"{successMessage} Output:\n{trimmedOutput}", packageInfo, nextSteps);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while executing process");
+                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", packageInfo);
+            }
+        }
+
+        /// <summary>
+        /// Creates ProcessOptions for command-based execution.
+        /// </summary>
+        private ProcessOptions? CreateCommandProcessOptions(
+            string configValue,
+            string workingDirectory,
+            Dictionary<string, string> variables,
+            int timeoutMinutes)
+        {
+            var substitutedCommand = SubstituteCommandVariables(configValue, variables);
+            var commandParts = ParseCommand(substitutedCommand);
+
+            if (commandParts.Length == 0)
+            {
+                _logger.LogWarning("No command parts found after parsing: {Command}", substitutedCommand);
+                return null;
+            }
+
+            var options = new ProcessOptions(
+                commandParts[0], 
+                commandParts.Skip(1).ToArray(),
+                logOutputStream: true,
+                workingDirectory: workingDirectory,
+                timeout: TimeSpan.FromMinutes(timeoutMinutes)
+            );
+
+            _logger.LogInformation("Created command process options: {Command} {Args}", options.Command, string.Join(" ", options.Args));
+            return options;
+        }
+
+        /// <summary>
+        /// Creates ProcessOptions for script-based execution.
+        /// </summary>
+        private ProcessOptions? CreateScriptProcessOptions(
+            string sdkRepoRoot,
+            string configValue,
+            string workingDirectory,
+            Dictionary<string, string> variables,
+            int timeoutMinutes)
+        {
+            var fullScriptPath = Path.Combine(sdkRepoRoot, configValue);
+
+            if (!File.Exists(fullScriptPath))
+            {
+                _logger.LogWarning("Script not found at: {FullScriptPath}", fullScriptPath);
+                return null;
+            }
+
+            _logger.LogInformation("Executing PowerShell script: {FullScriptPath}", fullScriptPath);
+
+            // Convert dictionary to PowerShell parameter array
+            var scriptArgs = new List<string>();
+            foreach (var param in variables)
+            {
+                scriptArgs.Add($"-{param.Key}");
+                scriptArgs.Add(param.Value);
+            }
+
+            return new PowershellOptions(
+                fullScriptPath,
+                scriptArgs.ToArray(),
+                logOutputStream: true,
+                workingDirectory: workingDirectory,
+                timeout: TimeSpan.FromMinutes(timeoutMinutes)
+            );
         }
     }
 

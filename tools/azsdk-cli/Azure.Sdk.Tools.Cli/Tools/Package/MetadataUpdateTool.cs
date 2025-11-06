@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Extensions;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
@@ -20,26 +21,20 @@ public class MetadataUpdateTool : MCPTool
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<MetadataUpdateTool> _logger;
     private readonly ILanguageSpecificResolver<ILanguagePackageUpdate> _packageUpdateResolver;
-    private readonly IProcessConfigurationService _processConfigurationService;
-    private readonly IResponseFactory _responseFactory;
-    private readonly LanguageService _languageService;
+    private readonly ILanguageSpecificResolver<IPackageInfoHelper> _packageInfoResolver;
     private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
 
     public MetadataUpdateTool(
         IGitHelper gitHelper,
         ILogger<MetadataUpdateTool> logger,
         ILanguageSpecificResolver<ILanguagePackageUpdate> packageUpdateResolver,
-        IProcessConfigurationService processConfigurationService,
-        IResponseFactory responseFactory,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        LanguageService languageService)
+        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver)
     {
         _gitHelper = gitHelper;
         _logger = logger;
-        _languageService = languageService;
-        _processConfigurationService = processConfigurationService;
-        _responseFactory = responseFactory;
-        _packageUpdateResolver = packageUpdateResolver;        
+        _packageInfoResolver = packageInfoResolver;
+        _packageUpdateResolver = packageUpdateResolver;
         _specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
 
@@ -72,19 +67,19 @@ public class MetadataUpdateTool : MCPTool
             // Validate package path
             if (string.IsNullOrWhiteSpace(packagePath))
             {
-                return _responseFactory.CreateFailureResponse("Package path is required and cannot be empty.");
+                return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }
 
             if (!Directory.Exists(packagePath))
             {
-                return _responseFactory.CreateFailureResponse($"Package path does not exist: {packagePath}");
+                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
             }
 
             // Discover the repository root
             var sdkRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
             if (sdkRepoRoot == null)
             {
-                return _responseFactory.CreateFailureResponse("Unable to find git repository root from the provided package path.");
+                return PackageOperationResponse.CreateFailure("Unable to find git repository root from the provided package path.");
             }
 
             _logger.LogInformation("Repository root discovered: {SdkRepoRoot}", sdkRepoRoot);
@@ -102,16 +97,16 @@ public class MetadataUpdateTool : MCPTool
                 };
 
                 // Create and execute process options for the update-metadata script
-                var processOptions = _processConfigurationService.CreateProcessOptionsAsync(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
+                var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
                 if (processOptions != null)
                 {
-                    var packageInfo = await _languageService.GetPackageInfo(packagePath, ct);
-                    return await _processConfigurationService.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version if it's a release."]);
+                    var packageInfo = await PackageInfoExtensions.CreateFromPath(packagePath, _packageInfoResolver, _logger, ct);
+                    return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version if it's a release."]);
                 }
             }
 
             // Hand over to language service for language-specific update steps
-            _logger.LogInformation("No configured script found for updating package metadata. Executing language-specific update steps...");
+            _logger.LogInformation("No configured script found for updating package metadata. Checking for language-specific update implementations...");
 
             // Resolve language package update service
             var languagePackageUpdateService = await _packageUpdateResolver.Resolve(packagePath, ct);
@@ -120,13 +115,13 @@ public class MetadataUpdateTool : MCPTool
                 return await languagePackageUpdateService.UpdateMetadataAsync(packagePath, ct);
             }
 
-            _logger.LogError("Failed to resolve language package update service for package path: {packagePath}", packagePath);
-            return _responseFactory.CreateFailureResponse("Failed to resolve language package update service.");
+            _logger.LogInformation("No language-specific package update implementation found for package path: {packagePath}.", packagePath);
+            return PackageOperationResponse.CreateSuccess("No package metadata updates performed.", null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
-            return _responseFactory.CreateFailureResponse($"An error occurred: {ex.Message}");
+            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
         }
     }
 }

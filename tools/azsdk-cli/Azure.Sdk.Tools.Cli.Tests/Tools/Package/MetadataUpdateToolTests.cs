@@ -9,6 +9,8 @@ using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 
@@ -27,19 +29,16 @@ public class MetadataUpdateToolTests
     private const string EmptyPackagePathError = "Package path is required and cannot be empty.";
     private const string PackageNotFoundError = "Package path does not exist: ";
     private const string RepoRootNotFoundError = "Unable to find git repository root from the provided package path.";
-    private const string LanguageResolverError = "Failed to resolve language package update service.";
 
     #endregion
 
     private MetadataUpdateTool _tool;
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<ILanguageSpecificResolver<ILanguagePackageUpdate>> _mockPackageUpdateResolver;
-    private Mock<IProcessConfigurationService> _mockProcessConfigurationService;
-    private Mock<IResponseFactory> _mockResponseFactory;
     private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
     private Mock<ILanguagePackageUpdate> _mockLanguagePackageUpdate;
+    private Mock<ILanguageSpecificResolver<IPackageInfoHelper>> _mockPackageInfoResolver;
     private TestLogger<MetadataUpdateTool> _logger;
-    private LanguageService _languageService;
     private TempDirectory _tempDirectory;
     private PackageInfo _testPackageInfo;
     private PackageOperationResponse _successResponse;
@@ -51,22 +50,17 @@ public class MetadataUpdateToolTests
         // Create mocks
         _mockGitHelper = new Mock<IGitHelper>();
         _mockPackageUpdateResolver = new Mock<ILanguageSpecificResolver<ILanguagePackageUpdate>>();
-        _mockProcessConfigurationService = new Mock<IProcessConfigurationService>();
-        _mockResponseFactory = new Mock<IResponseFactory>();
         _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         _mockLanguagePackageUpdate = new Mock<ILanguagePackageUpdate>();
+        _mockPackageInfoResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
         _logger = new TestLogger<MetadataUpdateTool>();
 
-        // Create a real LanguageService instance with mocked dependencies
-        var mockPackageInfoResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
+        // Setup package info resolver to return test package info
         var mockPackageInfoHelper = new Mock<IPackageInfoHelper>();
         mockPackageInfoHelper.Setup(x => x.ResolvePackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_testPackageInfo);
-        mockPackageInfoResolver.Setup(x => x.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockPackageInfoResolver.Setup(x => x.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockPackageInfoHelper.Object);
-        
-        var mockLanguageLogger = new TestLogger<LanguageService>();
-        _languageService = new LanguageService(mockPackageInfoResolver.Object, mockLanguageLogger);
 
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("MetadataUpdateToolTests");
@@ -103,21 +97,13 @@ public class MetadataUpdateToolTests
             PackageType = SdkType.Unknown
         };
 
-        // Setup default mock behavior
-        _mockResponseFactory.Setup(x => x.CreateSuccessResponse(It.IsAny<string>(), It.IsAny<PackageInfo>(), It.IsAny<string[]>()))
-            .Returns(_successResponse);
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(It.IsAny<string>(), It.IsAny<PackageInfo>(), It.IsAny<string[]>()))
-            .Returns(_failureResponse);
-
         // Create the tool instance
         _tool = new MetadataUpdateTool(
             _mockGitHelper.Object,
             _logger,
             _mockPackageUpdateResolver.Object,
-            _mockProcessConfigurationService.Object,
-            _mockResponseFactory.Object,
             _mockSpecGenSdkConfigHelper.Object,
-            _languageService
+            _mockPackageInfoResolver.Object
         );
     }
 
@@ -144,29 +130,23 @@ public class MetadataUpdateToolTests
     [Test]
     public async Task UpdateMetadataAsync_WithNullPackagePath_ShouldReturnFailure()
     {
-        // Arrange
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(EmptyPackagePathError, null, null))
-            .Returns(_failureResponse);
-
         // Act
         var result = await _tool.UpdateMetadataAsync(null!, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_failureResponse));
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(EmptyPackagePathError));
     }
 
     [Test]
     public async Task UpdateMetadataAsync_WithEmptyPackagePath_ShouldReturnFailure()
     {
-        // Arrange
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(EmptyPackagePathError, null, null))
-            .Returns(_failureResponse);
-
         // Act
         var result = await _tool.UpdateMetadataAsync(string.Empty, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_failureResponse));
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(EmptyPackagePathError));
     }
 
     [Test]
@@ -175,14 +155,13 @@ public class MetadataUpdateToolTests
         // Arrange
         var nonExistentPath = "/non/existent/path";
         var expectedError = $"{PackageNotFoundError}{nonExistentPath}";
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(expectedError, null, null))
-            .Returns(_failureResponse);
 
         // Act
         var result = await _tool.UpdateMetadataAsync(nonExistentPath, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_failureResponse));
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
     }
 
     [Test]
@@ -191,14 +170,13 @@ public class MetadataUpdateToolTests
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns((string?)null!);
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(RepoRootNotFoundError, null, null))
-            .Returns(_failureResponse);
 
         // Act
         var result = await _tool.UpdateMetadataAsync(testPath, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_failureResponse));
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(RepoRootNotFoundError));
     }
 
     [Test]
@@ -211,7 +189,7 @@ public class MetadataUpdateToolTests
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
         var mockProcessOptions = new ProcessOptions("echo", ["test"]);
-        _mockProcessConfigurationService.Setup(x => x.CreateProcessOptionsAsync(
+        _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             TestConfigValue,
             TestRepoRoot,
@@ -220,31 +198,31 @@ public class MetadataUpdateToolTests
             It.IsAny<int>()))
             .Returns(mockProcessOptions);
 
-        _mockProcessConfigurationService.Setup(x => x.ExecuteProcessAsync(
+        _mockSpecGenSdkConfigHelper.Setup(x => x.ExecuteProcessAsync(
             It.IsAny<ProcessOptions>(),
             It.IsAny<CancellationToken>(),
             It.IsAny<PackageInfo>(),
-            TestSuccessMessage,
+            It.IsAny<string>(),
             It.IsAny<string[]>()))
-            .ReturnsAsync(_successResponse);
+            .ReturnsAsync(PackageOperationResponse.CreateSuccess("Success", null));
 
         // Act
         var result = await _tool.UpdateMetadataAsync(testPath, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_successResponse));
-        _mockProcessConfigurationService.Verify(x => x.CreateProcessOptionsAsync(
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        _mockSpecGenSdkConfigHelper.Verify(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             TestConfigValue,
             TestRepoRoot,
             testPath,
             It.IsAny<Dictionary<string, string>>(),
             It.IsAny<int>()), Times.Once);
-        _mockProcessConfigurationService.Verify(x => x.ExecuteProcessAsync(
+        _mockSpecGenSdkConfigHelper.Verify(x => x.ExecuteProcessAsync(
             It.IsAny<ProcessOptions>(),
             It.IsAny<CancellationToken>(),
             It.IsAny<PackageInfo>(),
-            TestSuccessMessage,
+            It.IsAny<string>(),
             It.IsAny<string[]>()), Times.Once);
     }
 
@@ -257,7 +235,7 @@ public class MetadataUpdateToolTests
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
-        _mockProcessConfigurationService.Setup(x => x.CreateProcessOptionsAsync(
+        _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
             It.IsAny<SpecGenSdkConfigContentType>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
@@ -306,7 +284,7 @@ public class MetadataUpdateToolTests
     }
 
     [Test]
-    public async Task UpdateMetadataAsync_WhenLanguageResolverReturnsNull_ShouldReturnFailure()
+    public async Task UpdateMetadataAsync_WhenLanguageResolverReturnsNull_ShouldReturnSuccess()
     {
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
@@ -317,14 +295,12 @@ public class MetadataUpdateToolTests
         _mockPackageUpdateResolver.Setup(x => x.Resolve(testPath, It.IsAny<CancellationToken>()))
             .ReturnsAsync((ILanguagePackageUpdate?)null);
 
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(LanguageResolverError, null, null))
-            .Returns(_failureResponse);
-
         // Act
         var result = await _tool.UpdateMetadataAsync(testPath, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_failureResponse));
+        Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.Message, Is.EqualTo("No package metadata updates performed."));
         _mockPackageUpdateResolver.Verify(x => x.Resolve(testPath, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -337,14 +313,13 @@ public class MetadataUpdateToolTests
         var expectedErrorMessage = $"An error occurred: {expectedException.Message}";
 
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Throws(expectedException);
-        _mockResponseFactory.Setup(x => x.CreateFailureResponse(expectedErrorMessage, null, null))
-            .Returns(_failureResponse);
 
         // Act
         var result = await _tool.UpdateMetadataAsync(testPath, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_failureResponse));
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedErrorMessage));
     }
 
     [Test]
@@ -389,7 +364,7 @@ public class MetadataUpdateToolTests
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, scriptContent));
 
         var processOptions = new ProcessOptions("echo", ["test"]);
-        _mockProcessConfigurationService.Setup(x => x.CreateProcessOptionsAsync(
+        _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             scriptContent,
             TestRepoRoot,
@@ -400,34 +375,34 @@ public class MetadataUpdateToolTests
             It.IsAny<int>()))
             .Returns(processOptions);
 
-        _mockProcessConfigurationService.Setup(x => x.ExecuteProcessAsync(
+        _mockSpecGenSdkConfigHelper.Setup(x => x.ExecuteProcessAsync(
             It.IsAny<ProcessOptions>(),
             It.IsAny<CancellationToken>(),
             It.IsAny<PackageInfo>(),
-            TestSuccessMessage,
+            It.IsAny<string>(),
             It.IsAny<string[]>()))
-            .ReturnsAsync(_successResponse);
+            .ReturnsAsync(PackageOperationResponse.CreateSuccess("Success", null));
 
         // Act
         var result = await _tool.UpdateMetadataAsync(testPath, CancellationToken.None);
 
         // Assert
-        Assert.That(result, Is.EqualTo(_successResponse));
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         
         // Verify the complete flow
         _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata), Times.Once);
-        _mockProcessConfigurationService.Verify(x => x.CreateProcessOptionsAsync(
+        _mockSpecGenSdkConfigHelper.Verify(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             scriptContent,
             TestRepoRoot,
             testPath,
             It.IsAny<Dictionary<string, string>>(),
             It.IsAny<int>()), Times.Once);
-        _mockProcessConfigurationService.Verify(x => x.ExecuteProcessAsync(
+        _mockSpecGenSdkConfigHelper.Verify(x => x.ExecuteProcessAsync(
             It.IsAny<ProcessOptions>(),
             It.IsAny<CancellationToken>(),
             It.IsAny<PackageInfo>(),
-            TestSuccessMessage,
+            It.IsAny<string>(),
             It.IsAny<string[]>()), Times.Once);
     }
 

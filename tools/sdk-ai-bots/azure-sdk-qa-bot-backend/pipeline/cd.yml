@@ -44,9 +44,15 @@ extends:
               # 1. Checkout
               - checkout: self
                 displayName: 'Checkout repository'
-                ${{ if ne(parameters.environment, 'dev') }}:
-                  persistCredentials: true
-                  ref: release/qa-bot
+                persistCredentials: true
+              - ${{ if ne(parameters.environment, 'dev') }}:
+                - bash: |
+                    set -euo pipefail
+                    git fetch origin release/qa-bot
+                    git checkout --force release/qa-bot
+                    git reset --hard origin/release/qa-bot
+                    echo "Checked out release/qa-bot"
+                  displayName: 'Switch to release branch'
 
               # 2. Resolve image tag
               - bash: |
@@ -61,7 +67,6 @@ extends:
                     COMMIT_ID=$(git rev-parse --short HEAD)
                     [ -n "$COMMIT_ID" ] || { echo "Failed to determine commit id" >&2; exit 1; }
                     IMAGE_TAG="${MODULE_VERSION}_${COMMIT_ID}"
-                    fi
                   fi
                   echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
                   echo "Resolved image tag: $IMAGE_TAG"

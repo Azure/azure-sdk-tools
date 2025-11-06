@@ -48,11 +48,13 @@ extends:
               - ${{ if ne(parameters.environment, 'dev') }}:
                 - bash: |
                     set -euo pipefail
-                    git fetch origin release/qa-bot
-                    git checkout --force release/qa-bot
-                    git reset --hard origin/release/qa-bot
-                    echo "Checked out release/qa-bot"
-                  displayName: 'Switch to release branch'
+                    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                    echo "Current branch: $CURRENT_BRANCH"
+                    if [ "$CURRENT_BRANCH" != "release/qa-bot" ]; then
+                      echo "ERROR: Current branch is $CURRENT_BRANCH, but release/qa-bot is required for ${{ parameters.environment }} deployment" >&2
+                      exit 1
+                    fi
+                  displayName: 'Validate release branch'
 
               # 2. Resolve image tag
               - bash: |

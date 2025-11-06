@@ -41,6 +41,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
 
     const modularSDKType = getModularSDKType(packageFolderPath);
     if (modularSDKType === ModularSDKType.DataPlane) {
+        logger.info(`Skipping changelog generation for DataPlane SDK: ${packageName}`);
         return;
     }
 

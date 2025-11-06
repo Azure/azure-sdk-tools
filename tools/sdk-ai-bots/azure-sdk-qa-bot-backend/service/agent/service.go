@@ -128,6 +128,7 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 	}, nil)
 
 	if err != nil {
@@ -407,75 +408,14 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 
 func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	schema := map[string]interface{}{
-		"type": "object",
-		"properties": map[string]interface{}{
-			"has_result": map[string]interface{}{
-				"type":        "boolean",
-				"description": "true if you can answer current question",
-			},
-			"answer": map[string]interface{}{
-				"type":        "string",
-				"description": "your complete, formatted response",
-			},
-			"references": map[string]interface{}{
-				"type":        "array",
-				"description": "put all supporting for your answer references from Knowledge",
-				"items": map[string]interface{}{
-					"type": "object",
-					"properties": map[string]interface{}{
-						"title": map[string]interface{}{
-							"type":        "string",
-							"description": "section or document title",
-						},
-						"source": map[string]interface{}{
-							"type":        "string",
-							"description": "document source",
-						},
-						"link": map[string]interface{}{
-							"type":        "string",
-							"description": "complete link to the reference",
-						},
-						"content": map[string]interface{}{
-							"type":        "string",
-							"description": "relevant extract that supports your answer",
-						},
-					},
-					"required":             []string{"title", "source", "link", "content"},
-					"additionalProperties": false,
-				},
-			},
-			"reasoning_progress": map[string]interface{}{
-				"type":        "string",
-				"description": "output your reasoning progress of generating the answer",
-			},
-		},
-		"required":             []string{"has_result", "answer", "references", "reasoning_progress"},
-		"additionalProperties": false,
-	}
-
-	schemaBytes, err := json.Marshal(schema)
-	if err != nil {
-		log.Printf("ERROR marshaling schema: %s", err)
-		return nil, err
-	}
-
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
 		DeploymentName: &s.model,
-		ResponseFormat: &azopenai.ChatCompletionsJSONSchemaResponseFormat{
-			JSONSchema: &azopenai.ChatCompletionsJSONSchemaResponseFormatJSONSchema{
-				Name:        to.Ptr("bot-response-format"),
-				Description: to.Ptr("Bot Response Format"),
-				Schema:      schemaBytes,
-				Strict:      to.Ptr(true),
-			},
-		},
-		TopP: to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		TopP:           to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
 	}, nil)
-
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {

@@ -68,9 +68,7 @@ Formalizing Stage 6 as cohesive tools improves reliability, supports automation-
 
 ### Language-Specific Limitations
 
-| Language   | Limitation | Impact | Workaround |
-|------------|------------|--------|------------|
-| JavaScript | Code formatting isn't hooked up to the emitter | Noisy diffs or linter failures | Run code formatting step in the `update-metadata` tool |
+No language-specific limitations are known at this time. If any language requires an exception, it will be documented here.
 
 ---
 

@@ -57,7 +57,7 @@ public class MetadataUpdateTool : MCPTool
     /// <param name="packagePath">The absolute path to the package directory.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
     /// <returns>A response indicating the result of the metadata update operation.</returns>
-    [McpServerTool(Name = "azsdk_update_metadata"), Description("Updates the package metadata content for a specified package.")]
+    [McpServerTool(Name = "azsdk_package_update_metadata"), Description("Updates the package metadata content for a specified package.")]
     public async Task<PackageOperationResponse> UpdateMetadataAsync(
         [Description("The absolute path to the package directory.")] string packagePath,
         CancellationToken ct)

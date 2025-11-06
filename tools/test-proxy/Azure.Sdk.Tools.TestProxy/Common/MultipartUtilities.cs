@@ -17,6 +17,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     {
         public static readonly byte[] CrLf = "\r\n"u8.ToArray();
 
+        // Compiled regex for better performance when normalizing Content-Disposition headers
+        private static readonly System.Text.RegularExpressions.Regex FilenameRegex = new System.Text.RegularExpressions.Regex(
+            @"(filename\s*=\s*""[^""]*"")|" +  // filename="..." 
+            @"(filename\*\s*=\s*utf-8''[^;\s]*)",  // filename*=utf-8''...
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled
+        );
+
         public static byte[] ReadAllBytes(Stream s)
         {
             if (s is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> seg))
@@ -202,11 +209,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return headerValue;
             
             // Use regex to target only filename parameters
-            // Pattern matches: filename="path/to/file" or filename*=utf-8''path%2Fto%2Ffile
-            var result = System.Text.RegularExpressions.Regex.Replace(
+            var result = FilenameRegex.Replace(
                 headerValue,
-                @"(filename\s*=\s*""[^""]*"")|" +  // filename="..." 
-                @"(filename\*\s*=\s*utf-8''[^;\s]*)",  // filename*=utf-8''...
                 match =>
                 {
                     var value = match.Value;
@@ -214,10 +218,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     value = value.Replace("/", "\\");
                     // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
                     value = value.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
-                    value = value.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
                     return value;
-                },
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                }
             );
             
             return result;

@@ -19,6 +19,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class RecordEntry
     {
+        // Compiled regex for better performance when normalizing multipart bodies
+        private static readonly System.Text.RegularExpressions.Regex FilenameRegex = new System.Text.RegularExpressions.Regex(
+            @"(filename\s*=\s*""[^""]*"")|" +  // filename="..." 
+            @"(filename\*\s*=\s*utf-8''[^;\s]*)",  // filename*=utf-8''...
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled
+        );
+
         // Requests and responses are usually formatted using Newtonsoft.Json that has more relaxed encoding rules
         // To enable us to store more responses as JSON instead of string in Recording files use
         // relaxed settings for roundtrip.
@@ -190,11 +197,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private static string NormalizeMultipartPathSeparators(string multipartBody)
         {
             // Use regex to target only filename parameters in Content-Disposition headers
-            // Pattern matches: filename="path/to/file" or filename*=utf-8''path%2Fto%2Ffile
-            var result = System.Text.RegularExpressions.Regex.Replace(
+            var result = FilenameRegex.Replace(
                 multipartBody,
-                @"(filename\s*=\s*""[^""]*)|" +  // filename="..." 
-                @"(filename\*\s*=\s*utf-8''[^;\s\r\n]*)",  // filename*=utf-8''...
                 match =>
                 {
                     var value = match.Value;
@@ -202,10 +206,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     value = value.Replace("/", "\\");
                     // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
                     value = value.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
-                    value = value.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
                     return value;
-                },
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                }
             );
             
             return result;

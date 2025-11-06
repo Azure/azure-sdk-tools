@@ -11,7 +11,13 @@ namespace Schemas;
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
 @jsonSchema
 model CodeFile {
+  /** ServiceTree ID that identifies the relevant service. */
+  ServiceTreeId?: string;
+  /** ServiceTree product ID that identifies the relevant product. */
+  ServiceTreeProductId?: string;
+  /** Name of the package. */
   PackageName: string;
+  /** Version of the package. */
   PackageVersion: string;
   /** version of the APIview language parser used to create token file*/
   ParserVersion: string;
@@ -146,3 +152,14 @@ model NavigationItem {
  * Value: Cross-language TypeSpec ID
  */
 model LanguageIdMap is Record<string>;
+
+model ServiceTreeMetadata {
+  /** Unique identifier for the service tree concept. */
+  Id: string;
+  /** Kind of the service tree concept, either a Service or a Product. Assumes all service and product ids are unique */
+  Kind: "Service" | "Product";
+  /** Canonical name of the service tree concept. */
+  CanonicalName: string;
+  /** Display name of the service tree concept in APIView. */
+  Name: string;
+}

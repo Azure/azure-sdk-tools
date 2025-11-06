@@ -3,6 +3,10 @@
     "$id": "CodeFile.json",
     "type": "object",
     "properties": {
+        "ServiceTreeId": {
+            "type": "string",
+            "description": "ServiceTreeId associated with this package."
+        },
         "PackageName": {
             "type": "string"
         },

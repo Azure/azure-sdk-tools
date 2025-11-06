@@ -517,10 +517,10 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Init with global tspclientconfig.yaml", async () => {
+  it("Init with global tsp-client-config.yaml", async () => {
     await cp(
-      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+      joinPaths(cwd(), "test/utils/tsp-client-config.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
     );
     try {
       const args = {
@@ -541,16 +541,16 @@ describe.sequential("Verify commands", () => {
         ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       });
-      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }
   });
 
-  it("Init with global tspclientconfig.yaml with no emitter matches", async () => {
+  it("Init with global tsp-client-config.yaml with no emitter matches", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tspclientconfig-no-match.yaml"),
-      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"),
     );
     try {
       const args = {
@@ -572,7 +572,7 @@ describe.sequential("Verify commands", () => {
           "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
         ],
       });
-      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }
@@ -728,6 +728,49 @@ describe.sequential("Verify commands", () => {
       assert.equal(Object.keys(emitterJson["devDependencies"]).length, 2);
       assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  }, 360000);
+
+  it("Generate config files preserves all existing fields", async () => {
+    try {
+      // Create a temp directory and copy the test file
+      const tempDir = joinPaths(repoRoot, "tools/tsp-client/test/utils/temp-preserve-fields");
+      await mkdir(tempDir, { recursive: true });
+      const emitterPackageJsonPath = joinPaths(tempDir, "emitter-package-with-extra-fields.json");
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-with-extra-fields.json"),
+        emitterPackageJsonPath,
+      );
+
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "emitter-package-json-path": emitterPackageJsonPath,
+      };
+      await generateConfigFilesCommand(args);
+      const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
+
+      // Check that dependencies and devDependencies are updated
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+
+      // Check that all other fields are preserved
+      assert.equal(emitterJson["name"], "test-emitter");
+      assert.equal(emitterJson["version"], "1.0.0");
+      assert.equal(emitterJson["description"], "Test emitter package with extra fields");
+      assert.equal(emitterJson["author"], "Test Author");
+      assert.equal(emitterJson["license"], "MIT");
+      assert.equal(emitterJson["customField"], "customValue");
+      assert.exists(emitterJson["scripts"]);
+      assert.equal(emitterJson["scripts"]["build"], "tsc");
+      assert.equal(emitterJson["scripts"]["test"], "vitest");
+
+      // Check that main field is always set correctly
+      assert.equal(emitterJson["main"], "dist/src/index.js");
+
+      // Clean up the temp directory
+      await removeDirectory(tempDir);
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }

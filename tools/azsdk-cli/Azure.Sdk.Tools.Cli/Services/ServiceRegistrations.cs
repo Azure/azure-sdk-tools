@@ -13,7 +13,10 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Services.VerifySetup;
+
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -33,7 +36,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddScoped<ILanguageChecks, LanguageChecks>();
             services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
             {
                 Python = typeof(PythonLanguageSpecificChecks),
@@ -50,15 +52,44 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Future: Python = typeof(PythonUpdateLanguageService), etc
             });
 
+            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageInfoHelper),
+                Java = typeof(JavaPackageInfoHelper),
+                Python = typeof(PythonPackageInfoHelper),
+                JavaScript = typeof(JavaScriptPackageInfoHelper),
+                Go = typeof(GoPackageInfoHelper),
+            });
+
+            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetSampleLanguageContext),
+                Java = typeof(JavaSampleLanguageContext),
+                Python = typeof(PythonSampleLanguageContext),
+                JavaScript = typeof(TypeScriptSampleLanguageContext),
+                Go = typeof(GoSampleLanguageContext),
+            });
+
             services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
             {
                 Java = typeof(JavaTestRunner),
                 JavaScript = typeof(JavaScriptTestRunner),
+                Go = typeof(GoLanguageSpecificChecks),
                 Python = typeof(PythonTestRunner),
                 DotNet = typeof(DotNetTestRunner),
             });
 
+            services.AddLanguageSpecific<IEnvRequirementsCheck>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonRequirementsCheck),
+                Java = typeof(JavaRequirementsCheck),
+                JavaScript = typeof(JavaScriptRequirementsCheck),
+                DotNet = typeof(DotNetRequirementsCheck),
+                Go = typeof(GoRequirementsCheck),
+            });
+
             // Helper classes
+            services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();
@@ -80,9 +111,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
+            services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+            services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
 
             // Telemetry

@@ -47,11 +47,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         }
 
         private const string _sdkDirectory = "sdk";
-        private const string _cargoName = "cargo";
         private string _resultsDirectory = "testResults";
-        private bool _debug = false;
         private string _executablePath = "";
-        private string _testCommand = "";
         private string _targetResultsDirectory;
         public bool IsTest { get; set; } = false;
         public bool IsWindows { get; set; } = Util.IsWindows;
@@ -69,11 +66,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // just make sure we have the target directory cleaned up of previous results in case of a test issue in a previous test / run
             _targetResultsDirectory = await CleanupAsync(project);
             Directory.CreateDirectory(_targetResultsDirectory);
-            _debug = debug;
 
             string flavor = debug ? "debug" : "release";
-            _testCommand = $"--{flavor} --package {primaryPackage} --test perf ";
-            var result = await Util.RunAsync(_cargoName, $"build {_testCommand} --message-format=json", WorkingDirectory, log: false);
+            string testCommand = $"--{flavor} --package {primaryPackage} --bench perf ";
+            var result = await Util.RunAsync("cargo", $"build {testCommand} --message-format=json", WorkingDirectory, log: false);
             // Look for errors in the build.
             if (result.ExitCode != 0)
             {
@@ -137,45 +133,28 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
             }
-            ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
-            if (_executablePath == String.Empty)
+            ProcessResult result = null;
+            string testParams = $" --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+            if (_executablePath != String.Empty)
             {
-                Console.WriteLine("Executable path is empty, building test.");
-                // set up the params for cargo. Some of the arguments were established in the setup stage.
-                string finalParams = $"test {_testCommand} -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
-                if (IsTest)
-                {
-                    UtilMethodCall(this, new UtilEventArgs(
-                        "RunAsync",
-                        new string[] {
-                        _cargoName,
-                        finalParams,
-                        WorkingDirectory}));
-                    result = new ProcessResult(0, "cargo bench result", "error");
-                }
-                else
-                {
-                    result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
-                }
-            }
-            else
-            {
-                string finalParams = $" --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
                 if (IsTest)
                 {
                     UtilMethodCall(this, new UtilEventArgs(
                         "RunAsync",
                         new string[] {
                         _executablePath,
-                        finalParams,
+                        testParams,
                         WorkingDirectory}));
                     result = new ProcessResult(0, "cargo bench result", "error");
                 }
                 else
                 {
-                    result = await Util.RunAsync(_executablePath, finalParams, WorkingDirectory);
+                    result = await Util.RunAsync(_executablePath, testParams, WorkingDirectory);
                 }
-
+            }
+            else
+            {
+                throw new Exception("No test executable found to run the benchmark.");
             }
 
             if (result.ExitCode != 0)

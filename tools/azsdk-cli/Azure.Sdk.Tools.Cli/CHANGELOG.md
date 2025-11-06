@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.5 (Unreleased)
+## 0.5.8 (Unreleased)
 
 ### Features Added
 
@@ -8,7 +8,43 @@
 
 ### Bugs Fixed
 
+- Sample generator: Fix integer overflow when calculating file sizes
+- Sample generator: Fix stopping loading when an empty file is encountered
+- Sample generator: Fix not giving enough priority to files in the input package folder
+
 ### Other Changes
+
+## 0.5.7 (2025-11-05)
+
+### Features Added
+
+- Updated responses for release plan, TypeSpec, generate and build SDK tools to include language, TypeSpec path and package name.
+- Added verify setup tool
+
+### Bugs Fixed
+
+- Validation workflow fixes
+- Fix issue in telemetry service when setting string properties
+
+## 0.5.6 (2025-11-03)
+
+### Features Added
+
+- Sample generator: Add support for user-defined additional context
+- Sample generator: Add support for input prompts with local links
+- Updated responses to include language and package name in telemetry.
+
+## 0.5.5 (2025-10-28)
+
+### Features Added
+
+- Add support for generating samples for Azure client libraries across all languages
+- Add tool status in response
+- Disable telemetry in debug mode.
+
+### Bugs Fixed
+
+- Fixed issue when linking .NET PR to release plan
 
 ## 0.5.4 (2025-10-21)
 
@@ -25,7 +61,6 @@
 ### Features
 
 - Updated System.CommandLine dependency to 2.5 beta
-
 ### Bugs Fixed
 
 - Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)

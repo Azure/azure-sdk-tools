@@ -1,6 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
-using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.GitHub;
@@ -9,6 +7,8 @@ using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
+using Azure.Sdk.Tools.Cli.Tools.Verify;
+using Azure.Sdk.Tools.Cli.Tools.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -25,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
             typeof(ReadMeGeneratorTool),
+            typeof(SampleGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
             typeof(SdkBuildTool),
@@ -39,6 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecInitTool),
             typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
+            typeof(VerifySetupTool),
             typeof(TestTool),
 #if DEBUG
             // only add these tools in debug mode

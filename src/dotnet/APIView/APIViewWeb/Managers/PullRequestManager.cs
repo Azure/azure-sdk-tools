@@ -11,6 +11,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
@@ -21,8 +22,6 @@ namespace APIViewWeb.Managers
 {
     public class PullRequestManager : IPullRequestManager
     {
-        static readonly GitHubClient _githubClient = new GitHubClient(new ProductHeaderValue("apiview"));
-        
         private readonly TelemetryClient _telemetryClient;
         private readonly ILogger<PullRequestManager> _logger;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
@@ -32,13 +31,19 @@ namespace APIViewWeb.Managers
         private readonly ICodeFileManager _codeFileManager;
         private readonly IConfiguration _configuration;
         private readonly IEnumerable<LanguageService> _languageServices;
+        private readonly IGitHubClientFactory _gitHubClientFactory;
         private readonly int _pullRequestCleanupDays;
-        private readonly bool _isGitClientAvailable;
 
-        public PullRequestManager(
-            ICosmosPullRequestsRepository pullRequestsRepository, ICosmosAPIRevisionsRepository apiRevisionsRepository,
-            IAPIRevisionsManager apiRevisionsManager, IConfiguration configuration, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, TelemetryClient telemetryClient, ILogger<PullRequestManager> logger, IEnumerable<LanguageService> languageServices)
+        public PullRequestManager(ICosmosPullRequestsRepository pullRequestsRepository,
+            ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            IAPIRevisionsManager apiRevisionsManager,
+            IConfiguration configuration, 
+            ICodeFileManager codeFileManager,
+            IReviewManager reviewManager,
+            TelemetryClient telemetryClient, 
+            ILogger<PullRequestManager> logger, 
+            IEnumerable<LanguageService> languageServices,
+            IGitHubClientFactory gitHubClientFactory)
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -49,14 +54,9 @@ namespace APIViewWeb.Managers
             _telemetryClient = telemetryClient;
             _languageServices = languageServices;
             _logger = logger;
+            _gitHubClientFactory = gitHubClientFactory;
 
-            var ghToken = _configuration["github-access-token"];
-            if (!string.IsNullOrEmpty(ghToken))
-            {
-                _githubClient.Credentials = new Credentials(ghToken);
-                _isGitClientAvailable = true;
-            }
-            var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
+            string pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
         public async Task UpsertPullRequestAsync(PullRequestModel pullRequestModel)
@@ -78,8 +78,16 @@ namespace APIViewWeb.Managers
             var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName, language);
             if (pullRequestModel == null)
             {
-                var repoInfo = repoName.Split("/");
-                var pullRequest = await _githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
+                string[] repoInfo = repoName.Split("/");
+                GitHubClient githubClient = await _gitHubClientFactory.CreateGitHubClientAsync(repoInfo[0], repoInfo[1]);
+
+                if (githubClient == null)
+                {
+                    _logger.LogError("GitHub client not available to get PR {PullRequestNumber} in {RepoName}", prNumber, repoName);
+                    return null;
+                }
+
+                PullRequest pullRequest = await githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
                 pullRequestModel = new PullRequestModel()
                 {
                     RepoName = repoName,
@@ -225,11 +233,17 @@ namespace APIViewWeb.Managers
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
         {
-            if (!_isGitClientAvailable)
+            string[] repoInfo = prModel.RepoName.Split("/");
+            GitHubClient githubClient = await _gitHubClientFactory.CreateGitHubClientAsync(repoInfo[0], repoInfo[1]);
+            if (githubClient == null)
+            {
+                _logger.LogWarning(
+                    "GitHub client not available for cleanup check of PR {PullRequestNumber} in {RepoName}",
+                    prModel.PullRequestNumber, prModel.RepoName);
                 return false;
+            }
 
-            var repoInfo = prModel.RepoName.Split("/");
-            var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
+            Issue issue = await githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
             // Close review created for pull request if pull request was closed more than _pullRequestCleanupDays days ago
             if (issue.ClosedAt != null)
             {

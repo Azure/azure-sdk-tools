@@ -22,4 +22,4 @@ jobs:
           scriptPath: eng/scripts/Invoke-CPEX-Attestation-Automation.ps1
           arguments: >
             -AzureSDKEmailUri "$(AzureSDKEmailerSasURL)"
-            -TableName ${{ parameters.TableName }}
+            -TableName "${{ parameters.TableName }}"

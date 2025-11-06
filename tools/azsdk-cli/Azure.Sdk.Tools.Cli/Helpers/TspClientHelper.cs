@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -44,28 +44,36 @@ public class TspClientHelper : ITspClientHelper
             {
                 ResponseError = isCli
                     ? "Failed to convert swagger to TypeSpec project, see details in the above logs."
-                    : "Failed to convert swagger to TypeSpec project, see generator output below" + Environment.NewLine + result.Output
+                    : "Failed to convert swagger to TypeSpec project, see generator output below" + Environment.NewLine + result.Output,
+                TypeSpecProject = outputDirectory
             };
         }
 
         return new TspToolResponse
         {
             IsSuccessful = true,
-            TypeSpecProjectPath = outputDirectory
+            TypeSpecProject = outputDirectory
         };
     }
 
-    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, bool isCli, CancellationToken ct)
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha, bool isCli, CancellationToken ct)
     {
-        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}", tspLocationPath, outputDirectory);
+        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}, commit: {commit}", tspLocationPath, outputDirectory, commitSha);
+        
         if (!File.Exists(tspLocationPath))
         {
-            return new TspToolResponse { ResponseError = $"tsp-location.yaml not found at path: {tspLocationPath}" };
+            return new TspToolResponse {
+                ResponseError = $"tsp-location.yaml not found at path: {tspLocationPath}",
+                TypeSpecProject = outputDirectory
+            };
         }
         var workingDir = Path.GetDirectoryName(Path.GetFullPath(tspLocationPath))!;
+        
+        var args = new List<string> { "tsp-client", "update", "--commit", commitSha };
+        
         var npxOptions = new NpxOptions(
             "@azure-tools/typespec-client-generator-cli",
-            ["tsp-client", "update"],
+            args.ToArray(),
             logOutputStream: true,
             workingDirectory: workingDir
         );
@@ -77,14 +85,15 @@ public class TspClientHelper : ITspClientHelper
             {
                 ResponseError = isCli
                     ? "Failed to regenerate TypeSpec client, see details in the above logs."
-                    : "Failed to regenerate TypeSpec client, see generator output below" + Environment.NewLine + result.Output
+                    : "Failed to regenerate TypeSpec client, see generator output below" + Environment.NewLine + result.Output,
+                TypeSpecProject = outputDirectory
             };
         }
 
         return new TspToolResponse
         {
             IsSuccessful = true,
-            TypeSpecProjectPath = outputDirectory
+            TypeSpecProject = outputDirectory
         };
     }
 }

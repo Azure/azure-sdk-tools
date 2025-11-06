@@ -7,7 +7,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -18,7 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType, Description("Tools for converting existing Azure service swagger definitions to TypeSpec projects.")]
     public class TypeSpecConvertTool(
         ILogger<TypeSpecConvertTool> logger,
-        ITspClientHelper tspClientHelper
+        ITspClientHelper tspClientHelper,
+        IFileHelper fileHelper
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
@@ -100,19 +101,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = readmeValidationResult
+                        ResponseError = readmeValidationResult,
+                        TypeSpecProject = outputDirectory
                     };
                 }
                 // fullPathToSwaggerReadme is not null or empty at this point - already validated
                 var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
 
                 // validate outputDirectory using FileHelper
-                var validationResult = FileHelper.ValidateEmptyDirectory(outputDirectory);
+                var validationResult = fileHelper.ValidateEmptyDirectory(outputDirectory);
                 if (validationResult != null)
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
+                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}",
+                        TypeSpecProject = outputDirectory
                     };
                 }
 
@@ -124,7 +127,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 logger.LogError(ex, "Error occurred while converting swagger to TypeSpec: {pathToSwaggerReadme}, {outputDirectory}", pathToSwaggerReadme, outputDirectory);
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"
+                    ResponseError = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}",
+                    TypeSpecProject = outputDirectory
                 };
             }
         }

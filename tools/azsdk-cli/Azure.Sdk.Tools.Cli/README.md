@@ -125,6 +125,45 @@ In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
 
+## OpenAI Configuration
+
+**Default Behavior**: The CLI uses a shared Azure OpenAI instance with Entra ID authentication.
+
+### Using Your Own Azure OpenAI Instance
+
+To use your own Azure OpenAI deployment, set:
+
+```bash
+export AZURE_OPENAI_ENDPOINT="https://your-instance.openai.azure.com"
+```
+
+The system will use Entra ID authentication by default. Optionally, you can also set an API key:
+
+```bash
+export OPENAI_API_KEY="your-azure-openai-api-key"
+```
+
+### Using Non-Azure OpenAI Providers
+
+To use external or local model providers, set both variables:
+
+```bash
+export OPENAI_BASE_URL="provider-endpoint"
+export OPENAI_API_KEY="your-api-key"
+```
+
+### Non-Azure Provider Permissions
+
+If you choose to use non-Azure OpenAI providers (such as OpenAI or Anthropic), you must ensure you have the appropriate permissions and follow Microsoft's AI guidance:
+
+**📋 Required: Review [AI Guidance for Microsoft Developers](https://eng.ms/docs/initiatives/ai-guidance-for-microsoft-developers/guidance) before using external AI services.**
+
+This guidance covers:
+- Security and compliance requirements
+- Data handling policies
+- Approved external AI services
+- Required approvals and documentation
+
 ## Telemetry Configuration
 Telemetry collection is on by default.
 

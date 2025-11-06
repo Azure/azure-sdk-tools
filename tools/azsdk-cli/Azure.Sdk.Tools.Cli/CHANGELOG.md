@@ -14,6 +14,8 @@
 
 ### Other Changes
 
+- Added support for OpenAI configuration environment variables (OPENAI_BASE_URL, OPENAI_API_KEY)
+
 ## 0.5.7 (2025-11-05)
 
 ### Features Added

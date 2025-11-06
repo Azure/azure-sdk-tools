@@ -42,11 +42,14 @@ extends:
               os: linux
             steps:
               # 1. Checkout
-              - checkout: self
-                displayName: 'Checkout repository'
-                ${{ if ne(parameters.environment, 'dev') }}:
+              - ${{ if eq(parameters.environment, 'dev') }}:
+                - checkout: self
+                  displayName: 'Checkout repository'
+              - ${{ if ne(parameters.environment, 'dev') }}:
+                - checkout: self
+                  displayName: 'Checkout repository'
                   persistCredentials: true
-                  ref: release/qa-bot
+                  ref: refs/heads/release/qa-bot
 
               # 2. Resolve image tag
               - bash: |

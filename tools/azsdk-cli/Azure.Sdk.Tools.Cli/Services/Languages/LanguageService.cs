@@ -3,7 +3,7 @@
 using System.Collections.Immutable;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Services
+namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
     public class LanguageService
     {

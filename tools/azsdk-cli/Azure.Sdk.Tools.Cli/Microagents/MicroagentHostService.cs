@@ -33,7 +33,7 @@ public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostSe
         // with a result, indicating success, or we hit the max number of iterations.
         var conversationHistory = new List<ChatMessage>
         {
-            new SystemChatMessage(agentDefinition.Instructions)
+            new UserChatMessage(agentDefinition.Instructions)
         };
 
         var chatCompletionOptions = new ChatCompletionOptions

@@ -116,7 +116,7 @@ public class MetadataUpdateTool : MCPTool
             }
 
             _logger.LogInformation("No language-specific package update implementation found for package path: {packagePath}.", packagePath);
-            return PackageOperationResponse.CreateSuccess("No package metadata updates performed.", null);
+            return PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed.", null);
         }
         catch (Exception ex)
         {

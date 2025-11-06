@@ -56,17 +56,19 @@ public class ExtraLabelValidation : IValidation
             while ((index = htmlText.IndexOf(label, index)) != -1)
             {
                 // Check if the label is followed by a self-closing tag pattern
-                string selfClosingPattern = $@"{label}\s(.*)?\/>";
-                if (Regex.IsMatch(htmlText.Substring(index), selfClosingPattern))
+                string selfClosingPattern = $@"{Regex.Escape(label)}\s.*?\/>";
+                var match = Regex.Match(htmlText.Substring(index), selfClosingPattern);
+                if (match.Success)
                 {
                     // This is a self-closing tag, skip it
-                    index += label.Length + 2;
+                    index += match.Length;
                     continue;
                 }
 
                 if (ignoreList.Any(ignore => htmlText.Contains(ignore.IgnoreText)))
                 {
                     // If the label is in the ignore list, skip it
+                    index += label.Length; // 必须更新index避免死循环
                     continue;
                 }
 

@@ -26,140 +26,143 @@ variables:
     value: 'azure-sdk-qa-bot-backend'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend'
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: DeployPipeline
+        displayName: 'Deploy Pipeline'
+        jobs:
+          - job: RunDeploy
+            displayName: 'Run Deploy Flow'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              # 1. Checkout
+              - checkout: self
+                displayName: 'Checkout repository'
+                ${{ if ne(parameters.environment, 'dev') }}:
+                  persistCredentials: true
+                  ref: release/qa-bot
 
-stages:
-  - stage: DeployPipeline
-    displayName: 'Deploy Pipeline'
-    jobs:
-      - job: RunDeploy
-        displayName: 'Run Deploy Flow'
-        pool:
-          name: $(LINUXPOOL)
-          image: $(LINUXVMIMAGE)
-          os: linux
-        steps:
-          # 1. Checkout
-          - checkout: self
-            displayName: 'Checkout repository'
-            ${{ if ne(parameters.environment, 'dev') }}:
-              persistCredentials: true
-              ref: release/qa-bot
+              # 2. Resolve image tag
+              - bash: |
+                  set -euo pipefail
+                  if [ "${{ parameters.environment }}" = "dev" ]; then
+                    IMAGE_TAG=$(git rev-parse --short HEAD)
+                    echo "Dev: tag=$IMAGE_TAG"
+                  else
+                    VERSION_FILE="$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/version.go"
+                    [ -f "$VERSION_FILE" ] || { echo "version.go missing" >&2; exit 1; }
+                    IMAGE_TAG=$(grep -m1 moduleVersion "$VERSION_FILE" | sed -n 's/.*moduleVersion.*"\(.*\)".*/\1/p')
+                    [ -n "$IMAGE_TAG" ] || { echo "moduleVersion not found" >&2; exit 1; }
+                    echo "${{ parameters.environment }}: tag=$IMAGE_TAG"
+                  fi
+                  echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
+                  echo "Resolved image tag: $IMAGE_TAG"
+                displayName: 'Resolve Image Tag'
 
-          # 2. Resolve image tag
-          - bash: |
-              set -euo pipefail
-              if [ "${{ parameters.environment }}" = "dev" ]; then
-                IMAGE_TAG=$(git rev-parse --short HEAD)
-                echo "Dev: tag=$IMAGE_TAG"
-              else
-                VERSION_FILE="$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/version.go"
-                [ -f "$VERSION_FILE" ] || { echo "version.go missing" >&2; exit 1; }
-                IMAGE_TAG=$(grep -m1 moduleVersion "$VERSION_FILE" | sed -n 's/.*moduleVersion.*"\(.*\)".*/\1/p')
-                [ -n "$IMAGE_TAG" ] || { echo "moduleVersion not found" >&2; exit 1; }
-                echo "${{ parameters.environment }}: tag=$IMAGE_TAG"
-              fi
-              echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
-              echo "Resolved image tag: $IMAGE_TAG"
-            displayName: 'Resolve Image Tag'
+              # 3. Build & push (prod reuse existing image)
+              - task: AzureCLI@2
+                condition: ne('${{ parameters.environment }}','prod')
+                displayName: 'Build & Push Image'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+                    ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
+                    echo "ACR: $ACR_LOGIN_SERVER"
+                    az acr login --name "$(ACR_NAME)"
+                    docker build -t "$(imageName):$(imageTag)" -f "$(workingDirectory)/Dockerfile" "$(workingDirectory)"
+                    docker tag "$(imageName):$(imageTag)" "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
+                    docker push "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
+                    echo "Image pushed: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
 
-          # 3. Build & push (prod reuse existing image)
-          - task: AzureCLI@2
-            condition: ne('${{ parameters.environment }}','prod')
-            displayName: 'Build & Push Image'
-            inputs:
-              azureSubscription: $(SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                set -euo pipefail
-                ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
-                echo "ACR: $ACR_LOGIN_SERVER"
-                az acr login --name "$(ACR_NAME)"
-                docker build -t "$(imageName):$(imageTag)" -f "$(workingDirectory)/Dockerfile" "$(workingDirectory)"
-                docker tag "$(imageName):$(imageTag)" "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
-                docker push "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
-                echo "Image pushed: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
+              # 4. Validate image exists
+              - task: AzureCLI@2
+                displayName: 'Validate Image Exists'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+                    echo "Validating image $(imageName):$(imageTag) in ACR $(ACR_NAME)"
+                    if az acr repository show-tags --name "$(ACR_NAME)" --repository "$(imageName)" --output tsv | grep -Fxq "$(imageTag)"; then
+                      echo "Image found"
+                    else
+                      echo "Image $(imageName):$(imageTag) not found in $(ACR_NAME)" >&2
+                      exit 1
+                    fi
 
-          # 4. Validate image exists
-          - task: AzureCLI@2
-            displayName: 'Validate Image Exists'
-            inputs:
-              azureSubscription: $(SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                set -euo pipefail
-                echo "Validating image $(imageName):$(imageTag) in ACR $(ACR_NAME)"
-                if az acr repository show-tags --name "$(ACR_NAME)" --repository "$(imageName)" --output tsv | grep -Fxq "$(imageTag)"; then
-                  echo "Image found"
-                else
-                  echo "Image $(imageName):$(imageTag) not found in $(ACR_NAME)" >&2
-                  exit 1
-                fi
+              # 5. Deploy App Service
+              - task: AzureCLI@2
+                displayName: 'Update App Service'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+                    echo "Updating container image $(imageName):$(imageTag) for app $(APP_NAME)"
+                    ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
+                    echo "ACR: $ACR_LOGIN_SERVER"
+                    set +e
+                    OUTPUT=$(az webapp config container set \
+                      --name "$(APP_NAME)" \
+                      --resource-group "$(RESOURCE_GROUP)" \
+                      --container-image-name "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)" \
+                      --container-registry-url "https://$ACR_LOGIN_SERVER" 2>&1)
+                    STATUS=$?
+                    set -euo pipefail
+                    echo "$OUTPUT"
+                    [ $STATUS -eq 0 ] || { echo "Failed to update container" >&2; exit $STATUS; }
+                    echo "Container configuration updated"
+                    az webapp restart --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)"
+                    echo "Webapp restart requested"
+                env:
+                  APP_NAME: $(APP_NAME)
+                  RESOURCE_GROUP: $(RESOURCE_GROUP)
+                  ACR_NAME: $(ACR_NAME)
+                  ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
+                  IMAGE_NAME: $(imageName)
 
-          # 5. Deploy App Service
-          - task: AzureCLI@2
-            displayName: 'Update App Service'
-            inputs:
-              azureSubscription: $(SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                set -euo pipefail
-                echo "Updating container image $(imageName):$(imageTag) for app $(APP_NAME)"
-                ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
-                echo "ACR: $ACR_LOGIN_SERVER"
-                set +e
-                OUTPUT=$(az webapp config container set \
-                  --name "$(APP_NAME)" \
-                  --resource-group "$(RESOURCE_GROUP)" \
-                  --container-image-name "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)" \
-                  --container-registry-url "https://$ACR_LOGIN_SERVER" 2>&1)
-                STATUS=$?
-                set -euo pipefail
-                echo "$OUTPUT"
-                [ $STATUS -eq 0 ] || { echo "Failed to update container" >&2; exit $STATUS; }
-                echo "Container configuration updated"
-                az webapp restart --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)"
-                echo "Webapp restart requested"
-            env:
-              APP_NAME: $(APP_NAME)
-              RESOURCE_GROUP: $(RESOURCE_GROUP)
-              ACR_NAME: $(ACR_NAME)
-              ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
-              IMAGE_NAME: $(imageName)
-
-          # 6. Health check
-          - task: AzureCLI@2
-            displayName: 'Health Check'
-            inputs:
-              azureSubscription: $(SERVICE_CONNECTION)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                set -euo pipefail
-                APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" --query defaultHostName -o tsv)
-                echo "App URL: https://$APP_URL"
-                echo "Waiting for health..."; sleep 25
-                HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://$APP_URL/ping || echo 000)
-                if [ "$HTTP_STATUS" = "200" ]; then
-                  echo "Health check OK"
-                else
-                  echo "Health endpoint returned $HTTP_STATUS" >&2
-                fi
-                ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
-                echo "=== Deployment Summary ==="
-                echo "Environment: ${{ parameters.environment }}"
-                echo "Image Tag: $(imageTag)"
-                echo "Resource Group: $(RESOURCE_GROUP)"
-                echo "App Service: $(APP_NAME)"
-                echo "Image: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
-                echo "Health Status: $HTTP_STATUS"
-                echo "URL: https://$APP_URL"
-                echo "=========================="
-            env:
-              APP_NAME: $(APP_NAME)
-              RESOURCE_GROUP: $(RESOURCE_GROUP)
-              ACR_NAME: $(ACR_NAME)
-              ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
-              IMAGE_NAME: $(imageName)
+              # 6. Health check
+              - task: AzureCLI@2
+                displayName: 'Health Check'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+                    APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" --query defaultHostName -o tsv)
+                    echo "App URL: https://$APP_URL"
+                    echo "Waiting for health..."; sleep 25
+                    HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://$APP_URL/ping || echo 000)
+                    if [ "$HTTP_STATUS" = "200" ]; then
+                      echo "Health check OK"
+                    else
+                      echo "Health endpoint returned $HTTP_STATUS" >&2
+                    fi
+                    ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
+                    echo "=== Deployment Summary ==="
+                    echo "Environment: ${{ parameters.environment }}"
+                    echo "Image Tag: $(imageTag)"
+                    echo "Resource Group: $(RESOURCE_GROUP)"
+                    echo "App Service: $(APP_NAME)"
+                    echo "Image: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
+                    echo "Health Status: $HTTP_STATUS"
+                    echo "URL: https://$APP_URL"
+                    echo "=========================="
+                env:
+                  APP_NAME: $(APP_NAME)
+                  RESOURCE_GROUP: $(RESOURCE_GROUP)
+                  ACR_NAME: $(ACR_NAME)
+                  ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
+                  IMAGE_NAME: $(imageName)

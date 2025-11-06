@@ -23,10 +23,10 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.5" />
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.3.0-beta.2" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.4.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.79.0" />
+    <PackageReference Include="OpenAI" Version="2.6.0" />
     <PackageReference Include="OpenTelemetry" Version="1.12.0" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.12.0" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />

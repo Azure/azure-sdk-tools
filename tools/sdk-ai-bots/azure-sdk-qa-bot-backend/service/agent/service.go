@@ -139,7 +139,8 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	if len(resp.Choices) > 0 {
 		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
+			respStr, _ := resp.MarshalJSON()
+			log.Printf("Failed to parse intension response: %v, response:%s", err, respStr)
 			return nil, err
 		}
 		return result, nil
@@ -429,7 +430,8 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	if len(resp.Choices) > 0 {
 		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("ERROR: %s, content:%s", err, *resp.Choices[0].Message.Content)
+			respStr, _ := resp.MarshalJSON()
+			log.Printf("ERROR: %s, response:%s", err, respStr)
 			return nil, err
 		}
 		return answer, nil

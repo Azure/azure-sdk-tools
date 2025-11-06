@@ -157,10 +157,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         /// <summary>
         /// Normalizes multipart form data bodies for cross-platform compatibility.
-        /// Converts all path separators to Windows-style backslashes to match recording format.
+        /// Converts path separators in filename parameters to Windows-style backslashes to match recording format.
         /// </summary>
         public static void NormalizeMultipartBody(RequestOrResponse requestOrResponse)
         {
+            if (requestOrResponse?.Body == null)
+                return;
+                
             if (requestOrResponse.TryGetContentType(out string contentType) && 
                 ContentTypeUtilities.IsMultiPart(contentType, out var boundary))
             {
@@ -186,14 +189,26 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private static string NormalizeMultipartPathSeparators(string multipartBody)
         {
-            // Replace forward slashes with backslashes to match Windows format
-            var normalized = multipartBody.Replace("/", "\\");
+            // Use regex to target only filename parameters in Content-Disposition headers
+            // Pattern matches: filename="path/to/file" or filename*=utf-8''path%2Fto%2Ffile
+            var result = System.Text.RegularExpressions.Regex.Replace(
+                multipartBody,
+                @"(filename\s*=\s*""[^""]*)|" +  // filename="..." 
+                @"(filename\*\s*=\s*utf-8''[^;\s\r\n]*)",  // filename*=utf-8''...
+                match =>
+                {
+                    var value = match.Value;
+                    // Replace forward slashes with backslashes
+                    value = value.Replace("/", "\\");
+                    // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
+                    value = value.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
+                    value = value.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
+                    return value;
+                },
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
             
-            // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
-            normalized = normalized.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
-            normalized = normalized.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
-            
-            return normalized;
+            return result;
         }
 
         private static void DeserializeHeaders(IDictionary<string, string[]> headers, in JsonElement property)

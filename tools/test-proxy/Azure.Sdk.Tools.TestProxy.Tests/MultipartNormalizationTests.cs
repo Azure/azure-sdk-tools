@@ -29,7 +29,7 @@ Content-Type: audio/wav
 
             var expectedNormalizedBody = @"--boundary123
 Content-Disposition: form-data; name=""file""; filename=""Assets\audio_french.wav""
-Content-Type: audio\wav
+Content-Type: audio/wav
 
 [binary content]
 --boundary123--";
@@ -64,7 +64,7 @@ Content-Type: audio/wav
 
             var expectedNormalizedBody = @"--boundary123
 Content-Disposition: form-data; name=""file""; filename=""Assets\audio.wav""; filename*=utf-8''Assets%5Caudio.wav
-Content-Type: audio\wav
+Content-Type: audio/wav
 
 [binary content]
 --boundary123--";
@@ -92,7 +92,7 @@ Content-Type: audio\wav
             // Arrange - Create a multipart body with backslashes (Windows-style)
             var multipartBody = @"--boundary123
 Content-Disposition: form-data; name=""file""; filename=""Assets\audio_french.wav""
-Content-Type: audio\wav
+Content-Type: audio/wav
 
 [binary content]
 --boundary123--";
@@ -200,7 +200,7 @@ Content-Disposition: form-data; name=""file2""; filename*=utf-8''Assets%5Caudio.
             // This is what would be in the recording file (normalized to Windows format during recording)
             var recordedMultipartBody = $@"--{boundary}
 Content-Disposition: form-data; name=""file""; filename=""Assets\audio.wav""
-Content-Type: audio\wav
+Content-Type: audio/wav
 
 test content
 --{boundary}--
@@ -209,7 +209,7 @@ test content
             // This is what comes from a Windows request (Windows-style backslashes)
             var incomingRequestBody = $@"--{boundary}
 Content-Disposition: form-data; name=""file""; filename=""Assets\audio.wav""
-Content-Type: audio\wav
+Content-Type: audio/wav
 
 test content
 --{boundary}--
@@ -241,7 +241,7 @@ test content
             // This is what would be in the recording file (Windows-style backslashes)
             var recordedMultipartBody = $@"--{boundary}
 Content-Disposition: form-data; name=""file""; filename=""Assets\audio.wav""
-Content-Type: audio\wav
+Content-Type: audio/wav
 
 test content
 --{boundary}--
@@ -271,6 +271,41 @@ test content
             // Assert - Should match the recorded body after normalization
             var normalizedBody = Encoding.UTF8.GetString(requestOrResponse.Body);
             Assert.Equal(recordedMultipartBody, normalizedBody);
+        }
+
+        [Fact]
+        public void NormalizeMultipartBody_PreservesNonFilenameSlashes()
+        {
+            // Arrange - Create a multipart body with slashes in Content-Type which should NOT be normalized
+            var multipartBody = @"--boundary123
+Content-Disposition: form-data; name=""file""; filename=""Assets/test.wav""
+Content-Type: custom/type; param=""value/with/slashes""
+
+[binary content]
+--boundary123--";
+
+            var expectedNormalizedBody = @"--boundary123
+Content-Disposition: form-data; name=""file""; filename=""Assets\test.wav""
+Content-Type: custom/type; param=""value/with/slashes""
+
+[binary content]
+--boundary123--";
+
+            var requestOrResponse = new RequestOrResponse
+            {
+                Headers = new SortedDictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase)
+                {
+                    { "Content-Type", new[] { "multipart/form-data; boundary=boundary123" } }
+                },
+                Body = Encoding.UTF8.GetBytes(multipartBody)
+            };
+
+            // Act
+            RecordEntry.NormalizeMultipartBody(requestOrResponse);
+
+            // Assert - Only filename should be normalized, Content-Type should remain unchanged
+            var actualNormalizedBody = Encoding.UTF8.GetString(requestOrResponse.Body);
+            Assert.Equal(expectedNormalizedBody, actualNormalizedBody);
         }
     }
 }

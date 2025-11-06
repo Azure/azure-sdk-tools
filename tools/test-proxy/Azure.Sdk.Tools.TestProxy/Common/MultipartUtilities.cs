@@ -192,22 +192,35 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Normalizes path separators in Content-Disposition headers to Windows-style backslashes.
         /// This ensures recordings are platform-independent by using a consistent format.
+        /// Only normalizes the filename and filename* parameters to avoid affecting other header values.
         /// </summary>
         /// <param name="headerValue">The Content-Disposition header value</param>
-        /// <returns>Normalized header value with Windows-style path separators</returns>
+        /// <returns>Normalized header value with Windows-style path separators in filename parameters</returns>
         private static string NormalizeContentDispositionToWindows(string headerValue)
         {
             if (!headerValue.Contains("filename", StringComparison.OrdinalIgnoreCase))
                 return headerValue;
             
-            // Replace forward slashes with backslashes in quoted filenames
-            var normalized = headerValue.Replace("/", "\\");
+            // Use regex to target only filename parameters
+            // Pattern matches: filename="path/to/file" or filename*=utf-8''path%2Fto%2Ffile
+            var result = System.Text.RegularExpressions.Regex.Replace(
+                headerValue,
+                @"(filename\s*=\s*""[^""]*"")|" +  // filename="..." 
+                @"(filename\*\s*=\s*utf-8''[^;\s]*)",  // filename*=utf-8''...
+                match =>
+                {
+                    var value = match.Value;
+                    // Replace forward slashes with backslashes
+                    value = value.Replace("/", "\\");
+                    // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
+                    value = value.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
+                    value = value.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
+                    return value;
+                },
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
             
-            // Replace URL-encoded forward slashes (%2F) with backslashes (%5C)
-            normalized = normalized.Replace("%2F", "%5C", StringComparison.OrdinalIgnoreCase);
-            normalized = normalized.Replace("%2f", "%5C", StringComparison.OrdinalIgnoreCase);
-            
-            return normalized;
+            return result;
         }
 
         public static void WriteMultipartLines(

@@ -29,7 +29,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: false
+    Use1ESOfficial: true
     stages:
       - stage: DeployPipeline
         displayName: 'Deploy Pipeline'

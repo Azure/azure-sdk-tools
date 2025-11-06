@@ -25,8 +25,8 @@ from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+from src._apiview import ApiViewClient
 from src._apiview import get_active_reviews as _get_active_reviews
-from src._apiview import get_apiview_comments as _get_apiview_comments
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, get_database_manager
 from src._garbage_collector import GarbageCollector
@@ -168,105 +168,31 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(language: str, test_file: str, num_runs: int = 3):
+def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
     """
-    Runs one or all eval test cases.
+    Runs the specified test case(s).
     """
-    from evals._runner import EvalRunner
+    from evals._discovery import discover_targets
+    from evals._runner import EvaluationRunner
 
-    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
-    runner.run()
+    targets = discover_targets(test_paths)
+    runner = EvaluationRunner(num_runs=num_runs)
+    try:
+        results = runner.run(targets)
+        if save:
+            report = runner.generate_report(results)
+            for doc in report:
+                db = get_database_manager()
+                try:
+                    db.evals.upsert(doc["id"], data=doc)
+                except Exception as exc:
+                    print(f"Error saving eval document to database: {exc}")
+                    raise exc
 
-
-def create_test_case(
-    language: str,
-    test_case: str,
-    apiview_path: str,
-    expected_path: str,
-    test_file: str,
-    overwrite: bool = False,
-):
-    """
-    Creates or updates a test case for the APIView reviewer.
-    """
-    with open(apiview_path, "r", encoding="utf-8") as f:
-        apiview_contents = f.read()
-
-    with open(expected_path, "r", encoding="utf-8") as f:
-        expected_contents = json.loads(f.read())
-
-    guidelines_path = pathlib.Path(__file__).parent / "guidelines" / language
-    guidelines = []
-    for file in guidelines_path.glob("*.json"):
-        with open(file, "r", encoding="utf-8") as f:
-            guidelines.extend(json.loads(f.read()))
-
-    context = ""
-    for violation in expected_contents["comments"]:
-        for rule_id in violation["guideline_ids"]:
-            for rule in guidelines:
-                if rule["id"] == rule_id:
-                    if rule["text"] not in context:
-                        context += f"\n{rule['text']}"
-
-    test_case = {
-        "testcase": test_case,
-        "query": apiview_contents.replace("\t", ""),
-        "language": language,
-        "context": context,
-        "response": json.dumps(expected_contents),
-    }
-
-    if os.path.exists(test_file):
-        if overwrite:
-            with open(test_file, "r", encoding="utf-8") as f:
-                existing_test_cases = [json.loads(line) for line in f if line.strip()]
-            for existing_test_case in existing_test_cases:
-                if existing_test_case["testcase"] == test_case["testcase"]:
-                    existing_test_cases.remove(existing_test_case)
-                    break
-            existing_test_cases.append(test_case)
-            with open(test_file, "w", encoding="utf-8") as f:
-                for existing_test_case in existing_test_cases:
-                    f.write(json.dumps(existing_test_case) + "\n")
-        else:
-            with open(test_file, "a", encoding="utf-8") as f:
-                f.write("\n")
-                json.dump(test_case, f)
-    else:
-        with open(test_file, "w", encoding="utf-8") as f:
-            json.dump(test_case, f)
-
-
-def deconstruct_test_case(language: str, test_case: str, test_file: str):
-    """
-    Deconstructs a test case into its component APIView test and expected results file.
-    """
-    test_cases = {}
-    with open(test_file, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                parsed = json.loads(line)
-                if "testcase" in parsed:
-                    test_cases[parsed["testcase"]] = parsed
-
-    if test_case not in test_cases:
-        raise ValueError(f"Test case '{test_case}' not found in the file.")
-
-    apiview = test_cases[test_case].get("query", "")
-    expected = test_cases[test_case].get("response", "")
-    deconstructed_apiview = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.txt"
-    deconstructed_expected = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.json"
-    with open(deconstructed_apiview, "w", encoding="utf-8") as f:
-        f.write(apiview)
-
-    with open(deconstructed_expected, "w", encoding="utf-8") as f:
-        # sort comments by line number
-        expected = json.loads(expected)
-        expected["comments"] = sorted(expected["comments"], key=lambda x: x["line_no"])
-        f.write(json.dumps(expected, indent=4))
-
-    print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
+        runner.show_results(results)
+        runner.show_summary(results)
+    finally:
+        runner.cleanup()
 
 
 def deploy_flask_app():
@@ -275,6 +201,27 @@ def deploy_flask_app():
     from scripts.deploy_app import deploy_app_to_azure
 
     deploy_app_to_azure()
+
+
+def group_apiview_comments(comments_path: str):
+    """
+    Groups similar comments in an APIView comments JSON file.
+    """
+    from src._comment_grouper import CommentGrouper
+    from src._models import Comment
+
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    comments_data = data.get("comments", [])
+    comments = [Comment(**comment) for comment in comments_data]
+    grouper = CommentGrouper(comments=comments)
+    grouped_comments = grouper.group()
+    return grouped_comments
 
 
 def generate_review(
@@ -393,6 +340,42 @@ def review_job_get(job_id: str):
         print(f"Error: {resp.status_code} {resp.text}")
 
 
+def get_all_guidelines(language: str, markdown: bool = False):
+    """
+    Retrieve all guidelines for a specific language. Returns a context
+    object which can be printed as JSON or Markdown.
+    """
+    search = SearchManager(language=language)
+    context = search.build_context(search.language_guidelines.results)
+    if markdown:
+        md = context.to_markdown()
+        print(md)
+    else:
+        print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
+def extract_document_section(apiview_path: str, size: int, index: int = 1):
+    """
+    Extracts a section of a document for testing purposes.
+
+    apiview_path: Path to the document file.
+    size: Size of the section to extract.
+    index: Index of the section to extract (default is 1).
+    """
+    from src._sectioned_document import SectionedDocument
+
+    if not os.path.exists(apiview_path):
+        raise ValueError(f"File {apiview_path} does not exist.")
+    with open(apiview_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    sectioned = SectionedDocument(lines=content.splitlines(), max_chunk_size=size)
+    try:
+        section = sectioned.sections[index - 1]
+        print(str(section))
+    except IndexError:
+        print(f"Error: Index {index} out of range. Document has {len(sectioned.sections)} sections.")
+
+
 def search_knowledge_base(
     language: Optional[str] = None,
     text: Optional[str] = None,
@@ -403,7 +386,8 @@ def search_knowledge_base(
     """
     Queries the Search indexes and returns the resulting Cosmos DB
     objects, resolving all links between objects. This result represents
-    what the AI reviewer would receive as context in RAG mode.
+    what the AI reviewer would receive as context in RAG mode when used
+    with the Markdown flag.
     """
     # ensure that if ids is provided, no other parameters are provided
     if ids:
@@ -683,12 +667,25 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
             print(f"Error purging container: {e}")
 
 
-def get_apiview_comments(review_id: str, environment: str = "production") -> dict:
+def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
     """
-    Retrieves comments for a specific APIView review and returns them grouped by element ID and
-    sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
+    Retrieves comments for a specific APIView revision and returns them grouped by line number and
+    sorted by createdOn time.
     """
-    return _get_apiview_comments(review_id, environment)
+    apiview = ApiViewClient(environment=environment)
+    comments = asyncio.run(apiview.get_review_comments(revision_id=revision_id))
+    conversations = {}
+    if comments:
+        for comment in comments:
+            line_no = comment.get("lineNo")
+            if line_no in conversations:
+                conversations[line_no].append(comment)
+            else:
+                conversations[line_no] = [comment]
+    for line_no, comments in conversations.items():
+        # sort comments by created_on time
+        comments.sort(key=lambda x: x.get("createdOn", 0))
+    return conversations
 
 
 def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
@@ -709,9 +706,12 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
-def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
+def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    return get_metrics_report(start_date, end_date, environment, markdown)
+    environment = os.getenv("ENVIRONMENT_NAME", None)
+    if environment not in ("production", "staging"):
+        raise ValueError(f"ENVIRONMENT_NAME must be 'production' or 'staging', got '{environment}'.")
+    return get_metrics_report(start_date, end_date, environment, markdown, save)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -760,7 +760,7 @@ def grant_permissions(assignee_id: str = None):
             principal_type=PrincipalType.USER,
             subscription_id=subscription_id,
             rg_name=rg_name,
-            role_kind="readOnly",
+            role_kind="readWrite",
             cosmos_account_name=cosmos_name,
         )
 
@@ -895,19 +895,20 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("start-job", "review_job_start")
             g.command("get-job", "review_job_get")
             g.command("summarize", "review_summarize")
+            g.command("group-comments", "group_apiview_comments")
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
-            g.command("run", "run_test_case")
-            g.command("create", "create_test_case")
-            g.command("deconstruct", "deconstruct_test_case")
+            g.command("run", "run_evals")
+            g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
+            g.command("all-guidelines", "get_all_guidelines")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
             g.command("delete", "db_delete")
@@ -954,6 +955,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to a JSON file containing comments.",
+                options_list=["--comments-path", "-c"],
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
@@ -1009,33 +1016,39 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--test-file", "-f"],
                 help="The full path to the JSONL test file.",
             )
-        with ArgumentsContext(self, "eval run") as ac:
-            ac.argument(
-                "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
-            )
-        with ArgumentsContext(self, "eval create") as ac:
-            ac.argument("test_case", type=str, help="The name of the test case")
             ac.argument(
                 "apiview_path",
+                options_list=["--apiview-path", "-p"],
                 type=str,
                 help="The full path to the txt file containing the APIView text",
             )
             ac.argument(
-                "expected_path",
-                type=str,
-                help="The full path to the expected JSON output from the AI reviewer.",
+                "save",
+                help="Save the results to CosmosDB metrics.",
+            )
+
+        with ArgumentsContext(self, "eval extract-section") as ac:
+            ac.argument("size", type=int, help="The size of the section to extract.")
+            ac.argument(
+                "index",
+                type=int,
+                help="The index of the section to extract (default is 1).",
+                default=1,
+                options_list=["--index", "-i"],
+            )
+        with ArgumentsContext(self, "eval run") as ac:
+            ac.argument(
+                "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
             )
             ac.argument(
-                "test_file",
+                "test_paths",
                 type=str,
-                options_list=["--test-file", "-f"],
-                help="The full path to the JSONL test file. Can be an existing test file, or will create a new one.",
+                nargs="*",
+                options_list=["--test-paths", "-p"],
+                default=[],
+                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
-            ac.argument(
-                "overwrite",
-                action="store_true",
-                help="Overwrite the test case if it already exists.",
-            )
+
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",
@@ -1058,6 +1071,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
             )
             ac.argument(
                 "ids",
@@ -1140,12 +1157,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
             )
-            ac.argument(
-                "comments_path",
-                type=str,
-                help="Path to the JSON file containing comments for the agent to process.",
-                options_list=["--comments-path", "-c"],
-            )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
@@ -1177,10 +1188,10 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(
-                "review_id",
+                "revision_id",
                 type=str,
-                help="The review ID of the APIView to retrieve comments for.",
-                options_list=["--review-id", "-r"],
+                help="The revision ID of the APIView to retrieve comments for.",
+                options_list=["--revision-id", "-r"],
             )
             ac.argument(
                 "environment",

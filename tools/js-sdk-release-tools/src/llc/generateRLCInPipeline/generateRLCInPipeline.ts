@@ -95,7 +95,10 @@ export async function generateRLCInPipeline(options: {
                 if (options.apiVersion) {
                     specifyApiVersionToGenerateSDKByTypeSpec(tspDefDir, options.apiVersion);
                 }
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
+                const tspClientDir = path.join(process.cwd(), 'eng', 'common', 'tsp-client');
+                
+                logger.info(`Using tsp-client from: ${tspClientDir}`);
+                const scriptCommand = ['npm', '--prefix', tspClientDir, 'exec', '--no', '--', 'tsp-client', 'init', '--update-if-exists', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
@@ -286,7 +289,7 @@ export async function generateRLCInPipeline(options: {
                 try {
                     execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
                 } catch (error) {
-                    logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
+                    logger.warn(`Failed to build package due to: ${(error as Error)?.stack ?? error}`);
                     buildStatus = `failed`;
                 }
             } else {

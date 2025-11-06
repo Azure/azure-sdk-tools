@@ -3,7 +3,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.CommandLine;
 using System.CommandLine.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -55,7 +54,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var specToSdkConfigFilePath = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
 
-            _logger.LogInformation($"Reading configuration from: {specToSdkConfigFilePath} at path: {jsonPath}");
+            _logger.LogInformation(
+                "Reading configuration from: {ConfigFilePath} at path: {JsonPath}",
+                specToSdkConfigFilePath,
+                jsonPath);
 
             if (!File.Exists(specToSdkConfigFilePath))
             {
@@ -120,10 +122,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return (BuildConfigType.ScriptPath, path);
                 }
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // Path not found either
-                _logger.LogError("No build configuration found");
+                _logger.LogError(ex, "No build configuration found");
             }
 
             throw new InvalidOperationException($"Neither '{BuildCommandJsonPath}' nor '{BuildScriptPathJsonPath}' found in configuration.");
@@ -163,14 +165,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return Array.Empty<string>();
             }
 
-            // Use System.CommandLine.Parser
-            var parser = new Parser(new RootCommand());
-            var result = parser.Parse(command);
-            
-            // Get all tokens
-            var tokens = result.Tokens
-                .Select(t => t.Value)
-                .ToArray();
+            // Use System.CommandLine.CommandLineParser to split respecting quotes
+            var tokens = CommandLineParser.SplitCommandLine(command).ToArray();
 
             _logger.LogDebug("Parsed command into {Count} parts: {Parts}", tokens.Length, string.Join(", ", tokens));
             return tokens;

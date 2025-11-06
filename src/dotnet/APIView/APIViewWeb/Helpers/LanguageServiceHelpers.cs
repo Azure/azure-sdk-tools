@@ -14,10 +14,10 @@ namespace APIViewWeb.Helpers
 
             foreach (var language in languages)
             {
-                if (language.Equals("TypeSpec") || language.Equals("Cadl"))
+                if (language.Equals(ApiViewConstants.TypeSpecLanguage) || language.Equals("Cadl"))
                 {
                     result.Add("Cadl");
-                    result.Add("TypeSpec");
+                    result.Add(ApiViewConstants.TypeSpecLanguage);
                 }
                 result.Add(language);
             }
@@ -37,7 +37,7 @@ namespace APIViewWeb.Helpers
                 return "JavaScript";
 
             if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
-                return "TypeSpec";
+                return ApiViewConstants.TypeSpecLanguage;
 
             return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
         }

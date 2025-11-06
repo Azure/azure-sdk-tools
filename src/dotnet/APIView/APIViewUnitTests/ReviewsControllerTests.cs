@@ -30,7 +30,6 @@ namespace APIViewUnitTests
         private readonly UserProfileCache _userProfileCache;
         private readonly Mock<IHubContext<SignalRHub>> _mockSignalRHubContext;
         private readonly Mock<INotificationManager> _mockNotificationManager;
-        private readonly Mock<IWebHostEnvironment> _mockEnvironment;
         private readonly ReviewsController _controller;
 
         public ReviewsControllerTests()
@@ -43,7 +42,6 @@ namespace APIViewUnitTests
             _mockConfiguration = new Mock<IConfiguration>();
             _mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
             _mockNotificationManager = new Mock<INotificationManager>();
-            _mockEnvironment = new Mock<IWebHostEnvironment>();
 
             var mockMemoryCache = new Mock<IMemoryCache>();
             var mockUserProfileManager = new Mock<IUserProfileManager>();
@@ -65,8 +63,7 @@ namespace APIViewUnitTests
                 _userProfileCache,
                 mockLanguageServices,
                 _mockSignalRHubContext.Object,
-                _mockNotificationManager.Object,
-                _mockEnvironment.Object);
+                _mockNotificationManager.Object);
         }
 
         [Theory]

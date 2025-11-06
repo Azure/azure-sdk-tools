@@ -44,11 +44,16 @@ internal class TelemetryService : ITelemetryService
         builder
             .AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
             .SetSampler(new AlwaysOnSampler())
-            .AddProcessor(new TelemetryProcessor())
-            .AddOtlpExporter(otlp =>
+            .AddProcessor(new TelemetryProcessor());
+
+#if !DEBUG
+            // Only upload telemetry when not in debug mode
+            builder.AddOtlpExporter(otlp =>
                 otlp.ExportProcessorType = ExportProcessorType.Simple
             );
+#endif
 
+        // output to console when --debug is passed (separate from dotnet debug build/config mode)
         if (debug)
         {
             builder.AddConsoleExporter();
@@ -59,7 +64,7 @@ internal class TelemetryService : ITelemetryService
 
     public static void RegisterServerTelemetry(IServiceCollection services, bool debug = false)
     {
-        services.AddOpenTelemetry()
+        var builder = services.AddOpenTelemetry()
             .WithTracing(b =>
             {
                 b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
@@ -67,8 +72,12 @@ internal class TelemetryService : ITelemetryService
                     .AddHttpClientInstrumentation()
                     .AddProcessor(new TelemetryProcessor());
                 if (debug) { b.AddConsoleExporter(); }
-            })
-            .UseOtlpExporter();
+            });
+
+#if !DEBUG
+            // Only upload telemetry when not in debug mode
+            builder.UseOtlpExporter();
+#endif
     }
 
     public ValueTask<Activity?> StartActivity(string activityId) => StartActivity(activityId, null);
@@ -115,6 +124,9 @@ internal class TelemetryService : ITelemetryService
 
             _tagsList.Add(new(TagName.MacAddressHash, macAddressHash));
             _tagsList.Add(new(TagName.DevDeviceId, deviceId));
+#if DEBUG
+            _tagsList.Add(new(TagName.DebugTag, "true"));
+#endif
 
             _isInitialized.SetResult();
         }

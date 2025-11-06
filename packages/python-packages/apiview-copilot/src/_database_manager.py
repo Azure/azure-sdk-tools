@@ -29,6 +29,8 @@ class ContainerNames(Enum):
     MEMORIES = "memories"
     EXAMPLES = "examples"
     REVIEW_JOBS = "review-jobs"
+    METRICS = "metrics"
+    EVALS = "evals"
 
     @classmethod
     def values(cls) -> list[str]:
@@ -38,7 +40,7 @@ class ContainerNames(Enum):
     @classmethod
     def data_containers(cls) -> list[str]:
         """Return a list of all data container names, omitting containers that are for internal bookkeeping."""
-        return [name.value for name in cls if name != cls.REVIEW_JOBS]
+        return [name.value for name in cls if name not in {cls.REVIEW_JOBS, cls.METRICS}]
 
 
 class DatabaseManager:
@@ -55,6 +57,10 @@ class DatabaseManager:
         if name not in self.containers:
             if name == ContainerNames.REVIEW_JOBS.value:
                 self.containers[name] = ReviewJobsContainer(self, name)
+            elif name == ContainerNames.METRICS.value:
+                self.containers[name] = MetricsContainer(self, name)
+            elif name == ContainerNames.EVALS.value:
+                self.containers[name] = EvalsContainer(self, name)
             elif name == ContainerNames.GUIDELINES.value:
                 self.containers[name] = GuidelinesContainer(self, name)
             else:
@@ -80,6 +86,16 @@ class DatabaseManager:
     def review_jobs(self):
         """Get the review jobs container client."""
         return self.get_container_client(ContainerNames.REVIEW_JOBS.value)
+
+    @property
+    def metrics(self):
+        """Get the metrics container client."""
+        return self.get_container_client(ContainerNames.METRICS.value)
+
+    @property
+    def evals(self):
+        """Get the evaluations container client."""
+        return self.get_container_client(ContainerNames.EVALS.value)
 
 
 class BasicContainer:
@@ -196,6 +212,22 @@ class ReviewJobsContainer(BasicContainer):
 
     def run_indexer(self):
         # reviews_jobs container does not have an indexer
+        pass
+
+
+class MetricsContainer(BasicContainer):
+    """Container client for metrics operations."""
+
+    def run_indexer(self):
+        # metrics container does not have an indexer
+        pass
+
+
+class EvalsContainer(BasicContainer):
+    """Container client for evaluations operations."""
+
+    def run_indexer(self):
+        # evaluations container does not have an indexer
         pass
 
 

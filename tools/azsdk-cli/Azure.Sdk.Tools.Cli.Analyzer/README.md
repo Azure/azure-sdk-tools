@@ -215,3 +215,50 @@ All MCP server tool names must start with the prefix `azsdk_`. This ensures clea
 **Invalid examples:**
 - `[McpServerTool(Name = "hello_world")]`
 - `[McpServerTool(Name = "generate_sdk")]`
+
+# LogError Exception Requirement (MCP009)
+
+## Overview
+
+When logging inside a `catch` block, always call `logger.LogError` with the caught exception as the first argument. This preserves the stack trace and ensures structured logging captures exception details. Calls that omit the exception or embed `ex.Message` inside the log string are not allowed.
+
+**Valid examples:**
+
+```csharp
+public void Example()
+{
+    logger.LogError("Example error hardcoded in source");
+}
+```
+
+```csharp
+public void Example()
+{
+    try
+    {
+        // some work here
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to run example");
+        // Also valid, interpolated strings not including the exception
+        logger.LogError(ex, $"Failed to run {method}", nameof(Example));
+    }
+}
+```
+
+**Invalid examples:**
+
+```csharp
+public void Example()
+{
+    try
+    {
+        // some work here
+    }
+    catch (Exception ex)
+    {
+        logger.LogError($"Failed to process data. Error: {ex.Message}");
+    }
+}
+```

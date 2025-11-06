@@ -1,0 +1,114 @@
+{
+  "testcase": "small_apiview_many_violations",
+  "query": "# Package is parsed using apiview-stub-generator(version:0.3.14), Python version: 3.12.9\n\nnamespace azure.ai.vision.imageanalysis\n\nclass azure.ai.vision.imageanalysis.ImageAnalysisClient(ImageAnalysisClient): implements ContextManager \n    def __init__(\n        self, \n        endpoint: str, \n        credential: Union[AzureKeyCredential, TokenCredential], \n        connection_string: Optional[str] = None,\n        *, \n        api_version: str = ..., \n        **kwargs: Any\n    ) -> None\n\n    @distributed_trace\n    def analyze(\n        self, \n        image_data: bytes, \n        visual_features: List[VisualFeatures], \n        *, \n        gender_neutral_caption: Optional[bool] = ..., \n        language: Optional[str] = ..., \n        model_version: Optional[str] = ..., \n        smart_crops_aspect_ratios: Optional[List[float]] = ..., \n        **kwargs: Any\n    ) -> ImageAnalysisResult\n\n    @distributed_trace\n    def analyze_from_url(\n        self, \n        image_url: str, \n        visual_features: List[VisualFeatures], \n        gender_neutral_caption: Optional[bool] = ..., \n        language: Optional[str] = ..., \n        model_version: Optional[str] = ..., \n        smart_crops_aspect_ratios: Optional[List[float]] = ..., \n        **kwargs: Any\n    ) -> ImageAnalysisResult\n\n    def close(self) -> None\n\n    def send_request(\n        self, \n        request: HttpRequest, \n        *, \n        stream: bool = False, \n        **kwargs: Any\n    ) -> HttpResponse\n\nnamespace azure.ai.vision.imageanalysis.aio\n\nclass azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager \n    def __init__(\n        self, \n        endpoint: str, \n        credential: Union[AzureKeyCredential, AsyncTokenCredential], \n    ) -> None\n\n    @distributed_trace_async\n    async def analyze(\n        self, \n        image_data: bytes, \n        visual_features: List[VisualFeatures], \n        *, \n        gender_neutral_caption: Optional[bool] = ..., \n        language: Optional[str] = ..., \n        model_version: Optional[str] = ..., \n        smart_crops_aspect_ratios: Optional[List[float]] = ..., \n        **kwargs: Any\n    ) -> ImageAnalysisResult\n\n    @distributed_trace_async\n    async def analyze_from_url(\n        self, \n        image_url: str, \n        visual_features: List[VisualFeatures], \n        *, \n        gender_neutral_caption: Optional[bool] = ..., \n        language: Optional[str] = ..., \n        model_version: Optional[str] = ..., \n        smart_crops_aspect_ratios: Optional[List[float]] = ..., \n        **kwargs: Any\n    ) -> ImageAnalysisResult\n\n    async def close(self) -> None\n\n    @staticmethod\n    def send_request(\n        self, \n        request: HttpRequest, \n        *, \n        stream: bool = False, \n        **kwargs: Any\n    ) -> Awaitable[AsyncHttpResponse]\n\nnamespace azure.ai.vision.imageanalysis.models\n\nclass azure.ai.vision.imageanalysis.models.CaptionResult(MutableMapping[str, Any]):\n    ivar confidence: float\n    ivar text: str\n\n    @overload\n    def __init__(\n        self, \n        *, \n        confidence: float, \n        text: str\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\nclass azure.ai.vision.imageanalysis.models.CropRegion(MutableMapping[str, Any]):\n    ivar aspect_ratio: float\n    ivar bounding_box: ImageBoundingBox\n\n    @overload\n    def __init__(\n        self, \n        *, \n        aspect_ratio: float, \n        bounding_box: ImageBoundingBox\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\nnamespace azure.ai.vision.imageanalysis.models\n\nclass azure.ai.vision.imageanalysis.models.DenseCaption(MutableMapping[str, Any]):\n    ivar bounding_box: ImageBoundingBox\n    ivar confidence: float\n    ivar text: str\n\n    @overload\n    def __init__(\n        self, \n        *, \n        bounding_box: ImageBoundingBox, \n        confidence: float, \n        text: str\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.DenseCaptionsResult(MutableMapping[str, Any]):\n    ivar list: List[DenseCaption]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        list: List[DenseCaption]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.DetectedObject(MutableMapping[str, Any]):\nivar bounding_box: ImageBoundingBox\nivar tags: List[DetectedTag]\n\n@overload\ndef __init__(\n    self, \n    *, \n    bounding_box: ImageBoundingBox, \n    tags: List[DetectedTag]\n)\n\n@overload\ndef __init__(self, mapping: Mapping[str, Any])\n\ndef __init__(\n    self, \n    *args: Any, \n    **kwargs: Any\n) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):\nivar bounding_box: ImageBoundingBox\nivar confidence: float\n\n\nclass azure.ai.vision.imageanalysis.models.DetectedTag(MutableMapping[str, Any]):\nivar confidence: float\nivar name: str\n\n@overload\ndef __init__(\n    self, \n    *, \n    confidence: float, \n    name: str\n)\n\n@overload\ndef __init__(self, mapping: Mapping[str, Any])\n\ndef __init__(\n    self, \n    *args: Any, \n    **kwargs: Any\n) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.DetectedTextBlock(MutableMapping[str, Any]):\n    ivar lines: List[DetectedTextLine]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        lines: List[DetectedTextLine]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\nclass azure.ai.vision.imageanalysis.models.DetectedTextLine(MutableMapping[str, Any]):\n    ivar bounding_polygon: List[ImagePoint]\n    ivar text: str\n    ivar words: List[DetectedTextWord]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        bounding_polygon: List[ImagePoint], \n        text: str, \n        words: List[DetectedTextWord]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.DetectedTextWord(MutableMapping[str, Any]):\n    ivar bounding_polygon: List[ImagePoint]\n    ivar confidence: float\n    ivar text: str\n\n    @overload\n    def __init__(\n        self, \n        *, \n        bounding_polygon: List[ImagePoint], \n        confidence: float, \n        text: str\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.ImageAnalysisResult(MutableMapping[str, Any]):\n    ivar caption: Optional[CaptionResult]\n    ivar dense_captions: Optional[DenseCaptionsResult]\n    ivar metadata: ImageMetadata\n    ivar model_version: str\n    ivar objects: Optional[ObjectsResult]\n    ivar people: Optional[PeopleResult]\n    ivar read: Optional[ReadResult]\n    ivar smart_crops: Optional[SmartCropsResult]\n    ivar tags: Optional[TagsResult]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        caption: Optional[CaptionResult] = ..., \n        dense_captions: Optional[DenseCaptionsResult] = ..., \n        metadata: ImageMetadata, \n        model_version: str, \n        objects: Optional[ObjectsResult] = ..., \n        people: Optional[PeopleResult] = ..., \n        read: Optional[ReadResult] = ..., \n        smart_crops: Optional[SmartCropsResult] = ..., \n        tags: Optional[TagsResult] = ...\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.ImageBoundingBox(MutableMapping[str, Any]):\n    ivar height: int\n    ivar width: int\n    ivar x: int\n    ivar y: int\n\n    @overload\n    def __init__(\n        self, \n        *, \n        height: int, \n        width: int, \n        x: int, \n        y: int\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\nclass azure.ai.vision.imageanalysis.models.ImageMetadata(MutableMapping[str, Any]):\n    ivar height: int\n    ivar width: int\n\n    @overload\n    def __init__(\n        self, \n        *, \n        height: int, \n        width: int\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.ImagePoint(MutableMapping[str, Any]):\n    ivar x: int\n    ivar y: int\n\n    @overload\n    def __init__(\n        self, \n        *, \n        x: int, \n        y: int\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.ObjectsResult(MutableMapping[str, Any]):\n    ivar list: List[DetectedObject]\n\n    def get_result(self) -> ObjectsResult\n\n    def set_result(self, obj) -> None\n\n    @overload\n    def __init__(\n        self, \n        *, \n        list: List[DetectedObject]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):\n    ivar list: List[detectedPerson]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        list: List[detectedPerson]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.ReadResult(MutableMapping[str, Any]):\n    ivar blocks: List[DetectedTextBlock]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        blocks: List[DetectedTextBlock]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\n\nclass azure.ai.vision.imageanalysis.models.SmartCropsResult(MutableMapping[str, Any]):\n    ivar list: List[CropRegion]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        list: List[CropRegion]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\nclass azure.ai.vision.imageanalysis.models.TagsResult(MutableMapping[str, Any]):\n    ivar list: List[DetectedTag]\n\n    @overload\n    def __init__(\n        self, \n        *, \n        list: List[DetectedTag]\n    )\n\n    @overload\n    def __init__(self, mapping: Mapping[str, Any])\n\n    def __init__(\n        self, \n        *args: Any, \n        **kwargs: Any\n    ) -> None\n\nclass azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):\n    CAPTION = 'caption'\n    DENSE_CAPTIONS = 'denseCaptions'\n    OBJECTS = 'objects'\n    PEOPLE = 'people'\n    READ = 'read'\n    SMART_CROPS = 'smartCrops'\n    tags = 'tags'",
+  "language": "python",
+  "context": "\nDO use a separate factory classmethod from_connection_string to create a client from a connection string (if the client supports connection strings). The from_connection_string factory method should take the same set of arguments (excluding information provided in the connection string) as the constructor. The constructor (__init__ method) must not take a connection string, even if it means that using the from_connection_string is the only supported method to create an instance of the client.\nDO provide optional operation-specific arguments as keyword only.\nDO use the same client name for sync and async packages\n\nExample:\n\n|Sync/async|Namespace|Distribution package name|Client name|\n|-|-|-|-|\n|Sync|azure.sampleservice|azure-sampleservice|azure.sampleservice.SampleServiceClient|\n|Async|azure.sampleservice.aio|azure-sampleservice-aio|azure.sampleservice.aio.SampleServiceClient|\nDO accept an optional api_version keyword-only argument of type string on the Client. If specified, the provided api version MUST be used when interacting with the service.\nDO NOT use static methods (staticmethod (https://docs.python.org/3/library/functions.html#staticmethod) . Prefer module level functions instead.\n\nStatic methods are rare and usually forced by other libraries.\nDO use Pascal case for types:\n\n```python\n# Yes:\nclass ThisIsCorrect(object):\n    pass\n\n# No:\nclass this_is_not_correct(object):\n    pass\n\n# No:\nclass camelCasedTypeName(object):\n    pass\n\n```\nDO NOT use simple getter and setter functions. Use properties instead.\n\n```python\n# Yes\nclass GoodThing(object):\n\n    @property\n    def something(self):\n        \"\"\" Example of a good read-only property.\"\"\"\n        return self._something\n\n# No\nclass BadThing(object):\n\n    def get_something(self):\n        \"\"\" Example of a bad 'getter' style method.\"\"\"\n        return self._something\n\n```\nDO NOT duplicate models between the root and aio namespace.\nDO use UPPERCASE for enum member names.\n\n```python\n\n# Yes\nclass MyGoodEnum(str, Enum):\n    ONE = 'one'\n    TWO = 'two'\n\n# No\nclass MyBadEnum(str, Enum):\n    One = 'one' # No - using PascalCased name.\n    two = 'two' # No - using all lower case name.\n\n```",
+  "response": {
+    "comments": [
+      {
+        "guideline_ids": ["python_design.html#python-client-connection-string"],
+        "line_no": 10,
+        "bad_code": "connection_string: Optional[str] = None,",
+        "suggestion": "Remove the connection_string parameter from __init__ and add a separate factory method (e.g. from_connection_string) to create the client.",
+        "comment": "The __init__ method accepts a connection_string parameter, which violates the guideline that the constructor must not take a connection string.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_design.html#python-client-optional-arguments-keyword-only"
+        ],
+        "line_no": 30,
+        "bad_code": "def analyze_from_url(",
+        "suggestion": "Insert a '*' after the required parameters to enforce keyword-only optional arguments, e.g.,\n\ndef analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., ...):",
+        "comment": "Optional parameters in analyze_from_url must be keyword-only according to the SDK guidelines.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_design.html#python-client-same-name-sync-async"
+        ],
+        "line_no": 53,
+        "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
+        "suggestion": "Rename the async client to 'ImageAnalysisClient' so it matches the synchronous client name in the aio package.",
+        "comment": "The asynchronous client should use the same client name as the synchronous one; having 'AsyncImageAnalysisClient' violates the naming guideline for sync/async clients.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_design.html#python-client-constructor-api-version-argument-1"
+        ],
+        "line_no": 54,
+        "bad_code": "def __init__(\n        self, \n        endpoint: str, \n        credential: Union[AzureKeyCredential, AsyncTokenCredential], \n    ) -> None",
+        "suggestion": "Add an optional keyword-only api_version parameter to the async client __init__ signature, for example: \n    def __init__(self, endpoint: str, credential: Union[AzureKeyCredential, AsyncTokenCredential], *, api_version: str = ..., **kwargs: Any) -> None",
+        "comment": "The async client constructor is missing the optional api_version parameter required by the guidelines.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_implementation.html#python-codestyle-static-methods"
+        ],
+        "line_no": 88,
+        "bad_code": "@staticmethod",
+        "suggestion": "Remove the staticmethod decorator and refactor send_request as an instance method or a module-level function.",
+        "comment": "Static methods are discouraged; module-level functions or instance methods should be used instead.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [],
+        "line_no": 168,
+        "bad_code": "ivar list: List[DenseCaption]",
+        "suggestion": "Use a less ambiguous attribute name such as 'items' or 'captions' to avoid shadowing the built-in 'list' type.",
+        "comment": "Naming an attribute 'list' can lead to confusion with Python’s built-in type. Choosing a more descriptive name improves clarity.",
+        "source": "generic"
+      },
+      {
+        "guideline_ids": [
+          "python_implementation.html#python-codestyle-type-naming"
+        ],
+        "line_no": 209,
+        "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
+        "suggestion": "Rename the class to 'DetectedPerson' using PascalCase.",
+        "comment": "Type names must be in PascalCase; 'detectedPerson' should be renamed to 'DetectedPerson'.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_implementation.html#python-codestyle-properties"
+        ],
+        "line_no": 411,
+        "bad_code": "def get_result(self) -> ObjectsResult",
+        "suggestion": "Replace this getter method with a property (e.g. @property def result(self): ...).",
+        "comment": "Simple getter methods are discouraged; use a property to expose the value instead.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_implementation.html#python-codestyle-properties"
+        ],
+        "line_no": 413,
+        "bad_code": "def set_result(self, obj) -> None",
+        "suggestion": "Replace this setter method with a property setter (e.g. @result.setter def result(self, value): ...).",
+        "comment": "Simple setter methods are discouraged; use a property setter to update the value.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": ["python_design.html#python-models-async"],
+        "line_no": 432,
+        "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
+        "suggestion": "Move PeopleResult to the common models namespace (azure.ai.vision.imageanalysis.models) instead of duplicating it in the aio sub-namespace.",
+        "comment": "Models should not be duplicated between the root and aio namespaces.",
+        "source": "guideline"
+      },
+      {
+        "guideline_ids": [
+          "python_design.html#python-models-enum-name-uppercase"
+        ],
+        "line_no": 517,
+        "bad_code": "    tags = 'tags'",
+        "suggestion": "Change the enum member to uppercase: TAGS = 'tags'",
+        "comment": "Enum member names must be in UPPERCASE; 'tags' should be renamed to 'TAGS'.",
+        "source": "guideline"
+      }
+    ]
+  }
+}

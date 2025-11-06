@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
+using System.CommandLine.Parsing;
 
 
 namespace CSharpAPIParserTests
@@ -310,7 +311,7 @@ namespace Microsoft.Extensions.Azure {
 
             foreach (var line in lines)
             {
-                if (line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
+                if (line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute().") && !string.IsNullOrEmpty(line.RelatedToLine))
                 {
                     count++;
                 }
@@ -405,6 +406,121 @@ namespace Microsoft.Extensions.Azure {
             bool isRequiresDynamicCode = classLine.Children?.Any(l => l.Tokens.Any(t => t.Value == "RequiresDynamicCode")) ?? false;
             Assert.False(isRequiresUnreferencedCodePresent);
             Assert.False(isRequiresDynamicCode);
+        }
+
+        [Fact]
+        public void VerifyCodeFileBuilderThrowsOnDuplicateLineIdsInBuildProcess()
+        {
+            // This test verifies that CodeFileBuilder.Build() properly throws InvalidOperationException
+            // when duplicate LineIds are generated during the build process. We simulate this by
+            // creating a custom SymbolOrderProvider that returns duplicate members.
+            
+            var sourceCode = @"
+using System;
+
+namespace TestNamespace
+{
+    public class TestClass
+    {
+        public void Method1() { }
+        public void Method2() { }
+        public int Property1 { get; set; }
+    }
+}";
+
+            // Create a syntax tree from the source
+            var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(sourceCode);
+            
+            // Create a compilation with the syntax tree
+            var compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
+                "TestAssembly",
+                new[] { syntaxTree },
+                new[] { 
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Console).Assembly.Location)
+                },
+                new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+            // Get the assembly symbol
+            var assemblySymbol = compilation.Assembly;
+            
+            // Create the builder with a custom SymbolOrderProvider that duplicates members
+            var builder = new CSharpAPIParser.TreeToken.CodeFileBuilder();
+            builder.SymbolOrderProvider = new DuplicatingSymbolOrderProvider();
+            
+            // The Build method should throw InvalidOperationException when it calls VerifyCodeFile
+            // because the DuplicatingSymbolOrderProvider causes duplicate LineIds to be generated
+            var exception = Assert.Throws<InvalidOperationException>(() => 
+                builder.Build(assemblySymbol, false, null));
+            
+            Assert.Contains("Duplicate LineId values found", exception.Message);
+        }
+
+        // Custom SymbolOrderProvider that returns members twice to simulate duplicate LineIds
+        private class DuplicatingSymbolOrderProvider : ICodeFileBuilderSymbolOrderProvider
+        {
+            public IEnumerable<INamespaceSymbol> OrderNamespaces(IEnumerable<INamespaceSymbol> namespaces)
+            {
+                return namespaces;
+            }
+
+            public IEnumerable<T> OrderTypes<T>(IEnumerable<T> symbols) where T : ITypeSymbol
+            {
+                return symbols;
+            }
+
+            public IEnumerable<ISymbol> OrderMembers(IEnumerable<ISymbol> members)
+            {
+                // Return each member twice to create duplicate LineIds
+                var membersList = members.ToList();
+                foreach (var member in membersList)
+                {
+                    yield return member;
+                }
+                foreach (var member in membersList)
+                {
+                    yield return member;
+                }
+            }
+        }
+
+        [Fact]
+        public void TestInternalsVisibleToAttributes_WithDuplicateAssemblyUniquePublicKeys()
+        {
+            // Arrange
+            var lineIds = new HashSet<string>();
+            var sourceCode = @"
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo(""Microsoft.Azure.Cosmos.Client, PublicKey=0024000004800000940000000602000000240000525341310004000001000100b5fc90e7027f67871e773a8fde8938c81dd402ba65b9201d60593e96c492651e889cc13f1415ebb53fac1131ae0bd333c5ee6021672d9718ea31a8aebd0da0072f25d87dba6fc90ffd598ed4da35e44c398c454307e8e33b8426143daec9f596836f97c8f74750e5975c64e2189f45def46b2a2b1247adc3652bf5c308055da9"")]
+[assembly: InternalsVisibleTo(""Microsoft.Azure.Cosmos.Client, PublicKey=0024000004800000940000000602000000240000525341310004000001000100197c25d0a04f73cb271e8181dba1c0c713df8deebb25864541a66670500f34896d280484b45fe1ff6c29f2ee7aa175d8bcbd0c83cc23901a894a86996030f6292ce6eda6e6f3e6c74b3c5a3ded4903c951e6747e6102969503360f7781bf8bf015058eb89b7621798ccc85aaca036ff1bc1556bb7f62de15908484886aa8bbae"")]
+
+namespace TestNamespace
+{
+    public class TestClass { }
+}";
+
+            var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(sourceCode);
+            var compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
+                "TestAssembly",
+                new[] { syntaxTree },
+                new[] { Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+                new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary));
+
+            var assemblySymbol = compilation.Assembly;
+            var reviewLines = new List<APIView.Model.V2.ReviewLine>();
+
+            // Act
+            CSharpAPIParser.TreeToken.CodeFileBuilder.BuildInternalsVisibleToAttributes(reviewLines, assemblySymbol);
+
+            foreach (var line in reviewLines)
+            {
+                if (!string.IsNullOrEmpty(line.LineId))
+                {
+                    // Assert
+                    Assert.True(lineIds.Add(line.LineId), $"Duplicate LineId found: {line.LineId}");
+                }
+            }
         }
     }
 }

@@ -37,6 +37,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Linq;
+using APIViewWeb.Services;
 
 namespace APIViewWeb
 {
@@ -116,11 +117,13 @@ namespace APIViewWeb
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
+            services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
             services.AddSingleton<IPullRequestManager, PullRequestManager>();
             services.AddSingleton<IPackageNameManager, PackageNameManager>();
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -157,6 +160,17 @@ namespace APIViewWeb
                 {
                     options.LoginPath = "/Login";
                     options.AccessDeniedPath = "/Unauthorized";
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        if (context.Request.Path.StartsWithSegments("/api"))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            return Task.CompletedTask;
+                        }
+                        
+                        context.Response.Redirect(context.RedirectUri);
+                        return Task.CompletedTask;
+                    };
                 })
                 .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("TokenAuth", options => { })
                 .AddJwtBearer("Bearer", options =>

@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.SymbolDisplay;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using ApiView;
-using System.Diagnostics.CodeAnalysis;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -48,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29.2";
+        public const string CurrentVersion = "29.8";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -107,6 +106,7 @@ namespace CSharpAPIParser.TreeToken
             }
 
             codeFile.Diagnostics = analyzer.Results.ToArray();
+            VerifyCodeFile(codeFile);
             return codeFile;
         }
 
@@ -137,10 +137,10 @@ namespace CSharpAPIParser.TreeToken
                         if (!String.IsNullOrEmpty(param))
                         {
                             var firstComma = param?.IndexOf(',');
-                            param = firstComma > 0 ? param?[..(int)firstComma] : param;
+                            param = firstComma > 0 ? param?[..(int)firstComma] + "_" + param?[^5..] : param;
                             reviewLines.Add(new ReviewLine()
                             {
-                                LineId = attribute.AttributeClass?.Name,
+                                LineId = attribute.AttributeClass?.Name + "_" + param,
                                 Tokens = [
                                     ReviewToken.CreateStringLiteralToken(param)
                                 ]
@@ -174,7 +174,7 @@ namespace CSharpAPIParser.TreeToken
                     versionToken.SkipDiff = true;
                     var dependencyLine = new ReviewLine()
                     {
-                        LineId = dependency.Name,
+                        LineId = dependency.Name + versionToken.Value,
                         Tokens = [
                             ReviewToken.CreateStringLiteralToken(dependency.Name, false),
                             versionToken
@@ -451,6 +451,15 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
+        private string GetTypedConstantValue(TypedConstant typedConstant)
+        {
+            return typedConstant.Kind switch
+            {
+                TypedConstantKind.Array => string.Join(", ", typedConstant.Values.Select(v => v.ToString())),
+                _ => typedConstant.Value?.ToString() ?? string.Empty
+            };
+        }
+
         private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden, string relatedTo)
         {
             const string attributeSuffix = "Attribute";
@@ -466,11 +475,13 @@ namespace CSharpAPIParser.TreeToken
                         continue;
                     }
 
+                    string args = String.Join(", ", attribute.ConstructorArguments.Select(a => GetTypedConstantValue(a)));
+
                     var attributeLine = new ReviewLine()
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}({attribute.ConstructorArguments.FirstOrDefault().Value}).{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}",
                         IsHidden = isHidden
                     };
 
@@ -870,6 +881,44 @@ namespace CSharpAPIParser.TreeToken
                 (_, _) => lineId
             };
             return value;
+        }
+
+        /// <summary>
+        /// Verifies that all LineId values in the codeFile's ReviewLines collection are unique.
+        /// </summary>
+        /// <param name="codeFile">The CodeFile to verify.</param>
+        /// <exception cref="InvalidOperationException">Thrown when duplicate LineId values are found.</exception>
+        private static void VerifyCodeFile(CodeFile codeFile)
+        {
+            var lineIds = new HashSet<string>();
+            var duplicates = new List<string>();
+
+            void CheckLineIds(IEnumerable<ReviewLine> lines)
+            {
+                foreach (var line in lines)
+                {
+                    if (!string.IsNullOrEmpty(line.LineId))
+                    {
+                        if (!lineIds.Add(line.LineId))
+                        {
+                            duplicates.Add(line.LineId);
+                        }
+                    }
+
+                    if (line.Children != null && line.Children.Count > 0)
+                    {
+                        CheckLineIds(line.Children);
+                    }
+                }
+            }
+
+            CheckLineIds(codeFile.ReviewLines);
+
+            if (duplicates.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate LineId values found: {string.Join(", ", duplicates.Distinct())}");
+            }
         }
     }
 }

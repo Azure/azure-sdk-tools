@@ -205,7 +205,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             {
                 message.TryGetContentType(out string contentType);
 
-                if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
+                if (ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
                 {
                     message.Body = SanitizeMultipartBody(boundary, message.Body);
                 }
@@ -222,7 +222,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             }
         }
 
-        public virtual void Sanitize(RecordEntry entry)
+        public virtual void Sanitize(RecordEntry entry, bool matchingBodies = true)
         {
             if (Condition == null || Condition.IsApplicable(entry))
             {
@@ -230,11 +230,14 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
                 SanitizeHeaders(entry.Request.Headers);
 
-                SanitizeBody(entry.Request);
+                if (matchingBodies)
+                {
+                    SanitizeBody(entry.Request);
+                }
 
                 SanitizeHeaders(entry.Response.Headers);
 
-                if (entry.RequestMethod != RequestMethod.Head)
+                if (entry.RequestMethod != RequestMethod.Head && matchingBodies)
                 {
                     SanitizeBody(entry.Response);
                 }

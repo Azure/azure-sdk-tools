@@ -8,8 +8,6 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -18,6 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Extensions;
 
 public static class OpenTelemetryExtensions
 {
+    private const string DefaultAppInsights = "InstrumentationKey=61976f7a-4734-47a1-9fa0-0d5dcfda7f11;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=b22875b9-495e-4a5f-925a-a8b3b28ab441";
+
     public static void ConfigureOpenTelemetry(this IServiceCollection services)
     {
         services.AddOptions<AzSdkToolsMcpServerConfiguration>()
@@ -29,8 +29,7 @@ public static class OpenTelemetryExtensions
                 {
                     options.Version = assemblyName.Version.ToString();
                 }
-
-                var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_COLLECT_TELEMETRY");
+                var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_COLLECT_TELEMETRY");
                 options.IsTelemetryEnabled = string.IsNullOrEmpty(collectTelemetry)
                     || (bool.TryParse(collectTelemetry, out var shouldCollect) && shouldCollect);
             });
@@ -76,12 +75,6 @@ public static class OpenTelemetryExtensions
         });
 #endif
 
-        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING");
-        if (string.IsNullOrEmpty(appInsightsConnectionString))
-        {
-            return;
-        }
-
         services.ConfigureOpenTelemetryTracerProvider((sp, builder) =>
         {
             var serverConfig = sp.GetRequiredService<IOptions<AzSdkToolsMcpServerConfiguration>>();
@@ -89,15 +82,19 @@ public static class OpenTelemetryExtensions
             {
                 return;
             }
-
             builder.AddSource(serverConfig.Value.Name);
         });
+
+        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_APPLICATIONINSIGHTS_CONNECTION_STRING");
+        if (string.IsNullOrEmpty(appInsightsConnectionString))
+        {
+            appInsightsConnectionString = DefaultAppInsights;
+        }
 
         services.AddOpenTelemetry()
             .ConfigureResource(r =>
             {
                 var version = Assembly.GetExecutingAssembly()?.GetName()?.Version?.ToString();
-
                 r.AddService(Constants.TOOLS_ACTIVITY_SOURCE, version)
                     .AddTelemetrySdk();
             })

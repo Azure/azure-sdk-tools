@@ -19,11 +19,14 @@ from dotenv import load_dotenv
 from azure.storage.blob import BlobServiceClient
 import yaml
 import logging
+import shutil
 
 weights: dict[str, float] = {
     "similarity_weight": 0.6,  # Similarity between expected and actual
     "groundedness_weight": 0.4,  # Staying grounded in guidelines
 }
+
+channel_to_tenant_id_dict: dict[str, str] = {}
 
 scenario_to_channel: dict[str, str] = {
     "typespec": "TypeSpec Discussion",
@@ -39,7 +42,7 @@ scenario_to_channel: dict[str, str] = {
     "javascript": "Language - JavaScript"
 }
 
-def retrieve_tenant_id(channel: str):
+def retrieve_tenant_ids() -> dict[str, str]:
     credential = DefaultAzureCredential()
     storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
     blob_service_client = BlobServiceClient(
@@ -54,22 +57,25 @@ def retrieve_tenant_id(channel: str):
     download_stream = blob_client.download_blob()
     channel_data_yaml = yaml.safe_load(download_stream.readall())
     channels = channel_data_yaml["channels"]
+    channel_to_tenant_id = {}
+    channel_to_tenant_id["default"] = channel_data_yaml["default"]["tenant"]
     if channels:
         for item in channels:
-            if item["name"] == channel:
-                return item["tenant"]
+            channel_to_tenant_id[item["name"]] = item["tenant"]
 
-    return channel_data_yaml["default"]["tenant"]
+    return channel_to_tenant_id
 
 async def process_file(input_file: str, output_file: str, scenario: str, is_bot: bool) -> None:
     """Process a single input file"""
     logging.info(f"Processing file: {input_file}")
     
-    azure_bot_service_access_token = os.environ["BOT_AGENT_ACCESS_TOKEN"]
+    azure_bot_service_access_token = os.environ.get("BOT_AGENT_ACCESS_TOKEN", None)
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
-    tenant_id = retrieve_tenant_id(scenario_to_channel[scenario] if scenario in scenario_to_channel else scenario)
+    tenant_id = channel_to_tenant_id_dict[scenario_to_channel[scenario] if scenario in scenario_to_channel else scenario]
+    if tenant_id is None:
+        tenant_id = channel_to_tenant_id_dict["default"]
     
     outputFile = open(output_file, 'a', encoding='utf-8')
     with open(input_file, "r", encoding="utf-8") as f:
@@ -104,8 +110,10 @@ async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tena
     """Call the completion API endpoint."""
     headers = {
         "Content-Type": "application/json; charset=utf8",
-        "Authorization": f"Bearer {access_token}"
     }
+    if access_token: 
+        headers["Authorization"] = f"Bearer {access_token}"
+    
     payload = {
         "tenant_id": tenant_id if tenant_id is not None else "azure_sdk_qa_bot",
         "message": {
@@ -133,13 +141,23 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     """
     logging.info("📁 Preparing dataset...")
     data_dir = Path(testdata_dir)
+    logging.info(f"📂 Data directory: {data_dir.absolute()}")
     script_directory = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"Script directory:{script_directory}")
     output_dir = Path(os.path.join(script_directory, "output"))
     output_dir.mkdir(exist_ok=True)
-    
-    logging.info(f"📂 Data directory: {data_dir.absolute()}")
     logging.info(f"📂 Output directory: {output_dir.absolute()}")
+    
+    for filename in os.listdir(output_dir.absolute()):
+        file_path = os.path.join(output_dir.absolute(), filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)  # remove file or link
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)  # remove directory
+        except Exception as e:
+            print(f"Failed to delete {file_path}. Reason: {e}")
+    print(f"Directory '{output_dir.absolute()}' cleared.")
     
     if not data_dir.exists():
         logging.error(f"❌ Data directory {data_dir.absolute()} does not exist!")
@@ -408,6 +426,7 @@ if __name__ == "__main__":
     logging.info(f"test folder: {args.test_folder}")
     # Required environment variables
     load_dotenv()
+    channel_to_tenant_id_dict = retrieve_tenant_ids()
     all_results = {}
     try: 
         logging.info("📊 Preparing dataset...")

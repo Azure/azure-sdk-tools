@@ -140,10 +140,6 @@ jobs:
             TargetRepos:
               azure-sdk/azure-dev-docs-pr:
 
-          Azure/azure-mcp:
-            TargetRepos:
-              Azure/azure-mcp-pr:
-
           microsoft/mcp:
             TargetRepos:
               microsoft/mcp-pr:

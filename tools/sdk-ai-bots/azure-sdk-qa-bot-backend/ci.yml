@@ -38,7 +38,7 @@ extends:
             steps:
               - task: AzureCLI@2
                 inputs:
-                  azureSubscription: 'azure-sdk-qa-bot'
+                  azureSubscription: 'azuresdkqabot-dev'
                   addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript

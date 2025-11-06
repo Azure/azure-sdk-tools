@@ -6,13 +6,13 @@
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
                     <div class="d-grid gap-2">
-                        <button class="{{apiRevisionApprovalBtnClass}}" type="button" 
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button"
                             (click)="handleAPIRevisionApprovalAction()"
                             [disabled]="isAPIRevisionApprovalDisabled">{{apiRevisionApprovalBtnLabel}}</button>
                     </div>
                 </ng-container>
                 <ng-template #cantToggleApproveAPIRevision>
-                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision." 
+                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision."
                         tooltipPosition="bottom">
                         <button class="{{apiRevisionApprovalBtnClass}}" type="button"
                             disabled>
@@ -28,7 +28,7 @@
                 <span class="small text-muted mt-1">Current Revision approval pending</span>
             </ng-template>
         </li>
-        <li class="list-group-item text-center">
+        <li class="list-group-item text-center" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
@@ -38,8 +38,9 @@
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" type="button" id="first-release-approval-button"
                             (click)="handleReviewApprovalAction()"
-                            pTooltip="Package name must be approved before first preview release of a new package." 
-                            tooltipPosition="bottom">
+                            pTooltip="Package name must be approved before first preview release of a new package."
+                            tooltipPosition="bottom"
+                            data-clarity-region="approve-namespace-button">
                             Approve first release
                         </button>
                     </div>
@@ -49,6 +50,18 @@
             <ng-template #userIsNotAPreferedApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
+        </li>
+        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">
+            <div class="d-grid gap-2">
+                <button class="{{namespaceReviewBtnClass}}" type="button"
+                        (click)="handleNamespaceReviewAction()"
+                        [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress"
+                        data-clarity-region="request-namespace-review-button">
+                    <span *ngIf="isNamespaceReviewInProgress" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    {{namespaceReviewBtnLabel}}
+                </button>
+            </div>
+            <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
         </li>
     </ul>
     </app-page-options-section>
@@ -74,27 +87,27 @@
 
     <app-page-options-section sectionName="Page Utils">
     <ul class="list-group">
-        <li class="list-group-item"> 
+        <li class="list-group-item">
             <p-iconField iconPosition="left" class="w-full">
                 <p-inputIcon styleClass="pi pi-search" />
-                <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" style="width: 100%; box-sizing: border-box;"/>
+                <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" style="width: 100%; box-sizing: border-box;" data-clarity-region="review-search-input"/>
             </p-iconField>
             <div *ngIf="codeLineSearchInfo" class="d-flex justify-content-between">
                 <small class="review-search-info">{{ (codeLineSearchInfo.currentMatch?.index ?? 0) + 1 }} of {{ codeLineSearchInfo.totalMatchCount }}</small>
                 <span class="mt-2">
-                    <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)"></i>
-                    <i class="bi bi-arrow-down-short border review-search-icon" (click)="navigateSearch(1)"></i>
-                    <i class="bi bi-x border rounded-end review-search-icon" (click)="clearReviewSearch()"></i>
+                    <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)" data-clarity-region="review-search-up"></i>
+                    <i class="bi bi-arrow-down-short border review-search-icon" (click)="navigateSearch(1)" data-clarity-region="review-search-down"></i>
+                    <i class="bi bi-x border rounded-end review-search-icon" (click)="clearReviewSearch()" data-clarity-region="review-search-clear"></i>
                 </span>
             </div>
         </li>
-        <li class="list-group-item" *ngIf="showCommentsSwitch">                
+        <li class="list-group-item" *ngIf="showCommentsSwitch">
             <label class="small mx-1 fw-semibold">Comment:</label>
             <div class="d-grid gap-2">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)" data-clarity-region="review-comment-prev">
                         <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)" data-clarity-region="review-comment-next">
                         <i class="bi bi-arrow-down"></i>Next</button>
                 </div>
             </div>
@@ -112,12 +125,12 @@
         </li>
         <li class="list-group-item">
             <div class="d-grid gap-2">
-                <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)">
+                <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)" data-clarity-region="copy-review-text-button">
                     <i class="bi bi-clipboard"></i>
                     {{ copyReviewTextButtonText }}
                 </button>
                 <ng-container *ngIf="review && userProfile && preferredApprovers.includes(userProfile?.userName!) && isCopilotReviewSupported">
-                    <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText == 'Generating review...'" (click)="generateAIReview()">
+                    <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText == 'Generating review...'" (click)="generateAIReview()" data-clarity-region="generate-copilot-review-button">
                         <i *ngIf="aiReviewGenerationState === 'NotStarted' || aiReviewGenerationState == 'Completed'" class="bi bi-stars"></i>
                         <div *ngIf="aiReviewGenerationState == 'InProgress'" class="spinner-grow spinner-grow-sm" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -135,49 +148,49 @@
     <ul class="list-group">
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showCommentsSwitch"
-            (onChange)="onCommentsSwitchChange($event)" />
+            (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toggle-comments" />
             <label class="ms-2">Comments</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch"
-            (onChange)="onShowSystemCommentsSwitchChange($event)" />
+            (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostics" />
             <label class="ms-2">System comments</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showDocumentationSwitch"
-            (onChange)="onShowDocumentationSwitchChange($event)" />
+            (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
             <label class="ms-2">Documentation</label>
         </li>
         <li *ngIf="hasHiddenAPIs" class="list-group-item">
             <p-inputSwitch [(ngModel)]="showHiddenAPISwitch"
-            (onChange)="onShowHiddenAPISwitchChange($event)" />
+            (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
             <label class="ms-2">Hidden APIs</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch" 
-            (onChange)="onShowLineNumbersSwitchChange($event)" />
+            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch"
+            (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toggle-line-numbers"/>
             <label class="ms-2">Line numbers</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
-            (onChange)="onShowLeftNavigationSwitchChange($event)" />
+            (onChange)="onShowLeftNavigationSwitchChange($event)" data-clarity-region="toggle-left-navigation" />
             <label class="ms-2">Left navigation</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="disableCodeLinesLazyLoading"
-            (onChange)="onDisableLazyLoadingSwitchChange($event)" />
+            (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
             <label class="ms-2">Disable lazy loading</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff style :</label>
-            <p-dropdown 
+            <p-dropdown
                 (onChange)="onDiffStyleChange($event)"
-                [options]="diffStyleOptions" 
+                [options]="diffStyleOptions"
                 [(ngModel)]="selectedDiffStyle"
                 [disabled]="!contentHasDiff"
                 inputId="diff-style-select"
                 optionLabel="label"
-                [style]="{'width':'100%'}"/>
+                [style]="{'width':'100%'}" data-clarity-region="diff-view-style-dropdown" />
         </li>
     </ul>
     </app-page-options-section>
@@ -186,18 +199,19 @@
     <ul class="list-group">
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
-            (onChange)="onMarkedAsViewedSwitchChange($event)" />
+            (onChange)="onMarkedAsViewedSwitchChange($event)" data-clarity-region="toggle-marked-as-viewed" />
             <label class="ms-2">Mark as viewed</label>
         </li>
         <li class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
-            <p-multiSelect 
-                [options]="preferredApprovers" 
-                [(ngModel)]="selectedApprovers" 
+            <p-multiSelect
+                [options]="preferredApprovers"
+                [(ngModel)]="selectedApprovers"
                 placeholder="Request Reviewers"
                 [showClear]="true"
                 [style]="{'width':'100%'}"
-                (onPanelHide)="handleAssignedReviewersChange()">
+                (onPanelHide)="handleAssignedReviewersChange()"
+                data-clarity-region="reviewers-multiselect">
                     <ng-template pTemplate="selectedItems">
                         <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
                         <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>
@@ -206,7 +220,7 @@
                     </ng-template>
                     <ng-template let-approver pTemplate="item">
                         <div class="flex align-items-center gap-2">
-                            <img 
+                            <img
                                 src="https://github.com/{{ approver }}.png?size=30"
                                 class="me-2 rounded"
                                 style="width: 30px" />
@@ -222,7 +236,8 @@
     <ul class="list-group">
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="subscribeSwitch"
-            (onChange)="onSubscribeSwitchChange($event)" />
+            (onChange)="onSubscribeSwitchChange($event)"
+            data-clarity-region="toggle-subscribe" />
             <label class="ms-2">Subscribe</label>
         </li>
     </ul>
@@ -244,10 +259,9 @@
                 </ng-template>
             </p-timeline>
         </li>
-    </ul>
-    </app-page-options-section>
+    </ul>    </app-page-options-section>
 
-    <p-dialog header="Approve APIRevision" 
+    <p-dialog header="Approve APIRevision"
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
@@ -277,13 +291,13 @@
       </div>
     </p-dialog>
 
-    <p-dialog header="Disable Lazy Loading" 
+    <p-dialog header="Disable Lazy Loading"
         [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
-        [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
+        [style]="{ width: '30dvw' }" (onHide)="onDisableLazyLoadingModalHide()">
         <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
         <div class="d-grid gap-2 mt-2">
-        <button class="btn btn-primary" type="button" (click)="disableCodeLinesLazyLoadingEmitter.emit(disableCodeLinesLazyLoading); showDisableCodeLinesLazyLoadingModal = false">Disable</button>
-        <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="onDisableLazyLoadingConfirm()">Disable</button>
+        <button class="btn btn-link" type="button" (click)="onDisableLazyLoadingCancel()">Cancel</button>
         </div>
     </p-dialog>
 </ng-container>

@@ -1,0 +1,43 @@
+{
+  "name": "azure-sdk-qa-bot-knowledge-sync",
+  "version": "1.0.0",
+  "description": "Standalone knowledge sync application for Azure SDK QA Bot",
+  "scripts": {
+    "build": "tsc && npm run copy-config",
+    "watch": "npm run copy-config && tsc -w",
+    "copy-config": "shx mkdir -p dist/config && shx cp -r config/* dist/config/",
+    "clean": "rimraf dist",
+    "prestart": "npm run clean && npm run build",
+    "start": "node dist/src/index.js",
+    "sync": "npm run build && npm run start",
+    "test": "vitest run --reporter=default",
+    "test:watch": "vitest"
+  },
+  "bin": {
+    "sync-knowledge": "dist/src/index.js"
+  },
+  "dependencies": {
+    "@azure/app-configuration": "^1.7.0",
+    "@azure/arm-search": "^3.3.0",
+    "@azure/data-tables": "^13.3.1",
+    "@azure/functions": "^4.5.0",
+    "@azure/identity": "^4.5.0",
+    "@azure/keyvault-secrets": "^4.8.0",
+    "@azure/search-documents": "^12.1.0",
+    "@azure/storage-blob": "^12.21.0",
+    "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0",
+    "openai": "^5.20.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.5",
+    "@types/node": "^20.x",
+    "@types/uuid": "^10.0.0",
+    "rimraf": "^5.0.0",
+    "shx": "^0.4.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4"
+  },
+  "main": "dist/src/index.js"
+}

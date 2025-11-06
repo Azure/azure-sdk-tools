@@ -1,14 +1,27 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
 import { access, constants, mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory, readTspLocation } from "./fs.js";
 import { parse as parseYaml } from "yaml";
+import { getRepoRoot } from "./git.js";
 
-const defaultTspClientConfigPath = joinPaths("eng", "tspclientconfig.yaml");
+const defaultTspClientConfigPath = joinPaths("eng", "tsp-client-config.yaml");
+
+/**
+ * Reads and returns the package.json content.
+ */
+export async function getPackageJson(): Promise<any> {
+  return JSON.parse(
+    await readFile(
+      joinPaths(dirname(fileURLToPath(import.meta.url)), "..", "package.json"),
+      "utf8",
+    ),
+  );
+}
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
@@ -109,6 +122,7 @@ export async function writeTspLocationYaml(
 export async function updateExistingTspLocation(
   tspLocationData: TspLocation,
   projectPath: string,
+  emitterPackageJsonOverride?: string,
 ): Promise<TspLocation> {
   try {
     const existingTspLocation = await readTspLocation(projectPath);
@@ -117,13 +131,13 @@ export async function updateExistingTspLocation(
     const updatedTspLocation = { ...existingTspLocation };
 
     // Define the properties that can be updated
+    // NOTE: emitterPackageJsonPath is handled separately below because of the override logic
     const updatableProperties: (keyof TspLocation)[] = [
       "repo",
       "commit",
       "directory",
       "entrypointFile",
       "additionalDirectories",
-      "emitterPackageJsonPath",
     ];
 
     // Update each property if it has a valid value
@@ -134,6 +148,21 @@ export async function updateExistingTspLocation(
       }
     }
 
+    // Only add/replace emitterPackageJsonPath value if an override is provided, otherwise keep existing value or leave undefined
+    if (emitterPackageJsonOverride) {
+      if (existingTspLocation.emitterPackageJsonPath !== undefined) {
+        Logger.debug(
+          `Updating existing emitterPackageJsonPath ${existingTspLocation.emitterPackageJsonPath} with ${emitterPackageJsonOverride} in tsp-location.yaml`,
+        );
+      } else {
+        Logger.debug(
+          `Adding emitterPackageJsonPath ${emitterPackageJsonOverride} to tsp-location.yaml`,
+        );
+      }
+      updatedTspLocation.emitterPackageJsonPath = normalizeSlashes(
+        relative(await getRepoRoot(projectPath), emitterPackageJsonOverride),
+      );
+    }
     return updatedTspLocation;
   } catch (error) {
     Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
@@ -143,6 +172,7 @@ export async function updateExistingTspLocation(
 
 export interface TspClientConfig {
   supportedEmitters?: Array<{ name: string; path: string }>;
+  generateMetadata?: boolean;
 }
 
 export async function parseTspClientRepoConfig(
@@ -153,7 +183,7 @@ export async function parseTspClientRepoConfig(
     const data = await readFile(configPath, "utf8");
     return parseYaml(data) as TspClientConfig;
   } catch (err) {
-    Logger.debug(`Did not find a tspclientconfig.yaml at ${configPath}. Error: ${err}`);
+    Logger.debug(`Did not find a tsp-client-config.yaml at ${configPath}. Error: ${err}`);
     return undefined;
   }
 }

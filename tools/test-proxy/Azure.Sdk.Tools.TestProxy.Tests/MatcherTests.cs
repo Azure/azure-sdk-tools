@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void BodilessMatcherMatchesIdenticalRequest()
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
-            
+
             var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
 
             var expectedIdenticalMatch = sessionForRetrieval.Session.Lookup(identicalRequest, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var bodilessRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             bodilessRequest.Request.Body = new byte[] { };
             bodilessRequest.Request.Headers["Content-Length"] = new string[] { "0" };
-            
+
             var expectedBodilessMatch = sessionForRetrieval.Session.Lookup(bodilessRequest, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
@@ -75,7 +75,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var identicalRequestDiffURI = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             identicalRequestDiffURI.RequestUri = identicalRequestDiffURI.RequestUri + "2";
 
-            Assert.Throws<TestRecordingMismatchException>(() => {
+            Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(identicalRequestDiffURI, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
         }
@@ -88,7 +89,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var identicalBodyDiffHeaders = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             identicalBodyDiffHeaders.Request.Headers.Remove(identicalBodyDiffHeaders.Request.Headers.Keys.First());
 
-            Assert.Throws<TestRecordingMismatchException>(() => {
+            Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(identicalBodyDiffHeaders, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
         }
@@ -119,7 +121,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
             var identicalHeaders = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
-            
+
             var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(identicalHeaders, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
@@ -130,7 +132,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var diffBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
             diffBodyRequest.Request.Body = Encoding.UTF8.GetBytes("A Different Request Body");
 
-            Assert.Throws<TestRecordingMismatchException>(() => {
+            Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(diffBodyRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
         }
@@ -142,7 +145,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var differenUriRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
             differenUriRequest.RequestUri = "https://shouldntmatch.com";
 
-            Assert.Throws<TestRecordingMismatchException>(() => {
+            Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(differenUriRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
         }
@@ -202,7 +206,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
 
-            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
 
@@ -218,7 +223,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
 
-            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(sameOriginalHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
 
@@ -245,7 +251,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             differentRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
             differentRequest.RequestUri = "https://shouldntmatch.com";
 
-            Assert.Throws<TestRecordingMismatchException>(() => {
+            Assert.Throws<TestRecordingMismatchException>(() =>
+            {
                 sessionForRetrieval.Session.Lookup(differentRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
         }
@@ -260,7 +267,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
-           
+
             var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
@@ -342,6 +349,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal("Ref A: 980665086A12483993E2782EDFC9F29A Ref B: STBEDGE0106 Ref C: 2023-07-19T22:52:17Z", playbackContext.Response.Headers["X-MSEdge-Ref"].ToString());
             Assert.Equal(200, playbackContext.Response.StatusCode);
+        }
+
+        [Fact]
+        public void MultiPartMatcherMatchesDifferentBoundary()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
+            var differentBoundaryRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_diff_boundary.json").Session.Entries[0];
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBoundaryRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void MultiPartMultiLayerMatcherMatchesDifferentBoundary()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_two_layers.json");
+            var differentBoundaryRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_two_layers_diff_boundary.json").Session.Entries[0];
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBoundaryRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void MultiPartMatcherThrowsOnDiffBody()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
+            var diffBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_diff_body.json").Session.Entries[0];
+            diffBodyRequest.Request.Body = Encoding.UTF8.GetBytes("A Different Request Body");
+            Assert.Throws<TestRecordingMismatchException>(() =>
+            {
+                sessionForRetrieval.Session.Lookup(diffBodyRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+        }
+
+        [Fact]
+        public void MultiPartMatcherMatchesIdenticalBoundary()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
+            var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json").Session.Entries[0];
+            var expectedIdenticalMatch = sessionForRetrieval.Session.Lookup(identicalRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
     }
 }

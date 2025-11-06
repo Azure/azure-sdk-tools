@@ -9,13 +9,35 @@ import re
 import shutil
 import threading
 import time
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, List, Union
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
-from _evals_result import record_run_result
+from _evals_result import EvalsResult
 from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
+
+def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]:
+    """
+    Map an array of reference objects to a string array of their 'link' properties.
+    
+    Args:
+        references: List of reference objects, each containing a 'link' field
+        
+    Returns:
+        List of link strings extracted from the reference objects
+    """
+    if not references:
+        return []
+    
+    links = []
+    for ref in references:
+        if isinstance(ref, dict) and 'link' in ref and ref['link']:
+            links.append(ref['link'])
+        elif isinstance(ref, dict) and 'Link' in ref and ref['Link']:  # Handle capitalized version
+            links.append(ref['Link'])
+    
+    return links
 
 class EvaluatorConfig:
     """Configuration for an evaluator"""
@@ -24,10 +46,11 @@ class EvaluatorConfig:
     """Dictionary mapping evaluator input name to column in data"""
 
 class EvaluatorClass:
-    def __init__(self, name: str, evaluator:Any, evaluator_config: Optional[EvaluatorConfig] = None):
+    def __init__(self, name: str, evaluator:Any, evaluator_config: Optional[EvaluatorConfig] = None, output_fields: Optional[list[str]] = None):
         self._name = name
         self._evaluator = evaluator
         self._evaluator_config = evaluator_config
+        self._output_fields = output_fields
     
     
     @property
@@ -63,7 +86,11 @@ class EvaluatorClass:
     def evaluator_config(self, value):
         """Setter for evaluator config"""
         self._evaluator_config = value
-
+    
+    @property
+    def output_fileds(self):
+        """Getter for output fields"""
+        return self._output_fields
     
 
 class EvalsRunner:
@@ -84,8 +111,9 @@ class EvalsRunner:
         "javascript": "Language - JavaScript"
     }
 
-    def __init__(self, evaluators: dict[str, EvaluatorClass] | None = None, num_to_run: int = 1):
+    def __init__(self, evaluators: dict[str, EvaluatorClass] | None = None, evals_result: EvalsResult|None = None, num_to_run: int = 1):
         self._evaluators = evaluators or {}
+        self._evals_result = evals_result or {}
         self._num_to_run = num_to_run
         # Initialize the shared cache lazily once
         if EvalsRunner.channel_to_tenant_id_dict is None:
@@ -98,6 +126,11 @@ class EvalsRunner:
     def evaluators(self):
         """Read-only view of evaluators."""
         return self._evaluators
+
+    @property
+    def evals_result(self):
+        """Getter for evals result"""
+        return self._evals_result
 
     def registerEvaluator(self, name: str, evaluator: EvaluatorClass):
         self._evaluators[name] = evaluator
@@ -148,6 +181,8 @@ class EvalsRunner:
                         api_response = await self._call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
                         answer = api_response.get("answer", "")
                         full_context = api_response.get("full_context", "")
+                        references = api_response.get("references", [])
+                        reference_urls = extract_links_from_references(references)
                         latency = time.time() - start_time
                         processed_test_data = {
                             "query": record["query"],
@@ -156,6 +191,8 @@ class EvalsRunner:
                             "context": full_context,
                             "latency": latency,
                             "response_length": len(answer),
+                            "expected_reference_urls": record["expected_reference_urls"] if "expected_reference_urls" in record else [],
+                            "reference_urls": reference_urls,
                             "testcase": record.get("testcase", "unknown"),
                         }
                         if processed_test_data:
@@ -260,38 +297,41 @@ class EvalsRunner:
         logging.info("Processing complete. Results written to output directory.")
         return output_dir.absolute()
 
-    def evaluate_run(self, test_folder:str, prefix: Optional[str] = None, need_retrieve_response: bool = True, evaluator_filter: Optional[list] = None, evaluation_name_prefix: Optional[str] = None, ai_project_endpoint: Optional[str] = None, **kwargs):
+    def evaluate_run(self, test_folder:str, prefix: Optional[str] = None, need_retrieve_response: bool = True, evaluation_name_prefix: Optional[str] = None, ai_project_endpoint: Optional[str] = None, **kwargs):
 
         all_results = {}
         evaluators = {}
         evaluator_config = {}
-        metrics = evaluator_filter if evaluator_filter is not None else self._evaluators.keys()
+        # metrics = evaluator_filter if evaluator_filter is not None else self._evaluators.keys()
         for index, (key, value) in enumerate(self._evaluators.items()):
-            if (evaluator_filter is None or key in evaluator_filter):
-                evaluators[key] = value.evaluator
-                evaluator_config[key] = value.evaluator_config
+            evaluators[key] = value.evaluator
+            evaluator_config[key] = value.evaluator_config
         
         if not evaluators or not evaluator_config:
             logging.info("No evaluators. return empty result")
             return {}
         
-        output_file_dir = asyncio.run(self._prepare_dataset(test_folder, prefix, need_retrieve_response))    
+        output_file_dir = asyncio.run(self._prepare_dataset(test_folder, prefix, need_retrieve_response))
+        if not output_file_dir:
+            logging.info("No test data file to evaluate.")
+            return all_results
+        
         for output_file in output_file_dir.glob("*.jsonl"):
             result = evaluate(
                 data=output_file,
                 evaluators=evaluators,
-                evaluation_name=f"{evaluation_name_prefix}-{os.path.splitext(os.path.basename(output_file))[0]}" if evaluation_name_prefix else os.path.splitext(os.path.basename(output_file))[0],
+                evaluation_name=f"{evaluation_name_prefix}-{output_file.stem}" if evaluation_name_prefix else output_file.stem,
                 # column mapping
                 evaluator_config=evaluator_config,
                 # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
                 azure_ai_project = ai_project_endpoint,
                 # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
-                output_path="./evalresults.json",
+                output_path=f"./{output_file.stem}-eval-results.json",
                 **kwargs
             )
             # print("✅ Evaluation completed. Results:", result)
             logging.info("✅ Evaluation completed.")
-            run_result = record_run_result(result, metrics)
+            run_result = self._evals_result.record_run_result(result)
             all_results[output_file.name] = run_result
         
         return all_results

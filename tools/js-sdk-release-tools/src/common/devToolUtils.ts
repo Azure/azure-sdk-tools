@@ -58,16 +58,30 @@ export async function lintFix(packageDirectory: string) {
         logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
     }
 }
-
 export async function customizeCodes(packageDirectory: string) {
     logger.info(`Start to customize codes in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
 
     try {
-        //TODO: support ./src/generated cases in future
-        const customizeCommand = `customization apply-v2 -s ./generated -c ./src`;
-        await runCommand('npm', ['exec', '--', 'dev-tool', customizeCommand], options, true, 600, true);
+        // Check if package.json has a customization script
+        const packageJsonPath = path.join(packageDirectory, 'package.json');
+        let useCustomScript = false;
+
+        if (await exists(packageJsonPath)) {
+            const packageJson = await import(packageJsonPath, { assert: { type: 'json' } });
+            useCustomScript = packageJson.default?.scripts?.customization !== undefined;
+        }
+
+        if (useCustomScript) {
+            logger.info(`Running customization script from package.json`);
+            await runCommand('npm', ['run', 'customization'], options, true, 600, true);
+        } else {
+            //TODO: support ./src/generated cases in future
+            const customizeCommand = `customization apply-v2 -s ./generated -c ./src`;
+            await runCommand('npm', ['exec', '--', 'dev-tool', customizeCommand], options, true, 600, true);
+        }
+
         logger.info(`Customize codes successfully.`);
     } catch (error) {
         logger.warn(`Failed to customize codes due to: ${(error as Error)?.stack ?? error}`);

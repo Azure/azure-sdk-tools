@@ -12,7 +12,7 @@
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.5.6</VersionPrefix>
+    <VersionPrefix>0.5.8</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <!-- Package metadata -->
     <PackageReleaseNotes>See CHANGELOG.md for release notes</PackageReleaseNotes>
@@ -60,6 +60,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Configuration/RequirementsV1.json" />
   </ItemGroup>
 
   <ItemGroup>

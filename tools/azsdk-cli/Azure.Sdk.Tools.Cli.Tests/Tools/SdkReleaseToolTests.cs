@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             logger = new TestLogger<SdkReleaseTool>();
             var mockDevOpsService = new Mock<IDevOpsService>();
             mockDevOpsService.Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(new PackageResponse
+                .ReturnsAsync(new PackageWorkitemResponse
                 {
                     PackageName = "azure-template",
                     Language = SdkLanguage.Python,
@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.Multiple(() =>
             {
                 Assert.That(result.PackageName, Is.EqualTo(packageName));
-                Assert.That(result.Language, Is.EqualTo(SdkLanguage.DotNet));
+                Assert.That(result.Language, Is.EqualTo(SdkLanguage.Unknown));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Language must be one of the following"));
             });
         }

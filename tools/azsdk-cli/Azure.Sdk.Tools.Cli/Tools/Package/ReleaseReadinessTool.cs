@@ -45,14 +45,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
-        public async Task<PackageResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
+        public async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
             {
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
-                    package = new PackageResponse
+                    package = new PackageWorkitemResponse
                     {
                         PackageName = packageName,   
                         ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language."
@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             catch (Exception ex)
             {
-                var package = new PackageResponse
+                var package = new PackageWorkitemResponse
                 {
                     PackageName = packageName,
                     IsPackageReady = false,

@@ -46,6 +46,49 @@ public class InstrumentedTool(
             activity?.SetTag(TagName.ToolResponse, content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 
+            try
+            {
+                foreach (var c in result.Content)
+                {
+                    // Process only TextContentBlock for custom properties
+                    // Other content types are binary, audiio etc.
+                    if (c is TextContentBlock contentBlock)
+                    {
+                        var responseDict = JsonSerializer.Deserialize<Dictionary<string, object>>(contentBlock.Text);
+                        if (responseDict != null)
+                        {
+                            foreach (var kvp in responseDict)
+                            {
+                                if (kvp.Value is JsonElement value)
+                                {
+                                    switch (value.ValueKind)
+                                    {
+                                        // Add custom properties based on the value kind. Otherwise string type is url escaped in telemetry
+                                        // like \"python\" instead of python
+                                        case JsonValueKind.String:
+                                            activity?.SetCustomProperty(kvp.Key, value.GetString() ?? string.Empty);
+                                            break;
+                                        default:
+                                            activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
+                                            break;
+                                    }                                    
+                                }
+                                else
+                                {
+                                    activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
+                                }
+
+                            }                  
+                        }
+                    }
+                }
+            }
+            catch (JsonException ex)
+            {
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                logger.LogError(ex, "Failed to deserialize contentBlock.Text for telemetry properties");
+            }
             return result;
         }
         catch (Exception ex)

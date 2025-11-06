@@ -1,5 +1,5 @@
 import path from "path";
-import { SDKType, RunMode } from "../common/types.js";
+import { SDKType, RunMode, ModularSDKType } from "../common/types.js";
 import { loadTspConfig, isMgmtPackage } from "../common/utils.js";
 import { RunningEnvironment } from "./runningEnvironment.js";
 import { exists } from "fs-extra";
@@ -108,4 +108,11 @@ export async function parseInputJson(inputJson: any) {
         runMode,
         sdkReleaseType,
     };
+}
+
+export function getModularSDKType(packageDirectory: string) {
+    if (packageDirectory.includes("arm-")) {
+        return ModularSDKType.ManagementPlane;
+    }
+    return ModularSDKType.DataPlane;
 }

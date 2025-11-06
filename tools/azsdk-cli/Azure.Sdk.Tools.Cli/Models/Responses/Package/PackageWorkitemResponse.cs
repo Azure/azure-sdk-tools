@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
-    public class PackageResponse : PackageResponseBase
+    public class PackageWorkitemResponse : PackageResponseBase
     {
         [JsonPropertyName("work_item_id")]
         public int WorkItemId { get; set; }

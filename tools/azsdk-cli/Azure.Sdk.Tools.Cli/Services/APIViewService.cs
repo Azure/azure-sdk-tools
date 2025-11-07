@@ -1,13 +1,10 @@
-using System.Text.Json;
-using Azure.Sdk.Tools.Cli.Models.APIView;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface IAPIViewService
 {
-    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string selectionType,
-        string contentReturnType, string environment = "production");
+    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string environment = "production");
     Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production");
 }
 
@@ -37,9 +34,9 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string selectionType, string contentReturnType, string environment = "production")
+    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string environment = "production")
     {
-        string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&selectionType={selectionType}&contentReturnType={contentReturnType}";
+        string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&contentReturnType={contentReturnType}";
         string? result = await _httpService.GetAsync(revisionContentEndpoint, "get revision content", environment);
         if (string.IsNullOrWhiteSpace(result))
         {

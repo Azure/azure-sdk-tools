@@ -69,12 +69,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
-        public static readonly CommandGroup APIViewRevision = new(
-            Verb: "revision",
-            Description: "APIView revision operations",
-            Options: []
-        );
-
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

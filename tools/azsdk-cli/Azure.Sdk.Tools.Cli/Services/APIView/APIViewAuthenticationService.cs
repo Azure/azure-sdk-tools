@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Configuration;

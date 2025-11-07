@@ -11,20 +11,35 @@ public class APIViewResponse : CommandResponse
     [JsonPropertyName("message")]
     public string? Message { get; set; }
 
-    [JsonPropertyName("data")]
-    public object? Data { get; set; }
+    [JsonPropertyName("content")]
+    public string? Content { get; set; }
 
-    public override string ToString()
+
+    [JsonPropertyName("result")]
+    public object? Result { get; set; }
+
+    protected override string Format()
     {
         var output = new StringBuilder();
 
-        output.AppendLine(Success ? "Operation completed successfully" : "Operation failed");
+        output.AppendLine(Success ? "✓ Operation completed successfully" : "✗ Operation failed");
 
         if (!string.IsNullOrEmpty(Message))
         {
             output.AppendLine(Message);
         }
+      
+        if (!string.IsNullOrWhiteSpace(Content))
+        {
+            string unescapedContent = System.Text.RegularExpressions.Regex.Unescape(Content);
+            output.AppendLine(unescapedContent);
+        }
 
-        return ToString(output);
+        if (Result != null)
+        {
+            output.AppendLine(Result.ToString());
+        }
+
+        return output.ToString();
     }
 }

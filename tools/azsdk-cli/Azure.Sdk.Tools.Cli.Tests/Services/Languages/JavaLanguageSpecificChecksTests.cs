@@ -23,7 +23,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             LangService = new JavaLanguageSpecificChecks(
                 MockMavenHelper.Object,
-                new Mock<IGitHelper>().Object,
                 NullLogger<JavaLanguageSpecificChecks>.Instance,
                 new Mock<ICommonValidationHelpers>().Object);
         }

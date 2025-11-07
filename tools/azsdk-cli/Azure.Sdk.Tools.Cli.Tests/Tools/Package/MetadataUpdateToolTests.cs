@@ -300,7 +300,7 @@ public class MetadataUpdateToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
-        Assert.That(result.Message, Is.EqualTo("No package metadata updates performed."));
+        Assert.That(result.Message, Is.EqualTo("No package metadata updates need to be performed."));
         _mockPackageUpdateResolver.Verify(x => x.Resolve(testPath, It.IsAny<CancellationToken>()), Times.Once);
     }
 

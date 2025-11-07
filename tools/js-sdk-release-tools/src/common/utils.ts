@@ -422,16 +422,44 @@ export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
 ): Promise<void> {
-    // Preserve test directory and assets.json file only in Release and Local modes
-    // In SpecPullRequest and Batch modes, remove everything
-    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserveForMgmtPackages = pipelineRunMode ? ["test", "assets.json"] : [];
-
-    const modularSDKType = getModularSDKType(packageDirectory);
-    if (modularSDKType === ModularSDKType.DataPlane && pipelineRunMode) {
+    // Check if directory exists first
+    if (!fs.existsSync(packageDirectory)) {
+        logger.info(`Directory ${packageDirectory} doesn't exist yet, nothing to clean up.`);
         return;
     }
-    await cleanUpDirectory(packageDirectory, entriesToPreserveForMgmtPackages);
+
+    const modularSDKType = getModularSDKType(packageDirectory);
+    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
+    const entriesToPreserveForPackages = pipelineRunMode ? ["test", "assets.json"] : [];
+
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        // For data plane packages
+        if (pipelineRunMode) {
+            // Perform clean up by the emitter in Release/Local modes (src folder)
+            logger.info(`Skipping cleanup for data plane package in ${runMode} mode (handled by emitter): ${packageDirectory}`);
+            return;
+        } else {
+            // In SpecPullRequest and Batch modes, clean up everything
+            logger.info(`Cleaning up all files for data plane package in ${runMode} mode: ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+        }
+    } else {
+        // For management plane packages
+        // Check if package.json exists before trying to determine SDK type
+        const packageJsonPath = path.join(packageDirectory, 'package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+            logger.info(`package.json not found at ${packageJsonPath}. Skipping cleanup as package hasn't been generated yet.`);
+            return;
+        }
+
+        const managementSDKType = getSDKType(packageDirectory);
+        if (managementSDKType === SDKType.HighLevelClient) {
+            logger.info(`Cleaning up high-level client package in ${runMode} mode`);
+            await cleanUpDirectory(packageDirectory, entriesToPreserveForPackages);
+            return;
+        }
+        logger.info(`Skipping cleanup for management plane package (handled by emitter): ${packageDirectory}`);
+    }
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {

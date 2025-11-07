@@ -35,10 +35,14 @@ Return a JSON object matching the following schema:
     {
       "name": "Theme Name",
       "summary": "Short summary of the theme.",
-      "comment_indices": [0, 2, 5]
+      "examples": [
+        "Comment text 1",
+        "Comment text 2",
+        "Comment text 3"
+      ]
     },
     ...
   ]
 }
 
-Each theme should have a descriptive name, a short summary, and a list of indices (0-based) for comments that fit the theme. If a comment fits multiple themes, include its index in all relevant buckets.
+Each theme should have a descriptive name, a short summary, and a list of example comments (as strings) that fit the theme. If a comment fits multiple themes, include its text in all relevant buckets.

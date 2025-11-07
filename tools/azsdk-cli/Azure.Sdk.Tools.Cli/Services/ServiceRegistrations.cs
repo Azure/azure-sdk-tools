@@ -89,6 +89,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Go = typeof(GoRequirementsCheck),
             });
 
+            services.AddLanguageSpecific<ILanguagePackageUpdate>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageUpdate),
+            });
+
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

@@ -917,7 +917,6 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     filtered = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic" and c.get("IsDeleted") != True]
 
     allowed_commenters = get_approvers(language=language)
-    print(allowed_commenters)
 
     reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
     review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))

@@ -121,7 +121,7 @@ class ApiViewClient:
             return resp.json()
 
 
-def get_apiview_cosmos_client(container_name: str, environment: str = "production", db_name="APIViewV2"):
+def get_apiview_cosmos_client(container_name: str, environment: str = "production", db_name: str = "APIViewV2"):
     """
     Returns the Cosmos DB container client for the specified container and environment.
     """

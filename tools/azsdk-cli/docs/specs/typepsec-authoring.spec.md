@@ -92,45 +92,6 @@ What are we trying to achieve with this design?
 
 _Known cases where this approach doesn't work or has limitations._
 
-#### Exception 1: Highly Complex Custom Scenarios
-
-**Description:**
-When services require highly customized TypeSpec patterns that deviate significantly from standard Azure ARM/DP patterns, the AI may not have sufficient examples in the knowledge base to provide accurate guidance.
-
-**Impact:**
-Developers may receive generic suggestions that don't fully address their specific edge case, requiring them to fall back to manual documentation review or expert consultation.
-
-**Workaround:**
-- Users can explicitly reference specific documentation or examples in their prompts
-- The knowledge base can be incrementally enhanced with new patterns as they emerge
-- Complex scenarios may still require human expert review
-
-#### Exception 2: Real-time TypeSpec Language Updates
-
-**Description:**
-When TypeSpec introduces breaking changes or new syntax features, there may be a lag between the language update and the knowledge base/RAG service being updated with the latest patterns.
-
-**Impact:**
-AI may suggest patterns that are outdated or incompatible with the latest TypeSpec version.
-
-**Workaround:**
-- Regular updates to the RAG knowledge base to incorporate latest TypeSpec changes
-- Users should verify generated code against the latest TypeSpec compiler version
-- Documentation should indicate the supported TypeSpec version range
-
-#### Exception 3: Multi-file Refactoring Across Large Projects
-
-**Description:**
-When changes span multiple TypeSpec files with complex interdependencies (e.g., refactoring shared models across many service versions), the AI may not have full context of all affected files.
-
-**Impact:**
-Suggestions may be correct for individual files but create inconsistencies across the broader project.
-
-**Workaround:**
-- Users should review changes across all affected files
-- The tool should warn when changes might impact other files
-- This is acceptable as complex refactoring typically requires human oversight regardless
-
 #### Language-Specific Limitations
 
 | Language   | Limitation | Impact | Workaround |

@@ -24,7 +24,6 @@ import prompty
 import prompty.azure
 import requests
 from colorama import Fore, Style
-from dotenv import load_dotenv
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps

@@ -92,17 +92,6 @@
     width: 30px;
 }
 
-@mixin app-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    white-space: nowrap;
-    height: 30px;
-    line-height: 30px;
-    z-index: 3;
-    background: var(--base-bg-color);
-}
-
 @mixin base-tags {
     p {
         color: var(--base-text-color);

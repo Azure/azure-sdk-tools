@@ -1,12 +1,14 @@
 # Stage 1: Build the .NET CLI tool
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-builder
 
-WORKDIR /azsdk-cli
+WORKDIR /build
 
-# Copy the CLI project files
-COPY ../../../tools/azsdk-cli ./
+# Copy the CLI project and its dependencies
+COPY tools/azsdk-cli ./tools/azsdk-cli
+COPY tools/codeowners-utils ./tools/codeowners-utils
 
 # Restore and build the CLI tool
+WORKDIR /build/tools/azsdk-cli
 RUN dotnet restore Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
 RUN dotnet publish Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -c Release -o /azsdk-cli/publish --self-contained false
 
@@ -16,7 +18,7 @@ FROM mcr.microsoft.com/devcontainers/go:1.24
 WORKDIR /app
 
 # Copy Go application files
-COPY . .
+COPY tools/sdk-ai-bots/azure-sdk-qa-bot-backend .
 
 # Build Go application
 RUN go mod download

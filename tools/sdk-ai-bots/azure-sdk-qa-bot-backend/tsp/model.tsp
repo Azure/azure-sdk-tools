@@ -205,6 +205,12 @@ model FeedbackRequest {
   
   @doc("Optional comment from the user about the conversation")
   comment?: string;
+  
+  @doc("Optional The channel ID")
+  channel_id?: string;
+
+  @doc("Optional user name")
+  user_name?: string;
 }
 
 @doc("Response for feedback submission")

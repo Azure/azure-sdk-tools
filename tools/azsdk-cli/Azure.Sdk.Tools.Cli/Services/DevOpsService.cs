@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
-        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
+        public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
@@ -922,7 +922,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// If package version is given, then it will find the package work item for that version.
         /// If package version is empty, then it will find the latest package work item for that package name and language.
         /// </summary>
-        public async Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        public async Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             language = MapLanguageIdToName(language);
             if (packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersion.Contains(' ') || packageVersion.Contains('\'') || packageVersion.Contains('"'))
@@ -946,13 +946,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
         }
 
-        public static PackageResponse MapPackageWorkItemToModel(WorkItem workItem)
+        public static PackageWorkitemResponse MapPackageWorkItemToModel(WorkItem workItem)
         {
             if (workItem == null)
             {
                 throw new ArgumentNullException(nameof(workItem), "Work item cannot be null.");
             }
-            PackageResponse packageModel = new()
+            PackageWorkitemResponse packageModel = new()
             {
                 PackageName = GetWorkItemValue(workItem, "Custom.Package"),
                 Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),

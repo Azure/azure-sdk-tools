@@ -1,8 +1,5 @@
-using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -10,23 +7,26 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Go-specific implementation of language repository service.
 /// Uses tools like go build, go test, go mod, gofmt, etc. for Go development workflows.
 /// </summary>
-public class GoLanguageSpecificChecks : ILanguageSpecificChecks
+public class GoLanguageSpecificChecks : ILanguageSpecificChecks, Tests.ITestRunner
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<GoLanguageSpecificChecks> _logger;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     public GoLanguageSpecificChecks(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
-        ILogger<GoLanguageSpecificChecks> logger)
+        ILogger<GoLanguageSpecificChecks> logger,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
+        _commonValidationHelpers = commonValidationHelpers;
     }
     private readonly string compilerName = "go";
     private readonly string compilerNameWindows = "go.exe";
@@ -69,7 +69,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #endregion
 
-    public async Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -86,11 +86,11 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependencies));
+            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -103,12 +103,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCode));
+            return new PackageCheckResponse(1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -117,26 +117,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCode));
+            return new PackageCheckResponse(1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<PackageCheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
-    {
-        try
-        {
-            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
-        }
-    }
-
-    public async Task<PackageCheckResponse> BuildProjectAsync(string packagePath, CancellationToken ct)
+    public async Task<PackageCheckResponse> BuildProject(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -145,8 +131,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProject));
+            return new PackageCheckResponse(1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -159,12 +145,35 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
         // ex: sdk/messaging/azservicebus/
         var relativePath = packagePath.Replace(repo, "");
-        // Ensure forward slashes for Go package names
-        return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
+        // Ensure forward slashes for Go package names and remove trailing slash
+        var packageName = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+        return await Task.FromResult(packageName.TrimEnd('/'));
     }
 
-    public async Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await Task.FromResult(new PackageCheckResponse());
     }
+
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
+        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    {
+        try
+        {
+            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            return result.ExitCode == 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunAllTests));
+            return false;
+        }
+    }
 }
+

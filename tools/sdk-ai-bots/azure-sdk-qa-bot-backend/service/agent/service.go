@@ -317,6 +317,21 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				content := info.Content
+
+				// Check if this is a pipeline link and analyze it
+				if utils.IsPipelineLink(info.Link) {
+					log.Printf("Detected Azure DevOps pipeline link: %s", info.Link)
+					analysisText, err := utils.AnalyzePipeline(info.Link, "", true) // Use agent analysis
+					if err != nil {
+						log.Printf("Failed to analyze pipeline: %v", err)
+						// Fall back to regular link processing
+					} else {
+						// Use the pipeline analysis as content
+						content = analysisText
+						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				}
+
 				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]

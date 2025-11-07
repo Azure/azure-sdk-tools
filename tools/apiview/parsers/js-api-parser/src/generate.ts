@@ -177,8 +177,13 @@ function* getApiKindOrdering() {
  * one for each subpath export.
  * @param reviewLines The result array to push {@link ReviewLine}s to
  * @param apiModel {@link ApiModel} object loaded from the .api.json file
+ * @param crossLanguageDefinitionIds Optional mapping of JS canonical references to cross-language IDs
  */
-function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
+function buildSubpathExports(
+  reviewLines: ReviewLine[],
+  apiModel: ApiModel,
+  crossLanguageDefinitionIds?: Record<string, string>,
+) {
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
       const subpath = getSubPathName(entryPoint);
@@ -204,7 +209,7 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
             containingExport.add(subpath);
             exported.set(canonicalRef, containingExport);
           }
-          buildMember(exportLine.Children!, member);
+          buildMember(exportLine.Children!, member, crossLanguageDefinitionIds);
         }
       }
 
@@ -352,14 +357,24 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: bool
  * Builds review for an {@link ApiItem}.
  * @param reviewLines The result array to push {@link ReviewLine}s to
  * @param item the Api to build review for
+ * @param crossLanguageDefinitionIds Optional mapping of JS canonical references to cross-language IDs
  */
-function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
+function buildMember(
+  reviewLines: ReviewLine[],
+  item: ApiItem,
+  crossLanguageDefinitionIds: Record<string, string> = {},
+) {
   const itemId = item.canonicalReference.toString();
   const line: ReviewLine = {
     LineId: itemId,
     Children: [],
     Tokens: [],
   };
+
+  // Set CrossLanguageId if mapping exists
+  if (crossLanguageDefinitionIds[itemId]) {
+    line.CrossLanguageId = crossLanguageDefinitionIds[itemId];
+  }
 
   buildDocumentation(reviewLines, item, itemId);
 
@@ -385,7 +400,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
       for (const kind of getApiKindOrdering()) {
         const members = grouped[kind];
         for (const member of members) {
-          buildMember(line.Children!, member);
+          buildMember(line.Children!, member, crossLanguageDefinitionIds);
         }
       }
 
@@ -420,19 +435,21 @@ function buildReview(
   review: ReviewLine[],
   dependencies: Record<string, string>,
   apiModel: ApiModel,
+  crossLanguageDefinitionIds?: Record<string, string>,
 ) {
   buildDependencies(review, dependencies);
-  buildSubpathExports(review, apiModel);
+  buildSubpathExports(review, apiModel, crossLanguageDefinitionIds);
 }
 
 export function generateApiView(options: {
   meta: Metadata;
   dependencies: Record<string, string>;
   apiModel: ApiModel;
+  crossLanguageDefinitionIds?: Record<string, string>;
 }): CodeFile {
-  const { meta, dependencies, apiModel } = options;
+  const { meta, dependencies, apiModel, crossLanguageDefinitionIds } = options;
   const review: ReviewLine[] = [];
-  buildReview(review, dependencies, apiModel);
+  buildReview(review, dependencies, apiModel, crossLanguageDefinitionIds);
 
   return {
     ...meta,

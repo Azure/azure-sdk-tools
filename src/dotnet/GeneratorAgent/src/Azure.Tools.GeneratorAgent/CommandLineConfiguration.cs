@@ -9,16 +9,6 @@ namespace Azure.Tools.GeneratorAgent
     /// </summary>
     internal sealed class CommandLineConfiguration
     {
-        private const int ExitCodeSuccess = 0;
-        private const int ExitCodeFailure = 1;    
-        private readonly ILogger<CommandLineConfiguration> Logger;
-
-        public CommandLineConfiguration(ILogger<CommandLineConfiguration> logger)
-        {
-            ArgumentNullException.ThrowIfNull(logger);
-            Logger = logger;
-        }
-
         /// <summary>
         /// Creates and configures the root command for the application.
         /// </summary>
@@ -26,20 +16,20 @@ namespace Azure.Tools.GeneratorAgent
         /// <returns>The configured root command.</returns>
         public RootCommand CreateRootCommand(Func<string?, string?, string, Task<int>> handler)
         {
-            RootCommand rootCommand = new("Azure SDK Generator Agent");
+            var rootCommand = new RootCommand("Azure SDK Generator Agent");
 
-            Option<string?> typespecDirOption = new(
+            var typespecDirOption = new Option<string?>(
                 new[] { "--typespec-dir", "-t" },
                 "Path to the local TypeSpec project directory or TypeSpec specification directory (e.g., specification/testservice/TestService)")
             {
                 IsRequired = true
             };
 
-            Option<string?> commitIdOption = new(
+            var commitIdOption = new Option<string?>(
                 new[] { "--commit-id", "-c" },
                 "GitHub commit ID to generate SDK from (optional, used with --typespec-dir for GitHub generation)");
 
-            Option<string> sdkDirOption = new(
+            var sdkDirOption = new Option<string>(
                 new[] { "--output-dir", "-o" },
                 "Output directory for generated SDK files")
             {
@@ -57,26 +47,5 @@ namespace Azure.Tools.GeneratorAgent
 
             return rootCommand;
         }
-
-        internal int ValidateInput(string? typespecDir, string? commitId, string sdkDir)
-        {
-            try
-            {
-                Result<ValidationContext> result = ValidationContext.TryValidateAndCreate(typespecDir, commitId, sdkDir, Logger);
-                
-                if (result.IsFailure)
-                {
-                    Logger.LogError("Input validation failed: {Error}", result.Exception?.Message);
-                    return ExitCodeFailure;
-                }
-                
-                return ExitCodeSuccess;
-            }
-            catch (ArgumentException ex)
-            {
-                Logger.LogError("Input validation failed: {Error}", ex.Message);
-                return ExitCodeFailure;
-            }
-        } 
     }
 }

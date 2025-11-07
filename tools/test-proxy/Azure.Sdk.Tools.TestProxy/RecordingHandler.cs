@@ -1,6 +1,7 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Models;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
@@ -1250,38 +1251,86 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            // Instead of obtaining the Path of the request from request.Path, we use this
-            // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
-            // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
-            // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
-            // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
-            var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-            var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
+            var hostValue = GetHeader(request, "x-recording-upstream-base-uri", allowNulls: true);
 
-            // it is easy to forget the x-recording-upstream-base-uri value
-            if (string.IsNullOrWhiteSpace(hostValue))
+            if ((Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback) && null == hostValue) 
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"The value present in header 'x-recording-upstream-base-uri' is not a valid hostname: {hostValue}.");
-            }
+                // remember from above, if we use UriBuilder or similar, we get auto-decoding of escaped characters in the path/query, which will break 
+                // some requests.
+                var feat = request.HttpContext.Features.Get<IHttpRequestFeature>();
+                var rawTarget = feat?.RawTarget ?? string.Empty;
 
-            // The host value from the header should include scheme and port. EG:
-            //    https://portal.azure.com/
-            //    http://localhost:8080
-            //    http://user:pass@localhost:8080/ <-- this should be EXTREMELY rare given it's extremely insecure
-            //
-            // The value from rawTarget is the _exact_ "rest of the URI" WITHOUT auto-decoding (as specified above) and could look like:
-            //    ///request
-            //    /hello/world?query=blah
-            //    ""
-            //    //hello/world
-            //
-            // We cannot use a URIBuilder to combine the hostValue and the rawTarget, as doing so results in auto-decoding of escaped
-            // characters that will BREAK the request that we actually wish to make.
-            //
-            // Given these limitations, and safe in the knowledge of both sides of this operation. We trim the trailing / off of the host,
-            // and string concatenate them together.
-            var rawUri = hostValue.TrimEnd('/') + rawTarget;
-            return new Uri(rawUri);
+                // If client sent absolute-form to the proxy, we already have the full URL.
+                if (!string.IsNullOrEmpty(rawTarget) &&
+                    (rawTarget.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                     rawTarget.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return new Uri(rawTarget, UriKind.Absolute);
+                }
+
+                // ensure we have a usable Host (required to build authority)
+                if (!request.Host.HasValue)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "Missing Host header on proxied request.");
+                }
+
+                // build the authority part from Scheme + Host, preserving original host/port
+                var authority = $"{request.Scheme}://{request.Host.ToUriComponent()}";
+
+                //  - "*" (asterisk-form, e.g., OPTIONS *) -> return just the authority
+                //  - "host:port" (authority-form, e.g., CONNECT) -> treat as authority; not typical for HTTP proxying here
+                if (rawTarget == "*")
+                {
+                    return new Uri(authority, UriKind.Absolute);
+                }
+
+                // If it's authority-form like "host:443" (CONNECT), we could decide what to do;
+                // for HTTP-only proxying, reject for now.
+                if (!string.IsNullOrEmpty(rawTarget) && !rawTarget.StartsWith("/"))
+                {
+                    // Not starting with "/" and not absolute -> likely authority-form; reject.
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unsupported request-target for HTTP proxy: '{rawTarget}'.");
+                }
+
+                // Origin-form (normal proxied HTTP request): combine authority + raw path/query verbatim.
+                // Avoid UriBuilder since it can normalize/decode; concatenate instead.
+                var combined = authority.TrimEnd('/') + (rawTarget.StartsWith("/") ? rawTarget : "/" + rawTarget);
+
+                return new Uri(combined, UriKind.Absolute);
+            }
+            else
+            {
+                // Instead of obtaining the Path of the request from request.Path, we use this
+                // more complicated method obtaining the raw string from the httpcontext. Unfortunately,
+                // The native request functions implicitly decode the Path value. EG: "aa%27bb" is decoded into 'aa'bb'.
+                // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
+                // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
+                var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
+                // it is easy to forget the x-recording-upstream-base-uri value
+                if (string.IsNullOrWhiteSpace(hostValue))
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, $"The value present in header 'x-recording-upstream-base-uri' is not a valid hostname: {hostValue}.");
+                }
+
+                // The host value from the header should include scheme and port. EG:
+                //    https://portal.azure.com/
+                //    http://localhost:8080
+                //    http://user:pass@localhost:8080/ <-- this should be EXTREMELY rare given it's extremely insecure
+                //
+                // The value from rawTarget is the _exact_ "rest of the URI" WITHOUT auto-decoding (as specified above) and could look like:
+                //    ///request
+                //    /hello/world?query=blah
+                //    ""
+                //    //hello/world
+                //
+                // We cannot use a URIBuilder to combine the hostValue and the rawTarget, as doing so results in auto-decoding of escaped
+                // characters that will BREAK the request that we actually wish to make.
+                //
+                // Given these limitations, and safe in the knowledge of both sides of this operation. We trim the trailing / off of the host,
+                // and string concatenate them together.
+                var rawUri = hostValue.TrimEnd('/') + rawTarget;
+                return new Uri(rawUri);
+            }
         }
 
         private static bool IncludeHeader(string header)

@@ -1,10 +1,12 @@
-using Azure.AI.Agents.Persistent;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenAI;
+using OpenAI.Chat;
 
 namespace Azure.Tools.GeneratorAgent.DependencyInjection
 {
@@ -21,27 +23,21 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(toolConfig);
 
-            // Register configuration
+            // Register configuration as singleton 
             services.AddSingleton(toolConfig);
-            services.AddSingleton(provider =>
+            
+            services.AddSingleton<AppSettings>(provider =>
             {
                 var logger = provider.GetRequiredService<ILogger<AppSettings>>();
-                return toolConfig.CreateAppSettings(logger);
+                var config = provider.GetRequiredService<ToolConfiguration>();
+                return config.CreateAppSettings(logger);
             });
 
-            // Register credential management services
-            services.AddCredentialServices();
-
-            // Register HttpClient management
-            services.AddHttpClientServices();
-
-            // Register Azure AI services
-            services.AddAzureAIServices();
-
-            // Register application services
-            services.AddApplicationServices();
-
-            return services;
+            return services
+                .AddCredentialServices()
+                .AddHttpClientServices()
+                .AddAIServices()
+                .AddApplicationServices();
         }
 
         /// <summary>
@@ -93,15 +89,29 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         }
 
         /// <summary>
-        /// Adds Azure AI services to the service collection.
+        /// Adds AI services to the service collection.
         /// </summary>
-        private static IServiceCollection AddAzureAIServices(this IServiceCollection services)
+        private static IServiceCollection AddAIServices(this IServiceCollection services)
         {
-            services.AddSingleton<PersistentAgentsClient>(provider =>
+            services.AddSingleton<ChatClient>(provider =>
             {
                 var appSettings = provider.GetRequiredService<AppSettings>();
-                var credential = provider.GetRequiredService<TokenCredential>();
-                return new PersistentAgentsClient(appSettings.ProjectEndpoint, credential);
+                
+                if (!string.IsNullOrEmpty(appSettings.OpenAIApiKey) && !string.IsNullOrEmpty(appSettings.OpenAIEndpoint))
+                {
+                    var apiKeyCredential = new System.ClientModel.ApiKeyCredential(appSettings.OpenAIApiKey);
+                    var deploymentName = appSettings.OpenAIModel;
+                    
+                    return new ChatClient(
+                        credential: apiKeyCredential,
+                        model: deploymentName,
+                        options: new OpenAIClientOptions()
+                        {
+                            Endpoint = new Uri(appSettings.OpenAIEndpoint),
+                        });
+                }
+                
+                throw new InvalidOperationException("OpenAI API key and endpoint not found in configuration. Please set OpenAI:ApiKey and OpenAI:Endpoint in appsettings.json.");
             });
 
             return services;
@@ -112,53 +122,23 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddSingleton<ErrorFixerAgent>();
-            services.AddSingleton<ProcessExecutor>();
-            services.AddSingleton<BuildErrorAnalyzer>();
-            services.AddSingleton<FixPromptService>();
-            services.AddSingleton<AgentResponseParser>();
+            services.AddSingleton<ProcessExecutionService>();
+            services.AddSingleton<FormatPromptService>();
+            services.AddSingleton<TypeSpecFileVersionManager>();
+            services.AddSingleton<TypeSpecPatchApplicator>();
+            services.AddSingleton<KnowledgeBaseService>();
 
-            services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
-            {
-                return validationContext => SdkGenerationServiceFactory.CreateSdkGenerationService(
-                    validationContext,
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILoggerFactory>(),
-                    provider.GetRequiredService<ProcessExecutor>());
-            });
+            services.AddScoped<ErrorAnalysisService>();
+            services.AddScoped<GenerationOrchestrator>();
+            services.AddScoped<BuildWorkflow>();
+            services.AddScoped<LocalLibraryGenerationService>();
+            services.AddScoped<LibraryBuildService>();
+            services.AddScoped<ToolExecutor>();
+            services.AddScoped<TypeSpecFileService>();
+            services.AddScoped<GitHubFileService>();
+            services.AddScoped<TypeSpecToolHandler>();
 
-            services.AddSingleton<Func<ValidationContext, SdkBuildService>>(provider =>
-            {
-                return validationContext => new SdkBuildService(
-                    provider.GetRequiredService<ILogger<SdkBuildService>>(),
-                    provider.GetRequiredService<ProcessExecutor>(),
-                    validationContext.ValidatedSdkDir);
-            });
-
-            services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
-            {
-                return validationContext => new TypeSpecFileService(
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILogger<TypeSpecFileService>>(),
-                    provider.GetRequiredService<ILoggerFactory>(),
-                    validationContext,
-                    provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
-            });
-
-            services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
-            {
-                return validationContext => 
-                {
-                    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
-                    var httpClient = httpClientFactory.CreateClient(nameof(GitHubFileService));
-                    
-                    return new GitHubFileService(
-                        provider.GetRequiredService<AppSettings>(),
-                        provider.GetRequiredService<ILogger<GitHubFileService>>(),
-                        validationContext,
-                        httpClient);
-                };
-            });
+            services.AddScoped<OpenAIService>();
 
             return services;
         }

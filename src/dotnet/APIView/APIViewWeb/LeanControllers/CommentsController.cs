@@ -81,6 +81,23 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(conversationInfobject, StatusCodes.Status200OK);
         }
 
+
+        /// <summary>
+        ///     Retrieve comments for a review.
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="isDeleted"></param>
+        /// <param name="commentType"></param>
+        /// <returns></returns>
+        [HttpGet("{reviewId}", Name = "GetComments")]
+        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCommentsAsync(string reviewId,
+            bool isDeleted = false, CommentType? commentType = null)
+        {
+            IEnumerable<CommentItemModel> comments =
+                await _commentsManager.GetCommentsAsync(reviewId, isDeleted, commentType);
+            return new LeanJsonResult(comments, StatusCodes.Status200OK);
+        }
+
         /// <summary>
         /// Create a new Comment
         /// </summary>
@@ -90,6 +107,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="elementId"></param>
         /// <param name="commentText"></param>
         /// <param name="commentType"></param>
+        /// <param name="severity"></param>
         /// <param name="resolutionLocked"></param>
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
@@ -100,6 +118,7 @@ namespace APIViewWeb.LeanControllers
             [FromForm] CommentType commentType,
             [FromForm] string apiRevisionId = null,
             [FromForm] string sampleRevisionId = null,
+            [FromForm] CommentSeverity? severity = null,
             bool resolutionLocked = false)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
@@ -117,7 +136,8 @@ namespace APIViewWeb.LeanControllers
                 ResolutionLocked = resolutionLocked,
                 CreatedBy = User.GetGitHubLogin(),
                 CreatedOn = DateTime.UtcNow,
-                CommentType = commentType
+                CommentType = commentType,
+                Severity = severity
             };
 
             bool isApiViewAgentTagged = AgentHelpers.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
@@ -153,7 +173,21 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Resolve comments in a comment thread
+        /// Update comment severity
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <param name="severity"></param>
+        /// <returns></returns>
+        [HttpPatch("{reviewId}/{commentId}/updateCommentSeverity", Name = "UpdateCommentSeverity")]
+        public async Task<ActionResult> UpdateCommentSeverityAsync(string reviewId, string commentId, [FromForm] CommentSeverity? severity)
+        {
+            await _commentsManager.UpdateCommentSeverityAsync(User, reviewId, commentId, severity);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Resolve a single comment thread
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="elementId"></param>
@@ -163,6 +197,19 @@ namespace APIViewWeb.LeanControllers
         {
             await _commentsManager.ResolveConversation(User, reviewId, elementId);
             return Ok();
+        }
+
+        /// <summary>
+        /// Resolve multiple comment threads with optional voting and reply
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPatch("{reviewId}/resolveBatchComments", Name = "ResolveBatchComments")]
+        public async Task<ActionResult> ResolveBatchCommentsAsync(string reviewId, [FromBody] ResolveBatchConversationRequest request)
+        {
+            List<CommentItemModel> createdComments = await _commentsManager.ResolveBatchConversationAsync(User, reviewId, request);
+            return new LeanJsonResult(createdComments, StatusCodes.Status201Created);
         }
 
         /// <summary>

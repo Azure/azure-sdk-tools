@@ -209,5 +209,16 @@ describe('runScript utils', () => {
 
       expect(result).toBe('succeeded');
     });
+
+    it('should throw exception when path is not provided in RunOptions', async () => {
+      const mockRunOptions = {
+        command: 'some command',
+        envs: ['TEST_VAR'],
+      };
+
+      await expect(runSdkAutoCustomScript(mockContext, mockRunOptions, baseOptions))
+        .rejects
+        .toThrow('Script path is not provided in run options.');
+    });
   });
 });

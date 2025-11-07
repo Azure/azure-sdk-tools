@@ -26,6 +26,7 @@ from src._database_manager import get_database_manager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
+from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 
@@ -34,7 +35,7 @@ JOB_RETENTION_SECONDS = 1800  # 30 minutes
 db_manager = get_database_manager()
 settings = SettingsManager()
 
-app = FastAPI()
+app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
 logger = logging.getLogger("uvicorn")  # Use Uvicorn's logger
 
@@ -250,6 +251,31 @@ async def handle_mention(request: MentionRequest):
         )
     except HTTPException as e:
         logger.error("Error in /api-review/mention: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+@app.post("/api-review/resolve", response_model=AgentChatResponse)
+async def handle_thread_resolution(request: MentionRequest):
+    """Handle thread resolution in API reviews."""
+    logger.info(
+        "Received /api-review/resolve request: language=%s, package_name=%s, comments_count=%d",
+        request.language,
+        request.package_name,
+        len(request.comments) if request.comments else 0,
+    )
+    try:
+        pretty_language = get_language_pretty_name(request.language)
+        response = handle_thread_resolution_request(
+            comments=request.comments,
+            language=pretty_language,
+            package_name=request.package_name,
+            code=request.code,
+        )
+        return AgentChatResponse(
+            response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
+        )
+    except HTTPException as e:
+        logger.error("Error in /api-review/resolve: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

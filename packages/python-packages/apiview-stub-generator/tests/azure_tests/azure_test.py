@@ -19,6 +19,9 @@ SDK_PARAMS = [
     ("azure-core", "1.32.0", "core", "azure.core", "src"),
     ("azure-core", "1.32.0", "core", "azure.core", "whl"),
     ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "whl"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "src"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "sdist"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
@@ -34,9 +37,6 @@ SDK_PARAMS = [
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
-    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "whl"),
-    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "src"),
-    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "sdist"),
     #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]

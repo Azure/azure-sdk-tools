@@ -81,6 +81,11 @@ class APIViewComment(BaseModel):
         description="The type of comment",
         alias="CommentType",
     )
+    comment_source: Optional[str] = Field(
+        description="The source of the comment: UserGenerated, AIGenerated, or Diagnostic",
+        alias="CommentSource",
+        default="UserGenerated",
+    )
     resolution_locked: Optional[bool] = Field(
         default=False,
         description="Whether the comment resolution is locked and cannot be changed.",
@@ -98,7 +103,11 @@ class Comment(BaseModel):
     Represents a comment in the review result.
     """
 
-    rule_ids: List[str] = Field(description="Unique guideline ID or IDs that were violated.")
+    guideline_ids: List[str] = Field(default_factory=list, description="Unique guideline ID or IDs that were violated.")
+    memory_ids: List[str] = Field(default_factory=list, description="Unique memory ID or IDs that were referenced.")
+    is_generic: bool = Field(
+        default=False, description="Whether any portion of the comment was formulated from generic guidance."
+    )
     line_no: int = Field(description="Line number of the comment.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
@@ -107,7 +116,16 @@ class Comment(BaseModel):
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
     comment: str = Field(description="the contents of the comment.")
-    source: str = Field(description="unique tag for the prompt that produced the comment.")
+    correlation_id: Optional[str] = Field(
+        default=None, description="a correlation ID for grouping similar comments together."
+    )
+    confidence_score: Optional[float] = Field(
+        default=None, description="Confidence score from the judge prompt (0.0 - 1.0)."
+    )
+    severity: Optional[str] = Field(
+        default=None,
+        description="The severity level of the comment: 'SUGGESTION', 'SHOULD', 'MUST', or 'QUESTION'.",
+    )
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -268,8 +286,8 @@ class ReviewResult(BaseModel):
             raw_line_no = str(comment.get("line_no", "0")).replace(" ", "").strip()
 
             # Ensure all required fields exist
-            if "rule_ids" not in comment:
-                comment["rule_ids"] = []
+            if "guideline_ids" not in comment:
+                comment["guideline_ids"] = []
             if "source" not in comment:
                 comment["source"] = "unknown"
 
@@ -286,7 +304,7 @@ class ReviewResult(BaseModel):
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
                     new_comment = Comment(**comment_copy)
-                    self._filter_rule_ids(new_comment)
+                    self._filter_guideline_ids(new_comment)
                     new_comment.line_no = self._find_line_number(section, new_comment)
                     if new_comment.line_no is not None:
                         result_comments.append(new_comment)
@@ -298,7 +316,7 @@ class ReviewResult(BaseModel):
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
                     new_comment = Comment(**comment_copy)
-                    self._filter_rule_ids(new_comment)
+                    self._filter_guideline_ids(new_comment)
                     new_comment.line_no = self._find_line_number(section, new_comment)
                     if new_comment.line_no is not None:
                         result_comments.append(new_comment)
@@ -317,22 +335,22 @@ class ReviewResult(BaseModel):
         self.sort()
         return self
 
-    def _filter_rule_ids(self, item: Comment):
+    def _filter_guideline_ids(self, item: Comment):
         """
-        Filter out invalid rule IDs from a comment, keeping only those that resolve.
+        Filter out invalid guideline IDs from a comment, keeping only those that resolve.
         """
-        if not item.rule_ids:
+        if not item.guideline_ids:
             return
-        resolved_rule_ids = set()
-        for rule_id in item.rule_ids:
-            resolved_rule_id = self._resolve_rule_id(rule_id)
-            if resolved_rule_id:
-                resolved_rule_ids.add(resolved_rule_id)
-        item.rule_ids = list(resolved_rule_ids)
+        resolved_guideline_ids = set()
+        for guideline_id in item.guideline_ids:
+            resolved_guideline_id = self._resolve_guideline_id(guideline_id)
+            if resolved_guideline_id:
+                resolved_guideline_ids.add(resolved_guideline_id)
+        item.guideline_ids = list(resolved_guideline_ids)
 
-    def _resolve_rule_id(self, rid: str) -> str | None:
+    def _resolve_guideline_id(self, rid: str) -> str | None:
         """
-        Ensure that the rule ID matches with an actual guideline ID.
+        Ensure that the guideline ID matches with an actual guideline ID.
         This ensures that the links that appear in APIView should never be broken (404).
         Allows for specific partial matches.
         """
@@ -393,3 +411,25 @@ class ReviewResult(BaseModel):
         print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
         comment.comment = f"{comment.comment} (general comment)"
         return comment.line_no
+
+
+class CosmosMetricsPeriod(BaseModel):
+    """Represents the period information for CosmosDB metrics."""
+
+    start_epoch_s: int
+    end_epoch_s: int
+    label: str
+
+
+class CosmosMetricDocument(BaseModel):
+    """Pydantic model for CosmosDB metric document."""
+
+    id: str  # "overview|2025-09-13|2025-10-03"
+    pk: str  # "overview"  // partition by series, not time
+    metric_name: str  # "overview"
+    dimensions: Dict[str, str]  # {"language": "python"}
+    period: CosmosMetricsPeriod
+    label: str  # "2025-09-13_to_2025-10-03"    // or "2025-TW-0"
+    values: dict
+    updated_at_epoch_s: int  # 1759449600
+    source: str = "aggregator@1.0"

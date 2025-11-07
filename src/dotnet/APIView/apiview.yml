@@ -4,7 +4,7 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20250301.1'
+    default: '1.0.0-dev.20251022.1'
   - name: JavaScriptAPIParser
     type: string
     default: '@azure-tools/ts-genapi@2.0.5'
@@ -316,6 +316,7 @@ extends:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
+          condition: and(succeeded(), eq(coalesce(variables['runStagingPublish'], 'true'), 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -373,6 +374,7 @@ extends:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
+          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'true'), 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -428,9 +430,11 @@ extends:
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
+          condition: eq(coalesce(variables['runProductionPublish'], 'true'), 'true')
 
           variables:
             - name: 'apiUrl'

@@ -63,7 +63,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public bool IsRepoPathForSpecRepo(string path)
         {
-            var uri = _gitHelper.GetRepoRemoteUri(path);
+            // Docs say this method should work for paths within a repo,
+            // so we need to find the repo root first.
+            var repoRootPath = _gitHelper.DiscoverRepoRoot(path);
+            var uri = _gitHelper.GetRepoRemoteUri(repoRootPath);
             return RestApiSpecsPublicOrPrivateRegex().IsMatch(uri.ToString());
         }
 

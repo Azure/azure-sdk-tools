@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class CodeownersValidationResult : Response
+public class CodeownersValidationResult : CommandResponse
 {
     [JsonPropertyName("username")]
     public string Username { get; set; } = "";
@@ -23,7 +23,7 @@ public class CodeownersValidationResult : Response
     [JsonPropertyName("organizations")]
     public Dictionary<string, bool> Organizations { get; set; } = new();
 
-    public override string ToString()
+    protected override string Format()
     {
         var result = new StringBuilder();
         result.AppendLine($"Username: {Username}");

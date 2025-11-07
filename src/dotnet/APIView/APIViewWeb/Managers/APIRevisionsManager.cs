@@ -558,7 +558,7 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
-            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
             {
                 if (awaitComputeDiff)
                 {
@@ -722,7 +722,7 @@ namespace APIViewWeb.Managers
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
-                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
                         {
                             // Trigger diff calculation using updated code file from sandboxing pipeline
                             await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);
@@ -775,7 +775,16 @@ namespace APIViewWeb.Managers
                         _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
                         continue;
                     }
-                    var codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false);
+
+                    CodeFile existingCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revision.Id, file.FileId);
+                    CrossLanguageMetadata crossLanguageMetadata = existingCodeFile?.CrossLanguageMetadata;
+                    string crossLanguageMetadataJson = null;
+                    if (crossLanguageMetadata != null)
+                    {
+                        crossLanguageMetadataJson = JsonSerializer.Serialize(crossLanguageMetadata);
+                    }
+
+                    CodeFile codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false, crossLanguageMetadataJson);
                     if (!verifyUpgradabilityOnly)
                     {
                         await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
@@ -790,7 +799,7 @@ namespace APIViewWeb.Managers
                     }
                     else
                     {
-                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} can be upgraded using new parser version.");
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} cannot be upgraded using new parser version.");
                     }
                 }
                 catch (Exception ex)

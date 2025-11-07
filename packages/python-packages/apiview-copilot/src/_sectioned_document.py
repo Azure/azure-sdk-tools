@@ -67,7 +67,7 @@ class SectionedDocument:
         if max_chunk_size == 1:
             raise ValueError("max_chunk_size must be greater than 1")
 
-        self.sections = []
+        self.sections: List[Section] = []
         # Step 1: Create initial fine-grained sections based on indentation
         if line_data is None:
             line_data = []

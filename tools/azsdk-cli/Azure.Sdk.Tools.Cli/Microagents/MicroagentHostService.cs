@@ -1,17 +1,20 @@
 using System.ComponentModel;
-using Azure.AI.OpenAI;
+using OpenAI;
+using Azure.Sdk.Tools.Cli.Helpers;
 using OpenAI.Chat;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Microagents;
 
-public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentHostService> logger) : IMicroagentHostService
+public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostService> logger, TokenUsageHelper tokenUsageHelper, ConversationLogger conversationLogger) : IMicroagentHostService
 {
     private const string ExitToolName = "Exit";
 
-    private AzureOpenAIClient openAI = openAI;
+    private readonly OpenAIClient openAI = openAI;
     private ILogger logger = logger;
+    private ConversationLogger conversationLogger = conversationLogger;
 
-    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default)
+    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default) where TResult : notnull
     {
         var tools = agentDefinition.Tools?.ToDictionary(t => t.Name) ?? new Dictionary<string, IAgentTool>();
         if (tools.ContainsKey(ExitToolName))
@@ -22,12 +25,15 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
         logger.LogInformation("Starting agent with model '{Model}'", agentDefinition.Model);
         var chatClient = openAI.GetChatClient(agentDefinition.Model);
 
+        // Initialize conversation logging
+        await conversationLogger.InitializeAsync(agentDefinition);
+
         // This list keeps track of all chat messages (essentially, just tool requests from the LLM and results from our program).
         // As the agent loop continues, this conversation history gets longer, until either the LLM calls the "exit" tool
         // with a result, indicating success, or we hit the max number of iterations.
         var conversationHistory = new List<ChatMessage>
         {
-            new SystemChatMessage(agentDefinition.Instructions)
+            new UserChatMessage(agentDefinition.Instructions)
         };
 
         var chatCompletionOptions = new ChatCompletionOptions
@@ -59,13 +65,24 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
         {
             // Request the chat completion
             logger.LogDebug("Sending conversation history with {MessageCount} messages to model '{Model}'", conversationHistory.Count, agentDefinition.Model);
+            
+            // Log the conversation turn before sending to model
+            await conversationLogger.LogConversationTurnAsync(i + 1, conversationHistory, "Request");
+            
             var response = await chatClient.CompleteChatAsync(conversationHistory, chatCompletionOptions, ct);
+            if (null != response.Value.Usage)
+            {
+                tokenUsageHelper.Add(agentDefinition.Model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
+            }
 
             var toolCall = response.Value.ToolCalls.Single();
             logger.LogInformation("Model called tool '{ToolName}'", toolCall.FunctionName);
 
             // Add the agent's response to the conversation history
             conversationHistory.Add(new AssistantChatMessage(response.Value));
+
+            // Log the assistant's response
+            await conversationLogger.LogConversationTurnAsync(i + 1, [new AssistantChatMessage(response.Value)], "Response");
 
             logger.LogDebug("Invoking tool '{ToolName}' with arguments: {Arguments}", toolCall.FunctionName, toolCall.FunctionArguments.ToString());
 
@@ -80,6 +97,21 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
                     throw new InvalidOperationException($"Exit tool did not return a valid result: {toolCall.FunctionArguments}");
                 }
 
+                if (agentDefinition.ValidateResult != null)
+                {
+                    var validation = await agentDefinition.ValidateResult(result.Result);
+                    if (!validation.Success)
+                    {
+                        var serializedReason = validation.Reason is string str ? str : System.Text.Json.JsonSerializer.Serialize(validation.Reason);
+                        logger.LogWarning("Agent returned a result that did not pass validation: {Reason}. Continuing the run.", serializedReason);
+                        conversationHistory.Add(ChatMessage.CreateToolMessage(toolCall.Id, $"The result you provided did not pass validation: {serializedReason}. Please try again."));
+                        continue;
+                    }
+                }
+
+                // Log successful completion
+                await conversationLogger.LogConversationEndAsync("SUCCESS", $"Agent completed successfully with result");
+
                 return result.Result;
             }
 
@@ -89,6 +121,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
             }
 
             string toolResult;
+            var toolStartTime = DateTime.UtcNow;
             try
             {
                 toolResult = await tool.Invoke(toolCall.FunctionArguments.ToString(), ct);
@@ -98,13 +131,19 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
                 // TODO: is this the best way to communicate an error to the LLM?
                 toolResult = $"Error: {e.Message}";
             }
+            var toolDuration = DateTime.UtcNow - toolStartTime;
             logger.LogInformation("Tool {ToolName} returned: {Result}", tool.Name, toolResult);
+
+            // Log the tool result
+            await conversationLogger.LogToolResultAsync(tool.Name, toolResult, toolDuration);
 
             // Add the result of calling the tool function to the conversation history.
             conversationHistory.Add(ChatMessage.CreateToolMessage(toolCall.Id, toolResult));
         }
 
-        throw new Exception("Agent did not return a result within the maximum number of iterations");
+        await conversationLogger.LogConversationEndAsync("TIMEOUT", $"Agent did not return a result within the maximum number of {agentDefinition.MaxToolCalls} iterations");
+        
+        throw new Exception($"Agent did not return a result within the maximum number of {agentDefinition.MaxToolCalls} iterations");
     }
 
     /// <summary>
@@ -112,9 +151,9 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     /// (OpenAI expects an object at the top level)
     /// </summary>
     /// <typeparam name="T">Type of the result</typeparam>
-    private class MicroagentResult<T>
+    private class MicroagentResult<T> where T : notnull
     {
         [Description("The result of the agent run. Output the result requested exactly, without additional padding, explanation, or code fences unless requested.")]
-        public T Result { get; set; }
+        public required T Result { get; set; }
     }
 }

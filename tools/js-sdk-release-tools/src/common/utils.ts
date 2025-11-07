@@ -1,7 +1,7 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType, RunMode } from './types.js';
+import { SDKType, RunMode, ModularSDKType } from './types.js';
 import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
@@ -11,6 +11,8 @@ import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
+import { exists } from 'fs-extra';
+import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -206,10 +208,17 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const tspConfig = await resolveOptions(typeSpecDirectory, sdkRepoRoot);
+    const emitterOptions = tspConfig.options?.[emitterName];
+    // Try to get package directory from emitter-output-dir first    
+    const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
+    if (emitterOutputDir) {
+        // emitter-output-dir is an absolute path, return it directly
+        return emitterOutputDir;
+    }
+
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
-    const emitterOptions = tspConfig.options?.[emitterName];
     const serviceDirFromEmitter = emitterOptions?.['service-dir'];
     if (serviceDirFromEmitter) {
         serviceDir = serviceDirFromEmitter;
@@ -227,7 +236,6 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     const packageDirFromRoot = posix.join(sdkRepoRoot, serviceDir, packageDir);
     return packageDirFromRoot;
 }
-
 
 export async function runCommand(
     command: string,
@@ -314,13 +322,16 @@ export async function existsAsync(path: string): Promise<boolean> {
     }
 }
 
-export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+export async function resolveOptions(typeSpecDirectory: string, sdkRepoRoot?: string): Promise<Exclude<any, null | undefined>> {
     const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
             cwd: process.cwd(),
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
+            overrides: {
+                outputDir: sdkRepoRoot || process.cwd() // Use sdkRepoRoot if provided, otherwise use current directory
+            }
         });
     return options
 }
@@ -338,7 +349,7 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
         tspConfig = yamlLoad(tspConfigContent);
     } catch (error) {
         throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
-    }    
+    }
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {
@@ -368,15 +379,15 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpDirectory(
-    directory: string, 
+    directory: string,
     entriesToPreserve: string[] = []
-): Promise<void> {      
+): Promise<void> {
     // Check if directory exists first
     if (!fs.existsSync(directory)) {
         logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
         return;
     }
-    
+
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
@@ -384,13 +395,13 @@ export async function cleanUpDirectory(
         await mkdir(directory, { recursive: true });
         return;
     }
-    
+
     // If we need to preserve some entries, selectively remove others
     logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
-    
+
     // Get all subdirectories and files
     const entries = await readdir(directory);
-    
+
     // Filter entries to exclude those that should be preserved
     const filteredEntries = entries.filter(entry => !entriesToPreserve.includes(entry));
 
@@ -413,21 +424,25 @@ export async function cleanUpPackageDirectory(
 ): Promise<void> {
     // Preserve test directory and assets.json file only in Release and Local modes
     // In SpecPullRequest and Batch modes, remove everything
-    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
+    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
+    const entriesToPreserveForMgmtPackages = pipelineRunMode ? ["test", "assets.json"] : [];
 
-    await cleanUpDirectory(packageDirectory, entriesToPreserve);
+    const modularSDKType = getModularSDKType(packageDirectory);
+    if (modularSDKType === ModularSDKType.DataPlane && pipelineRunMode) {
+        return;
+    }
+    await cleanUpDirectory(packageDirectory, entriesToPreserveForMgmtPackages);
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
-    
+
     // Get from package-details.name which is the actual NPM package name
     if (emitterOptions?.['package-details']?.name) {
         return emitterOptions['package-details'].name;
     }
-    
+
     return undefined;
 }
 

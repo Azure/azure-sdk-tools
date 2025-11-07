@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outputHelper)
+public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper outputHelper)
 {
     /// <summary>
     /// Runs a process with the specified command and arguments in the given working directory.
@@ -70,9 +70,17 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
                 }
             };
 
+            // Notify if the command might take a while
+            var timeoutMessage = options.Timeout > ProcessOptions.DEFAULT_PROCESS_TIMEOUT
+                                    ? $"with timeout {options.Timeout.TotalMinutes} minutes "
+                                    : "";
+
             logger.LogInformation(
-                "Running command: {command} {args} in {workingDirectory}",
-                options.Command, string.Join(" ", options.Args), options.WorkingDirectory);
+                "Running command [{command} {args}] {timeoutMessage}in {workingDirectory}",
+                options.Command,
+                string.Join(" ", options.Args),
+                timeoutMessage,
+                options.WorkingDirectory);
 
             process.Start();
             lock (result)
@@ -88,10 +96,9 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
                 tryPrintSeparator(options.LogOutputStream);
             }
             // Insert a more descriptive error message when the task times out
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (timeoutCts.IsCancellationRequested)
             {
-                logger.LogError("Process '{command}' timed out after {timeout}ms", options.ShortName, options.Timeout.TotalMilliseconds);
-                throw new OperationCanceledException($"Process '{options.ShortName}' timed out after {options.Timeout.TotalMilliseconds}ms");
+                throw new OperationCanceledException($"Process '{options.ShortName}' timed out after {options.Timeout.TotalMilliseconds}ms", ex);
             }
 
             result.ExitCode = process.ExitCode;

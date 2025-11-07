@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class ServiceLabelResponse : Response
+public class ServiceLabelResponse : CommandResponse
 {
     [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
@@ -14,16 +14,16 @@ public class ServiceLabelResponse : Response
     [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = $"Status: {Status}" + Environment.NewLine +
                      $"Label: {Label}";
-        
+
         if (!string.IsNullOrEmpty(PullRequestUrl))
         {
             output += Environment.NewLine + $"Pull Request URL: {PullRequestUrl}";
         }
-        
-        return ToString(output);
+
+        return output;
     }
 }

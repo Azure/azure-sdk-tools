@@ -40,62 +40,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="SampleTestFiles\app-conf-change-in-skipped-diff.json">
+    <None Update="SampleTestFiles\**\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\app-conf.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\app-conf_without_skip_diff.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-core-1.47.0-sources4.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-schemaregistry_python-with-overload_relatedto-NEW.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-schemaregistry_python-with-overload_relatedto-OLD.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-schemaregistry_python.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-schemaregistry_python_diff.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-storage-file-share_active.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure-storage-file-share_baseline.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure.data.tables.12.9.0_doc_change.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure.data.tables.12.9.0.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure.data.tables.12.9.0_dep_diff.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure.data.tables.12.9.0_altered.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\azure.data.tables.12.9.1.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\Azure.Template.cpp.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\Azure.Template.cpp_new.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\TokenFileWithSectionsRevision3.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SampleTestFiles\TokenFileWithSectionsRevision2.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

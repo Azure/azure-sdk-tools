@@ -7,28 +7,28 @@ import { isStructItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { getAPIJson } from "../main";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
  *
- * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The struct item to process.
+ * @param {string} lineIdPrefix - The prefix from ancestors for hierarchical LineId
  */
-export function processStruct(item: Item): ReviewLine[] {
+export function processStruct(item: Item, lineIdPrefix: string = ""): ReviewLine[] {
   if (!isStructItem(item)) return [];
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  lineIdMap.set(item.id.toString(), `struct_${item.name}`);
+  // Create initial placeholder docs (will be updated with correct LineId after struct tokens are generated)
+  const reviewLines: ReviewLine[] = [];
+
   // Process derives and impls
-  let implResult: ImplProcessResult;
+  let implResult: ImplProcessResult = { deriveTokens: [], implBlock: [], traitImpls: [] };
   if (item.inner.struct.impls) {
-    implResult = processImpl(item);
+    implResult = processImpl(item, lineIdPrefix);
   }
 
   const structLine: ReviewLine = {
-    LineId: item.id.toString(),
     Tokens: [],
     Children: [],
   };
@@ -36,7 +36,6 @@ export function processStruct(item: Item): ReviewLine[] {
   if (implResult.deriveTokens.length > 0) {
     const deriveTokensLine: ReviewLine = {
       Tokens: implResult.deriveTokens,
-      RelatedToLine: item.id.toString(),
     };
     reviewLines.push(deriveTokensLine);
   }
@@ -50,10 +49,25 @@ export function processStruct(item: Item): ReviewLine[] {
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_struct",
     RenderClasses: ["class"],
-    NavigateToId: item.id.toString(),
+    NavigateToId: item.id.toString(), // Will be updated in post-processing
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,
   });
+
+  // Create content-based LineId from the tokens and set it
+  const contentBasedLineId = createContentBasedLineId(structLine.Tokens, lineIdPrefix, item.id.toString());
+  structLine.LineId = contentBasedLineId;
+
+  // Add documentation with correct RelatedToLine
+  if (item.docs) {
+    const docsLines = createDocsReviewLines(item, contentBasedLineId);
+    reviewLines.unshift(...docsLines);
+  }
+
+  // Set RelatedToLine for derive tokens
+  if (implResult.deriveTokens.length > 0) {
+    reviewLines[reviewLines.length - 1].RelatedToLine = contentBasedLineId;
+  }
 
   const genericsTokens = processGenerics(item.inner.struct.generics);
   // Add generics params if present
@@ -85,7 +99,7 @@ export function processStruct(item: Item): ReviewLine[] {
           structLine.Children = [];
         }
 
-        structLine.Children.push(processStructField(fieldItem));
+        structLine.Children.push(processStructField(fieldItem, contentBasedLineId));
       }
     });
 
@@ -98,7 +112,7 @@ export function processStruct(item: Item): ReviewLine[] {
     } else {
       reviewLines.push(structLine);
       reviewLines.push({
-        RelatedToLine: item.id.toString(),
+        RelatedToLine: contentBasedLineId,
         Tokens: [
           {
             Kind: TokenKind.Punctuation,

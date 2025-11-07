@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -10,62 +10,36 @@ using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [McpServerToolType, Description("Fetches test data from Azure Pipelines")]
-public class PipelineTestsTool : MCPTool
+public class PipelineTestsTool(
+    IAzureService azureService,
+    IDevOpsService devopsService,
+    ILogger<PipelineTestsTool> logger
+) : MCPTool
 {
-    private BuildHttpClient buildClient;
-    private readonly bool initialized = false;
-
-    private IAzureService azureService;
-    private IDevOpsService devopsService;
-    private IOutputHelper output;
-    private ILogger<PipelineTestsTool> logger;
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
 
-    public PipelineTestsTool(
-        IAzureService azureService,
-        IDevOpsService devopsService,
-        IOutputHelper output,
-        ILogger<PipelineTestsTool> logger
-    ) : base()
-    {
-        this.azureService = azureService;
-        this.devopsService = devopsService;
-        this.output = output;
-        this.logger = logger;
+    protected override Command GetCommand() =>
+        new("test-results", "Get test results for a pipeline run") { buildIdArg };
 
-        CommandHierarchy =
-        [
-            SharedCommandGroups.AzurePipelines // azsdk azp
-        ];
-    }
-
-    public override Command GetCommand()
-    {
-        var testResultsCommand = new Command("test-results", "Get test results for a pipeline run") { buildIdArg };
-        testResultsCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        return testResultsCommand;
-    }
-
-    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         Initialize();
-        var buildId = ctx.ParseResult.GetValueForArgument(buildIdArg);
+        var buildId = parseResult.GetValue(buildIdArg);
 
         logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
-        var result = await GetPipelineLlmArtifacts(buildId);
-        ctx.ExitCode = ExitCode;
-        output.Output(result);
+        return await GetPipelineLlmArtifacts(buildId);
     }
+
+    private BuildHttpClient buildClient;
+    private readonly bool initialized = false;
 
     private void Initialize()
     {
@@ -95,7 +69,6 @@ public class PipelineTestsTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get pipeline artifacts for build {buildId} in project {project}", buildId, project);
-            SetFailure();
             return new ObjectCommandResponse
             {
                 ResponseError = $"Failed to get pipeline artifacts for build {buildId} in project {project}",

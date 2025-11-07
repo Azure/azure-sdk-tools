@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	neturl "net/url"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
 )
 
@@ -50,12 +52,6 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.Sources == nil {
 			req.Sources = tenantConfig.Sources
 		}
-		if req.PromptTemplate == nil {
-			req.PromptTemplate = &tenantConfig.PromptTemplate
-		}
-		if req.IntensionPromptTemplate == nil {
-			req.IntensionPromptTemplate = &tenantConfig.IntensionPromptTemplate
-		}
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
@@ -71,7 +67,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("Failed to marshal request: %v\n", err)
 	} else {
-		log.Printf("Request: %s", jsonReq)
+		log.Printf("Request: %s", utils.SanitizeForLog(string(jsonReq)))
 	}
 
 	if err = s.CheckArgs(req); err != nil {
@@ -93,7 +89,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+	prompt, err := s.buildPrompt(intension, chunks, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -101,7 +98,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 5. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
-	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
+	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -131,6 +128,7 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 	}, nil)
 
 	if err != nil {
@@ -139,9 +137,10 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	}
 
 	if len(resp.Choices) > 0 {
-		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intension.md")
+		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
+			respStr, _ := resp.MarshalJSON()
+			log.Printf("Failed to parse intension response: %v, response:%s", err, respStr)
 			return nil, err
 		}
 		return result, nil
@@ -183,10 +182,25 @@ func processName(name *string) *string {
 }
 
 func getImageDataURI(url string) (string, error) {
-	if !strings.HasPrefix(url, "https://smba.trafficmanager.net") {
-		log.Printf("URL does not start with expected prefix: %s", url)
-		return url, nil
+	// Parse and validate the URL to prevent SSRF attacks
+	parsedURL, err := neturl.Parse(url)
+	if err != nil {
+		log.Printf("Invalid URL format: %s, error: %v", utils.SanitizeForLog(url), err)
+		return "", fmt.Errorf("invalid URL format: %w", err)
 	}
+
+	// Validate scheme is HTTPS
+	if parsedURL.Scheme != "https" {
+		log.Printf("URL scheme is not HTTPS: %s", utils.SanitizeForLog(url))
+		return "", fmt.Errorf("only HTTPS URLs are allowed")
+	}
+
+	// Validate hostname is exactly smba.trafficmanager.net
+	if parsedURL.Hostname() != "smba.trafficmanager.net" {
+		log.Printf("URL hostname is not allowed: %s", utils.SanitizeForLog(parsedURL.Hostname()))
+		return "", fmt.Errorf("only smba.trafficmanager.net hostname is allowed")
+	}
+
 	cred, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
 		ID: azidentity.ClientID(config.GetBotClientID()),
 	})
@@ -308,7 +322,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					log.Printf("Failed to get image data URI: %v", err)
 					continue
 				}
-				log.Println("Image link:", link)
+				log.Println("Image link:", utils.SanitizeForLog(link))
 				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(
 						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
@@ -326,16 +340,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 
 	// process current user message
 	currentMessage := req.Message.Content
-	if req.WithPreprocess != nil && *req.WithPreprocess {
-		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
-		log.Println("user message with additional info:", preProcessedMessage)
-		// avoid token limit error, we need to limit the number of messages in the history
-		if len(preProcessedMessage) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
-			preProcessedMessage = preProcessedMessage[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
-		}
-		currentMessage = preProcessedMessage
-	}
 	msg := &azopenai.ChatRequestUserMessage{
 		Content: azopenai.NewChatRequestUserMessageContent(currentMessage),
 		Name:    processName(req.Message.Name),
@@ -351,7 +355,8 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		query = *req.Message.RawContent
 	}
 	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(*req.IntensionPromptTemplate, messages)
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+	intentResult, err := s.RecongnizeIntension(tenantConfig.IntensionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -370,7 +375,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	}
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-	log.Printf("Searching query: %s", query)
+	log.Printf("Searching query: %s", utils.SanitizeForLog(query))
 	return query, intentResult
 }
 
@@ -404,75 +409,14 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 
 func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	schema := map[string]interface{}{
-		"type": "object",
-		"properties": map[string]interface{}{
-			"has_result": map[string]interface{}{
-				"type":        "boolean",
-				"description": "true if you can answer current question",
-			},
-			"answer": map[string]interface{}{
-				"type":        "string",
-				"description": "your complete, formatted response",
-			},
-			"references": map[string]interface{}{
-				"type":        "array",
-				"description": "put all supporting for your answer references from Knowledge",
-				"items": map[string]interface{}{
-					"type": "object",
-					"properties": map[string]interface{}{
-						"title": map[string]interface{}{
-							"type":        "string",
-							"description": "section or document title",
-						},
-						"source": map[string]interface{}{
-							"type":        "string",
-							"description": "document source",
-						},
-						"link": map[string]interface{}{
-							"type":        "string",
-							"description": "complete link to the reference",
-						},
-						"content": map[string]interface{}{
-							"type":        "string",
-							"description": "relevant extract that supports your answer",
-						},
-					},
-					"required":             []string{"title", "source", "link", "content"},
-					"additionalProperties": false,
-				},
-			},
-			"reasoning_progress": map[string]interface{}{
-				"type":        "string",
-				"description": "output your reasoning progress of generating the answer",
-			},
-		},
-		"required":             []string{"has_result", "answer", "references", "reasoning_progress"},
-		"additionalProperties": false,
-	}
-
-	schemaBytes, err := json.Marshal(schema)
-	if err != nil {
-		log.Printf("ERROR marshaling schema: %s", err)
-		return nil, err
-	}
-
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
 		DeploymentName: &s.model,
-		ResponseFormat: &azopenai.ChatCompletionsJSONSchemaResponseFormat{
-			JSONSchema: &azopenai.ChatCompletionsJSONSchemaResponseFormatJSONSchema{
-				Name:        to.Ptr("bot-response-format"),
-				Description: to.Ptr("Bot Response Format"),
-				Schema:      schemaBytes,
-				Strict:      to.Ptr(true),
-			},
-		},
-		TopP: to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		TopP:           to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
 	}, nil)
-
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
@@ -486,7 +430,8 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	if len(resp.Choices) > 0 {
 		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("ERROR: %s, content:%s", err, *resp.Choices[0].Message.Content)
+			respStr, _ := resp.MarshalJSON()
+			log.Printf("ERROR: %s, response:%s", err, respStr)
 			return nil, err
 		}
 		return answer, nil
@@ -506,7 +451,12 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		agenticSearchPrompt = tenantConfig.AgenticSearchPrompt
 	}
 
-	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources, agenticSearchPrompt)
+	sourceFilter := map[model.Source]string{}
+	if hasConfig && tenantConfig.SourceFilter != nil {
+		sourceFilter = tenantConfig.SourceFilter
+	}
+
+	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -592,7 +542,11 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string) ([]model.Index, error) {
 	searchStart := time.Now()
 	searchClient := search.NewSearchClient()
-	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
+	sourceFilter := map[model.Source]string{}
+	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {
+		sourceFilter = tenantConfig.SourceFilter
+	}
+	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}

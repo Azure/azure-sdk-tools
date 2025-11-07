@@ -1,5 +1,4 @@
 ﻿using System.CommandLine;
-using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,46 +18,37 @@ namespace Azure.Tools.GeneratorAgent
         internal Program(IServiceProvider serviceProvider)
         {
             ArgumentNullException.ThrowIfNull(serviceProvider);
-            
+
             ServiceProvider = serviceProvider;
             Logger = ServiceProvider.GetRequiredService<ILogger<Program>>();
-            CommandLineConfig = new CommandLineConfiguration(ServiceProvider.GetRequiredService<ILogger<CommandLineConfiguration>>());
+            CommandLineConfig = new CommandLineConfiguration();
         }
 
         public static async Task<int> Main(string[] args)
         {
-            ToolConfiguration toolConfig = new ToolConfiguration();
-            using ILoggerFactory loggerFactory = toolConfig.CreateLoggerFactory();
+            var toolConfig = new ToolConfiguration();
+            using var loggerFactory = toolConfig.CreateLoggerFactory();
 
-            ServiceCollection services = new ServiceCollection();
+            var services = new ServiceCollection();
             services.AddSingleton(loggerFactory);
             services.AddLogging();
             services.AddGeneratorAgentServices(toolConfig);
 
-            await using ServiceProvider serviceProvider = services.BuildServiceProvider();
-            
-            Program program = new Program(serviceProvider);
+            await using var serviceProvider = services.BuildServiceProvider();
+
+            var program = new Program(serviceProvider);
             return await program.RunAsync(args).ConfigureAwait(false);
         }
 
         internal async Task<int> RunAsync(string[] args)
         {
-            RootCommand rootCommand = CommandLineConfig.CreateRootCommand(HandleCommandAsync);
+            var rootCommand = CommandLineConfig.CreateRootCommand(HandleCommandAsync);
             return await rootCommand.InvokeAsync(args).ConfigureAwait(false);
         }
 
         internal async Task<int> HandleCommandAsync(string? typespecPath, string? commitId, string sdkPath)
         {
-            int validationResult = CommandLineConfig.ValidateInput(typespecPath, commitId, sdkPath);
-            if (validationResult != ExitCodeSuccess)
-            {
-                return validationResult;
-            }
-
-            ValidationContext validationContext = ValidationContext.CreateFromValidatedInputs(
-                typespecPath!, commitId!, sdkPath);
-
-            using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (_, eventArgs) =>
             {
                 Logger.LogInformation("Cancellation requested by user");
@@ -68,94 +58,55 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                return await ExecuteGenerationAsync(validationContext, cancellationTokenSource.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogInformation("Operation was cancelled. Shutting down gracefully");
-                return ExitCodeSuccess;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unexpected error occurred during command execution");
-                return ExitCodeFailure;
-            }
-        }
+                var validationContext = ValidationContext.ValidateAndCreate(typespecPath, commitId, sdkPath);
 
-        private async Task<int> ExecuteGenerationAsync(ValidationContext validationContext, CancellationToken cancellationToken)
-        {
-            try
-            {
-                // Step 1: Get services from DI container
-                AppSettings appSettings = ServiceProvider.GetRequiredService<AppSettings>();
+                var orchestrator = ServiceProvider.GetRequiredService<GenerationOrchestrator>();      
+                await orchestrator.ExecuteAsync(validationContext, cancellationTokenSource.Token).ConfigureAwait(false);
                 
-                // Step 2: Get TypeSpec files (from local or GitHub)
-                Func<ValidationContext, TypeSpecFileService> fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
-                TypeSpecFileService fileService = fileServiceFactory(validationContext);
-
-                Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
-
-                // Step 3: Initialize ErrorFixer Agent with files in memory (singleton)
-                ErrorFixerAgent agent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
-                string threadId = await agent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
-
-                // Step 4: Compile Typespec 
-                Func<ValidationContext, ISdkGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
-                ISdkGenerationService sdkGenerationService = sdkServiceFactory(validationContext);
-                Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
-
-                // Step 5: Compile Generated SDK
-                Func<ValidationContext, SdkBuildService> sdkBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
-                SdkBuildService sdkBuildService = sdkBuildServiceFactory(validationContext);
-                Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
-
-                // Step 6: Analyze all errors and get fixes (singleton)
-                BuildErrorAnalyzer analyzer = ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
-                List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
-
-                // Step 7: Send fixes to ErrorFixerAgent if List<Fix> is not empty
-                if (allFixes.Count > 0)
-                {
-                    await agent.FixCodeAsync(allFixes, threadId, cancellationToken).ConfigureAwait(false);
-                }
-
                 return ExitCodeSuccess;
             }
             catch (OperationCanceledException)
             {
-                Logger.LogInformation("SDK generation was cancelled");
+                Logger.LogInformation("Operation was cancelled");
                 return ExitCodeSuccess;
-            }
-            catch (InvalidOperationException ex)
-            {
-                Logger.LogError("Operation failed: {Error}", ex.Message);
-                return ExitCodeFailure;
             }
             catch (ArgumentException ex)
             {
                 Logger.LogError("Invalid configuration: {Error}", ex.Message);
                 return ExitCodeFailure;
             }
-            catch (RequestFailedException ex) when (ex.Status == 401)
+            catch (HttpRequestException ex)
             {
-                Logger.LogError("Authentication failed for Azure AI service. Please check your credentials.");
+                Logger.LogError("GitHub API request failed: {Error}", ex.Message);
                 return ExitCodeFailure;
             }
-            catch (RequestFailedException ex) when (ex.Status >= 500)
+            catch (InvalidOperationException ex) when (ex.Message.Contains("GitHub") || ex.Message.Contains("deserialize"))
             {
-                Logger.LogError("Azure AI service is temporarily unavailable: {Error}", ex.Message);
+                Logger.LogError("GitHub API response error: {Error}", ex.Message);
                 return ExitCodeFailure;
             }
-            catch (RequestFailedException ex)
+            catch (UnauthorizedAccessException)
+            {
+                Logger.LogError("Authentication failed for Azure AI service");
+                return ExitCodeFailure;
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
+            {
+                Logger.LogError("Azure AI service client error ({StatusCode}): {Error}", ex.Status, ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (Azure.RequestFailedException ex)
             {
                 Logger.LogError("Azure AI service error: {Error}", ex.Message);
                 return ExitCodeFailure;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error occurred during SDK generation");
+                Logger.LogError(ex, "Unexpected error occurred during SDK generation");
                 return ExitCodeFailure;
             }
         }
-    }
+    } 
 }
+
+

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class AnalyzePipelineResponse : Response
+public class AnalyzePipelineResponse : CommandResponse
 {
     [JsonPropertyName("failed_test_titles")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -22,7 +22,7 @@ public class AnalyzePipelineResponse : Response
         WriteIndented = true,
     };
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = "";
 
@@ -42,6 +42,6 @@ public class AnalyzePipelineResponse : Response
             output += string.Join(Environment.NewLine, FailedTasks.Select(t => t.ToString())) + Environment.NewLine;
         }
 
-        return ToString(output);
+        return output;
     }
 }

@@ -1,21 +1,20 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Hubs;
-using APIViewWeb.Managers;
-using APIViewWeb;
-using APIViewWeb.Managers.Interfaces;
-using APIViewWeb.Repositories;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
-using Moq;
-using Xunit;
-using Xunit.Abstractions;
-using APIViewWeb.Helpers;
 using APIView.Model.V2;
 using APIView.TreeToken;
+using APIViewWeb;
+using APIViewWeb.Helpers;
+using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Repositories;
+using Moq;
+using Xunit;
 
 namespace APIViewUnitTests
 {
@@ -24,15 +23,14 @@ namespace APIViewUnitTests
         private readonly ICodeFileManager _codeFileManager;
 
         public CodeFileTests()
-        { 
+        {
             IEnumerable<LanguageService> languageServices = new List<LanguageService>();
             IDevopsArtifactRepository devopsArtifactRepository = new Mock<IDevopsArtifactRepository>().Object;
             IBlobCodeFileRepository blobCodeFileRepository = new Mock<IBlobCodeFileRepository>().Object;
             IBlobOriginalsRepository blobOriginalRepository = new Mock<IBlobOriginalsRepository>().Object;
 
-            _codeFileManager = new CodeFileManager(
-            languageServices: languageServices, codeFileRepository: blobCodeFileRepository,
-            originalsRepository: blobOriginalRepository, devopsArtifactRepository: devopsArtifactRepository);
+            _codeFileManager = new CodeFileManager(languageServices, blobCodeFileRepository, blobOriginalRepository,
+                devopsArtifactRepository);
         }
 
         [Fact]
@@ -317,5 +315,130 @@ namespace APIViewUnitTests
                 }
             }
         }
+
+        [Fact]
+        public async Task VerifyAzureAiEvaluationDiff()
+        {
+            (CodeFile codeFileA, CodeFile codeFileB) = await LoadCodeFilesPairAsync(
+                "azure-ai-evaluation-1.11.0.json",
+                "azure-ai-evaluation-1.9.0.json");
+
+            string expectedDiffPath = Path.Combine("SampleTestFiles", "azure-ai-evaluation-diff.txt");
+            string expectedDiff = await File.ReadAllTextAsync(expectedDiffPath);
+
+            Stopwatch sw = Stopwatch.StartNew();
+            List<ReviewLine> diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            TimeSpan diffTime = sw.Elapsed;
+            string actualDiff = ConvertDiffToText(diff);
+
+            Assert.True(FindAnyDiffLine(diff), "Diff should contain changes");
+            Assert.Equal(expectedDiff.Replace("\r\n", "\n"), actualDiff.Replace("\r\n", "\n"));
+            Assert.True(diffTime < TimeSpan.FromSeconds(30), $"Diff calculation too slow: {diffTime.TotalSeconds:F2}s");
+        }
+
+        [Fact]
+        public async Task VerifyAzureDataAppConfigurationDiff()
+        {
+            (CodeFile codeFileA, CodeFile codeFileB) = await LoadCodeFilesPairAsync(
+                "azure.data.appconfiguration.1.7.0.json",
+                "azure.data.appconfiguration.1.5.0.json");
+
+            string expectedDiffPath = Path.Combine("SampleTestFiles", "azure.data.appconfiguration.diff.txt");
+            string expectedDiff = await File.ReadAllTextAsync(expectedDiffPath);
+
+            Stopwatch sw = Stopwatch.StartNew();
+            List<ReviewLine> diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            TimeSpan diffTime = sw.Elapsed;
+            string actualDiff = ConvertDiffToText(diff);
+
+            Assert.True(FindAnyDiffLine(diff), "Diff should contain changes");
+            Assert.Equal(expectedDiff.Replace("\r\n", "\n"), actualDiff.Replace("\r\n", "\n"));
+            Assert.True(diffTime < TimeSpan.FromSeconds(30), $"Diff calculation too slow: {diffTime.TotalSeconds:F2}s");
+        }
+
+        [Fact]
+        public async Task VerifyAzureAiAgentsDiff()
+        {
+            (CodeFile codeFileA, CodeFile codeFileB) = await LoadCodeFilesPairAsync(
+                "azure-ai-agents-1.0.0b1.json",
+                "azure-ai-agents-1.0.0b1-old.json");
+
+            string expectedDiffPath = Path.Combine("SampleTestFiles", "azure-ai-agents-diff.txt");
+            string expectedDiff = await File.ReadAllTextAsync(expectedDiffPath);
+
+            Stopwatch sw = Stopwatch.StartNew();
+            List<ReviewLine> diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            TimeSpan diffTime = sw.Elapsed;
+
+            string actualDiff = ConvertDiffToText(diff);
+
+            Assert.True(FindAnyDiffLine(diff), "Diff should contain changes");
+            Assert.Equal(expectedDiff.Replace("\r\n", "\n"), actualDiff.Replace("\r\n", "\n"));
+            Assert.True(diffTime < TimeSpan.FromSeconds(30), $"Diff calculation too slow: {diffTime.TotalSeconds:F2}s");
+        }
+
+        private static string ConvertDiffToText(List<ReviewLine> diffLines)
+        {
+            StringBuilder sb = new();
+            ConvertDiffLinesToText(diffLines, sb, 0);
+            return sb.ToString();
+        }
+
+        private static void ConvertDiffLinesToText(List<ReviewLine> lines, StringBuilder sb, int indent)
+        {
+            string indentSpaces = "  ".PadRight(indent * 2);
+
+            foreach (ReviewLine line in lines)
+            {
+                string lineText = line.ToString();
+
+                if (string.IsNullOrWhiteSpace(lineText) && line.Children.Count == 0)
+                {
+                    sb.AppendLine();
+                    continue;
+                }
+
+                string prefix = line.DiffKind switch
+                {
+                    DiffKind.Added => "+ ",
+                    DiffKind.Removed => "- ",
+                    _ => "  "
+                };
+
+                if (!string.IsNullOrWhiteSpace(lineText) || line.Children.Count > 0)
+                {
+                    sb.Append(indentSpaces);
+                    sb.Append(prefix);
+                    sb.AppendLine(lineText);
+                }
+
+                if (line.Children.Count > 0)
+                {
+                    ConvertDiffLinesToText(line.Children, sb, indent + 1);
+                }
+            }
+        }
+
+        private async Task<(CodeFile fileA, CodeFile fileB)> LoadCodeFilesPairAsync(string fileAName, string fileBName)
+        {
+            CodeFile fileA;
+            CodeFile fileB;
+
+            string filePathA = Path.Combine("SampleTestFiles", fileAName);
+            await using (var streamA = new FileInfo(filePathA).OpenRead())
+            {
+                fileA = await CodeFile.DeserializeAsync(streamA);
+            }
+
+            string filePathB = Path.Combine("SampleTestFiles", fileBName);
+            await using (var streamB = new FileInfo(filePathB).OpenRead())
+            {
+                fileB = await CodeFile.DeserializeAsync(streamB);
+            }
+
+            return (fileA, fileB);
+        }
+
+
     }
 }

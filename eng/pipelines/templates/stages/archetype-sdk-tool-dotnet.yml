@@ -47,6 +47,9 @@ parameters:
   - name: Use1ESOfficial
     type: boolean
     default: true
+  - name: VerifyChangelog
+    type: boolean
+    default: false
   - name: TestMatrix
     type: object
     default:
@@ -62,6 +65,9 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
+  - name: CustomJobs
+    type: jobList
+    default: []
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -128,6 +134,11 @@ extends:
                     Get-ChildItem $(packagesToPublishDir) | ForEach-Object { Write-Host $_ }
                   }
                 displayName: Create dir for packages to publish or list its contents
+
+              - ${{ if eq(parameters.VerifyChangelog, true) }}:
+                - pwsh: |
+                    $(Build.SourcesDirectory)/eng/scripts/Verify-Nuget-Artifact-Changelogs.ps1 -ArtifactsPath "$(packagesToPublishDir)" -ForRelease $false
+                  displayName: Verify Changelogs for artifacts
 
           - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
             - job: Produce_Executables_linux
@@ -206,6 +217,10 @@ extends:
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
+
+          - ${{ each job in parameters.CustomJobs }}:
+            - ${{ job }}
+
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml
               parameters:
@@ -224,6 +239,8 @@ extends:
             ${{ if parameters.PublishEnvironment }}:
               PublishEnvironment: ${{ parameters.PublishEnvironment }}
             dependsOn: BuildTestAndPackage
+            VerifyChangelog: ${{ parameters.VerifyChangelog }}
+            ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

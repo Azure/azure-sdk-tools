@@ -13,6 +13,7 @@ import (
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 type SearchClient struct {
@@ -101,7 +102,7 @@ func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([
 	return httpResp.Value, nil
 }
 
-func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source) ([]model.Index, error) {
+func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string) ([]model.Index, error) {
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
@@ -114,11 +115,10 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 				Kind:   "text",
 			},
 		},
-		QueryType:             "semantic",
-		SemanticConfiguration: "vector-1741167123942-semantic-configuration",
-		Captions:              "extractive",
-		Answers:               "extractive|count-3",
-		QueryLanguage:         "en-us",
+		QueryType:     "semantic",
+		Captions:      "extractive",
+		Answers:       "extractive|count-3",
+		QueryLanguage: "en-us",
 	}
 
 	// If no sources specified, search all at once
@@ -145,10 +145,13 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 			req.Top = val
 		}
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
+		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
+			req.Filter = fmt.Sprintf("(%s and %s)", req.Filter, sourceFilterStr)
+		}
 
 		resp, err := s.QueryIndex(context.Background(), &req)
 		if err != nil {
-			log.Printf("Warning: search error for source %s: %v", source, err)
+			log.Printf("Warning: search error for source %s: %v", utils.SanitizeForLog(string(source)), err)
 			continue
 		}
 
@@ -319,7 +322,7 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	return chunk
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
 	var messages []model.KnowledgeAgentMessage
 
 	// Use custom prompt if provided, otherwise fall back to default
@@ -349,8 +352,13 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 
 	filters := make([]string, 0, len(sources))
 	for _, source := range sources {
-		filters = append(filters, fmt.Sprintf("context_id eq '%s'", source))
+		filter := fmt.Sprintf("context_id eq '%s'", source)
+		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
+			filter = fmt.Sprintf("(%s and %s)", filter, sourceFilterStr)
+		}
+		filters = append(filters, filter)
 	}
+
 	targetIndexParam := model.KnowledgeAgentIndexParams{
 		IndexName:         s.Index,
 		RerankerThreshold: model.RerankScoreMediumRelevanceThreshold,

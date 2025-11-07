@@ -25,19 +25,19 @@ public interface INpxHelper
     public Task<ProcessResult> Run(NpxOptions options, CancellationToken ct);
 }
 
-public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IOutputHelper outputHelper)
+public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<ProcessHelper>(logger, outputHelper), IProcessHelper
 {
     public async Task<ProcessResult> Run(ProcessOptions options, CancellationToken ct) => await base.Run(options, ct);
 }
 
-public sealed class PowershellHelper(ILogger<PowershellHelper> logger, IOutputHelper outputHelper)
+public sealed class PowershellHelper(ILogger<PowershellHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<PowershellHelper>(logger, outputHelper), IPowershellHelper
 {
     public async Task<ProcessResult> Run(PowershellOptions options, CancellationToken ct) => await base.Run(options, ct);
 }
 
-public sealed class NpxHelper(ILogger<NpxHelper> logger, IOutputHelper outputHelper)
+public sealed class NpxHelper(ILogger<NpxHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<NpxHelper>(logger, outputHelper), INpxHelper
 {
     public async Task<ProcessResult> Run(NpxOptions options, CancellationToken ct) => await base.Run(options, ct);

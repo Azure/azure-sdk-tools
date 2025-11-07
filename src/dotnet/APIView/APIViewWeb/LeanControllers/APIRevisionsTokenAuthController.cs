@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,14 +21,16 @@ namespace APIViewWeb.LeanControllers;
 public class APIRevisionsTokenAuthController : ControllerBase
 {
     private readonly IAPIRevisionsManager _apiRevisionsManager;
-
+    private readonly IBlobCodeFileRepository _codeFileRepository;
     private readonly ILogger<APIRevisionsTokenAuthController> _logger;
 
-    public APIRevisionsTokenAuthController(ILogger<APIRevisionsTokenAuthController> logger,
-        IAPIRevisionsManager apiRevisionsManager)
+    public APIRevisionsTokenAuthController(IBlobCodeFileRepository codeFileRepository,
+        IAPIRevisionsManager apiRevisionsManager,
+        ILogger<APIRevisionsTokenAuthController> logger)
     {
-        _logger = logger;
         _apiRevisionsManager = apiRevisionsManager;
+        _codeFileRepository = codeFileRepository;
+        _logger = logger;
     }
 
     /// <summary>
@@ -53,66 +57,58 @@ public class APIRevisionsTokenAuthController : ControllerBase
     ///     Generate review text for an API revision
     /// </summary>
     /// <param name="reviewId">The review ID</param>
-    /// <param name="apiRevisionId">The specific API revision ID (required when selectionType is Specific)</param>
+    /// <param name="apiRevisionId">The specific API revision ID (required when there is not selectionType)</param>
     /// <param name="selectionType">How to select the API revision</param>
+    /// <param name="contentReturnType">The content return type. Default is text, but CodeFile can also be selected</param>
     /// <returns>Plain text representation of the API review</returns>
-    [HttpGet("{reviewId}/getRevisionText", Name = "GetAPIRevisionText")]
-    public async Task<ActionResult<string>> GetAPIRevisionTextAsync(
-        string reviewId,
+    [HttpGet("getRevisionContent", Name = "GetAPIRevisionContent")]
+    public async Task<ActionResult> GetAPIRevisionContentAsync(
         [FromQuery] string apiRevisionId = null,
-        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Specific)
+        [FromQuery] string reviewId = null,
+        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Undefined,
+        [FromQuery] APIRevisionContentReturnType contentReturnType = APIRevisionContentReturnType.Text)
     {
         try
         {
-            APIRevisionListItemModel activeApiRevision = null;
-            switch (selectionType)
+            if (selectionType == APIRevisionSelectionType.Undefined && string.IsNullOrEmpty(apiRevisionId))
             {
-                case APIRevisionSelectionType.Specific:
-                    if (string.IsNullOrEmpty(apiRevisionId))
-                    {
-                        return BadRequest("apiRevisionId is required when selectionType is Specific");
-                    }
-
-                    activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
-                    break;
-                case APIRevisionSelectionType.Latest:
-                    activeApiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId);
-                    break;
-                case APIRevisionSelectionType.LatestApproved:
-                    IEnumerable<APIRevisionListItemModel> allRevisions =
-                        await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-                    activeApiRevision = allRevisions
-                        .Where(r => r.IsApproved && !r.IsDeleted)
-                        .OrderByDescending(r => r.CreatedOn)
-                        .FirstOrDefault();
-                    break;
-                case APIRevisionSelectionType.LatestAutomatic:
-                    activeApiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(
-                        reviewId,
-                        apiRevisionType: APIRevisionType.Automatic);
-                    break;
-                case APIRevisionSelectionType.LatestManual:
-                    activeApiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(
-                        reviewId,
-                        apiRevisionType: APIRevisionType.Manual);
-                    break;
-
-                default:
-                    return BadRequest($"Unsupported selection type: {selectionType}");
+                return BadRequest("apiRevisionId is required");
             }
 
-            if (activeApiRevision == null)
+            if (selectionType != APIRevisionSelectionType.Undefined && string.IsNullOrEmpty(reviewId))
+            {
+                return BadRequest($"reviewId is required when selectionType is {selectionType}");
+            }
+
+            APIRevisionListItemModel activeApiRevision = await GetApiRevisionBySelectionType(selectionType, reviewId, apiRevisionId);
+            if (activeApiRevision == null || activeApiRevision.IsDeleted)
             {
                 return NotFound($"No API revision found for selection type: {selectionType}");
             }
 
-            if (activeApiRevision.IsDeleted)
+            if (IsValidateRevisionMatch(activeApiRevision, reviewId, apiRevisionId, selectionType))
             {
-                return new LeanJsonResult(null, StatusCodes.Status204NoContent);
+                return BadRequest(
+                    $"Mismatch between reviewId and apiRevisionId: The API revision '{apiRevisionId}' does not belong to review '{reviewId}'. Ensure the revision ID corresponds to the specified review.");
             }
 
-            string reviewText = await _apiRevisionsManager.GetApiRevisionText(activeApiRevision);
-            return new LeanJsonResult(reviewText, StatusCodes.Status200OK);
+            switch (contentReturnType)
+            {
+                case APIRevisionContentReturnType.Text:
+                    string reviewText = await _apiRevisionsManager.GetApiRevisionText(activeApiRevision);
+                    return new LeanJsonResult(reviewText, StatusCodes.Status200OK);
+                case APIRevisionContentReturnType.CodeFile:
+                    CodeFile activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(activeApiRevision.Id, activeApiRevision.Files[0].FileId);
+                    if (activeRevisionReviewCodeFile == null)
+                    {
+                        return NotFound($"No code file found for API revision ID: {activeApiRevision.Id}");
+                    }
+
+                    return new LeanJsonResult(activeRevisionReviewCodeFile, StatusCodes.Status200OK);
+                default:
+                    return BadRequest(
+                        $"Unsupported contentReturnType: {contentReturnType}. Supported are {APIRevisionContentReturnType.Text} | {APIRevisionContentReturnType.CodeFile}");
+            }
         }
         catch (Exception ex)
         {
@@ -121,5 +117,39 @@ public class APIRevisionsTokenAuthController : ControllerBase
                 selectionType, reviewId);
             return StatusCode(StatusCodes.Status500InternalServerError, "Failed to generate review text");
         }
+    }
+
+    private async Task<APIRevisionListItemModel> GetApiRevisionBySelectionType(
+        APIRevisionSelectionType selectionType, string reviewId, string apiRevisionId)
+    {
+        return selectionType switch
+        {
+            APIRevisionSelectionType.Undefined => await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId),
+            APIRevisionSelectionType.Latest => await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId),
+            APIRevisionSelectionType.LatestApproved => await GetLatestApprovedRevision(reviewId),
+            APIRevisionSelectionType.LatestAutomatic => await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisionType: APIRevisionType.Automatic),
+            APIRevisionSelectionType.LatestManual => await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisionType: APIRevisionType.Manual),
+            _ => throw new ArgumentException($"Unsupported selection type: {selectionType}")
+        };
+    }
+
+    private async Task<APIRevisionListItemModel> GetLatestApprovedRevision(string reviewId)
+    {
+        IEnumerable<APIRevisionListItemModel> allRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+        return allRevisions
+            .Where(r => r.IsApproved && !r.IsDeleted)
+            .OrderByDescending(r => r.CreatedOn)
+            .FirstOrDefault();
+    }
+
+    private bool IsValidateRevisionMatch(APIRevisionListItemModel activeApiRevision, string reviewId, string apiRevisionId, APIRevisionSelectionType selectionType)
+    {
+        bool hasReviewIdMismatch = selectionType == APIRevisionSelectionType.Undefined &&
+                                   !string.IsNullOrEmpty(reviewId) && activeApiRevision.ReviewId != reviewId;
+
+        bool hasRevisionIdMismatch = selectionType != APIRevisionSelectionType.Undefined &&
+                                     !string.IsNullOrEmpty(apiRevisionId) && activeApiRevision.Id != apiRevisionId;
+
+        return hasRevisionIdMismatch || hasReviewIdMismatch;
     }
 }

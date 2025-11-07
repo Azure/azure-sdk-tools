@@ -1,19 +1,19 @@
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
-        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             throw new NotImplementedException();
         }
 
-        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main")
+        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main")
         {
             return Task.FromResult(new Build
             {
@@ -83,6 +83,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
             };
+            releasePlan.IsDataPlane = workItemId > 1000;
+            releasePlan.IsManagementPlane = !releasePlan.IsDataPlane;
             return Task.FromResult(releasePlan);
         }
 
@@ -97,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId)
+        Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch)
         {
             throw new NotImplementedException();
         }
@@ -120,6 +122,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         Task<Dictionary<string, List<string>>> IDevOpsService.GetPipelineLlmArtifacts(string project, int buildId)
         {
             return Task.FromResult(new Dictionary<string, List<string>>());
+        }
+
+        Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields)
+        {
+            var workItem = new WorkItem
+            {
+                Id = workItemId,
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.Title", "Updated work item" },
+                    { "System.State", "In Progress" }
+                }
+            };
+            return Task.FromResult(workItem);
         }
     }
 }

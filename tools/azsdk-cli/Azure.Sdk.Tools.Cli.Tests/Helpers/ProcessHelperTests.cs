@@ -10,13 +10,13 @@ internal class ProcessHelperTests
 {
     private ProcessHelper processHelper = null!;
     private Mock<ILogger<ProcessHelper>> mockLogger = null!;
-    private Mock<IOutputHelper> mockOutputHelper = null!;
+    private Mock<IRawOutputHelper> mockOutputHelper = null!;
 
     [SetUp]
     public void Setup()
     {
         mockLogger = new Mock<ILogger<ProcessHelper>>();
-        mockOutputHelper = new Mock<IOutputHelper>();
+        mockOutputHelper = new Mock<IRawOutputHelper>();
         processHelper = new ProcessHelper(mockLogger.Object, mockOutputHelper.Object);
     }
 

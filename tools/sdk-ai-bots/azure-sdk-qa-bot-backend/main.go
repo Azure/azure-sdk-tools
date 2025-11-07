@@ -5,7 +5,6 @@ import (
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/handler"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/auth"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -19,9 +18,9 @@ func setupRouter() *gin.Engine {
 	})
 
 	// Protected endpoints
-	r.POST("/completion", auth.APIKeyAuth(), handler.CompletionHandler)
-	r.POST("/feedback", auth.APIKeyAuth(), handler.FeedBackHandler)
-	r.POST("/record_answer", auth.APIKeyAuth(), handler.AnswerRecordHandler)
+	r.POST("/completion", handler.CompletionHandler)
+	r.POST("/feedback", handler.FeedBackHandler)
+	r.POST("/record_answer", handler.AnswerRecordHandler)
 
 	return r
 }

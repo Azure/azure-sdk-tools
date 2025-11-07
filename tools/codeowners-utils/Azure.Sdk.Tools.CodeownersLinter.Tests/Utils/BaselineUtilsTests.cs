@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Tests.Mocks;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Azure.Sdk.Tools.CodeownersUtils.Verification;
 using NUnit.Framework;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
 {
@@ -43,7 +44,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
             // Cleanup any temporary files created by the tests
             if (_tempFiles.Count > 0)
             {
-                foreach(string tempFile  in _tempFiles)
+                foreach (string tempFile in _tempFiles)
                 {
                     int tryNumber = 0;
                     while (tryNumber < maxTries)
@@ -55,7 +56,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Exception trying to delete {tempFile}. Ex={ex}");
+                            Log.Logger.LogError(ex, "Exception trying to delete {TempFile}.", tempFile);
                             // sleep 100ms and try again
                             System.Threading.Thread.Sleep(100);
                         }
@@ -64,7 +65,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
                     // Report that the test wasn't able to delete the file after successive tries
                     if (tryNumber == maxTries)
                     {
-                        Console.WriteLine($"Unable to delete {tempFile} after {maxTries}, see above for exception details.");
+                        Log.Logger.LogWarning("Unable to delete {TempFile} after {MaxTries}, see above for exception details.", tempFile, maxTries);
                     }
                 }
             }
@@ -89,7 +90,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
             // Load the expected baseline file and, for sanity's sake, ensure that all errors are filtered
             BaselineUtils expectedBaselineUtils = new BaselineUtils(expectedBaselineFile);
             var filteredWithExpected = expectedBaselineUtils.FilterErrorsUsingBaseline(actualErrors);
-            
+
             // This piece is for sanity, to verify that the the filter only filters out SingleLineErrors and leaves
             // the BlockFormattingErrors.
             if (expectedNumberOfBlockErrors > 0)

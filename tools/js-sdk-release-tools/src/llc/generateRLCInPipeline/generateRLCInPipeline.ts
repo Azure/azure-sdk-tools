@@ -18,11 +18,11 @@ import {
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
-import { remove } from 'fs-extra';
+import { remove, emptyDir } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
-import { formatSdk, updateSnippets, lintFix } from "../../common/devToolUtils.js";
+import { formatSdk, updateSnippets, lintFix, customizeCodes } from "../../common/devToolUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
@@ -60,7 +60,7 @@ export async function generateRLCInPipeline(options: {
                 sourcePath = path.join("src", "generated");
             }
             logger.info(`Should only remove ${sourcePath} for RLC generation in ${options.runMode} mode.`)
-            await remove(path.join(generatedPackageDir, sourcePath));
+            await emptyDir(path.join(generatedPackageDir, sourcePath));
         } else {
             logger.info(`Should remove all for RLC generation in ${options.runMode} mode`)
             await remove(generatedPackageDir);
@@ -95,7 +95,10 @@ export async function generateRLCInPipeline(options: {
                 if (options.apiVersion) {
                     specifyApiVersionToGenerateSDKByTypeSpec(tspDefDir, options.apiVersion);
                 }
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
+                const tspClientDir = path.join(process.cwd(), 'eng', 'common', 'tsp-client');
+                
+                logger.info(`Using tsp-client from: ${tspClientDir}`);
+                const scriptCommand = ['npm', '--prefix', tspClientDir, 'exec', '--no', '--', 'tsp-client', 'init', '--update-if-exists', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
@@ -273,7 +276,11 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
 
-            await lintFix(packagePath);
+            await customizeCodes(packagePath);
+
+            if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+                await lintFix(packagePath);
+            }
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
@@ -282,7 +289,7 @@ export async function generateRLCInPipeline(options: {
                 try {
                     execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
                 } catch (error) {
-                    logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
+                    logger.warn(`Failed to build package due to: ${(error as Error)?.stack ?? error}`);
                     buildStatus = `failed`;
                 }
             } else {

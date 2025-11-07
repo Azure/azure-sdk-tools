@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LogAnalysisResponse : Response
+public class LogAnalysisResponse : CommandResponse
 {
     [JsonPropertyName("summary")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -20,7 +20,7 @@ public class LogAnalysisResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string SuggestedFix { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = $"### Summary:" + Environment.NewLine +
                      $"{Summary}" + Environment.NewLine + Environment.NewLine;
@@ -41,7 +41,7 @@ public class LogAnalysisResponse : Response
                       Environment.NewLine;
         }
 
-        return ToString(output);
+        return output;
     }
 }
 

@@ -1,40 +1,49 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
-using System.Text.Json;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.TeamFoundation.Common;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger, IOutputHelper output) : MCPTool
+    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
     {
         private readonly string commandName = "sdk-release";
-        private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
-        private readonly Option<string> branchOpt = new(["--branch"], () => "main", "Branch to release the package from") { IsRequired = false };
-        public static readonly string[] ValidLanguages = { ".NET", "Go", "Java", "JavaScript", "Python" };
-
-        public override Command GetCommand()
+        private readonly Option<string> packageNameOpt = new("--package")
         {
-            var command = new Command(commandName, "Run the release pipeline for the package") { packageNameOpt, languageOpt, branchOpt };
-            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            return command;
-        }
+            Description = "Package name",
+            Required = true,
+        };
 
-        public async override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        private readonly Option<string> languageOpt = new("--language")
         {
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
-            var branch = ctx.ParseResult.GetValueForOption(branchOpt);
-            var result = await ReleasePackageAsync(packageName, language, branch);
-            output.Output(result);
+            Description = "Language of the package",
+            Required = true,
+        };
+
+        private readonly Option<string> branchOpt = new("--branch")
+        {
+            Description = "Branch to release the package from",
+            Required = false,
+            DefaultValueFactory = _ => "main",
+        };
+        public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
+
+        protected override Command GetCommand() =>
+            new(commandName, "Run the release pipeline for the package")
+            {
+                packageNameOpt, languageOpt, branchOpt,
+            };
+
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+        {
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
+            var branch = parseResult.GetValue(branchOpt);
+            return await ReleasePackageAsync(packageName, language, branch);
         }
 
         [McpServerTool(Name = "azsdk_release_sdk"), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
@@ -44,9 +53,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 SdkReleaseResponse response = new()
                 {
-                    PackageName = packageName,
-                    Language = language
+                    PackageName = packageName
                 };
+                response.SetLanguage(language);
 
                 bool isValidParams = true;
                 if (string.IsNullOrWhiteSpace(packageName))
@@ -68,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleasePipelineStatus = "Failed";
                     isValidParams = false;
                 }
-
+                response.PackageType = package?.PackageType ?? SdkType.Unknown;
                 if (string.IsNullOrEmpty(package?.PipelineDefinitionUrl))
                 {
                     response.ReleaseStatusDetails += $"No release pipeline found for package '{packageName}' in language '{language}'. Please check the package name and language.";
@@ -79,25 +88,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (!isValidParams)
                 {
                     response.ReleasePipelineStatus = "Failed";
-                    logger.LogError(response.ReleaseStatusDetails);
+                    logger.LogError("{details}", response.ReleaseStatusDetails);
                     return response;
                 }
 
                 // Check if the package is ready for release
-                var releaseReadinessTool = new ReleaseReadinessTool(devopsService, output, releaseReadinessLogger);
+                var releaseReadinessTool = new ReleaseReadinessTool(devopsService, releaseReadinessLogger);
                 var releaseReadiness = await releaseReadinessTool.CheckPackageReleaseReadinessAsync(packageName, language);
                 if (!releaseReadiness.IsPackageReady)
                 {
                     response.ReleaseStatusDetails = $"Package is not ready for release. {releaseReadiness.PackageReadinessDetails}";
                     response.ReleasePipelineStatus = "Failed";
-                    logger.LogError(response.ReleaseStatusDetails);
+                    logger.LogError("{details}", response.ReleaseStatusDetails);
                     return response;
                 }
 
                 var buildDefinitionId = package?.PipelineDefinitionUrl?.Split('=')?.LastOrDefault();
-                logger.LogInformation($"Package {packageName} is ready for release in {language}.");
-                logger.LogInformation($"Release pipeline: {package?.PipelineDefinitionUrl}");
-                logger.LogInformation($"Triggering release pipeline for package {packageName} in {language}...");
+                logger.LogInformation("Package {packageName} is ready for release in {language}.", packageName, language);
+                logger.LogInformation("Release pipeline: {pipelineUrl}", package?.PipelineDefinitionUrl);
+                logger.LogInformation("Triggering release pipeline for package {packageName} in {language}...", packageName, language);
 
                 // Trigger the release pipeline
                 if (buildDefinitionId != null)
@@ -109,20 +118,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         response.PipelineBuildId = releasePipelineRun.Id;
                         response.ReleasePipelineStatus = releasePipelineRun.Status?.ToString() ?? "";
                         response.ReleaseStatusDetails = $"Release pipeline triggered successfully for package '{packageName}' in language '{language}'. Check the status of the pipeline after some time and approve the SDK release using the link to the pipeline run. You can find more information about release approval in https://aka.ms/azsdk/publishsdk";
-                        logger.LogInformation(response.ReleaseStatusDetails);
+                        logger.LogInformation("{details}", response.ReleaseStatusDetails);
                     }
                     else
                     {
                         response.ReleaseStatusDetails = $"Failed to trigger release pipeline for package '{packageName}' in language '{language}'. Please check your access permissions. You can find more information in https://aka.ms/azsdk/access";
                         response.ReleasePipelineStatus = "Failed";
-                        logger.LogError(response.ReleaseStatusDetails);
+                        logger.LogError("{details}", response.ReleaseStatusDetails);
                     }
                 }
                 else
                 {
                     response.ReleaseStatusDetails = $"Failed to trigger release pipeline for package '{packageName}' in language '{language}'. Build definition ID is not available in pipeline URL {package?.PipelineDefinitionUrl}. Please check and make sure that SDK is present in the main branch of SDK repo.";
                     response.ReleasePipelineStatus = "Failed";
-                    logger.LogError(response.ReleaseStatusDetails);
+                    logger.LogError("{details}", response.ReleaseStatusDetails);
                 }
 
                 return response;
@@ -133,10 +142,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 SdkReleaseResponse response = new()
                 {
                     PackageName = packageName,
-                    Language = language,
                     ReleasePipelineStatus = "Failed",
-                    ReleaseStatusDetails = $"Error: {ex.Message}"
+                    ResponseError = $"Error: {ex.Message}"
                 };
+                response.SetLanguage(language);
                 return response;
             }
         }

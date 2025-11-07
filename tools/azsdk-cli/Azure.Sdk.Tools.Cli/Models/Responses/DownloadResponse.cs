@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response model for file download operations
 /// </summary>
-public class DownloadResponse : Response
+public class DownloadResponse : CommandResponse
 {
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -20,8 +20,8 @@ public class DownloadResponse : Response
     [JsonPropertyName("total_files")]
     public int TotalFiles { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
-        return ToString(Message);
+        return Message;
     }
 }

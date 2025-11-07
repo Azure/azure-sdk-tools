@@ -8,12 +8,63 @@ from ._pylint_parser import PylintParser
 keyword_regex = re.compile(r"<(class|enum) '([\w.]+)'>")
 forward_ref_regex = re.compile(r"ForwardRef\('([\w.]+)'\)")
 name_regex = re.compile(r"([^[]*)")
+# Pattern for finding Literal expressions
+literal_regex = re.compile(r'Literal\[[^\]]+\]')
+# Pattern for normalizing quotes in Literal types - matches single quotes and their contents
+literal_quotes_regex = re.compile(r"'([^']*)'")
+
+
+def normalize_literal_quotes(value: str) -> str:
+    """Normalize quotes in Literal types for consistent rendering.
+    """
+    # Replace single quotes with double quotes for string literals for render consistency
+    return literal_quotes_regex.sub(r'"\1"', value)
+
+
+def normalize_all_literals(value: str) -> str:
+    """Find all Literal expressions and normalize quotes within them.
+    """
+    def normalize_literal_match(match):
+        literal_expr = match.group(0)
+        return normalize_literal_quotes(literal_expr)
+    return literal_regex.sub(normalize_literal_match, value)
+
+
+def process_literal_args(obj, args):
+    """Unified function to handle Literal type arguments with proper quote normalization.
+    """
+    processed_args = []
+    obj_str = str(obj)
+
+    # Check if this is a Literal type (either direct or nested)
+    is_literal = (obj_str.startswith("typing.Literal[") or
+                 "Literal[" in obj_str)
+
+    for arg in args:
+        arg_string = str(arg)
+
+        if is_literal and obj_str.startswith(("typing.Literal[")):
+            # If individual string literal arg and not enum, return normalized string
+            if isinstance(arg, str) and not hasattr(arg, '__module__'):
+                # Plain string literal, add quotes
+                arg_string = f'"{arg}"'
+        elif "Literal[" in arg_string:
+            # Normalize nested literal
+            arg_string = normalize_all_literals(arg_string)
+
+        processed_args.append(arg_string)
+
+    return processed_args
 
 
 # Monkey patch NodeNG's as_string method
 def as_string(self, preserve_quotes=False) -> str:
     """Get the source code that this node represents."""
     value = astroid.nodes.as_string.AsStringVisitor()(self)
+    # Handle Literal types - preserve quotes and normalize them
+    if value.startswith("Literal["):
+        return normalize_literal_quotes(value)
+    # For other types, optionally strip quotes
     if not preserve_quotes:
         # strip any exterior quotes
         for char in ["'", '"']:
@@ -114,8 +165,10 @@ def get_qualified_name(obj, namespace: str) -> str:
     # newer versions of Python extract inner types into __args__
     # and are no longer part of the name
     if hasattr(obj, "__args__"):
-        for arg in obj.__args__ or []:
-            arg_string = str(arg)
+        # Process all arguments with unified Literal handling
+        processed_args = process_literal_args(obj, obj.__args__ or [])
+
+        for arg_string in processed_args:
             if keyword_regex.match(arg_string):
                 value = keyword_regex.search(arg_string).group(2)
                 if value == "NoneType":

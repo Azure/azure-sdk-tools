@@ -5,10 +5,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 internal class OutputHelperTests
 {
-  private readonly string summary = "a test summary";
-  private readonly List<LogEntry> errors =
-  [
-      new LogEntry
+    private readonly string summary = "a test summary";
+    private readonly List<LogEntry> errors =
+    [
+        new LogEntry
         {
             File = "file1",
             Line = 1,
@@ -20,13 +20,13 @@ internal class OutputHelperTests
             Line = 2,
             Message = "message2"
         }
-  ];
-  private readonly string suggestedFix = "a test suggested fix";
+    ];
+    private readonly string suggestedFix = "a test suggested fix";
 
-  [Test]
-  public void TestTypedJsonOutput()
-  {
-    var json = @"{
+    [Test]
+    public void TestTypedJsonOutput()
+    {
+        var json = @"{
   ""summary"": ""a test summary"",
   ""errors"": [
     {
@@ -40,26 +40,27 @@ internal class OutputHelperTests
       ""message"": ""message2""
     }
   ],
-  ""suggested_fix"": ""a test suggested fix""
+  ""suggested_fix"": ""a test suggested fix"",
+  ""operation_status"": ""Succeeded""
 }";
 
-    var output = new OutputHelper(OutputModes.Json);
-    var formatted = output.ValidateAndFormat<LogAnalysisResponse>(json);
+        var output = new OutputHelper(OutputHelper.OutputModes.Json);
+        var formatted = output.ValidateAndFormat<LogAnalysisResponse>(json);
 
-    Assert.That(formatted, Is.EqualTo(json));
-  }
+        Assert.That(formatted, Is.EqualTo(json));
+    }
 
-  [Test]
-  public void TestPlainTextOutput()
-  {
-    var response = new LogAnalysisResponse
+    [Test]
+    public void TestPlainTextOutput()
     {
-      Summary = summary,
-      Errors = errors,
-      SuggestedFix = suggestedFix
-    };
+        var response = new LogAnalysisResponse
+        {
+            Summary = summary,
+            Errors = errors,
+            SuggestedFix = suggestedFix
+        };
 
-    var expectedStr = @"
+        var expectedStr = @"
 ### Summary:
 a test summary
 
@@ -74,9 +75,9 @@ message1
 message2
 ".TrimStart();
 
-    var output = new OutputHelper(OutputModes.Plain);
-    var formatted = output.Format(response);
+        var output = new OutputHelper(OutputHelper.OutputModes.Plain);
+        var formatted = output.Format(response);
 
-    Assert.That(formatted, Is.EqualTo(expectedStr));
-  }
+        Assert.That(formatted, Is.EqualTo(expectedStr));
+    }
 }

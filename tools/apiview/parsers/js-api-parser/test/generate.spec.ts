@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDependencies, generateApiview } from "../src/generate";
+import { buildDependencies, generateApiView } from "../src/generate";
 import { ApiModel } from "@microsoft/api-extractor-model";
 import path from "path";
 import { ReviewLine } from "../src/models";
@@ -10,7 +10,7 @@ describe("generate", () => {
       const model: ApiModel = new ApiModel();
       model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));
 
-      const result = generateApiview({
+      const result = generateApiView({
         apiModel: model,
         dependencies: {},
         meta: {
@@ -79,6 +79,87 @@ describe("generate", () => {
       expect(children?.[0].Tokens?.[0].Value).toEqual("fast-xml-parser");
       expect(children?.[0].Tokens?.[0].SkipDiff).toEqual(false);
       expect(children?.[0].Tokens?.[2].SkipDiff).toEqual(true);
+    });
+  });
+
+  describe("cross-language IDs", () => {
+    it("sets CrossLanguageId when mapping is provided", () => {
+      const model: ApiModel = new ApiModel();
+      model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));
+
+      const crossLanguageDefinitionIds = {
+        "@azure/test-package!KnownFoo:enum": "TestPackage.KnownFoo",
+      };
+
+      const result = generateApiView({
+        apiModel: model,
+        dependencies: {},
+        meta: {
+          Name: "",
+          PackageName: "",
+          PackageVersion: "",
+          ParserVersion: "",
+          Language: "JavaScript",
+        },
+        crossLanguageDefinitionIds,
+      });
+
+      const enumReviewLine = result.ReviewLines[0].Children?.find(
+        (c: ReviewLine) => c.LineId === "@azure/test-package!KnownFoo:enum",
+      );
+      expect(enumReviewLine).toBeDefined();
+      expect(enumReviewLine?.CrossLanguageId).toEqual("TestPackage.KnownFoo");
+    });
+
+    it("does not set CrossLanguageId when mapping is not provided", () => {
+      const model: ApiModel = new ApiModel();
+      model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));
+
+      const result = generateApiView({
+        apiModel: model,
+        dependencies: {},
+        meta: {
+          Name: "",
+          PackageName: "",
+          PackageVersion: "",
+          ParserVersion: "",
+          Language: "JavaScript",
+        },
+      });
+
+      const enumReviewLine = result.ReviewLines[0].Children?.find(
+        (c: ReviewLine) => c.LineId === "@azure/test-package!KnownFoo:enum",
+      );
+      expect(enumReviewLine).toBeDefined();
+      expect(enumReviewLine?.CrossLanguageId).toBeUndefined();
+    });
+
+    it("does not set CrossLanguageId when item is not in mapping", () => {
+      const model: ApiModel = new ApiModel();
+      model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));
+
+      const crossLanguageDefinitionIds = {
+        "@azure/test-package!SomeOtherItem:interface": "TestPackage.SomeOtherItem",
+      };
+
+      const result = generateApiView({
+        apiModel: model,
+        dependencies: {},
+        meta: {
+          Name: "",
+          PackageName: "",
+          PackageVersion: "",
+          ParserVersion: "",
+          Language: "JavaScript",
+        },
+        crossLanguageDefinitionIds,
+      });
+
+      const enumReviewLine = result.ReviewLines[0].Children?.find(
+        (c: ReviewLine) => c.LineId === "@azure/test-package!KnownFoo:enum",
+      );
+      expect(enumReviewLine).toBeDefined();
+      expect(enumReviewLine?.CrossLanguageId).toBeUndefined();
     });
   });
 });

@@ -16,7 +16,7 @@ namespace Azure.Tools.GeneratorAgent.Authentication
 
         public TokenCredential CreateCredential(RuntimeEnvironment environment, TokenCredentialOptions? options = null)
         {
-            Logger.LogInformation("Creating credential for environment {Environment}", environment);
+            Logger.LogDebug("Creating credential for environment {Environment}", environment);
 
             return environment switch
             {

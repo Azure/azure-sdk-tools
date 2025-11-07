@@ -3,25 +3,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using System.Security;
+using System.Net.Http;
 
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
     public class TypeSpecFileServiceTests
     {
-        #region Helper Methods
-
         private static Mock<ILogger<TypeSpecFileService>> CreateMockLogger()
         {
             return new Mock<ILogger<TypeSpecFileService>>();
-        }
-
-        private static Mock<ILoggerFactory> CreateMockLoggerFactory()
-        {
-            var mockFactory = new Mock<ILoggerFactory>();
-            mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
-                .Returns(new Mock<ILogger>().Object);
-            return mockFactory;
         }
 
         private static AppSettings CreateAppSettings()
@@ -33,48 +25,44 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private static ValidationContext CreateLocalValidationContext(string typeSpecDir, string outputDir)
         {
-            return ValidationContext.CreateFromValidatedInputs(typeSpecDir, "", outputDir);
+            return ValidationContext.ValidateAndCreate(typeSpecDir, null, outputDir);
         }
 
         private static ValidationContext CreateGitHubValidationContext(string typeSpecPath, string commitId, string outputDir)
         {
-            return ValidationContext.CreateFromValidatedInputs(typeSpecPath, commitId, outputDir);
+            return ValidationContext.ValidateAndCreate(typeSpecPath, commitId, outputDir);
         }
 
         private static TypeSpecFileService CreateService(
-            AppSettings? appSettings = null,
             Mock<ILogger<TypeSpecFileService>>? mockLogger = null,
-            Mock<ILoggerFactory>? mockLoggerFactory = null,
-            ValidationContext? validationContext = null,
-            Func<ValidationContext, GitHubFileService>? gitHubServiceFactory = null)
+            GitHubFileService? gitHubFileService = null)
         {
             return new TypeSpecFileService(
-                appSettings ?? CreateAppSettings(),
                 (mockLogger ?? CreateMockLogger()).Object,
-                (mockLoggerFactory ?? CreateMockLoggerFactory()).Object,
-                validationContext ?? CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output"),
-                gitHubServiceFactory ?? CreateMockGitHubServiceFactory());
+                gitHubFileService ?? CreateGitHubFileService());
         }
 
-        private static Func<ValidationContext, GitHubFileService> CreateMockGitHubServiceFactory()
+        private static GitHubFileService CreateGitHubFileService()
         {
-            return validationContext =>
-            {
-                var appSettings = CreateAppSettings();
-                var logger = new Mock<ILogger<GitHubFileService>>().Object;
-                var httpClient = new HttpClient();
-                return new GitHubFileService(appSettings, logger, validationContext, httpClient);
-            };
+            var appSettings = CreateAppSettings();
+            var logger = new Mock<ILogger<GitHubFileService>>().Object;
+            var httpClient = new HttpClient();
+            return new GitHubFileService(appSettings, logger, httpClient);
         }
 
-        #endregion
-
-        #region Test Environment Fixture
+        private static Mock<GitHubFileService> CreateMockGitHubService()
+        {
+            var mock = new Mock<GitHubFileService>();
+            // Note: Cannot mock concrete GitHubFileService directly, this is for illustration
+            return mock;
+        }
 
         private sealed class TestEnvironmentFixture : IDisposable
         {
             private readonly string _tempDirectory;
             private bool _disposed;
+
+            public string TempDirectory => _tempDirectory;
 
             public TestEnvironmentFixture()
             {
@@ -103,7 +91,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             public string CreateValidGitHubTypeSpecPath()
             {
-                return "https://github.com/Azure/azure-rest-api-specs/tree/main/specification/typespec";
+                return "specification/typespec";
             }
 
             public string CreateValidCommitId()
@@ -131,103 +119,46 @@ namespace Azure.Tools.GeneratorAgent.Tests
             }
         }
 
-        #endregion
-
-        #region Constructor Tests
-
         [Test]
         public void Constructor_WithValidParameters_ShouldCreateInstance()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
-            var gitHubServiceFactory = CreateMockGitHubServiceFactory();
+            var gitHubFileService = CreateGitHubFileService();
 
             // Act
-            var service = CreateService(appSettings, mockLogger, mockLoggerFactory, validationContext, gitHubServiceFactory);
+            var service = CreateService(mockLogger, gitHubFileService);
 
             // Assert
             Assert.That(service, Is.Not.Null);
-            httpClient.Dispose();
-        }
-
-        [Test]
-        public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
-        {
-            // Arrange
-            var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
-            var gitHubServiceFactory = CreateMockGitHubServiceFactory();
-
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(null!, mockLogger.Object, mockLoggerFactory.Object, validationContext, gitHubServiceFactory));
-            Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
-            httpClient.Dispose();
         }
 
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
-            var gitHubServiceFactory = CreateMockGitHubServiceFactory();
+            var gitHubFileService = CreateGitHubFileService();
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(appSettings, null!, mockLoggerFactory.Object, validationContext, gitHubServiceFactory));
+                new TypeSpecFileService(null!, gitHubFileService));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
-            httpClient.Dispose();
         }
 
         [Test]
-        public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
+        public void Constructor_WithNullGitHubFileService_ShouldThrowArgumentNullException()
         {
             // Arrange
-            var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var validationContext = CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output");
-            var httpClient = new HttpClient();
-            var gitHubServiceFactory = CreateMockGitHubServiceFactory();
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(appSettings, mockLogger.Object, null!, validationContext, gitHubServiceFactory));
-            Assert.That(exception!.ParamName, Is.EqualTo("loggerFactory"));
-            httpClient.Dispose();
+                new TypeSpecFileService(mockLogger.Object, null!));
+            Assert.That(exception!.ParamName, Is.EqualTo("gitHubFileService"));
         }
 
         [Test]
-        public void Constructor_WithNullValidationContext_ShouldThrowArgumentNullException()
-        {
-            // Arrange
-            var appSettings = CreateAppSettings();
-            var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-            var httpClient = new HttpClient();
-            var gitHubServiceFactory = CreateMockGitHubServiceFactory();
-
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(appSettings, mockLogger.Object, mockLoggerFactory.Object, null!, gitHubServiceFactory));
-            Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
-            httpClient.Dispose();
-        }
-
-        #endregion
-
-        #region Local TypeSpec File Tests
-
-        [Test]
-        public async Task GetTypeSpecFilesAsync_WithLocalPath_ShouldReturnFiles()
+        public async Task GetTypeSpecFilesAsync_WithValidLocalPath_ShouldReturnFiles()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
@@ -235,18 +166,89 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var outputDir = fixture.CreateValidOutputDirectory();
 
             var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
-            var service = CreateService(validationContext: validationContext);
+            var service = CreateService();
 
             // Act
-            var result = await service.GetTypeSpecFilesAsync(CancellationToken.None);
+            var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.GreaterThan(0));
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.Count, Is.GreaterThan(0));
+                Assert.That(result.ContainsKey("main.tsp"), Is.True);
+                Assert.That(result["main.tsp"], Does.Contain("Valid TypeSpec content"));
+            });
         }
 
         [Test]
-        public void GetTypeSpecFilesAsync_WithCancellation_ShouldThrowOperationCanceledException()
+        public async Task GetTypeSpecFilesAsync_WithMultipleFiles_ShouldReturnAllFiles()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            
+            File.WriteAllText(Path.Combine(typeSpecDir, "second.tsp"), "// Second file content");
+            File.WriteAllText(Path.Combine(typeSpecDir, "third.tsp"), "// Third file content");
+            
+            var outputDir = fixture.CreateValidOutputDirectory();
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Count, Is.EqualTo(3));
+                Assert.That(result.ContainsKey("main.tsp"), Is.True);
+                Assert.That(result.ContainsKey("second.tsp"), Is.True);
+                Assert.That(result.ContainsKey("third.tsp"), Is.True);
+            });
+        }
+
+        [Test]
+        public async Task GetTypeSpecFilesAsync_WithSubDirectories_ShouldReturnAllFiles()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            
+            var subDir = Path.Combine(typeSpecDir, "subdir");
+            Directory.CreateDirectory(subDir);
+            File.WriteAllText(Path.Combine(subDir, "subfile.tsp"), "// Sub file content");
+            
+            var outputDir = fixture.CreateValidOutputDirectory();
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Count, Is.EqualTo(2));
+                Assert.That(result.ContainsKey("main.tsp"), Is.True);
+                Assert.That(result.ContainsKey("subfile.tsp"), Is.True);
+            });
+        }
+
+        [Test]
+        public void GetTypeSpecFilesAsync_WithNullValidationContext_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var service = CreateService();
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(() => 
+                service.GetTypeSpecFilesAsync(null!, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
+        }
+
+        [Test]
+        public void GetTypeSpecFilesAsync_WithCancellation_ShouldThrowInvalidOperationException()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
@@ -254,60 +256,371 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var outputDir = fixture.CreateValidOutputDirectory();
 
             var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
-            var service = CreateService(validationContext: validationContext);
+            var service = CreateService();
 
             using var cts = new CancellationTokenSource();
             cts.Cancel();
 
+            // Act & Assert - Service wraps TaskCanceledException in InvalidOperationException
+            Assert.ThrowsAsync<InvalidOperationException>(() => 
+                service.GetTypeSpecFilesAsync(validationContext, cts.Token));
+        }
+
+        [Test]
+        public async Task GetTypeSpecFilesAsync_WithLargeFiles_ShouldHandleCorrectly()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            
+            // Create a large file
+            var largeContent = new string('a', 100000); // 100KB content
+            File.WriteAllText(Path.Combine(typeSpecDir, "large.tsp"), largeContent);
+            
+            var outputDir = fixture.CreateValidOutputDirectory();
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ContainsKey("large.tsp"), Is.True);
+                Assert.That(result["large.tsp"].Length, Is.EqualTo(100000));
+            });
+        }
+
+        [Test]
+        public async Task GetTypeSpecFilesAsync_WithSpecialCharactersInContent_ShouldHandleCorrectly()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            
+            var specialContent = "// Special chars: äöü 中文 🚀 \n\r\t";
+            File.WriteAllText(Path.Combine(typeSpecDir, "special.tsp"), specialContent, System.Text.Encoding.UTF8);
+            
+            var outputDir = fixture.CreateValidOutputDirectory();
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ContainsKey("special.tsp"), Is.True);
+                Assert.That(result["special.tsp"], Is.EqualTo(specialContent));
+            });
+        }
+
+        [Test]
+        public async Task UpdateTypeSpecFileAsync_WithValidParameters_ShouldUpdateFile()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            var fileName = "updated.tsp";
+            var content = "// Updated content";
+
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync(fileName, content, validationContext, CancellationToken.None);
+
+            // Assert
+            var filePath = Path.Combine(typeSpecDir, fileName);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.True);
+                Assert.That(File.Exists(filePath), Is.True);
+                Assert.That(File.ReadAllText(filePath), Is.EqualTo(content));
+            });
+        }
+
+        [Test]
+        public async Task UpdateTypeSpecFileAsync_OverwriteExistingFile_ShouldUpdateContent()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            var fileName = "main.tsp";
+            var newContent = "// Updated main content";
+
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync(fileName, newContent, validationContext, CancellationToken.None);
+
+            // Assert
+            var filePath = Path.Combine(typeSpecDir, fileName);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.True);
+                Assert.That(File.ReadAllText(filePath), Is.EqualTo(newContent));
+            });
+        }
+
+        [Test]
+        public void UpdateTypeSpecFileAsync_WithNullFileName_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
             // Act & Assert
-            Assert.ThrowsAsync<TaskCanceledException>(
-                async () => await service.GetTypeSpecFilesAsync(cts.Token));
-        }
-
-        #endregion
-
-        #region GitHub TypeSpec File Tests
-
-        [Test]
-        public void GetTypeSpecFilesAsync_WithGitHubPath_ShouldUseGitHubService()
-        {
-            // Arrange
-            using var fixture = new TestEnvironmentFixture();
-            var typeSpecPath = fixture.CreateValidGitHubTypeSpecPath();
-            var commitId = fixture.CreateValidCommitId();
-            var outputDir = fixture.CreateValidOutputDirectory();
-            var mockLogger = CreateMockLogger();
-            var mockLoggerFactory = CreateMockLoggerFactory();
-
-            var validationContext = CreateGitHubValidationContext(typeSpecPath, commitId, outputDir);
-            var appSettings = CreateAppSettings();
-            var httpClient = new HttpClient();
-            var gitHubServiceFactory = CreateMockGitHubServiceFactory();
-
-            var service = CreateService(appSettings, mockLogger, mockLoggerFactory, validationContext, gitHubServiceFactory);
-
-            // Act & Assert - Just verify the service was created (GitHub service creation will happen on demand)
-            Assert.That(service, Is.Not.Null);
-
-            httpClient.Dispose();
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(() => 
+                service.UpdateTypeSpecFileAsync(null!, "content", validationContext, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("fileName"));
         }
 
         [Test]
-        public void Dispose_ShouldDisposeGitHubService()
+        public void UpdateTypeSpecFileAsync_WithEmptyFileName_ShouldThrowArgumentException()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
-            var typeSpecPath = fixture.CreateValidGitHubTypeSpecPath();
-            var commitId = fixture.CreateValidCommitId();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
             var outputDir = fixture.CreateValidOutputDirectory();
 
-            var validationContext = CreateGitHubValidationContext(typeSpecPath, commitId, outputDir);
-            var service = CreateService(validationContext: validationContext);
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
 
-            // Act & Assert - Just verify service was created successfully (no longer implements IDisposable)
-            Assert.That(service, Is.Not.Null);
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(() => 
+                service.UpdateTypeSpecFileAsync("", "content", validationContext, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("fileName"));
         }
 
-        #endregion
+        [Test]
+        public void UpdateTypeSpecFileAsync_WithWhitespaceFileName_ShouldThrowArgumentException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(() => 
+                service.UpdateTypeSpecFileAsync("   ", "content", validationContext, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("fileName"));
+        }
+
+        [Test]
+        public void UpdateTypeSpecFileAsync_WithNullContent_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(() => 
+                service.UpdateTypeSpecFileAsync("test.tsp", null!, validationContext, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("content"));
+        }
+
+        [Test]
+        public void UpdateTypeSpecFileAsync_WithNullValidationContext_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var service = CreateService();
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(() => 
+                service.UpdateTypeSpecFileAsync("test.tsp", "content", null!, CancellationToken.None));
+            Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
+        }
+
+        [Test]
+        public void UpdateTypeSpecFileAsync_WithPathTraversalAttempt_ShouldThrowSecurityException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<SecurityException>(() => 
+                service.UpdateTypeSpecFileAsync("../../../evil.tsp", "malicious content", validationContext, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("attempts to write outside current directory"));
+        }
+
+        [Test]
+        public void UpdateTypeSpecFileAsync_WithAbsolutePathOutsideDirectory_ShouldThrowSecurityException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<SecurityException>(() => 
+                service.UpdateTypeSpecFileAsync("C:\\temp\\evil.tsp", "malicious content", validationContext, CancellationToken.None));
+            Assert.That(exception!.Message, Does.Contain("attempts to write outside current directory"));
+        }
+
+
+        [Test]
+        public void GetTypeSpecFilesAsync_AfterDispose_ShouldThrowObjectDisposedException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            service.Dispose();
+
+            // Assert
+            Assert.ThrowsAsync<ObjectDisposedException>(() => 
+                service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None));
+        }
+
+        [Test]
+        public void UpdateTypeSpecFileAsync_AfterDispose_ShouldThrowObjectDisposedException()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            service.Dispose();
+
+            // Assert
+            Assert.ThrowsAsync<ObjectDisposedException>(() => 
+                service.UpdateTypeSpecFileAsync("test.tsp", "content", validationContext, CancellationToken.None));
+        }
+
+        [Test]
+        public void Dispose_CalledMultipleTimes_ShouldNotThrow()
+        {
+            // Arrange
+            var service = CreateService();
+
+            // Act & Assert
+            Assert.Multiple(() =>
+            {
+                Assert.DoesNotThrow(() => service.Dispose());
+                Assert.DoesNotThrow(() => service.Dispose());
+                Assert.DoesNotThrow(() => service.Dispose());
+            });
+        }
+
+        [Test]
+        public async Task UpdateTypeSpecFileAsync_WithEmptyContent_ShouldCreateEmptyFile()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync("empty.tsp", "", validationContext, CancellationToken.None);
+
+            // Assert
+            var filePath = Path.Combine(typeSpecDir, "empty.tsp");
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.True);
+                Assert.That(File.Exists(filePath), Is.True);
+                Assert.That(File.ReadAllText(filePath), Is.EqualTo(""));
+            });
+        }
+
+        [Test]
+        public async Task UpdateTypeSpecFileAsync_WithVeryLongContent_ShouldHandleCorrectly()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            var longContent = new string('a', 1000000); // 1MB content
+
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync("large.tsp", longContent, validationContext, CancellationToken.None);
+
+            // Assert
+            var filePath = Path.Combine(typeSpecDir, "large.tsp");
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.True);
+                Assert.That(File.Exists(filePath), Is.True);
+                Assert.That(File.ReadAllText(filePath).Length, Is.EqualTo(1000000));
+            });
+        }
+
+        [Test]
+        public async Task GetTypeSpecFilesAsync_WithReadOnlyFile_ShouldReadCorrectly()
+        {
+            // Arrange
+            using var fixture = new TestEnvironmentFixture();
+            var typeSpecDir = fixture.CreateValidTypeSpecDirectory();
+            var outputDir = fixture.CreateValidOutputDirectory();
+
+            // Make main.tsp read-only
+            var mainFile = Path.Combine(typeSpecDir, "main.tsp");
+            File.SetAttributes(mainFile, FileAttributes.ReadOnly);
+
+            var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
+            var service = CreateService();
+
+            try
+            {
+                // Act
+                var result = await service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None);
+
+                // Assert
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result, Is.Not.Null);
+                    Assert.That(result.ContainsKey("main.tsp"), Is.True);
+                    Assert.That(result["main.tsp"], Does.Contain("Valid TypeSpec content"));
+                });
+            }
+            finally
+            {
+                // Cleanup: Remove read-only attribute
+                File.SetAttributes(mainFile, FileAttributes.Normal);
+            }
+        }
     }
 }

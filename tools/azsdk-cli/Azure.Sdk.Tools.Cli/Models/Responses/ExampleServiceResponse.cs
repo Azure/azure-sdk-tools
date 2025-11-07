@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response model for Azure service example operations
 /// </summary>
-public class ExampleServiceResponse : Response
+public class ExampleServiceResponse : CommandResponse
 {
     [JsonPropertyName("service_name")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -26,7 +26,7 @@ public class ExampleServiceResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, string>? Details { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var sb = new StringBuilder();
 
@@ -54,6 +54,6 @@ public class ExampleServiceResponse : Response
             }
         }
 
-        return ToString(sb); // Calls base method to include error formatting
+        return sb.ToString();
     }
 }

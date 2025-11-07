@@ -35,7 +35,7 @@
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
-/tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
+/tools/js-sdk-release-tools/            @qiaozha @MaryGao
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
@@ -47,10 +47,25 @@
 /tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj
-/tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
+/tools/perf-regression-finder/          @m-redding @jsquire
 
+#####################
+# Attestation
+#####################              
+/eng/pipelines/cpex-attestation.yml     @smw-ms @praveenkuttappan @maririos 
+/eng/scripts/Attest-CPEX-KPIs.ps1       @smw-ms @praveenkuttappan @maririos 
+
+#####################
+# Azure SDK Tools MCP
+#####################
+/eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
 # PRLabel: %azsdk-cli
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft @l0lawrence @timovv @samvaity
+/tools/ai-evals/azsdk-mcp/              @jeo02 @smw-ms @praveenkuttappan @maririos
+# PRLabel: %azsdk-cli
+/tools/azsdk-cli/                       @azure/azsdk-cli
+# PRLabel: %azsdk-cli %design-discussion
+/tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
+
 
 ###########
 # Stress
@@ -62,14 +77,14 @@
 # .NET Client Tools
 ###########
 /src/dotnet/                            @azure/azsdknet @jsquire
-/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
+/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
 /tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
+/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
@@ -77,7 +92,6 @@
 /src/swift/                               @tjprescott
 /src/java/apiview-java-processor/         @JonathanGiles
 /src/go/                                  @jhendrixMSFT @chlowell @RickWinter
-
 
 ###########
 # Pylint checkers
@@ -87,9 +101,9 @@
 ###########
 # Azure SDK Q&A Bot
 ###########
-/tools/sdk-ai-bots/                                 @lirenhe @wanlwanl @chunyu3 @JiaqiZhang-Dev
+/tools/sdk-ai-bots/                                 @lirenhe @chunyu3 @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-backend         @JiaqiZhang-Dev
-/tools/sdk-ai-bots/azure-sdk-qa-bot                 @wanlwanl
+/tools/sdk-ai-bots/azure-sdk-qa-bot                 @chunyu3 @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
-/tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev @wanlwanl
-/tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @wanlwanl
+/tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @chunyu3 @JiaqiZhang-Dev

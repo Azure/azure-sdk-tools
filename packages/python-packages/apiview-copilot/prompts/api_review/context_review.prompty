@@ -9,55 +9,126 @@ model:
   configuration:
     type: azure_openai
     azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-5
+    azure_deployment: o3-mini
     api_version: 2025-03-01-preview
   parameters:
     frequency_penalty: 0
     presence_penalty: 0
     max_completion_tokens: 80000
-    reasoning_effort: "medium"
-    response_format: ${file:guideline_result_schema.json}
+    reasoning_effort: "high"
+    response_format: ${file:comment_result_schema.json}
 sample:
   language: python
   context: |
-    [{
-      "id": "python_implementation=html=python-codestyle-kwargs",
-      "title": "Use Keyword-Only Arguments for No Obvious Ordering",
-      "content": "DO use keyword-only arguments for arguments that have no obvious ordering.\n\n",
-      "language": "python",
-      "related_guidelines": [],
-      "related_examples": [
-        "python_implementation=html=python-codestyle-kwargs-example-1",
-        "python_implementation=html=python-codestyle-kwargs-example-2"
-      ]
-    },
-    {
-      "id": "python_implementation=html=python-codestyle-positional-params",
-      "title": "Specify Parameter Names for Positional Parameters",
-      "content": "DO specify the parameter name when calling methods with more than two required positional parameters.\n\n",
-      "language": "python",
-      "related_guidelines": [],
-      "related_examples": [
-        "python_implementation=html=python-codestyle-positional-params-example-1",
-        "python_implementation=html=python-codestyle-positional-params-example-2"
-      ]
-    },
-    {
-      "id": "python_implementation=html=python-codestyle-optional-param-calling",
-      "title": "Specify Parameter Names for Optional Parameters",
-      "content": "DO specify the parameter name for optional parameters when calling functions.\n\n",
-      "language": "python",
-      "related_guidelines": [],
-      "related_examples": [
-        "python_implementation=html=python-codestyle-optional-param-calling-example-1",
-        "python_implementation=html=python-codestyle-optional-param-calling-example-2"
-      ]
-    },
-    {
-      "id": "python_design.html#python-models-enum-name-uppercase",
-      "category": "Enumerations",
-      "text": "DO use UPPERCASE for enum member names.\n\n```python\n\n# Yes\nclass MyGoodEnum(str, Enum):\n    ONE = 'one'\n    TWO = 'two'\n\n# No\nclass MyBadEnum(str, Enum):\n    One = 'one' # No - using PascalCased name.\n    two = 'two' # No - using all lower case name.\n\n```"
-    }]
+    > **memory_id:** memory-abc<br>**score:** 78<br>
+    ## Don't use the term "Crops" in enum values
+
+    It was suggested to avoid using the term "Crops" in enum values, as it may not accurately represent the underlying data or functionality. Instead, use Noodles.
+
+    ### BAD Examples
+
+    ```python
+    FARM_CROPS = 'farmCrops'
+    ```
+
+    ### GOOD Examples
+
+    ```python
+    FARM_NOODLES = 'farmNoodles'
+    ```
+
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 51<br>
+    ## Use keyword-only arguments for optional or less-used arguments in Python 3
+
+    DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.
+
+    Note that you can even have required keyword-only arguments.
+
+    ### GOOD Examples
+
+    ```python
+    def foo(a, b, *, c, d=None):
+        # Note that I can even have required keyword-only arguments...
+        ...
+    ```
+
+    > **guideline_id:** python_implementation.html#python-codestyle-positional-params<br>**score:** 65<br>
+    ## Specify parameter names when calling methods with more than two required positional parameters
+
+    DO specify the parameter name when calling methods with more than two required positional parameters.
+
+    ### GOOD Examples
+
+    ```python
+    def foo(a, b, c):
+        pass
+
+    def bar(d, e):
+        pass
+
+    # Yes:
+    foo(a=1, b=2, c=3)
+    bar(1, 2)
+    bar(e=3, d=4)
+    ```
+
+    ### BAD Examples
+
+    ```python
+    def foo(a, b, c):
+        pass
+
+    # No:
+    foo(1, 2, 3)
+    ```
+
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-param-calling<br>**score:** 64<br>
+    ## Specify parameter names for optional parameters when calling functions
+
+    DO specify the parameter name for optional parameters when calling functions.
+
+    ### GOOD Examples
+
+    ```python
+    def foo(a, b=1, c=None):
+        pass
+
+    # Yes:
+    foo(1, b=2, c=3)
+    ```
+
+    ### BAD Examples
+
+    ```python
+    def foo(a, b=1, c=None):
+        pass
+
+    # No:
+    foo(1, 2, 3)
+    ```
+
+    > **guideline_id:** python_design.html#python-models-enum-name-uppercase<br>**score:** 66<br>
+    ## Use UPPERCASE names for enum members
+
+    DO use UPPERCASE names for enum names.
+
+    ### GOOD Examples
+
+    ```python
+    class MyGoodEnum(str, Enum):
+        ONE = 'one'
+        TWO = 'two'
+
+    ```
+
+    ### BAD Examples
+
+    ```python
+    class MyBadEnum(str, Enum):
+        One = 'one' # No - using PascalCased name.
+        two = 'two' # No - using all lower case name.
+
+    ```
   content: |
     ```python
     500: class azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):

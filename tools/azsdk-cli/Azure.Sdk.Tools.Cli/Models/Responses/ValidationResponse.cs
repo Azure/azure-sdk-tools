@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response model for prompt validation operations
 /// </summary>
-public class ValidationResponse : Response
+public class ValidationResponse : CommandResponse
 {
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -24,8 +24,8 @@ public class ValidationResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? MissingFiles { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
-        return ToString(Message);
+        return Message;
     }
 }

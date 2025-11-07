@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -37,6 +38,8 @@ public class AgentHelpers
                 Downvotes = comment.Downvotes.Count,
                 CreatedBy = comment.CreatedBy,
                 CommentText = comment.CommentText,
+                IsResolved = comment.IsResolved,
+                Severity = comment.Severity?.ToString() ?? String.Empty
             }).ToList();
     }
 

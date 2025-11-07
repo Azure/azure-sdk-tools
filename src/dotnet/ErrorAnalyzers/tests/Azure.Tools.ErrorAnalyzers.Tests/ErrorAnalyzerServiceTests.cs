@@ -25,13 +25,17 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         }
 
         [Test]
-        public void GetFix_WithUnsupportedError_ReturnsNull()
+        public void GetFix_WithUnsupportedError_ReturnsFallbackFix()
         {
             var error = new RuleError("UNSUPPORTED", "Unsupported error type");
 
             var fix = ErrorAnalyzerService.GetFix(error);
 
-            Assert.That(fix, Is.Null);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix!.Action, Is.EqualTo(FixAction.AgentPrompt));
+            var promptFix = fix as AgentPromptFix;
+            Assert.That(promptFix, Is.Not.Null);
+            Assert.That(promptFix!.Prompt, Does.Contain("Analyze and Fix Unknown Error")); // Fallback prompt
         }
 
         [Test]
@@ -46,7 +50,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             var fixes = ErrorAnalyzerService.GetFixes(errors).ToList();
 
-            Assert.That(fixes.Count, Is.EqualTo(2));
+            Assert.That(fixes.Count, Is.EqualTo(3)); // Now includes fallback fix
             Assert.That(fixes.All(f => f.Action == FixAction.AgentPrompt), Is.True);
         }
 
@@ -57,13 +61,14 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         }
 
         [Test]
-        public void GetFix_WithValidErrorButNoContext_StillReturnsFix()
+        public void GetFix_WithValidErrorButNoContext_StillReturnsFallbackFix()
         {
             var error = new RuleError("TESTNOCONTEXT", "Test error with no context");
 
             var fix = ErrorAnalyzerService.GetFix(error);
 
-            Assert.That(fix, Is.Null); // No prompt for this rule, so no fix
+            Assert.That(fix, Is.Not.Null); // Now returns fallback fix
+            Assert.That(fix!.Action, Is.EqualTo(FixAction.AgentPrompt));
         }
     }
 }

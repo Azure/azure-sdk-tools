@@ -27,12 +27,75 @@ namespace DataSource
 
             IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
 
-            string? readme = config["ReadmeName"];
             string? language = config["Language"];
             string branch = config["Branch"]!;
-            string? package = language?.ToLower() != "javascript" && language?.ToLower() != "dotnet" ? config["PackageName"] : config["CsvPackageName"];
+            string? package = config["PackageName"];
             string? cookieName = config["CookieName"];
             string? cookieValue = config["CookieValue"];
+
+            if (string.IsNullOrEmpty(language))
+            {
+                throw new ArgumentException("Language must be specified in the configuration.");
+            }
+            if (string.IsNullOrEmpty(package))
+            {
+                throw new ArgumentException("PackageName must be specified in the configuration.");
+            }
+
+            string configPath = Path.Combine(AppContext.BaseDirectory, "../../../config.json");
+            if (!File.Exists(configPath))
+            {
+                throw new FileNotFoundException($"Config file not found: {configPath}");
+            }
+            string configJson = File.ReadAllText(configPath);
+            var configRoot = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, ConfigEntry>>>(configJson);
+
+            string? readme = null;
+            if (configRoot != null)
+            {
+                var langKey = language.ToLower();
+                if (configRoot.TryGetValue(langKey, out var pkgDict) && pkgDict != null)
+                {
+                    if (pkgDict.TryGetValue(package, out var entry) && entry != null)
+                    {
+                        readme = entry.readme;
+                        if ( (langKey == "javascript" || langKey == "dotnet") && !string.IsNullOrEmpty(entry.csvPackage))
+                        {
+                            package = entry.csvPackage;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Package: {package} not found in config.json");
+                        Console.WriteLine($"Therefore, its initial link does not belong to the special pattern");
+                        Console.WriteLine($"Package: {package} will be processed according to the default pattern");
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(readme))
+            {
+                var langKey = language.ToLower();
+                switch (langKey)
+                {
+                    case "python":
+                        readme = package.Replace("azure-", "") + "-readme";
+                        break;
+                    case "java":
+                        readme = package.Replace("azure-", "") + "-readme";
+                        break;
+                    case "javascript":
+                        readme = package.Replace("azure-", "") + "-readme";
+                        package = package.Replace("azure-", "@azure/");
+                        break;
+                    case "dotnet":
+                        readme = package.Replace("azure-", "").Replace("-", ".") + "-readme";
+                        package = ToPascalWithDots(package);
+                        break;
+                    default:
+                        throw new ArgumentException($"Unsupported language specified: {langKey}");
+                }
+            }
 
             bool isRest = false;
 
@@ -58,6 +121,7 @@ namespace DataSource
             string? pageLink = GetPackagePageOverview(language, readme, versionSuffix, branch);
 
             List<string> allPages = new List<string>();
+            allPages.Add(pageLink);
 
             await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName ?? string.Empty, cookieValue ?? string.Empty, branch);
 
@@ -68,7 +132,7 @@ namespace DataSource
                 Console.WriteLine("Data saved successfully.");
             }
 
-            ExportData(allPages);
+            ExportData(allPages.Distinct().ToList());
         }
 
         static string GetPackagePageOverview(string? language, string? readme, string versionSuffix, string branch = "")
@@ -573,6 +637,15 @@ namespace DataSource
             Console.WriteLine(jsonString);
             File.WriteAllText("../ContentValidation.Test/appsettings.json", jsonString);
         }
+        
+        static string ToPascalWithDots(string input)
+        {
+            var parts = input
+                .Split('-', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => CultureInfo.InvariantCulture.TextInfo
+                    .ToTitleCase(p.ToLowerInvariant()));
+            return string.Join(".", parts);
+        }
     }
 
     public class PackageCSV
@@ -580,6 +653,12 @@ namespace DataSource
         public string Package { get; set; } = string.Empty;
         public string VersionGA { get; set; } = string.Empty;
         public string VersionPreview { get; set; } = string.Empty;
+    }
+
+    public class ConfigEntry
+    {
+        public string readme { get; set; } = string.Empty;
+        public string? csvPackage { get; set; } = string.Empty;
     }
 
     public class PythonPackageMap : ClassMap<PackageCSV>

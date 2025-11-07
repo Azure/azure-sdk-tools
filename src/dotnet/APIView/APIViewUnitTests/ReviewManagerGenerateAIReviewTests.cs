@@ -18,6 +18,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -119,13 +120,17 @@ public class ReviewManagerGenerateAIReviewTests
             mocks.CommentManager.Object,
             mocks.CodeFileRepository.Object,
             mocks.CommentsRepository.Object,
+            mocks.ApiRevisionsRepository.Object,
             mocks.SignalRHubContext.Object,
             mocks.LanguageServices,
             mocks.TelemetryClient,
             mocks.CodeFileManager.Object,
             mocks.Configuration.Object,
             mocks.HttpClientFactory.Object,
-            mocks.PollingJobQueueManager.Object
+            mocks.PollingJobQueueManager.Object,
+            mocks.NotificationManager.Object,
+            mocks.PullRequestsRepository.Object,
+            mocks.Logger.Object
         );
         return (reviewManager, mocks);
     }
@@ -158,12 +163,16 @@ public class ReviewManagerGenerateAIReviewTests
         public Mock<ICommentsManager> CommentManager { get; } = new();
         public Mock<IBlobCodeFileRepository> CodeFileRepository { get; } = new();
         public Mock<ICosmosCommentsRepository> CommentsRepository { get; } = new();
+        public Mock<ICosmosAPIRevisionsRepository> ApiRevisionsRepository { get; } = new();
         public Mock<IHubContext<SignalRHub>> SignalRHubContext { get; } = new();
         public TelemetryClient TelemetryClient { get; } = new(new TelemetryConfiguration());
         public Mock<ICodeFileManager> CodeFileManager { get; } = new();
         public Mock<IConfiguration> Configuration { get; } = new();
         public Mock<IHttpClientFactory> HttpClientFactory { get; } = new();
         public Mock<IPollingJobQueueManager> PollingJobQueueManager { get; } = new();
+        public Mock<INotificationManager> NotificationManager { get; } = new();
+        public Mock<ICosmosPullRequestsRepository> PullRequestsRepository { get; } = new();
+        public Mock<ILogger<ReviewManager>> Logger { get; } = new();
 
         public IEnumerable<LanguageService> LanguageServices { get; } = new List<LanguageService>();
     }

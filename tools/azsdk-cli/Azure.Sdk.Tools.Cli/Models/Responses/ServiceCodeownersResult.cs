@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class ServiceCodeownersResult : Response
+public class ServiceCodeownersResult : CommandResponse
 {
     [JsonPropertyName("message")]
     public string Message { get; set; } = "";
@@ -10,7 +10,7 @@ public class ServiceCodeownersResult : Response
     [JsonPropertyName("code_owners")]
     public List<CodeownersValidationResult> CodeOwners { get; set; } = new();
 
-    public override string ToString()
+    protected override string Format()
     {
         var lines = new List<string>
         {
@@ -26,6 +26,6 @@ public class ServiceCodeownersResult : Response
             }
         }
 
-        return ToString(string.Join(Environment.NewLine, lines));
+        return string.Join(Environment.NewLine, lines);
     }
 }

@@ -15,6 +15,7 @@ namespace ReportHelper
 
             string HostPackageName = config["PackageName"] ?? "PackageName";
             string language = config["Language"] ?? "Language";
+            string rules = config["Rules"] ?? "Rules";
             string owner = config["Owner"] ?? "Owner";
             string repo = config["Repo"] ?? "Repo";
             string githubToken = config["GitHubToken"] ?? "GitHubToken";
@@ -58,7 +59,7 @@ namespace ReportHelper
                         allPackageList = new List<TPackage4Json>();
                     }
                 }
-
+                
                 // Finding the target package
                 foreach (var package in allPackageList)
                 {
@@ -85,16 +86,20 @@ namespace ReportHelper
                 string differentSheetName = "DiffSheet";
                 ExcelHelper4Test.AddTestResult(differentList, excelFileName, differentSheetName);
 
+                List<string> syncIssuesRules = rules
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries) 
+                    .ToList();
                 // Update github issues
-                await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
-            }
-            else if (newDataList.Count != 0)
+                await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language, syncIssuesRules);
+            }else if (newDataList.Count != 0)
             {
+                List<string> syncIssuesRules = rules
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries) 
+                    .ToList();
                 // Create github issues
-                await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
+                await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language, syncIssuesRules);
 
-            }
-            else
+            }else
             {
                 Console.WriteLine($"There are no content validation issue with {HostPackageName} in {language}.");
             }

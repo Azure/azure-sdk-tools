@@ -40,73 +40,52 @@ public class PythonProcessOptions : ProcessOptions
     }
 
     /// <summary>
-    /// Resolves a Python executable path from venv or system PATH.
-    /// Checks in order: AZSDKTOOLS_PYTHON_VENV_PATH env var, system PATH.
+    /// Resolves a Python executable path from venv.
+    /// Checks in order: AZSDKTOOLS_PYTHON_VENV_PATH env var.
     /// </summary>
     /// <param name="executableName">Name of the Python executable</param>
     /// <param name="logger">Optional logger for diagnostics</param>
     /// <returns>Resolved executable path</returns>
     public static string ResolvePythonExecutable(string executableName, ILogger? logger = null)
     {
-        string? venvPath = null;
         string? resolvedFrom = null;
 
         // Check environment variable
-        var envVenvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
-        if (!string.IsNullOrWhiteSpace(envVenvPath))
-        {
-            venvPath = envVenvPath;
-            resolvedFrom = $"{VenvEnvironmentVariable} environment variable";
-        }
+        var venvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
 
         // Try to resolve from venv if path is provided
         if (!string.IsNullOrWhiteSpace(venvPath))
         {
             if (!Directory.Exists(venvPath))
             {
-                logger?.LogWarning("Python venv path does not exist: {VenvPath}. Falling back to system PATH.", venvPath);
+                throw new DirectoryNotFoundException(
+                    $"Python venv path specified in {VenvEnvironmentVariable} does not exist: {venvPath}");
+            }
+
+            var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+            var venvExecutablePath = Path.Combine(venvPath, binDir, executableName);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (!executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    var exePath = venvExecutablePath + ".exe";
+                    logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
+                        executableName, resolvedFrom, exePath);
+                    return exePath;
+                }
+
+                logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
+                    executableName, resolvedFrom, venvExecutablePath);
+                return venvExecutablePath;
             }
             else
             {
-                var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-                var venvExecutablePath = Path.Combine(venvPath, binDir, executableName);
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    if (!executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var exePath = venvExecutablePath + ".exe";
-                        if (File.Exists(exePath))
-                        {
-                            logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
-                                executableName, resolvedFrom, exePath);
-                            return exePath;
-                        }
-                    }
-
-                    if (File.Exists(venvExecutablePath))
-                    {
-                        logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
-                            executableName, resolvedFrom, venvExecutablePath);
-                        return venvExecutablePath;
-                    }
-                }
-                else
-                {
-                    if (File.Exists(venvExecutablePath))
-                    {
-                        logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
-                            executableName, resolvedFrom, venvExecutablePath);
-                        return venvExecutablePath;
-                    }
-                }
-
-                logger?.LogWarning("Python executable '{ExecutableName}' not found in venv at {VenvPath}. Falling back to system PATH.", 
-                    executableName, venvPath);
+                logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
+                    executableName, resolvedFrom, venvExecutablePath);
+                return venvExecutablePath;
             }
         }
-
-        logger?.LogInformation("Using Python executable '{ExecutableName}' from system PATH", executableName);
         return executableName;
     }
 }

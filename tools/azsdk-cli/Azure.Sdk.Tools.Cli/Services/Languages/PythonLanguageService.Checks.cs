@@ -18,41 +18,24 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting snippet update for Python project at: {PackagePath}", packagePath);
 
-            // Find the repository root from the package path using GitHelper
             var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-            logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
-
-            // Construct path to the Python snippet updater script
             var scriptPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update", "python_snippet_updater.py");
 
-            // Check if the script exists
             if (!File.Exists(scriptPath))
             {
                 logger.LogError("Python snippet updater script not found at: {ScriptPath}", scriptPath);
                 return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
             }
 
-            logger.LogInformation("Using Python snippet updater script: {ScriptPath}", scriptPath);
-
-            var pythonCommand = GetVenvExecutable(pythonVenvPath, "python");
-
-            // Check if Python is available
-            var pythonCheckResult = await processHelper.Run(new(pythonCommand, ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+            var pythonCheckResult = await processHelper.Run(new PythonProcessOptions("python", ["--version"], logger, timeout: TimeSpan.FromSeconds(10)), cancellationToken);
             if (pythonCheckResult.ExitCode != 0)
             {
                 logger.LogError("Python is not installed or not available in PATH");
                 return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
             }
 
-            logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
-
-            // Run the Python snippet updater
-            var command = pythonCommand;
-            var args = new[] { scriptPath, packagePath };
-
-            logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
             var timeout = TimeSpan.FromMinutes(5);
-            var result = await processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+            var result = await processHelper.Run(new PythonProcessOptions("python", [scriptPath, packagePath], logger, workingDirectory: packagePath, timeout: timeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -78,30 +61,23 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
             var timeout = TimeSpan.FromMinutes(10);
-            
-            var azpysdkCommand = GetVenvExecutable(pythonVenvPath, "azpysdk");
 
-            // Run multiple linting tools
             var lintingTools = new[]
             {
-                ("pylint", new[] { azpysdkCommand, "pylint", "--isolate", packagePath }),
-                ("mypy", new[] { azpysdkCommand, "mypy", "--isolate", packagePath }),
+                ("pylint", new PythonProcessOptions("azpysdk", ["pylint", "--isolate", packagePath], logger, workingDirectory: packagePath, timeout: timeout)),
+                ("mypy", new PythonProcessOptions("azpysdk", ["mypy", "--isolate", packagePath], logger, workingDirectory: packagePath, timeout: timeout)),
             };
 
             logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
 
-            // Create tasks for all linting tools to run in parallel
             var lintingTasks = lintingTools.Select(async tool =>
             {
-                var (toolName, command) = tool;
-                var result = await processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
+                var (toolName, options) = tool;
+                var result = await processHelper.Run(options, cancellationToken);
                 return (toolName, result);
             });
 
-            // Wait for all linting tools to complete
             var allResults = await Task.WhenAll(lintingTasks);
-
-            // Analyze results
             var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
 
             if (failedTools.Count == 0)
@@ -133,12 +109,8 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
             
-            var command = GetVenvExecutable(pythonVenvPath, "azpysdk");
-            var args = new[] { "black", "--isolate", packagePath };
-
-            logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
             var timeout = TimeSpan.FromMinutes(10);
-            var result = await processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+            var result = await processHelper.Run(new PythonProcessOptions("azpysdk", ["black", "--isolate", packagePath], logger, workingDirectory: packagePath, timeout: timeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {

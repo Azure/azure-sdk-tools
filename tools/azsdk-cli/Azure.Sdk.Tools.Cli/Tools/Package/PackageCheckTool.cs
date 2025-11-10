@@ -35,23 +35,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
         };
 
-        private readonly Option<string?> pythonVenvPathOption = new("--python-venv-path")
-        {
-            Description = "Path to Python virtual environment (Python-specific)",
-            Required = false,
-        };
-
         protected override List<Command> GetCommands()
         {
             // Add the package path option to the parent command so it can be used without subcommands
-            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption, pythonVenvPathOption };
+            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
 
             // Create sub-commands for each check type
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
             {
                 var checkName = checkType.ToString().ToLowerInvariant();
-                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption, pythonVenvPathOption };
+                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
                 parentCommand.Subcommands.Add(subCommand);
             }
 
@@ -66,12 +60,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var commandName = command.Name;
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
             var fixCheckErrors = parseResult.GetValue(fixOption);
-            var pythonVenvPath = parseResult.GetValue(pythonVenvPathOption);
 
             // If this is the parent command (run-checks), default to All
             if (commandName == RunChecksCommandName)
             {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, pythonVenvPath, ct);
+                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
             }
 
             // Check if this is a subcommand by checking if its parent is the run-checks command
@@ -80,15 +73,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Parse the subcommand name back to enum
                 if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
                 {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, pythonVenvPath, ct);
+                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
                 }
             }
 
             throw new ArgumentException($"Unknown command: {commandName}");
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. If it is a python package, specify Python venv path.")]
-        public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, string? pythonVenvPath = null, CancellationToken ct = default)
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
+        public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
             {
@@ -96,13 +89,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (!Directory.Exists(packagePath))
                 {
                     return new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}");
-                }
-
-                // Set the Python venv path if this is a Python package and venv path is provided
-                var languageChecks = GetLanguageService(packagePath);
-                if (languageChecks is PythonLanguageService pythonService && !string.IsNullOrEmpty(pythonVenvPath))
-                {
-                    pythonService.SetPythonVenvPath(pythonVenvPath);
                 }
 
                 var response = checkType switch

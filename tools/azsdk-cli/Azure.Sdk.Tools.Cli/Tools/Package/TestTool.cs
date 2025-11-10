@@ -28,38 +28,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string TestCommandName = "test";
 
-        private readonly Option<string?> pythonVenvPathOption = new("--python-venv-path")
-        {
-            Description = "Path to Python virtual environment (Python-specific)",
-            Required = false,
-        };
-
         protected override Command GetCommand() => new(TestCommandName, "Run tests for SDK packages")
         {
             SharedOptions.PackagePath,
-            pythonVenvPathOption,
         };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-            var pythonVenvPath = parseResult.GetValue(pythonVenvPathOption);
 
-            return await RunPackageTests(packagePath, pythonVenvPath, ct);
+            return await RunPackageTests(packagePath, ct);
         }
 
         [McpServerTool(Name = "azsdk_package_run_tests"), Description("Run tests for the specified SDK package. Provide package path.")]
-        public async Task<DefaultCommandResponse> RunPackageTests(string packagePath, string? pythonVenvPath = null, CancellationToken ct = default)
+        public async Task<DefaultCommandResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
         {
             try
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
                 var languageService = GetLanguageService(packagePath);
-                
-                if (languageService is PythonLanguageService pythonService && !string.IsNullOrEmpty(pythonVenvPath))
-                {
-                    pythonService.SetPythonVenvPath(pythonVenvPath);
-                }
                 
                 var success = await languageService.RunAllTests(packagePath, ct);
 

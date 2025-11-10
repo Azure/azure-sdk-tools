@@ -223,13 +223,6 @@ public class VerifySetupTool : LanguageMcpTool
                 continue;
             }
 
-            if (getter is PythonLanguageService pythonReqCheck && !string.IsNullOrEmpty(venvPath))
-            {
-                // If checking Python and venv path provided, use it
-                reqsToCheck.AddRange(pythonReqCheck.GetRequirements(packagePath, parsedReqs, venvPath, ct));
-                continue;
-            }
-
             reqsToCheck.AddRange(getter.GetRequirements(packagePath, parsedReqs, ct));
         }
 

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"time"
 )
 
@@ -17,13 +16,13 @@ func IsPipelineLink(url string) bool {
 }
 
 // ExtractBuildID extracts the build ID from a pipeline URL
-func ExtractBuildID(url string) (int, error) {
+func ExtractBuildID(url string) string {
 	buildIDRegex := regexp.MustCompile(`buildId=(\d+)`)
 	matches := buildIDRegex.FindStringSubmatch(url)
 	if len(matches) < 2 {
-		return 0, fmt.Errorf("could not extract buildId from URL: %s", url)
+		return ""
 	}
-	return strconv.Atoi(matches[1])
+	return matches[1]
 }
 
 // AnalyzePipeline calls the azsdk CLI tool to analyze a pipeline
@@ -38,8 +37,15 @@ func AnalyzePipeline(pipelineURL string, query string, useAgent bool) (string, e
 		log.Printf("AnalyzePipeline completed in %v", elapsed)
 	}()
 
+	// Extract build ID from URL if it's a full URL
+	buildID := ExtractBuildID(pipelineURL)
+	if buildID == "" {
+		return "", fmt.Errorf("invalid pipeline URL: %s", pipelineURL)
+	}
+	log.Printf("Extracted build ID %s from URL: %s", buildID, pipelineURL)
+
 	// Build the command arguments
-	args := []string{"azp", "analyze", pipelineURL}
+	args := []string{"azp", "analyze", buildID}
 
 	if query != "" {
 		args = append(args, "--query", query)

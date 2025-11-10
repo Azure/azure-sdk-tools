@@ -58,54 +58,51 @@ func TestExtractBuildID(t *testing.T) {
 	tests := []struct {
 		name        string
 		url         string
-		expectedID  int
+		expectedID  string
 		expectError bool
 	}{
 		{
 			name:        "Valid pipeline link with results",
 			url:         "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5530426",
-			expectedID:  5530426,
+			expectedID:  "5530426",
 			expectError: false,
 		},
 		{
 			name:        "Valid pipeline link without results",
 			url:         "https://dev.azure.com/azure-sdk/public/_build?buildId=12345",
-			expectedID:  12345,
+			expectedID:  "12345",
 			expectError: false,
 		},
 		{
 			name:        "Invalid - no buildId parameter",
 			url:         "https://dev.azure.com/azure-sdk/internal/_build/results",
-			expectedID:  0,
+			expectedID:  "0",
 			expectError: true,
 		},
 		{
 			name:        "Invalid - not a pipeline link",
 			url:         "https://github.com/Azure/azure-sdk-tools",
-			expectedID:  0,
+			expectedID:  "0",
 			expectError: true,
 		},
 		{
 			name:        "Valid - URL with space in project name and query params",
 			url:         "https://dev.azure.com/azure-sdk/public/public Team/_build/results?buildId=5530426&view=logs",
-			expectedID:  5530426,
+			expectedID:  "5530426",
 			expectError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buildID, err := utils.ExtractBuildID(tt.url)
+			buildID := utils.ExtractBuildID(tt.url)
 			if tt.expectError {
-				if err == nil {
+				if buildID != "" {
 					t.Errorf("ExtractBuildID(%q) expected error but got none", tt.url)
 				}
 			} else {
-				if err != nil {
-					t.Errorf("ExtractBuildID(%q) unexpected error: %v", tt.url, err)
-				}
 				if buildID != tt.expectedID {
-					t.Errorf("ExtractBuildID(%q) = %d, expected %d", tt.url, buildID, tt.expectedID)
+					t.Errorf("ExtractBuildID(%q) = %s, expected %s", tt.url, buildID, tt.expectedID)
 				}
 			}
 		})

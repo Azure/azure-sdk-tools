@@ -87,8 +87,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             throw new ArgumentException($"Unknown command: {commandName}");
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. Optionally specify Python venv path for Python packages.")]
-        public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default, string? pythonVenvPath = null)
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. If it is a python package, specify Python venv path.")]
+        public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, string? pythonVenvPath = null, CancellationToken ct = default)
         {
             try
             {

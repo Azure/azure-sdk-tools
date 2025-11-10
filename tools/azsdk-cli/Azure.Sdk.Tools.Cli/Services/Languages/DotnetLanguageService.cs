@@ -1,22 +1,47 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Xml.Linq;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// Produces <see cref="PackageInfo"/> for .NET packages.
 /// </summary>
-public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNetPackageInfoHelper> logger) : IPackageInfoHelper
+public sealed partial class DotnetLanguageService: LanguageService
 {
+    private const string DotNetCommand = "dotnet";
+    private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
+    private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
+
+    private IPowershellHelper powershellHelper;
+
+    public DotnetLanguageService(
+        IProcessHelper processHelper,
+        IPowershellHelper powershellHelper,
+        IGitHelper gitHelper,        
+        ILogger<LanguageService> logger,
+        ICommonValidationHelpers commonValidationHelpers)
+    {
+        this.powershellHelper = powershellHelper;
+        base.processHelper = processHelper;
+        base.gitHelper = gitHelper;
+        base.logger = logger;
+        base.commonValidationHelpers = commonValidationHelpers;
+    }
+
+    public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
     /// <summary>
     /// Gets the default samples directory path relative to the package path.
     /// </summary>
     /// <param name="packagePath">The package path</param>
     /// <returns>The default samples directory path</returns>
     private static string GetDefaultSamplesDirectory(string packagePath) => Path.Combine(packagePath, "tests", "samples");
-    public async Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
+
+    public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving .NET package info for path: {packagePath}", packagePath);
         var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
@@ -180,5 +205,23 @@ public sealed class DotNetPackageInfoHelper(IGitHelper gitHelper, ILogger<DotNet
             logger.LogWarning(ex, "Error searching for samples directory under {packagePath}, using default", packagePath);
             return GetDefaultSamplesDirectory(packagePath);
         }
+    }
+
+    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    {
+        var result = await processHelper.Run(new ProcessOptions(
+                command: "dotnet",
+                args: ["test"],
+                workingDirectory: packagePath
+            ),
+            ct
+        );
+
+        return result.ExitCode == 0;
+    }
+
+    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
+    {
+        return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 }

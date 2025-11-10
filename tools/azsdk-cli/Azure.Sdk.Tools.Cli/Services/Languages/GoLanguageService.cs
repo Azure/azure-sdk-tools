@@ -1,17 +1,43 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// Language-specific helper for Go packages. Provides structural package info plus lazy accessors
 /// for samples directory, file extension, and version parsing.
 /// </summary>
-public sealed partial class GoPackageInfoHelper(IGitHelper gitHelper, ILogger<GoPackageInfoHelper> logger) : IPackageInfoHelper
+public partial class GoLanguageService : LanguageService
 {
-    public async Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
+    private readonly INpxHelper npxHelper;
+
+    public GoLanguageService(
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
+        ILogger<LanguageService> logger,
+        ICommonValidationHelpers commonValidationHelpers)
+    {
+        this.npxHelper = npxHelper;
+        base.processHelper = processHelper;
+        base.gitHelper = gitHelper;
+        base.logger = logger;
+        base.commonValidationHelpers = commonValidationHelpers;
+    }
+
+    private readonly string compilerName = "go";
+    private readonly string compilerNameWindows = "go.exe";
+    private readonly string formatterName = "goimports";
+    private readonly string formatterNameWindows = "gofmt.exe";
+    private readonly string linterName = "golangci-lint";
+    private readonly string linterNameWindows = "golangci-lint.exe";
+    public override SdkLanguage Language { get; } = SdkLanguage.Go;
+
+    public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Go package info for path: {packagePath}", packagePath);
         var (repoRoot, relativePath, fullPath) = Parse(gitHelper, packagePath);
@@ -135,4 +161,9 @@ public sealed partial class GoPackageInfoHelper(IGitHelper gitHelper, ILogger<Go
     /// </summary>
     [GeneratedRegex(@"(?m)^\s*[Vv]ersion\s*=\s*""([^"" ]+)""", RegexOptions.Compiled)]
     private static partial Regex GoVersionDeclarationRegex();
+
+    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
+    {
+        return categories.TryGetValue("go", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
 }

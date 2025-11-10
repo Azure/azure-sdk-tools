@@ -7,20 +7,30 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Extensions;
-using System.Threading.Tasks;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to build/compile SDK code locally.")]
-    public class SdkBuildTool(
-        IGitHelper gitHelper,
-        ILogger<SdkBuildTool> logger,
-        IProcessHelper processHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver
-    ) : MCPTool
+    public class SdkBuildTool : LanguageMcpTool
     {
+        // Fields to hold constructor parameters
+        private readonly IProcessHelper processHelper;
+        private readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+
+        public SdkBuildTool(
+            IGitHelper gitHelper,
+            ILogger<SdkBuildTool> logger,
+            IProcessHelper processHelper,
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+            IEnumerable<LanguageService> languageServices
+        ) : base(languageServices, gitHelper, logger)
+        {
+            this.processHelper = processHelper;
+            this.specGenSdkConfigHelper = specGenSdkConfigHelper;
+        }
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
 
         // Command names
@@ -68,8 +78,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
                 string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
                 logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
-
-                PackageInfo? packageInfo = await PackageInfoExtensions.CreateFromPath(packagePath, packageInfoResolver, logger, ct);
+                var languageService = GetLanguageService(sdkRepoRoot);
+                if (languageService == null)
+                {
+                    return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");
+                }
+                PackageInfo? packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {

@@ -1,12 +1,13 @@
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Moq;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
@@ -21,38 +22,46 @@ public class TspClientUpdateToolAutoTests
     }
 
     // Language service that produces no API changes and no customizations
-    private class MockNoChangeLanguageService : IClientUpdateLanguageService
+    private class MockNoChangeLanguageService : LanguageService
     {
+        public override SdkLanguage Language { get; } = SdkLanguage.Java;
+        public override bool IsTspClientupdatedSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
-        public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public string? GetCustomizationRoot(string generationRoot, CancellationToken ct) => null; // No customizations found
-        public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
-        public Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
+        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) => null; // No customizations found
+        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
+        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
     }
 
     // Language service that has customizations and successful patch application
-    private class MockChangeLanguageService : IClientUpdateLanguageService
+    private class MockChangeLanguageService : LanguageService
     {
+        public override SdkLanguage Language { get; } = SdkLanguage.Java;
+        public override bool IsTspClientupdatedSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
-        public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
+        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
             Path.Combine(generationRoot, "customization"); // Mock customization root exists
-        public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
+        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
             => Task.FromResult(true); // Simulate successful patch application
-        public Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
     }
 
 
     [Test]
     public async Task Auto_NoCustomizations_CompletesSuccessfully()
     {
+        var gitHelper = new Mock<IGitHelper>();
+        var processHelper = new Mock<IProcessHelper>();
+        var logger = new TestLogger<LanguageService>();
+        var commonValidationHelper = new Mock<ICommonValidationHelpers>();
         var svc = new MockNoChangeLanguageService();
-        var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
+        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -63,10 +72,11 @@ public class TspClientUpdateToolAutoTests
     [Test]
     public async Task Auto_WithCustomizations_AppliedSuccessfully()
     {
+        var gitHelper = new Mock<IGitHelper>();
         var svc = new MockChangeLanguageService();
-        var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
+        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -80,8 +90,10 @@ public class TspClientUpdateToolAutoTests
     public async Task Validation_Failure_Provides_Guidance()
     {
         var tsp = new MockTspHelper();
+        var gitHelper = new Mock<IGitHelper>();
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp);
+        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -91,16 +103,18 @@ public class TspClientUpdateToolAutoTests
         Assert.That(string.Join(" ", resp.NextSteps), Does.Contain("validation failed"), "Should indicate validation failure");
     }
 
-    private class TestLanguageServiceFailThenFix : IClientUpdateLanguageService
+    private class TestLanguageServiceFailThenFix: LanguageService
     {
-        private readonly Func<int> _next;
-        public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
+        public override SdkLanguage Language { get; } = SdkLanguage.Java;
+        public override bool IsTspClientupdatedSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
-        public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
+        private Func<int> _next;
+        public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
+        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
+        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
             Path.Combine(generationRoot, "customization"); // Mock customization root exists
-        public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
-        public Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
+        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
+        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
         {
             var attempt = _next();
             if (attempt == 0)
@@ -109,14 +123,6 @@ public class TspClientUpdateToolAutoTests
             }
             return Task.FromResult(ValidationResult.CreateSuccess());
         }
-    }
-
-    private class SingleResolver : ILanguageSpecificResolver<IClientUpdateLanguageService>
-    {
-        private readonly IClientUpdateLanguageService _svc;
-        public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
-        public Task<IClientUpdateLanguageService?> Resolve(string packagePath, CancellationToken ct = default) => Task.FromResult(_svc);
-        public Task<IClientUpdateLanguageService?> Resolve(SdkLanguage language, CancellationToken ct = default) => Task.FromResult(_svc);
     }
 }
 

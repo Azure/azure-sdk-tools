@@ -11,12 +11,10 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Samples;
-using Azure.Sdk.Tools.Cli.Services.Tests;
-using Azure.Sdk.Tools.Cli.Services.VerifySetup;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -36,31 +34,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
 
-            // Language Check Services (Composition-based)
-            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
-            {
-                Python = typeof(PythonLanguageSpecificChecks),
-                Java = typeof(JavaLanguageSpecificChecks),
-                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
-                DotNet = typeof(DotNetLanguageSpecificChecks),
-                Go = typeof(GoLanguageSpecificChecks),
-            });
-
-            // Client update language services
-            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
-            {
-                Java = typeof(JavaUpdateLanguageService),
-                // Future: Python = typeof(PythonUpdateLanguageService), etc
-            });
-
-            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetPackageInfoHelper),
-                Java = typeof(JavaPackageInfoHelper),
-                Python = typeof(PythonPackageInfoHelper),
-                JavaScript = typeof(JavaScriptPackageInfoHelper),
-                Go = typeof(GoPackageInfoHelper),
-            });
+            services.AddScoped<LanguageService, DotnetLanguageService>();
+            services.AddScoped<LanguageService, JavaLanguageService>();
+            services.AddScoped<LanguageService, JavaScriptLanguageService>();
+            services.AddScoped<LanguageService, PythonLanguageService>();
+            services.AddScoped<LanguageService, GoLanguageService>();
 
             services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
             {
@@ -69,29 +47,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Python = typeof(PythonSampleLanguageContext),
                 JavaScript = typeof(TypeScriptSampleLanguageContext),
                 Go = typeof(GoSampleLanguageContext),
-            });
-
-            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
-            {
-                Java = typeof(JavaTestRunner),
-                JavaScript = typeof(JavaScriptTestRunner),
-                Go = typeof(GoLanguageSpecificChecks),
-                Python = typeof(PythonTestRunner),
-                DotNet = typeof(DotNetTestRunner),
-            });
-
-            services.AddLanguageSpecific<IEnvRequirementsCheck>(new LanguageSpecificImplementations
-            {
-                Python = typeof(PythonRequirementsCheck),
-                Java = typeof(JavaRequirementsCheck),
-                JavaScript = typeof(JavaScriptRequirementsCheck),
-                DotNet = typeof(DotNetRequirementsCheck),
-                Go = typeof(GoRequirementsCheck),
-            });
-
-            services.AddLanguageSpecific<ILanguagePackageUpdate>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetPackageUpdate),
             });
 
             // Helper classes

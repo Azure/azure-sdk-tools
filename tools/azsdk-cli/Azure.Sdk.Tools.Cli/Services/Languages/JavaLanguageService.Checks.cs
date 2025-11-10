@@ -1,18 +1,15 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
-namespace Azure.Sdk.Tools.Cli.Services;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// Java-specific implementation of language repository service.
 /// Uses tools like Maven, Gradle, javac, etc. for Java development workflows.
 /// </summary>
-public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
+public partial class JavaLanguageService : LanguageService
 {
-    private readonly IMavenHelper _mavenHelper;
-    private readonly ILogger<JavaLanguageSpecificChecks> _logger;
-    private readonly ICommonValidationHelpers _commonValidationHelpers;
-
     // Maven operation timeouts
     private static readonly TimeSpan MavenFormatTimeout = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan MavenLintTimeout = TimeSpan.FromMinutes(15);
@@ -36,21 +33,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         "Check Maven logs for more detailed error information"
     ];
 
-    public JavaLanguageSpecificChecks(
-        IMavenHelper mavenHelper,
-        ILogger<JavaLanguageSpecificChecks> logger,
-        ICommonValidationHelpers commonValidationHelpers)
-    {
-        _mavenHelper = mavenHelper;
-        _logger = logger;
-        _commonValidationHelpers = commonValidationHelpers;
-    }
-
-    public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting code formatting for Java project at: {PackagePath}", packagePath);
+            logger.LogInformation("Starting code formatting for Java project at: {PackagePath}", packagePath);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
@@ -70,7 +57,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 var successMessage = fixCheckErrors
                     ? "Code formatting applied successfully"
                     : "Code formatting check passed - all files are properly formatted";
-                _logger.LogInformation("{Message}", successMessage);
+                logger.LogInformation("{Message}", successMessage);
                 return new PackageCheckResponse(result.ExitCode, successMessage);
             }
             else
@@ -79,7 +66,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 
                 // Log command only for troubleshooting failed operations
                 var fullCommand = $"mvn {goal}";
-                _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}. To reproduce: {Command}", errorMessage, result.ExitCode, fullCommand);
+                logger.LogWarning("{ErrorMessage} with exit code {ExitCode}. To reproduce: {Command}", errorMessage, result.ExitCode, fullCommand);
 
                 var output = result.Output;
                 var nextSteps = fixCheckErrors ?
@@ -96,7 +83,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         {
             var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
             var fullCommand = $"mvn {goal}";
-            _logger.LogError(ex, "Error during code formatting for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
+            logger.LogError(ex, "Error during code formatting for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
             return new PackageCheckResponse(1, "", $"Error during code formatting: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps]
@@ -104,11 +91,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting code linting for Java project at: {PackagePath} (Fix: {Fix})", packagePath, fixCheckErrors);
+            logger.LogInformation("Starting code linting for Java project at: {PackagePath} (Fix: {Fix})", packagePath, fixCheckErrors);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
@@ -165,13 +152,13 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 {
                     var passedToolNames = string.Join(", ", passedTools.Select(t => t.Tool));
                     var successMessage = $"Code linting passed - All tools successful: {passedToolNames}";
-                    _logger.LogInformation("Code linting passed - All tools successful: {PassedToolNames}", passedToolNames);
+                    logger.LogInformation("Code linting passed - All tools successful: {PassedToolNames}", passedToolNames);
                     return new PackageCheckResponse(result.ExitCode, successMessage);
                 }
 
                 // Log command only for troubleshooting when build has other issues
                 var fullCommand = $"mvn install {string.Join(" ", args)}";
-                _logger.LogWarning("Code linting completed, but build had other issues. Exit code: {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
+                logger.LogWarning("Code linting completed, but build had other issues. Exit code: {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
                 const string otherIssuesMessage = "Code linting completed, but build had other issues. Check Maven output for details.";
                 return new PackageCheckResponse(result.ExitCode, otherIssuesMessage);
             }
@@ -184,7 +171,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 
                 // Log command only for troubleshooting when linting issues are found
                 var fullCommand = $"mvn install {string.Join(" ", args)}";
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Code linting found issues - Tools with issues: {FailedToolNames}. Clean tools: {PassedToolNames}. To reproduce: {Command}",
                     failedToolNames,
                     passedToolNames,
@@ -220,7 +207,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         catch (Exception ex)
         {
             // Note: args not available in catch block scope, but command details are logged by ProcessHelperBase
-            _logger.LogError(ex, "Error during code linting for Java project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error during code linting for Java project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error during code linting: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps, "Verify that the project's pom.xml is valid and contains required linting plugins", "Check the Maven command logs above for the exact command that failed"]
@@ -228,11 +215,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false,  CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false,  CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting code snippet update for Java project at: {PackagePath}", packagePath);
+            logger.LogInformation("Starting code snippet update for Java project at: {PackagePath}", packagePath);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
@@ -247,7 +234,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode == 0)
             {
-                _logger.LogInformation("Code snippets updated successfully");
+                logger.LogInformation("Code snippets updated successfully");
                 return new PackageCheckResponse(result.ExitCode, "Code snippets updated successfully");
             }
             else
@@ -255,7 +242,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 // Log command only for troubleshooting failed operations
                 const string goal = "com.azure.tools:codesnippet-maven-plugin:update-codesnippet";
                 var fullCommand = $"mvn {goal}";
-                _logger.LogWarning("Code snippet update failed with exit code {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
+                logger.LogWarning("Code snippet update failed with exit code {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
 
                 var output = result.Output;
                 return new PackageCheckResponse(result.ExitCode, output, "Code snippet update failed - some snippets may be outdated or missing")
@@ -268,7 +255,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         {
             const string goal = "com.azure.tools:codesnippet-maven-plugin:update-codesnippet";
             var fullCommand = $"mvn {goal}";
-            _logger.LogError(ex, "Error during code snippet update for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
+            logger.LogError(ex, "Error during code snippet update for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
             return new PackageCheckResponse(1, "", $"Error during code snippet update: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps]
@@ -276,11 +263,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting dependency analysis for Java project at: {PackagePath}", packagePath);
+            logger.LogInformation("Starting dependency analysis for Java project at: {PackagePath}", packagePath);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
@@ -295,23 +282,12 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during dependency analysis for Java project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error during dependency analysis for Java project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error during dependency analysis: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps]
             };
         }
-    }
-
-    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
-    {
-        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
-    }
-
-    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
-    {
-        var packageName = Path.GetFileName(packagePath);
-        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
     /// <summary>
@@ -334,14 +310,14 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         if (output.Contains("[INFO] BUILD SUCCESS", StringComparison.OrdinalIgnoreCase))
         {
             const string successMessage = "Dependency analysis completed - no conflicts detected";
-            _logger.LogInformation("Dependency analysis completed - no conflicts detected");
+            logger.LogInformation("Dependency analysis completed - no conflicts detected");
             return new PackageCheckResponse(0, successMessage);
         }
 
         // Log command only for troubleshooting when dependency issues are found
         var fullCommand = $"mvn dependency:tree {string.Join(" ", args)}";
         const string errorMessage = "Dependency analysis found issues - check Maven output for conflicts or build errors";
-        _logger.LogWarning("Dependency analysis found issues - check Maven output for conflicts or build errors. To reproduce: {Command}", fullCommand);
+        logger.LogWarning("Dependency analysis found issues - check Maven output for conflicts or build errors. To reproduce: {Command}", fullCommand);
 
         return new PackageCheckResponse(1, output, errorMessage)
         {
@@ -366,26 +342,26 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         var mavenCheckResult = await _mavenHelper.Run(new(["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
         if (mavenCheckResult.ExitCode != 0)
         {
-            _logger.LogError("Maven is not installed or not available in PATH");
+            logger.LogError("Maven is not installed or not available in PATH");
             return new PackageCheckResponse(mavenCheckResult.ExitCode, "", "Maven is not installed or not available in PATH.")
             {
                 NextSteps = [.. mavenInstallationNextSteps]
             };
         }
 
-        _logger.LogInformation("Maven is available: {MavenVersion}", mavenCheckResult.Output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)[0].Trim());
+        logger.LogInformation("Maven is available: {MavenVersion}", mavenCheckResult.Output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)[0].Trim());
 
         // Check for pom.xml in the package directory
         if (!File.Exists(pomPath))
         {
-            _logger.LogError("No pom.xml found in {PackagePath}", packagePath);
+            logger.LogError("No pom.xml found in {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"No pom.xml found in {packagePath}. This doesn't appear to be a Maven project.")
             {
                 NextSteps = [.. pomNotFoundNextSteps]
             };
         }
 
-        _logger.LogInformation("Using Maven project at: {PackagePath}", packagePath);
+        logger.LogInformation("Using Maven project at: {PackagePath}", packagePath);
         return null; // No error, prerequisites are valid
     }
 
@@ -424,4 +400,15 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
          output.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase) &&
          !output.Contains("Building jar:", StringComparison.OrdinalIgnoreCase) && 
          !output.Contains("-javadoc.jar", StringComparison.OrdinalIgnoreCase));
+
+    public override async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var packageName = Path.GetFileName(packagePath);
+        return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+    }
 }

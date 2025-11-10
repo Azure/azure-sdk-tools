@@ -1,13 +1,31 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
-public sealed class JavaScriptPackageInfoHelper(IGitHelper gitHelper, ILogger<JavaScriptPackageInfoHelper> logger) : IPackageInfoHelper
+public sealed partial class JavaScriptLanguageService : LanguageService
 {
-    public async Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
+    private readonly INpxHelper npxHelper;
+
+    public JavaScriptLanguageService(
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,        
+        ILogger<LanguageService> logger,
+        ICommonValidationHelpers commonValidationHelpers)
+    {
+        this.npxHelper = npxHelper;
+        base.processHelper = processHelper;
+        base.gitHelper = gitHelper;
+        base.logger = logger;
+        base.commonValidationHelpers = commonValidationHelpers;
+    }
+    public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
+
+    public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving JavaScript package info for path: {packagePath}", packagePath);
         var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
@@ -97,6 +115,24 @@ public sealed class JavaScriptPackageInfoHelper(IGitHelper gitHelper, ILogger<Ja
             logger.LogError(ex, "Error reading JavaScript package info from {packagePath}", packagePath);
             return (null, null);
         }
+    }
+
+    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    {
+        var result = await processHelper.Run(new ProcessOptions(
+                command: "npm",
+                args: ["run", "test"],
+                workingDirectory: packagePath
+            ),
+            ct
+        );
+
+        return result.ExitCode == 0;
+    }
+
+    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
+    {
+        return categories.TryGetValue("javascript", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 
 }

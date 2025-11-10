@@ -3,39 +3,20 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-namespace Azure.Sdk.Tools.Cli.Services;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// JavaScript-specific implementation of language repository service.
 /// Uses tools like npm, yarn, node, eslint, etc. for JavaScript development workflows.
 /// </summary>
-public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
-{
-    private readonly IProcessHelper _processHelper;
-    private readonly INpxHelper _npxHelper;
-    private readonly IGitHelper _gitHelper;
-    private readonly ILogger<JavaScriptLanguageSpecificChecks> _logger;
-    private readonly ICommonValidationHelpers _commonValidationHelpers;
-
-    public JavaScriptLanguageSpecificChecks(
-        IProcessHelper processHelper,
-        INpxHelper npxHelper,
-        IGitHelper gitHelper,
-        ILogger<JavaScriptLanguageSpecificChecks> logger,
-        ICommonValidationHelpers commonValidationHelpers)
-    {
-        _processHelper = processHelper;
-        _npxHelper = npxHelper;
-        _gitHelper = gitHelper;
-        _logger = logger;
-        _commonValidationHelpers = commonValidationHelpers;
-    }
+public partial class JavaScriptLanguageService : LanguageService
+{    
 
     public async Task<PackageCheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
-            var result = await _processHelper.Run(new(
+            var result = await processHelper.Run(new(
                     "pnpm",
                     ["run", "build:samples"],
                     workingDirectory: packagePath
@@ -45,7 +26,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode != 0)
             {
-                _logger.LogError("'pnpm run build:samples' failed with exit code {ExitCode}", result.ExitCode);
+                logger.LogError("'pnpm run build:samples' failed with exit code {ExitCode}", result.ExitCode);
                 return new PackageCheckResponse(result)
                 {
                     NextSteps = ["Review the error output and attempt to resolve the issue."]
@@ -56,16 +37,16 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating samples for JavaScript project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error validating samples for JavaScript project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error validating samples: {ex.Message}");
         }
     }
     
-    public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _processHelper.Run(new(
+            var result = await processHelper.Run(new(
                     "pnpm",
                     ["run", "update-snippets"],
                     workingDirectory: packagePath
@@ -75,7 +56,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode != 0)
             {
-                _logger.LogError("'pnpm run update-snippets' failed with exit code {ExitCode}", result.ExitCode);
+                logger.LogError("'pnpm run update-snippets' failed with exit code {ExitCode}", result.ExitCode);
                 return new PackageCheckResponse(result)
                 {
                     NextSteps = ["Review the error output and attempt to resolve the issue."]
@@ -86,18 +67,18 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating snippets for JavaScript project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error updating snippets for JavaScript project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}");
         }
     }
 
-    public async Task<PackageCheckResponse> LintCode(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> LintCode(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try
         {
             var subcommand = fix ? "lint:fix" : "lint";
 
-            var result = await _processHelper.Run(new(
+            var result = await processHelper.Run(new(
                     "pnpm",
                     ["run", subcommand],
                     workingDirectory: packagePath
@@ -107,7 +88,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode != 0)
             {
-                _logger.LogError(
+                logger.LogError(
                     "'pnpm run {Subcommand}' failed with exit code {ExitCode}",
                     subcommand,
                     result.ExitCode);
@@ -124,17 +105,17 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error linting JavaScript project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error linting JavaScript project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error linting code: {ex.Message}");
         }
     }
 
-    public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> FormatCode(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try
         {
             var subcommand = fix ? "format" : "check-format";
-            var result = await _processHelper.Run(new(
+            var result = await processHelper.Run(new(
                     "pnpm",
                     ["run", subcommand],
                     workingDirectory: packagePath
@@ -144,7 +125,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode != 0)
             {
-                _logger.LogError(
+                logger.LogError(
                     "'pnpm run {Subcommand}' failed with exit code {ExitCode}",
                     subcommand,
                     result.ExitCode);
@@ -159,7 +140,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error formatting JavaScript project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error formatting JavaScript project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error formatting code: {ex.Message}");
         }
     }
@@ -185,7 +166,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to parse package.json at {PackageJsonPath}. Falling back to directory name.", packageJsonPath);
+                logger.LogWarning(ex, "Failed to parse package.json at {PackageJsonPath}. Falling back to directory name.", packageJsonPath);
             }
         }
 
@@ -193,15 +174,15 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         return Path.GetFileName(packagePath);
     }
 
-    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
+        return await commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
-        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+        return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }

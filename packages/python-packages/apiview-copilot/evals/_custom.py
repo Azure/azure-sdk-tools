@@ -101,7 +101,7 @@ def _filter_existing_comment(testcase: str, response: str, language: str, existi
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
-def _deduplicate_parser_issue(testcase: str, response: str, language: str, package_name: str, code: str, error_context: str, existing_issues: str):
+def _deduplicate_parser_issue(testcase: str, response: str, language: str, package_name: str, code: str, issue_context: str, existing_issues: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "deduplicate_parser_issue.prompty"
     prompty_kwargs = {
         "testcase": testcase,
@@ -109,7 +109,7 @@ def _deduplicate_parser_issue(testcase: str, response: str, language: str, packa
         "language": language,
         "package_name": package_name,
         "code": code,
-        "error_context": error_context,
+        "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)

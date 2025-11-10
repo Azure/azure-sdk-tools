@@ -30,10 +30,11 @@ class OpenParserIssueWorkflow(MentionWorkflow):
     def _fetch_recent_parser_issues(self):
         """Fetch recent open parser issues from GitHub."""
         client = GithubManager.get_instance()
+        metadata_query = ["workflow: parser-issue", "source: APIView Copilot"]
         issues = client.search_issues(
             owner=self.REPO_OWNER,
             repo=self.REPO_NAME,
-            query="label:parser is:issue state:open"
+            query=f'{" ".join(metadata_query)} in:body is:issue state:open'
         )
         return issues
 
@@ -72,10 +73,19 @@ class OpenParserIssueWorkflow(MentionWorkflow):
     def _create_parser_issue(self, plan: dict):
         """Create a new parser issue on GitHub."""
         client = GithubManager.get_instance()
+        body = self._add_metadata_to_body(plan.get("body"))
         return client.create_issue(
             owner=self.REPO_OWNER,
             repo=self.REPO_NAME,
             title=plan.get("title"),
-            body=plan.get("body"),
+            body=body,
             labels=["parser"]
         )
+    
+    def _add_metadata_to_body(self, body: str) -> str:
+        """Inject parser issue metadata into issue body."""
+        return f"""<!-- workflow: parser-issue -->
+    <!-- source: APIView Copilot -->
+
+    {body}"""
+

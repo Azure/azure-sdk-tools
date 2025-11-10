@@ -8,8 +8,7 @@ You can override this default implementation in language specific subclass of `L
 ## Defining language-specific service methods
 
 1. Add a virtual method in LanguageService as default implementation.
-2. Implement a version of the interface for each language that needs to support the operation
-3. Register the interface as a per-language service (see example below)
+2. Add a method in language service class for each language to override the method with actual implementation.
 
 ## Example: Formatting code
 

@@ -27,7 +27,8 @@ All tools in the azsdk-cli project follow a consistent architecture:
 
 - **Location**: Tool files are organized under [`Azure.Sdk.Tools.Cli/Tools/`](../Azure.Sdk.Tools.Cli/Tools/{Category}/) in logical categories
 - **Namespace**: Tools should be in namespace `Azure.Sdk.Tools.Cli.Tools.{Category}`
-- **Base Class**: All tools inherit from [`MCPTool`](../Azure.Sdk.Tools.Cli.Contract/MCPTool.cs) or [`MCPMultiCommandTool`](../Azure.Sdk.Tools.Cli.Contract/MCPMultiCommandTool.cs)
+- **Base Class**: If the purpose of the tool is to run an operation at package or language level, the tool must inherit from [`LanguageMcpTool`](../Azure.Sdk.Tools.Cli/Tools/Core/LanguageMcpTool.cs) or [`LanguageMultiCommandTool`](../Azure.Sdk.Tools.Cli/Tools/Core/LanguageMultiCommandTool.cs).
+  Otherwise, all other tools must inherit from [`MCPTool`](../Azure.Sdk.Tools.Cli/Tools/Core/MCPTool.cs) or [`MCPMultiCommandTool`](../Azure.Sdk.Tools.Cli/Tools/Core/MCPMultiCommandTool.cs).
 - **Attributes**: Tools are decorated with `[McpServerToolType]` for discovery
 - **Dual Interface**: Tools support both CLI commands and MCP server methods
 

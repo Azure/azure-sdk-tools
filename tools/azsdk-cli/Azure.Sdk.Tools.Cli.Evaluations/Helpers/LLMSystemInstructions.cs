@@ -35,41 +35,22 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             return builder.ToString();
         }
 
-        private static async Task<string> GetCopilotInstructions()
+        private static string GetCopilotInstructions()
         {
-            if (!string.IsNullOrEmpty(TestSetup.GetCopilotInstructionsPath))
-            {
-                return File.ReadAllText(TestSetup.GetCopilotInstructionsPath!);
-            }
-            else
-            {
-                var logger = new LoggerFactory().CreateLogger<GitHubService>();
-                var githubService = new GitHubService(logger);
-                var copilotInstructions = await githubService.GetContentsSingleAsync(TestSetup.GetRepoOwner!, TestSetup.GetRepoName!, CopilotRepositoryPath);
-                return copilotInstructions.Content;
-            }
+            return File.ReadAllText(TestSetup.GetCopilotInstructionsPath!);
         }
 
-        private static async Task<string> GetMentionedInstructions(string instructionRelativePath)
+        private static string GetMentionedInstructions(string instructionRelativePath)
         {
-            if (!string.IsNullOrEmpty(TestSetup.GetCopilotInstructionsPath))
-            {
-                var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.GetCopilotInstructionsPath!)!;
+
+            var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.GetCopilotInstructionsPath!)!;
                 
-                // Normalize the path
-                instructionRelativePath = instructionRelativePath.Replace('\\', '/');
-                var instructionUri = new Uri(Path.Combine(copilotBaseDirectory, instructionRelativePath));
-                string instructionPath = Path.GetFullPath(instructionUri.LocalPath);
-                return File.ReadAllText(instructionPath);
-            }
-            else
-            {
-                string instructionPath = Path.Combine(instructionRelativePath.Substring(3));
-                var logger = new LoggerFactory().CreateLogger<GitHubService>();
-                var githubService = new GitHubService(logger);
-                var instructions = await githubService.GetContentsSingleAsync(TestSetup.GetRepoOwner!, TestSetup.GetRepoName!, instructionPath);
-                return instructions.Content;
-            }
+            // Normalize the path
+            instructionRelativePath = instructionRelativePath.Replace('\\', '/');
+            var instructionUri = new Uri(Path.Combine(copilotBaseDirectory, instructionRelativePath));
+            string instructionPath = Path.GetFullPath(instructionUri.LocalPath);
+            return File.ReadAllText(instructionPath);
+
         }
 
         private static readonly string DefaultToolInstructions =

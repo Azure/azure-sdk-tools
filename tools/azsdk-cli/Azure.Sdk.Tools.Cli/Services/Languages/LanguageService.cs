@@ -245,7 +245,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         {
             return Task.FromResult(
                 PackageOperationResponse.CreateSuccess(
-                    "Data-plane changelog untouched; manual edits required.",
+                    "Changelog untouched; manual edits required.",
                     nextSteps: [
                         "Summarize version updates under 'Features Added', 'Breaking Changes', 'Bug Fixes', and 'Other Changes'",
                         "Refer to this documentation: https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites",

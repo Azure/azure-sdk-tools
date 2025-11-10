@@ -82,7 +82,7 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
             var languageService = GetLanguageService(packagePath);
             if (languageService == null)
             {
-                return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.", nextSteps: ["Create an issue at the https://github.com/Azure/azure-sdk-tools/issues/new?", "contact the Azure SDK team for assistance."]);
+                return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.", nextSteps: ["Create an issue at the https://github.com/Azure/azure-sdk-tools/issues/new", "contact the Azure SDK team for assistance."]);
             }
 
             // Check for package type
@@ -111,8 +111,8 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
                 }
             }
 
-            // Run default logic for data-plane packages
-            logger.LogInformation("Running default logic to update changelog content for the data-plane package...");
+            // Run default logic to update changelog content
+            logger.LogInformation("Running default logic to update changelog content for the package...");
             return await languageService.UpdateChangelogContentAsync(packagePath, ct);
         }
         catch (Exception ex)

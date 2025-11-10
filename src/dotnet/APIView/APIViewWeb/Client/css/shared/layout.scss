@@ -36,18 +36,6 @@ form.comment {
     }
 }
 
-.footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    white-space: nowrap;
-    height: 30px;
-    line-height: 30px;
-    z-index: 3;
-    background: var(--base-bg-color);
-    @include app-footer;
-}
-
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
     background-color: var(--link-color);
     color: var(--primary-btn-color);

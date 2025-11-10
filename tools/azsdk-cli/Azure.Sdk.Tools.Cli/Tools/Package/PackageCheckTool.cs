@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             // If this is the parent command (run-checks), default to All
             if (commandName == RunChecksCommandName)
             {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct, pythonVenvPath);
+                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, pythonVenvPath, ct);
             }
 
             // Check if this is a subcommand by checking if its parent is the run-checks command
@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Parse the subcommand name back to enum
                 if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
                 {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct, pythonVenvPath);
+                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, pythonVenvPath, ct);
                 }
             }
 

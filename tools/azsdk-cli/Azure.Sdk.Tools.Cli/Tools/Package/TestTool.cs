@@ -47,7 +47,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
                 var languageService = GetLanguageService(packagePath);
-                
                 var success = await languageService.RunAllTests(packagePath, ct);
 
                 if (success)

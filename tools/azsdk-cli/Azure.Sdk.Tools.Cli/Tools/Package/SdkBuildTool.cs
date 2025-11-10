@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     };
                     
                     // Create and execute process options for the build script
-                    var processOptions = this.specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
+                    var processOptions = this.specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, CommandTimeoutInMinutes);
                     if (processOptions != null)
                     {
                         return await this.specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");

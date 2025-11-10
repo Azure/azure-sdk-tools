@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
 /// Process options for running Python executables with automatic virtual environment resolution.
-/// Resolves Python executables from AZSDKTOOLS_PYTHON_VENV_PATH environment variable or explicit path.
+/// Resolves Python executables from AZSDKTOOLS_PYTHON_VENV_PATH environment variable.
 /// </summary>
 public class PythonProcessOptions : ProcessOptions
 {
@@ -19,7 +19,6 @@ public class PythonProcessOptions : ProcessOptions
     /// <param name="executableName">Name of the Python executable (e.g., "python", "pytest", "azpysdk")</param>
     /// <param name="args">Command line arguments</param>
     /// <param name="logger">Optional logger for resolution diagnostics</param>
-    /// <param name="explicitVenvPath">Optional explicit venv path that overrides environment variable</param>
     /// <param name="workingDirectory">Working directory for the process</param>
     /// <param name="timeout">Execution timeout</param>
     /// <param name="logOutputStream">Whether to log stdout/stderr</param>
@@ -27,12 +26,11 @@ public class PythonProcessOptions : ProcessOptions
         string executableName,
         string[] args,
         ILogger? logger = null,
-        string? explicitVenvPath = null,
         string? workingDirectory = null,
         TimeSpan? timeout = null,
         bool logOutputStream = true
     ) : base(
-        ResolvePythonExecutable(executableName, logger, explicitVenvPath),
+        ResolvePythonExecutable(executableName, logger),
         args,
         logOutputStream,
         workingDirectory,
@@ -43,32 +41,22 @@ public class PythonProcessOptions : ProcessOptions
 
     /// <summary>
     /// Resolves a Python executable path from venv or system PATH.
-    /// Checks in order: explicit path parameter, AZSDKTOOLS_PYTHON_VENV_PATH env var, system PATH.
+    /// Checks in order: AZSDKTOOLS_PYTHON_VENV_PATH env var, system PATH.
     /// </summary>
     /// <param name="executableName">Name of the Python executable</param>
     /// <param name="logger">Optional logger for diagnostics</param>
-    /// <param name="explicitVenvPath">Optional explicit venv path</param>
     /// <returns>Resolved executable path</returns>
-    public static string ResolvePythonExecutable(string executableName, ILogger? logger = null, string? explicitVenvPath = null)
+    public static string ResolvePythonExecutable(string executableName, ILogger? logger = null)
     {
         string? venvPath = null;
         string? resolvedFrom = null;
 
-        // Priority 1: Explicit venv path parameter
-        if (!string.IsNullOrWhiteSpace(explicitVenvPath))
+        // Check environment variable
+        var envVenvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
+        if (!string.IsNullOrWhiteSpace(envVenvPath))
         {
-            venvPath = explicitVenvPath;
-            resolvedFrom = "explicit parameter";
-        }
-        // Priority 2: Environment variable
-        else
-        {
-            var envVenvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
-            if (!string.IsNullOrWhiteSpace(envVenvPath))
-            {
-                venvPath = envVenvPath;
-                resolvedFrom = $"{VenvEnvironmentVariable} environment variable";
-            }
+            venvPath = envVenvPath;
+            resolvedFrom = $"{VenvEnvironmentVariable} environment variable";
         }
 
         // Try to resolve from venv if path is provided

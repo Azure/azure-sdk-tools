@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
                     logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo);
+                    return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo, result: "noop");
                 }
 
                 var (configContentType, configValue) = await this.specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);

@@ -78,7 +78,7 @@ class MentionWorkflow(ABC):
         if not os.path.exists(prompt_path):
             print(f"Prompt file {prompt_path} does not exist.")
             return "No prompt file found."
-        properties_to_keep = ["url", "repository_url", "title", "created_at", "body"]
+        properties_to_keep = ["url", "repository_url", "title", "created_at", "body", "action"]
         filtered_results = (
             [{k: item.get(k) for k in properties_to_keep} for item in results]
             if isinstance(results, list)

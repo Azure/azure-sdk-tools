@@ -90,7 +90,7 @@ public class PythonProcessOptions : ProcessOptions
                         var exePath = venvExecutablePath + ".exe";
                         if (File.Exists(exePath))
                         {
-                            logger?.LogDebug("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
+                            logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
                                 executableName, resolvedFrom, exePath);
                             return exePath;
                         }
@@ -98,7 +98,7 @@ public class PythonProcessOptions : ProcessOptions
 
                     if (File.Exists(venvExecutablePath))
                     {
-                        logger?.LogDebug("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
+                        logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
                             executableName, resolvedFrom, venvExecutablePath);
                         return venvExecutablePath;
                     }
@@ -107,7 +107,7 @@ public class PythonProcessOptions : ProcessOptions
                 {
                     if (File.Exists(venvExecutablePath))
                     {
-                        logger?.LogDebug("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
+                        logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
                             executableName, resolvedFrom, venvExecutablePath);
                         return venvExecutablePath;
                     }
@@ -118,7 +118,7 @@ public class PythonProcessOptions : ProcessOptions
             }
         }
 
-        logger?.LogDebug("Using Python executable '{ExecutableName}' from system PATH", executableName);
+        logger?.LogInformation("Using Python executable '{ExecutableName}' from system PATH", executableName);
         return executableName;
     }
 }

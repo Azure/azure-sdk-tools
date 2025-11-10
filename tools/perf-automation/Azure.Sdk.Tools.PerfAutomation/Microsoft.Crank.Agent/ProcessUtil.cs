@@ -141,8 +141,8 @@ namespace Microsoft.Crank.Agent
             Task timeoutTask = Task.Delay(timeout.HasValue ? (int)timeout.Value.TotalMilliseconds : -1);
 
             // For measuring statistics
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            TimeSpan lastCpuTime = TimeSpan.Zero;
+            TimeSpan? lastCpuTime = null;
+            DateTimeOffset lastSampleTime = DateTimeOffset.UtcNow;
             List<double> cpuSamples = [];
             List<long> memorySamples = [];
 
@@ -185,16 +185,54 @@ namespace Microsoft.Crank.Agent
                     try
                     {
                         process.Refresh();
+                        DateTimeOffset currentSampleTime = DateTimeOffset.UtcNow;
+                        TimeSpan currentCpuTime = TimeSpan.Zero;
+                        long currentMemory = 0;
 
-                        // CPU usage
-                        TimeSpan currentCpuTime = process.TotalProcessorTime;
-                        double cpuUsage = (currentCpuTime - lastCpuTime).TotalMilliseconds / (1000.0 * Environment.ProcessorCount) * 100;
+                        // The python executable is called perstress. Perfstress spawns several
+                        // Python processes so we need to find and track the resources on those instead.
+                        if (process.ProcessName.Equals("perfstress", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Process[] allProcesses = Process.GetProcesses();
+                            foreach (Process proc in allProcesses)
+                            {
+                                try
+                                {
+                                    if (proc.ProcessName.Contains("python", StringComparison.CurrentCultureIgnoreCase))
+                                    {
+                                        proc.Refresh();
+                                        currentCpuTime += proc.TotalProcessorTime;
+                                        currentMemory += proc.WorkingSet64;
+                                    }
+                                }
+                                catch
+                                {
+                                    // Process may have exited
+                                }
+                                finally
+                                {
+                                    proc.Dispose();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            currentCpuTime = process.TotalProcessorTime;
+                            currentMemory = process.WorkingSet64;
+                        }
+
+                        if (lastCpuTime.HasValue)
+                        {
+                            double elapsedMs = (currentSampleTime - lastSampleTime).TotalMilliseconds;
+                            double cpuMs = (currentCpuTime - lastCpuTime.Value).TotalMilliseconds;
+
+                            double cpuUsage = (cpuMs / elapsedMs / Environment.ProcessorCount) * 100.0;
+                            cpuSamples.Add(cpuUsage);
+                        }
+
                         lastCpuTime = currentCpuTime;
-                        cpuSamples.Add(cpuUsage);
-
-                        // Memory usage
-                        long memoryUsage = process.WorkingSet64;
-                        memorySamples.Add(memoryUsage);
+                        lastSampleTime = currentSampleTime;
+                        memorySamples.Add(currentMemory);
                     }
                     catch (InvalidOperationException e)
                     {

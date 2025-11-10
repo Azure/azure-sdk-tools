@@ -18,7 +18,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
             ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
         
+        private static readonly bool UseMCPRelease = bool.Parse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE")) ?? false;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
+        private static readonly string localMcpPowershellScriptPath = @"../../../../..//eng/common/mcp/azure-sdk-mcp.ps1";
         public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
@@ -51,6 +53,20 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
             try
             {
+                if (UseMCPRelease)
+                {
+                    // Use MCP release
+                    return await McpClientFactory.CreateAsync(
+                        new StdioClientTransport(
+                            new()
+                            {
+                                Command = "pwsh",
+                                Arguments = [localMcpPowershellScriptPath, "-Run"]
+                            }
+                        )
+                    );
+                }
+                
                 // Run your local MCP server directly with dotnet run
                 var mcpClient = await McpClientFactory.CreateAsync(
                     new StdioClientTransport(

@@ -2,7 +2,7 @@ testcase: old_issue_same_problem_should_still_dedupe
 language: python
 package_name: azure.core
 code: "Union[Literal[success], Literal[failure]]"
-error_context: |
+issue_context: |
   [Python APIView] Multiple unquoted Literal values
   
   Parser fails when there are multiple unquoted Literal values in a Union.
@@ -15,12 +15,14 @@ existing_issues: |
   [
     {
       "number": 333,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/333",
       "title": "[Python APIView] Literal parsing broken",
       "body": "The Literal type annotation parser doesn't quote string values properly. Example: Literal[pending] should be Literal[\"pending\"]",
       "created_at": "2025-08-15T08:00:00Z"
     },
     {
       "number": 444,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/444",
       "title": "[Python APIView] Union types display incorrectly",
       "body": "Union types with many parameters are not displayed correctly in the APIView interface",
       "created_at": "2025-10-01T10:00:00Z"
@@ -28,4 +30,7 @@ existing_issues: |
   ]
 response:
   action: no-op
-  existing: 333
+  url: https://github.com/tjprescott/azure-sdk-tools/issues/333
+  title: "[Python APIView] Literal parsing broken"
+  created_at: "2025-08-15T08:00:00Z"
+  body: "The Literal type annotation parser doesn't quote string values properly. Example: Literal[pending] should be Literal[\"pending\"]"

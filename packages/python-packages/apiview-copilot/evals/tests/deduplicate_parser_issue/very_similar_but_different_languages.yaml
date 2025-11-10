@@ -2,7 +2,7 @@ testcase: very_similar_but_different_languages
 language: java
 package_name: com.azure.widget
 code: "List<Optional<String>>"
-error_context: |
+issue_context: |
   [Java APIView] Generic type parsing failure
   
   The Java parser is failing to correctly parse nested generic types.
@@ -15,12 +15,14 @@ existing_issues: |
   [
     {
       "number": 111,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/111",
       "title": "[Python APIView] Generic type parsing failure", 
       "body": "The Python parser is failing to correctly parse nested generic types like List[Optional[str]]",
       "created_at": "2025-10-16T11:00:00Z"
     },
     {
       "number": 222,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/222",
       "title": "[Java APIView] Import resolution problems",
       "body": "Java parser cannot resolve imports for certain generic types",
       "created_at": "2025-10-15T16:00:00Z"
@@ -28,4 +30,3 @@ existing_issues: |
   ]
 response:
   action: create
-  existing: null

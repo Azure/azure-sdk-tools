@@ -1,0 +1,40 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "deduplicate_parser_issue_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "Workflow decision."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the existing GitHub issue when the action is 'no-op'."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the existing GitHub issue when the action is 'no-op'."
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Timestamp for when the existing issue was created."
+        },
+        "body": {
+          "type": "string",
+          "description": "Body content of the existing GitHub issue when the action is 'no-op'."
+        }
+      },
+      "required": [
+        "action",
+        "url",
+        "title",
+        "created_at",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

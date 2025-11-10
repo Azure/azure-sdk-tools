@@ -23,8 +23,11 @@ class OpenParserIssueWorkflow(MentionWorkflow):
         
         issue = self._create_parser_issue(plan)
         return {
-            "action": "created",
-            "issue": issue
+            "action": "create",
+            "url": issue["html_url"],
+            "title": issue["title"],
+            "body": issue["body"],
+            "created_at": issue["created_at"],
         }
 
     def _fetch_recent_parser_issues(self):
@@ -54,8 +57,8 @@ class OpenParserIssueWorkflow(MentionWorkflow):
         try:
             return json.loads(raw_dedup)
         except json.JSONDecodeError:
-            # Default to creating new issue if we can't parse the response
-            return {"action": "create", "existing": None}
+            # Error out
+            raise ValueError(f"Deduplication prompt returned invalid JSON: {raw_dedup}")
 
     def _format_issues_for_dedup(self, issues: list) -> str:
         """Format issues for deduplication prompt input."""

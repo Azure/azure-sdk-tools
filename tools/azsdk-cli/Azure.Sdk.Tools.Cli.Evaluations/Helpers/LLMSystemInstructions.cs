@@ -1,7 +1,5 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {

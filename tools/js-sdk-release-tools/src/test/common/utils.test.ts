@@ -346,27 +346,16 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
 
-    test("preserves test directory and assets.json for Management Plane HighLevelClient in Release mode", async () => {
+    test("removes all files for Management Plane HighLevelClient in Release mode", async () => {
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
         
         try {            
             // Run the function with Release mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
-            // Verify that test directory and assets.json are preserved
-            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
-            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
-            
-            // Verify other files are removed
-            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
-            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
-            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
-            
-            expect(testDirExists).toBe(true);
-            expect(assetsFileExists).toBe(true);
-            expect(srcDirExists).toBe(false);
-            expect(distDirExists).toBe(false);
-            expect(packageJsonExists).toBe(false);
+            // Verify all files and directories are removed
+            const finalEntries = await readdir(tempPackageDir);
+            expect(finalEntries.length).toBe(0);
         } finally {
             await remove(tempPackageDir);
         }

@@ -37,6 +37,11 @@ func TestIsPipelineLink(t *testing.T) {
 			url:      "https://dev.azure.com/azure-sdk/internal/_build/results",
 			expected: false,
 		},
+		{
+			name:     "Valid - URL with space in project name and query params",
+			url:      "https://dev.azure.com/azure-sdk/public/public Team/_build/results?buildId=5530426&view=logs",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -79,6 +84,12 @@ func TestExtractBuildID(t *testing.T) {
 			url:         "https://github.com/Azure/azure-sdk-tools",
 			expectedID:  0,
 			expectError: true,
+		},
+		{
+			name:        "Valid - URL with space in project name and query params",
+			url:         "https://dev.azure.com/azure-sdk/public/public Team/_build/results?buildId=5530426&view=logs",
+			expectedID:  5530426,
+			expectError: false,
 		},
 	}
 

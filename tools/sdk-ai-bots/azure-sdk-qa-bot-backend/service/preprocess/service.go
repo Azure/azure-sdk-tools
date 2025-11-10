@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"log"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -47,6 +48,11 @@ func (s *PreprocessService) DecodeHTMLContent(input string) string {
 		return match // Return original if parsing fails
 	})
 
+	// Decode URL encoding (e.g., %20 -> space, %E2%80%A6 -> …)
+	if decodedURL, err := url.QueryUnescape(decoded); err == nil {
+		decoded = decodedURL
+	}
+
 	return decoded
 }
 
@@ -65,6 +71,16 @@ func (s *PreprocessService) CleanHTMLTags(input string) string {
 
 // PreprocessHTMLContent handles HTML-encoded content by decoding and cleaning it
 func (s *PreprocessService) PreprocessHTMLContent(input string) string {
+	// Check if content contains HTML entities or tags
+	if !strings.Contains(input, "\\u003c") && !strings.Contains(input, "&lt;") &&
+		!strings.Contains(input, "<") && !strings.Contains(input, "&amp;") &&
+		!strings.Contains(input, "\\u0026") {
+		// No HTML content detected, return original
+		return input
+	}
+
+	log.Printf("Detected HTML content, preprocessing...")
+
 	// First decode HTML entities and Unicode escapes
 	decoded := s.DecodeHTMLContent(input)
 

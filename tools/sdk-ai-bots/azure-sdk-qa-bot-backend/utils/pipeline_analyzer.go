@@ -7,14 +7,12 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // IsPipelineLink checks if a URL is an Azure DevOps pipeline link
 func IsPipelineLink(url string) bool {
-	// Match URLs like:
-	// https://dev.azure.com/{org}/{project}/_build/results?buildId={id}
-	// https://dev.azure.com/{org}/{project}/_build?buildId={id}
-	pipelineRegex := regexp.MustCompile(`https://dev\.azure\.com/[^/]+/[^/]+/_build(/results)?\?buildId=\d+`)
+	pipelineRegex := regexp.MustCompile(`^https?://dev\.azure\.com/.+buildId=\d+`)
 	return pipelineRegex.MatchString(url)
 }
 
@@ -34,6 +32,12 @@ func ExtractBuildID(url string) (int, error) {
 // useAgent: whether to use AI agent for analysis (default: true)
 // Returns the plain text output from the CLI tool
 func AnalyzePipeline(pipelineURL string, query string, useAgent bool) (string, error) {
+	startTime := time.Now()
+	defer func() {
+		elapsed := time.Since(startTime)
+		log.Printf("AnalyzePipeline completed in %v", elapsed)
+	}()
+
 	// Build the command arguments
 	args := []string{"azp", "analyze", pipelineURL}
 

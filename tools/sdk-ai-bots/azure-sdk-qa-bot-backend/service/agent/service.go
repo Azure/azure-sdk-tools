@@ -281,10 +281,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 
 	// Preprocess HTML content if it contains HTML entities or tags
 	preprocessService := preprocess.NewPreprocessService()
-	if strings.Contains(req.Message.Content, "\\u003c") || strings.Contains(req.Message.Content, "&lt;") || strings.Contains(req.Message.Content, "<") {
-		log.Printf("Detected HTML content, preprocessing...")
-		req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
-	}
+	req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
 
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
@@ -294,11 +291,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	// process history messages
 	for _, message := range req.History {
 		// Preprocess HTML content in history messages
-		content := message.Content
-		if strings.Contains(content, "\\u003c") || strings.Contains(content, "&lt;") || strings.Contains(content, "<") {
-			log.Printf("Detected HTML content in history message, preprocessing...")
-			content = preprocessService.PreprocessHTMLContent(content)
-		}
+		content := preprocessService.PreprocessHTMLContent(message.Content)
 
 		if message.Role == model.Role_Assistant {
 			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
@@ -317,6 +310,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				content := info.Content
+				info.Link = preprocessService.PreprocessHTMLContent(info.Link)
 
 				// Check if this is a pipeline link and analyze it
 				if utils.IsPipelineLink(info.Link) {

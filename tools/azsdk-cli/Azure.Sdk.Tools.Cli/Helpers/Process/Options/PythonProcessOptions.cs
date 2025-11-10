@@ -11,6 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// </summary>
 public class PythonProcessOptions : ProcessOptions
 {
+    // Environment variable user can set in their system environment variables for specifying Python venv path
     private const string VenvEnvironmentVariable = "AZSDKTOOLS_PYTHON_VENV_PATH";
 
     /// <summary>

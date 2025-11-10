@@ -52,13 +52,27 @@ You are an agent that detects duplicate parser issues for apiview.
 - You will also be given a list of EXISTING recent parser issues.
 - Your job is to determine if the NEW issue is a duplicate of ANY existing issue.
 - Focus on the UNDERLYING BUG, not the specific package or code snippet. Multiple different code examples can have the same root cause.
+- If the NEW issue is a duplicate of any existing issue, respond with action "no-op" and include the existing issue's payload INCLUDING its URL under a 'url' field verbatim.
 - Your response MUST be valid json (DO NOT include the ```json at the start or ``` at the end of your response!):
 ```json
 {
   "action": "<no-op|create>",
-  "existing": issue_number_or_null,
+  "<flattened_issue_payload|None>"
 }
 ```
+
+The flattened issue payload follows this structure:
+```json
+{
+  "url": "<issue_url>",
+  "title": "<issue_title>",
+  "created_at": "<issue_creation_date>",
+  "body": "<issue_body>",
+}```
+
+All of the fields must be siblings of the "action" field, and if action is "create", there should be no additional fields.
+Issue payloads must NOT be nested inside an "issue" field or similar.
+
 
 # Guidelines
 

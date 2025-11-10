@@ -19,10 +19,7 @@ class OpenParserIssueWorkflow(MentionWorkflow):
         dedup_result = self._check_for_duplicate_issue(plan, recent_issues)
         
         if dedup_result["action"] == "no-op":
-            return {
-                "action": "no-op",
-                "existing_issue": dedup_result["existing"],
-            }
+            return dedup_result
         
         issue = self._create_parser_issue(plan)
         return {

@@ -7,24 +7,22 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public static class LLMSystemInstructions
     {
-        private static string CopilotRepositoryPath => ".github\\copilot-instructions.md";
-
-        public static async Task<string> BuildLLMInstructions()
+        public static string BuildLLMInstructions()
         {
             var toolInstructions = DefaultToolInstructions;
-            toolInstructions += $"<instructions>{await LoadInstructions()}</instructions";
+            toolInstructions += $"<instructions>{LoadInstructions()}</instructions";
             return toolInstructions;
         }
 
-        private static async Task<string> LoadInstructions()
+        private static string LoadInstructions()
         {
-            var copilotInstructions = await GetCopilotInstructions();
+            var copilotInstructions = GetCopilotInstructions();
             var linkRegex = new Regex(@"\[([^\]]+)\]\(([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
 
             var matches = linkRegex.Matches(copilotInstructions);
             var instructionTasks = matches
                 .Select(match => GetMentionedInstructions(match.Groups[2].Value));
-            var instructions = await Task.WhenAll(instructionTasks);
+            var instructions =  instructionTasks;
             
             var builder = new StringBuilder(copilotInstructions);
             foreach (var instruction in instructions)

@@ -86,12 +86,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         /// <param name="message">The success message to include in the response.</param>
         /// <param name="packageInfo">Optional package information to include in the response.</param>
         /// <param name="nextSteps">Optional next steps to include in the response.</param>
+        /// <param name="result">Optional result status to include in the response.</param>
         /// <returns>A PackageOperationResponse indicating success.</returns>
-        public static PackageOperationResponse CreateSuccess(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null)
+        public static PackageOperationResponse CreateSuccess(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null, string? result = "succeeded")
         {
             return new PackageOperationResponse
             {
-                Result = "succeeded",
+                Result = result,
                 Message = message,
                 PackageName = packageInfo?.PackageName ?? string.Empty,
                 Language = packageInfo?.Language ?? SdkLanguage.Unknown,

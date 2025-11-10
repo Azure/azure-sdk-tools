@@ -231,7 +231,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>A response indicating the result of the metadata update operation.</returns>
         public virtual Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
         {
-            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+            this.logger.LogInformation("No language-specific package metadata update implementation found for package path: {packagePath}.", packagePath);
+            return Task.FromResult(PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed.", nextSteps: ["Update the version when preparing for a release"]));
         }
 
         /// <summary>
@@ -242,7 +243,15 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>A response indicating the result of the changelog update operation.</returns>
         public virtual Task<PackageOperationResponse> UpdateChangelogContentAsync(string packagePath, CancellationToken ct)
         {
-            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+            return Task.FromResult(
+                PackageOperationResponse.CreateSuccess(
+                    "Changelog untouched; manual edits required.",
+                    nextSteps: [
+                        "Summarize version updates under 'Features Added', 'Breaking Changes', 'Bug Fixes', and 'Other Changes'",
+                        "Refer to this documentation: https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites",
+                        "Update package metadata after the changelog content has been updated"
+                        ],
+                    result: "noop"));
         }
 
         /// <summary>
@@ -253,7 +262,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>A response indicating the result of the version update operation.</returns>
         public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, CancellationToken ct)
         {
-            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+            this.logger.LogInformation("No language-specific package version update implementation found for package path: {packagePath}.", packagePath);
+            return Task.FromResult(PackageOperationResponse.CreateSuccess("No package version updates need to be performed."));
         }
     }
 }

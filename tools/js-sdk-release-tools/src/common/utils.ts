@@ -430,7 +430,6 @@ export async function cleanUpPackageDirectory(
 
     const modularSDKType = getModularSDKType(packageDirectory);
     const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserveForPackages = pipelineRunMode ? ["test", "assets.json"] : [];
 
     if (modularSDKType === ModularSDKType.DataPlane) {
         // For data plane packages
@@ -454,8 +453,8 @@ export async function cleanUpPackageDirectory(
 
         const managementSDKType = getSDKType(packageDirectory);
         if (managementSDKType === SDKType.HighLevelClient) {
-            logger.info(`Cleaning up high-level client package in ${runMode} mode`);
-            await cleanUpDirectory(packageDirectory, entriesToPreserveForPackages);
+            logger.info(`Cleaning up all files for high-level client package: ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
             return;
         }
         logger.info(`Skipping cleanup for management plane package (handled by emitter): ${packageDirectory}`);

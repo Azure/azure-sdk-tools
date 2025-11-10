@@ -5,8 +5,8 @@ import os
 import sys
 from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
-from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
+from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
+from azure.identity import DefaultAzureCredential, AzureCliCredential
 from _evals_result import EvalsResult
 from eval.evaluator import AzureBotEvaluator
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         ])
 
         evaluators = {
-            "similarity": simiarity_class,
+            "similarity": similarity_class,
             "groundedness": groundedness_class,
             "response_completeness": response_completion_class,
             "bot_evals": qa_evaluator_class
@@ -115,10 +115,10 @@ if __name__ == "__main__":
         evals = {}
         if args.evaluators:
             evals = {eval_key: evaluators[eval_key] for eval_key in args.evaluators}
-            metrics = {eval_key: evaluators[eval_key].output_fileds for eval_key in args.evaluators}
+            metrics = {eval_key: evaluators[eval_key].output_fields for eval_key in args.evaluators}
         else:
             evals = evaluators
-            metrics = {eval_key: evaluators[eval_key].output_fileds for eval_key in evaluators.keys()}
+            metrics = {eval_key: evaluators[eval_key].output_fields for eval_key in evaluators.keys()}
 
         weights: dict[str, float] = {
             "similarity_weight": 0.6,  # Similarity between expected and actual
@@ -145,13 +145,14 @@ if __name__ == "__main__":
 
         if (args.cache_result) :
             now = datetime.now()
-            result_file = open(os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}"), 'a', encoding='utf-8')
+            result_file_path = os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}")
             logging.info(f"all_results:{len(all_results.keys())}")
-            for name, test_results in all_results.items():
-                result_file.write(f"\n-----------{name}----------------------\n")
-                result_file.write(evals_runner.evals_result.build_output_table(test_results))
-            result_file.flush()
-            result_file.close()
+            with open(result_file_path, 'a', encoding='utf-8') as result_file:
+                for name, test_results in all_results.items():
+                    result_file.write(f"\n-----------{name}----------------------\n")
+                    result_file.write(evals_runner.evals_result.build_output_table(test_results))
+                result_file.flush()
+                result_file.close()
 
         evals_runner.evals_result.show_results(all_results, args.baseline_check)
         if args.baseline_check:

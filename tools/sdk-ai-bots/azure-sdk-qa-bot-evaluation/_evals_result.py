@@ -52,11 +52,11 @@ class EvalsResult:
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "reference_urls": row["inputs.expected_reference_urls"]
-            },
+            }
             row_result["actual"] = {
                 "answer": row["inputs.response"],
                 "reference_urls": row["inputs.reference_urls"]
-            },
+            }
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)

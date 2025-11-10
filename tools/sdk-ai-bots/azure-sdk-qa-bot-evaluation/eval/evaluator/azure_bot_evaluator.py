@@ -1,8 +1,7 @@
 import json
 import logging
-from typing import Dict, Any, Set
-import copy
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
+from typing import Dict, Set
+from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from .constants import QA_BOT_EVALS_WEIGHT, EVALUATION_PASS_FAIL_MAPPING
 
 class AzureBotEvaluator:
@@ -85,7 +84,6 @@ class AzureBotEvaluator:
     
     def __call__(self, *, query: str, response: str, ground_truth: str, reference_urls: list[str], expected_reference_urls: list[str] = None) -> Dict[str, float]:
         similarity = self._similarity(query=query, response=response, ground_truth=ground_truth)
-        # groundness = self._groundedness(response=response, context=context, query=query)
         response_completion = self._response_completion(ground_truth=ground_truth, response=response)
         
         # Calculate reference matching if expected references are provided
@@ -95,15 +93,16 @@ class AzureBotEvaluator:
         result = {}
         base_key = f"{AzureBotEvaluator.RESULT_KEY}"
         if expected_reference_urls:
-            exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_refence_matches(expected_reference_urls, reference_urls)
+            exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_reference_matches(expected_reference_urls, reference_urls)
             reference_match_score = match_percentage
             result[f"{base_key}_reference_match"] = match_percentage
             result[f"{base_key}_exact_matches"] = list(exact_matches)
             result[f"{base_key}_unexpected_refs"] = list(unexpected_refs)
             result[f"{base_key}_missing_refs"] = list(missing_refs)
+        else: 
+            result[f"{base_key}_reference_match"] = reference_match_score
         
         # Calculate weighted score including reference matching
-        # reference_weight = self._weight.get("reference_weight", 0.0)
         score_value = float(similarity["similarity"]) * self._weight["similarity_weight"] + float(response_completion["response_completeness"]) * self._weight["response_completeness_weight"]
         
         result[f"{base_key}"] = score_value

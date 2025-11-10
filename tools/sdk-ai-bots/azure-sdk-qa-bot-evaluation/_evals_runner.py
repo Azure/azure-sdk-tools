@@ -9,10 +9,10 @@ import re
 import shutil
 import threading
 import time
-from typing import Any, Dict, Optional, Type, List, Union
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from typing import Any, Dict, Optional, List
+from azure.ai.evaluation import evaluate
 from _evals_result import EvalsResult
-from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
+from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
@@ -88,7 +88,7 @@ class EvaluatorClass:
         self._evaluator_config = value
     
     @property
-    def output_fileds(self):
+    def output_fields(self):
         """Getter for output fields"""
         return self._output_fields
     
@@ -171,40 +171,40 @@ class EvalsRunner:
         if tenant_id is None:
             tenant_id = EvalsRunner.channel_to_tenant_id_dict["default"]
         
-        outputFile = open(output_file, 'a', encoding='utf-8')
-        with open(input_file, "r", encoding="utf-8") as f:
-            for line in f:
-                record = json.loads(line)
-                logging.debug(record)
-                if retrieve_response:
-                    try:
-                        api_response = await self._call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
-                        answer = api_response.get("answer", "")
-                        full_context = api_response.get("full_context", "")
-                        references = api_response.get("references", [])
-                        reference_urls = extract_links_from_references(references)
-                        latency = time.time() - start_time
-                        processed_test_data = {
-                            "query": record["query"],
-                            "ground_truth": record["ground_truth"],
-                            "response": answer,
-                            "context": full_context,
-                            "latency": latency,
-                            "response_length": len(answer),
-                            "expected_reference_urls": record["expected_reference_urls"] if "expected_reference_urls" in record else [],
-                            "reference_urls": reference_urls,
-                            "testcase": record.get("testcase", "unknown"),
-                        }
-                        if processed_test_data:
-                            outputFile.write(json.dumps(processed_test_data, ensure_ascii=False) + '\n')
-                    except Exception as e:
-                        logging.error(f"❌ Error occurred when process {input_file}: {str(e)}")
-                        import traceback
-                        traceback.print_exc()
-                else:
-                    outputFile.write(line)
-        outputFile.flush()
-        outputFile.close()
+        with open(output_file, 'a', encoding='utf-8') as outputFile:
+            with open(input_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    record = json.loads(line)
+                    logging.debug(record)
+                    if retrieve_response:
+                        try:
+                            api_response = await self._call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
+                            answer = api_response.get("answer", "")
+                            full_context = api_response.get("full_context", "")
+                            references = api_response.get("references", [])
+                            reference_urls = extract_links_from_references(references)
+                            latency = time.time() - start_time
+                            processed_test_data = {
+                                "query": record["query"],
+                                "ground_truth": record["ground_truth"],
+                                "response": answer,
+                                "context": full_context,
+                                "latency": latency,
+                                "response_length": len(answer),
+                                "expected_reference_urls": record["expected_reference_urls"] if "expected_reference_urls" in record else [],
+                                "reference_urls": reference_urls,
+                                "testcase": record.get("testcase", "unknown"),
+                            }
+                            if processed_test_data:
+                                outputFile.write(json.dumps(processed_test_data, ensure_ascii=False) + '\n')
+                        except Exception as e:
+                            logging.error(f"❌ Error occurred when process {input_file}: {str(e)}")
+                            import traceback
+                            traceback.print_exc()
+                    else:
+                        outputFile.write(line)
+            outputFile.flush()
+            outputFile.close()
 
     async def _call_bot_api(self, question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, with_full_context: bool = True) -> Dict[str, Any]:
         """Call the completion API endpoint."""

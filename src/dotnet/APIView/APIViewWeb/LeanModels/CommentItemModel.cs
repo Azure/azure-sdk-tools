@@ -35,7 +35,8 @@ namespace APIViewWeb.LeanModels
     public class CommentFeedback
     {
         public List<string> Reasons { get; set; } = new List<string>();
-        public string AdditionalComments { get; set; } = string.Empty;
+        public string Comment { get; set; } = string.Empty;
+        public bool IsDelete { get; set; }
         public string SubmittedBy { get; set; }
         public DateTime? SubmittedOn { get; set; }
     }

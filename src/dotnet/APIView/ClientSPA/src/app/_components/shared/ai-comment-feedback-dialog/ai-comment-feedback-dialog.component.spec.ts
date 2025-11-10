@@ -24,15 +24,7 @@ describe('AICommentFeedbackDialogComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should show downvote description when not deleting', () => {
-    component.isDeleting = false;
-    expect(component.dialogDescription).toBe('Your downvote has been recorded. Please tell us why to help us improve:');
-  });
 
-  it('should show deletion description when deleting', () => {
-    component.isDeleting = true;
-    expect(component.dialogDescription).toBe('The comment has been deleted. Please tell us why to help us improve:');
-  });
 
   it('should not allow submission without selected reasons', () => {
     component.selectedReasons = [];
@@ -40,26 +32,26 @@ describe('AICommentFeedbackDialogComponent', () => {
   });
 
   it('should allow submission with at least one reason selected', () => {
-    component.selectedReasons = ['Information is factually incorrect'];
+    component.selectedReasons = ['This comment is factually incorrect'];
     expect(component.canSubmit).toBeTruthy();
   });
 
   it('should allow submission with multiple reasons selected', () => {
-    component.selectedReasons = ['Information is factually incorrect', 'APIView tool limitation or quirk'];
+    component.selectedReasons = ['This comment is factually incorrect', 'This is an APIView rendering bug'];
     expect(component.canSubmit).toBeTruthy();
   });
 
   it('should emit feedback on submit with valid reasons', () => {
     spyOn(component.feedbackSubmit, 'emit');
     component.commentId = 'test-123';
-    component.selectedReasons = ['Information is factually incorrect'];
+    component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
     
     component.onSubmit();
     
     expect(component.feedbackSubmit.emit).toHaveBeenCalledWith({
       commentId: 'test-123',
-      reasons: ['Information is factually incorrect'],
+      reasons: ['This comment is factually incorrect'],
       additionalComments: 'Test comment'
     });
   });
@@ -76,7 +68,7 @@ describe('AICommentFeedbackDialogComponent', () => {
   });
 
   it('should reset form after successful submit', () => {
-    component.selectedReasons = ['Information is factually incorrect'];
+    component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
     
     component.onSubmit();
@@ -86,12 +78,12 @@ describe('AICommentFeedbackDialogComponent', () => {
   });
 
   it('should reset form on cancel', () => {
-    component.selectedReasons = ['Inaccurate or incorrect'];
+    component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
     component.visible = true;
     
     spyOn(component.visibleChange, 'emit');
-    spyOn(component.dialogHide, 'emit');
+    spyOn(component.cancel, 'emit');
     
     component.onCancel();
     
@@ -99,19 +91,19 @@ describe('AICommentFeedbackDialogComponent', () => {
     expect(component.additionalComments).toBe('');
     expect(component.visible).toBe(false);
     expect(component.visibleChange.emit).toHaveBeenCalledWith(false);
-    expect(component.dialogHide.emit).toHaveBeenCalled();
+    expect(component.cancel.emit).toHaveBeenCalled();
   });
 
   it('should reset form on hide', () => {
-    component.selectedReasons = ['Inaccurate or incorrect'];
+    component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
     
-    spyOn(component.dialogHide, 'emit');
+    spyOn(component.cancel, 'emit');
     
     component.onHide();
     
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
-    expect(component.dialogHide.emit).toHaveBeenCalled();
+    expect(component.cancel.emit).toHaveBeenCalled();
   });
 });

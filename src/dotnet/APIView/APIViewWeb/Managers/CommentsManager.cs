@@ -480,7 +480,8 @@ namespace APIViewWeb.Managers
             comment.Feedback.Add(new CommentFeedback
             {
                 Reasons = feedback.Reasons ?? [],
-                AdditionalComments = feedback.AdditionalComments ?? string.Empty,
+                Comment = feedback.Comment ?? string.Empty,
+                IsDelete = feedback.IsDelete,
                 SubmittedBy = userName,
                 SubmittedOn = DateTime.UtcNow
             });

@@ -14,60 +14,59 @@ export interface AICommentFeedback {
 export class AICommentFeedbackDialogComponent {
   @Input() visible: boolean = false;
   @Input() commentId: string = '';
-  @Input() isDeleting: boolean = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() feedbackSubmit = new EventEmitter<AICommentFeedback>();
-  @Output() dialogHide = new EventEmitter<void>();
+  @Output() cancel = new EventEmitter<void>();
 
- 
-  dialogTitle: string = "Provide additional feedback"
-
-  get dialogDescription(): string {
-    return this.isDeleting 
-      ? "The comment has been deleted. Please tell us why to help us improve:"
-      : "Your downvote has been recorded. Please tell us why to help us improve:";
-  }
+  readonly dialogTitle = "Provide additional feedback";
+  readonly dialogDescription = "Please tell us why you're downvoting this comment to help us improve:";
 
   selectedReasons: string[] = [];
   additionalComments: string = '';
 
-  feedbackReasons = [
-    'Information is factually incorrect',
-    'APIView tool limitation or quirk',
-    'Azure SDK design decision/guideline',
-    'Other'
+  readonly feedbackReasons = [
+    'This comment is factually incorrect',
+    'This is an APIView rendering bug',
+    'This is an accepted APIView rendering choice',
+    'This is an accepted SDK design pattern',
+    'The guideline cited here is out-of-date'
   ];
 
-
   get canSubmit(): boolean {
-    // Require at least one reason to be selected
     return this.selectedReasons.length > 0;
   }
 
-  onSubmit() {
-    if (this.canSubmit) {
-      this.feedbackSubmit.emit({
-        commentId: this.commentId,
-        reasons: this.selectedReasons,
-        additionalComments: this.additionalComments
-      });
-      this.resetForm();
+  onSubmit(): void {
+    if (!this.canSubmit) {
+      return;
     }
+
+    this.feedbackSubmit.emit({
+      commentId: this.commentId,
+      reasons: this.selectedReasons,
+      additionalComments: this.additionalComments
+    });
+
+    this.closeDialog();
   }
 
-  onCancel() {
+  onCancel(): void {
+    this.cancel.emit();
+    this.closeDialog();
+  }
+
+  onHide(): void {
+    this.cancel.emit();
+    this.closeDialog();
+  }
+
+  private closeDialog(): void {
     this.resetForm();
     this.visible = false;
     this.visibleChange.emit(false);
-    this.dialogHide.emit();
   }
 
-  onHide() {
-    this.resetForm();
-    this.dialogHide.emit();
-  }
-
-  private resetForm() {
+  private resetForm(): void {
     this.selectedReasons = [];
     this.additionalComments = '';
   }

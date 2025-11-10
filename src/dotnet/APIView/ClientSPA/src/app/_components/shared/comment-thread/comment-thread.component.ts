@@ -15,6 +15,7 @@ import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
 import { AICommentFeedback } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteReason } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
 
 interface AICommentInfoItem {
   icon: string;
@@ -27,7 +28,6 @@ interface AICommentInfoItem {
 interface AICommentInfo {
   items: AICommentInfoItem[];
 }
-
 @Component({
   selector: 'app-comment-thread',
   templateUrl: './comment-thread.component.html',
@@ -92,15 +92,16 @@ export class CommentThreadComponent {
   selectedCommentId: string = ''; 
 
   showAIFeedbackDialog: boolean = false;
+  showAIDeleteDialog: boolean = false;
   pendingDownvoteAction: CommentUpdatesDto | null = null;
   pendingDeleteAction: CommentUpdatesDto | null = null;
 
-  get isDeletingAIComment(): boolean {
-    return this.pendingDeleteAction !== null;
+  get pendingDownvoteCommentId(): string {
+    return this.pendingDownvoteAction?.commentId || '';
   }
 
-  get pendingDownvoteCommentId(): string {
-    return this.pendingDownvoteAction?.commentId || this.pendingDeleteAction?.commentId || '';
+  get pendingDeleteCommentId(): string {
+    return this.pendingDeleteAction?.commentId || '';
   }
 
   private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
@@ -322,11 +323,11 @@ export class CommentThreadComponent {
     } as CommentUpdatesDto;
     
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    
     if (comment?.commentSource === CommentSource.AIGenerated) {
       this.pendingDeleteAction = deleteAction;
-      
       setTimeout(() => {
-        this.showAIFeedbackDialog = true;
+        this.showAIDeleteDialog = true;
         this.changeDetectorRef.detectChanges();
       }, 100);
     } else {
@@ -451,6 +452,7 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-btn-id");
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
     const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
+    const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
     
     const downvoteAction = { 
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
@@ -459,10 +461,8 @@ export class CommentThreadComponent {
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
     } as CommentUpdatesDto;
     
-    const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
     if (isAIComment && !hasDownvote) {
       this.pendingDownvoteAction = downvoteAction;
-      
       setTimeout(() => {
         this.showAIFeedbackDialog = true;
         this.changeDetectorRef.detectChanges();
@@ -472,17 +472,20 @@ export class CommentThreadComponent {
     }
   }
 
-  onAIFeedbackSubmit(feedback: AICommentFeedback) {
+  onAIFeedbackSubmit(feedback: AICommentFeedback): void {
     this.showAIFeedbackDialog = false;
     
-    this.executePendingAction();
+    if (this.pendingDownvoteAction) {
+      this.commentDownvoteActionEmitter.emit(this.pendingDownvoteAction);
+    }
     
     if (feedback.reasons.length > 0) {
       this.commentsService.submitAICommentFeedback(
         this.reviewId,
         feedback.commentId,
         feedback.reasons,
-        feedback.additionalComments
+        feedback.additionalComments,
+        false
       ).pipe(take(1)).subscribe({
         next: () => {
         },
@@ -492,28 +495,42 @@ export class CommentThreadComponent {
       });
     }
     
-    this.resetFeedbackState();
+    this.pendingDownvoteAction = null;
   }
 
-  onAIFeedbackCancel() {
+  onAIFeedbackCancel(): void {
     this.showAIFeedbackDialog = false;
-    
-    this.executePendingAction();
-    this.resetFeedbackState();
+    this.pendingDownvoteAction = null;
   }
 
-  private executePendingAction() {
-    if (this.pendingDownvoteAction) {
-      this.commentDownvoteActionEmitter.emit(this.pendingDownvoteAction);
-    }
+  onAIDeleteConfirm(deleteReason: AICommentDeleteReason): void {
+    this.showAIDeleteDialog = false;
     
     if (this.pendingDeleteAction) {
       this.deleteCommentActionEmitter.emit(this.pendingDeleteAction);
     }
+    
+    if (deleteReason.reason.trim().length > 0) {
+      this.commentsService.submitAICommentFeedback(
+        this.reviewId,
+        deleteReason.commentId,
+        [],
+        deleteReason.reason,
+        true
+      ).pipe(take(1)).subscribe({
+        next: () => {
+        },
+        error: (error: any) => {
+          console.error('Failed to submit deletion reason:', error);
+        }
+      });
+    }
+    
+    this.pendingDeleteAction = null;
   }
 
-  private resetFeedbackState() {
-    this.pendingDownvoteAction = null;
+  onAIDeleteCancel(): void {
+    this.showAIDeleteDialog = false;
     this.pendingDeleteAction = null;
   }
 

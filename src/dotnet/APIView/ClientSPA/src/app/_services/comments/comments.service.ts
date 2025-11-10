@@ -129,14 +129,15 @@ export class CommentsService {
     });
   }
 
-  submitAICommentFeedback(reviewId: string, commentId: string, reasons: string[], additionalComments: string) {
+  submitAICommentFeedback(reviewId: string, commentId: string, reasons: string[], comment: string, isDelete: boolean = false) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     })
 
     const body = {
       reasons: reasons,
-      additionalComments: additionalComments
+      comment: comment,
+      isDelete: isDelete
     };
 
     return this.http.post(this.baseUrl + `/${reviewId}/${commentId}/feedback`, body, { 

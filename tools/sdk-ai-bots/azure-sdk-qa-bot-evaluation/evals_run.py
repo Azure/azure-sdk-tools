@@ -95,7 +95,13 @@ if __name__ == "__main__":
             "expected_reference_urls": "${data.expected_reference_urls}",
             "reference_urls": "${data.reference_urls}",
             "testcase": "${data.testcase}"
-        }})
+        }},
+        [
+            "bot_evals",
+            "bot_evals_similarity",
+            "bot_evals_response_completeness",
+            "bot_evals_result"
+        ])
 
         evaluators = {
             "similarity": simiarity_class,

@@ -5,6 +5,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 
@@ -29,10 +31,13 @@ public class SdkBuildToolTests
     private SdkBuildTool _tool;
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<IProcessHelper> _mockProcessHelper;
+    private Mock<INpxHelper> _mockNpxHelper;
+    private Mock<IPowershellHelper> _mockPowerShellHelper;
     private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
     private TestLogger<SdkBuildTool> _logger;
     private TempDirectory _tempDirectory;
-    private ILanguageSpecificResolver<IPackageInfoHelper> _packageInfoHelper;
+    private List<LanguageService> _languageServices;
+    private Mock<ICommonValidationHelpers> _commonValidationHelpers;
 
     [SetUp]
     public void Setup()
@@ -41,11 +46,22 @@ public class SdkBuildToolTests
         _mockGitHelper = new Mock<IGitHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
         _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
+        _mockNpxHelper = new Mock<INpxHelper>();
+        _mockPowerShellHelper = new Mock<IPowershellHelper>();
         _logger = new TestLogger<SdkBuildTool>();
+        _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
+        var languageLogger = new TestLogger<LanguageService>();
+        var mockMicrohostAgent = new Mock<IMicroagentHostService>();
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
-        _packageInfoHelper = Mock.Of<ILanguageSpecificResolver<IPackageInfoHelper>>();
+        _languageServices = [
+            new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
+            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
+            new GoLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object)
+        ];
 
         // Create the tool instance
         _tool = new SdkBuildTool(
@@ -53,7 +69,7 @@ public class SdkBuildToolTests
             _logger,
             _mockProcessHelper.Object,
             _mockSpecGenSdkConfigHelper.Object,
-            _packageInfoHelper
+            _languageServices
         );
     }
 
@@ -126,7 +142,7 @@ public class SdkBuildToolTests
 
         // Mock the SpecGenSdkConfigHelper to throw an exception for missing config
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath))
+            .Setup(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build))
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
         // Act
@@ -148,7 +164,7 @@ public class SdkBuildToolTests
 
         // Mock the SpecGenSdkConfigHelper to throw a JSON parsing exception
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath))
+            .Setup(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build))
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
         // Act
@@ -174,7 +190,7 @@ public class SdkBuildToolTests
 
         // Mock the SpecGenSdkConfigHelper to throw when config file is not found
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath))
+            .Setup(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build))
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
         // Act
@@ -182,9 +198,9 @@ public class SdkBuildToolTests
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));
-        _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath), Times.Once);
-        _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory.DirectoryPath), Times.Once);
-        _mockSpecGenSdkConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath), Times.Once);
+        _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath), Times.AtMost(2));
+        _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory.DirectoryPath), Times.AtMost(2));
+        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build), Times.Once);
     }
 
     #endregion

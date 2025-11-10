@@ -3,22 +3,30 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Models;
-using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, provides intelligent analysis and recommendations for updating customization code.")]
-public class TspClientUpdateTool(
-    ILogger<TspClientUpdateTool> logger,
-    ILanguageSpecificResolver<IClientUpdateLanguageService> clientUpdateLanguageSpecificService,
-    ITspClientHelper tspClientHelper
-) : MCPTool
+public class TspClientUpdateTool: LanguageMcpTool
 {
+    private readonly ITspClientHelper tspClientHelper;
+    public TspClientUpdateTool(
+        ILogger<TspClientUpdateTool> logger,
+        IEnumerable<LanguageService> languageServices,
+        IGitHelper gitHelper,
+        ITspClientHelper tspClientHelper
+    ) : base(languageServices, gitHelper, logger)
+    {
+        this.tspClientHelper = tspClientHelper;
+    }
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
     private readonly Argument<string> updateCommitSha = new("update-commit-sha")
@@ -84,12 +92,13 @@ public class TspClientUpdateTool(
             {
                 return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
             }
-            var resolved = await clientUpdateLanguageSpecificService.Resolve(packagePath, ct);
-            if (resolved == null)
+            var languageService = GetLanguageService(packagePath);
+            if (!languageService.IsTspClientupdatedSupported)
             {
                 return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };
             }
-            return await UpdateCoreAsync(commitSha, packagePath, resolved, ct);
+
+            return await UpdateCoreAsync(commitSha, packagePath, languageService, ct);
         }
         catch (Exception ex)
         {
@@ -98,7 +107,7 @@ public class TspClientUpdateTool(
         }
     }
 
-    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, LanguageService languageService, CancellationToken ct)
     {
         try
         {
@@ -179,7 +188,7 @@ public class TspClientUpdateTool(
     }
     private async Task<(bool Success, bool RequiresReview)> ValidateAndUpdateGuidanceAsync(
         string packagePath,
-        IClientUpdateLanguageService languageService,
+        LanguageService languageService,
         List<string> guidance,
         CancellationToken ct)
     {
@@ -206,7 +215,7 @@ public class TspClientUpdateTool(
         string commitSha,
         string? customizationRoot,
         string packagePath,
-        IClientUpdateLanguageService languageService,
+        LanguageService languageService,
         CancellationToken ct)
     {
         try

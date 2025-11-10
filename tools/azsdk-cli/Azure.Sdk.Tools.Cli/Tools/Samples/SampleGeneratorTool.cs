@@ -10,6 +10,8 @@ using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Samples
 {
@@ -21,13 +23,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
     public record GeneratedSample(string FileName, string Content);
 
     [McpServerToolType, Description("Generates sample files")]
-    public class SampleGeneratorTool(
-        IMicroagentHostService microagentHostService,
-        ILogger<SampleGeneratorTool> logger,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver,
-        ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
-    ) : MCPTool
+    public class SampleGeneratorTool: LanguageMcpTool
     {
+        private ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
+        private IMicroagentHostService microagentHostService;
+        public SampleGeneratorTool(
+            IMicroagentHostService microagentHostService,
+            ILogger<SampleGeneratorTool> logger,
+            IGitHelper gitHelper,
+            IEnumerable<LanguageService> languageServices,
+            ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
+        ) : base(languageServices, gitHelper, logger)
+        {
+            this.sampleContextResolver = sampleContextResolver;
+            this.microagentHostService = microagentHostService;
+        }
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Samples];
 
         private readonly Option<string> promptOption = new("--prompt")
@@ -128,8 +138,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
 
         private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, string[]? extraContextPaths, CancellationToken ct)
         {
-            IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
-            var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
+            var languageService = GetLanguageService(packagePath) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
             var resolvedOutputDirectory = packageInfo.SamplesDirectory;
 
             logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);

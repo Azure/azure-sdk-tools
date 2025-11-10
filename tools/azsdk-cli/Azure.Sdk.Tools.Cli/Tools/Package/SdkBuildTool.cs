@@ -7,19 +7,30 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
-using System.Threading.Tasks;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to build/compile SDK code locally.")]
-    public class SdkBuildTool(
-        IGitHelper gitHelper,
-        ILogger<SdkBuildTool> logger,
-        IProcessHelper processHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver
-    ) : MCPTool
+    public class SdkBuildTool : LanguageMcpTool
     {
+        // Fields to hold constructor parameters
+        private readonly IProcessHelper processHelper;
+        private readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+
+        public SdkBuildTool(
+            IGitHelper gitHelper,
+            ILogger<SdkBuildTool> logger,
+            IProcessHelper processHelper,
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+            IEnumerable<LanguageService> languageServices
+        ) : base(languageServices, gitHelper, logger)
+        {
+            this.processHelper = processHelper;
+            this.specGenSdkConfigHelper = specGenSdkConfigHelper;
+        }
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
 
         // Command names
@@ -49,31 +60,35 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Validate inputs
                 if (string.IsNullOrEmpty(packagePath))
                 {
-                    return CreateFailureResponse("Package path is required.");
+                    return PackageOperationResponse.CreateFailure("Package path is required.");
                 }
 
                 if (!Directory.Exists(packagePath))
                 {
-                    return CreateFailureResponse($"Path does not exist: {packagePath}");
+                    return PackageOperationResponse.CreateFailure($"Path does not exist: {packagePath}");
                 }
 
                 // Get repository root path from project path
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
-                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
+                    return PackageOperationResponse.CreateFailure($"Failed to discover local sdk repo with project-path: {packagePath}.");
                 }
 
                 logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
                 string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
                 logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
-
-                PackageInfo packageInfo = await GetPackageInfo(packagePath, ct);
+                var languageService = GetLanguageService(sdkRepoRoot);
+                if (languageService == null)
+                {
+                    return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");
+                }
+                PackageInfo? packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
                     logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo);
+                    return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo);
                 }
 
                 // Get the build configuration (command or script path)
@@ -84,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
                 catch (Exception ex)
                 {
-                    return CreateFailureResponse($"Failed to get build configuration: {ex.Message}", packageInfo);
+                    return PackageOperationResponse.CreateFailure($"Failed to get build configuration: {ex.Message}", packageInfo);
                 }
 
                 // Run the build script or command
@@ -93,72 +108,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
                 if (buildResult.ExitCode != 0)
                 {
-                    return CreateFailureResponse($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}", packageInfo);
+                    return PackageOperationResponse.CreateFailure($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}", packageInfo);
                 }
 
                 logger.LogInformation("Build process execution completed");
-                return CreateSuccessResponse($"Build completed successfully. Output:\n{trimmedBuildResult}", packageInfo);
+                return PackageOperationResponse.CreateSuccess($"Build completed successfully. Output:\n{trimmedBuildResult}", packageInfo);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return CreateFailureResponse($"An error occurred: {ex.Message}");
+                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
             }
-        }
-
-        private async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
-        {
-            PackageInfo? packageInfo = null;
-            try
-            {
-                var packageInfoHelper = await packageInfoResolver.Resolve(packagePath, ct);
-                if (packageInfoHelper != null)
-                {
-                    packageInfo = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
-                }
-                else
-                {
-                    logger.LogError("No package info helper found for package path: {packagePath}", packagePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while parsing package path: {packagePath}", packagePath);
-            }
-            return packageInfo;
-        }
-
-        // Helper method to create failure responses along with setting the failure state
-        private PackageOperationResponse CreateFailureResponse(string message, PackageInfo? packageInfo = null)
-        {
-            return new PackageOperationResponse
-            {
-                ResponseErrors = [message],
-                PackageName = packageInfo?.PackageName ?? string.Empty,
-                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
-                PackageType = packageInfo?.SdkType ?? SdkType.Unknown
-            };
-        }
-
-        // Helper method to create success responses (no SetFailure needed)
-        private PackageOperationResponse CreateSuccessResponse(string message, PackageInfo? packageInfo)
-        {
-            return new PackageOperationResponse
-            {
-                Result = "succeeded",
-                Message = message,
-                PackageName = packageInfo?.PackageName ?? string.Empty,
-                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
-                PackageType = packageInfo?.SdkType ?? SdkType.Unknown
-            };
         }
 
         // Create process options for building the SDK based on configuration
         private async Task<ProcessOptions> CreateProcessOptions(string sdkRepoRoot, string packagePath)
         {
-            var (configType, configValue) = await specGenSdkConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
+            var (configType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
 
-            if (configType == BuildConfigType.Command)
+            if (configType == SpecGenSdkConfigContentType.Command)
             {
                 // Execute as command
                 var variables = new Dictionary<string, string>

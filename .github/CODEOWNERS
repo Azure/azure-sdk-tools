@@ -25,6 +25,11 @@
 /eng/common/pipelines/codeowners-linter.yml @weshaggard
 
 ###########
+# Files used to manage tsp-client version and installation
+###########
+/eng/common/tsp-client @catalinaperalta @raych1
+
+###########
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng

@@ -59,5 +59,45 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         }
 
         public static implicit operator PackageOperationResponse(string s) => new() { Message = s };
+
+        /// <summary>
+        /// Creates a failure response with the specified error message and package info.
+        /// </summary>
+        /// <param name="message">The error message to include in the response.</param>
+        /// <param name="packageInfo">Optional package information to include in the response.</param>
+        /// <param name="nextSteps">Optional next steps to include in the response.</param>
+        /// <returns>A PackageOperationResponse indicating failure.</returns>
+        public static PackageOperationResponse CreateFailure(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null)
+        {
+            return new PackageOperationResponse
+            {
+                ResponseErrors = [message],
+                PackageName = packageInfo?.PackageName ?? string.Empty,
+                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
+                PackageType = packageInfo?.SdkType ?? SdkType.Unknown,
+                Result = "failed",
+                NextSteps = nextSteps?.ToList() ?? []
+            };
+        }
+
+        /// <summary>
+        /// Creates a success response with the specified message.
+        /// </summary>
+        /// <param name="message">The success message to include in the response.</param>
+        /// <param name="packageInfo">Optional package information to include in the response.</param>
+        /// <param name="nextSteps">Optional next steps to include in the response.</param>
+        /// <returns>A PackageOperationResponse indicating success.</returns>
+        public static PackageOperationResponse CreateSuccess(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null)
+        {
+            return new PackageOperationResponse
+            {
+                Result = "succeeded",
+                Message = message,
+                PackageName = packageInfo?.PackageName ?? string.Empty,
+                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
+                PackageType = packageInfo?.SdkType ?? SdkType.Unknown,
+                NextSteps = nextSteps?.ToList() ?? []
+            };
+        }
     }
 }

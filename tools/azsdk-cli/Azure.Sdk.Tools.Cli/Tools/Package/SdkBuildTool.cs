@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         return await this.specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");
                     }
                 }
-                return PackageOperationResponse.CreateFailure("No build configuration found or failed to preprare the build command", packageInfo, nextSteps: ["Ensure the SDK repository has a valid 'buildScript' configuration in eng/swagger_to_sdk_config.json", "Resolve any issues reported in the build log", "Re-run the tool"]);
+                return PackageOperationResponse.CreateFailure("No build configuration found or failed to prepare the build command", packageInfo, nextSteps: ["Ensure the SDK repository has a valid 'buildScript' configuration in eng/swagger_to_sdk_config.json", "Resolve any issues reported in the build log", "Re-run the tool"]);
             }
             catch (Exception ex)
             {

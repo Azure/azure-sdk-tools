@@ -216,7 +216,7 @@ func getImageDataURI(url string) (string, error) {
 		log.Printf("Failed to get token: %v", err)
 		return "", err
 	}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		log.Printf("Failed to create request: %v", err)
 		return "", err

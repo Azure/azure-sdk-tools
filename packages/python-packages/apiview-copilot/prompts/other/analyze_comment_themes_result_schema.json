@@ -1,0 +1,39 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "analyze_comment_themes_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "themes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Descriptive name for the theme/bucket."
+              },
+              "summary": {
+                "type": "string",
+                "description": "Short summary of the theme."
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Comments that fit this theme."
+              }
+            },
+            "required": ["name", "summary", "examples"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["themes"]
+    }
+  }
+}

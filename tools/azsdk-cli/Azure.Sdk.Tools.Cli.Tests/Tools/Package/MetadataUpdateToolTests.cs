@@ -230,6 +230,7 @@ public class MetadataUpdateToolTests
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
@@ -259,6 +260,7 @@ public class MetadataUpdateToolTests
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
@@ -299,6 +301,7 @@ public class MetadataUpdateToolTests
         var cancellationToken = new CancellationToken();
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 

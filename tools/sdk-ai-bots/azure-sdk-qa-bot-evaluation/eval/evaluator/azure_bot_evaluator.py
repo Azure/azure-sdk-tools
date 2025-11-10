@@ -56,7 +56,7 @@ class AzureBotEvaluator:
         normalized = urlunparse((scheme, netloc, path, parsed.params, query, ''))
         return normalized
 
-    def _get_refence_matches(self, expected: list[str], actual: list[str]) -> tuple[Set, Set, Set, float]:
+    def _get_reference_matches(self, expected: list[str], actual: list[str]) -> tuple[Set, Set, Set, float]:
         """Compare reference URLs between expected and actual lists with normalized comparison."""
         # Create mappings from normalized URL to original URL
         expected_map = {self._normalize_url(url): url for url in expected}

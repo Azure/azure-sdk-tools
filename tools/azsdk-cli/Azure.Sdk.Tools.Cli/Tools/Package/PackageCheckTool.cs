@@ -99,10 +99,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Set the Python venv path if this is a Python package and venv path is provided
-                var languageChecks = await ResolveLanguageChecks(packagePath, ct);
-                if (languageChecks is PythonLanguageSpecificChecks pythonChecks && !string.IsNullOrEmpty(pythonVenvPath))
+                var languageChecks = GetLanguageService(packagePath);
+                if (languageChecks is PythonLanguageService pythonService && !string.IsNullOrEmpty(pythonVenvPath))
                 {
-                    pythonChecks.SetPythonVenvPath(pythonVenvPath);
+                    pythonService.SetPythonVenvPath(pythonVenvPath);
                 }
 
                 var response = checkType switch

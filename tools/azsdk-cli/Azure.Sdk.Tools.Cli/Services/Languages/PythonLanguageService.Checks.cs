@@ -34,8 +34,10 @@ public partial class PythonLanguageService : LanguageService
 
             logger.LogInformation("Using Python snippet updater script: {ScriptPath}", scriptPath);
 
+            var pythonCommand = GetVenvExecutable(pythonVenvPath, "python");
+
             // Check if Python is available
-            var pythonCheckResult = await processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+            var pythonCheckResult = await processHelper.Run(new(pythonCommand, ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
             if (pythonCheckResult.ExitCode != 0)
             {
                 logger.LogError("Python is not installed or not available in PATH");
@@ -45,7 +47,7 @@ public partial class PythonLanguageService : LanguageService
             logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
 
             // Run the Python snippet updater
-            var command = "python";
+            var command = pythonCommand;
             var args = new[] { scriptPath, packagePath };
 
             logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
@@ -75,13 +77,15 @@ public partial class PythonLanguageService : LanguageService
         try
         {
             logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
-            var timeout = TimeSpan.FromMinutes(10); 
+            var timeout = TimeSpan.FromMinutes(10);
+            
+            var azpysdkCommand = GetVenvExecutable(pythonVenvPath, "azpysdk");
 
             // Run multiple linting tools
             var lintingTools = new[]
             {
-                ("pylint", new[] { "azpysdk", "pylint", "--isolate", packagePath }),
-                ("mypy", new[] { "azpysdk", "mypy", "--isolate", packagePath }),
+                ("pylint", new[] { azpysdkCommand, "pylint", "--isolate", packagePath }),
+                ("mypy", new[] { azpysdkCommand, "mypy", "--isolate", packagePath }),
             };
 
             logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
@@ -128,8 +132,8 @@ public partial class PythonLanguageService : LanguageService
         try
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
-            // Run azpysdk black
-            var command = "azpysdk";
+            
+            var command = GetVenvExecutable(pythonVenvPath, "azpysdk");
             var args = new[] { "black", "--isolate", packagePath };
 
             logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));

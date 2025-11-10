@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public sealed partial class PythonLanguageService : LanguageService
 {
     private readonly INpxHelper npxHelper;
+    private string? pythonVenvPath;
 
     public PythonLanguageService(
         IProcessHelper processHelper,
@@ -25,6 +26,12 @@ public sealed partial class PythonLanguageService : LanguageService
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+    }
+
+    public void SetPythonVenvPath(string? venvPath)
+    {
+        pythonVenvPath = venvPath;
+        logger.LogDebug("Python venv path set to: {VenvPath}", venvPath);
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
 
@@ -137,8 +144,10 @@ public sealed partial class PythonLanguageService : LanguageService
 
     public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {
+        var pytestCommand = GetVenvExecutable(pythonVenvPath, "pytest");
+        
         var result = await processHelper.Run(new ProcessOptions(
-                command: "pytest",
+                command: pytestCommand,
                 args: ["tests"],
                 workingDirectory: packagePath
             ),
@@ -149,22 +158,23 @@ public sealed partial class PythonLanguageService : LanguageService
     }
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
-        return GetRequirements(packagePath, categories, null, ct);
+        return GetRequirements(packagePath, categories, pythonVenvPath, ct);
     }
 
-    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, string venvPath, CancellationToken ct = default)
+    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, string? venvPath, CancellationToken ct = default)
     {
         var reqs = categories.TryGetValue("python", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
 
         if (string.IsNullOrWhiteSpace(venvPath))
         {
-            venvPath = FindVenv(packagePath);
+            logger.LogInformation("No venv path provided, using Python executables from PATH");
+            return reqs;
         }
 
-        if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
+        if (!Directory.Exists(venvPath))
         {
-            logger.LogWarning("Provided venv path is invalid or does not exist: {VenvPath}", venvPath);
-            return reqs;
+            logger.LogError("Provided venv path does not exist: {VenvPath}", venvPath);
+            throw new DirectoryNotFoundException($"Python venv path does not exist: {venvPath}");
         }
 
         logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
@@ -175,7 +185,6 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         foreach (var req in reqs)
         {
-            // Update checks to use venv path
             var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
             req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
         }
@@ -183,25 +192,31 @@ public sealed partial class PythonLanguageService : LanguageService
         return reqs;
     }
 
-    private string FindVenv(string packagePath)
+    private string GetVenvExecutable(string? venvPath, string executableName)
     {
-        // try to find existing venv in package path if none was provided
-        if (string.IsNullOrWhiteSpace(packagePath))
+        if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
         {
-            packagePath = Environment.CurrentDirectory;
+            return executableName;
         }
 
-        var candidates = new[] { ".venv", "venv", ".env", "env" };
-
-        foreach (var c in candidates)
+        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+        var venvExecutable = Path.Combine(venvPath, binDir, executableName);
+        
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !executableName.EndsWith(".exe"))
         {
-            var path = Path.Combine(packagePath, c);
-            if (Directory.Exists(path))
+            var exePath = venvExecutable + ".exe";
+            if (File.Exists(exePath))
             {
-                return Path.GetFullPath(path);
+                return exePath;
             }
         }
+        
+        if (File.Exists(venvExecutable))
+        {
+            return venvExecutable;
+        }
 
-        return null;
+        logger.LogWarning("Executable {ExecutableName} not found in venv at {VenvPath}, falling back to system executable", executableName, venvPath);
+        return executableName;
     }
 }

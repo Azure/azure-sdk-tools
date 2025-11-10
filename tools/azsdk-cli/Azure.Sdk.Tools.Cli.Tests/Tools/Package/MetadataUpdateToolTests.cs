@@ -183,6 +183,7 @@ public class MetadataUpdateToolTests
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
@@ -328,6 +329,7 @@ public class MetadataUpdateToolTests
         var scriptContent = "echo 'Updating metadata'";
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, scriptContent));
 

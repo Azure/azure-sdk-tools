@@ -78,8 +78,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
                 string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
                 logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
-
-                PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
+                var languageService = GetLanguageService(sdkRepoRoot);
+                if (languageService == null)
+                {
+                    return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");
+                }
+                PackageInfo? packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -115,53 +119,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 logger.LogError(ex, "Error occurred while building SDK");
                 return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
             }
-        }
-
-        private async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
-        {
-            PackageInfo? packageInfo = null;
-            try
-            {
-                var languageService = GetLanguageService(packagePath);
-                if (languageService != null)
-                {
-                    packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-                }
-                else
-                {
-                    logger.LogError("No package info helper found for package path: {packagePath}", packagePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while parsing package path: {packagePath}", packagePath);
-            }
-            return packageInfo;
-        }
-
-        // Helper method to create failure responses along with setting the failure state
-        private PackageOperationResponse CreateFailureResponse(string message, PackageInfo? packageInfo = null)
-        {
-            return new PackageOperationResponse
-            {
-                ResponseErrors = [message],
-                PackageName = packageInfo?.PackageName ?? string.Empty,
-                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
-                PackageType = packageInfo?.SdkType ?? SdkType.Unknown
-            };
-        }
-
-        // Helper method to create success responses (no SetFailure needed)
-        private PackageOperationResponse CreateSuccessResponse(string message, PackageInfo? packageInfo)
-        {
-            return new PackageOperationResponse
-            {
-                Result = "succeeded",
-                Message = message,
-                PackageName = packageInfo?.PackageName ?? string.Empty,
-                Language = packageInfo?.Language ?? SdkLanguage.Unknown,
-                PackageType = packageInfo?.SdkType ?? SdkType.Unknown
-            };
         }
 
         // Create process options for building the SDK based on configuration

@@ -75,7 +75,11 @@ public class MetadataUpdateTool : LanguageMcpTool
             }
 
             logger.LogInformation("Repository root discovered: {SdkRepoRoot}", sdkRepoRoot);
-
+            var languageService = GetLanguageService(packagePath);
+            if (languageService == null)
+            {
+                return PackageOperationResponse.CreateFailure("Unable to determine language service for the specified package path.");
+            }
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateMetadata);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
             {
@@ -87,55 +91,24 @@ public class MetadataUpdateTool : LanguageMcpTool
                     { "SdkRepoPath", sdkRepoRoot },
                     { "PackagePath", packagePath }
                 };
-
+                
                 // Create and execute process options for the update-metadata script
                 var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
                 if (processOptions != null)
                 {
-                    var packageInfo = await GetPackageInfo(packagePath, ct);
+                    var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                     return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version if it's a release."]);
                 }
             }
 
             // Hand over to language service for language-specific update steps
             logger.LogInformation("No configured script found for updating package metadata. Checking for language-specific update implementations...");
-
-            // Resolve language package update service
-            var languageService = GetLanguageService(packagePath);
-            if (languageService != null)
-            {
-                return await languageService.UpdateMetadataAsync(packagePath, ct);
-            }
-
-            logger.LogInformation("No language-specific package update implementation found for package path: {packagePath}.", packagePath);
-            return PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed.", null);
+            return await languageService.UpdateMetadataAsync(packagePath, ct);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
             return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
         }
-    }
-
-    private async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
-    {
-        PackageInfo? packageInfo = null;
-        try
-        {
-            var languageService = GetLanguageService(packagePath);
-            if (languageService != null)
-            {
-                packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-            }
-            else
-            {
-                logger.LogError("No package info helper found for package path: {packagePath}", packagePath);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while parsing package path: {packagePath}", packagePath);
-        }
-        return packageInfo;
     }
 }

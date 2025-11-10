@@ -126,7 +126,7 @@ The three tools are intentionally small, composable units. Each emits a machine-
 
 Name (CLI): `azsdk package update-changelog-content`
 
-Name (MCP): `azsdk_package_update_changelog-content`
+Name (MCP): `azsdk_package_update_changelog_content`
 
 Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected. This tool only modifies changelog content and does not change release date or version numbers.
 
@@ -359,8 +359,8 @@ Update the package at /home/dev/sdk/healthdataaiservices/Azure.ResourceManager.H
 **Expected Agent Activity:**
 
 1. Run changelog update.
-2. Run version update with inferred `--release-type stable`.
-3. Run metadata update (README, API export, formatting if needed) and summarize JSON results.
+2. Run metadata update (pom.xml, _metadata.json, API export, etc.) and summarize JSON results.
+3. Run version update with inferred `--release-type stable`.
 
 ### Scenario 2: Update Version for Stable Release (Data-Plane)
 

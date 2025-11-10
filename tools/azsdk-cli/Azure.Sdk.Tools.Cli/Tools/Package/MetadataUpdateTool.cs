@@ -23,7 +23,7 @@ public class MetadataUpdateTool : LanguageMcpTool
 
     public MetadataUpdateTool(
         IGitHelper gitHelper,
-        ILogger<LanguageMcpTool> logger,
+        ILogger<MetadataUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper): base(languageServices, gitHelper, logger)
     {
@@ -56,6 +56,8 @@ public class MetadataUpdateTool : LanguageMcpTool
     {
         try
         {
+            logger.LogInformation("Updating package metadata content for package at: {packagePath}", packagePath);
+
             // Validate package path
             if (string.IsNullOrWhiteSpace(packagePath))
             {
@@ -78,8 +80,9 @@ public class MetadataUpdateTool : LanguageMcpTool
             var languageService = GetLanguageService(packagePath);
             if (languageService == null)
             {
-                return PackageOperationResponse.CreateFailure("Unable to determine language service for the specified package path.");
+                return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.", nextSteps: ["Create an issue at the https://github.com/Azure/azure-sdk-tools/issues/new", "contact the Azure SDK team for assistance."]);
             }
+
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateMetadata);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
             {
@@ -97,7 +100,7 @@ public class MetadataUpdateTool : LanguageMcpTool
                 if (processOptions != null)
                 {
                     var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-                    return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version if it's a release."]);
+                    return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version when preparing for a release."]);
                 }
             }
 
@@ -108,7 +111,7 @@ public class MetadataUpdateTool : LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
-            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
+            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the running logs for details about the error", "resolve the issue", "re-run the tool"]);
         }
     }
 }

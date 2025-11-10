@@ -65,9 +65,9 @@ if __name__ == "__main__":
         }
 
         similarity_threshold = int(os.environ.get("SIMILARITY_THRESHOLD", "3"))
-        simialirty_evaluator = SimilarityEvaluator(model_config=model_config, threshold=similarity_threshold)
+        similarity_evaluator = SimilarityEvaluator(model_config=model_config, threshold=similarity_threshold)
         groundedness_evaluator = GroundednessEvaluator(model_config=model_config)
-        simiarity_class = EvaluatorClass("similarity", simialirty_evaluator, {"column_mapping": {
+        similarity_class = EvaluatorClass("similarity", similarity_evaluator, {"column_mapping": {
             "query": "${data.query}",
             "response": "${data.response}",
             "ground_truth": "${data.ground_truth}",

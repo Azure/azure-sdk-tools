@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
                 logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
 
-                PackageInfo? packageInfo = await PackageInfoExtensions.CreateFromPath(packagePath, packageInfoResolver, logger, ct);
+                PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {

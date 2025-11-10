@@ -3,6 +3,7 @@
 using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -222,5 +223,26 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
         return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
+
+    /// <inheritdoc />
+    public override async Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
+    {
+        logger.LogInformation("No built-in metadata update implementation for .NET packages at path: {PackagePath}", packagePath);
+        return await Task.FromResult(PackageOperationResponse.CreateSuccess("No metadata updates performed for .NET package.", null));
+    }
+
+    /// <inheritdoc />
+    public override async Task<PackageOperationResponse> UpdateChangelogContentAsync(string packagePath, CancellationToken ct)
+    {
+        logger.LogInformation("No built-in changelog content update implementation for .NET packages at path: {PackagePath}", packagePath);
+        return await Task.FromResult(PackageOperationResponse.CreateSuccess("No changelog content updates performed for .NET package.", null));
+    }
+
+    /// <inheritdoc />
+    public override async Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, CancellationToken ct)
+    {
+        logger.LogInformation("No built-in version update implementation for .NET packages at path: {PackagePath}", packagePath);
+        return await Task.FromResult(PackageOperationResponse.CreateSuccess("No version updates performed for .NET package.", null));
     }
 }

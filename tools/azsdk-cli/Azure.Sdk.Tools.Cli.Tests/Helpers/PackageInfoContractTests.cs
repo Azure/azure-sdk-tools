@@ -173,7 +173,7 @@ public class PackageInfoContractTests
         ///var powershellHelper = new Mock<IPowershellHelper>();
 
         SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper),
-        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper),
+        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper),
         SdkLanguage.Python => new PythonLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper),
         SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper),
         SdkLanguage.Go => new GoLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper),

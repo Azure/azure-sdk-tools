@@ -192,9 +192,6 @@ public sealed partial class JavaLanguageService : LanguageService
 
         // Run Maven tests using consistent command pattern
         var pomPath = Path.Combine(packagePath, "pom.xml");
-        var command = "mvn";
-        var args = new[] { "test", "--no-transfer-progress", "-f", pomPath };
-
         var result = await _mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: TestTimeout), ct);
 
         if (result.ExitCode == 0)

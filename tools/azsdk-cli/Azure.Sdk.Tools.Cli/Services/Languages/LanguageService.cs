@@ -13,14 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected ILogger<LanguageService> logger;
         protected ICommonValidationHelpers commonValidationHelpers;
 
-        /*public LanguageService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<LanguageService> logger, ICommonValidationHelpers commonValidationHelpers)
-        {
-            this.processHelper = processHelper;
-            this.gitHelper = gitHelper;
-            this.logger = logger;
-            this.commonValidationHelpers = commonValidationHelpers;
-        }*/
-
         public abstract SdkLanguage Language { get; }
         public virtual bool IsTspClientupdatedSupported => false;
 #pragma warning disable CS1998
@@ -229,6 +221,39 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         public virtual List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
         {
             throw new NotImplementedException("Environment requirements are not implemented for this language.");
+        }
+
+        /// <summary>
+        /// Updates the package metadata content for a specified package.
+        /// </summary>
+        /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>A response indicating the result of the metadata update operation.</returns>
+        public virtual Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
+        {
+            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+        }
+
+        /// <summary>
+        /// Updates the changelog content for a specified package.
+        /// </summary>
+        /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>A response indicating the result of the changelog update operation.</returns>
+        public virtual Task<PackageOperationResponse> UpdateChangelogContentAsync(string packagePath, CancellationToken ct)
+        {
+            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+        }
+
+        /// <summary>
+        /// Updates the version for a specified package.
+        /// </summary>
+        /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>A response indicating the result of the version update operation.</returns>
+        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, CancellationToken ct)
+        {
+            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
         }
     }
 }

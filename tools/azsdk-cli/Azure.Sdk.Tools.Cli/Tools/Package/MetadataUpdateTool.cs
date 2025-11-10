@@ -1,12 +1,13 @@
-using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Extensions;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
@@ -16,25 +17,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package;
 /// Supports running configured script or built-in code for update flows.
 /// </summary>
 [McpServerToolType, Description("This type contains the tools to update package metadata content for Azure SDK packages.")]
-public class MetadataUpdateTool : MCPTool
+public class MetadataUpdateTool : LanguageMcpTool
 {
-    private readonly IGitHelper _gitHelper;
-    private readonly ILogger<MetadataUpdateTool> _logger;
-    private readonly ILanguageSpecificResolver<ILanguagePackageUpdate> _packageUpdateResolver;
-    private readonly ILanguageSpecificResolver<IPackageInfoHelper> _packageInfoResolver;
     private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
 
     public MetadataUpdateTool(
         IGitHelper gitHelper,
-        ILogger<MetadataUpdateTool> logger,
-        ILanguageSpecificResolver<ILanguagePackageUpdate> packageUpdateResolver,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver)
+        ILogger<LanguageMcpTool> logger,
+        IEnumerable<LanguageService> languageServices,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper): base(languageServices, gitHelper, logger)
     {
-        _gitHelper = gitHelper;
-        _logger = logger;
-        _packageInfoResolver = packageInfoResolver;
-        _packageUpdateResolver = packageUpdateResolver;
         _specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
 
@@ -76,18 +68,18 @@ public class MetadataUpdateTool : MCPTool
             }
 
             // Discover the repository root
-            var sdkRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+            var sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
             if (sdkRepoRoot == null)
             {
                 return PackageOperationResponse.CreateFailure("Unable to find git repository root from the provided package path.");
             }
 
-            _logger.LogInformation("Repository root discovered: {SdkRepoRoot}", sdkRepoRoot);
+            logger.LogInformation("Repository root discovered: {SdkRepoRoot}", sdkRepoRoot);
 
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateMetadata);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
             {
-                _logger.LogInformation("Found valid configuration for updating package metadata. Executing configured script...");
+                logger.LogInformation("Found valid configuration for updating package metadata. Executing configured script...");
 
                 // Prepare script parameters
                 var scriptParameters = new Dictionary<string, string>
@@ -100,28 +92,50 @@ public class MetadataUpdateTool : MCPTool
                 var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
                 if (processOptions != null)
                 {
-                    var packageInfo = await PackageInfoExtensions.CreateFromPath(packagePath, _packageInfoResolver, _logger, ct);
+                    var packageInfo = await GetPackageInfo(packagePath, ct);
                     return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version if it's a release."]);
                 }
             }
 
             // Hand over to language service for language-specific update steps
-            _logger.LogInformation("No configured script found for updating package metadata. Checking for language-specific update implementations...");
+            logger.LogInformation("No configured script found for updating package metadata. Checking for language-specific update implementations...");
 
             // Resolve language package update service
-            var languagePackageUpdateService = await _packageUpdateResolver.Resolve(packagePath, ct);
-            if (languagePackageUpdateService != null)
+            var languageService = GetLanguageService(packagePath);
+            if (languageService != null)
             {
-                return await languagePackageUpdateService.UpdateMetadataAsync(packagePath, ct);
+                return await languageService.UpdateMetadataAsync(packagePath, ct);
             }
 
-            _logger.LogInformation("No language-specific package update implementation found for package path: {packagePath}.", packagePath);
+            logger.LogInformation("No language-specific package update implementation found for package path: {packagePath}.", packagePath);
             return PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed.", null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
             return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
         }
+    }
+
+    private async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct)
+    {
+        PackageInfo? packageInfo = null;
+        try
+        {
+            var languageService = GetLanguageService(packagePath);
+            if (languageService != null)
+            {
+                packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+            }
+            else
+            {
+                logger.LogError("No package info helper found for package path: {packagePath}", packagePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while parsing package path: {packagePath}", packagePath);
+        }
+        return packageInfo;
     }
 }

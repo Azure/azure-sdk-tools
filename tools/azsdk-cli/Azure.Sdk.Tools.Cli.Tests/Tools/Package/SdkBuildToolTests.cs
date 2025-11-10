@@ -57,7 +57,7 @@ public class SdkBuildToolTests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [
             new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
-            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object),
+            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
             new GoLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
             new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object)

@@ -357,7 +357,7 @@ public class SampleGeneratorToolTests
         realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
         _languageServices = [
             new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
-            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
             new GoLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
             new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object)

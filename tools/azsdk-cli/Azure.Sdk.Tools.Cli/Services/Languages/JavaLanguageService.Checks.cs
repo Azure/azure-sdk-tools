@@ -66,7 +66,7 @@ public partial class JavaLanguageService : LanguageService
                 
                 // Log command only for troubleshooting failed operations
                 var fullCommand = $"mvn {goal}";
-                _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}. To reproduce: {Command}", errorMessage, result.ExitCode, fullCommand);
+                logger.LogWarning("{ErrorMessage} with exit code {ExitCode}. To reproduce: {Command}", errorMessage, result.ExitCode, fullCommand);
 
                 var output = result.Output;
                 var nextSteps = fixCheckErrors ?
@@ -83,7 +83,7 @@ public partial class JavaLanguageService : LanguageService
         {
             var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
             var fullCommand = $"mvn {goal}";
-            _logger.LogError(ex, "Error during code formatting for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
+            logger.LogError(ex, "Error during code formatting for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
             return new PackageCheckResponse(1, "", $"Error during code formatting: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps]
@@ -158,7 +158,7 @@ public partial class JavaLanguageService : LanguageService
 
                 // Log command only for troubleshooting when build has other issues
                 var fullCommand = $"mvn install {string.Join(" ", args)}";
-                _logger.LogWarning("Code linting completed, but build had other issues. Exit code: {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
+                logger.LogWarning("Code linting completed, but build had other issues. Exit code: {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
                 const string otherIssuesMessage = "Code linting completed, but build had other issues. Check Maven output for details.";
                 return new PackageCheckResponse(result.ExitCode, otherIssuesMessage);
             }
@@ -171,7 +171,7 @@ public partial class JavaLanguageService : LanguageService
                 
                 // Log command only for troubleshooting when linting issues are found
                 var fullCommand = $"mvn install {string.Join(" ", args)}";
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Code linting found issues - Tools with issues: {FailedToolNames}. Clean tools: {PassedToolNames}. To reproduce: {Command}",
                     failedToolNames,
                     passedToolNames,
@@ -207,7 +207,7 @@ public partial class JavaLanguageService : LanguageService
         catch (Exception ex)
         {
             // Note: args not available in catch block scope, but command details are logged by ProcessHelperBase
-            _logger.LogError(ex, "Error during code linting for Java project at: {PackagePath}", packagePath);
+            logger.LogError(ex, "Error during code linting for Java project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error during code linting: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps, "Verify that the project's pom.xml is valid and contains required linting plugins", "Check the Maven command logs above for the exact command that failed"]
@@ -242,7 +242,7 @@ public partial class JavaLanguageService : LanguageService
                 // Log command only for troubleshooting failed operations
                 const string goal = "com.azure.tools:codesnippet-maven-plugin:update-codesnippet";
                 var fullCommand = $"mvn {goal}";
-                _logger.LogWarning("Code snippet update failed with exit code {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
+                logger.LogWarning("Code snippet update failed with exit code {ExitCode}. To reproduce: {Command}", result.ExitCode, fullCommand);
 
                 var output = result.Output;
                 return new PackageCheckResponse(result.ExitCode, output, "Code snippet update failed - some snippets may be outdated or missing")
@@ -255,7 +255,7 @@ public partial class JavaLanguageService : LanguageService
         {
             const string goal = "com.azure.tools:codesnippet-maven-plugin:update-codesnippet";
             var fullCommand = $"mvn {goal}";
-            _logger.LogError(ex, "Error during code snippet update for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
+            logger.LogError(ex, "Error during code snippet update for Java project at: {PackagePath}. To reproduce: {Command}", packagePath, fullCommand);
             return new PackageCheckResponse(1, "", $"Error during code snippet update: {ex.Message}")
             {
                 NextSteps = [.. exceptionHandlingNextSteps]
@@ -290,17 +290,6 @@ public partial class JavaLanguageService : LanguageService
         }
     }
 
-    public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
-    {
-        return await _commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
-    }
-
-    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
-    {
-        var packageName = Path.GetFileName(packagePath);
-        return await _commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
-    }
-
     /// <summary>
     /// Analyzes the Maven dependency tree for conflicts, duplicates, and issues.
     /// Uses 'mvn dependency:tree -Dverbose' as recommended in Azure SDK for Java troubleshooting.
@@ -328,7 +317,7 @@ public partial class JavaLanguageService : LanguageService
         // Log command only for troubleshooting when dependency issues are found
         var fullCommand = $"mvn dependency:tree {string.Join(" ", args)}";
         const string errorMessage = "Dependency analysis found issues - check Maven output for conflicts or build errors";
-        _logger.LogWarning("Dependency analysis found issues - check Maven output for conflicts or build errors. To reproduce: {Command}", fullCommand);
+        logger.LogWarning("Dependency analysis found issues - check Maven output for conflicts or build errors. To reproduce: {Command}", fullCommand);
 
         return new PackageCheckResponse(1, output, errorMessage)
         {
@@ -419,7 +408,6 @@ public partial class JavaLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = Path.GetFileName(packagePath);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }

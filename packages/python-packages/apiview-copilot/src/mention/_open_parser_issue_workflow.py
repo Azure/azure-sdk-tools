@@ -20,7 +20,7 @@ class OpenParserIssueWorkflow(MentionWorkflow):
         
         if dedup_result["action"] == "no-op":
             # in recent_issues, find the issue with the matching number
-            issue_number = int(dedup_result["issue"])
+            issue_number = dedup_result["issue"]
             for issue in recent_issues:
                 if issue["number"] == issue_number:
                      return {

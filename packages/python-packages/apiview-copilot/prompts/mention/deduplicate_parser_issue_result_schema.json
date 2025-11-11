@@ -11,7 +11,7 @@
           "description": "Workflow decision."
         },
         "issue": {
-          "type": "string",
+          "type": "number",
           "description": "Number of the existing GitHub issue when the action is 'no-op'."
         }
       },

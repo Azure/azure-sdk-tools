@@ -30,7 +30,7 @@ def _review_apiview(testcase: str, query: str, language: str):
     return {"actual": review.model_dump_json()}
 
 
-def _mention_summarize_workflow(testcase: str, results: Any):
+def _mention_summarize_workflow(testcase: str, results: dict):
     prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "summarize_github_actions.prompty"
     prompty_kwargs = {
         "testcase": testcase,

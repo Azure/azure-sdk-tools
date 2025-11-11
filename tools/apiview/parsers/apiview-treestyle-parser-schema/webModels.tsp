@@ -113,7 +113,7 @@ model SamplesRevision {
     ReviewId: Review.Id;
     FileId: string;
     OriginalFileId: string;
-    OrginalFileName: string;
+    OriginalFileName: string;
     CreatedBy: string;
     CreatedOn: utcDateTime;
     Title: string;

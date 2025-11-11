@@ -130,7 +130,7 @@ func (p *DefaultPromptParser) ParseResponse(response, template string) (*model.C
 	return &model.CompletionResp{
 		Answer:            resp.Answer,
 		HasResult:         resp.HasResult,
-		References:        resp.References,
+		References:        append([]model.Reference{}, resp.References...),
 		ReasoningProgress: &resp.ReasoningProgress,
 	}, nil
 }

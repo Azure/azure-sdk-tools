@@ -115,8 +115,8 @@ public class MetadataUpdateTool : LanguageMcpTool
                 $"An error occurred: {ex.Message}",
                 nextSteps: [
                     "Check the running logs for details about the error",
-                    "resolve the issue",
-                    "re-run the tool",
+                    "Resolve the issue",
+                    "Re-run the tool",
                     "run verify setup tool if the issue is environment related"
                     ]);
         }

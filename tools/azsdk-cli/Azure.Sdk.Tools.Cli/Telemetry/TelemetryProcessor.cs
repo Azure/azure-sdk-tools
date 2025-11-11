@@ -31,7 +31,7 @@ public sealed class TelemetryProcessor : BaseProcessor<Activity>
         }
         if (activity.GetCustomProperty(TelemetryConstants.TagName.OperationStatus) is Status operationStatus)
         {
-            activity.SetTag(TelemetryConstants.TagName.OperationStatus, operationStatus.ToString());
+            activity.SetTag(TelemetryConstants.TagName.OperationStatus, operationStatus);
         }
 
         // TokenUsageHelper telemetry

@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 // Build request
                 var request = new CompletionRequest
                 {
-                    TenantId = TenantId.AzureSDKQaBot,
+                    TenantId = TenantId.AzureTypespecAuthoring,
                     Message = new Message
                     {
                         Role = Role.User,

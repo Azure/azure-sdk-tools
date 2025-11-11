@@ -17,7 +17,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         PythonChannelQaBot,
 
         [EnumMember(Value = "azure_sdk_onboarding")]
-        AzureSDKOnboarding
+        AzureSDKOnboarding,
+
+        [EnumMember(Value = "azure_typespec_authoring")]
+        AzureTypespecAuthoring
     }
 
     [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<Role>))]

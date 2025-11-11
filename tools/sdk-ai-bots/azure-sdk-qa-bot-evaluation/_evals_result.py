@@ -151,9 +151,15 @@ class EvalsResult:
             else:
                 for metric in metrics:
                     metric_score = result[f"{metric}"] if f"{metric}" in result else -1
-                    metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                     values.append(f"{metric_score:.1f}")
-                    values.append(f"{metric_result}")
+                    if self._metrics[metric]:
+                        for field in self._metrics[metric]:
+                            if (field != metric):
+                                metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
+                                values.append(f"{metric_value}")
+                    else: 
+                        metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
+                        values.append(f"{metric_result}")
                 values.append(f"{score:.1f}")
             
             terminal_row.extend(values)

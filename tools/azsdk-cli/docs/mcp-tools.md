@@ -40,7 +40,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_release_sdk | Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness |
 | azsdk_run_generate_sdk | Generate SDK from a TypeSpec project using pipeline. |
 | azsdk_run_typespec_validation | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |
-| azsdk_tsp_update | Update customized TypeSpec-generated client code |
+| azsdk_customized_code_update | Update customized TypeSpec-generated client code |
 | azsdk_typespec_check_project_in_public_repo | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
 | azsdk_update_language_exclusion_justification | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_sdk_details_in_release_plan | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |

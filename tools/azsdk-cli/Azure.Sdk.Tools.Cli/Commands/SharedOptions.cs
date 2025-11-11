@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TestAnalysisTool),
             typeof(TypeSpecConvertTool),
             typeof(TypeSpecInitTool),
-            typeof(TspClientUpdateTool),
+            typeof(CustomizedCodeUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(VerifySetupTool),
             typeof(TestTool),

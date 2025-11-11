@@ -167,7 +167,8 @@ public class VersionUpdateTool : LanguageMcpTool
                             processOptions,
                             ct,
                             packageInfo,
-                            $"Version updated to {packageInfo?.PackageVersion} and release date set to {releaseDate}.",
+                            $"Version updated to {packageInfo?.PackageVersion}" + 
+                                (!string.IsNullOrWhiteSpace(releaseDate) ? $" and release date set to {releaseDate}." : "."),
                             ["Review the updated version and release date", "Run validation checks"]);
                     }
                 }

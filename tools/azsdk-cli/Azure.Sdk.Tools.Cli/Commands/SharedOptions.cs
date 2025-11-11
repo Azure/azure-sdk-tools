@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(QuokkaTool),
             typeof(ReadMeGeneratorTool),
             typeof(SampleGeneratorTool),
+            typeof(SampleTranslatorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
             typeof(SdkBuildTool),

@@ -206,16 +206,19 @@ _Natural language prompts that should work in [agent mode](#agent-mode) when Sce
 **Prompt:**
 
 ```text
-I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDKs, update package metadata, and run all PR checks.
+I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDKs, update package metadata, changelog, and version, and run all PR checks.
 ```
 
 **Expected Agent Activity:**
 
 1. Execute `verify-setup` for all 5 languages
-2. Execute `generate-sdk` for Health Deidentification service
-3. Execute `update-package` to update versions, changelogs, READMEs
-4. Execute `validate` locally to validate all checks pass
-5. Report status and next steps
+2. Execute `azsdk_package_generate_code` for Health Deidentification service to generate the SDK code
+3. Execute `azsdk_package_build_code` to build the SDK code
+4. Execute `azsdk_package_update_changelog_content` to update the changelog entries
+5. Execute `azsdk_package_update_metadata` to update the package metadata
+6. Execute `azsdk_package_update_version` to update the version and the release date
+7. Execute `validate` locally to validate all checks pass
+8. Report status and next steps
 
 ### Environment Setup
 
@@ -233,31 +236,44 @@ Check if my environment is ready to generate SDKs for all languages.
 
 **Prompt:**
 ```
-Generate the Health Deidentification SDK for all languages from the TypeSpec in azure-rest-api-specs.
+Use MCP tool `azsdk_package_generate_code` to generate the Health Deidentification SDK for all languages from the TypeSpec in azure-rest-api-specs. Then use MCP tool to build the generated SDK code.
 ```
 
 **Expected Agent Activity:**
+
 1. Locate Health Deidentification [TypeSpec](#typespec) specifications
-2. Execute `generate-sdk` for all 5 languages
+2. Execute `azsdk_package_generate_code` for all 5 languages
 3. Execute `build-sdk` to verify compilation
-4. Execute `run-tests` in [playback mode](#playback-mode)
-5. Execute `validate-samples` to ensure samples are valid
-6. Report generation results for each language
+4. Report results for each language
+
+### Run Tests and Validate Samples
+
+**Prompt:**
+```
+Use MCP tool to run the tests and validation samples.
+```
+
+**Expected Agent Activity:**
+
+1. Execute `run-tests` in [playback mode](#playback-mode)
+2. Execute `validate-samples` to ensure samples are valid
+3. Report the result
 
 ### Update Package Metadata
 
 **Prompt:**
 ```
-Update the package metadata for Health Deidentification SDKs to prepare for a preview release.
+Update the changelog, metadata, and version for Health Deidentification SDKs to prepare for a preview release.
 ```
 
 **Expected Agent Activity:**
-1. Execute `update-package` for all 5 languages
-2. Update version numbers for [preview release](#preview-release)
-3. Update changelogs with recent changes (only management plane)
-4. Update READMEs and language-specific metadata files
-5. Validate all updates are correctly formatted
-6. Report what was updated
+For each language, perform the following steps:
+
+1. Run `azsdk_package_update_changelog_content` to update changelog content with recent changes (for mgmt-plane SDK) or prompt the user to manually add entries (for data-plane SDK)
+2. Run `azsdk_package_update_metadata` to update the package metadata
+3. Run `azsdk_package_update_version` to update the version number and release date for [preview release](#preview-release)
+4. Validate all updates are correctly formatted
+5. Report what was updated
 
 ### Validate for PR
 
@@ -305,77 +321,86 @@ Environment check complete: 4/5 languages ready
 Run with --fix to install missing dependencies
 ```
 
-### 2. Generate SDK
+### 2. Generate/Build SDK
 
-> Sample: will be changed when the spec for this tool is added
-
-**Command:**
+**Generate Command:**
 ```bash
-azsdk generate-sdk --service healthdataaiservices --spec-path <path-to-specs> --languages .NET,Java,JavaScript,Python,Go
+azsdk package generate -r <path-to-local-sdk-repo> -t <path-to-spec-config>
 ```
 
 **Options:**
-- `--service <name>`: Service name to generate SDK for (required)
-- `--spec-path <path>`: Path to azure-rest-api-specs repository (required)
-- `--languages <list>`: Languages to generate (default: all)
-- `--output-path <path>`: Output directory for generated SDKs (default: current language repo)
-- `--with-tests`: Generate test files
-- `--with-samples`: Generate sample files
-- `--validate`: Build and test after generation
+
+- -r, --local-sdk-repo-path: absolute path to the local azure-sdk-for-{language} repository (required)
+- -t, --tsp-config-path: absolute path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL (required)
 
 **Expected Output:**
-```
-Generating Health Deidentification SDK for 5 languages...
 
-✓ .NET: Generated successfully
-  - Code: sdk/healthdataaiservices/Azure.Health.Deidentification
-  - Tests: 15 files
-  - Samples: 8 files
-  
-✓ Java: Generated successfully
-  - Code: sdk/healthdataaiservices/azure-health-deidentification
-  - Tests: 12 files
-  - Samples: 8 files
-
+```text
+{"message":"SDK generation completed successfully using tspconfig.yaml. Output:...","result":"succeeded","language":"DotNet","package_type":"Unknown","sdk_repo":"azure-sdk-for-net","operation_status":"Succeeded"}
 ... (similar for other languages)
-
-Generation complete: 5/5 languages successful
 ```
 
-### 3. Update Package Metadata
-
-> Sample: will be changed when the spec for this tool is added
-
-**Command:**
+**Build Command:**
 ```bash
-azsdk update-package --service healthdataaiservices --version 1.1.0-beta.1 --languages .NET,Java,JavaScript,Python,Go
+azsdk package build -p <path-to-package-path>
 ```
 
 **Options:**
-- `--service <name>`: Service name to update (required)
-- `--version <version>`: New version number (required)
-- `--languages <list>`: Languages to update (default: all)
-- `--update-changelog`: Update changelog files
-- `--update-readme`: Update README files
-- `--changelog-entry <text>`: Custom changelog entry
+
+- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+
+**Expected Output:**
+
+```text
+Build completed successfully. Output:...0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:16.72","result":"succeeded","language":"DotNet","package_name":"Azure.Health.Deidentification","package_type":"Unknown","next_steps":[],"operation_status":"Succeeded"
+... (similar for other languages)
+```
+
+### 3. Update Package
+
+**Command to Update Changelog Content:**
+```bash
+azsdk package update-changelog-content -p <path-to-package-path>
+```
+
+**Options:**
+
+- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
 
 **Expected Output:**
 ```
-Updating package metadata for Health Deidentification SDK...
-
-✓ .NET: Updated to 1.1.0-beta.1
-  - Version updated in .csproj
-  - Changelog updated
-  - README version badge updated
-
-✓ Java: Updated to 1.1.0-beta.1
-  - Version updated in pom.xml
-  - Changelog updated
-  - README version badge updated
-
+"message":"Changelog untouched; manual edits required.","result":"noop","language":".NET","package_name":"{package-name}","package_type":"Client","next_steps":["Summarize version updates under 'Features', 'Added', 'Breaking Changes', 'Bug Fixes', and 'Other Changes'","Refer to this documentation: https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites","Update package metadata after the changelog content has been updated"],"operation_status":"Succeeded"
 ... (similar for other languages)
+```
 
-Package metadata updated for 5/5 languages
+**Command to Update Metadata:**
+```bash
+azsdk package update-metadata -p <path-to-package-path>
+```
+
+**Options:**
+
+- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+
+**Expected Output:**
+```
+"message":"No package metadata updates need to be performed.","result":"succeeded","language":".NET","package_name":"{}","package_type":"Unknown","next_steps":["Update the version when preparing for a release"],"operation_status":"Succeeded"
+... (similar for other languages)
+```
+
+**Command to Update Version:**
+```bash
+azsdk package update-version -p <path-to-package-path>
+```
+
+**Options:**
+
+- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+
+**Expected Output:**
+```
+"message":"No package metadata updates need to be performed.","result":"succeeded","language":".NET","package_name":"{}","package_type":"Unknown","next_steps":["Update the version when preparing for a release"],"operation_status":"Succeeded"
+... (similar for other languages)
 ```
 
 ### 4. Run Validation Checks

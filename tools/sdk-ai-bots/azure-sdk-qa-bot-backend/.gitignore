@@ -1,0 +1,5 @@
+# Build artifacts
+azure-sdk-qa-bot-backend
+
+# Environment files
+.env

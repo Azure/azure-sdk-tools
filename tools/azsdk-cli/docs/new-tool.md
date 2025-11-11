@@ -335,15 +335,15 @@ and these custom response classes are defined in [package responses](../Azure.Sd
 
 1. **TypeSpecBaseResponse**
 If the goal of MCP tool is to run operations at TypeSpec project level then a custom response must be derived from `TypeSpecBaseResponse`.
-There are few predefined custom responses for TypeSpec operations defined in [TypeSpec](../Azure.Sdk.Tools.Cli/Models/Responses/TypeSpec)
+There are a few predefined custom responses for TypeSpec operations defined in [TypeSpec](../Azure.Sdk.Tools.Cli/Models/Responses/TypeSpec)
 
 1. **ReleasePlanBaseResponse**
 If the goal of MCP tool is to run operations at a release plan level then a custom response must be derived from `ReleasePlanBaseResponse`.
-There are few predefined custom responses for release plan operations defined in [ReleasePlan](../Azure.Sdk.Tools.Cli/Models/Responses/ReleasePlan)
+There are a few predefined custom responses for release plan operations defined in [ReleasePlan](../Azure.Sdk.Tools.Cli/Models/Responses/ReleasePlan)
 
 All tool response classes must:
 
-1. **Inherit from `Response`** base class if not derived from above mentioned custom base class.
+1. **Inherit from `CommandResponse`** base class if not derived from above mentioned custom base class.
 1. **Override `Format()`** to format properties in a human readable way.
 1. **Set JSON serializer attributes** on all properties.
 

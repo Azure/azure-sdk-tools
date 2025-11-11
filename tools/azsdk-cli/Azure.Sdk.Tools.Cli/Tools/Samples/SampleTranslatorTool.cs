@@ -38,8 +38,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
     {
         private readonly ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
         private readonly IMicroagentHostService microagentHostService;
-        private readonly IFileHelper fileHelper;
-
         public SampleTranslatorTool(
             IMicroagentHostService microagentHostService,
             ILogger<SampleTranslatorTool> logger,
@@ -51,7 +49,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
         {
             this.sampleContextResolver = sampleContextResolver;
             this.microagentHostService = microagentHostService;
-            this.fileHelper = fileHelper;
         }
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Samples];
@@ -81,12 +78,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             Required = false
         };
 
+        private readonly Option<int> batchSizeOption = new("--batch-size")
+        {
+            Description = "Number of samples to process in each batch to avoid overwhelming the AI model",
+            Required = false,
+            DefaultValueFactory = _ => SampleConstants.DefaultBatchSize,
+        };
+
         protected override Command GetCommand() => new("translate", "Translates sample files from source language to target package language")
         {
             fromOption,
             toOption,
             overwriteOption,
-            modelOption
+            modelOption,
+            batchSizeOption
         };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -95,10 +100,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             string toPackagePath = parseResult.GetValue(toOption) ?? throw new ArgumentException("to is required");
             bool overwrite = parseResult.GetValue(overwriteOption);
             var model = parseResult.GetValue(modelOption);
+            int batchSize = parseResult.GetValue(batchSizeOption);
 
             try
             {
-                await TranslateSamplesAsync(fromPackagePath, toPackagePath, overwrite, model, ct);
+                await TranslateSamplesAsync(fromPackagePath, toPackagePath, overwrite, model, batchSize, ct);
                 return new DefaultCommandResponse { Message = "Sample translation completed successfully" };
             }
             catch (ArgumentException ex)
@@ -113,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             }
         }
 
-        private async Task TranslateSamplesAsync(string fromPackagePath, string toPackagePath, bool overwrite, string? model, CancellationToken ct)
+        private async Task TranslateSamplesAsync(string fromPackagePath, string toPackagePath, bool overwrite, string? model, int batchSize, CancellationToken ct)
         {
             // Determine source language and get samples directory from source package path
             var sourceLanguageService = GetLanguageService(fromPackagePath) ?? throw new ArgumentException("Unable to determine source language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
@@ -144,7 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             logger.LogInformation("Found {count} sample files to translate", sampleFiles.Count);
 
             // Load target package context for translation
-            var targetPackageContext = await targetContext.LoadContextAsync([packageInfo.PackagePath], 2000000, 50000, ct);
+            var targetPackageContext = await targetContext.LoadContextAsync([packageInfo.PackagePath], SampleConstants.MaxContextCharacters, SampleConstants.MaxCharactersPerFile, ct);
             
             if (string.IsNullOrWhiteSpace(targetPackageContext))
             {
@@ -154,12 +160,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             var targetLanguageInstructions = targetContext.GetSampleGenerationInstructions();
 
             // Process samples in batches to avoid overwhelming the AI model
-            const int batchSize = 5;
             var batches = sampleFiles.Chunk(batchSize);
 
             foreach (var batch in batches)
             {
-                await TranslateSampleBatchAsync(batch, targetLanguage, targetLanguageInstructions, targetPackageContext, targetContext, packageInfo, samplesPath, outputDirectory, overwrite, model, ct);
+                await TranslateSampleBatchAsync(batch, sourceLanguage, targetLanguage, targetLanguageInstructions, targetPackageContext, targetContext, packageInfo, samplesPath, outputDirectory, overwrite, model, ct);
             }
 
             logger.LogInformation("Sample translation completed");
@@ -221,6 +226,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
 
         private async Task TranslateSampleBatchAsync(
             IEnumerable<SourceSampleFile> batch, 
+            string sourceLanguage,
             string targetLanguage, 
             string targetLanguageInstructions,
             string targetPackageContext,
@@ -247,7 +253,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             }
 
             var enhancedPrompt = $@"
-You are translating sample code files from various languages to {targetLanguage} for the {packageInfo.PackageName} client library.
+You are translating sample code files from {sourceLanguage} to {targetLanguage} for the {packageInfo.PackageName} client library.
 
 TRANSLATION REQUIREMENTS:
 - Translate functionality, not just syntax - understand what each sample does and implement equivalent functionality

@@ -1,10 +1,12 @@
 using System.CommandLine;
+using ApiView;
 using NSwag;
 
 namespace SwaggerTreeStyleParser;
 
 public class Program
 {
+    public const string CurrentVersion = "0.1";
     public static async Task<int> Main(string[] args)
     {
         var swaggers = new Option<IEnumerable<string>>(name: "--swaggers", aliases: "-s")
@@ -96,6 +98,14 @@ public class Program
             return;
         }
 
+        var codeFile = new CodeFile()
+        {
+            Language = "Swagger",
+            ParserVersion = CurrentVersion,
+            PackageName = packageName,
+            Name = packageName,
+        };
+
         foreach (var swaggerFilePath in swaggerFilePaths)
         {
             if (!File.Exists(swaggerFilePath)) 
@@ -106,8 +116,10 @@ public class Program
 
             Console.WriteLine(swaggerFilePath);
             OpenApiDocument openApiDocument = await OpenApiDocument.FromFileAsync(swaggerFilePath);
-            var codeFile = new CodeFileBuilder().Build(openApiDocument!, packageName ?? "swagger");
-
+            codeFile.ParserVersion = openApiDocument.Info.Version;
+            var reviewLines = new CodeFileBuilder().Build(openApiDocument!);
+            codeFile.ReviewLines.AddRange(reviewLines);
+                                                                                                         
             var outputFilePath = Path.GetFullPath(outputFile);
             await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
             Console.WriteLine($"Generate codefile {outputFile} successfully.");

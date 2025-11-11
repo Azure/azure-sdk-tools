@@ -63,7 +63,7 @@ namespace APIView.Model.V2
         /// </summary>
         public List<string> RenderClasses { get; set; } = [];
 
-        public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true)
+        public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true, string? tokenClass = null)
         {
             var token = new ReviewToken(value, TokenKind.Text);
             if (!string.IsNullOrEmpty(navigateToId))
@@ -71,6 +71,10 @@ namespace APIView.Model.V2
                 token.NavigateToId = navigateToId;
             }
             token.HasSuffixSpace = hasSuffixSpace;
+            if (!string.IsNullOrEmpty(tokenClass))
+            {
+                token.RenderClasses.Add(tokenClass);
+            }
             return token;
         }
 

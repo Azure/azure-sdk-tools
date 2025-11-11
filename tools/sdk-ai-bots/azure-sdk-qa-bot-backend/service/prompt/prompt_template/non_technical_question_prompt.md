@@ -10,12 +10,12 @@ Your mission is to provide friendly, helpful responses to greetings, casual conv
 - Respond simply, naturally, politely and warmly
 - Keep the tone friendly and professional
 
-# QUESTION INTENSION
+# QUESTION INTENTION
 ===================================
 The intention of user's question based on whole conversation:
 
 ```
-{{intension}}
+{{intention}}
 ```
 
 # OUTPUT REQUIREMENTS

@@ -19,7 +19,18 @@ class OpenParserIssueWorkflow(MentionWorkflow):
         dedup_result = self._check_for_duplicate_issue(plan, recent_issues)
         
         if dedup_result["action"] == "no-op":
-            return dedup_result
+            # in recent_issues, find the issue with the matching number
+            issue_number = int(dedup_result["issue"])
+            for issue in recent_issues:
+                if issue["number"] == issue_number:
+                     return {
+                        "action": "no-op",
+                        "url": issue["html_url"],
+                        "title": issue["title"],
+                        "body": issue.get("body", ""),
+                        "created_at": issue["created_at"],
+                    }
+            raise ValueError(f"Issue number {issue_number} from deduplication prompt not found in recent issues.")
         
         issue = self._create_parser_issue(plan)
         return {

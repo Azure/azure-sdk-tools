@@ -317,16 +317,33 @@ default `ExitCode` to `1`. The `ExitCode` property can also be manually overridd
 
 ### Response Class Requirements
 
-A custom response class is not always necessary. It should be defined when the tool needs to:
+A custom response class is not always necessary. It should be defined if the tool is under a specific category or when the tool needs to:
 
 1. Define formatting rules for complex output data
 1. Return structured data that is easier for an LLM to parse
 1. Enforce specific fields get set in output
 1. Customize error output
 
+#### Response base class for custom tool response
+
+We have a predefined set of base classes for custom tool response to ensure all required basic properties are set in the responses.
+This allows us to classify the tool and command usage in telemetry.
+
+1. **PackageResponseBase**
+If the goal of MCP tool/command is to run operations at a package level or language repo level then MCP tool response must use a response class derived from `PackageResponseBase`
+and these custom response classes are defined in [package responses](../Azure.Sdk.Tools.Cli/Models/Responses/Package).
+
+1. **TypeSpecBaseResponse**
+If the goal of MCP tool is to run operations at TypeSpec project level then a custom response must be derived from `TypeSpecBaseResponse`.
+There are few predefined custom responses for TypeSpec operations defined in [TypeSpec](../Azure.Sdk.Tools.Cli/Models/Responses/TypeSpec)
+
+1. **ReleasePlanBaseResponse**
+If the goal of MCP tool is to run operations at a release plan level then a custom response must be derived from `ReleasePlanBaseResponse`.
+There are few predefined custom responses for release plan operations defined in [ReleasePlan](../Azure.Sdk.Tools.Cli/Models/Responses/ReleasePlan)
+
 All tool response classes must:
 
-1. **Inherit from `Response`** base class
+1. **Inherit from `Response`** base class if not derived from above mentioned custom base class.
 1. **Override `Format()`** to format properties in a human readable way.
 1. **Set JSON serializer attributes** on all properties.
 

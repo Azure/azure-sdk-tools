@@ -1,5 +1,4 @@
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
@@ -7,12 +6,11 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Moq;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
 [TestFixture]
-public class TspClientUpdateToolAutoTests
+public class CustomizedCodeUpdateToolAutoTests
 {
     private static string CreateTempPackageDir()
     {
@@ -25,7 +23,7 @@ public class TspClientUpdateToolAutoTests
     private class MockNoChangeLanguageService : LanguageService
     {
         public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsTspClientupdatedSupported => true;
+        public override bool IsCustomizedCodeUpdateSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) => null; // No customizations found
@@ -37,7 +35,7 @@ public class TspClientUpdateToolAutoTests
     private class MockChangeLanguageService : LanguageService
     {
         public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsTspClientupdatedSupported => true;
+        public override bool IsCustomizedCodeUpdateSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
             => Task.FromResult(new List<ApiChange> {
@@ -61,7 +59,7 @@ public class TspClientUpdateToolAutoTests
         var svc = new MockNoChangeLanguageService();
         var tsp = new MockTspHelper();
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -76,7 +74,7 @@ public class TspClientUpdateToolAutoTests
         var svc = new MockChangeLanguageService();
         var tsp = new MockTspHelper();
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -93,7 +91,7 @@ public class TspClientUpdateToolAutoTests
         var gitHelper = new Mock<IGitHelper>();
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -106,7 +104,7 @@ public class TspClientUpdateToolAutoTests
     private class TestLanguageServiceFailThenFix: LanguageService
     {
         public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsTspClientupdatedSupported => true;
+        public override bool IsCustomizedCodeUpdateSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         private Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }

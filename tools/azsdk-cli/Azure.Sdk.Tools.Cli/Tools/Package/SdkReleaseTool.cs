@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleaseStatusDetails = "Package name cannot be null or empty. ";
                     isValidParams = false;
                 }
-                if (string.IsNullOrWhiteSpace(language) || !ValidLanguages.Contains(language))
+                if (string.IsNullOrWhiteSpace(language) || !ValidLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
                 {
                     response.ReleaseStatusDetails += "Language must be one of the following: " + string.Join(", ", ValidLanguages);
                     isValidParams = false;

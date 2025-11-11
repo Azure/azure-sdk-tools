@@ -110,7 +110,7 @@ public class SdkBuildToolTests
         var result = await _tool.BuildSdkAsync(pythonProjectPath);
 
         // Assert
-        Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.Result, Is.EqualTo("noop"));
         Assert.That(result.Message, Does.Contain("Python SDK project detected"));
         Assert.That(result.Message, Does.Contain("Skipping build step"));
     }
@@ -149,7 +149,7 @@ public class SdkBuildToolTests
         var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
 
         // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to get build configuration"));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration"));
     }
 
     [Test]
@@ -171,7 +171,7 @@ public class SdkBuildToolTests
         var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
 
         // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to get build configuration"));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("Error parsing JSON configuration: Invalid JSON"));
     }
 
     #endregion

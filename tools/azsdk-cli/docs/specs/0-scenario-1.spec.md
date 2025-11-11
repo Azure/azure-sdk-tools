@@ -206,7 +206,7 @@ _Natural language prompts that should work in [agent mode](#agent-mode) when Sce
 **Prompt:**
 
 ```text
-I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDKs, update package metadata, changelog, and version, and run all PR checks.
+I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDK code, build the SDK code, update package metadata, changelog, and version, and run all PR checks.
 ```
 
 **Expected Agent Activity:**
@@ -243,7 +243,7 @@ Use MCP tool `azsdk_package_generate_code` to generate the Health Deidentificati
 
 1. Locate Health Deidentification [TypeSpec](#typespec) specifications
 2. Execute `azsdk_package_generate_code` for all 5 languages
-3. Execute `build-sdk` to verify compilation
+3. Execute `azsdk_package_build_code` to verify compilation
 4. Report results for each language
 
 ### Run Tests and Validate Samples
@@ -390,16 +390,19 @@ azsdk package update-metadata -p <path-to-package-path>
 
 **Command to Update Version:**
 ```bash
-azsdk package update-version -p <path-to-package-path>
+azsdk package update-version -p <path-to-package-path> -v 1.2.0 -d 2025-10-17
 ```
 
 **Options:**
 
-- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required)
+- -t, --release-type: specifies whether the next version is 'beta' or 'stable'
+- -v, --version: specifies the next version number
+- -d, --release-date: the date (YYYY-MM-DD) to write into the changelog
 
 **Expected Output:**
 ```
-"message":"No package metadata updates need to be performed.","result":"succeeded","language":".NET","package_name":"{}","package_type":"Unknown","next_steps":["Update the version when preparing for a release"],"operation_status":"Succeeded"
+"result":"noop","message":"No version update performed.","language":".NET","package_name":"{}","package_type":"Client","next_steps":["Manually update the version and release date in the changelog and metadata as needed when preparing a release", "Run validation checks"]
 ... (similar for other languages)
 ```
 

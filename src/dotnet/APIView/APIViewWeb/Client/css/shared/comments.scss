@@ -50,7 +50,7 @@
 }
 
 .comment-holder {
-    max-width: 780px;
+    max-width: min(780px, calc(100vw - 40px));
     position: sticky;
     left: 10px;
     z-index: 100; // for user suggestion box, position sticky creates new stacking order, so z-index has to be set here too
@@ -92,7 +92,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 14px;
     background-color: var(--base-fg-color);
-    max-width: 758px;
+    max-width: min(758px, calc(100vw - 62px));
 }
 
 .review-comment {

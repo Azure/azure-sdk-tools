@@ -6,16 +6,16 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 {
-    internal class PythonProcessOptionsTests
+    internal class PythonOptionsTests
     {
         private const string VenvEnvironmentVariable = "AZSDKTOOLS_PYTHON_VENV_PATH";
-        private TestLogger<PythonProcessOptions> logger;
+        private TestLogger<PythonOptions> logger;
         private string? originalVenvPath;
 
         [SetUp]
         public void Setup()
         {
-            logger = new TestLogger<PythonProcessOptions>();
+            logger = new TestLogger<PythonOptions>();
             // Save original environment variable value
             originalVenvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
         }
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void Constructor_CreatesOptionsWithResolvedExecutable()
         {
             // Arrange & Act
-            var options = new PythonProcessOptions("python", ["--version"], logger);
+            var options = new PythonOptions("python", ["--version"]);
 
             // Assert
             Assert.That(options, Is.Not.Null);
@@ -56,10 +56,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var workingDir = Path.GetTempPath();
 
             // Act
-            var options = new PythonProcessOptions(
+            var options = new PythonOptions(
                 "python",
                 ["--version"],
-                logger,
                 workingDirectory: workingDir
             );
 
@@ -74,10 +73,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var timeout = TimeSpan.FromMinutes(5);
 
             // Act
-            var options = new PythonProcessOptions(
+            var options = new PythonOptions(
                 "python",
                 ["--version"],
-                logger,
                 timeout: timeout
             );
 
@@ -89,10 +87,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void Constructor_WithLogOutputStream_SetsLogOutputStream()
         {
             // Act
-            var options = new PythonProcessOptions(
+            var options = new PythonOptions(
                 "python",
                 ["--version"],
-                logger,
                 logOutputStream: false
             );
 
@@ -107,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Environment.SetEnvironmentVariable(VenvEnvironmentVariable, null);
 
             // Act
-            var result = PythonProcessOptions.ResolvePythonExecutable("python", logger);
+            var result = PythonOptions.ResolvePythonExecutable("python");
 
             // Assert
             Assert.That(result, Is.EqualTo("python"));
@@ -120,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Environment.SetEnvironmentVariable(VenvEnvironmentVariable, "");
 
             // Act
-            var result = PythonProcessOptions.ResolvePythonExecutable("pytest", logger);
+            var result = PythonOptions.ResolvePythonExecutable("pytest");
 
             // Assert
             Assert.That(result, Is.EqualTo("pytest"));
@@ -135,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act & Assert
             var ex = Assert.Throws<DirectoryNotFoundException>(() =>
-                PythonProcessOptions.ResolvePythonExecutable("python", logger));
+                PythonOptions.ResolvePythonExecutable("python"));
 
             Assert.That(ex.Message, Does.Contain(VenvEnvironmentVariable));
             Assert.That(ex.Message, Does.Contain(nonExistentPath));
@@ -155,7 +152,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Environment.SetEnvironmentVariable(VenvEnvironmentVariable, tempVenvPath);
 
                 // Act
-                var result = PythonProcessOptions.ResolvePythonExecutable("python", logger);
+                var result = PythonOptions.ResolvePythonExecutable("python");
 
                 // Assert
                 var expectedPath = Path.Combine(tempVenvPath, binDir, "python");
@@ -189,7 +186,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Environment.SetEnvironmentVariable(VenvEnvironmentVariable, tempVenvPath);
 
                 // Act
-                var result = PythonProcessOptions.ResolvePythonExecutable("pytest", logger);
+                var result = PythonOptions.ResolvePythonExecutable("pytest");
 
                 // Assert
                 Assert.That(result, Does.EndWith(".exe"));
@@ -219,7 +216,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Environment.SetEnvironmentVariable(VenvEnvironmentVariable, tempVenvPath);
 
                 // Act
-                var result = PythonProcessOptions.ResolvePythonExecutable("python.exe", logger);
+                var result = PythonOptions.ResolvePythonExecutable("python.exe");
 
                 // Assert
                 Assert.That(result, Does.EndWith(".exe"));
@@ -250,7 +247,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Environment.SetEnvironmentVariable(VenvEnvironmentVariable, tempVenvPath);
 
                 // Act
-                var result = PythonProcessOptions.ResolvePythonExecutable("python", logger);
+                var result = PythonOptions.ResolvePythonExecutable("python");
 
                 // Assert
                 Assert.That(result, Does.Contain("bin"));
@@ -284,7 +281,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 // Act & Assert
                 foreach (var executable in executables)
                 {
-                    var result = PythonProcessOptions.ResolvePythonExecutable(executable, logger);
+                    var result = PythonOptions.ResolvePythonExecutable(executable);
                     Assert.That(result, Does.Contain(executable));
                     Assert.That(result, Does.Contain(tempVenvPath));
                 }
@@ -313,7 +310,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Environment.SetEnvironmentVariable(VenvEnvironmentVariable, tempVenvPath);
 
                 // Act
-                var result = PythonProcessOptions.ResolvePythonExecutable("python", logger);
+                var result = PythonOptions.ResolvePythonExecutable("python");
 
                 // Assert - verify logger was used
                 Assert.That(logger.Logs, Is.Not.Empty);
@@ -337,7 +334,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act & Assert
             Assert.DoesNotThrow(() =>
-                PythonProcessOptions.ResolvePythonExecutable("python", null));
+                PythonOptions.ResolvePythonExecutable("python"));
         }
 
         [Test]
@@ -349,10 +346,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var timeout = TimeSpan.FromMinutes(10);
 
             // Act
-            var options = new PythonProcessOptions(
+            var options = new PythonOptions(
                 "python",
                 args,
-                logger,
                 workingDir,
                 timeout,
                 logOutputStream: false

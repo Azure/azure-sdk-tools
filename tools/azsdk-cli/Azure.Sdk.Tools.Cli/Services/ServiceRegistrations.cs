@@ -69,6 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<IMavenHelper, MavenHelper>();
+            services.AddSingleton<IPythonHelper, PythonHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();

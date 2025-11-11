@@ -12,14 +12,17 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public sealed partial class PythonLanguageService : LanguageService
 {
     private readonly INpxHelper npxHelper;
+    private readonly IPythonHelper pythonHelper;
 
     public PythonLanguageService(
         IProcessHelper processHelper,
+        IPythonHelper pythonHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers)
     {
+        this.pythonHelper = pythonHelper;
         this.npxHelper = npxHelper;
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
@@ -137,10 +140,9 @@ public sealed partial class PythonLanguageService : LanguageService
 
     public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {
-        var result = await processHelper.Run(new PythonProcessOptions(
+        var result = await pythonHelper.Run(new PythonOptions(
                 "pytest",
                 ["tests"],
-                logger,
                 workingDirectory: packagePath
             ),
             ct
@@ -157,7 +159,7 @@ public sealed partial class PythonLanguageService : LanguageService
             if (req.check != null && req.check.Length > 0)
             {
                 var executableName = req.check[0];
-                req.check[0] = PythonProcessOptions.ResolvePythonExecutable(executableName, logger);
+                req.check[0] = PythonOptions.ResolvePythonExecutable(executableName);
             }
         }
 

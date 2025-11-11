@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -9,29 +8,27 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// Process options for running Python executables with automatic virtual environment resolution.
 /// Resolves Python executables from AZSDKTOOLS_PYTHON_VENV_PATH environment variable.
 /// </summary>
-public class PythonProcessOptions : ProcessOptions
+public class PythonOptions : ProcessOptions
 {
     // Environment variable user can set in their system environment variables for specifying Python venv path
-    private const string VenvEnvironmentVariable = "AZSDKTOOLS_PYTHON_VENV_PATH";
+    private static string VenvEnvironmentVariable = "AZSDKTOOLS_PYTHON_VENV_PATH";
 
     /// <summary>
     /// Creates process options for a Python executable with automatic venv resolution.
     /// </summary>
     /// <param name="executableName">Name of the Python executable (e.g., "python", "pytest", "azpysdk")</param>
     /// <param name="args">Command line arguments</param>
-    /// <param name="logger">Optional logger for resolution diagnostics</param>
     /// <param name="workingDirectory">Working directory for the process</param>
     /// <param name="timeout">Execution timeout</param>
     /// <param name="logOutputStream">Whether to log stdout/stderr</param>
-    public PythonProcessOptions(
+    public PythonOptions(
         string executableName,
         string[] args,
-        ILogger? logger = null,
         string? workingDirectory = null,
         TimeSpan? timeout = null,
         bool logOutputStream = true
     ) : base(
-        ResolvePythonExecutable(executableName, logger),
+        ResolvePythonExecutable(executableName),
         args,
         logOutputStream,
         workingDirectory,
@@ -45,12 +42,9 @@ public class PythonProcessOptions : ProcessOptions
     /// Checks in order: AZSDKTOOLS_PYTHON_VENV_PATH env var.
     /// </summary>
     /// <param name="executableName">Name of the Python executable</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
     /// <returns>Resolved executable path</returns>
-    public static string ResolvePythonExecutable(string executableName, ILogger? logger = null)
+    public static string ResolvePythonExecutable(string executableName)
     {
-        string? resolvedFrom = null;
-
         // Check environment variable
         var venvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
 
@@ -70,20 +64,12 @@ public class PythonProcessOptions : ProcessOptions
             {
                 if (!executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 {
-                    var exePath = venvExecutablePath + ".exe";
-                    logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
-                        executableName, resolvedFrom, exePath);
-                    return exePath;
+                    return venvExecutablePath + ".exe";
                 }
-
-                logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
-                    executableName, resolvedFrom, venvExecutablePath);
                 return venvExecutablePath;
             }
             else
             {
-                logger?.LogInformation("Resolved Python executable '{ExecutableName}' from {Source}: {ResolvedPath}", 
-                    executableName, resolvedFrom, venvExecutablePath);
                 return venvExecutablePath;
             }
         }

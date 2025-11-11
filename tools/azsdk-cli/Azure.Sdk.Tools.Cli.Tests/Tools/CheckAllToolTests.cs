@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private Mock<ILogger<PackageCheckTool>> _mockLogger;
         private Mock<IProcessHelper> _mockProcessHelper;
+        private Mock<IPythonHelper> _mockPythonHelper;
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ILogger<PythonLanguageService>> _mockPythonLogger;
@@ -28,6 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             _mockLogger = new Mock<ILogger<PackageCheckTool>>();
             _mockProcessHelper = new Mock<IProcessHelper>();
+            _mockPythonHelper = new Mock<IPythonHelper>();
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
             _mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-python");
@@ -35,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockCommonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
             // Create language-specific check implementations with mocked dependencies
-            var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object);
+            var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object);
 
             var languageChecks = new List<PythonLanguageService> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();

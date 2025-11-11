@@ -27,15 +27,14 @@ public partial class PythonLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
             }
 
-            var pythonCheckResult = await processHelper.Run(new PythonProcessOptions("python", ["--version"], logger, timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+            var pythonCheckResult = await pythonHelper.Run(new PythonOptions("python", ["--version"]), cancellationToken);
             if (pythonCheckResult.ExitCode != 0)
             {
                 logger.LogError("Python is not installed or not available in PATH");
                 return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
             }
 
-            var timeout = TimeSpan.FromMinutes(5);
-            var result = await processHelper.Run(new PythonProcessOptions("python", [scriptPath, packagePath], logger, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+            var result = await pythonHelper.Run(new PythonOptions("python", [scriptPath, packagePath], workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -60,12 +59,11 @@ public partial class PythonLanguageService : LanguageService
         try
         {
             logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
-            var timeout = TimeSpan.FromMinutes(10);
 
             var lintingTools = new[]
             {
-                ("pylint", new PythonProcessOptions("azpysdk", ["pylint", "--isolate", packagePath], logger, workingDirectory: packagePath, timeout: timeout)),
-                ("mypy", new PythonProcessOptions("azpysdk", ["mypy", "--isolate", packagePath], logger, workingDirectory: packagePath, timeout: timeout)),
+                ("pylint", new PythonOptions("azpysdk", ["pylint", "--isolate", packagePath], workingDirectory: packagePath)),
+                ("mypy", new PythonOptions("azpysdk", ["mypy", "--isolate", packagePath], workingDirectory: packagePath)),
             };
 
             logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
@@ -73,7 +71,7 @@ public partial class PythonLanguageService : LanguageService
             var lintingTasks = lintingTools.Select(async tool =>
             {
                 var (toolName, options) = tool;
-                var result = await processHelper.Run(options, cancellationToken);
+                var result = await pythonHelper.Run(options, cancellationToken);
                 return (toolName, result);
             });
 
@@ -109,8 +107,7 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
             
-            var timeout = TimeSpan.FromMinutes(10);
-            var result = await processHelper.Run(new PythonProcessOptions("azpysdk", ["black", "--isolate", packagePath], logger, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["black", "--isolate", packagePath], workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {

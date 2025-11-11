@@ -14,7 +14,7 @@
 
 ### Other Changes
 
-- Added a PythonProcessOptions that allows the user to use an env var to declare a python venv
+- Added a PythonOptions that allows the user to use an env var to declare a python venv
 
 ## 0.5.7 (2025-11-05)
 

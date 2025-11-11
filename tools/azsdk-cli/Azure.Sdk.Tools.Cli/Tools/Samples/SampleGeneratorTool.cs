@@ -10,6 +10,8 @@ using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Samples
 {
@@ -21,13 +23,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
     public record GeneratedSample(string FileName, string Content);
 
     [McpServerToolType, Description("Generates sample files")]
-    public class SampleGeneratorTool(
-        IMicroagentHostService microagentHostService,
-        ILogger<SampleGeneratorTool> logger,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver,
-        ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
-    ) : MCPTool
+    public class SampleGeneratorTool: LanguageMcpTool
     {
+        private ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
+        private IMicroagentHostService microagentHostService;
+        public SampleGeneratorTool(
+            IMicroagentHostService microagentHostService,
+            ILogger<SampleGeneratorTool> logger,
+            IGitHelper gitHelper,
+            IEnumerable<LanguageService> languageServices,
+            ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
+        ) : base(languageServices, gitHelper, logger)
+        {
+            this.sampleContextResolver = sampleContextResolver;
+            this.microagentHostService = microagentHostService;
+        }
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Samples];
 
         private readonly Option<string> promptOption = new("--prompt")
@@ -50,12 +60,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             Required = false
         };
 
+        private readonly Option<string[]> extraContextOption = new("--extra-context")
+        {
+            Description = "Path to a file or folder containing additional context to include in the prompt. Can be specified multiple times.",
+            Required = false,
+            AllowMultipleArgumentsPerToken = true
+        };
+
         protected override Command GetCommand() => new("generate", "Generates sample files")
         {
             SharedOptions.PackagePath,
             promptOption,
             overwriteOption,
-            modelOption
+            modelOption,
+            extraContextOption
         };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -79,6 +97,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
                         {
                             logger.LogInformation("Loading prompt content from file: {promptFile}", fullPath);
                             prompt = await File.ReadAllTextAsync(fullPath, ct);
+                            
+                            // Expand any relative file links in the loaded prompt
+                            prompt = await PromptHelper.ExpandRelativeFileLinksAsync(prompt, Path.GetDirectoryName(fullPath)!, logger, ct);
                         }
                     }
                 }
@@ -88,13 +109,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
                     prompt = rawPrompt; // fallback
                 }
             }
+            else
+            {
+                // For direct text prompts, expand any relative file links using current directory as base
+                prompt = await PromptHelper.ExpandRelativeFileLinksAsync(rawPrompt, Directory.GetCurrentDirectory(), logger, ct);
+            }
             string packagePath = parseResult.GetValue(SharedOptions.PackagePath) ?? ".";
             bool overwrite = parseResult.GetValue(overwriteOption);
             var model = parseResult.GetValue(modelOption);
+            var extraContextPaths = parseResult.GetValue(extraContextOption);
 
             try
             {
-                await GenerateSampleAsync(prompt, packagePath, overwrite, model, ct);
+                await GenerateSampleAsync(prompt, packagePath, overwrite, model, extraContextPaths, ct);
                 return new DefaultCommandResponse { Message = "Sample generation completed successfully" };
             }
             catch (ArgumentException ex)
@@ -109,10 +136,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             }
         }
 
-        private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, CancellationToken ct)
+        private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, string[]? extraContextPaths, CancellationToken ct)
         {
-            IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
-            var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
+            var languageService = GetLanguageService(packagePath) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
             var resolvedOutputDirectory = packageInfo.SamplesDirectory;
 
             logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);
@@ -124,10 +151,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             logger.LogDebug("Package info: {packageName} at {repoRoot}", packageInfo.PackageName, packageInfo.RepoRoot);
             logger.LogDebug("Samples directory: {outputDirectory}", resolvedOutputDirectory);
 
-            var sourceContext = await sampleContext.GetClientLibrarySourceCodeAsync(packageInfo.PackagePath, totalBudget: 3000000, perFileLimit: 50000, ct);
-            logger.LogDebug("Loaded source context: {length} characters", sourceContext.Length);
+            var allPaths = new List<string> { packageInfo.PackagePath };
+            if (extraContextPaths != null && extraContextPaths.Length > 0)
+            {
+                foreach (var extraContextPath in extraContextPaths)
+                {
+                    if (!string.IsNullOrWhiteSpace(extraContextPath))
+                    {
+                        var fullPath = Path.GetFullPath(extraContextPath.Trim());
+                        allPaths.Add(fullPath);
+                        logger.LogDebug("Will include extra context from path: {path}", fullPath);
+                    }
+                }
+            }
 
-            if (string.IsNullOrWhiteSpace(sourceContext))
+            var context = await sampleContext.LoadContextAsync(allPaths, 4000000, 50000, ct);
+            
+            logger.LogDebug("Loaded context: {length} characters", context.Length);
+
+            if (string.IsNullOrWhiteSpace(context))
             {
                 throw new InvalidOperationException($"No source code content could be loaded from the package path '{packageInfo.PackagePath}'. Please verify the path contains valid source files for language '{language}'.");
             }
@@ -142,13 +184,12 @@ Generate samples for the {packageInfo.PackageName} client library in {language} 
 Scenarios description:
 {prompt}
 
-<source_context>
-{sourceContext}
-</source_context>
+<context>
+{context}
+</context>
 
 ";
-            logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of source context", sourceContext.Length);
-
+            logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", context.Length);
             logger.LogDebug("Starting microagent with model: {model}", model);
             logger.LogDebug("Enhanced prompt length: {promptLength} characters", enhancedPrompt.Length);
 
@@ -217,7 +258,7 @@ Scenarios description:
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error running microagent: {message}", ex.Message);
+                logger.LogError(ex, "Error running microagent");
                 throw;
             }
 

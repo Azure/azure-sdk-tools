@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
+using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Azure.Sdk.Tools.Cli.Tools.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Commands
@@ -29,6 +30,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReleaseReadinessTool),
             typeof(SdkBuildTool),
             typeof(SdkGenerationTool),
+            typeof(MetadataUpdateTool),
+            typeof(ChangelogContentUpdateTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(PullRequestTools),
@@ -39,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecInitTool),
             typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
+            typeof(VerifySetupTool),
             typeof(TestTool),
 #if DEBUG
             // only add these tools in debug mode

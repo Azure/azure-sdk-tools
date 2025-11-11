@@ -135,7 +135,7 @@ _If you create a PR to compare the generated library with the existing library a
 
 ```text
 1. Environment Setup → verify-setup
-   └─ Check all requirements for all 5 languages
+   └─ Check requirements for the user's working repository, or for user-specified language(s)
 
 2. Generating → generate-sdk
    └─ Generate SDK code, tests, samples from TypeSpec
@@ -145,8 +145,8 @@ _If you create a PR to compare the generated library with the existing library a
    └─ Update versions, changelogs, READMEs, metadata files
    └─ Validate: versions, READMEs, changelogs
 
-4. Validating → run-pr-checks
-   └─ Run all PR CI checks locally to ensure green PR
+4. Validating → validate
+   └─ Run validation checks locally to ensure green PR
 
 ⚠️  STOP: This is a test scenario only. Do NOT commit these changes or create release PRs.
 ```
@@ -158,7 +158,7 @@ _If you create a PR to compare the generated library with the existing library a
 ### 1. Environment Setup
 
 **Tool**: `verify-setup` ([#12287](https://github.com/Azure/azure-sdk-tools/issues/12287))  
-**Action**: Check all requirements upfront for all languages  
+**Action**: Check requirements upfront for the working repository, or user-specified language(s)  
 **Success**: All tools/SDKs installed, user knows what's missing
 
 ### 2. Generating
@@ -177,8 +177,8 @@ _If you create a PR to compare the generated library with the existing library a
 
 ### 4. Validating
 
-**Tools**: `run-pr-checks` ([#11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127))  
-**Action**: Run all [PR CI checks](#pr-checks) locally before creating PRs  
+**Tools**: `validate` ([#11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127))  
+**Action**: Run [validation checks](#pr-checks) locally before creating PRs  
 **Success**: All checks pass for all languages - PR will be green
 
 ---
@@ -214,7 +214,7 @@ I want to prepare a preview version of the Health Deidentification SDK for all l
 1. Execute `verify-setup` for all 5 languages
 2. Execute `generate-sdk` for Health Deidentification service
 3. Execute `update-package` to update versions, changelogs, READMEs
-4. Execute `run-pr-checks` locally to validate all checks pass
+4. Execute `validate` locally to validate all checks pass
 5. Report status and next steps
 
 ### Environment Setup
@@ -263,14 +263,13 @@ Update the package metadata for Health Deidentification SDKs to prepare for a pr
 
 **Prompt:**
 ```
-Run all PR checks locally for the Health Deidentification SDKs before I create pull requests.
+Run validation checks locally for the Health Deidentification SDKs before I create pull requests.
 ```
 
 **Expected Agent Activity:**
-1. Execute `run-pr-checks` for all 5 languages
-2. Run build, test, lint, breaking change detection
-3. Report which checks passed and which failed
-4. Provide guidance on fixing any failures
+1. Execute `validate` for all 5 languages
+1. Report which checks passed and which failed
+1. Provide general guidance on fixing failures
 
 ---
 
@@ -280,15 +279,15 @@ _Direct command-line interface usage for [CLI mode](#cli-mode):_
 
 ### 1. Verify Setup
 
-> Sample: will be changed when the spec for this tool is added
-
 **Command:**
 ```bash
-azsdk verify-setup --languages .NET,Java,JavaScript,Python,Go
+azsdk verify setup --languages Dotnet Java JavaScript Python Go
 ```
 
 **Options:**
-- `--languages <list>`: Comma-separated list of languages to check (default: all)
+- `--languages <list>`: Space-separated list of languages to check (default: language of current repository)
+- `--packagePath <string>`: Path to package to use
+- `--venvPath <string>`: Path to virtual environment to use (for Python requirements)
 - `--verbose`: Show detailed output for each check
 - `--fix`: Attempt to automatically install missing dependencies
 
@@ -379,41 +378,44 @@ Updating package metadata for Health Deidentification SDK...
 Package metadata updated for 5/5 languages
 ```
 
-### 4. Run PR Checks
+### 4. Run Validation Checks
 
-> Sample: will be changed when the spec for this tool is added
 
 **Command:**
 ```bash
-azsdk run-pr-checks --service healthdataaiservices --languages .NET,Java,JavaScript,Python,Go
+# Run all checks (default)
+azsdk package validate --package-path <path_to_sdk_package>/
+
+# Run specific check type
+azsdk package validate <check-type> --package-path <path_to_sdk_package>/
 ```
 
 **Options:**
-- `--service <name>`: Service name to check (required)
-- `--languages <list>`: Languages to check (default: all)
-- `--checks <list>`: Specific checks to run (build,test,lint,breaking-changes)
-- `--parallel`: Run checks in parallel
-- `--fail-fast`: Stop on first failure
+- `--package-path <path>`: Path to the specific SDK package directory (required)
+- `--fix`: Option to fix the errors reported (Milestone 2)
+
+**Available Check Types (as subcommands):**
+- `all`: Run all available validation checks (default)
+- `changelog`: Run changelog validation check
+- `dependency`: Run dependency analysis check  
+- `readme`: Run README validation check
+- `cspell`: Run spelling validation check
+- `snippets`: Run snippet update check
+- `linting`: Run code linting check
+- `format`: Run code formatting check
+- `checkaotcompat`: .NET AOT compatibility validation
+- `generatedcodechecks`: .NET generated code validation
+- `samples`: Validate samples for JS
 
 **Expected Output:**
 ```
-Running PR checks for Health Deidentification SDK...
-
-.NET:
-  ✓ Build passed
-  ✓ Tests passed (45/45)
-  ✓ Lint passed
-  ✓ No breaking changes detected
-
-Java:
-  ✓ Build passed
-  ✓ Tests passed (38/38)
-  ✓ Lint passed
-  ✓ No breaking changes detected
-
-... (similar for other languages)
-
-PR checks complete: 5/5 languages passed all checks
+[ERROR] Some checks failed
+[NEXT STEPS]
+Successful checks: Spelling, Snippets, Format
+Failed checks: Changelog, README, Linting
+Address the issues identified above before proceeding with package release.
+Re-run the package checks after making corrections to verify all issues are resolved.
+Note: The following checks are not implemented for this language: Dependency, AOT Compatibility, Generated Code, Sample Validation
 ```
 
 ---
@@ -432,5 +434,5 @@ PR checks complete: 5/5 languages passed all checks
 - [Generate SDK - #11403](https://github.com/Azure/azure-sdk-tools/issues/11403)
 - [Package Metadata Update - #11827](https://github.com/Azure/azure-sdk-tools/issues/11827)
 - [Build SDK](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122043733)
-- [Run PR Checks - #11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127)
+- [Run validation Checks - #11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127)
 - [DevEx Inner Loop Project](https://github.com/orgs/Azure/projects/865/views/4)

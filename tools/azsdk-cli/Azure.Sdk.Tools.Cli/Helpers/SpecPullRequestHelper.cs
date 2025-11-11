@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         if (m is Match match)
                         {
                             var matchValue = match.Value;
-                            _logger.LogDebug($"Found API view match: {matchValue}");
+                            _logger.LogDebug("Found API view match: {MatchValue}", matchValue);
                             if(match.Groups.Count == 4)
                             {
                                 apiviewLinks.Add(
@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to get API review links from comments, Error: {ex.Message}");
+                _logger.LogError(ex, "Failed to get API review links from comments");
                 return [];
             }            
         }

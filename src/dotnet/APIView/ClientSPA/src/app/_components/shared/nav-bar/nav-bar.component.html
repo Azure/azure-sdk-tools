@@ -7,8 +7,11 @@
         </button>
         <div class="navbar-collapse collapse">
             <ul class="navbar-nav ms-auto">
+                <li *ngIf="isLoggedIn && isApprover" class="nav-item">
+                    <a href="{{RequestReviewPageUrl}}" class="nav-link">Requested Reviews</a>
+                </li>
                 <li *ngIf="isLoggedIn"  class="nav-item">
-                    <a class="nav-link position-relative" (click)="notificationsSidePanel = !notificationsSidePanel">
+                    <a class="nav-link position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" data-clarity-region="notifications-button">
                         <i class="bi bi-bell"></i>
                         <span *ngIf="notifications.length > 0" class="position-absolute top-50 start-0 translate-middle bg-danger border border-light rounded-circle" style="padding: 0.2rem;">
                             <span class="visually-hidden">New alerts</span>
@@ -16,19 +19,16 @@
                     </a>
                 </li>
                 <li *ngIf="isLoggedIn" class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-clarity-region="user-profile-menu">
                         <i class="bi bi-person-circle"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" [routerLink]="['/profile', userProfile?.userName]" target="_blank">Profile</a></li>
-                        <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}">Log Out</a></li>
+                        <li><a class="dropdown-item" [routerLink]="['/profile', userProfile?.userName]" target="_blank" data-clarity-region="user-profile-link">Profile</a></li>
+                        <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}" data-clarity-region="user-logout-link">Log Out</a></li>
                     </ul>
                 </li>
-                <li *ngIf="isLoggedIn && isApprover" class="nav-item">
-                    <a href="{{RequestReviewPageUrl}}" class="nav-link">Requested Reviews</a>
-                </li>
                 <li class="nav-item">
-                    <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link">Help</a>
+                    <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link" data-clarity-region="help-link">Help</a>
                 </li>
             </ul>
         </div>

@@ -36,6 +36,7 @@ import { config as dotenvConfig } from "dotenv";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
+import { createTspClientMetadata } from "./metadata.js";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
@@ -64,7 +65,7 @@ async function initProcessDataAndWriteTspLocation(
   tspLocationData: TspLocation,
   argv: any,
 ): Promise<string> {
-  // Read the global tspclientconfig.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
+  // Read the global tsp-client-config.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
   const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
 
   // Read tspconfig.yaml contents
@@ -155,7 +156,7 @@ async function initProcessDataAndWriteTspLocation(
  *
  * @param repoRoot - The root directory of the repository.
  * @param tspConfigData - The parsed tspconfig.yaml data.
- * @param globalConfigFile - Optional global tspclientconfig.yaml configuration.
+ * @param globalConfigFile - Optional global tsp-client-config.yaml configuration.
  * @param emitterPackageJsonOverride - Optional explicit override path to an emitter-package.json file.
  * @returns An object containing the emitter name and an optional relative path to the emitter package.json file.
  * @throws If no valid emitter can be resolved or if the default emitter-package.json is missing or invalid.
@@ -288,6 +289,14 @@ export async function initCommand(argv: any) {
     }
     await syncCommand(argv);
     await generateCommand(argv);
+  } else {
+    // If skip-sync-and-generate is set, just check if we should create the tsp-client-metadata.yaml file.
+    const tspLocation: TspLocation = await readTspLocation(outputDir);
+    await createTspClientMetadata(
+      outputDir,
+      repoRoot,
+      getEmitterPackageJsonPath(repoRoot, tspLocation),
+    );
   }
   return outputDir;
 }
@@ -402,10 +411,15 @@ export async function generateCommand(argv: any) {
     throw new Error("cannot find project name");
   }
   const srcDir = joinPaths(tempRoot, projectName);
-  const emitter = await getEmitterFromRepoConfig(getEmitterPackageJsonPath(repoRoot, tspLocation));
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
+  const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
+
+  // Check if we should create tsp-client-metadata.yaml file
+  await createTspClientMetadata(outputDir, repoRoot, emitterPackageJsonPath);
+
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   // Read tspconfig.yaml contents
@@ -578,10 +592,28 @@ export async function generateConfigFilesCommand(argv: any) {
   Logger.info("Generating emitter-package.json file...");
   const content = await readFile(packageJsonPath);
   const packageJson: Record<string, any> = JSON.parse(content.toString());
-  const emitterPackageJson: Record<string, any> = {
-    main: "dist/src/index.js",
-    dependencies: {},
-  };
+
+  const emitterPath =
+    resolveEmitterPathFromArgs(argv) ??
+    joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
+
+  // Start with the existing emitter-package.json if it exists, otherwise create a new one
+  let emitterPackageJson: Record<string, any>;
+  try {
+    emitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
+    Logger.debug(`Updating existing ${basename(emitterPath)}`);
+  } catch (err) {
+    Logger.debug(`Couldn't read ${basename(emitterPath)}. Creating a new file. Error: ${err}`);
+    emitterPackageJson = {};
+  }
+
+  // Always set the main field
+  emitterPackageJson["main"] = "dist/src/index.js";
+
+  // Initialize dependencies if not present
+  if (!emitterPackageJson["dependencies"]) {
+    emitterPackageJson["dependencies"] = {};
+  }
 
   let overrideJson: Record<string, any> = {};
   if (overridePath) {
@@ -606,63 +638,22 @@ export async function generateConfigFilesCommand(argv: any) {
     }
   }
 
+  // Update devDependencies with new pinned packages
   if (Object.keys(devDependencies).length > 0) {
-    emitterPackageJson["devDependencies"] = devDependencies;
+    if (!emitterPackageJson["devDependencies"]) {
+      emitterPackageJson["devDependencies"] = {};
+    }
+    // Merge new devDependencies with existing ones
+    emitterPackageJson["devDependencies"] = {
+      ...emitterPackageJson["devDependencies"],
+      ...devDependencies,
+    };
   }
+
   if (Object.keys(overrideJson).length > 0) {
     emitterPackageJson["overrides"] = overrideJson;
   }
 
-  const emitterPath =
-    resolveEmitterPathFromArgs(argv) ??
-    joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
-
-  let existingEmitterPackageJson: Record<string, any> | undefined;
-  try {
-    existingEmitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
-  } catch (err) {
-    Logger.debug(
-      `Couldn't read ${basename(emitterPath)}. If the file exists it will be over-written. Error: ${err}`,
-    );
-  }
-  // If there's an existing emitter-package.json, we need to check for any manually added dependencies and devDependencies
-  if (existingEmitterPackageJson) {
-    // Register all manually added regular dependencies and their current values
-    const manualDependencies = {};
-    for (const [key, value] of Object.entries(existingEmitterPackageJson["dependencies"] ?? {})) {
-      if (!Object.keys(emitterPackageJson["dependencies"] ?? {}).includes(key)) {
-        Object.assign(manualDependencies, { [key]: value });
-      }
-    }
-
-    // Preserve manually added regular dependencies
-    emitterPackageJson["dependencies"] = {
-      ...manualDependencies,
-      ...emitterPackageJson["dependencies"],
-    };
-
-    // Register all manually pinned dev dependencies and their current values
-    const manualDevDependencies = {};
-    for (const [key, value] of Object.entries(
-      existingEmitterPackageJson["devDependencies"] ?? {},
-    )) {
-      if (!Object.keys(emitterPackageJson["devDependencies"] ?? {}).includes(key)) {
-        Object.assign(manualDevDependencies, { [key]: value });
-      }
-    }
-
-    if (
-      Object.keys(manualDevDependencies).length > 0 &&
-      emitterPackageJson["devDependencies"] === undefined
-    ) {
-      // Add a devDependencies entry in the new emitter-package.json content to create
-      emitterPackageJson["devDependencies"] = {};
-    }
-    emitterPackageJson["devDependencies"] = {
-      ...manualDevDependencies,
-      ...emitterPackageJson["devDependencies"],
-    };
-  }
   await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
 

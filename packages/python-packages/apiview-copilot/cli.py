@@ -20,22 +20,32 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import colorama
+import prompty
+import prompty.azure
 import requests
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from src._apiview import ApiViewClient
+from src._apiview import (
+    ApiViewClient,
+)
 from src._apiview import get_active_reviews as _get_active_reviews
+from src._apiview import (
+    get_apiview_cosmos_client,
+    get_approvers,
+    get_comments_in_date_range,
+)
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, get_database_manager
 from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
+from src._models import APIViewComment
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -168,7 +178,7 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(test_paths: list[str], num_runs: int = 1):
+def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
     """
     Runs the specified test case(s).
     """
@@ -179,6 +189,16 @@ def run_test_case(test_paths: list[str], num_runs: int = 1):
     runner = EvaluationRunner(num_runs=num_runs)
     try:
         results = runner.run(targets)
+        if save:
+            report = runner.generate_report(results)
+            for doc in report:
+                db = get_database_manager()
+                try:
+                    db.evals.upsert(doc["id"], data=doc)
+                except Exception as exc:
+                    print(f"Error saving eval document to database: {exc}")
+                    raise exc
+
         runner.show_results(results)
         runner.show_summary(results)
     finally:
@@ -699,8 +719,6 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
 def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
     """Generate a report of APIView metrics between two dates."""
     environment = os.getenv("ENVIRONMENT_NAME", None)
-    if not environment:
-        raise ValueError("ENVIRONMENT_NAME environment variable is not set. Must be 'production' or 'staging'.")
     if environment not in ("production", "staging"):
         raise ValueError(f"ENVIRONMENT_NAME must be 'production' or 'staging', got '{environment}'.")
     return get_metrics_report(start_date, end_date, environment, markdown, save)
@@ -873,6 +891,68 @@ def revoke_permissions(assignee_id: str = None):
         print(f"✅ Re-created 'CanNotDelete' lock for resource group '{rg_name}'...")
 
 
+ANALYZE_COMMENT_LANGUAGES = [
+    "C",
+    "C#",
+    "C++",
+    "Go",
+    "Java",
+    "JavaScript",
+    "Json",
+    "Kotlin",
+    "Python",
+    "Rust",
+    "Swagger",
+    "Swift",
+    "TypeSpec",
+    "Xml",
+]
+
+
+def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
+    """
+    Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
+    """
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    filtered = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic" and c.get("IsDeleted") != True]
+
+    allowed_commenters = get_approvers(language=language)
+
+    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+    review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
+    if review_ids:
+        params = []
+        clauses = []
+        for i, rid in enumerate(review_ids):
+            param_name = f"@id_{i}"
+            clauses.append(f"c.id = {param_name}")
+            params.append({"name": param_name, "value": rid})
+        query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+        review_results = list(
+            reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+        )
+        review_lang_map = {r["id"]: r.get("Language", "").lower() for r in review_results}
+    else:
+        review_lang_map = {}
+
+    language = language.lower()
+    comments = [APIViewComment(**c) for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == language]
+
+    if allowed_commenters:
+        comments = [c for c in comments if c.created_by in allowed_commenters]
+
+    comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
+
+    prompt_path = get_prompt_path(folder="other", filename="analyze_comment_themes")
+    inputs = {"comments": comment_texts}
+    theme_output = prompty.execute(prompt_path, inputs=inputs)
+    print(theme_output)
+
+    print(f"Comment count: {len(comment_texts)}")
+    created_by_set = {comment.created_by for comment in comments if comment.created_by}
+    print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
+
+
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -882,6 +962,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
+            g.command("analyze-comments", "analyze_comments")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -893,7 +974,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
-            g.command("run", "run_test_case")
+            g.command("run", "run_evals")
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
@@ -999,7 +1080,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "language",
                 type=str,
                 help="The language of the test case.",
-                options_list=["--language", "-l"],
+                options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
@@ -1014,6 +1095,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The full path to the txt file containing the APIView text",
             )
+            ac.argument(
+                "save",
+                help="Save the results to CosmosDB metrics.",
+            )
+
         with ArgumentsContext(self, "eval extract-section") as ac:
             ac.argument("size", type=int, help="The size of the section to extract.")
             ac.argument(
@@ -1125,11 +1211,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 "language",
                 type=str,
                 help="The language of the APIView file",
-                options_list=["--language", "-l"],
+                options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
-                "target", type=str, help="The path to the APIView file to summarize.", options_list=["--target", "-t"]
+                "target", type=str, help="The path to the APIView file to summarize.", options_list=("--target", "-t")
             )
             ac.argument(
                 "base",
@@ -1187,6 +1273,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "language",
+                type=str,
+                help="Language to filter comments (e.g., python)",
+                choices=ANALYZE_COMMENT_LANGUAGES,
+                options_list=("--language", "-l"),
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

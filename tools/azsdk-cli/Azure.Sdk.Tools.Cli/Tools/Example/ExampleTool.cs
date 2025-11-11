@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
-using Azure.AI.OpenAI;
+using OpenAI;
 using ModelContextProtocol.Server;
 using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -25,7 +24,7 @@ public class ExampleTool(
     IProcessHelper processHelper,
     IPowershellHelper powershellHelper,
     TokenUsageHelper tokenUsageHelper,
-    AzureOpenAIClient openAIClient
+    OpenAIClient openAIClient
 ) : MCPMultiCommandTool
 {
     // Sub-command constants
@@ -243,7 +242,7 @@ public class ExampleTool(
                 ["model_used"] = model
             };
 
-            // Get ChatClient from AzureOpenAIClient
+            // Get ChatClient from OpenAIClient
             var chatClient = openAIClient.GetChatClient(model);
 
             var messages = new ChatMessage[]

@@ -276,7 +276,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (result.ExitCode != 0)
                 {
-                    return PackageOperationResponse.CreateFailure($"Process failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}", packageInfo);
+                    return PackageOperationResponse.CreateFailure(
+                        $"Process failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}",
+                        packageInfo,
+                        nextSteps: [
+                            "Check the running logs for details about the error",
+                            "Resolve the issue",
+                            "Re-run the tool",
+                            "Run verify setup tool if the issue is environment related"
+                        ]);
                 }
 
                 return PackageOperationResponse.CreateSuccess($"{successMessage} Output:\n{trimmedOutput}", packageInfo, nextSteps);

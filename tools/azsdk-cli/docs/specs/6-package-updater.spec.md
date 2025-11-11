@@ -192,7 +192,7 @@ Execution Steps:
 Outputs:
 
 ```json
-{"result":"succeeded", "version": "1.2.0", "message":"Version updated to 1.2.0 and release date set to 2025-10-17", "next_steps": "run validation checks"}
+{"result":"succeeded", "version": "1.2.0", "message":"Version updated and release date set to 2025-10-17", "next_steps": "run validation checks"}
 ```
 
 ```json
@@ -422,7 +422,7 @@ azsdk package update-version --package-path <absolute_folder_path_to_package> --
 **Expected Output:**
 
 ```text
-"succeeded, version: 1.2.0, message: Version updated to 1.2.0 and release date set to 2025-10-17, next_steps: run validation checks."
+"succeeded, version: 1.2.0, message: Version updated and release date set to 2025-10-17, next_steps: run validation checks."
 ```
 
 **Failed Output:**

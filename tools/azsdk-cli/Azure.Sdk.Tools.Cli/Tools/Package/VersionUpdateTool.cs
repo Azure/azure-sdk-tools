@@ -163,11 +163,14 @@ public class VersionUpdateTool : LanguageMcpTool
                     var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
                     if (processOptions != null)
                     {
-                        return await _specGenSdkConfigHelper.ExecuteProcessAsync(
+                        // Use custom ExecuteProcessAsync that refetches packageInfo after the version update
+                        return await ExecuteProcessAndRefetchPackageInfoAsync(
+                            packagePath,
+                            languageService,
                             processOptions,
-                            ct,
                             packageInfo,
-                            $"Version updated to {packageInfo?.PackageVersion}" + 
+                            ct,
+                            $"Version updated" + 
                                 (!string.IsNullOrWhiteSpace(releaseDate) ? $" and release date set to {releaseDate}." : "."),
                             ["Review the updated version and release date", "Run validation checks"]);
                     }
@@ -187,8 +190,53 @@ public class VersionUpdateTool : LanguageMcpTool
                     "Check the running logs for details about the error",
                     "Resolve the issue",
                     "Re-run the tool",
-                    "run verify setup tool if the issue is environment related"
+                    "Run verify setup tool if the issue is environment related"
                     ]);
         }
+    }
+
+    /// <summary>
+    /// Executes a process and refetches package info after completion since version update changes the package metadata.
+    /// </summary>
+    private async Task<PackageOperationResponse> ExecuteProcessAndRefetchPackageInfoAsync(
+        string packagePath,
+        LanguageService languageService,
+        ProcessOptions processOptions,
+        PackageInfo? packageInfo,
+        CancellationToken ct,
+        string successMessage,
+        string[]? nextSteps = null)
+    {
+        var result = await _specGenSdkConfigHelper.ExecuteProcessAsync(
+            processOptions,
+            ct,
+            packageInfo,
+            successMessage,
+            nextSteps);
+
+        // If the process succeeded, refetch the package info to get updated version
+        if (result.OperationStatus == Status.Succeeded)
+        {
+            try
+            {
+                logger.LogInformation("Refetching package info after version update for: {PackagePath}", packagePath);
+                var updatedPackageInfo = await languageService.GetPackageInfo(packagePath, ct);
+                
+                // Create a new response with the updated package info
+                return PackageOperationResponse.CreateSuccess(
+                    successMessage,
+                    updatedPackageInfo,
+                    nextSteps?.ToArray());
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to refetch package info after version update, returning result without updated info");
+                // Return the original result if refetch fails
+                return result;
+            }
+        }
+
+        // If the process failed, return the result as-is
+        return result;
     }
 }

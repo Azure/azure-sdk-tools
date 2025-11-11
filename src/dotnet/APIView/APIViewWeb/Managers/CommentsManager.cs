@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.DTOs;
@@ -23,7 +24,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace APIViewWeb.Managers
 {
@@ -95,7 +95,7 @@ namespace APIViewWeb.Managers
 
                 var res = await c.SendAsync(req);
                 var body = await res.Content.ReadAsStringAsync();
-                var users = JsonConvert.DeserializeObject<GithubUser[]>(body);
+                var users = JsonSerializer.Deserialize<GithubUser[]>(body);
                 foreach (var user in users)
                 {
                     TaggableUsers.Add(user);
@@ -258,7 +258,7 @@ namespace APIViewWeb.Managers
                 var clientResponse = await client.SendAsync(request);
                 clientResponse.EnsureSuccessStatusCode();
                 string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
-                AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
+                AgentChatResponse agentChatResponse = JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
 
                 await AddAgentComment(comment, agentChatResponse?.Response);
                 

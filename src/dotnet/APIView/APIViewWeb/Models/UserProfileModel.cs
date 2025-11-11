@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.Models
 {
@@ -12,7 +12,7 @@ namespace APIViewWeb.Models
             UserName = username;
         }
 
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string UserName { get; set; }
         public string Email { get; set; }
         public UserPreferenceModel Preferences { get; set; }

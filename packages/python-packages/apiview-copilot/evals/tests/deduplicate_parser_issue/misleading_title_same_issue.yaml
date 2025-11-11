@@ -30,18 +30,4 @@ existing_issues: |
   ]
 response:
   action: no-op
-  url: https://github.com/tjprescott/azure-sdk-tools/issues/567
-  title: "[Python APIView] Bare strings in Literal cause problems"
-  created_at: "2025-10-14T09:00:00Z"
-  body: |-
-    When using Literal types with unquoted strings, the parser doesn't handle them correctly.
-
-    **Example:**
-    ```python
-    Literal[active]
-    ```
-
-    **Should be:**
-    ```python
-    Literal["active"]
-    ```
+  issue: 567

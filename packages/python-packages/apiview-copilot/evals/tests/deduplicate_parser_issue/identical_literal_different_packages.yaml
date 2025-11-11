@@ -35,20 +35,4 @@ existing_issues: |
   ]
 response:
   action: no-op
-  url: https://github.com/tjprescott/azure-sdk-tools/issues/123
-  title: "[Python APIView] Literal values are not quoted"
-  created_at: "2025-10-15T10:00:00Z"
-  body: |-
-    The parser is failing to handle unquoted string values in Literal type annotations.
-
-    **Bad code:**
-    ```python
-    val: Literal[baz]
-    ```
-
-    **Should be:**
-    ```python
-    val: Literal["baz"]
-    ```
-
-    **Package:** azure.widget
+  issue: 123

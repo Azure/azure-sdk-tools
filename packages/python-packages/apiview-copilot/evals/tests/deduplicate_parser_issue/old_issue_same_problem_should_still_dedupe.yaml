@@ -30,7 +30,4 @@ existing_issues: |
   ]
 response:
   action: no-op
-  url: https://github.com/tjprescott/azure-sdk-tools/issues/333
-  title: "[Python APIView] Literal parsing broken"
-  created_at: "2025-08-15T08:00:00Z"
-  body: "The Literal type annotation parser doesn't quote string values properly. Example: Literal[pending] should be Literal[\"pending\"]"
+  issue: 333

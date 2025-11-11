@@ -118,7 +118,14 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating changelog content for package: {PackagePath}", packagePath);
-            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the running logs for details about the error", "resolve the issue", "re-run the tool"]);
+            return PackageOperationResponse.CreateFailure(
+                $"An error occurred: {ex.Message}",
+                nextSteps: [
+                    "Check the running logs for details about the error",
+                    "resolve the issue",
+                    "re-run the tool",
+                    "run verify setup tool if the issue is environment related"
+                    ]);
         }
     }
 }

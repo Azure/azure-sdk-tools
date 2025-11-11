@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added ChangelogContentUpdateTool, MetadataUpdateTool, and VersionUpdateTool
+
 ### Breaking Changes
 
 ### Bugs Fixed

@@ -37,6 +37,9 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_generate_code | Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally. |
 | azsdk_package_run_check | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | Run tests for the specified SDK package. Provide package path. |
+| azsdk_package_update_changelog_content | Updates the changelog content for a specified package. |
+| azsdk_package_update_metadata | Updates the package metadata content for a specified package. |
+| azsdk_package_update_version | Updates the version and release date for a specified package. |
 | azsdk_release_sdk | Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness |
 | azsdk_run_generate_sdk | Generate SDK from a TypeSpec project using pipeline. |
 | azsdk_run_typespec_validation | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |

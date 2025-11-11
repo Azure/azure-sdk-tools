@@ -95,6 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 Result = result,
                 Message = message,
                 PackageName = packageInfo?.PackageName ?? string.Empty,
+                Version = packageInfo?.PackageVersion ?? string.Empty,
                 Language = packageInfo?.Language ?? SdkLanguage.Unknown,
                 PackageType = packageInfo?.SdkType ?? SdkType.Unknown,
                 NextSteps = nextSteps?.ToList() ?? []

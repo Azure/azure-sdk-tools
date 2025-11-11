@@ -80,7 +80,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 1. Build messages from the openai request
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
-	// 2. Build query for search and recognize intention
+	// 2. Build query for search
 	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Check if we need RAG processing
@@ -103,14 +103,14 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 	}
 
-	// Build prompt with retrieved context
+	// 4. Build prompt
 	prompt, err = s.buildPrompt(intention, chunks, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
 	}
 
-	// 4. Get answer from LLM
+	// 5. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
 	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
@@ -118,7 +118,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 5. Process the result
+	// 6. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")

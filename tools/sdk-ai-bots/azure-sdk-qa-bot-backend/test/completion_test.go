@@ -171,11 +171,12 @@ Important Links:
 func convertToLLMMessages(messages []model.Message) []azopenai.ChatRequestMessageClassification {
 	llmMessages := make([]azopenai.ChatRequestMessageClassification, 0, len(messages))
 	for _, msg := range messages {
-		if msg.Role == model.Role_User {
+		switch msg.Role {
+		case model.Role_User:
 			llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
 				Content: azopenai.NewChatRequestUserMessageContent(msg.Content),
 			})
-		} else if msg.Role == model.Role_Assistant {
+		case model.Role_Assistant:
 			llmMessages = append(llmMessages, &azopenai.ChatRequestAssistantMessage{
 				Content: azopenai.NewChatRequestAssistantMessageContent(msg.Content),
 			})

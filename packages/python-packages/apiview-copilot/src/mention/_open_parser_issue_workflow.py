@@ -13,6 +13,26 @@ class OpenParserIssueWorkflow(MentionWorkflow):
     REPO_OWNER = "tjprescott"
     REPO_NAME = "azure-sdk-tools"
 
+    LANGUAGE_LABELS = {
+        "python": "Python",
+        "py": "Python",
+        "c#": ".NET",
+        "csharp": ".NET",
+        "dotnet": ".NET",
+        ".net": ".NET",
+        "c++": "C++",
+        "cpp": "C++",
+        "c99": "C99",
+        "java": "Java",
+        "android": "Java",
+        "swift": "Swift",
+        "javascript": "javascript",
+        "js": "javascript",
+        "go": "Go",
+        "golang": "Go",
+        "rust": "Rust",
+    }
+
     def execute_plan(self, plan: dict):
         """Execute the parser issue workflow"""
         recent_issues = self._fetch_recent_parser_issues()
@@ -88,12 +108,13 @@ class OpenParserIssueWorkflow(MentionWorkflow):
         """Create a new parser issue on GitHub."""
         client = GithubManager.get_instance()
         body = self._add_metadata_to_body(plan.get("body"))
+        labels = self._build_issue_labels()
         return client.create_issue(
             owner=self.REPO_OWNER,
             repo=self.REPO_NAME,
             title=plan.get("title"),
             body=body,
-            labels=["parser"]
+            labels=labels
         )
     
     def _add_metadata_to_body(self, body: str) -> str:
@@ -102,4 +123,13 @@ class OpenParserIssueWorkflow(MentionWorkflow):
     <!-- source: APIView Copilot -->
 
     {body}"""
+
+    def _build_issue_labels(self) -> list[str]:
+        """Build labels for the GitHub issue including language-specific tag when available."""
+        labels = ["APIView"]
+        normalized_language = (self.language or "").strip().lower()
+        language_label = self.LANGUAGE_LABELS.get(normalized_language)
+        if language_label:
+            labels.append(language_label)
+        return labels
 

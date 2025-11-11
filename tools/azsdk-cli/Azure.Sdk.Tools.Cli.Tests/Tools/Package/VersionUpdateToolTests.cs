@@ -396,9 +396,9 @@ public class VersionUpdateToolTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.Is<Dictionary<string, string>>(d => 
-                d.ContainsKey("ReleaseType") && d["ReleaseType"] == releaseType &&
-                d.ContainsKey("Version") && d["Version"] == version &&
-                d.ContainsKey("ReleaseDate") && d["ReleaseDate"] == releaseDate),
+                d.GetValueOrDefault("ReleaseType") == releaseType &&
+                d.GetValueOrDefault("Version") == version &&
+                d.GetValueOrDefault("ReleaseDate") == releaseDate),
             It.IsAny<int>()))
             .Returns(processOptions);
 
@@ -421,9 +421,9 @@ public class VersionUpdateToolTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.Is<Dictionary<string, string>>(d => 
-                d.ContainsKey("ReleaseType") && d["ReleaseType"] == releaseType &&
-                d.ContainsKey("Version") && d["Version"] == version &&
-                d.ContainsKey("ReleaseDate") && d["ReleaseDate"] == releaseDate),
+                d.GetValueOrDefault("ReleaseType") == releaseType &&
+                d.GetValueOrDefault("Version") == version &&
+                d.GetValueOrDefault("ReleaseDate") == releaseDate),
             It.IsAny<int>()), Times.Once);
     }
 
@@ -444,7 +444,7 @@ public class VersionUpdateToolTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.Is<Dictionary<string, string>>(d => d.ContainsKey("ReleaseType") && d["ReleaseType"] == "beta"),
+            It.Is<Dictionary<string, string>>(d => d.GetValueOrDefault("ReleaseType") == "beta"),
             It.IsAny<int>()))
             .Returns(processOptions);
 
@@ -466,7 +466,7 @@ public class VersionUpdateToolTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.Is<Dictionary<string, string>>(d => d.ContainsKey("ReleaseType") && d["ReleaseType"] == "beta"),
+            It.Is<Dictionary<string, string>>(d => d.GetValueOrDefault("ReleaseType") == "beta"),
             It.IsAny<int>()), Times.Once);
     }
 

@@ -51,8 +51,12 @@ namespace IssueLabelerService
             {
                 var generatorService = _issueGeneratorServices.GetIssueGeneratorService(config);
                 var answer = await generatorService.GenerateIssue(repositoryName);
-                result.Answer = answer;
-                Console.WriteLine($"OpenAI answer: {answer}");
+                
+                // Write answer to JSON file - answerData is an array of objects
+                //var jsonString = JsonConvert.SerializeObject(answer, Formatting.Indented);
+                var fileName = $"issue_answer_{repositoryName}.json";
+                await File.WriteAllTextAsync(fileName, answer);
+                _logger.LogInformation($"Answer written to file: {fileName}");
             }
             catch (Exception ex)
             {
@@ -70,7 +74,7 @@ namespace IssueLabelerService
         {
             using var bodyReader = new StreamReader(request.Body);
             var requestBody = await bodyReader.ReadToEndAsync();
-            return requestBody;
+            return requestBody.Replace("\"", "");
         }
 
         public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)

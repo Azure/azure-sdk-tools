@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.Search.Documents.Agents;
 using Azure.Search.Documents.Agents.Models;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using IssueLabeler.Shared;
 
 namespace IssueLabelerService
 {
@@ -16,12 +20,14 @@ namespace IssueLabelerService
         private TriageRag _ragService;
         private ILogger<IssueGeneratorFactory> _logger;
         private readonly KnowledgeAgentRetrievalClient _retrievalClient;
+        private BlobServiceClient _blobClient;
 
-        public OpenAiIssueGenerator(ILogger<IssueGeneratorFactory> logger, RepositoryConfiguration config, TriageRag ragService)
+        public OpenAiIssueGenerator(ILogger<IssueGeneratorFactory> logger, RepositoryConfiguration config, TriageRag ragService, BlobServiceClient blobClient)
         {
             _config = config;
             _ragService = ragService;
             _logger = logger;
+            _blobClient = blobClient;
             _retrievalClient = new KnowledgeAgentRetrievalClient(
                 endpoint: new Uri(_config.SearchEndpoint),
                 agentName: _config.KnowledgeAgentName,
@@ -32,9 +38,15 @@ namespace IssueLabelerService
         {
             var modelName = _config.AnswerModelName;
             var instructions = _config.IssueGeneratorInstruction;
+            var repoLabels = await GetLabelsAsync(repositoryName);
+            var applicableServiceLabels = GetServiceLabelsForPrompt(repoLabels);
+            var applicableCategoryLabels = GetCategoryLabelsForPrompt(repoLabels);
             var replacements = new Dictionary<string, string>
             {
                 { "repositoryName", repositoryName },
+                { "numIssues", "50"},
+                { "applicableServiceLabels", applicableServiceLabels},
+                { "applicableCategoryLabels", applicableCategoryLabels}
             };
             var message = AzureSdkIssueLabelerService.FormatTemplate(_config.IssueGeneratorMessage, replacements, _logger);
 
@@ -48,7 +60,7 @@ namespace IssueLabelerService
 
             // var formattedResponse = FormatResponse(SuggestionsAnswerType, issue, response);
 
-            _logger.LogInformation($"Open AI generated issue for {repositoryName} using the Complete Triage model: \n{response}");
+            // _logger.LogInformation($"Open AI generated issue for {repositoryName} using the Complete Triage model: \n{response}");
             return response;
         }
 
@@ -115,6 +127,54 @@ namespace IssueLabelerService
                     $"Title: {obj["title"]}\nDescription: {obj["content"]}\nTerms: {obj["terms"]}")
             );
         }
+        private async Task<IEnumerable<Label>> GetLabelsAsync(string repositoryName)
+        {
+            // Initialize BlobServiceClient
+            var containerClient = _blobClient.GetBlobContainerClient("labels");
+
+            // Get the blob client for the specific repository
+            var blobClient = containerClient.GetBlobClient(repositoryName);
+
+            // Check if the blob exists
+            if (!await blobClient.ExistsAsync())
+            {
+                throw new FileNotFoundException($"Blob for repository '{repositoryName}' not found.");
+            }
+
+            // Download the blob content
+            var response = await blobClient.DownloadContentAsync();
+            var labelsJson = response.Value.Content.ToString();
+
+            // Deserialize the JSON into a list of labels
+            var labels = JsonConvert.DeserializeObject<IEnumerable<Label>>(labelsJson);
+
+            if (labels == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize labels from blob.");
+            }
+
+            return labels;
+        }
+
+        private string GetCategoryLabelsForPrompt(IEnumerable<Label> labels)
+        {
+            var categoryLabels = labels
+                .Where(AzureSdkLabel.IsCategoryLabel)
+                .Select(label => label.Name)
+                .ToList();
+
+            return string.Join(", ", categoryLabels);
+        }
+        private string GetServiceLabelsForPrompt(IEnumerable<Label> labels)
+        {
+            var serviceLabels = labels
+                .Where(AzureSdkLabel.IsServiceLabel)
+                .Select(label => label.Name)
+                .ToList();
+
+            return string.Join(", ", serviceLabels);
+        }
+        
 
         /*
         private string FormatResponse(string answerType, IssuePayload issue, string response)

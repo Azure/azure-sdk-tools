@@ -57,14 +57,14 @@ You are an agent that detects duplicate parser issues for apiview.
 
 # Guidelines
 
-**Duplicates** have the same ROOT CAUSE even if the specific code differs:
-- "Literal[foo]" vs "Literal[bar]" = DUPLICATE (both unquoted literals)
-- "missing quotes in Literal" vs "bare string in type hint" = DUPLICATE (same underlying issue)
-- "parser crashes on Union types" vs "parser crashes on Optional types" = MIGHT BE DUPLICATE (check if same parse failure mode)
+**Duplicates** share the same ROOT CAUSE even if the source code looks different:
+- "Unescaped generic type parameter" vs "Angle-bracketed type argument" = DUPLICATE if both trigger the same tokenizer bug for `<T>` constructs.
+- "Enum member rendered without namespace" vs "Enum member rendered with wrong qualifier" = DUPLICATE when both stem from the same symbol-resolution defect.
+- "Parser throws when encountering triple-quoted docstrings" vs "Parser throws on multi-line comments" = DUPLICATE if both failures trace back to the same newline handling bug.
 
-**Not duplicates** have different root causes:
-- "unquoted Literal" vs "deeply nested generics" = NOT DUPLICATE (different parser failures)
-- "missing import statement" vs "incorrect type annotation" = NOT DUPLICATE (different error types)
+**Not duplicates** surface distinct underlying problems:
+- "Tokenizer drops characters in UTF-8 identifiers" vs "Parser cannot resolve imported symbols" = NOT DUPLICATE (encoding bug vs name resolution).
+- "XML doc comment fails schema validation" vs "Type annotation loses optional marker" = NOT DUPLICATE (doc processing vs annotation serialization).
 
 **Pay attention to these distinctions:**
 - Identify the SUBJECT of the bug: is it about string values, type names, structural nesting, imports, or display/formatting?

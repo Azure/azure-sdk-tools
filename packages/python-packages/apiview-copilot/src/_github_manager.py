@@ -71,6 +71,7 @@ class GithubManager:
         repo: str,
         title: str,
         body: str,
+        labels: Iterable[str] | None = None,
         assignees: Optional[Iterable[str]] = None,
     ) -> dict:
         """
@@ -78,6 +79,8 @@ class GithubManager:
         """
         url = f"https://api.github.com/repos/{owner}/{repo}/issues"
         payload = {"title": title, "body": body}
+        if labels:
+            payload["labels"] = list(labels)
         if assignees:
             payload["assignees"] = list(assignees)
         token = self._get_installation_token(owner)

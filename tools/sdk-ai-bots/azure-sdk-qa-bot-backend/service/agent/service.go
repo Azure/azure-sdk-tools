@@ -95,7 +95,6 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		promptTemplate = "non_technical_question_prompt.md"
 	} else {
 		// Run agentic search and knowledge search in parallel, then merge results
-		var err error
 		chunks, err = s.runParallelSearchAndMergeResults(ctx, req, query)
 		if err != nil {
 			log.Printf("Parallel search failed: %v", err)

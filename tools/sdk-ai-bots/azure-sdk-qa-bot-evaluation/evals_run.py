@@ -64,8 +64,8 @@ if __name__ == "__main__":
             "api_version": os.environ["AZURE_API_VERSION"],
         }
 
-        similarity_threshold = int(os.environ.get("SIMILARITY_THRESHOLD", "3"))
-        similarity_evaluator = SimilarityEvaluator(model_config=model_config, threshold=similarity_threshold)
+        evaluate_threshold = int(os.environ.get("EVALUATE_THRESHOLD", "3"))
+        similarity_evaluator = SimilarityEvaluator(model_config=model_config, threshold=evaluate_threshold)
         groundedness_evaluator = GroundednessEvaluator(model_config=model_config)
         similarity_class = EvaluatorClass("similarity", similarity_evaluator, {"column_mapping": {
             "query": "${data.query}",
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             "testcase": "${data.testcase}"
         }})
 
-        qa_evaluator = AzureBotEvaluator(model_config=model_config, threshold = similarity_threshold)
+        qa_evaluator = AzureBotEvaluator(model_config=model_config, threshold = evaluate_threshold)
         qa_evaluator_class = EvaluatorClass("bot_evals", qa_evaluator, {"column_mapping": {
             "response": "${data.response}",
             "ground_truth": "${data.ground_truth}",

@@ -112,11 +112,11 @@ class EvalsResult:
             "Test Case",
         ]
         for metric in metrics:
+            headers.append(metric)
             if self._metrics[metric]:
                 for field in self._metrics[metric]:
-                    headers.append(field)
+                    if (field != metric): headers.append(field)
             else:
-                headers.append(metric)
                 headers.append(f"{metric} Result")
         
         headers.append("Score")
@@ -141,8 +141,9 @@ class EvalsResult:
                         values.append(f"{metric_score:.1f}")
                     if self._metrics[metric]:
                         for field in self._metrics[metric]:
-                            metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
-                            values.append(f"{metric_value}")
+                            if (field != metric):
+                                metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
+                                values.append(f"{metric_value}")
                     else:
                         metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                         values.append(f"{metric_result}")

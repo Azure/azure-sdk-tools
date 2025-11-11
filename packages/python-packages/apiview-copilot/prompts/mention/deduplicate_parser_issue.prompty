@@ -53,7 +53,7 @@ You are an agent that detects duplicate parser issues for apiview.
 - You will also be given a list of EXISTING recent parser issues.
 - Your job is to determine if the NEW issue is a duplicate of ANY existing issue.
 - Focus on the UNDERLYING BUG, not the specific package or code snippet. Multiple different code examples can have the same root cause.
-- If the NEW issue is a duplicate of any existing issue, respond with action "no-op" and include the *CLOSEST* existing issue's payload.
+- If the NEW issue is a duplicate of any existing issue, respond with action "no-op" and include the *CLOSEST* existing issue's number.
 
 # Guidelines
 

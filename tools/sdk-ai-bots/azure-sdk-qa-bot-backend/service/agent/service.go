@@ -86,12 +86,13 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Check if we need RAG processing
 	var chunks []string
 	var prompt string
+	promptTemplate := tenantConfig.PromptTemplate
 
 	if intention != nil && !intention.NeedsRagProcessing {
-		// Skip RAG workflow for greetings/announcements
+		// Skip RAG workflow for non-technical messages
 		log.Printf("Skipping RAG workflow - non-technical message detected")
 		chunks = []string{}
-		prompt = "You are a helpful AI assistant. Respond naturally to the user's message."
+		promptTemplate = "non_technical_question_prompt.md"
 	} else {
 		// Run agentic search and knowledge search in parallel, then merge results
 		var err error
@@ -100,13 +101,13 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 			log.Printf("Parallel search failed: %v", err)
 			return nil, model.NewSearchFailureError(err)
 		}
+	}
 
-		// Build prompt with retrieved context
-		prompt, err = s.buildPrompt(intention, chunks, tenantConfig.PromptTemplate)
-		if err != nil {
-			log.Printf("Prompt building failed: %v", err)
-			return nil, err
-		}
+	// Build prompt with retrieved context
+	prompt, err = s.buildPrompt(intention, chunks, promptTemplate)
+	if err != nil {
+		log.Printf("Prompt building failed: %v", err)
+		return nil, err
 	}
 
 	// 4. Get answer from LLM

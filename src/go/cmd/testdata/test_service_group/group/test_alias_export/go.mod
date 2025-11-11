@@ -2,4 +2,4 @@ module github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/g
 
 go 1.18
 
-require github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal v0.0.0
+require github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal v0.0.0-20251110234504-c2be7250f719

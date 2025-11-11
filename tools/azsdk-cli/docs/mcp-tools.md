@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools supported by the Azure SDK MCP server version 0.5.5.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools supported by the Azure SDK MCP server version 0.5.7.
 
 ## Tools list
 
@@ -44,3 +44,4 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_typespec_check_project_in_public_repo | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
 | azsdk_update_language_exclusion_justification | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_sdk_details_in_release_plan | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |
+| azsdk_verify_setup | Verifies that the user's environment is setup with the necessary installations to use SDK MCP tools. |

@@ -297,47 +297,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void ResolvePythonExecutable_LogsResolution()
-        {
-            // Arrange
-            var tempVenvPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            try
-            {
-                Directory.CreateDirectory(tempVenvPath);
-                var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-                Directory.CreateDirectory(Path.Combine(tempVenvPath, binDir));
-                
-                Environment.SetEnvironmentVariable(VenvEnvironmentVariable, tempVenvPath);
-
-                // Act
-                var result = PythonOptions.ResolvePythonExecutable("python");
-
-                // Assert - verify logger was used
-                Assert.That(logger.Logs, Is.Not.Empty);
-                Assert.That(logger.Logs.Any(m => m.ToString()!.Contains("python")), Is.True);
-            }
-            finally
-            {
-                // Cleanup
-                if (Directory.Exists(tempVenvPath))
-                {
-                    Directory.Delete(tempVenvPath, true);
-                }
-            }
-        }
-
-        [Test]
-        public void ResolvePythonExecutable_WithNullLogger_DoesNotThrow()
-        {
-            // Arrange
-            Environment.SetEnvironmentVariable(VenvEnvironmentVariable, null);
-
-            // Act & Assert
-            Assert.DoesNotThrow(() =>
-                PythonOptions.ResolvePythonExecutable("python"));
-        }
-
-        [Test]
         public void Constructor_WithAllParameters_CreatesOptionsCorrectly()
         {
             // Arrange

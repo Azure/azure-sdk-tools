@@ -43,16 +43,21 @@ _Describe the problem you're solving and why it's important._
 
 TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec contributes to producing high-quality SDKs. However, Azure API developers face significant challenges when authoring TypeSpec:
 
-**Problem 1: Adding New Resources/Operations**
-- Azure API developers want to add new resources, operations, or other components to Azure services following ARM/DP/SDK/TypeSpec guidelines
+**Problem 1: Adding new Resources/Operations following guidelines**
+- Azure API developers want to add new resources, operations, or other components to services following ARM/DP/SDK/TypeSpec guidelines
 - Generic AI (like standard GitHub Copilot) cannot provide effective help because it lacks domain-specific knowledge about Azure TypeSpec patterns and standards
 - **Example**: When a user asks to "create an ARM resource named 'Asset' with CRUD operations," generic AI generates incorrect code that doesn't follow Azure Resource Manager patterns or use proper decorators like `@armResourceOperations`
-
-**Problem 2: Updating TypeSpec for Expected Compilation Outputs**
+ 
+**Problem 2: Updating TypeSpec for expected compilation outputs**
 - Azure API developers need to update TypeSpec to achieve expected outputs after compilation (e.g., correct API paths in generated OpenAPI)
-- TypeSpec syntax is hard to understand, especially for complex scenarios like routing paths and resource hierarchies
+- For simple routes, TypeSpec is straightforward. For complex resource hierarchies and nested paths, the syntax can feel unintuitive because it relies on multiple decorators and conventions that are not self-explanatory.
 - Generic AI cannot provide effective help for these domain-specific challenges
 - **Example**: After compiling TypeSpec, developers notice that generated paths in `openapi.json` are incorrect. For instance, when "assets" belong to an "employee," the expected paths should include `employees/{employeeName}` before `assets/{assetName}`, but the generic AI cannot guide developers on how to properly use `@route` and `@parentResource` decorators to fix this
+ 
+**Problem 3: Adding a New version following Azure versioning guidelines**
+- TypeSpec versioning is intricate, involving decorators such as @added, @removed, and @useDependency to manage preview vs stable versions. These rules are nuanced and tied to Azure’s breaking-change policies, making them hard for generic AI to infer without domain-specific context.
+- Generic AI currently cannot reliably provide effective guidance for scenarios requiring integrated knowledge of TypeSpec versioning decorators and Azure-specific conversion and breaking-change policies.
+- **Example**: When a user asks to "add a new preview version", generic AI may add a new version without replacing the older one.
 
 ### Why This Matters
 

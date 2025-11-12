@@ -91,5 +91,5 @@ jobs:
         PRBranchName: update-mcp-tools-list-$(Build.BuildId)
         CommitMsg: "Update MCP tools list"
         PRTitle: "Update MCP tools list"
-        WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
+        WorkingDirectory: $(Build.SourcesDirectory)
         ScriptDirectory: $(Build.SourcesDirectory)/eng/common/scripts/

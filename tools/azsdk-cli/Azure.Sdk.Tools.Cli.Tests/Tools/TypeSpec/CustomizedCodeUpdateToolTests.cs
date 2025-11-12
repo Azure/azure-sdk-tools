@@ -58,8 +58,9 @@ public class CustomizedCodeUpdateToolAutoTests
         var commonValidationHelper = new Mock<ICommonValidationHelpers>();
         var svc = new MockNoChangeLanguageService();
         var tsp = new MockTspHelper();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -73,8 +74,9 @@ public class CustomizedCodeUpdateToolAutoTests
         var gitHelper = new Mock<IGitHelper>();
         var svc = new MockChangeLanguageService();
         var tsp = new MockTspHelper();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -89,9 +91,10 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         var tsp = new MockTspHelper();
         var gitHelper = new Mock<IGitHelper>();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));

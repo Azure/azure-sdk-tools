@@ -62,7 +62,7 @@ internal class VerifySetupToolTests
             new PythonLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
             new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
-            new GoLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
+            new GoLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
             new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object)
         ];
 
@@ -75,8 +75,8 @@ internal class VerifySetupToolTests
             .Setup(x => x.Run(
                     It.IsAny<ProcessOptions>(), // Handle cases where command might be wrapped
                     It.IsAny<CancellationToken>()))
-            
-            .ReturnsAsync((ProcessOptions processOptions, CancellationToken ct) =>            
+
+            .ReturnsAsync((ProcessOptions processOptions, CancellationToken ct) =>
             {
                 var successfulCommands = new Dictionary<string, string>
                 {
@@ -89,7 +89,7 @@ internal class VerifySetupToolTests
                     { "python", "Python 3.9.0" },
                     { "java", "java 17.0.1" }
                 };
-                foreach(var kvp in successfulCommands)
+                foreach (var kvp in successfulCommands)
                 {
                     var command = kvp.Key;
                     var output = kvp.Value;
@@ -106,7 +106,7 @@ internal class VerifySetupToolTests
                 {
                     ExitCode = 1,
                     OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, "Command not found") }
-                };            
+                };
             });
     }
 
@@ -116,10 +116,10 @@ internal class VerifySetupToolTests
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(opt => opt.Command.Contains(command) || opt.Args.Contains(command)),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult 
-            { 
-                ExitCode = exitCode, 
-                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, errorOutput) } 
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = exitCode,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, errorOutput) }
             });
     }
 
@@ -270,7 +270,7 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python, SdkLanguage.Java }, "/test/path/java");
 
         // Assert
-        Assert.That(result.ResponseError, Is.Null); 
+        Assert.That(result.ResponseError, Is.Null);
     }
 
     [Test]

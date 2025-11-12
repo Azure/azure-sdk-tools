@@ -31,7 +31,7 @@ public class SampleGeneratorToolTests
     private TestLogger<SdkBuildTool> _logger;
     private List<LanguageService> _languageServices;
     private IGitHelper realGitHelper;
-    private Mock<ICommonValidationHelpers> _commonValidationHelpers;    
+    private Mock<ICommonValidationHelpers> _commonValidationHelpers;
 
 
     [Test]
@@ -116,7 +116,7 @@ public class SampleGeneratorToolTests
         {
             // Use a real FileHelper instance instead of mock
             var fileHelper = new FileHelper(new TestLogger<FileHelper>());
-            
+
             return language switch
             {
                 SdkLanguage.DotNet => new DotNetSampleLanguageContext(fileHelper),
@@ -359,7 +359,7 @@ public class SampleGeneratorToolTests
             new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
             new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
-            new GoLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
+            new GoLanguageService(_mockProcessHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
             new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object)
         ];
         var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();

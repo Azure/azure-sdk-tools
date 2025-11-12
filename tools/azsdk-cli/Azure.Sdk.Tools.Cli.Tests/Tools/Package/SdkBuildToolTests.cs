@@ -59,7 +59,7 @@ public class SdkBuildToolTests
             new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
-            new GoLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
+            new GoLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
             new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object)
         ];
 
@@ -85,17 +85,17 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_InvalidProjectPath_ReturnsFailure()
     {
         // Act
-    var result = await _tool.BuildSdkAsync("/nonexistent/path");
+        var result = await _tool.BuildSdkAsync("/nonexistent/path");
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
     }
 
-        [Test]
+    [Test]
     public async Task BuildSdkAsync_PythonProject_SkipsBuild()
     {
         // Arrange
-    var pythonProjectPath = Path.Combine(_tempDirectory.DirectoryPath, "test-python-sdk");
+        var pythonProjectPath = Path.Combine(_tempDirectory.DirectoryPath, "test-python-sdk");
         Directory.CreateDirectory(pythonProjectPath);
 
         // Mock GitHelper to return a Python SDK repo name
@@ -134,8 +134,8 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_ConfigFileNotFound_ReturnsError()
     {
         // Arrange
-    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
-    _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper
             .Setup(x => x.GetRepoRemoteUri(_tempDirectory.DirectoryPath))
             .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));

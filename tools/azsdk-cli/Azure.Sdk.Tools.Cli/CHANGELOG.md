@@ -3,8 +3,8 @@
 ## 0.5.8 (Unreleased)
 
 ### Features Added
-- Validate package names before adding to release plan
 
+- Validate package names before adding to release plan
 - Add support for sample translation from one language to another
 
 ### Breaking Changes

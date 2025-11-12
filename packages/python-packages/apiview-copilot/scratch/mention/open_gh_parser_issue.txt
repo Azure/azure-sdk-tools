@@ -1,0 +1,19 @@
+{
+  "language": "python",
+  "package_name": "azure.widgets",
+  "code": "  foo: Literal[Foo]",
+  "comments": [
+    {
+      "lineNo": 50,
+      "createdBy": "azure-sdk",
+      "createdOn": "2025-07-03T09:15:00-07:00",
+      "commentText": "The literal value must be quoted.\n\nSuggestion: `foo: Literal[\"Foo\"]`"
+    },
+    {
+      "lineNo": 50,
+      "createdBy": "annatisch",
+      "createdOn": "2025-07-03T09:20:00-07:00",
+      "commentText": "@azure-sdk this actually looks like a bug in the APIView parser. Could you please open an issue?"
+    }
+  ]
+}

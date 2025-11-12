@@ -15,7 +15,6 @@ from typing import Any
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from azure.identity import ChainedTokenCredential
 from azure.search.documents.indexes import SearchIndexerClient
 from pydantic import BaseModel
 from src._credential import get_credential
@@ -46,7 +45,23 @@ class ContainerNames(Enum):
 class DatabaseManager:
     """Manager for Azure Cosmos DB operations."""
 
-    def __init__(self, endpoint: str, db_name: str, credential: ChainedTokenCredential):
+    _instance: "DatabaseManager" = None
+
+    @classmethod
+    def get_instance(cls, force_new: bool = False) -> "DatabaseManager":
+        """
+        Returns a singleton instance of DatabaseManager.
+        """
+        if cls._instance is None or force_new:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        settings = SettingsManager()
+        db_name = settings.get("COSMOS_DB_NAME")
+        endpoint = settings.get("COSMOS_ENDPOINT")
+        credential = get_credential()
+
         self.client = CosmosClient(endpoint, credential=credential)
         self.database = self.client.get_database_client(db_name)
         self.containers = {}
@@ -234,7 +249,4 @@ class EvalsContainer(BasicContainer):
 @lru_cache()
 def get_database_manager():
     """Get a singleton instance of the DatabaseManager."""
-    settings = SettingsManager()
-    db_name = settings.get("COSMOS_DB_NAME")
-    endpoint = settings.get("COSMOS_ENDPOINT")
-    return DatabaseManager(endpoint, db_name, get_credential())
+    return DatabaseManager.get_instance()

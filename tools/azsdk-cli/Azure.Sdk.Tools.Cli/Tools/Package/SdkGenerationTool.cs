@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         INpxHelper npxHelper
     ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         // Command names
         private const string GenerateSdkCommandName = "generate";

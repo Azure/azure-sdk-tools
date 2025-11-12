@@ -1,0 +1,33 @@
+testcase: misleading_title_same_issue
+language: python
+package_name: azure.messaging
+code: "Dict[str, Literal[status]]"
+issue_context: |
+  [Python APIView] Type annotation parsing error
+  
+  APIView is not correctly displaying this type annotation due to parser issues.
+  
+  **Bad code:**
+  ```python
+  Dict[str, Literal[status]]
+  ```
+existing_issues: |
+  [
+    {
+      "number": 567,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/567",
+      "title": "[Python APIView] Bare strings in Literal cause problems",
+      "body": "When using Literal types with unquoted strings, the parser doesn't handle them correctly.\n\n**Example:**\n```python\nLiteral[active]\n```\n\n**Should be:**\n```python\nLiteral[\"active\"]\n```",
+      "created_at": "2025-10-14T09:00:00Z"
+    },
+    {
+      "number": 890,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/890",
+      "title": "[Python APIView] Generic type parameters not displayed correctly",
+      "body": "Complex generic types with multiple parameters are not rendered properly in APIView.",
+      "created_at": "2025-10-13T14:00:00Z"
+    }
+  ]
+response:
+  action: no-op
+  issue: 567

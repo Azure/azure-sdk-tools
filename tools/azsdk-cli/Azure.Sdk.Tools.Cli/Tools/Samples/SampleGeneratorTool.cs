@@ -165,7 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
                 }
             }
 
-            var context = await sampleContext.LoadContextAsync(allPaths, 4000000, 50000, ct);
+            var context = await sampleContext.LoadContextAsync(allPaths, SampleConstants.MaxContextCharacters, SampleConstants.MaxCharactersPerFile, ct);
             
             logger.LogDebug("Loaded context: {length} characters", context.Length);
 

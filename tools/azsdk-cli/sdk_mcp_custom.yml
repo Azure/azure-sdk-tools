@@ -58,3 +58,37 @@ jobs:
         testRunTitle: $(System.JobDisplayName)
         testResultsFormat: 'VSTest'
         mergeTestResults: true
+  
+  - job: Update_MCP_List
+    displayName: 'Update MCP List'
+    pool:
+      name: $(LINUXPOOL)
+      image: $(LINUXVMIMAGE)
+      os: linux
+    
+    steps:
+    - checkout: self
+    - template: /eng/pipelines/templates/steps/install-dotnet.yml
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Azure SDK Tools CLI'
+      inputs:
+        command: 'build'
+        projects: 'tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
+        arguments: '--configuration Release'
+    
+    - task: PowerShell@2
+      displayName: 'Get MCP Tools List and Update Documentation'
+      inputs:
+        targetType: 'filePath'
+        filePath: 'tools/azsdk-cli/update-mcp-tools-docs.ps1'
+        pwsh: true
+    
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: azure-sdk-tools
+        PRBranchName: update-mcp-tools-list-$(Build.BuildId)
+        CommitMsg: "Update MCP tools list"
+        PRTitle: "Update MCP tools list"
+        WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
+        ScriptDirectory: $(Build.SourcesDirectory)/eng/common/scripts/

@@ -12,7 +12,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// </summary>
 public partial class GoLanguageService : LanguageService
 {
-
     public GoLanguageService(
         IProcessHelper processHelper,
         IGitHelper gitHelper,

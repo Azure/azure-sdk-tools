@@ -204,14 +204,7 @@ public class VersionUpdateTool : LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating version for package: {PackagePath}", packagePath);
-            return PackageOperationResponse.CreateFailure(
-                $"An error occurred: {ex.Message}",
-                nextSteps: [
-                    "Check the running logs for details about the error",
-                    "Resolve the issue",
-                    "Re-run the tool",
-                    "Run verify setup tool if the issue is environment related"
-                    ]);
+            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
         }
     }
 

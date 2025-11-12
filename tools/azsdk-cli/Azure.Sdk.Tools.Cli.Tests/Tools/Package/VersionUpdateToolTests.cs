@@ -145,7 +145,7 @@ public class VersionUpdateToolTests
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(EmptyPackagePathError));
         Assert.That(result.NextSteps, Is.Not.Null);
-        Assert.That(result.NextSteps, Is.Empty);
+        Assert.That(result.NextSteps![0], Does.Contain("Check the running logs"));
     }
 
     [Test]
@@ -162,7 +162,7 @@ public class VersionUpdateToolTests
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
         Assert.That(result.NextSteps, Is.Not.Null);
-        Assert.That(result.NextSteps, Is.Empty);
+        Assert.That(result.NextSteps![0], Does.Contain("Check the running logs"));
     }
 
     [Test]
@@ -179,7 +179,7 @@ public class VersionUpdateToolTests
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(RepoRootNotFoundError));
         Assert.That(result.NextSteps, Is.Not.Null);
-        Assert.That(result.NextSteps, Is.Empty);
+        Assert.That(result.NextSteps![0], Does.Contain("Check the running logs"));
     }
 
     [Test]

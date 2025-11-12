@@ -88,6 +88,7 @@ jobs:
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
         RepoName: azure-sdk-tools
+        BaseBranchName: main
         PRBranchName: update-mcp-tools-list-$(Build.BuildId)
         CommitMsg: "Update MCP tools list"
         PRTitle: "Update MCP tools list"

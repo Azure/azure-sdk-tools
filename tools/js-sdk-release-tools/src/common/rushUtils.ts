@@ -178,7 +178,11 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    const errorAsWarning = runMode !== RunMode.Release;
+    const modularSDKType = getModularSDKType(packageDirectory);
+    let errorAsWarning = runMode !== RunMode.Release;
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        errorAsWarning = true;
+    }
     try {
         if (isRushRepo(sdkRepoRoot)) {
             await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, errorAsWarning);

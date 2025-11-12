@@ -267,7 +267,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         {
             this.logger.LogInformation("No language-specific package version update implementation found for package path: {packagePath}.", packagePath);
             return Task.FromResult(PackageOperationResponse.CreateSuccess(
-                "No version bump performed.",
+                "No version update performed.",
                 nextSteps: [
                     "Manually update the version and release date in the changelog and metadata as needed when preparing a release",
                     "Run validation checks"

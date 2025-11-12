@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	neturl "net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -82,7 +83,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Run agentic search and knowledge search in parallel, then merge results
-	chunks, err := s.runParallelSearchAndMergeResults(ctx, req, query)
+	chunks, indexChunks, err := s.runParallelSearchAndMergeResults(ctx, req, query)
 	if err != nil {
 		log.Printf("Parallel search failed: %v", err)
 		return nil, model.NewSearchFailureError(err)
@@ -104,7 +105,12 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 6. Process the result
+	// 6. Validate and complete references using chunk links
+	chunkLinks := extractLinksFromChunks(indexChunks)
+	log.Printf("Extracted %d links from %d chunks for validation", len(chunkLinks), len(indexChunks))
+	result.References = validateAndCompleteReferences(result.References, chunkLinks)
+
+	// 7. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")
@@ -179,6 +185,86 @@ func processName(name *string) *string {
 		return nil
 	}
 	return to.Ptr(processedName)
+}
+
+// extractLinksFromChunks extracts all links from the given chunks
+// It extracts both document links (from GetIndexLink) and links found in chunk content
+func extractLinksFromChunks(chunks []model.Index) []string {
+	linkMap := make(map[string]bool) // Use map to avoid duplicates
+
+	// Regular expression to find URLs in text
+	// Matches http:// or https:// followed by non-whitespace characters
+	urlRegex := regexp.MustCompile(`https?://[^\s<>"{}|\\^\[\]` + "`" + `]+`)
+
+	for _, chunk := range chunks {
+		// Get the document link
+		docLink := model.GetIndexLink(chunk)
+		if docLink != "" && docLink != "Please reference link from document content" {
+			linkMap[docLink] = true
+		}
+
+		// Extract links from chunk content
+		matches := urlRegex.FindAllString(chunk.Chunk, -1)
+		for _, match := range matches {
+			linkMap[match] = true
+		}
+	}
+
+	// Convert map to slice
+	links := make([]string, 0, len(linkMap))
+	for link := range linkMap {
+		links = append(links, link)
+	}
+
+	return links
+}
+
+// validateAndCompleteReferences validates and completes reference links against chunk links
+// For each reference:
+// - If the link exists in chunkLinks, keep it as-is
+// - If the link is a prefix of any chunkLink, replace with the complete link
+// - If the link doesn't exist and is not a prefix, set it to empty string
+func validateAndCompleteReferences(references []model.Reference, chunkLinks []string) []model.Reference {
+	validatedRefs := make([]model.Reference, len(references))
+
+	for i, ref := range references {
+		validatedRefs[i] = ref
+
+		// Check if the link exists exactly
+		linkExists := false
+		for _, chunkLink := range chunkLinks {
+			if ref.Link == chunkLink {
+				linkExists = true
+				break
+			}
+		}
+
+		if linkExists {
+			// Link exists exactly, keep it
+			continue
+		}
+
+		// Check if the link is a prefix of any chunk link
+		completedLink := ""
+		for _, chunkLink := range chunkLinks {
+			if strings.HasPrefix(chunkLink, ref.Link) {
+				completedLink = chunkLink
+				break
+			}
+		}
+
+		if completedLink != "" {
+			// Found a complete link, replace it
+			log.Printf("Completed incomplete link: %s -> %s", utils.SanitizeForLog(ref.Link), utils.SanitizeForLog(completedLink))
+			validatedRefs[i].Link = completedLink
+		} else {
+			// Link doesn't exist and is not a prefix, set to empty
+			log.Printf("Invalid link not found in chunks, setting to empty: %s", utils.SanitizeForLog(ref.Link))
+			validatedRefs[i].Link = ""
+		}
+	}
+
+	return validatedRefs
 }
 
 func getImageDataURI(url string) (string, error) {
@@ -480,7 +566,8 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]string, error) {
+// Returns both the processed chunks as strings and the original Index objects
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]string, []model.Index, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -516,7 +603,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	knowledgeRes := <-knowledgeCh
 
 	if agenticRes.err != nil && knowledgeRes.err != nil {
-		return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, knowledgeRes.err)
+		return nil, nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, knowledgeRes.err)
 	}
 
 	var agenticChunks []model.Index
@@ -528,14 +615,14 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	}
 
 	if knowledgeRes.err != nil {
-		return nil, knowledgeRes.err
+		return nil, nil, knowledgeRes.err
 	}
 
 	// Merge and process the results
-	mergedChunks := s.mergeAndProcessSearchResults(req, agenticChunks, knowledgeRes.rawResults)
+	mergedChunks, indexChunks := s.mergeAndProcessSearchResults(req, agenticChunks, knowledgeRes.rawResults)
 
 	log.Printf("Parallel search and merge took: %v", time.Since(parallelSearchStart))
-	return mergedChunks, nil
+	return mergedChunks, indexChunks, nil
 }
 
 // searchKnowledgeBase performs the core knowledge search without dependency on agentic results
@@ -556,7 +643,8 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 
 // mergeAndProcessSearchResults intelligently merges agentic and knowledge search results,
 // prioritizes them based on relevance and source, then processes them
-func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionReq, agenticChunks []model.Index, knowledgeResults []model.Index) []string {
+// Returns both the processed chunks as strings and the original Index objects
+func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionReq, agenticChunks []model.Index, knowledgeResults []model.Index) ([]string, []model.Index) {
 	mergeStart := time.Now()
 
 	allChunks := make([]model.Index, 0)
@@ -662,11 +750,14 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 
 	// Build final result
 	result := make([]string, 0)
+	// Track all Index objects used
+	allIndexChunks := make([]model.Index, 0)
 
 	// Add completed chunks first (avoid duplicates by chunk content)
 	for _, file := range files {
 		chunk := processDocument(file)
 		result = append(result, chunk)
+		allIndexChunks = append(allIndexChunks, file)
 		log.Printf("✓ Completed document: %s/%s", file.ContextID, file.Title)
 	}
 
@@ -674,11 +765,12 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	for _, chunk := range allChunks {
 		content := processChunk(chunk)
 		result = append(result, content)
+		allIndexChunks = append(allIndexChunks, chunk)
 		log.Printf("- Normal chunks: %s/%s#%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3)
 	}
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d q&a + %d chunks",
 		len(agenticChunks), len(knowledgeResults), completedFilesCnt, len(needCompleteChunks), len(allChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
-	return result
+	return result, allIndexChunks
 }

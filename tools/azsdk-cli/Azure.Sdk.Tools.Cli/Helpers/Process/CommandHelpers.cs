@@ -30,6 +30,11 @@ public interface IMavenHelper
     public Task<ProcessResult> Run(MavenOptions options, CancellationToken ct);
 }
 
+public interface IPythonHelper
+{
+    public Task<ProcessResult> Run(PythonOptions options, CancellationToken ct);
+}
+
 public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<ProcessHelper>(logger, outputHelper), IProcessHelper
 {
@@ -52,4 +57,10 @@ public sealed class MavenHelper(ILogger<MavenHelper> logger, IRawOutputHelper ou
     : ProcessHelperBase<MavenHelper>(logger, outputHelper), IMavenHelper
 {
     public async Task<ProcessResult> Run(MavenOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class PythonHelper(ILogger<PythonHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<PythonHelper>(logger, outputHelper), IPythonHelper
+{
+    public async Task<ProcessResult> Run(PythonOptions options, CancellationToken ct) => await base.Run(options, ct);
 }

@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Verify;
 internal class VerifySetupToolTests
 {
     private Mock<IProcessHelper> mockProcessHelper;
+    private Mock<IPythonHelper> mockPythonHelper;
     private TestLogger<VerifySetupTool> logger;
     private List<LanguageService> languageServices;
     private Mock<INpxHelper> _mockNpxHelper;
@@ -30,6 +31,7 @@ internal class VerifySetupToolTests
     public void Setup()
     {
         mockProcessHelper = new Mock<IProcessHelper>();
+        mockPythonHelper = new Mock<IPythonHelper>();
         logger = new TestLogger<VerifySetupTool>();
 
         _languageLogger = new TestLogger<LanguageService>();
@@ -59,7 +61,7 @@ internal class VerifySetupToolTests
         // Create temp directory for tests
 
         languageServices = [
-            new PythonLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
+            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
             new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
             new GoLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),

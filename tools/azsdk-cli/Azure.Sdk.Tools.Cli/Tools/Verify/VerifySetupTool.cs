@@ -50,19 +50,12 @@ public class VerifySetupTool : LanguageMcpTool
         DefaultValueFactory = _ => false
     };
 
-    private readonly Option<string> venvOption = new("--venv-path", "-venv")
-    {
-        Description = "Path to Python virtual environment to use for Python requirements checks.",
-        Required = false
-    };
-
     protected override Command GetCommand() =>
         new("setup", "Verify environment setup for MCP release tools")
         {
             languagesParam,
             allLangOption,
-            SharedOptions.PackagePath,
-            venvOption
+            SharedOptions.PackagePath
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -71,16 +64,15 @@ public class VerifySetupTool : LanguageMcpTool
         var allLangs = parseResult.GetValue(allLangOption);
         var parsed = allLangs ? Enum.GetValues<SdkLanguage>().ToHashSet() : langs.ToHashSet();
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-        var venvPath = parseResult.GetValue(venvOption);
-        return await VerifySetup(parsed, packagePath, venvPath, ct);
+        return await VerifySetup(parsed, packagePath, ct);
     }
 
-    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. Accepts a specific Python virtual environment path to use for Python requirements checks.")]
-    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, string venvPath = null, CancellationToken ct = default)
+    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check.")]
+    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, CancellationToken ct = default)
     {
         try
         {
-            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs, packagePath ?? Environment.CurrentDirectory, venvPath, ct);
+            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs, packagePath ?? Environment.CurrentDirectory, ct);
 
             VerifySetupResponse response = new VerifySetupResponse
             {
@@ -95,7 +87,7 @@ public class VerifySetupTool : LanguageMcpTool
                 logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
                     req.requirement, req.check, req.instructions);
 
-                var task = RunCheck(req, packagePath, venvPath, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
+                var task = RunCheck(req, packagePath, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
                 checkTasks.Add(task);
             }
 
@@ -129,7 +121,7 @@ public class VerifySetupTool : LanguageMcpTool
         }
     }
 
-    private async Task<DefaultCommandResponse> RunCheck(SetupRequirements.Requirement req, string packagePath, string venvPath, CancellationToken ct)
+    private async Task<DefaultCommandResponse> RunCheck(SetupRequirements.Requirement req, string packagePath, CancellationToken ct)
     {
         var command = req.check;
         var options = new ProcessOptions(
@@ -137,7 +129,7 @@ public class VerifySetupTool : LanguageMcpTool
             args: command.Skip(1).ToArray(),
             timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
             logOutputStream: true,
-            workingDirectory: venvPath ?? packagePath
+            workingDirectory: packagePath
         );
 
         var trimmed = string.Empty;
@@ -183,7 +175,7 @@ public class VerifySetupTool : LanguageMcpTool
         };
     }
 
-    private List<SetupRequirements.Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, string venvPath, CancellationToken ct)
+    private List<SetupRequirements.Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)
     {
         // Check core requirements before language-specific requirements
         var parsedReqs = ParseRequirements(ct);
@@ -220,13 +212,6 @@ public class VerifySetupTool : LanguageMcpTool
             if (getter == null)
             {
                 logger.LogError("Could not resolve requirements checker for one of the specified languages.");
-                continue;
-            }
-
-            if (getter is PythonLanguageService pythonReqCheck && !string.IsNullOrEmpty(venvPath))
-            {
-                // If checking Python and venv path provided, use it
-                reqsToCheck.AddRange(pythonReqCheck.GetRequirements(packagePath, parsedReqs, venvPath, ct));
                 continue;
             }
 

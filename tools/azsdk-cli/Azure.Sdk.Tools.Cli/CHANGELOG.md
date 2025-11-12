@@ -5,6 +5,7 @@
 ### Features Added
 
 - Validate package names before adding to release plan
+- Allow forced creation when a release plan already exists
 - Add support for sample translation from one language to another
 
 ### Breaking Changes
@@ -16,6 +17,8 @@
 - Sample generator: Fix not giving enough priority to files in the input package folder
 
 ### Other Changes
+
+- Added a PythonOptions that allows the user to use an env var to declare a python venv
 
 ## 0.5.7 (2025-11-05)
 

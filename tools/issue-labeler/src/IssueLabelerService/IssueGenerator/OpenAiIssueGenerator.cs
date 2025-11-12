@@ -44,7 +44,7 @@ namespace IssueLabelerService
             var replacements = new Dictionary<string, string>
             {
                 { "repositoryName", repositoryName },
-                { "numIssues", "50"},
+                { "numIssues", "100"},
                 { "applicableServiceLabels", applicableServiceLabels},
                 { "applicableCategoryLabels", applicableCategoryLabels}
             };
@@ -174,38 +174,5 @@ namespace IssueLabelerService
 
             return string.Join(", ", serviceLabels);
         }
-        
-
-        /*
-        private string FormatResponse(string answerType, IssuePayload issue, string response)
-        {
-            string intro;
-            string outro;
-
-            var replacementsIntro = new Dictionary<string, string>
-            {
-            { "IssueUserLogin", issue.IssueUserLogin },
-            { "RepositoryName", issue.RepositoryName }
-            };
-
-            if (answerType == SolutionAnswerType)
-            {
-            intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacementsIntro, _logger);
-            outro = _config.SolutionResponseConclusion;
-            }
-            else
-            {
-            intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacementsIntro, _logger);
-            outro = _config.SuggestionResponseConclusion;
-            }
-
-            if (string.IsNullOrEmpty(response))
-            {
-            throw new Exception($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber} had an empty response.");
-            }
-
-            return intro + response + outro;
-        }
-        */
     }
 }

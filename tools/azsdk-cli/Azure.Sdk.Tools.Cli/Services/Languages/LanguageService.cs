@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected ICommonValidationHelpers commonValidationHelpers;
 
         public abstract SdkLanguage Language { get; }
-        public virtual bool IsTspClientupdatedSupported => false;
+        public virtual bool IsCustomizedCodeUpdateSupported => false;
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
         {

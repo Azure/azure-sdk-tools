@@ -6,9 +6,9 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 /// <summary>
-/// Response payload for TspClientUpdateTool MCP / CLI operations.
+/// Response payload for CustomizedCodeUpdateTool MCP / CLI operations.
 /// </summary>
-public class TspClientUpdateResponse : PackageResponseBase
+public class CustomizedCodeUpdateResponse : PackageResponseBase
 {
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

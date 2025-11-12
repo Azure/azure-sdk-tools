@@ -5,6 +5,7 @@
 ### Features Added
 
 - Added ChangelogContentUpdateTool, MetadataUpdateTool, and VersionUpdateTool
+- Added support for sample translation from one language to another
 
 ### Breaking Changes
 

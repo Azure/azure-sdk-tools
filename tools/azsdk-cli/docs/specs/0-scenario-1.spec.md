@@ -336,7 +336,9 @@ azsdk package generate -r <path-to-local-sdk-repo> -t <path-to-spec-config>
 **Expected Output:**
 
 ```text
-{"message":"SDK generation completed successfully using tspconfig.yaml. Output:...","result":"succeeded","language":"DotNet","package_type":"Unknown","sdk_repo":"azure-sdk-for-net","operation_status":"Succeeded"}
+generation complete
+"succeeded"
+Language: DotNet
 ... (similar for other languages)
 ```
 
@@ -352,7 +354,11 @@ azsdk package build -p <path-to-package-path>
 **Expected Output:**
 
 ```text
-Build completed successfully. Output:...0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:16.72","result":"succeeded","language":"DotNet","package_name":"Azure.Health.Deidentification","package_type":"Unknown","next_steps":[],"operation_status":"Succeeded"
+"succeeded"
+Package: <package-name>
+Language: DotNet
+Version: <version number>
+Package Type: <SdkType>
 ... (similar for other languages)
 ```
 
@@ -369,7 +375,8 @@ azsdk package update-changelog-content -p <path-to-package-path>
 
 **Expected Output:**
 ```
-"message":"Changelog untouched; manual edits required.","result":"noop","language":".NET","package_name":"{package-name}","package_type":"Client","next_steps":["Summarize version updates under 'Features', 'Added', 'Breaking Changes', 'Bug Fixes', and 'Other Changes'","Refer to this documentation: https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites","Update package metadata after the changelog content has been updated"],"operation_status":"Succeeded"
+[NEXT STEPS]
+"Summarize version updates under 'Features', 'Added', 'Breaking Changes', 'Bug Fixes', and 'Other Changes'","Refer to this documentation: https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites","Update package metadata after the changelog content has been updated"
 ... (similar for other languages)
 ```
 
@@ -384,7 +391,8 @@ azsdk package update-metadata -p <path-to-package-path>
 
 **Expected Output:**
 ```
-"message":"No package metadata updates need to be performed.","result":"succeeded","language":".NET","package_name":"{}","package_type":"Unknown","next_steps":["Update the version when preparing for a release"],"operation_status":"Succeeded"
+[NEXT STEPS]
+Update the version when preparing for a release
 ... (similar for other languages)
 ```
 
@@ -402,12 +410,13 @@ azsdk package update-version -p <path-to-package-path> -v 1.2.0 -d 2025-10-17
 
 **Expected Output:**
 ```
-"result":"noop","message":"No version update performed.","language":".NET","package_name":"{}","package_type":"Client","next_steps":["Manually update the version and release date in the changelog and metadata as needed when preparing a release", "Run validation checks"]
+[NEXT STEPS]
+Manually update the version and release date in the changelog and metadata as needed when preparing a release.
+Run validation checks.
 ... (similar for other languages)
 ```
 
 ### 4. Run Validation Checks
-
 
 **Command:**
 ```bash

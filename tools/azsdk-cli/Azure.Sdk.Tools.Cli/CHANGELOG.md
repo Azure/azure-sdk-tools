@@ -3,8 +3,8 @@
 ## 0.5.8 (Unreleased)
 
 ### Features Added
-- Allow forced creation when a release plan already exists
 
+- Allow forced creation when a release plan already exists
 - Add support for sample translation from one language to another
 
 ### Breaking Changes

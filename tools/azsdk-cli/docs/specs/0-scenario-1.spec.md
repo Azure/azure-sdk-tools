@@ -206,7 +206,7 @@ _Natural language prompts that should work in [agent mode](#agent-mode) when Sce
 **Prompt:**
 
 ```text
-I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDK code, build the SDK code, update package metadata, changelog, and version, and run all PR checks.
+I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDK code, build the SDK code, update package metadata, changelog, and version, and run all validations and tests.
 ```
 
 **Expected Agent Activity:**

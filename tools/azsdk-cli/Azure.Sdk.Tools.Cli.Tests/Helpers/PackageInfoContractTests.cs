@@ -81,7 +81,7 @@ public class PackageInfoContractTests
 
     private void SetupGoPackage(string packagePath, string version)
     {
-        var gitHelper = new GitHelper(null, Mock.Of<ILogger<GitHelper>>());
+        var gitHelper = new GitHelper(Mock.Of<IGitHubService>(), Mock.Of<ILogger<GitHelper>>());
 
         CreateTestFile(Path.Join(gitHelper.DiscoverRepoRoot(packagePath), "eng", "common", "scripts"), "common.ps1",
             $@"function Get-GoModuleProperties($goModPath) {{

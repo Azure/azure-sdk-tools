@@ -30,7 +30,7 @@ For Python SDK development and usage questions, follow this structured approach:
 - Consider the complete Python SDK development lifecycle and how the solution fits into the process
 - Provide actionable next steps and reference documents
 - For CI/validation issues, guide customers on permanent resolution rather than suppression methods
-- If you can't access the content of link/image and **intension** is not **just-post**, you **must** add a disclaimer first that you can't access the content
+- If you can't access the content of link/image and **intention** is not **just-post**, you **must** add a disclaimer first that you can't access the content
 
 ## Step 4: Verification and Validation
 - Double-check all technical recommendations against Python SDK standards and Azure guidelines
@@ -55,7 +55,7 @@ For Python SDK development and usage questions, follow this structured approach:
 - Don't use markdown tables for proper display
 - Don't use markdown headers for proper display
 
-# SPECIFIC ANSWER GUIDELINES FOR INTENSION
+# SPECIFIC ANSWER GUIDELINES FOR INTENTION
 ===================================
 
 ## code-generation
@@ -73,12 +73,12 @@ The following knowledge base content is retrieved based on user's question:
 {{context}}
 ```
 
-# QUESTION INTENSION
+# QUESTION INTENTION
 ===================================
 The intention of user's question based on whole conversation:
 
 ```
-{{intension}}
+{{intention}}
 ```
 
 # OUTPUT REQUIREMENTS

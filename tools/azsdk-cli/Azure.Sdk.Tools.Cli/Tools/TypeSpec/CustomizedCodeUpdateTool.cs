@@ -6,20 +6,18 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, provides intelligent analysis and recommendations for updating customization code.")]
-public class TspClientUpdateTool: LanguageMcpTool
+public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
-    public TspClientUpdateTool(
-        ILogger<TspClientUpdateTool> logger,
+    public CustomizedCodeUpdateTool(
+        ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
         ITspClientHelper tspClientHelper
@@ -72,30 +70,30 @@ public class TspClientUpdateTool: LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Client update failed");
-            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ClientUpdateFailed" };
+            return new CustomizedCodeUpdateResponse { ResponseError = ex.Message, ErrorCode = "ClientUpdateFailed" };
         }
     }
 
-    [McpServerTool(Name = "azsdk_tsp_update"), Description("Update customized TypeSpec-generated client code")]
-    public Task<TspClientUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
+    [McpServerTool(Name = "azsdk_customized_code_update"), Description("Update customized TypeSpec-generated client code")]
+    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
         => RunUpdateAsync(commitSha, packagePath, ct);
 
-    private async Task<TspClientUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, CancellationToken ct)
     {
         try
         {
             if (!Directory.Exists(packagePath))
             {
-                return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = $"Package path does not exist: {packagePath}" };
+                return new CustomizedCodeUpdateResponse { ErrorCode = "1", ResponseError = $"Package path does not exist: {packagePath}" };
             }
             if (string.IsNullOrWhiteSpace(commitSha))
             {
-                return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
+                return new CustomizedCodeUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
             }
             var languageService = GetLanguageService(packagePath);
-            if (!languageService.IsTspClientupdatedSupported)
+            if (!languageService.IsCustomizedCodeUpdateSupported)
             {
-                return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };
+                return new CustomizedCodeUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };
             }
 
             return await UpdateCoreAsync(commitSha, packagePath, languageService, ct);
@@ -103,11 +101,11 @@ public class TspClientUpdateTool: LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Update failed");
-            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = ex.GetType().Name };
+            return new CustomizedCodeUpdateResponse { ResponseError = ex.Message, ErrorCode = ex.GetType().Name };
         }
     }
 
-    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, LanguageService languageService, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, LanguageService languageService, CancellationToken ct)
     {
         try
         {
@@ -116,7 +114,7 @@ public class TspClientUpdateTool: LanguageMcpTool
             var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
             if (!regenResult.IsSuccessful)
             {
-                return new TspClientUpdateResponse
+                return new CustomizedCodeUpdateResponse
                 {
                     ErrorCode = "RegenerateFailed",
                     ResponseError = regenResult.ResponseError
@@ -154,7 +152,7 @@ public class TspClientUpdateTool: LanguageMcpTool
                 }
             }
 
-            return new TspClientUpdateResponse
+            return new CustomizedCodeUpdateResponse
             {
                 NextSteps = guidance
             };
@@ -162,7 +160,7 @@ public class TspClientUpdateTool: LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Core update failed");
-            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = ex.GetType().Name };
+            return new CustomizedCodeUpdateResponse { ResponseError = ex.Message, ErrorCode = ex.GetType().Name };
         }
     }
 

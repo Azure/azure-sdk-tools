@@ -86,12 +86,12 @@ The following knowledge base content is retrieved based on your question:
 {{context}}
 ```
 
-# QUESTION INTENSION
+# QUESTION INTENTION
 ===================================
-The intension of user's question based on whole conversation:
+The intention of user's question based on whole conversation:
 
 ```
-{{intension}}
+{{intention}}
 ```
 
 # OUTPUT REQUIREMENTS

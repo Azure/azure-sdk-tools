@@ -26,6 +26,7 @@ public class SampleGeneratorToolTests
     private Mock<ITelemetryService> telemetryServiceMock;
     private Mock<INpxHelper> _mockNpxHelper;
     private Mock<IProcessHelper> _mockProcessHelper;
+    private Mock<IPythonHelper> _mockPythonHelper;
     private Mock<IPowershellHelper> _mockPowerShellHelper;
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<LanguageService> _mockGoLanguageService;
@@ -368,6 +369,7 @@ public class SampleGeneratorToolTests
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
+        _mockPythonHelper = new Mock<IPythonHelper>();
         _mockGitHelper = new Mock<IGitHelper>();
         _logger = new TestLogger<SdkBuildTool>();
         _mockGoLanguageService = new Mock<LanguageService>();
@@ -378,7 +380,7 @@ public class SampleGeneratorToolTests
         var gitHubServiceMock = new Mock<IGitHubService>();
         realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
             new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object),
             _mockGoLanguageService.Object,

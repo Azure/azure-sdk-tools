@@ -12,14 +12,17 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public sealed partial class PythonLanguageService : LanguageService
 {
     private readonly INpxHelper npxHelper;
+    private readonly IPythonHelper pythonHelper;
 
     public PythonLanguageService(
         IProcessHelper processHelper,
+        IPythonHelper pythonHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers)
     {
+        this.pythonHelper = pythonHelper;
         this.npxHelper = npxHelper;
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
@@ -137,9 +140,9 @@ public sealed partial class PythonLanguageService : LanguageService
 
     public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {
-        var result = await processHelper.Run(new ProcessOptions(
-                command: "pytest",
-                args: ["tests"],
+        var result = await pythonHelper.Run(new PythonOptions(
+                "pytest",
+                ["tests"],
                 workingDirectory: packagePath
             ),
             ct
@@ -149,59 +152,17 @@ public sealed partial class PythonLanguageService : LanguageService
     }
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
-        return GetRequirements(packagePath, categories, null, ct);
-    }
-
-    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, string venvPath, CancellationToken ct = default)
-    {
         var reqs = categories.TryGetValue("python", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
 
-        if (string.IsNullOrWhiteSpace(venvPath))
-        {
-            venvPath = FindVenv(packagePath);
-        }
-
-        if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
-        {
-            logger.LogWarning("Provided venv path is invalid or does not exist: {VenvPath}", venvPath);
-            return reqs;
-        }
-
-        logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
-        return UpdateChecksWithVenv(reqs, venvPath);
-    }
-
-    private List<SetupRequirements.Requirement> UpdateChecksWithVenv(List<SetupRequirements.Requirement> reqs, string venvPath)
-    {
         foreach (var req in reqs)
         {
-            // Update checks to use venv path
-            var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
-        }
-
-        return reqs;
-    }
-
-    private string FindVenv(string packagePath)
-    {
-        // try to find existing venv in package path if none was provided
-        if (string.IsNullOrWhiteSpace(packagePath))
-        {
-            packagePath = Environment.CurrentDirectory;
-        }
-
-        var candidates = new[] { ".venv", "venv", ".env", "env" };
-
-        foreach (var c in candidates)
-        {
-            var path = Path.Combine(packagePath, c);
-            if (Directory.Exists(path))
+            if (req.check != null && req.check.Length > 0)
             {
-                return Path.GetFullPath(path);
+                var executableName = req.check[0];
+                req.check[0] = PythonOptions.ResolvePythonExecutable(executableName);
             }
         }
 
-        return null;
+        return reqs;
     }
 }

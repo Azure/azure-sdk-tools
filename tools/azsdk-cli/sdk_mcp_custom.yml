@@ -61,6 +61,7 @@ jobs:
   
   - job: Update_MCP_List
     displayName: 'Update MCP List'
+    condition: ne(variables['Build.Reason'],'PullRequest')
     pool:
       name: $(LINUXPOOL)
       image: $(LINUXVMIMAGE)
@@ -68,22 +69,29 @@ jobs:
     
     steps:
     - checkout: self
+      ref: main
+      path: azure-sdk-tools-main
+    
+    - checkout: self
+      path: azure-sdk-tools-current
+    
     - template: /eng/pipelines/templates/steps/install-dotnet.yml
     
     - task: DotNetCoreCLI@2
-      displayName: 'Build Azure SDK Tools CLI'
+      displayName: 'Build Azure SDK Tools CLI from current branch'
       inputs:
         command: 'build'
-        projects: 'tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
+        projects: '$(Pipeline.Workspace)/azure-sdk-tools-current/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
         arguments: '--configuration Release'
     
     - task: PowerShell@2
       displayName: 'Get MCP Tools List and Update Documentation'
       inputs:
         targetType: 'filePath'
-        filePath: 'tools/azsdk-cli/update-mcp-tools-docs.ps1'
-        arguments: '-AzsdkCliPath $(Build.SourcesDirectory)/artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk'
+        filePath: '$(Pipeline.Workspace)/azure-sdk-tools-main/tools/azsdk-cli/update-mcp-tools-docs.ps1'
+        arguments: '-AzsdkCliPath $(Pipeline.Workspace)/azure-sdk-tools-current/artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk'
         pwsh: true
+        workingDirectory: '$(Pipeline.Workspace)/azure-sdk-tools-main'
     
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
@@ -92,5 +100,5 @@ jobs:
         PRBranchName: update-mcp-tools-list-$(Build.BuildId)
         CommitMsg: "Update MCP tools list"
         PRTitle: "Update MCP tools list"
-        WorkingDirectory: $(Build.SourcesDirectory)
-        ScriptDirectory: $(Build.SourcesDirectory)/eng/common/scripts/
+        WorkingDirectory: $(Pipeline.Workspace)/azure-sdk-tools-main
+        ScriptDirectory: $(Pipeline.Workspace)/azure-sdk-tools-main/eng/common/scripts/

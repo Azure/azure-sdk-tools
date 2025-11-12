@@ -20,22 +20,22 @@ Online evaluation runs can be triggered by the [tools - sdk-ai-bot-online-evalua
 
 Running evaluations locally will execute evaluations on test files.
 
-The main evaluation script is `run.py`. Here are common ways to use it:
+The main evaluation script is `evals_run.py`. Here are common ways to use it:
 
 1. Run all tests for a specific language:
 ```bash
-python run.py
+python evals_run.py
 ```
 
 2. Run tests in a specific test folder:
 ```bash
-python run.py --test_folder specific_test_folder
+python evals_run.py --test_folder specific_test_folder
 ```
 
 3. Run tests for a specific scenario:
 
 ```bash
-python run.py --prefix specific_file_prefix
+python evals_run.py --prefix specific_file_prefix
 ```
 
 

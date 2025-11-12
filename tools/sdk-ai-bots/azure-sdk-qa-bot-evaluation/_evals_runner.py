@@ -9,35 +9,37 @@ import re
 import shutil
 import threading
 import time
-from typing import Any, Dict, Optional, Type, List, Union
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from typing import Any, Dict, Optional, List
+from azure.ai.evaluation import evaluate
 from _evals_result import EvalsResult
-from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
+from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
 
+
 def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]:
     """
     Map an array of reference objects to a string array of their 'link' properties.
-    
+
     Args:
         references: List of reference objects, each containing a 'link' field
-        
+
     Returns:
         List of link strings extracted from the reference objects
     """
     if not references:
         return []
-    
+
     links = []
     for ref in references:
-        if isinstance(ref, dict) and 'link' in ref and ref['link']:
-            links.append(ref['link'])
-        elif isinstance(ref, dict) and 'Link' in ref and ref['Link']:  # Handle capitalized version
-            links.append(ref['Link'])
-    
+        if isinstance(ref, dict) and "link" in ref and ref["link"]:
+            links.append(ref["link"])
+        elif isinstance(ref, dict) and "Link" in ref and ref["Link"]:  # Handle capitalized version
+            links.append(ref["Link"])
+
     return links
+
 
 class EvaluatorConfig:
     """Configuration for an evaluator"""
@@ -45,21 +47,27 @@ class EvaluatorConfig:
     column_mapping: Dict[str, str]
     """Dictionary mapping evaluator input name to column in data"""
 
+
 class EvaluatorClass:
-    def __init__(self, name: str, evaluator:Any, evaluator_config: Optional[EvaluatorConfig] = None, output_fields: Optional[list[str]] = None):
+    def __init__(
+        self,
+        name: str,
+        evaluator: Any,
+        evaluator_config: Optional[EvaluatorConfig] = None,
+        output_fields: Optional[list[str]] = None,
+    ):
         self._name = name
         self._evaluator = evaluator
         self._evaluator_config = evaluator_config
         self._output_fields = output_fields
-    
-    
+
     @property
     def name(self):
         """Getter for name"""
         return self._name
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         """Setter for name"""
         if not value:
             raise ValueError("Name cannot be empty")
@@ -71,7 +79,7 @@ class EvaluatorClass:
         return self._evaluator
 
     @evaluator.setter
-    def evaluator(self, value):
+    def evaluator(self, value: Any):
         """Setter for evaluator"""
         if not value:
             raise ValueError("evaluator cannot be None")
@@ -83,15 +91,15 @@ class EvaluatorClass:
         return self._evaluator_config
 
     @evaluator_config.setter
-    def evaluator_config(self, value):
+    def evaluator_config(self, value: EvaluatorConfig):
         """Setter for evaluator config"""
         self._evaluator_config = value
-    
+
     @property
-    def output_fileds(self):
+    def output_fields(self):
         """Getter for output fields"""
         return self._output_fields
-    
+
 
 class EvalsRunner:
     _tenant_ids_lock = threading.Lock()
@@ -108,10 +116,15 @@ class EvalsRunner:
         "go": "Language - Go",
         "java": "Language - Java",
         "net": "Language - DotNet",
-        "javascript": "Language - JavaScript"
+        "javascript": "Language - JavaScript",
     }
 
-    def __init__(self, evaluators: dict[str, EvaluatorClass] | None = None, evals_result: EvalsResult|None = None, num_to_run: int = 1):
+    def __init__(
+        self,
+        evaluators: dict[str, EvaluatorClass] | None = None,
+        evals_result: EvalsResult | None = None,
+        num_to_run: int = 1,
+    ):
         self._evaluators = evaluators or {}
         self._evals_result = evals_result or {}
         self._num_to_run = num_to_run
@@ -120,7 +133,6 @@ class EvalsRunner:
             with EvalsRunner._tenant_ids_lock:
                 if EvalsRunner.channel_to_tenant_id_dict is None:
                     EvalsRunner.channel_to_tenant_id_dict = EvalsRunner._retrieve_tenant_ids()
-
 
     @property
     def evaluators(self):
@@ -140,9 +152,7 @@ class EvalsRunner:
         credential = DefaultAzureCredential()
         storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
         blob_service_client = BlobServiceClient(
-            account_url=f"https://{storage_blob_account}.blob.core.windows.net",
-            credential=credential
-
+            account_url=f"https://{storage_blob_account}.blob.core.windows.net", credential=credential
         )
         container_name = os.environ["BOT_CONFIG_CONTAINER"]
         container_client = blob_service_client.get_container_client(container_name)
@@ -162,66 +172,76 @@ class EvalsRunner:
     async def _process_file(self, input_file: str, output_file: str, scenario: str, retrieve_response: bool) -> None:
         """Process a single input file"""
         logging.info(f"Processing file: {input_file}")
-        
+
         azure_bot_service_access_token = os.environ.get("BOT_AGENT_ACCESS_TOKEN", None)
-        bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
-        api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
+        bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None)
+        api_url = (
+            f"{bot_service_endpoint}/completion"
+            if bot_service_endpoint is not None
+            else "http://localhost:8088/completion"
+        )
         start_time = time.time()
-        tenant_id = EvalsRunner.channel_to_tenant_id_dict[EvalsRunner.scenario_to_channel[scenario] if scenario in EvalsRunner.scenario_to_channel else scenario]
+        tenant_id = EvalsRunner.channel_to_tenant_id_dict[
+            EvalsRunner.scenario_to_channel[scenario] if scenario in EvalsRunner.scenario_to_channel else scenario
+        ]
         if tenant_id is None:
             tenant_id = EvalsRunner.channel_to_tenant_id_dict["default"]
-        
-        outputFile = open(output_file, 'a', encoding='utf-8')
-        with open(input_file, "r", encoding="utf-8") as f:
-            for line in f:
-                record = json.loads(line)
-                logging.debug(record)
-                if retrieve_response:
-                    try:
-                        api_response = await self._call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
-                        answer = api_response.get("answer", "")
-                        full_context = api_response.get("full_context", "")
-                        references = api_response.get("references", [])
-                        reference_urls = extract_links_from_references(references)
-                        latency = time.time() - start_time
-                        processed_test_data = {
-                            "query": record["query"],
-                            "ground_truth": record["ground_truth"],
-                            "response": answer,
-                            "context": full_context,
-                            "latency": latency,
-                            "response_length": len(answer),
-                            "expected_reference_urls": record["expected_reference_urls"] if "expected_reference_urls" in record else [],
-                            "reference_urls": reference_urls,
-                            "testcase": record.get("testcase", "unknown"),
-                        }
-                        if processed_test_data:
-                            outputFile.write(json.dumps(processed_test_data, ensure_ascii=False) + '\n')
-                    except Exception as e:
-                        logging.error(f"❌ Error occurred when process {input_file}: {str(e)}")
-                        import traceback
-                        traceback.print_exc()
-                else:
-                    outputFile.write(line)
-        outputFile.flush()
-        outputFile.close()
 
-    async def _call_bot_api(self, question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, with_full_context: bool = True) -> Dict[str, Any]:
+        with open(output_file, "a", encoding="utf-8") as outputFile:
+            with open(input_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    record = json.loads(line)
+                    logging.debug(record)
+                    if retrieve_response:
+                        try:
+                            api_response = await self._call_bot_api(
+                                record["query"], api_url, azure_bot_service_access_token, tenant_id
+                            )
+                            answer = api_response.get("answer", "")
+                            full_context = api_response.get("full_context", "")
+                            references = api_response.get("references", [])
+                            reference_urls = extract_links_from_references(references)
+                            latency = time.time() - start_time
+                            processed_test_data = {
+                                "query": record["query"],
+                                "ground_truth": record["ground_truth"],
+                                "response": answer,
+                                "context": full_context,
+                                "latency": latency,
+                                "response_length": len(answer),
+                                "expected_reference_urls": (
+                                    record["expected_reference_urls"] if "expected_reference_urls" in record else []
+                                ),
+                                "reference_urls": reference_urls,
+                                "testcase": record.get("testcase", "unknown"),
+                            }
+                            if processed_test_data:
+                                outputFile.write(json.dumps(processed_test_data, ensure_ascii=False) + "\n")
+                        except Exception as e:
+                            logging.error(f"❌ Error occurred when process {input_file}: {str(e)}")
+                            import traceback
+
+                            traceback.print_exc()
+                    else:
+                        outputFile.write(line)
+            outputFile.flush()
+            outputFile.close()
+
+    async def _call_bot_api(
+        self, question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, with_full_context: bool = True
+    ) -> Dict[str, Any]:
         """Call the completion API endpoint."""
         headers = {
             "Content-Type": "application/json; charset=utf8",
         }
-        if access_token: 
+        if access_token:
             headers["Authorization"] = f"Bearer {access_token}"
-        
+
         payload = {
             "tenant_id": tenant_id if tenant_id is not None else "azure_sdk_qa_bot",
-            "message": {
-                "role": "user",
-                "content": question
-            },
+            "message": {"role": "user", "content": question},
             "with_preprocess": True,
-            "with_full_context": with_full_context
+            "with_full_context": with_full_context,
         }
 
         async with aiohttp.ClientSession() as session:
@@ -234,7 +254,7 @@ class EvalsRunner:
     async def _prepare_dataset(self, testdata_dir: str, file_prefix: str = None, retrieve_response: bool = True):
         """
         Process markdown files in the data directory and generate Q&A pairs.
-        
+
         Args:
             prefix: Optional prefix to filter which markdown files to process.
                         If provided, only files starting with this prefix will be processed.
@@ -247,7 +267,7 @@ class EvalsRunner:
         output_dir = Path(os.path.join(script_directory, "output"))
         output_dir.mkdir(exist_ok=True)
         logging.info(f"📂 Output directory: {output_dir.absolute()}")
-        
+
         for filename in os.listdir(output_dir.absolute()):
             file_path = os.path.join(output_dir.absolute(), filename)
             try:
@@ -258,19 +278,19 @@ class EvalsRunner:
             except Exception as e:
                 print(f"Failed to delete {file_path}. Reason: {e}")
         print(f"Directory '{output_dir.absolute()}' cleared.")
-        
+
         if not data_dir.exists():
             logging.error(f"❌ Data directory {data_dir.absolute()} does not exist!")
             return None
-        
+
         current_date = datetime.now().strftime("%Y_%m_%d")
         # Process jsonl files in the folder, optionally filtered by prefix
         glob_pattern = f"{file_prefix}*.jsonl" if file_prefix else "*.jsonl"
         matching_files = list(data_dir.glob(glob_pattern))
-        
+
         logging.info(f"🔍 Looking for files matching pattern: {glob_pattern}")
         logging.info(f"📋 Found {len(matching_files)} matching files")
-        
+
         if matching_files:
             logging.info(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
             # group files
@@ -281,7 +301,7 @@ class EvalsRunner:
                 if match:
                     key = match.group(1)
                     grouped[key].append(item)
-            
+
             for key, items in grouped.items():
                 output_file = os.path.join(output_dir.absolute(), f"{key}_{current_date}.jsonl")
                 for file_path in items:
@@ -293,11 +313,19 @@ class EvalsRunner:
         else:
             logging.info(f"No files found in {data_dir}/")
             return None
-            
+
         logging.info("Processing complete. Results written to output directory.")
         return output_dir.absolute()
 
-    def evaluate_run(self, test_folder:str, prefix: Optional[str] = None, need_retrieve_response: bool = True, evaluation_name_prefix: Optional[str] = None, ai_project_endpoint: Optional[str] = None, **kwargs):
+    def evaluate_run(
+        self,
+        test_folder: str,
+        prefix: Optional[str] = None,
+        need_retrieve_response: bool = True,
+        evaluation_name_prefix: Optional[str] = None,
+        ai_project_endpoint: Optional[str] = None,
+        **kwargs,
+    ):
 
         all_results = {}
         evaluators = {}
@@ -306,38 +334,37 @@ class EvalsRunner:
         for index, (key, value) in enumerate(self._evaluators.items()):
             evaluators[key] = value.evaluator
             evaluator_config[key] = value.evaluator_config
-        
+
         if not evaluators or not evaluator_config:
             logging.info("No evaluators. return empty result")
             return {}
-        
+
         output_file_dir = asyncio.run(self._prepare_dataset(test_folder, prefix, need_retrieve_response))
         if not output_file_dir:
             logging.info("No test data file to evaluate.")
             return all_results
-        
+
         for output_file in output_file_dir.glob("*.jsonl"):
             result = evaluate(
                 data=output_file,
                 evaluators=evaluators,
-                evaluation_name=f"{evaluation_name_prefix}-{output_file.stem}" if evaluation_name_prefix else output_file.stem,
+                evaluation_name=(
+                    f"{evaluation_name_prefix}-{output_file.stem}" if evaluation_name_prefix else output_file.stem
+                ),
                 # column mapping
                 evaluator_config=evaluator_config,
                 # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
-                azure_ai_project = ai_project_endpoint,
+                azure_ai_project=ai_project_endpoint,
                 # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
                 output_path=f"./{output_file.stem}-eval-results.json",
-                **kwargs
+                **kwargs,
             )
             # print("✅ Evaluation completed. Results:", result)
             logging.info("✅ Evaluation completed.")
             run_result = self._evals_result.record_run_result(result)
             all_results[output_file.name] = run_result
-        
+
         return all_results
 
 
-__all__ = [
-    EvaluatorClass,
-    EvalsRunner
-]
+__all__ = [EvaluatorClass, EvalsRunner]

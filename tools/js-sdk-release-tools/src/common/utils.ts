@@ -429,17 +429,19 @@ export async function cleanUpPackageDirectory(
     }
 
     const modularSDKType = getModularSDKType(packageDirectory);
+    const sdkType = getSDKType(packageDirectory);
     const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
 
-    if (modularSDKType === ModularSDKType.DataPlane) {
-        // For data plane packages
+    if (sdkType === SDKType.RestLevelClient || modularSDKType === ModularSDKType.DataPlane) {
+        // For RestLevelClient or Data Plane packages
+        const packageType = sdkType === SDKType.RestLevelClient ? 'RestLevelClient' : 'Data Plane';
         if (pipelineRunMode) {
             // Perform clean up by the emitter in Release/Local modes (src folder)
-            logger.info(`Skipping cleanup for data plane package in ${runMode} mode (handled by emitter): ${packageDirectory}`);
+            logger.info(`[${packageType}] Skipping cleanup in ${runMode} mode - emitter handles cleanup for: ${packageDirectory}`);
             return;
         } else {
             // In SpecPullRequest and Batch modes, clean up everything
-            logger.info(`Cleaning up all files for data plane package in ${runMode} mode: ${packageDirectory}`);
+            logger.info(`[${packageType}] Performing full cleanup in ${runMode} mode for: ${packageDirectory}`);
             await cleanUpDirectory(packageDirectory, []);
         }
     } else {

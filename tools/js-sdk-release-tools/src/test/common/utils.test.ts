@@ -220,24 +220,39 @@ describe("getReleaseStatus", () => {
 
 describe("cleanUpPackageDirectory", () => {
     // Test the cleanup behavior based on package type and run mode:
-    // - Data Plane (non-arm): 
+    // - RestLevelClient (@azure-rest/*): 
+    //   * Release/Local mode: Cleanup is skipped (handled by emitter)
+    //   * SpecPullRequest/Batch modes: All files are cleaned up
+    // - Data Plane (non-arm, non-rest): 
     //   * Release/Local mode: Cleanup is skipped (handled by emitter)
     //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) HighLevelClient: 
-    //   * Release/Local mode: Preserves test directory and assets.json
-    //   * SpecPullRequest/Batch modes: Removes everything
+    //   * All modes: Removes everything
     // - Management Plane (arm-*) Non-HighLevelClient: 
     //   * All modes: Cleanup is skipped (handled by emitter)
     
     async function createTestDirectoryStructure(
         baseDir: string, 
-        packageType: 'management' | 'dataplane' = 'management',
+        packageType: 'management' | 'dataplane' | 'restlevel' = 'management',
         isHighLevelClient: boolean = false
     ): Promise<string> {
         // Create different directory names based on package type to trigger correct logic
         // Management packages must contain 'arm-' in the path to be detected as ManagementPlane
-        const packageName = packageType === 'management' ? `@azure/arm-test-${getRandomInt(10000)}` : `@azure/test-${getRandomInt(10000)}`;
-        const dirName = packageType === 'management' ? `tmp/arm-package-${getRandomInt(10000)}` : `tmp/package-${getRandomInt(10000)}`;
+        // RestLevelClient packages must have @azure-rest/ prefix
+        let packageName: string;
+        let dirName: string;
+        
+        if (packageType === 'management') {
+            packageName = `@azure/arm-test-${getRandomInt(10000)}`;
+            dirName = `tmp/arm-package-${getRandomInt(10000)}`;
+        } else if (packageType === 'restlevel') {
+            packageName = `@azure-rest/test-${getRandomInt(10000)}`;
+            dirName = `tmp/rest-package-${getRandomInt(10000)}`;
+        } else {
+            packageName = `@azure/test-${getRandomInt(10000)}`;
+            dirName = `tmp/package-${getRandomInt(10000)}`;
+        }
+        
         const tempPackageDir = path.join(baseDir, dirName);
         
         // Create main directories
@@ -272,8 +287,34 @@ describe("cleanUpPackageDirectory", () => {
         return tempPackageDir;
     }
     
+    test("skips cleanup for RestLevelClient in Release mode (handled by emitter)", async () => {
+        // Create a RestLevelClient package (@azure-rest/*) to test that cleanup is skipped
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'restlevel');
+        
+        try {            
+            // Run the function with Release mode
+            await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
+            
+            // Verify that cleanup was skipped - all files should still exist
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            
+            // Assert all files/directories are preserved
+            expect(testDirExists).toBe(true);
+            expect(srcDirExists).toBe(true);
+            expect(distDirExists).toBe(true);
+            expect(packageJsonExists).toBe(true);
+            expect(assetsFileExists).toBe(true);
+        } finally {
+            await remove(tempPackageDir);
+        }
+    });
+
     test("skips cleanup for DataPlane in Release mode (handled by emitter)", async () => {
-        // Create a data plane package (non-arm) to test that cleanup is skipped
+        // Create a data plane package (non-arm, non-rest) to test that cleanup is skipped
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'dataplane');
         
         try {            
@@ -306,6 +347,26 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
     
+    test("removes all files and directories for RestLevelClient in SpecPullRequest and Batch mode", async () => {
+        // Test both SpecPullRequest and Batch modes that have the same behavior
+        const runModes = [RunMode.SpecPullRequest, RunMode.Batch];
+        
+        for (const runMode of runModes) {
+            const tempPackageDir = await createTestDirectoryStructure(__dirname, 'restlevel');
+            
+            try {
+                // Run the function
+                await cleanUpPackageDirectory(tempPackageDir, runMode);
+
+                // Verify all files and directories are removed
+                const finalEntries = await readdir(tempPackageDir);
+                expect(finalEntries.length).toBe(0);
+            } finally {
+                await remove(tempPackageDir);
+            }
+        }
+    });
+
     test("removes all files and directories for DataPlane in SpecPullRequest and Batch mode", async () => {
         // Test both SpecPullRequest and Batch modes that have the same behavior
         const runModes = [RunMode.SpecPullRequest, RunMode.Batch];

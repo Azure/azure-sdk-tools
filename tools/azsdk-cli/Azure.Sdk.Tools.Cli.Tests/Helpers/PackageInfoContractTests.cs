@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using LibGit2Sharp;
-using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
@@ -81,7 +81,14 @@ public class PackageInfoContractTests
 
     private void SetupGoPackage(string packagePath, string version)
     {
-        CreateTestFile(packagePath, "version.go", $"package azkeys\n\nconst (\n    moduleName = \"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys\"\n    version    = \"{version}\"\n)\n");
+        var gitHelper = new GitHelper(null, Mock.Of<ILogger<GitHelper>>());
+
+        CreateTestFile(Path.Join(gitHelper.DiscoverRepoRoot(packagePath), "eng", "common", "scripts"), "common.ps1",
+            $@"function Get-GoModuleProperties($goModPath) {{
+                return @{{
+                    Version = ""{version}""
+                }}
+            }}");
     }
 
     private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version)
@@ -147,6 +154,11 @@ public class PackageInfoContractTests
         var (pkgPath, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, commonValidationHelper) = CreateSdkPackage(servicePath, package);
 
         SetupPackageForLanguage(language, pkgPath, package, expectedVersion);
+
+        if (language == SdkLanguage.Go)
+        {
+            processHelper = new ProcessHelper(Mock.Of<ILogger<ProcessHelper>>(), Mock.Of<IRawOutputHelper>());
+        }
 
         var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, commonValidationHelper);
         var info = await helper.GetPackageInfo(pkgPath);

@@ -352,7 +352,7 @@ azsdk package build -p <path-to-package-path>
 **Expected Output:**
 
 ```text
-Build completed successfully. Output:...0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:16.72","result":"succeeded","language":"DotNet","package_name":"Azure.Health.Deidentification","package_type":"Unknown","next_steps":[],"operation_status":"Succeeded"
+{"message":"Build completed successfully. Output:...0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:16.72","result":"succeeded","language":"DotNet","package_name":"Azure.Health.Deidentification","package_type":"Unknown","next_steps":[],"operation_status":"Succeeded"}
 ... (similar for other languages)
 ```
 

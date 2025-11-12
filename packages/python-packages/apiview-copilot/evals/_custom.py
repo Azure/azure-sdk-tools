@@ -19,6 +19,7 @@ from evals._util import ensure_json_obj
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
+
 def _review_apiview(testcase: str, query: str, language: str):
     """APIView review target function for evals framework."""
     from src._apiview_reviewer import ApiViewReview
@@ -27,6 +28,17 @@ def _review_apiview(testcase: str, query: str, language: str):
     review = reviewer.run()
     reviewer.close()
     return {"actual": review.model_dump_json()}
+
+
+def _mention_summarize_workflow(testcase: str, results: dict):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "summarize_github_actions.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "results": results,
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
 
 def _mention_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, other_comments: str, trigger_comment: str
@@ -43,6 +55,7 @@ def _mention_action_workflow(
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
+
 
 def _thread_resolution_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, comments: str
@@ -61,6 +74,7 @@ def _thread_resolution_action_workflow(
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
+
 def _filter_comment_metadata(testcase: str, response: str, language: str, exceptions: str, outline: str, content: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_comment_with_metadata.prompty"
     prompty_kwargs = {
@@ -74,6 +88,7 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
+
 def _filter_existing_comment(testcase: str, response: str, language: str, existing: str, comment: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_existing_comment.prompty"
     prompty_kwargs = {
@@ -82,6 +97,20 @@ def _filter_existing_comment(testcase: str, response: str, language: str, existi
         "language": language,
         "existing": existing,
         "comment": comment,
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
+def _deduplicate_parser_issue(testcase: str, response: str, language: str, package_name: str, code: str, issue_context: str, existing_issues: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "deduplicate_parser_issue.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "package_name": package_name,
+        "code": code,
+        "issue_context": issue_context,
+        "existing_issues": existing_issues,
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
@@ -565,7 +594,7 @@ class PromptyEvaluator(BaseEvaluator):
             rationale_similarity = 1.0 if expected_rationale == actual_rationale else 0.0
 
         return {
-            "correct_action": is_correct,
+            "success": is_correct,
             "actual": actual,
             "expected": response,
             "testcase": testcase,
@@ -593,7 +622,7 @@ class PromptyEvaluator(BaseEvaluator):
                 for row in result.get("rows", []):
                     test_result = {
                         "testcase": row.get("inputs.testcase", "unknown"),
-                        "correct": row.get("outputs.metrics.correct_action", False),
+                        "correct": row.get("outputs.metrics.success", False),
                         "expected_action": row.get("outputs.metrics.expected_action", ""),
                         "actual_action": row.get("outputs.metrics.actual_action", ""),
                         "score": row.get("outputs.metrics.score", 0),
@@ -625,8 +654,6 @@ class PromptyEvaluator(BaseEvaluator):
 
     def show_results(self, processed_results: dict) -> None:
         """Display prompt workflow results."""
-        from tabulate import tabulate
-
         for file_name, results in processed_results.items():
             accuracy = results["accuracy"]
 
@@ -662,6 +689,7 @@ class PromptyEvaluator(BaseEvaluator):
             "thread_resolution_action": _thread_resolution_action_workflow,
             "filter_comment_metadata": _filter_comment_metadata,
             "filter_existing_comment": _filter_existing_comment,
+            "deduplicate_parser_issue": _deduplicate_parser_issue,
             # Add more workflows as needed
         }
 
@@ -672,8 +700,96 @@ class PromptyEvaluator(BaseEvaluator):
         return workflow_targets[workflow_name]
 
 
-# Register evaluators at module load time to prevent circular imports
-from evals._config_loader import register_evaluator
+class PromptySummaryEvaluator(PromptyEvaluator):
+    """Evaluator for summarization prompts using Prompty."""
 
-register_evaluator("apiview", CustomAPIViewEvaluator)
-register_evaluator("prompt", PromptyEvaluator)
+    def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
+        expected_summary = response.strip()
+        actual_summary = actual.strip()
+        similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+            response=actual_summary,
+            query=expected_summary,
+            ground_truth=expected_summary,
+        )
+        similarity = similarity_result.get("similarity", 0.0) / 5.0 * 100
+        return {
+            "actual": actual,
+            "expected": response,
+            "testcase": testcase,
+            "score": similarity,
+            "success": similarity > 70,
+        }
+
+    @property
+    def target_function(self) -> callable:
+        workflow_targets = {
+            "mention_summarize": _mention_summarize_workflow,
+            # Add more workflows as needed
+        }
+
+        workflow_name = self.config.name
+        if workflow_name not in workflow_targets:
+            raise ValueError(f"No target function defined for workflow: {workflow_name}")
+
+        return workflow_targets[workflow_name]
+
+    def process_results(self, raw_results: list, guideline_ids: set = None) -> dict:
+        """Process prompt workflow results."""
+        all_results = {}
+
+        for run_result_data in raw_results:
+            for file_name, result in run_result_data.items():
+                if file_name not in all_results:
+                    all_results[file_name] = []
+
+                run_summary = {
+                    "sum_score": 0.0,
+                    "max_score": 0.0,
+                    "test_results": [],
+                }
+
+                # Process each test case in this run
+                for row in result.get("rows", []):
+                    score = row.get("outputs.metrics.score", 0)
+                    test_result = {
+                        "testcase": row.get("inputs.testcase", "unknown"),
+                        "success": True if score > 70 else False,
+                        "score": score,
+                    }
+
+                    run_summary["test_results"].append(test_result)
+                    run_summary["max_score"] += 100
+                    run_summary["sum_score"] += test_result["score"]
+
+                run_summary["accuracy"] = (
+                    (run_summary["sum_score"] / run_summary["max_score"]) * 100 if run_summary["max_score"] > 0 else 0
+                )
+                all_results[file_name].append(run_summary)
+
+        # For multiple runs: take the median accuracy run
+        final_results = {}
+        for file_name, runs in all_results.items():
+            if len(runs) == 1:
+                final_results[file_name] = runs[0]
+            else:
+                # Find median by accuracy
+                sorted_runs = sorted(runs, key=lambda x: x["accuracy"])
+                median_idx = len(sorted_runs) // 2
+                final_results[file_name] = sorted_runs[median_idx]
+
+        return final_results
+
+    def show_results(self, processed_results: dict) -> None:
+        """Display prompt workflow results."""
+        for file_name, results in processed_results.items():
+            accuracy = results["accuracy"]
+
+            print("====================================================")
+            print(f"\n\n✨ {file_name} results:\n")
+            print(f"Overall Score: ({accuracy:.0f}%)\n")
+
+            # Show each test result
+            print("== TEST RESULTS ==")
+            for test in results["test_results"]:
+                status = "✅" if test["success"] else "❌"
+                print(f"  {status} {test['score']}% - {test['testcase']} ")

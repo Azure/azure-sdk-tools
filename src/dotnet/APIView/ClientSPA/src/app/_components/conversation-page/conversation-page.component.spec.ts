@@ -8,7 +8,6 @@ import { ConversationsComponent } from '../conversations/conversations.component
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
 import { MenuModule } from 'primeng/menu';
-import { FooterComponent } from '../shared/footer/footer.component';
 import { MenubarModule } from 'primeng/menubar';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -24,7 +23,6 @@ describe('ConversationPageComponent', () => {
         ConversationPageComponent,
         ConversationsComponent,
         NavBarComponent,
-        FooterComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
         LanguageNamesPipe

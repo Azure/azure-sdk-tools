@@ -1,0 +1,126 @@
+{
+    "categories": {
+        "core": [
+            {   
+                "requirement": "Node.js >= 22.16.0",
+                "check": ["node", "--version"],
+                "instructions": ["Download Node.js"]
+            },
+            {
+                "requirement": "tsp-client >= 0.24.0",
+                "check": ["tsp-client", "--version"],
+                "instructions": ["cd eng/common/tsp-client", "`npm ci`"]
+            },
+            {
+                "requirement": "tsp >= 1.0.0",
+                "check": ["tsp", "--version"],
+                "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
+            },
+            {
+                "requirement": "Powershell >= 7.0",
+                "check": ["pwsh", "--version"],
+                "instructions": ["Download and install PowerShell"]
+            },
+            {
+                "requirement": "github CLI >= 2.30.0",
+                "check": ["gh", "--version"],
+                "instructions": ["Download and install GitHub CLI"]
+            },
+            {
+                "requirement": "python",
+                "check": ["python", "--version"],
+                "instructions": ["Install Python from https://www.python.org/downloads/"]
+            }
+        ],
+        "java": [
+            {
+                "requirement": "java >= 17.0.0",
+                "check": ["java", "-version"],
+                "instructions": ["Download JDK", "Set JAVA_HOME environment variable to the JDK installation path", "Add JAVA_HOME/bin to your PATH environment variable", "Restart your IDE."]
+            },
+            {
+                "requirement": "maven",
+                "check": ["mvn", "-v"],
+                "instructions": ["Download the latest version of Maven.", "Set MAVEN_HOME environment variable to the Maven installation path", "Add MAVEN_HOME/bin to your PATH environment variable", "Restart your IDE."]
+            }
+        ],
+        "javascript": [
+            {
+                "requirement": "pnpm",
+                "check": ["pnpm", "--version"],
+                "instructions": ["npm install -g pnpm", "Run pnpm install in the repo root."]
+            }
+        ],
+        "dotnet": [
+            {
+                "requirement": "dotnet >= 9.0.306",
+                "check": ["dotnet", "--version"],
+                "instructions": ["Install .NET SDK with version at least higher than defined in global.json file in the repo root."]
+            }
+        ],
+        "go": [
+            {
+                "requirement": "go",
+                "check": ["go", "version"],
+                "instructions": ["Download and install the Go version specified in globals.yml", "Ensure your GOPATH and GOROOT environment variables are set correctly", "Add GOROOT/bin to your PATH environment variable"]
+            },
+            {
+                "requirement": "go-junit-report",
+                "check": ["go-junit-report", "--version"],
+                "instructions": ["go install github.com/jstemmer/go-junit-report/v2@v2.1.0"]
+            },
+            {
+                "requirement": "gocov",
+                "check": ["gocov", "--version"],
+                "instructions": ["go install github.com/axw/gocov/gocov@v1.2.1"]
+            },
+            {
+                "requirement": "gocov-xml",
+                "check": ["gocov-xml", "--version"],
+                "instructions": ["go install github.com/AlekSi/gocov-xml@v1.1.0"]
+            },
+            {
+                "requirement": "gocov-html",
+                "check": ["gocov-html", "--version"],
+                "instructions": ["go install github.com/matm/gocov-html/cmd/gocov-html@v1.4.0"]
+            },
+            {
+                "requirement": "golangci-lint",
+                "check": ["golangci-lint", "--version"],
+                "instructions": ["https://golangci-lint.run/docs/welcome/install/"]
+            },
+            {
+                "requirement": "generator",
+                "check": ["generator", "--help"],
+                "instructions": ["go install github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"]
+            }
+        ],
+        "python": [
+            {
+                "requirement": "python >= 3.9",
+                "check": ["python", "--version"],
+                "instructions": ["Install Python from https://www.python.org/downloads/"]
+            },
+            {
+                "requirement": "azpysdk",
+                "check": ["azpysdk", "--help"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with `azpysdk --help`"]
+            },
+            {
+                "requirement": "sdk_generator",
+                "check": ["sdk_generator", "--help"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with `sdk_generator --help`"]
+            },
+            {
+                "requirement": "ghtools",
+                "check": ["python", "-m", "pip", "show", "GitPython"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with `pip show GitPython`"]
+            },
+            {
+                "requirement": "pytest >= 8.3.5",
+                "check": ["pytest", "--version"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with `pytest --version`"]
+            }
+        ]
+    }
+}

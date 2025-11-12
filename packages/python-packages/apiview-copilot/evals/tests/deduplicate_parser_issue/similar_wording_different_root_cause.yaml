@@ -1,0 +1,32 @@
+testcase: similar_wording_different_root_cause
+language: python
+package_name: azure.compute
+code: "Optional[Union[Dict[str, invalid_type]]]"
+issue_context: |
+  [Python APIView] Parser crashes on unquoted type names
+  
+  The parser fails when encountering unquoted identifiers in complex type annotations.
+  
+  **Bad code:**
+  ```python
+  Optional[Union[Dict[str, invalid_type]]]
+  ```
+existing_issues: |
+  [
+    {
+      "number": 789,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/789",
+      "title": "[Python APIView] Literal values are not quoted",
+      "body": "The parser is failing to handle unquoted string values in Literal type annotations.\n\n**Bad code:**\n```python\nval: Literal[unquoted]\n```\n\n**Should be:**\n```python\nval: Literal[\"unquoted\"]\n```",
+      "created_at": "2025-10-15T10:00:00Z"
+    },
+    {
+      "number": 234,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/234",
+      "title": "[Python APIView] Import resolution fails for undefined types",
+      "body": "Parser cannot resolve type names that are not properly imported, causing APIView to show incorrect type information.",
+      "created_at": "2025-10-10T12:00:00Z"
+    }
+  ]
+response:
+  action: create

@@ -39,7 +39,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm main-nav-cst-theme">
             <div class="container-fluid">
-                <a href="/" class="navbar-brand"><img id="apiview-logo" alt="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
+                <a href="/" class="navbar-brand" data-clarity-region="apiview-home-logo"><img id="apiview-logo" alt="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -81,14 +81,6 @@
             </div>
         </div>
     </main>
-
-    <footer class="border-top footer text-muted">
-        <div class="container text-center">
-            &copy; @DateTime.Now.Year - apiview.dev
-            - <a href="https://github.com/Azure/azure-sdk-tools/">Feedback</a>
-            - <a href="https://github.com/Azure/azure-sdk-tools/commit/@Startup.VersionHash">@Startup.VersionHash</a>
-        </div>
-    </footer>
 
     <environment include="Development">
         <script src="~/lib/jquery/dist/jquery.js"></script>

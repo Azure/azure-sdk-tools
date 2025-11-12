@@ -40,24 +40,65 @@ public abstract class SampleLanguageContext
         GetLanguageSpecificInstructions() + GetSampleExample();
 
     /// <summary>
-    /// Loads source code context for the client library to aid sample generation.
+    /// Loads context for sample generation from the specified paths.
     /// </summary>
-    /// <param name="packagePath">Root path to the language-specific package.</param>
+    /// <param name="paths">Paths to include in the context loading. First path is treated as the package path.</param>
     /// <param name="totalBudget">Maximum aggregate characters for all source files.</param>
     /// <param name="perFileLimit">Maximum characters per individual file before truncation.</param>
     /// <param name="ct">Cancellation token applied to file reads.</param>
-    /// <returns>Concatenated structured source context string.</returns>
-    public abstract Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default);
+    /// <returns>Concatenated structured context string.</returns>
+    public virtual async Task<string> LoadContextAsync(IEnumerable<string> paths, int totalBudget, int perFileLimit, CancellationToken ct = default)
+    {
+        if (!paths.Any())
+        {
+            throw new ArgumentException("At least one path must be provided", nameof(paths));
+        }
+
+        var packagePath = paths.First(); // First path is the package path
+        var additionalPaths = paths.Skip(1); // Remaining paths are additional context
+
+        var sourceInputProvider = GetSourceInputProvider();
+        var sourceInputs = sourceInputProvider.Create(packagePath).ToList();
+        
+        // Add additional paths as SourceInput entries
+        foreach (var path in additionalPaths)
+        {
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                var fullPath = Path.GetFullPath(path.Trim());
+                sourceInputs.Add(new SourceInput(fullPath, 
+                    IncludeExtensions: Array.Empty<string>(),
+                    ExcludeGlobPatterns: Array.Empty<string>()));
+            }
+        }
+        
+        return await FileHelper.LoadFilesAsync(sourceInputs, packagePath, totalBudget, perFileLimit, f => GetContextAwarePriority(f, packagePath), ct);
+    }
 
     /// <summary>
-    /// Shared priority calculator for source inputs. Languages may override if needed, but most use the
-    /// heuristic: filenames containing "client" get highest priority.
+    /// Priority function that gives much higher priority to files from the main package path
+    /// versus files from extra context paths.
     /// </summary>
     /// <param name="f">File metadata.</param>
+    /// <param name="packagePath">The main package path.</param>
     /// <returns>Smaller numbers indicate higher priority.</returns>
-    protected virtual int GetSourcePriority(FileMetadata f)
+    protected virtual int GetContextAwarePriority(FileMetadata f, string packagePath)
     {
+        var isFromMainPackage = f.FilePath.StartsWith(packagePath, StringComparison.OrdinalIgnoreCase);
         var name = Path.GetFileNameWithoutExtension(f.FilePath);
-        return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
+        var hasClient = name.Contains("client", StringComparison.OrdinalIgnoreCase);
+        
+        // Files from main package get priority 1-10, extra context get 20-50
+        return isFromMainPackage
+            ? (hasClient ? 1 : 5)
+            : (hasClient ? 20 : 50);
+    }
+
+    /// <summary>
+    /// Gets the source input provider for this language. Override in derived classes to provide language-specific providers.
+    /// </summary>
+    protected virtual ILanguageSourceInputProvider GetSourceInputProvider()
+    {
+        throw new NotImplementedException($"Language '{Language}' must override GetSourceInputProvider() method.");
     }
 }

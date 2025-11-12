@@ -217,7 +217,7 @@ I want to prepare a preview version of the Health Deidentification SDK for all l
 4. Execute `azsdk_package_update_changelog_content` to update the changelog entries
 5. Execute `azsdk_package_update_metadata` to update the package metadata
 6. Execute `azsdk_package_update_version` to update the version and the release date
-7. Execute `validate` locally to validate all checks pass
+7. Execute `azsdk_package_run_check` locally to validate all checks pass
 8. Report status and next steps
 
 ### Environment Setup

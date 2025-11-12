@@ -6,11 +6,12 @@ import re
 from typing import Any, Optional
 from tabulate import tabulate
 
+
 class EvalsResult:
-    def __init__(self, weights: dict[str, float]|None, metrics: dict[str, list[str]]):
+    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str]]):
         self._weights = weights or {}
         self._metrics = metrics
-    
+
     def calculate_overall_score(self, row: dict[str, Any]) -> float:
         """Calculate weighted score based on various metrics."""
         # calculate the overall score when there are multiple metrics.
@@ -18,7 +19,7 @@ class EvalsResult:
         overall_score = 0
         for metric in metrics:
             metric_key = f"outputs.{metric}.{metric}"
-            if (metric_key not in row):
+            if metric_key not in row:
                 return 0.0
             else:
                 score = float(row[metric_key])
@@ -28,9 +29,9 @@ class EvalsResult:
                     overall_score += score * self._weights[f"{metric}_weight"]
                 else:
                     overall_score += score
-        
+
         return overall_score
-    
+
     def record_run_result(self, result: dict[str, Any]) -> list[dict[str, Any]]:
         run_result = []
         total_score = 0
@@ -42,7 +43,7 @@ class EvalsResult:
         for metric in metrics:
             pass_rates[metric] = 0
             fail_rates[metric] = 0
-        
+
         for row in result["rows"]:
             score = self.calculate_overall_score(row)
             total_score += score
@@ -51,12 +52,9 @@ class EvalsResult:
             row_result["testcase"] = row["inputs.testcase"]
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
-                "reference_urls": row["inputs.expected_reference_urls"]
+                "reference_urls": row["inputs.expected_reference_urls"],
             }
-            row_result["actual"] = {
-                "answer": row["inputs.response"],
-                "reference_urls": row["inputs.reference_urls"]
-            }
+            row_result["actual"] = {"answer": row["inputs.response"], "reference_urls": row["inputs.reference_urls"]}
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)
@@ -106,7 +104,9 @@ class EvalsResult:
             return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
         return f" ({diff:{format_str}})"
 
-    def build_output_table(self, eval_results: list[dict[str, Any]], baseline_results: Optional[dict[str, Any]] = None) -> str:
+    def build_output_table(
+        self, eval_results: list[dict[str, Any]], baseline_results: Optional[dict[str, Any]] = None
+    ) -> str:
         metrics = self._metrics.keys()
         headers = [
             "Test Case",
@@ -115,15 +115,16 @@ class EvalsResult:
             headers.append(metric)
             if self._metrics[metric]:
                 for field in self._metrics[metric]:
-                    if (field != metric): headers.append(field)
+                    if field != metric:
+                        headers.append(field)
             else:
                 headers.append(f"{metric} Result")
-        
+
         headers.append("Score")
 
         terminal_rows = []
 
-        for result in eval_results[: -1]: # Skip summary object
+        for result in eval_results[:-1]:  # Skip summary object
             logging.debug(json.dumps(result, ensure_ascii=False))
             testcase = result["testcase"]
             score = float(result["overall_score"])
@@ -136,12 +137,14 @@ class EvalsResult:
                     metric_score = float(result[f"{metric}"]) if f"{metric}" in result else -1
                     base_score = base[f"{metric}"] if f"{metric}" in base else None
                     if base_score is not None:
-                        values.append(f"{metric_score:.1f}{EvalsResult.format_terminal_diff(metric_score, float(base_score))}")
+                        values.append(
+                            f"{metric_score:.1f}{EvalsResult.format_terminal_diff(metric_score, float(base_score))}"
+                        )
                     else:
                         values.append(f"{metric_score:.1f}")
                     if self._metrics[metric]:
                         for field in self._metrics[metric]:
-                            if (field != metric):
+                            if field != metric:
                                 metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
                                 values.append(f"{metric_value}")
                     else:
@@ -154,20 +157,22 @@ class EvalsResult:
                     values.append(f"{metric_score:.1f}")
                     if self._metrics[metric]:
                         for field in self._metrics[metric]:
-                            if (field != metric):
+                            if field != metric:
                                 metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
                                 values.append(f"{metric_value}")
-                    else: 
+                    else:
                         metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                         values.append(f"{metric_result}")
                 values.append(f"{score:.1f}")
-            
+
             terminal_row.extend(values)
             terminal_rows.append(terminal_row)
 
         return tabulate(terminal_rows, headers, tablefmt="simple")
 
-    def output_table(self, eval_results: list[dict[str, Any]], file_name: str, baseline_results: Optional[dict[str, Any]] = None) -> None:
+    def output_table(
+        self, eval_results: list[dict[str, Any]], file_name: str, baseline_results: Optional[dict[str, Any]] = None
+    ) -> None:
         logging.debug(json.dumps(eval_results[-1], ensure_ascii=False))
         logging.info("====================================================")
         logging.info(f"\n\n✨ {file_name} results:\n")
@@ -175,11 +180,15 @@ class EvalsResult:
         print(self.build_output_table(eval_results, baseline_results))
 
         if baseline_results:
-            print(f"\n{file_name} average score: {eval_results[-1]['average_score']} {EvalsResult.format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}")
+            print(
+                f"\n{file_name} average score: {eval_results[-1]['average_score']} {EvalsResult.format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}"
+            )
             for metric in metrics:
                 pass_rate = eval_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in eval_results[-1] else 0
                 fail_rate = eval_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in eval_results[-1] else 0
-                print(f" {metric}: pass({pass_rate}) fail({fail_rate})",)
+                print(
+                    f" {metric}: pass({pass_rate}) fail({fail_rate})",
+                )
 
     def show_results(self, all_results: dict[str, Any], with_baseline: bool = True) -> None:
         """Display results in a table format."""
@@ -187,8 +196,8 @@ class EvalsResult:
             baseline_results = None
             if with_baseline:
                 baseline_results = {}
-                baselineName = f"{name.split('_')[0]}-test.json"
-                baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+                baseline_name = f"{name.split('_')[0]}-test.json"
+                baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
 
                 if baseline_path.exists():
                     with open(baseline_path, "r") as f:
@@ -205,11 +214,11 @@ class EvalsResult:
         metrics = self._metrics.keys()
         for name, test_results in all_results.items():
             scenario_ret = True
-            
+
             if with_baseline:
                 baseline_results = {}
-                baselineName = f"{name.split('_')[0]}-test.json"
-                baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+                baseline_name = f"{name.split('_')[0]}-test.json"
+                baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
 
                 if baseline_path.exists():
                     with open(baseline_path, "r") as f:
@@ -220,7 +229,7 @@ class EvalsResult:
                         if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
                             # scenario_ret = False //ignore decrease in average score
                             logging.warning(f"scenario {name} avarage score decrease!")
-            
+
             for metric in metrics:
                 pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
                 fail_rate = test_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in test_results[-1] else 0
@@ -237,7 +246,7 @@ class EvalsResult:
                 ret = False
         if failed_scenarios:
             logging.info(f"Failed Scenarios: {' '.join(failed_scenarios)}")
-        return ret 
+        return ret
 
     def establish_baseline(self, all_results: dict[str, Any], is_ci: bool) -> None:
         """Establish the current results as the new baseline."""
@@ -247,8 +256,8 @@ class EvalsResult:
             establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
             if establish_baseline.lower() == "y":
                 for name, result in all_results.items():
-                    baselineName = f"{name.split('_')[0]}-test.json"
-                    baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+                    baseline_name = f"{name.split('_')[0]}-test.json"
+                    baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
                     with open(str(baseline_path), "w") as f:
                         json.dump(result, indent=4, fp=f)
 
@@ -258,11 +267,10 @@ class EvalsResult:
             log_path.mkdir(parents=True, exist_ok=True)
 
         for name, result in all_results.items():
-            baselineName = f"{name.split('_')[0]}-test.json"
-            output_path = log_path / baselineName
+            baseline_name = f"{name.split('_')[0]}-test.json"
+            output_path = log_path / baseline_name
             with open(str(output_path), "w") as f:
                 json.dump(result, indent=4, fp=f)
 
-__all__ = [
-    EvalsResult
-]
+
+__all__ = [EvalsResult]

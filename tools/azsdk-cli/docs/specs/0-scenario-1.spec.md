@@ -349,7 +349,7 @@ azsdk package build -p <path-to-package-path>
 
 **Options:**
 
-- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+- -p, --package-path: absolute path to the package directory (required).
 
 **Expected Output:**
 
@@ -371,7 +371,7 @@ azsdk package update-changelog-content -p <path-to-package-path>
 
 **Options:**
 
-- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+- -p, --package-path: absolute path to the package directory (required).
 
 **Expected Output:**
 ```
@@ -387,7 +387,7 @@ azsdk package update-metadata -p <path-to-package-path>
 
 **Options:**
 
-- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required).
+- -p, --package-path: absolute path to the package directory (required).
 
 **Expected Output:**
 ```
@@ -403,7 +403,7 @@ azsdk package update-version -p <path-to-package-path> -v 1.2.0 -d 2025-10-17
 
 **Options:**
 
-- -p, --package-path: absolute path to the package directory. Defaults to the current working directory (required)
+- -p, --package-path: absolute path to the package directory (required).
 - -t, --release-type: specifies whether the next version is 'beta' or 'stable'
 - -v, --version: specifies the next version number
 - -d, --release-date: the date (YYYY-MM-DD) to write into the changelog

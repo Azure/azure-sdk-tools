@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Test]
         public async Task Evaluate_GetPullRequestLinkForCurrentBranch()
         {
-            const string prompt = "I have submitted a spec PR in my current branch. What's the status of it? Path to my repository root: C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs";
+            const string prompt = "What's the status of the spec PR in my current branch? Only check the status once. Path to my repository root: C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs";
             string[] expectedTools =
             [
                 "azsdk_get_pull_request_link_for_current_branch",

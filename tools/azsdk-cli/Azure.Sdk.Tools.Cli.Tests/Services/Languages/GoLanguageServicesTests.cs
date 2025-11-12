@@ -12,8 +12,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
     internal class GoLanguageServiceTests
     {
-        // Setting this lets you run tests that require a live environment.
-        private readonly string? actualSdkRepo = Environment.GetEnvironmentVariable("AZSDK_CLI_TEST_AZSDKGO");
 
         private TempDirectory tempDir = null!;
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
@@ -82,6 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"));
 
             resp = await LangService.FormatCode(tempDir.DirectoryPath, false, CancellationToken.None);
+            Assert.That(resp.ExitCode, Is.EqualTo(0));
             Assert.That(File.ReadAllText(Path.Join(tempDir.DirectoryPath, "main.go")), Does.Not.Contain("azservicebus"));
 
             resp = await LangService.BuildProject(tempDir.DirectoryPath, CancellationToken.None);
@@ -152,11 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         [Test]
         public async Task TestGetPackageInfo()
         {
-            if (actualSdkRepo == null)
-            {
-                Assert.Ignore("Skipping test that uses a real Go repo");
-            }
-
+            var actualSdkRepo = IgnoreTestIfRepoNotConfigured();
             var packageInfo = await LangService.GetPackageInfo(Path.Join(actualSdkRepo, "sdk/messaging/azservicebus"));
 
             Assert.Multiple(() =>
@@ -205,6 +200,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Assert.That(packageInfo.PackageName, Is.Not.Null.And.Not.Empty);
                 Assert.That(packageInfo.PackageVersion, Is.Not.Null.And.Not.Empty);
             });
+        }
+
+        /// <summary>
+        /// Ignores the test if you don't have a path to a real Go repo configured.
+        /// </summary>
+        /// <returns></returns>
+        private static string IgnoreTestIfRepoNotConfigured()
+        {
+            // Setting this lets you run tests that require a live environment.
+            const string GoLiveTestVarName = "AZSDK_CLI_TEST_AZSDKGO";
+            var actualSdkRepo = Environment.GetEnvironmentVariable(GoLiveTestVarName);
+
+            if (actualSdkRepo != null)
+            {
+                return actualSdkRepo;
+            }
+
+            Assert.Ignore("Live testing disabled for GoLanguageServiceTests: AZSDK_CLI_TEST_AZSDKGO is not set to a Go repo path");
+            return "";
         }
     }
 }

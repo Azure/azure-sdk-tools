@@ -56,11 +56,8 @@ public partial class GoLanguageService : LanguageService
         //   "ModuleName": "azservicebus"
         // }
         logger.LogDebug("Resolving Go package info for path: {packagePath}", packagePath);
-        string[] args = ["-c", $". {commonPS1}; Get-GoModuleProperties('{packagePath}') | ConvertTo-Json"];
-        var processResult = await processHelper.Run(new ProcessOptions(
-            "pwsh", args,
-            "pwsh.exe", args,
-            workingDirectory: repoRoot), ct);
+        string[] args = [$". {commonPS1}; Get-GoModuleProperties('{packagePath}') | ConvertTo-Json"];
+        var processResult = await processHelper.Run(new PowershellOptions(args, workingDirectory: repoRoot), ct);
 
         if (processResult.ExitCode != 0)
         {

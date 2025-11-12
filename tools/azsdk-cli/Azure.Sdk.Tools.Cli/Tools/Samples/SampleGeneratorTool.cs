@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             this.sampleContextResolver = sampleContextResolver;
             this.microagentHostService = microagentHostService;
         }
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Samples];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.PackageSample];
 
         private readonly Option<string> promptOption = new("--prompt")
         {

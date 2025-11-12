@@ -84,7 +84,7 @@ public class SampleTranslatorToolTests
     public void CommandHierarchy_ReturnsCorrectGroup()
     {
         // Act & Assert
-        Assert.That(_sampleTranslatorTool.CommandHierarchy, Contains.Item(SharedCommandGroups.Samples));
+        Assert.That(_sampleTranslatorTool.CommandHierarchy, Contains.Item(SharedCommandGroups.PackageSample));
     }
 
     [Test]

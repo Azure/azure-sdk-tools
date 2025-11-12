@@ -19,10 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run validation checks for SDK packages")]
     [McpServerToolType]
     public class PackageCheckTool(
-        ILogger<LanguageMultiCommandTool> logger,
+        ILogger<LanguageMcpTool> logger,
         IGitHelper gitHelper,
         IEnumerable<LanguageService> languageServices
-    ) : LanguageMultiCommandTool(languageServices, logger: logger, gitHelper: gitHelper)
+    ) : LanguageMcpTool(languageServices, logger: logger, gitHelper: gitHelper)
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [
             SharedCommandGroups.Package,

@@ -272,8 +272,7 @@ For each language, perform the following steps:
 1. Run `azsdk_package_update_changelog_content` to update changelog content with recent changes (for mgmt-plane SDK) or prompt the user to manually add entries (for data-plane SDK)
 2. Run `azsdk_package_update_metadata` to update the package metadata
 3. Run `azsdk_package_update_version` to update the version number and release date for [preview release](#preview-release)
-4. Validate all updates are correctly formatted
-5. Report what was updated
+4. Report what was updated
 
 ### Validate for PR
 

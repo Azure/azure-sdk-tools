@@ -4,8 +4,10 @@
 
 ### Features Added
 
-- Added ChangelogContentUpdateTool, MetadataUpdateTool, and VersionUpdateTool
 - Added support for sample translation from one language to another
+- Allow forced creation when a release plan already exists
+- Add support for sample translation from one language to another
+- Added ChangelogContentUpdateTool, MetadataUpdateTool, and VersionUpdateTool
 
 ### Breaking Changes
 
@@ -16,6 +18,8 @@
 - Sample generator: Fix not giving enough priority to files in the input package folder
 
 ### Other Changes
+
+- Added a PythonOptions that allows the user to use an env var to declare a python venv
 
 ## 0.5.7 (2025-11-05)
 

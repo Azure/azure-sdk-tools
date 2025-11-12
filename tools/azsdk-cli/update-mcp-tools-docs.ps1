@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 param(
     [Parameter(Mandatory=$false)]
-    [string]$AzsdkCliPath = "$PSScriptRoot\..\..\artifacts\bin\Azure.Sdk.Tools.Cli\Release\net8.0\azsdk.exe"
+    [string]$AzsdkCliPath = "$PSScriptRoot/../../artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk.exe"
 )
 
 function Start-McpServer {
@@ -98,8 +98,8 @@ function Get-Version {
 }
 
 # Main script
-$docsPath = Join-Path $PSScriptRoot "docs\mcp-tools.md"
-$csprojPath = Join-Path $PSScriptRoot "Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj"
+$docsPath = Join-Path $PSScriptRoot "docs/mcp-tools.md"
+$csprojPath = Join-Path $PSScriptRoot "Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj"
 
 if (-not (Test-Path $AzsdkCliPath)) {
     Write-Error "Azure SDK CLI tool not found at: $AzsdkCliPath"

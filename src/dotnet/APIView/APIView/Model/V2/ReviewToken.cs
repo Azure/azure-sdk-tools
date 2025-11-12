@@ -143,13 +143,18 @@ namespace APIView.Model.V2
             return token;
         }
 
-        public static List<ReviewToken> CreateKeyValueToken(string key, string value = null, bool addPuctuation = true,  string keyTokenClass = null, string valueTokenClass = null)
+        public static List<ReviewToken> CreateKeyValueToken(string key, string value = null,
+            bool addPuctuation = true, string keyTokenClass = null, string valueTokenClass = null, bool addKeyToNavigation = false)
         {
             var results = new List<ReviewToken>();
             var keyToken = new ReviewToken(key, TokenKind.Text);
             if (keyTokenClass != null)
             {
                 keyToken.RenderClasses.Add(keyTokenClass);
+            }
+            if (addKeyToNavigation)
+            {
+                keyToken.NavigationDisplayName = key;
             }
             results.Add(keyToken);
 

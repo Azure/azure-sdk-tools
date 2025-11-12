@@ -1,5 +1,6 @@
 using System.CommandLine;
 using ApiView;
+using APIView;
 using NSwag;
 
 namespace SwaggerTreeStyleParser;
@@ -119,12 +120,12 @@ public class Program
             codeFile.ParserVersion = openApiDocument.Info.Version;
             var reviewLines = new CodeFileBuilder().Build(openApiDocument!);
             codeFile.ReviewLines.AddRange(reviewLines);
-                                                                                                         
-            var outputFilePath = Path.GetFullPath(outputFile);
-            await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
-            Console.WriteLine($"Generate codefile {outputFile} successfully.");
-            await codeFile.SerializeAsync(writer);
         }
+
+        var outputFilePath = Path.GetFullPath(outputFile!);
+        await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
+        Console.WriteLine($"Generate codefile {outputFile} successfully.");
+        await codeFile.SerializeAsync(writer);
 
         return;
     }

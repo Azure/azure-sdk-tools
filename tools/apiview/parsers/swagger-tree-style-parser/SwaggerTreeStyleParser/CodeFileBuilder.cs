@@ -309,19 +309,19 @@ namespace SwaggerTreeStyleParser
         {
             if (schema == null) return;
             string foundIn = string.Empty;
-            string? schemaName = TryGetSchemaName(schema, out foundIn);
+            var schemaInfo = TryGetSchemaName(schema);
 
-            if (schemaName != null)
+            if (schemaInfo != null)
             {
-                reviewLine.AddToken(ReviewToken.CreateTextToken(value: schemaName, navigateToId: schemaName, hasSuffixSpace: false, tokenClass: "tname"));
+                reviewLine.AddToken(ReviewToken.CreateTextToken(value: schemaInfo?.schemaName, navigateToId: schemaInfo?.id, hasSuffixSpace: false, tokenClass: "tname"));
             }
         }
-        private string? TryGetSchemaName(JsonSchema schema, out string foundIn)
+        private (string? schemaName, string? id)? TryGetSchemaName(JsonSchema schema)
         {
-            foundIn = string.Empty;
             if (schema == null) return null;
 
             string? schemaName = null;
+            string? id = null;
 
             var defsProp = this.openApiDocument.GetType().GetProperty("Definitions", BindingFlags.Public | BindingFlags.Instance);
             if (defsProp?.GetValue(this.openApiDocument) is IDictionary<string, JsonSchema> defs)
@@ -329,17 +329,21 @@ namespace SwaggerTreeStyleParser
                 foreach (var kvp in defs)
                 {
                     if (ReferenceEquals(kvp.Value.ActualSchema, schema.ActualSchema))
-                        schemaName = kvp.Key;
+                        schemaName = id = kvp.Key;
                 }
-                foundIn = "Definitions";
             }
 
             if (schema.Type == JsonObjectType.Array && schema.Item != null)
             {
-                var itemName = TryGetSchemaName(schema.Item, out foundIn);
-                schemaName = itemName != null ? $"array<{itemName}>" : null;
+                var result = TryGetSchemaName(schema.Item);
+                if (result?.schemaName != null)
+                {
+                    id = result?.schemaName;
+                    schemaName = $"array<{result?.schemaName}>";
+
+                }                
             }
-            return schemaName;
+            return (schemaName, id);
         }
         private ReviewLine CreateKeyValueLine(string key, string? value = null, bool addPunctuation = true, string? keyTokenClass = null, bool addKeyToNavigation = false)
         {

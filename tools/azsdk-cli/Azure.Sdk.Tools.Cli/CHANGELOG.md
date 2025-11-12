@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- Allow forced creation when a release plan already exists
 - Add support for sample translation from one language to another
 
 ### Breaking Changes

@@ -41,11 +41,11 @@ def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]
     return links
 
 
-class EvaluatorConfig:
-    """Configuration for an evaluator"""
+# class EvaluatorConfig:
+#     """Configuration for an evaluator"""
 
-    column_mapping: Dict[str, str]
-    """Dictionary mapping evaluator input name to column in data"""
+#     column_mapping: Dict[str, str]
+#     """Dictionary mapping evaluator input name to column in data"""
 
 
 class EvaluatorClass:
@@ -53,7 +53,7 @@ class EvaluatorClass:
         self,
         name: str,
         evaluator: Any,
-        evaluator_config: Optional[EvaluatorConfig] = None,
+        evaluator_config: Optional[Any] = None,
         output_fields: Optional[list[str]] = None,
     ):
         self._name = name
@@ -62,41 +62,41 @@ class EvaluatorClass:
         self._output_fields = output_fields
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Getter for name"""
         return self._name
 
     @name.setter
-    def name(self, value: str):
+    def name(self, value: str) -> None:
         """Setter for name"""
         if not value:
             raise ValueError("Name cannot be empty")
         self._name = value
 
     @property
-    def evaluator(self):
+    def evaluator(self) -> Any:
         """Getter for evaluator"""
         return self._evaluator
 
     @evaluator.setter
-    def evaluator(self, value: Any):
+    def evaluator(self, value: Any) -> None:
         """Setter for evaluator"""
         if not value:
             raise ValueError("evaluator cannot be None")
         self._evaluator = value
 
     @property
-    def evaluator_config(self):
+    def evaluator_config(self) -> Any | None:
         """Getter for evaluator config"""
         return self._evaluator_config
 
     @evaluator_config.setter
-    def evaluator_config(self, value: EvaluatorConfig):
+    def evaluator_config(self, value: Any) -> None:
         """Setter for evaluator config"""
         self._evaluator_config = value
 
     @property
-    def output_fields(self):
+    def output_fields(self) -> list[str] | None:
         """Getter for output fields"""
         return self._output_fields
 
@@ -126,7 +126,7 @@ class EvalsRunner:
         num_to_run: int = 1,
     ):
         self._evaluators = evaluators or {}
-        self._evals_result = evals_result or {}
+        self._evals_result: EvalsResult = evals_result or EvalsResult(None, {})
         self._num_to_run = num_to_run
         # Initialize the shared cache lazily once
         if EvalsRunner.channel_to_tenant_id_dict is None:
@@ -135,16 +135,16 @@ class EvalsRunner:
                     EvalsRunner.channel_to_tenant_id_dict = EvalsRunner._retrieve_tenant_ids()
 
     @property
-    def evaluators(self):
+    def evaluators(self) -> dict[str, EvaluatorClass]:
         """Read-only view of evaluators."""
         return self._evaluators
 
     @property
-    def evals_result(self):
+    def evals_result(self) -> EvalsResult:
         """Getter for evals result"""
         return self._evals_result
 
-    def registerEvaluator(self, name: str, evaluator: EvaluatorClass):
+    def registerEvaluator(self, name: str, evaluator: EvaluatorClass) -> None:
         self._evaluators[name] = evaluator
 
     @classmethod
@@ -181,11 +181,13 @@ class EvalsRunner:
             else "http://localhost:8088/completion"
         )
         start_time = time.time()
-        tenant_id = EvalsRunner.channel_to_tenant_id_dict[
-            EvalsRunner.scenario_to_channel[scenario] if scenario in EvalsRunner.scenario_to_channel else scenario
-        ]
-        if tenant_id is None:
-            tenant_id = EvalsRunner.channel_to_tenant_id_dict["default"]
+        tenant_id = None
+        if EvalsRunner.channel_to_tenant_id_dict:
+            tenant_id = EvalsRunner.channel_to_tenant_id_dict[
+                EvalsRunner.scenario_to_channel[scenario] if scenario in EvalsRunner.scenario_to_channel else scenario
+            ]
+            if tenant_id is None:
+                tenant_id = EvalsRunner.channel_to_tenant_id_dict["default"]
 
         with open(output_file, "a", encoding="utf-8") as outputFile:
             with open(input_file, "r", encoding="utf-8") as f:
@@ -228,8 +230,13 @@ class EvalsRunner:
             outputFile.close()
 
     async def _call_bot_api(
-        self, question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, with_full_context: bool = True
-    ) -> Dict[str, Any]:
+        self,
+        question: str,
+        bot_endpoint: str,
+        access_token: str | None,
+        tenant_id: str | None = None,
+        with_full_context: bool = True,
+    ) -> Any:
         """Call the completion API endpoint."""
         headers = {
             "Content-Type": "application/json; charset=utf8",
@@ -251,7 +258,9 @@ class EvalsRunner:
                 else:
                     raise Exception(f"API request failed with status {resp.status}")
 
-    async def _prepare_dataset(self, testdata_dir: str, file_prefix: str = None, retrieve_response: bool = True):
+    async def _prepare_dataset(
+        self, testdata_dir: str, file_prefix: str | None = None, retrieve_response: bool = True
+    ) -> Path | None:
         """
         Process markdown files in the data directory and generate Q&A pairs.
 
@@ -294,7 +303,7 @@ class EvalsRunner:
         if matching_files:
             logging.info(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
             # group files
-            grouped = defaultdict(list)
+            grouped: dict[str, list[Path]] = defaultdict(list[Path])
 
             for item in matching_files:
                 match = re.match(r"^([^_]+)_", item.name)
@@ -302,20 +311,20 @@ class EvalsRunner:
                     key = match.group(1)
                     grouped[key].append(item)
 
-            for key, items in grouped.items():
+            for key, paths in grouped.items():
                 output_file = os.path.join(output_dir.absolute(), f"{key}_{current_date}.jsonl")
-                for file_path in items:
-                    logging.info(f"  - {file_path.name}")
-                    await self._process_file(str(file_path), str(output_file), key, retrieve_response)
+                for input_file_path in paths:
+                    logging.info(f"  - {input_file_path.name}")
+                    await self._process_file(str(input_file_path), str(output_file), key, retrieve_response)
+
+            logging.info("Processing complete. Results written to output directory.")
+            return output_dir.absolute()
         elif file_prefix:
             logging.info(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
             return None
         else:
             logging.info(f"No files found in {data_dir}/")
             return None
-
-        logging.info("Processing complete. Results written to output directory.")
-        return output_dir.absolute()
 
     def evaluate_run(
         self,
@@ -324,16 +333,17 @@ class EvalsRunner:
         need_retrieve_response: bool = True,
         evaluation_name_prefix: Optional[str] = None,
         ai_project_endpoint: Optional[str] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> dict[str, Any]:
 
-        all_results = {}
+        all_results: dict[str, Any] = {}
         evaluators = {}
-        evaluator_config = {}
+        evaluator_config: Dict[str, Any] = {}
         # metrics = evaluator_filter if evaluator_filter is not None else self._evaluators.keys()
         for index, (key, value) in enumerate(self._evaluators.items()):
             evaluators[key] = value.evaluator
-            evaluator_config[key] = value.evaluator_config
+            if value.evaluator_config:
+                evaluator_config[key] = value.evaluator_config
 
         if not evaluators or not evaluator_config:
             logging.info("No evaluators. return empty result")
@@ -361,10 +371,10 @@ class EvalsRunner:
             )
             # print("✅ Evaluation completed. Results:", result)
             logging.info("✅ Evaluation completed.")
-            run_result = self._evals_result.record_run_result(result)
+            run_result = self._evals_result.record_run_result(dict(result))
             all_results[output_file.name] = run_result
 
         return all_results
 
 
-__all__ = [EvaluatorClass, EvalsRunner]
+__all__ = ["EvalsRunner"]

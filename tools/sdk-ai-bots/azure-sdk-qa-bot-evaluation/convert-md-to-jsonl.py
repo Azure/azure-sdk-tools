@@ -10,12 +10,12 @@ from typing import List, Tuple
 
 async def parse_data(file_path: str) -> List[Tuple[str, str, str]]:
     qa_pairs = []
-    current_title = None
-    current_question = []
-    current_answer = []
-    in_question_section = False
-    in_answer_section = False
-    in_code_block = False
+    current_title: str | None = None
+    current_question: list[str] = []
+    current_answer: list[str] = []
+    in_question_section: bool = False
+    in_answer_section: bool = False
+    in_code_block: bool = False
 
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -88,7 +88,7 @@ async def parse_data(file_path: str) -> List[Tuple[str, str, str]]:
     return qa_pairs
 
 
-def convert_md_to_jsonl(md_file_path: str, json_file_path: str):
+def convert_md_to_jsonl(md_file_path: str, json_file_path: str) -> None:
     qa_pairs = asyncio.run(parse_data(md_file_path))
     jsonLFile = open(json_file_path, "a", encoding="utf-8")
     for idx, (title, question, answer) in enumerate(qa_pairs, 1):
@@ -133,6 +133,6 @@ if __name__ == "__main__":
             output_file = os.path.join(
                 args.dest_jsonl_folder, f"{os.path.splitext(os.path.basename(md_file))[0]}.jsonl"
             )
-            convert_md_to_jsonl(md_file, output_file)
+            convert_md_to_jsonl(str(md_file), output_file)
     else:
         print("Path does not exist.")

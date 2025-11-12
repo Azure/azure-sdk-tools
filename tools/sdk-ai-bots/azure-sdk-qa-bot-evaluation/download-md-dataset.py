@@ -8,7 +8,7 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
 
-def extract_date(filename, date_patterns) -> datetime:
+def extract_date(filename: str, date_patterns: list[str]) -> datetime | None:
     for pattern in date_patterns:
         match = re.search(pattern, filename)
         if match:
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             for item in blobs:
                 filename = re.split(r"[\\/]", item.name)[-1]
                 file_date = extract_date(filename=filename, date_patterns=date_patterns)
-                if file_date >= date_days_before:
+                if file_date is not None and file_date >= date_days_before:
                     print(f"download {item.name}")
                     blob_client = container_client.get_blob_client(item.name)
                     download_file_path = os.path.join(args.test_folder, filename)

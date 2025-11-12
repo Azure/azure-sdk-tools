@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, Set
+from typing import Any, Dict, Set
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from .constants import QA_BOT_EVALS_WEIGHT, EVALUATION_PASS_FAIL_MAPPING
 
@@ -10,17 +10,17 @@ class AzureBotEvaluator:
 
     def __init__(
         self,
-        model_config,
+        model_config: dict[Any, Any],
         *,
-        threshold=3,
+        threshold: int = 3,
         weight: Dict[str, float] = QA_BOT_EVALS_WEIGHT,
         higher_is_better: bool = True,
-        credential=None,
-        **kwargs,
-    ):
-        self._similarity = SimilarityEvaluator(model_config=model_config)
-        self._groundedness = GroundednessEvaluator(model_config=model_config)
-        self._response_completion = ResponseCompletenessEvaluator(model_config=model_config)
+        credential: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
+        self._similarity = SimilarityEvaluator(model_config=model_config, credential=credential)
+        self._groundedness = GroundednessEvaluator(model_config=model_config, credential=credential)
+        self._response_completion = ResponseCompletenessEvaluator(model_config=model_config, credential=credential)
         self._threshold = threshold
         self._higher_is_better = higher_is_better
         self._weight = weight
@@ -98,22 +98,20 @@ class AzureBotEvaluator:
         response: str,
         ground_truth: str,
         reference_urls: list[str],
-        expected_reference_urls: list[str] = None,
+        expected_reference_urls: list[str] | None = None,
     ) -> Dict[str, float]:
         similarity = self._similarity(query=query, response=response, ground_truth=ground_truth)
         response_completion = self._response_completion(ground_truth=ground_truth, response=response)
 
         # Calculate reference matching if expected references are provided
         reference_match_score = 1.0  # Default to perfect match if no expected references
-        match_percentage = 1.0  # Default value
 
-        result = {}
+        result: dict[str, Any] = {}
         base_key = f"{AzureBotEvaluator.RESULT_KEY}"
         if expected_reference_urls:
             exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_reference_matches(
                 expected_reference_urls, reference_urls
             )
-            reference_match_score = match_percentage
             result[f"{base_key}_reference_match"] = match_percentage
             result[f"{base_key}_exact_matches"] = list(exact_matches)
             result[f"{base_key}_unexpected_refs"] = list(unexpected_refs)

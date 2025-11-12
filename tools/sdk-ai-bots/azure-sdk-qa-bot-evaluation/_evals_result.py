@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 
 class EvalsResult:
-    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str]]):
+    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str] | None]):
         self._weights = weights or {}
         self._metrics = metrics
 
@@ -16,7 +16,7 @@ class EvalsResult:
         """Calculate weighted score based on various metrics."""
         # calculate the overall score when there are multiple metrics.
         metrics = self._metrics.keys()
-        overall_score = 0
+        overall_score = 0.0
         for metric in metrics:
             metric_key = f"outputs.{metric}.{metric}"
             if metric_key not in row:
@@ -33,8 +33,8 @@ class EvalsResult:
         return overall_score
 
     def record_run_result(self, result: dict[str, Any]) -> list[dict[str, Any]]:
-        run_result = []
-        total_score = 0
+        run_result: list[dict[str, Any]] = []
+        total_score = 0.0
 
         metrics = self._metrics.keys()
 
@@ -48,7 +48,7 @@ class EvalsResult:
             score = self.calculate_overall_score(row)
             total_score += score
 
-            row_result = {}
+            row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
@@ -80,7 +80,7 @@ class EvalsResult:
         else:
             average_score = 0
 
-        summary_result = {"average_score": average_score, "total_evals": len(result["rows"])}
+        summary_result: dict[str, Any] = {"average_score": average_score, "total_evals": len(result["rows"])}
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):
@@ -113,8 +113,9 @@ class EvalsResult:
         ]
         for metric in metrics:
             headers.append(metric)
-            if self._metrics[metric]:
-                for field in self._metrics[metric]:
+            fields = self._metrics[metric]
+            if fields:
+                for field in fields:
                     if field != metric:
                         headers.append(field)
             else:
@@ -142,8 +143,9 @@ class EvalsResult:
                         )
                     else:
                         values.append(f"{metric_score:.1f}")
-                    if self._metrics[metric]:
-                        for field in self._metrics[metric]:
+                    fields = self._metrics[metric]
+                    if fields:
+                        for field in fields:
                             if field != metric:
                                 metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
                                 values.append(f"{metric_value}")
@@ -155,8 +157,9 @@ class EvalsResult:
                 for metric in metrics:
                     metric_score = result[f"{metric}"] if f"{metric}" in result else -1
                     values.append(f"{metric_score:.1f}")
-                    if self._metrics[metric]:
-                        for field in self._metrics[metric]:
+                    fields = self._metrics[metric]
+                    if fields:
+                        for field in fields:
                             if field != metric:
                                 metric_value = result[f"{field}"] if f"{field}" in result else "N/A"
                                 values.append(f"{metric_value}")
@@ -273,4 +276,4 @@ class EvalsResult:
                 json.dump(result, indent=4, fp=f)
 
 
-__all__ = [EvalsResult]
+__all__ = ["EvalsResult"]

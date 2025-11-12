@@ -72,3 +72,15 @@ Current measures:
 - Similarity to expected responses
 
 Weights are applied to each metric to calculate the overall score.
+
+## Pre-commit Hooks
+
+Pre-commit hooks are enabled to ensure code quality. There are two hooks : mypy, pyright enabled. After cloning, install the hooks by running:
+```bash
+pre-commit install
+```
+To run all checks manually, execute:
+```bash
+pre-commit run --all-files
+```
+

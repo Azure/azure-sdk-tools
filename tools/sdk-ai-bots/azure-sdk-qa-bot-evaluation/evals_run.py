@@ -3,12 +3,13 @@ from datetime import datetime
 import logging
 import os
 import sys
+from typing import Any
 from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from azure.identity import DefaultAzureCredential, AzureCliCredential
 from _evals_result import EvalsResult
-from eval.evaluator import AzureBotEvaluator
+from eval import AzureBotEvaluator
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -146,7 +147,7 @@ if __name__ == "__main__":
 
         evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result)
 
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if args.send_result:
             if args.is_ci:
                 kwargs = {"credential": DefaultAzureCredential()}

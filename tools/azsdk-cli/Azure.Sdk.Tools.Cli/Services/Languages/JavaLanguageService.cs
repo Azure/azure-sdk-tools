@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public sealed partial class JavaLanguageService : LanguageService
 {
     public override SdkLanguage Language { get; } = SdkLanguage.Java;
-    public override bool IsTspClientupdatedSupported => true;
+    public override bool IsCustomizedCodeUpdateSupported => true;
     private readonly IMicroagentHostService microagentHost;
     private readonly IMavenHelper _mavenHelper;
     private const string CustomizationDirName = "customization";

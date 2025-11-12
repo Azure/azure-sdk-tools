@@ -31,6 +31,7 @@ public class SdkBuildToolTests
     private SdkBuildTool _tool;
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<IProcessHelper> _mockProcessHelper;
+    private Mock<IPythonHelper> _mockPythonHelper;
     private Mock<INpxHelper> _mockNpxHelper;
     private Mock<IPowershellHelper> _mockPowerShellHelper;
     private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
@@ -45,6 +46,7 @@ public class SdkBuildToolTests
         // Create mocks
         _mockGitHelper = new Mock<IGitHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
+        _mockPythonHelper = new Mock<IPythonHelper>();
         _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
@@ -56,7 +58,7 @@ public class SdkBuildToolTests
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
             new GoLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),

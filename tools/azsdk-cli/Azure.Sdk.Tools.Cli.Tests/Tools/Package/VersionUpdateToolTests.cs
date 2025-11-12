@@ -144,6 +144,8 @@ public class VersionUpdateToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(EmptyPackagePathError));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Is.Empty);
     }
 
     [Test]
@@ -159,6 +161,8 @@ public class VersionUpdateToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Is.Empty);
     }
 
     [Test]
@@ -174,6 +178,8 @@ public class VersionUpdateToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(RepoRootNotFoundError));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Is.Empty);
     }
 
     [Test]
@@ -209,6 +215,10 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.EqualTo(2));
+        Assert.That(result.NextSteps![0], Does.Contain("Review the updated version"));
+        Assert.That(result.NextSteps![1], Does.Contain("Run validation checks"));
         _mockSpecGenSdkConfigHelper.Verify(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             TestConfigValue,
@@ -243,7 +253,7 @@ public class VersionUpdateToolTests
             It.IsAny<int>()))
             .Returns((ProcessOptions)null!);
 
-        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_successResponse);
 
         // Act
@@ -251,7 +261,7 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result, Is.EqualTo(_successResponse));
-        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -264,7 +274,7 @@ public class VersionUpdateToolTests
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
-        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_successResponse);
 
         // Act
@@ -272,7 +282,7 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result, Is.EqualTo(_successResponse));
-        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -291,6 +301,12 @@ public class VersionUpdateToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedErrorMessage));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.EqualTo(4));
+        Assert.That(result.NextSteps![0], Does.Contain("Check the running logs"));
+        Assert.That(result.NextSteps![1], Does.Contain("Resolve the issue"));
+        Assert.That(result.NextSteps![2], Does.Contain("Re-run the tool"));
+        Assert.That(result.NextSteps![3], Does.Contain("Run verify setup tool"));
     }
 
     [Test]
@@ -305,7 +321,7 @@ public class VersionUpdateToolTests
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
-        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), cancellationToken))
+        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), cancellationToken))
             .ReturnsAsync(_successResponse);
 
         // Act
@@ -313,7 +329,7 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result, Is.EqualTo(_successResponse));
-        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), cancellationToken), Times.Once);
+        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), cancellationToken), Times.Once);
     }
 
     #endregion
@@ -483,7 +499,7 @@ public class VersionUpdateToolTests
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
-        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, version, releaseDate, It.IsAny<CancellationToken>()))
+        _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), version, releaseDate, It.IsAny<CancellationToken>()))
             .ReturnsAsync(_successResponse);
 
         // Act
@@ -491,7 +507,108 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result, Is.EqualTo(_successResponse));
-        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, version, releaseDate, It.IsAny<CancellationToken>()), Times.Once);
+        _mockLanguageService.Verify(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), version, releaseDate, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdateVersionAsync_WithInvalidReleaseDateFormat_ShouldReturnFailure()
+    {
+        // Arrange
+        var testPath = _tempDirectory.DirectoryPath;
+        var invalidReleaseDate = "11-12-2025"; // Wrong format (MM-DD-YYYY)
+
+        // Act
+        var result = await _tool.UpdateVersionAsync(testPath, null, null, invalidReleaseDate, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("Invalid release date format"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("YYYY-MM-DD"));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.EqualTo(2));
+        Assert.That(result.NextSteps![0], Does.Contain("Provide the release date in the correct format"));
+        Assert.That(result.NextSteps![1], Does.Contain("Re-run the tool"));
+    }
+
+    [Test]
+    public async Task UpdateVersionAsync_WithValidReleaseDateFormat_ShouldSucceed()
+    {
+        // Arrange
+        var testPath = _tempDirectory.DirectoryPath;
+        var validReleaseDate = "2025-12-25"; // Correct format (YYYY-MM-DD)
+        
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
+
+        var processOptions = new ProcessOptions("echo", ["test"]);
+        _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
+            It.IsAny<SpecGenSdkConfigContentType>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.Is<Dictionary<string, string>>(d => d.ContainsKey("ReleaseDate") && d["ReleaseDate"] == validReleaseDate),
+            It.IsAny<int>()))
+            .Returns(processOptions);
+
+        _mockSpecGenSdkConfigHelper.Setup(x => x.ExecuteProcessAsync(
+            It.IsAny<ProcessOptions>(),
+            It.IsAny<CancellationToken>(),
+            It.IsAny<PackageInfo>(),
+            It.IsAny<string>(),
+            It.IsAny<string[]>()))
+            .ReturnsAsync(PackageOperationResponse.CreateSuccess("Success", null));
+
+        // Act
+        var result = await _tool.UpdateVersionAsync(testPath, "beta", null, validReleaseDate, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+    }
+
+    [Test]
+    public async Task UpdateVersionAsync_WithEmptyReleaseDate_ShouldSetToCurrentDate()
+    {
+        // Arrange
+        var testPath = _tempDirectory.DirectoryPath;
+        var expectedDatePattern = DateTime.Now.ToString("yyyy-MM-dd");
+        
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
+
+        var processOptions = new ProcessOptions("echo", ["test"]);
+        _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
+            It.IsAny<SpecGenSdkConfigContentType>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.Is<Dictionary<string, string>>(d => d.ContainsKey("ReleaseDate") && d["ReleaseDate"] == expectedDatePattern),
+            It.IsAny<int>()))
+            .Returns(processOptions);
+
+        _mockSpecGenSdkConfigHelper.Setup(x => x.ExecuteProcessAsync(
+            It.IsAny<ProcessOptions>(),
+            It.IsAny<CancellationToken>(),
+            It.IsAny<PackageInfo>(),
+            It.IsAny<string>(),
+            It.IsAny<string[]>()))
+            .ReturnsAsync(PackageOperationResponse.CreateSuccess("Success", null));
+
+        // Act
+        var result = await _tool.UpdateVersionAsync(testPath, "beta", null, null, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        _mockSpecGenSdkConfigHelper.Verify(x => x.CreateProcessOptions(
+            It.IsAny<SpecGenSdkConfigContentType>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.Is<Dictionary<string, string>>(d => d.ContainsKey("ReleaseDate") && d["ReleaseDate"] == expectedDatePattern),
+            It.IsAny<int>()), Times.Once);
     }
 
     #endregion

@@ -34,26 +34,26 @@ public class VersionUpdateTool : LanguageMcpTool
 
     private const string UpdateVersionCommandName = "update-version";
 
-    private static readonly Option<string?> ReleaseTypeOption = new("--release-type")
+    private static readonly Option<string?> ReleaseTypeOption = new("--release-type", "-t")
     {
-        Description = "Specifies whether the next version is 'beta' or 'stable'.",
+        Description = "Specifies whether the next version is 'beta' or 'stable'",
         Required = false
     };
 
-    private static readonly Option<string?> VersionOption = new("--version")
+    private static readonly Option<string?> VersionOption = new("--version", "-v")
     {
-        Description = "Specifies the next version number.",
+        Description = "Specifies the next version number",
         Required = false
     };
 
-    private static readonly Option<string?> ReleaseDateOption = new("--release-date")
+    private static readonly Option<string?> ReleaseDateOption = new("--release-date", "-d")
     {
-        Description = "The date (YYYY-MM-DD) to write into the changelog.",
+        Description = "The date (YYYY-MM-DD) to write into the changelog",
         Required = false
     };
 
     protected override Command GetCommand() =>
-        new(UpdateVersionCommandName, "Updates version and release date for Azure SDK packages.") 
+        new(UpdateVersionCommandName, "Updates version and release date for Azure SDK packages") 
         { 
             SharedOptions.PackagePath,
             ReleaseTypeOption,
@@ -103,6 +103,26 @@ public class VersionUpdateTool : LanguageMcpTool
             if (!Directory.Exists(packagePath))
             {
                 return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+            }
+
+            // Validate and set release date
+            if (string.IsNullOrWhiteSpace(releaseDate))
+            {
+                releaseDate = DateTime.Now.ToString("yyyy-MM-dd");
+                logger.LogInformation("No release date specified. Setting to current date: {ReleaseDate}", releaseDate);
+            }
+            else
+            {
+                // Validate date format (YYYY-MM-DD)
+                if (!DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out _))
+                {
+                    return PackageOperationResponse.CreateFailure(
+                        $"Invalid release date format: {releaseDate}. Expected format: YYYY-MM-DD (e.g., 2025-11-12)",
+                        nextSteps: [
+                            "Provide the release date in the correct format: YYYY-MM-DD",
+                            "Re-run the tool with the corrected release date"
+                        ]);
+                }
             }
 
             // Set default release type to 'beta' if both Version and ReleaseType are empty or null
@@ -179,7 +199,7 @@ public class VersionUpdateTool : LanguageMcpTool
 
             // Run default logic to update version
             logger.LogInformation("Running default logic to update version for the package...");            
-            return await languageService.UpdateVersionAsync(packagePath, version, releaseDate, ct);
+            return await languageService.UpdateVersionAsync(packagePath, releaseType, version, releaseDate, ct);
         }
         catch (Exception ex)
         {

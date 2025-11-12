@@ -196,7 +196,7 @@ Outputs:
 ```
 
 ```json
-{"result":"noop", "version": "", "message":"no version bump performed.", "next_steps": "Manually update the version and release date in the changelog and metadata as needed when preparing a release. Run validation checks."}
+{"result":"noop", "version": "", "message":"no version update performed.", "next_steps": "Manually update the version and release date in the changelog and metadata as needed when preparing a release. Run validation checks."}
 ```
 
 Failure Modes:

@@ -258,11 +258,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// Updates the version for a specified package.
         /// </summary>
         /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="releaseType">Specifies whether the next version is 'beta' or 'stable'.</param>
         /// <param name="version">Specifies the next version number.</param>
         /// <param name="releaseDate">The date (YYYY-MM-DD) to write into the changelog.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns>A response indicating the result of the version update operation.</returns>
-        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? version, string? releaseDate, CancellationToken ct)
+        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
         {
             this.logger.LogInformation("No language-specific package version update implementation found for package path: {packagePath}.", packagePath);
             return Task.FromResult(PackageOperationResponse.CreateSuccess(

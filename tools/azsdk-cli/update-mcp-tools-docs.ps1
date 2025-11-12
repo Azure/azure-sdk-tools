@@ -101,7 +101,7 @@ function Get-Version {
 }
 
 # Main script
-$docsPath = Join-Path $PSScriptRoot "docs/mcp-tools.md"
+$docsPath = Join-Path $PWD "tools/azsdk-cli/docs/mcp-tools.md"
 
 if (-not (Test-Path $AzsdkCliPath)) {
     Write-Error "Azure SDK CLI tool not found at: $AzsdkCliPath"

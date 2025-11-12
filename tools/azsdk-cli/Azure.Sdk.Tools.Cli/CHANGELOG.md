@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Add support for sample translation from one language to another
+
 ### Breaking Changes
 
 ### Bugs Fixed

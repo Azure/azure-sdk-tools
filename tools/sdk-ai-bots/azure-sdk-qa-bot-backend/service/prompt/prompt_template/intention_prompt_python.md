@@ -49,7 +49,8 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories: api-design, code-generation, sdk-development, sdk-release, and sdk-usage
+  "category": string,    // Must be one of the categories: api-design, code-generation, sdk-development, sdk-release, and sdk-usage,
+  "needs_rag_processing": boolean    // Whether to invoke RAG workflow (true for technical questions, false for greetings/announcements)
 }
 
 ## Examples
@@ -59,6 +60,7 @@ Response:
 {
   "question": "What steps should I follow to generate a Python SDK from a TypeSpec definition?",
   "category": "code-generation",
+  "needs_rag_processing": true
 }
 
 Original: "How to set custom polling endpoint in python sdk?"
@@ -66,6 +68,7 @@ Response:
 {
   "question": "What's the best practice for custom code to set custom polling endpoint in python sdk?",
   "category": "sdk-development",
+  "needs_rag_processing": true
 }
 
 Original: "How to get release pipeline link?"
@@ -73,4 +76,5 @@ Response:
 {
   "question": "What's the way to find the link of release pipeline that associated with a specific python sdk",
   "category": "sdk-release",
+  "needs_rag_processing": true
 }

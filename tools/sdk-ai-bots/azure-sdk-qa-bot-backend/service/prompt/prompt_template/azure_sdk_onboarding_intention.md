@@ -50,6 +50,7 @@ Respond with a JSON object using this structure (no markdown formatting needed):
   "question": string,    // The rewritten standalone question
   "category": string,    // Must be one of the categories: sdk-onboard, api-design, sdk-develop, and sdk-release
   "spec_type": string,   // user's service specification language: TypeSpec or OpenAPI or unknown
+  "needs_rag_processing": boolean    // Whether to invoke RAG workflow (true for technical questions, false for greetings/announcements)
 }
 
 ## Examples
@@ -59,5 +60,6 @@ Response:
 {
   "question": "What are the requirements and prerequisites to get my Azure service ready for SDK onboarding?",
   "category": "service-onboarding",
-  "spec_type": "unknown"
+  "spec_type": "unknown",
+  "needs_rag_processing": true
 }

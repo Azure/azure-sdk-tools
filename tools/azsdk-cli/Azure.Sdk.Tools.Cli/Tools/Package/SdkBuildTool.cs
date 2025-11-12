@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             this.specGenSdkConfigHelper = specGenSdkConfigHelper;
         }
 
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         // Command names
         private const string BuildSdkCommandName = "build";
@@ -88,94 +88,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
                     logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo);
+                    return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo, result: "noop");
                 }
 
-                // Get the build configuration (command or script path)
-                ProcessOptions options;
-                try
+                var (configContentType, configValue) = await this.specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
+                if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
                 {
-                    options = await CreateProcessOptions(sdkRepoRoot, packagePath);
-                }
-                catch (Exception ex)
-                {
-                    return PackageOperationResponse.CreateFailure($"Failed to get build configuration: {ex.Message}", packageInfo);
-                }
+                    logger.LogInformation("Found valid configuration for build process. Executing configured script...");
 
-                // Run the build script or command
-                logger.LogInformation("Executing build process...");
-                var buildResult = await processHelper.Run(options, ct);
-                var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
-                if (buildResult.ExitCode != 0)
-                {
-                    return PackageOperationResponse.CreateFailure($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}", packageInfo);
+                    // Prepare script parameters
+                    var scriptParameters = new Dictionary<string, string>
+                    {
+                        { "PackagePath", packagePath }
+                    };
+                    
+                    // Create and execute process options for the build script
+                    var processOptions = this.specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, CommandTimeoutInMinutes);
+                    if (processOptions != null)
+                    {
+                        return await this.specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");
+                    }
                 }
-
-                logger.LogInformation("Build process execution completed");
-                return PackageOperationResponse.CreateSuccess($"Build completed successfully. Output:\n{trimmedBuildResult}", packageInfo);
+                return PackageOperationResponse.CreateFailure("No build configuration found or failed to prepare the build command", packageInfo, nextSteps: ["Ensure the SDK repository has a valid 'buildScript' configuration in eng/swagger_to_sdk_config.json", "Resolve any issues reported in the build log", "Re-run the tool"]);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
-            }
-        }
-
-        // Create process options for building the SDK based on configuration
-        private async Task<ProcessOptions> CreateProcessOptions(string sdkRepoRoot, string packagePath)
-        {
-            var (configType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
-
-            if (configType == SpecGenSdkConfigContentType.Command)
-            {
-                // Execute as command
-                var variables = new Dictionary<string, string>
-                {
-                    { "packagePath", packagePath }
-                };
-
-                var substitutedCommand = specGenSdkConfigHelper.SubstituteCommandVariables(configValue, variables);
-                logger.LogInformation("Executing build command: {SubstitutedCommand}", substitutedCommand);
-
-                var commandParts = specGenSdkConfigHelper.ParseCommand(substitutedCommand);
-                if (commandParts.Length == 0)
-                {
-                    throw new InvalidOperationException($"Invalid build command: {substitutedCommand}");
-                }
-
-                return new ProcessOptions(
-                    commandParts[0],
-                    commandParts.Skip(1).ToArray(),
-                    logOutputStream: true,
-                    workingDirectory: packagePath,
-                    timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-                );
-            }
-            else // BuildConfigType.ScriptPath
-            {
-                // Execute as script file
-                // Always resolve relative paths against sdkRepoRoot, then normalize
-                var fullBuildScriptPath = Path.IsPathRooted(configValue)
-                    ? configValue
-                    : Path.Combine(sdkRepoRoot, configValue);
-
-                // Normalize the final path
-                fullBuildScriptPath = Path.GetFullPath(fullBuildScriptPath);
-
-                if (!File.Exists(fullBuildScriptPath))
-                {
-                    throw new FileNotFoundException($"Build script not found at: {fullBuildScriptPath}");
-                }
-
-                logger.LogInformation("Executing build script file: {BuildScriptPath}", fullBuildScriptPath);
-
-                return new PowershellOptions(
-                    fullBuildScriptPath,
-                    ["-PackagePath", packagePath],
-                    logOutputStream: true,
-                    workingDirectory: sdkRepoRoot,
-                    timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-                );
+                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the build logs for details about the error", "Resolve the issue", "Re-run the tool"]);
             }
         }
     }

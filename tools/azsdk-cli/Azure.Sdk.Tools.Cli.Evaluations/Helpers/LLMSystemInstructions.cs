@@ -18,9 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var linkRegex = new Regex(@"\[([^\]]+)\]\(([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
 
             var matches = linkRegex.Matches(copilotInstructions);
-            var instructionTasks = matches
+            var instruction = matches
                 .Select(match => GetMentionedInstructions(match.Groups[2].Value));
-            var instructions =  instructionTasks;
             
             var builder = new StringBuilder(copilotInstructions);
             foreach (var instruction in instructions)

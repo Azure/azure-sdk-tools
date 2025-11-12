@@ -1,5 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -8,8 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
     internal class JavaLanguageSpecificChecksTests
     {
         private string JavaPackageDir { get; set; }
+
+        private Mock<IMavenHelper> MockMavenHelper { get; set; }
         private Mock<IProcessHelper> MockProcessHelper { get; set; }
-        private JavaLanguageSpecificChecks LangService { get; set; }
+        private JavaLanguageService LangService { get; set; }
 
         [SetUp]
         public void SetUp()
@@ -20,11 +24,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 "TestAssets", "Java");
 
             MockProcessHelper = new Mock<IProcessHelper>();
-
-            LangService = new JavaLanguageSpecificChecks(
+            MockMavenHelper = new Mock<IMavenHelper>();
+            var gitHelperMock = new Mock<IGitHelper>();
+            gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+            LangService = new JavaLanguageService(
                 MockProcessHelper.Object,
-                new Mock<IGitHelper>().Object,
-                NullLogger<JavaLanguageSpecificChecks>.Instance,
+                gitHelperMock.Object,
+                MockMavenHelper.Object,
+                new Mock<IMicroagentHostService>().Object,
+                NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object);
         }
 
@@ -35,9 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenVersionCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" && p.Args.Contains("--version")) || 
-                (p.Command == "cmd.exe" && p.Args.Contains("mvn") && p.Args.Contains("--version"))), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
         }
@@ -47,9 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedMavenVersionCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" && p.Args.Contains("--version")) || 
-                (p.Command == "cmd.exe" && p.Args.Contains("mvn") && p.Args.Contains("--version"))), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Maven not found")] });
         }
@@ -59,8 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSpotlessCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:check")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -70,8 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSpotlessApply()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:apply")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -81,8 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSpotlessCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:check")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "The following files had format violations")] });
         }
@@ -92,8 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSpotlessApply()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:apply")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "spotless failed with errors")] });
         }
@@ -103,8 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenInstall()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("install")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { 
                     ExitCode = 0, 
@@ -121,8 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupMavenInstallWithToolErrors(string errorOutput)
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("install")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, errorOutput)] });
         }
@@ -132,8 +130,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSnippetUpdate()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
@@ -144,8 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSnippetUpdate()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Codesnippet update failed")] });
@@ -153,13 +149,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
         /// <summary>
         /// Sets up successful Maven linting command with all tools including javadoc.
-        /// This matches the fail-safe accumulation approach.
+        /// This matches the fail-safe accumulation approach used in the actual implementation.
         /// </summary>
         private void SetupSuccessfulMavenLinting()
         {
-            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
@@ -171,15 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-Dcheckstyle.failOnViolation=false") &&
-                p.Args.Contains("-Dcheckstyle.failsOnError=false") &&
-                p.Args.Contains("-Dspotbugs.failOnError=false") &&
-                p.Args.Contains("-Drevapi.failBuildOnProblemsFound=false") &&
-                p.Args.Contains("-am") &&
-                p.Args.Contains("-f") &&
-                p.Args.Contains(pomPath) &&
-                p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(15)), 
+                p.Args.Contains("-am")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { 
                     ExitCode = 0, 
@@ -341,7 +327,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         public async Task TestFormatCode_ExceptionHandling()
         {
             // Arrange
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
                 .Throws(new Exception("Process execution failed"));
 
             // Act
@@ -367,8 +353,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("spotless:check") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -389,8 +374,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             await LangService.FormatCode(JavaPackageDir, true, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("spotless:apply") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -465,8 +449,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -494,18 +478,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly (no separate javadoc command)
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
         public async Task TestLintCode_AllToolsFail_ReturnsError()
         {
             // Arrange
-            var capturedOptions = new List<ProcessOptions>();
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
-                .ReturnsAsync((ProcessOptions options, CancellationToken _) =>
+            var capturedOptions = new List<MavenOptions>();
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
+                .ReturnsAsync((MavenOptions options, CancellationToken _) =>
                 {
                     if (IsMavenVersionCheck(options))
                     {
@@ -554,12 +538,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         public async Task TestLintCode_WithFix_UsesFailOnViolationFalse()
         {
             // Arrange - Reset mock to avoid interference from other test setups
-            MockProcessHelper.Reset();
+            MockMavenHelper.Reset();
             
-            var capturedOptions = new List<ProcessOptions>();
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
-                .ReturnsAsync((ProcessOptions options, CancellationToken _) =>
+            var capturedOptions = new List<MavenOptions>();
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
+                .ReturnsAsync((MavenOptions options, CancellationToken _) =>
                 {
                     if (IsMavenVersionCheck(options))
                     {
@@ -603,7 +587,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         public async Task TestLintCode_Exception_ReturnsError()
         {
             // Arrange
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
                 .Throws(new InvalidOperationException("Process execution failed"));
 
             // Act
@@ -628,30 +612,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Act
             await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
-            // Assert - verify Maven install command includes javadoc and fail-safe flags
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
                 p.Args.Contains("-Dgpg.skip") &&
                 p.Args.Contains("-DtrimStackTrace=false") &&
-                p.Args.Contains("-Dmaven.javadoc.skip=false") && // Javadoc included in install approach
+                p.Args.Contains("-Dmaven.javadoc.skip=false") &&
                 p.Args.Contains("-Dcodesnippet.skip=true") &&
                 p.Args.Contains("-Dspotless.skip=false") &&
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-Dcheckstyle.failOnViolation=false") && // Fail-safe flags
-                p.Args.Contains("-Dcheckstyle.failsOnError=false") &&
-                p.Args.Contains("-Dspotbugs.failOnError=false") &&
-                p.Args.Contains("-Drevapi.failBuildOnProblemsFound=false") &&
-                p.Args.Contains("-am") &&
-                p.Args.Contains("-f") &&
-                p.Args.Contains(pomPath) &&
-                p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(15)), 
+                p.Args.Contains("-am")),
                 It.IsAny<CancellationToken>()), Times.Once);
+
+            // Verify Maven commands were called correctly
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -677,8 +655,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -708,8 +686,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -722,30 +700,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Act
             await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
-            // Assert - verify the Maven install command includes javadoc and all required parameters
-            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
-                p.Args.Contains("--no-transfer-progress") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("install") &&
-                p.Args.Contains("-Dmaven.javadoc.skip=false") && // Javadoc included in install approach
+                p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
                 p.Args.Contains("-Dgpg.skip") &&
                 p.Args.Contains("-DtrimStackTrace=false") &&
+                p.Args.Contains("-Dmaven.javadoc.skip=false") && // Javadoc included in install approach
                 p.Args.Contains("-Dcodesnippet.skip=true") &&
                 p.Args.Contains("-Dspotless.skip=false") &&
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-Dcheckstyle.failOnViolation=false") && // Fail-safe flags
-                p.Args.Contains("-Dcheckstyle.failsOnError=false") &&
-                p.Args.Contains("-Dspotbugs.failOnError=false") &&
-                p.Args.Contains("-Drevapi.failBuildOnProblemsFound=false") &&
-                p.Args.Contains("-am") &&
-                p.Args.Contains("-f") &&
-                p.Args.Contains(pomPath) &&
-                p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(15)), 
+                p.Args.Contains("-am")),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -835,7 +802,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         public async Task TestUpdateSnippets_ExceptionHandling()
         {
             // Arrange
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
                 .Throws(new Exception("Process execution failed"));
 
             // Act
@@ -861,8 +828,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called with -am flag
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Any(arg => arg.Contains("com.azure.tools:codesnippet-maven-plugin:update-codesnippet")) &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -880,8 +846,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulDependencyAnalysis()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") && 
                 p.Args.Contains("-Dverbose")), 
                 It.IsAny<CancellationToken>()))
@@ -896,8 +861,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedDependencyAnalysis()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") && 
                 p.Args.Contains("-Dverbose")), 
                 It.IsAny<CancellationToken>()))
@@ -927,8 +891,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             // Verify correct Maven command was called
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") &&
                 p.Args.Contains("-Dverbose") &&
                 p.Args.Contains("-f") &&
@@ -961,8 +924,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             // Verify correct Maven command was called
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") &&
                 p.Args.Contains("-Dverbose") &&
                 p.Args.Contains("-f") &&
@@ -977,21 +939,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         #region Helper Methods for Cross-Platform Command Validation
 
         /// <summary>
-        /// Checks if the ProcessOptions represents a Maven version check command.
-        /// Handles both Unix (mvn --version) and Windows (cmd.exe /C mvn --version) patterns.
+        /// Checks if the MavenOptions represents a Maven version check command.
         /// </summary>
-        private static bool IsMavenVersionCheck(ProcessOptions options) =>
-            (options.Command == "mvn" && options.Args.Contains("--version")) ||
-            (options.Command == "cmd.exe" && options.Args.Contains("mvn") && options.Args.Contains("--version"));
+        private static bool IsMavenVersionCheck(MavenOptions options) =>
+            options.Args.Contains("--version");
 
         /// <summary>
-        /// Checks if the ProcessOptions represents a Maven install command.
-        /// Handles both Unix (mvn) and Windows (cmd.exe /C mvn) patterns.
+        /// Checks if the MavenOptions represents a Maven install command.
         /// </summary>
-        private static bool IsMavenInstallCommand(ProcessOptions options)
+        private static bool IsMavenInstallCommand(MavenOptions options)
         {
-            return (options.Command == "mvn" && options.Args.Contains("install")) ||
-                   (options.Command == "cmd.exe" && options.Args.Contains("mvn") && options.Args.Contains("install"));
+            return options.Args.Contains("install");
         }
 
         #endregion

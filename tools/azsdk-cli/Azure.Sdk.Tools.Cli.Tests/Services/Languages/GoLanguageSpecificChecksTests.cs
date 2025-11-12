@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -12,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     {
         private TempDirectory _tempDir = null!;
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
-        private GoLanguageSpecificChecks LangService { get; set; } = null!;
+        private GoLanguageService LangService { get; set; } = null!;
 
         [SetUp]
         public async Task SetUp()
@@ -20,8 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _tempDir = TempDirectory.Create("golang_checks");
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            var commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
-            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance, commonValidationHelpersMock.Object);
+            LangService = new GoLanguageService(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>());
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

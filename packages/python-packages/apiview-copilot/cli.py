@@ -330,7 +330,7 @@ def review_job_start(
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/start"
 
-    resp = requests.post(api_endpoint, json=payload, timeout=60)
+    resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
     if resp.status_code == 202:
         return resp.json()
     else:
@@ -343,7 +343,9 @@ def review_job_get(job_id: str):
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
-    resp = requests.get(url, timeout=10)
+
+    headers = _build_auth_header(base_url)
+    resp = requests.get(url, headers=headers, timeout=10)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -445,7 +447,8 @@ def review_summarize(language: str, target: str, base: str = None):
     settings = SettingsManager()
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/summarize"
-    response = requests.post(api_endpoint, json=payload, timeout=60)
+
+    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
         print(summary)
@@ -471,6 +474,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
             base_url = settings.get("WEBAPP_ENDPOINT")
             api_endpoint = f"{base_url}/agent/chat"
             session = requests.Session()
+            # Inline _build_auth_header in requests below
             while True:
                 try:
                     user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -494,7 +498,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     payload = {"user_input": user_input}
                     if current_thread_id:
                         payload["thread_id"] = current_thread_id
-                    resp = session.post(api_endpoint, json=payload, timeout=60)
+                    resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
@@ -568,6 +572,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(base_url),
                 timeout=60,
             )
             data = resp.json()
@@ -615,6 +620,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(base_url),
                 timeout=60,
             )
             data = resp.json()
@@ -951,6 +957,22 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     print(f"Comment count: {len(comment_texts)}")
     created_by_set = {comment.created_by for comment in comments if comment.created_by}
     print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
+
+
+def _build_auth_header(base_url):
+    """
+    Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
+    """
+    from src._credential import get_credential
+
+    credential = get_credential()
+    # Determine correct scope based on endpoint
+    if "apiview.dev" in base_url:
+        scope = "api://apiview/.default"
+    else:
+        scope = "api://66bad3f5-7326-4160-b644-987e6da42d1c/user_impersonation"
+    token = credential.get_token(scope)
+    return {"Authorization": f"Bearer {token.token}"}
 
 
 class CliCommandsLoader(CLICommandsLoader):

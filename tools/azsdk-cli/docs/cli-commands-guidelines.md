@@ -106,5 +106,5 @@ For TypeSpec-related operations:
 - `tsp convert --swagger-file ./swagger.json`
 - `tsp init --name MyService`
 - `tsp validate --project-path ./typespec`
-- `tsp client update --package-path ./sdk/storage --update-commit-sha <sha>`
+- `tsp client customized-update --package-path ./sdk/storage --update-commit-sha <sha>`
 - `tsp project modified-projects --repo-root ./azure-rest-api-specs`

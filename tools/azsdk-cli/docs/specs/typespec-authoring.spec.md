@@ -43,7 +43,7 @@ _Describe the problem you're solving and why it's important._
 
 TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec contributes to producing high-quality SDKs. However, Azure API developers face significant challenges when authoring TypeSpec:
 
-**Problem 1: Adding New Resources/Operations**
+**Problem 1: Writing TypeSpec that follows Azure guidelines and fixing non-compliant code**
 - Azure API developers want to add new resources, operations, or other components to Azure services following ARM/DP/SDK/TypeSpec guidelines
 - Generic AI (like standard GitHub Copilot) cannot provide effective help because it lacks domain-specific knowledge about Azure TypeSpec patterns and standards
 - **Example**: When a user asks to "create an ARM resource named 'Asset' with CRUD operations," generic AI generates incorrect code that doesn't follow Azure Resource Manager patterns or use proper decorators like `@armResourceOperations`

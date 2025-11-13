@@ -10,10 +10,10 @@ import asyncio
 from typing import Iterable, Optional
 
 import httpx
+import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import jwt
-from jose.exceptions import ExpiredSignatureError, JWTError
+from jwt import ExpiredSignatureError, InvalidTokenError, PyJWKClient
 
 # TODO: Get these from appConfig
 TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47"  # Microsoft tenant you showed in the token
@@ -66,32 +66,31 @@ async def require_auth(
     Validates a JWT access token from Microsoft Entra ID and (optionally) enforces scopes.
     Returns claims dict on success or raises 401/403.
     """
-    keys = await _ensure_jwks_loaded()
-    header = jwt.get_unverified_header(cred.credentials)
-    key = next((k for k in keys if k["kid"] == header.get("kid")), None)
-
-    # Handle key rollover by refetching JWKS once if no matching kid
-    if not key:
-        async with _lock:
-            global _jwks_keys
-            _jwks_keys = None
-        keys = await _ensure_jwks_loaded()
-        key = next((k for k in keys if k["kid"] == header.get("kid")), None)
-        if not key:
+    # Use PyJWT's PyJWKClient to fetch and cache keys
+    jwks_url = f"{ISSUER}/discovery/v2.0/keys"
+    jwk_client = PyJWKClient(jwks_url)
+    try:
+        signing_key = jwk_client.get_signing_key_from_jwt(cred.credentials)
+    except Exception:
+        # Try to refresh JWKS if key not found (key rollover)
+        jwk_client = PyJWKClient(jwks_url, cache_keys=False)
+        try:
+            signing_key = jwk_client.get_signing_key_from_jwt(cred.credentials)
+        except Exception:
             raise HTTPException(status_code=401, detail="Unknown signing key (kid)")
 
     try:
         claims = jwt.decode(
             cred.credentials,
-            key,  # jose accepts a JWK dict
-            algorithms=[header.get("alg", "RS256")],
-            audience=list(ACCEPTED_AUDIENCES),  # primary aud verification
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=list(ACCEPTED_AUDIENCES),
             issuer=ISSUER,
             options={"verify_aud": True},
         )
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except JWTError:
+    except InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     # Secondary audience check (defensive)

@@ -1,6 +1,6 @@
 ---
 name: Parse Memory to GitHub Issue
-description: Drafts a GitHub issue for the azure-sdk repo using an existing knowledge-base memory and its linked assets.
+description: Drafts a GitHub issue for the azure-rest-api-specs repo using an existing knowledge-base memory and its linked assets.
 authors:
   - marcarro
   - tjprescott

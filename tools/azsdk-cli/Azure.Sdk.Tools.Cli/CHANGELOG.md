@@ -1,20 +1,17 @@
 # Release History
 
-## 0.5.8 (Unreleased)
+## 0.5.8 (2025-11-13)
 
 ### Features Added
 
 - Add support for sample translation from one language to another
-
-### Breaking Changes
+- Updated CLI commands hierarchy
 
 ### Bugs Fixed
 
 - Sample generator: Fix integer overflow when calculating file sizes
 - Sample generator: Fix stopping loading when an empty file is encountered
 - Sample generator: Fix not giving enough priority to files in the input package folder
-
-### Other Changes
 
 ## 0.5.7 (2025-11-05)
 

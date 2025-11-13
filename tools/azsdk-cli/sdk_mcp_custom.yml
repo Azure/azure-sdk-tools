@@ -47,8 +47,6 @@ jobs:
         DOTNET_MULTILEVEL_LOOKUP: 0
         AZURE_OPENAI_MODEL_DEPLOYMENT_NAME: ${{ parameters.Model }}
         AZURE_OPENAI_ENDPOINT: ${{ parameters.OpenAIEndPoint }}
-        COPILOT_INSTRUCTIONS_REPOSITORY_NAME: ${{ parameters.RepoName }}
-        COPILOT_INSTRUCTIONS_REPOSITORY_OWNER: ${{ parameters.RepoOwner }}
         COPILOT_INSTRUCTIONS_PATH: $(System.DefaultWorkingDirectory)/${{ parameters.RepoName }}/.github/copilot-instructions.md
 
     - task: PublishTestResults@2
@@ -68,17 +66,15 @@ jobs:
       os: linux
     
     steps:
+    - checkout: self
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Repositories:
           - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
-            WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools-current
-          - Name: Azure/azure-sdk-tools
             Commitish: main
             WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools-main
         Paths:
-          - '**'
+          - 'tools/azsdk-cli/**'
     
     - template: /eng/pipelines/templates/steps/install-dotnet.yml
     
@@ -86,17 +82,17 @@ jobs:
       displayName: 'Build Azure SDK Tools CLI from current branch'
       inputs:
         command: 'build'
-        projects: '$(System.DefaultWorkingDirectory)/azure-sdk-tools-current/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
+        projects: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
         arguments: '--configuration Release'
     
     - task: PowerShell@2
       displayName: 'Get MCP Tools List and Update Documentation'
       inputs:
         targetType: 'filePath'
-        filePath: '$(System.DefaultWorkingDirectory)/azure-sdk-tools-current/tools/azsdk-cli/update-mcp-tools-docs.ps1'
+        filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
         arguments: >
-          -AzsdkCliPath $(System.DefaultWorkingDirectory)/azure-sdk-tools-current/artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk
-          -CsprojPath $(System.DefaultWorkingDirectory)/azure-sdk-tools-current/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+          -AzsdkCliPath $(System.DefaultWorkingDirectory)/artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk
+          -CsprojPath $(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
         pwsh: true
         workingDirectory: '$(System.DefaultWorkingDirectory)/azure-sdk-tools-main'
     

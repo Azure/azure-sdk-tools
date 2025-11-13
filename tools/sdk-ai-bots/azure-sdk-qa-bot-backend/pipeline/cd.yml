@@ -46,15 +46,6 @@ extends:
                 displayName: 'Checkout repository'
                 persistCredentials: true
                 continueOnError: false
-              - ${{ if ne(parameters.environment, 'dev') }}:
-                - bash: |
-                    set -euo pipefail
-                    git fetch origin release/qa-bot
-                    git checkout --force release/qa-bot
-                    git reset --hard origin/release/qa-bot
-                    echo "Checked out release/qa-bot"
-                  displayName: 'Switch to release branch'
-                  continueOnError: false
 
               # 2. Resolve image tag
               - bash: |

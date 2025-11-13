@@ -1,7 +1,5 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -10,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// Uses tools like go build, go test, go mod, gofmt, etc. for Go development workflows.
 /// </summary>
 public partial class GoLanguageService : LanguageService
-{    
+{
 
     #region Go specific functions, not part of the LanguageRepoService
 

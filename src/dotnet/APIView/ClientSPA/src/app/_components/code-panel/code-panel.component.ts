@@ -536,7 +536,8 @@ export class CodePanelComponent implements OnChanges{
           next: () => {
             this.updateCommentTextInCommentThread(commentUpdates);
           }
-        });    }
+        });    
+      }
     else {
       this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
         .pipe(take(1)).subscribe({
@@ -545,7 +546,8 @@ export class CodePanelComponent implements OnChanges{
               commentUpdates.comment = response;
             }
           }
-        );    }
+        );    
+      }
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
@@ -564,13 +566,15 @@ export class CodePanelComponent implements OnChanges{
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
         }
-      });    }
+      });    
+    }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
         }
-      });    }
+      });    
+    }
   }
 
   handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
@@ -578,7 +582,7 @@ export class CodePanelComponent implements OnChanges{
     
     switch (commentUpdates.commentThreadUpdateAction) {
       case CommentThreadUpdateAction.CommentCreated:
-         if (commentUpdates.comment) {
+        if (commentUpdates.comment) {
           this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
         }
         break;

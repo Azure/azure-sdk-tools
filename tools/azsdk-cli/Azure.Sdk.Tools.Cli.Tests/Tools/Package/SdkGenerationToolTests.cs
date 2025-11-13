@@ -101,6 +101,9 @@ public class SdkGenerationToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkRegenerationSuccessMessage));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
         _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -139,6 +142,9 @@ public class SdkGenerationToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkGenerationSuccessMessage));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
         _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -168,6 +174,9 @@ public class SdkGenerationToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkGenerationSuccessMessage));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
         _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -277,6 +286,9 @@ public class SdkGenerationToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
 
         // Verify the arguments passed to InitializeGenerationAsync
         _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(
@@ -309,6 +321,9 @@ public class SdkGenerationToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
         _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(
             It.IsAny<string>(),
             It.Is<string>(path => path == RemoteTspConfigUrl),
@@ -341,6 +356,9 @@ public class SdkGenerationToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
 
         // Verify the arguments passed to InitializeGenerationAsync
         _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(

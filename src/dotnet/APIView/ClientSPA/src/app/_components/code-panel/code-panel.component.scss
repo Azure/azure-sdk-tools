@@ -146,6 +146,39 @@
         grid-column: 2;
         position: relative; 
         white-space: pre;
+        .list-group {
+            white-space: normal;
+            border-top: 0px;
+            max-height: 22px;
+            width: 50%;
+
+            .list-group-item {
+                padding-top: 0px;
+                padding-bottom: 0px;
+                border-radius: 0px;
+                background: none;
+
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+
+                &:nth-child(1) {
+                    width: 300px;
+                }
+                
+                &:nth-child(2) {
+                    width: 300px;
+                }
+                
+                &:nth-child(3) {
+                    width: 200px;
+                }
+                
+                &:nth-child(4) {
+                    width: 2000px;
+                }
+            }
+        }
     }
 
     .line-number {
@@ -254,6 +287,10 @@
 
         .header {
             color: var(--link-color);
+        }
+
+        .table-header {
+            font-weight: bold;
         }
     }
 

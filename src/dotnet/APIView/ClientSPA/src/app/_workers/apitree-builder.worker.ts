@@ -23,6 +23,7 @@ addEventListener('message', ({ data }) => {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     codePanelData = JSON.parse(jsonString);
+
     if (!codePanelData?.hasDiff) {
       apiTreeBuilderData!.diffStyle = FULL_DIFF_STYLE; // If there is no diff nodes and tree diff will not work
     }

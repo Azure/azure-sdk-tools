@@ -49,7 +49,7 @@ namespace APIView.Model.V2
         /// </summary>
         public bool? IsHidden { get; set; }
         /// <summary>
-        /// Tender the Tokens like a table Row with each token representing a cell in the row
+        /// Render the Tokens like a table Row with each token representing a cell in the row
         /// </summary>
         public bool? RenderTokensAsCells { get; set; }
         /// <summary>

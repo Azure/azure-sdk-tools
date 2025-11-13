@@ -23,8 +23,17 @@
           <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
       <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+        <ul *ngIf="item.renderTokensAsTableCells; else regularCells" class="list-group list-group-horizontal">
+          <li *ngFor="let token of item.rowOfTokens" class="list-group-item" [ngClass]="getTokenClassObject(token)"
+            [title]="token.value"
+            [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}
+          </li>
+        </ul>
+        <ng-template #regularCells>
           <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
-          [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
+            [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}
+          </span>
+	      </ng-template>
       </div>
     </ng-container>
     <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">

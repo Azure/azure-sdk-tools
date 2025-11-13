@@ -63,7 +63,7 @@ namespace APIView.Model.V2
         /// </summary>
         public List<string> RenderClasses { get; set; } = [];
 
-        public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true, string? tokenClass = null)
+        public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true, string tokenClass = null)
         {
             var token = new ReviewToken(value, TokenKind.Text);
             if (!string.IsNullOrEmpty(navigateToId))
@@ -148,6 +148,7 @@ namespace APIView.Model.V2
         {
             var results = new List<ReviewToken>();
             var keyToken = new ReviewToken(key, TokenKind.Text);
+            keyToken.HasSuffixSpace = false;
             if (keyTokenClass != null)
             {
                 keyToken.RenderClasses.Add(keyTokenClass);
@@ -161,13 +162,14 @@ namespace APIView.Model.V2
             if (addPuctuation)
             {
                 var colonToken = new ReviewToken(":", TokenKind.Punctuation);
-                colonToken.HasSuffixSpace = true;
+                colonToken.HasSuffixSpace = false;
                 results.Add(colonToken);
             }
 
             if (value != null)
             {
                 var valueToken = new ReviewToken(value, TokenKind.Text);
+                valueToken.HasSuffixSpace = false;
                 if (valueTokenClass != null)
                 {
                     valueToken.RenderClasses.Add(valueTokenClass);

@@ -190,7 +190,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <summary>
     /// Builds the SDK project to validate compilation.
     /// </summary>
-    private async Task<PackageOperationResponse> BuildSdkAsync(string packagePath, LanguageService languageService, CancellationToken ct)
+    private async Task<(bool Success, string? ErrorMessage)> BuildSdkAsync(string packagePath, LanguageService languageService, CancellationToken ct)
     {
         try
         {
@@ -198,13 +198,13 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             if (string.IsNullOrEmpty(packagePath))
             {
                 logger.LogError("Package path is null or empty in BuildSdkAsync");
-                return PackageOperationResponse.CreateFailure("Package path is required.");
+                return (false, "Package path is required.");
             }
 
             if (!Directory.Exists(packagePath))
             {
                 logger.LogError("Package path does not exist: {PackagePath}", packagePath);
-                return PackageOperationResponse.CreateFailure($"Path does not exist: {packagePath}");
+                return (false, $"Path does not exist: {packagePath}");
             }
 
             logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
@@ -213,7 +213,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
             if (string.IsNullOrEmpty(sdkRepoRoot))
             {
-                return PackageOperationResponse.CreateFailure($"Failed to discover local sdk repo with project-path: {packagePath}.");
+                return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.");
             }
 
             string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
@@ -221,7 +221,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             // Return if the project is python project (Python SDKs don't require compilation)
             if (sdkRepoName.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
             {
-                return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo, result: "noop");
+                return (true, null); // Success - no build needed for Python
             }
 
             // Get build configuration and execute if found
@@ -238,44 +238,23 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 var processOptions = specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, 30);
                 if (processOptions != null)
                 {
-                    return await specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");
+                    var result = await specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");
+                    var errorMessage = result.ExitCode == 0 ? null : 
+                        !string.IsNullOrEmpty(result.ResponseError) ? result.ResponseError :
+                        result.ResponseErrors?.Count > 0 ? string.Join("; ", result.ResponseErrors) :
+                        !string.IsNullOrEmpty(result.Message) ? result.Message :
+                        $"Build failed with exit code {result.ExitCode}";
+                    return (result.ExitCode == 0, errorMessage);
                 }
             }
             
-            return PackageOperationResponse.CreateFailure("No build configuration found or failed to prepare the build command", packageInfo);
+            return (false, "No build configuration found or failed to prepare the build command");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while building SDK");
-            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
+            return (false, $"An error occurred: {ex.Message}");
         }
-    }
-
-    /// <summary>
-    /// Extracts a meaningful error message from a PackageOperationResponse.
-    /// </summary>
-    private static string GetErrorMessage(PackageOperationResponse response)
-    {
-        // Check for single error message first
-        if (!string.IsNullOrEmpty(response.ResponseError))
-        {
-            return response.ResponseError;
-        }
-
-        // Check for multiple error messages
-        if (response.ResponseErrors?.Count > 0)
-        {
-            return string.Join("; ", response.ResponseErrors);
-        }
-
-        // Check if there's a message (might contain error info)
-        if (!string.IsNullOrEmpty(response.Message))
-        {
-            return response.Message;
-        }
-
-        // Fallback to generic message with exit code
-        return $"Build failed with exit code {response.ExitCode}";
     }
 
     private async Task<bool> ApplyPatchesAsync(
@@ -304,16 +283,15 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         List<string> guidance,
         CancellationToken ct)
     {
-        var buildResult = await BuildSdkAsync(packagePath, languageService, ct);
+        var (success, errorMessage) = await BuildSdkAsync(packagePath, languageService, ct);
 
-        if (buildResult.ExitCode == 0)
+        if (success)
         {
             logger.LogInformation("Build completed successfully - validation passed");
             guidance.Add(PATCHES_APPLIED_GUIDANCE);
         }
         else
         {
-            var errorMessage = GetErrorMessage(buildResult);
             logger.LogError("Build failed: {Error}", errorMessage);
             guidance.Add($"Build failed after applying patches: {errorMessage}");
             guidance.Add("");

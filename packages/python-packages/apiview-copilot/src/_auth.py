@@ -10,13 +10,15 @@ import asyncio
 from typing import Iterable, Optional, Set
 
 import jwt
+import requests
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import ExpiredSignatureError, InvalidTokenError, PyJWKClient
+from src._settings import SettingsManager
 
-# TODO: Get these from appConfig
-TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47"  # Microsoft tenant you showed in the token
-APP_ID = "66bad3f5-7326-4160-b644-987e6da42d1c"  # your API application (client) ID
+settings = SettingsManager()
+TENANT_ID = settings.get("TENANT_ID")
+APP_ID = settings.get("APP_ID")
 REQUIRED_SCOPES_DEFAULT = {"user_impersonation"}  # default scope for routes
 
 ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
@@ -28,16 +30,33 @@ _jwks_uri: Optional[str] = None
 _lock = asyncio.Lock()
 
 # Choose ONE canonical audience for PyJWT to verify.
+
+# Only accept canonical audience
 CANONICAL_AUD = f"api://{APP_ID}"
-# Optionally accept alternates after decode (defensive)
-ACCEPTED_AUDIENCES: Set[str] = {CANONICAL_AUD, APP_ID}
 
 REQUIRED_SCOPES_DEFAULT: Set[str] = {"user_impersonation"}
 
 _security = HTTPBearer(auto_error=True)
 
-# Cache the JWK client (it caches keys internally)
-_JWK_CLIENT = PyJWKClient(f"{ISSUER}/discovery/v2.0/keys")
+
+# Dynamically fetch and cache the JWKS URI and PyJWKClient
+_JWK_CLIENT = None
+_JWK_URI = None
+_JWK_LOCK = asyncio.Lock()
+
+
+def _get_jwk_client():
+    global _JWK_CLIENT, _JWK_URI
+    if _JWK_CLIENT is not None:
+        return _JWK_CLIENT
+    # Fetch OpenID config
+    config_url = f"{ISSUER}/.well-known/openid-configuration"
+    resp = requests.get(config_url, timeout=5)
+    resp.raise_for_status()
+    jwks_uri = resp.json()["jwks_uri"]
+    _JWK_URI = jwks_uri
+    _JWK_CLIENT = PyJWKClient(jwks_uri)
+    return _JWK_CLIENT
 
 
 def _safe_get_scopes(claims: dict) -> Set[str]:
@@ -49,15 +68,6 @@ def _safe_get_scopes(claims: dict) -> Set[str]:
     return set(scp.split())
 
 
-def _aud_ok(aud_claim) -> bool:
-    """Secondary audience check allowing an alternate AAD format."""
-    if isinstance(aud_claim, str):
-        return aud_claim in ACCEPTED_AUDIENCES
-    if isinstance(aud_claim, Iterable):
-        return any(a in ACCEPTED_AUDIENCES for a in aud_claim)
-    return False
-
-
 async def require_auth(
     cred: HTTPAuthorizationCredentials = Depends(_security),
     required_scopes: Optional[Set[str]] = None,
@@ -66,30 +76,36 @@ async def require_auth(
     token = cred.credentials
 
     # 1) Resolve signing key (handles rollover via kid)
+    jwk_client = _get_jwk_client()
     try:
-        signing_key = _JWK_CLIENT.get_signing_key_from_jwt(token)
+        signing_key = jwk_client.get_signing_key_from_jwt(token)
     except Exception:
         # One retry without cache in rare rollover race
-        signing_key = PyJWKClient(f"{ISSUER}/discovery/v2.0/keys", cache_keys=False).get_signing_key_from_jwt(token)
+        jwk_client = PyJWKClient(_JWK_URI, cache_keys=False)
+        signing_key = jwk_client.get_signing_key_from_jwt(token)
 
-    # 2) Decode + verify issuer and canonical audience
+    # 2) Decode without audience check, so we can force canonical form
     try:
         claims = jwt.decode(
             token,
             signing_key.key,
             algorithms=["RS256"],
-            audience=CANONICAL_AUD,  # single canonical value
+            options={"verify_aud": False, "verify_iss": True},
             issuer=ISSUER,
-            options={"verify_aud": True, "verify_iss": True},
         )
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except InvalidTokenError as e:
-        # Fall back to a clearer message
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-    # 3) Secondary audience acceptance (accept GUID or api://GUID)
-    if not _aud_ok(claims.get("aud")):
+    # Force audience to canonical form if needed
+    aud = claims.get("aud")
+    if aud == APP_ID:
+        aud = CANONICAL_AUD
+        claims["aud"] = aud
+
+    # Now strictly check canonical audience
+    if aud != CANONICAL_AUD:
         raise HTTPException(status_code=401, detail="Invalid audience")
 
     # 4) Delegated scope enforcement (only for user tokens with 'scp')

@@ -708,7 +708,7 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
-    reviews = _get_active_reviews(start_date, end_date, environment)
+    reviews = _get_active_reviews(start_date, end_date, environment=environment)
     pretty_language = get_language_pretty_name(language).lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
@@ -970,7 +970,9 @@ def _build_auth_header(base_url):
     if "apiview.dev" in base_url:
         scope = "api://apiview/.default"
     else:
-        scope = "api://66bad3f5-7326-4160-b644-987e6da42d1c/.default"
+        settings = SettingsManager()
+        app_id = settings.get("APP_ID")
+        scope = f"api://{app_id}/.default"
     token = credential.get_token(scope)
     return {"Authorization": f"Bearer {token.token}"}
 

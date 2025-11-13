@@ -9,10 +9,12 @@ azure-search-documents==11.5.2
 black==25.1.0
 colorama==0.4.6
 fastapi==0.111.0
+httpx==0.28.1
 knack==0.12.0
 openai==2.4.0
 prompty[azure]==0.1.49
 python-dotenv==1.0.1
+python-jose==3.5.0
 pydantic==2.10.6
 pyyaml==6.0.2
 pytest==7.4.2

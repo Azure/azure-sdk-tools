@@ -241,7 +241,21 @@
         }
     }
 
+    .swagger {
+        .header1 {
+            color: var(--link-color);
+            font-weight: bold;
+        }
 
+        .header2 {
+            color: var(--link-color);
+            font-weight: bolder;
+        }
+
+        .header {
+            color: var(--link-color);
+        }
+    }
 
     .java {
         .javadoc {

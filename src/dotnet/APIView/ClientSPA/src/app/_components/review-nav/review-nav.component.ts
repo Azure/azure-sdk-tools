@@ -37,4 +37,8 @@ export class ReviewNavComponent implements OnChanges {
   isClientType(node: TreeNode): boolean {
     return node.label?.toLowerCase().endsWith('client') || false;
   }
+
+  onImageError(event: any) {
+    event.target.src = this.assetsPath + '/images/type.png';
+  }
 }

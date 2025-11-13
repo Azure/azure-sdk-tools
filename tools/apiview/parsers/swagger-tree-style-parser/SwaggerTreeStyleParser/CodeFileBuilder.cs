@@ -75,15 +75,15 @@ namespace SwaggerTreeStyleParser
             BuildOpenApiPathItemObject(openApiDocument.Paths, nameof(openApiDocument.Paths), rootFileLine.Children);
             BuildJsonSchemaDefinitions(openApiDocument.Definitions, nameof(openApiDocument.Definitions), rootFileLine.Children);
             BuildOpenApiParameterObject(openApiDocument.Parameters, nameof(openApiDocument.Parameters), rootFileLine.Children);
-
             result.Add(rootFileLine);
+            result.Add(new ReviewLine());
+            result.Add(new ReviewLine());
             return result;
         }
-
         private void BuildOpenApiInfoObject(OpenApiInfo infoObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (infoObject == null) return;
-            var rootLine = CreateKeyValueLine(key: objectName, addPunctuation: false, keyTokenClass: "header");
+            var rootLine = CreateKeyValueLine(key: objectName, addPunctuation: false, keyTokenClass: "header1");
             BuildValueTypeProperties(infoObject, rootLine.Children, keyTokenClass: "keyword");
             BuildOpenApiContactObject(infoObject.Contact, nameof(infoObject.Contact), rootLine.Children);
             BuildOpenApiLicenseObject(infoObject.License, nameof(infoObject.License), rootLine.Children);
@@ -106,10 +106,10 @@ namespace SwaggerTreeStyleParser
         private void BuildOpenApiSecuritySchemeObject(IDictionary<string, OpenApiSecurityScheme> securityScheme, string objectName, List<ReviewLine> reviewLines)
         {
             if (securityScheme == null || securityScheme.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header");
+            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header1");
             foreach (var kvp in securityScheme)
             {
-                var line = CreateKeyValueLine(kvp.Key, addPunctuation: false, keyTokenClass: "header");
+                var line = CreateKeyValueLine(kvp.Key, addPunctuation: false, keyTokenClass: "header2");
                 BuildValueTypeProperties(kvp.Value, line.Children, keyTokenClass: "keyword");
                 if (kvp.Value.Scopes.Any())
                 {
@@ -124,7 +124,7 @@ namespace SwaggerTreeStyleParser
         private void BuildOpenApiSecurityRequirementObject(ICollection<OpenApiSecurityRequirement> securityRequirement, string objectName, List<ReviewLine> reviewLines)
         {
             if (securityRequirement == null || securityRequirement.Count() == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header");
+            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header1");
             foreach (var item in securityRequirement)
             {
                 foreach (var kvp in item)
@@ -139,10 +139,10 @@ namespace SwaggerTreeStyleParser
         private void BuildOpenApiPathItemObject(IDictionary<string, OpenApiPathItem> openApiPaths, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiPaths == null || openApiPaths.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header", addKeyToNavigation: true);
+            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header1", addKeyToNavigation: true);
             foreach (var kvp in openApiPaths)
             {
-                var line = CreateKeyValueLine(key: kvp.Key, addPunctuation: false, keyTokenClass: "header", addKeyToNavigation: true);
+                var line = CreateKeyValueLine(key: kvp.Key, addPunctuation: false, keyTokenClass: "header2", addKeyToNavigation: true);
                 foreach (var opKvp in kvp.Value)
                 {
                     var opLine = CreateKeyValueLine(key: opKvp.Key.ToUpper(), addPunctuation: false, keyTokenClass: "header");
@@ -194,12 +194,12 @@ namespace SwaggerTreeStyleParser
         private void BuildJsonSchemaDefinitions(IDictionary<string, JsonSchema> definitions, string objectName, List<ReviewLine> reviewLines)
         {
             if (definitions == null || definitions.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header", addKeyToNavigation: true);
+            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header1", addKeyToNavigation: true);
             foreach (var kvp in definitions)
             {
                 var schemaProps = kvp.Value.ActualProperties;
                 if (schemaProps.Count == 0) continue;
-                var definitionRoot = CreateKeyValueLine(kvp.Key, addPunctuation: false, keyTokenClass: "header", addKeyToNavigation: true);
+                var definitionRoot = CreateKeyValueLine(kvp.Key, addPunctuation: false, keyTokenClass: "header2", addKeyToNavigation: true);
                 definitionRoot.Children.Add(
                     CreateKeyValueLine(key: nameof(kvp.Value.Description), kvp.Value.Description, keyTokenClass: "keyword")
                 );
@@ -220,6 +220,7 @@ namespace SwaggerTreeStyleParser
                     var keywords = CollectKeywords(prop.Value);
                     propRow.AddToken(ReviewToken.CreateTextToken(value: String.Join(", ", keywords), hasSuffixSpace: false));
                     propRow.AddToken(ReviewToken.CreateTextToken(value: prop.Value.Description, hasSuffixSpace: false));
+                    propRow.RenderTokensAsCells = true;
                     definitionRoot.Children.Add(propRow);
                 }
                 rootLine.Children.Add(definitionRoot);
@@ -236,7 +237,7 @@ namespace SwaggerTreeStyleParser
         private void BuildOpenApiParameterObject(IDictionary<string, OpenApiParameter> openApiParameters, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiParameters == null || openApiParameters.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header", addKeyToNavigation: true);
+            var rootLine = CreateKeyValueLine(objectName, addPunctuation: false, keyTokenClass: "header1", addKeyToNavigation: true);
             CreatePropertiesTableHeader(rootLine.Children, firstColumnName: "Name");
             foreach (var kvp in openApiParameters)
             {
@@ -255,6 +256,7 @@ namespace SwaggerTreeStyleParser
                 var keywords = CollectKeywords(kvp.Value);
                 paramRow.AddToken(ReviewToken.CreateTextToken(value: String.Join(", ", keywords), hasSuffixSpace: false));
                 paramRow.AddToken(ReviewToken.CreateTextToken(value: kvp.Value.Description, hasSuffixSpace: false));
+                paramRow.RenderTokensAsCells = true;
                 rootLine.Children.Add(paramRow);
             }
             reviewLines.Add(rootLine);
@@ -284,6 +286,7 @@ namespace SwaggerTreeStyleParser
                     var keywords = CollectKeywords(parameter);
                     paramRow.AddToken(ReviewToken.CreateTextToken(value: String.Join(", ", keywords), hasSuffixSpace: false));
                     paramRow.AddToken(ReviewToken.CreateTextToken(value: item.ActualParameter.Description, hasSuffixSpace: false));
+                    paramRow.RenderTokensAsCells = true;
                     paramHeaderLine.Children.Add(paramRow); 
                 }
                 reviewLines.Add(paramHeaderLine);
@@ -365,6 +368,7 @@ namespace SwaggerTreeStyleParser
             headerLine.AddToken(ReviewToken.CreateTextToken("Type/Format", hasSuffixSpace: false));
             headerLine.AddToken(ReviewToken.CreateTextToken("Keywords", hasSuffixSpace: false));
             headerLine.AddToken(ReviewToken.CreateTextToken("Description", hasSuffixSpace: false));
+            headerLine.RenderTokensAsCells = true;
             reviewLines.Add(headerLine);
         }
         private HashSet<string> CollectKeywords<T>(T obj) where T : JsonSchema

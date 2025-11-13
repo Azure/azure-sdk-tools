@@ -49,6 +49,10 @@ namespace APIView.Model.V2
         /// </summary>
         public bool? IsHidden { get; set; }
         /// <summary>
+        /// Tender the Tokens like a table Row with each token representing a cell in the row
+        /// </summary>
+        public bool? RenderTokensAsCells { get; set; }
+        /// <summary>
         /// This is set if a line is end of context. For e.g. end of a class or name space line "}"
         /// </summary>
         public bool? IsContextEndLine { get; set; }
@@ -68,7 +72,6 @@ namespace APIView.Model.V2
         public bool IsEmpty => Tokens.Count == 0 || !Tokens.Any( t => t.SkipDiff != true);
         [JsonIgnore]
         public bool Processed { get; set; } = false;
-
         [JsonIgnore]
         public int Indent {  get; set; }
         [JsonIgnore]
@@ -77,12 +80,10 @@ namespace APIView.Model.V2
         {
             Tokens.Add(token);
         }
-
         public void AddTokenRange(IEnumerable<ReviewToken> tokens)
         {
             Tokens.AddRange(tokens);
         }
-
         public void AppendApiTextToBuilder<T>(T builder, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4, TokensFilter filter = TokensFilter.All) where T : class
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
@@ -114,7 +115,6 @@ namespace APIView.Model.V2
                 child.AppendApiTextToBuilder(builder, indent + 1, skipDocs, lineIndentSpaces, filter);
             }
         }
-
         private void AppendToBuilder<T>(T builder, string text, string lineId = null)
         {
             switch (builder)
@@ -138,7 +138,6 @@ namespace APIView.Model.V2
                     throw new ArgumentException("Unsupported type for builder. Expected StringBuilder or List<string>.");
             }
         }
-
         private string ToString(TokensFilter filter)
         {
             var filterdTokens = Tokens;
@@ -174,13 +173,10 @@ namespace APIView.Model.V2
             }
             return sb.ToString();
         }
-
-        
         public override string ToString()
         {
             return ToString(TokensFilter.SkipDiff);
         }
-
         public override bool Equals(object obj)
         {
             if(obj is ReviewLine other)
@@ -189,12 +185,10 @@ namespace APIView.Model.V2
             }
             return false;
         }
-
         public override int GetHashCode()
         {
             return $"{ToString()}-{LineId}-{RelatedToLine}".GetHashCode();
         }
-
         public string GetTokenNodeIdHash(string parentNodeIdHash, int lineIndex)
         {
             var idPart = LineId;
@@ -207,17 +201,14 @@ namespace APIView.Model.V2
             var hash = CreateHashFromString(idPart);
             return hash + parentNodeIdHash.Replace("nId", "").Replace("root", ""); // Append the parent node Id to ensure uniqueness
         }
-
         private static string CreateHashFromString(string inputString)
         {
             int hash = inputString.GetHashCode();
             return "nId" + hash.ToString();
         }
-
         public bool IsSkippedFromDiff()
         {
             return Tokens.All(t => t.SkipDiff == true);
         }
-
     }
 }

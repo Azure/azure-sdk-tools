@@ -160,7 +160,7 @@ namespace APIViewWeb.Helpers
             BuildNodeTokens(codePanelData, codePanelRawData, reviewLine, nodeIdHashed, indent);
 
             //Create navigation node for current line
-            var navTreeNode = CreateNavigationNode(reviewLine, nodeIdHashed);
+            var navTreeNode = CreateNavigationNode(reviewLine, nodeIdHashed, codePanelRawData.activeRevisionCodeFile.Language);
             if (navTreeNode != null)
             {
                 codePanelData.AddNavigation(nodeIdHashed, navTreeNode);
@@ -208,7 +208,7 @@ namespace APIViewWeb.Helpers
         }
 
         // Create navigation node for current line if applicable
-        private static NavigationTreeNode CreateNavigationNode(ReviewLine reviewLine, string nodeIdHashed)
+        private static NavigationTreeNode CreateNavigationNode(ReviewLine reviewLine, string nodeIdHashed, string language)
         {
             NavigationTreeNode navTreeNode = null;
             //Generate navigation node only from active revision
@@ -218,6 +218,11 @@ namespace APIViewWeb.Helpers
             if (navToken != null && reviewLine.IsHidden != true)
             {
                 string navIcon = "";
+                
+                // Collapse some of the swagger navigations
+                bool expanded = (language == "Swagger" && (navToken.Value == "Paths" || navToken.Value == "Definitions" || navToken.Value == "Parameters"))
+                    ? false : true;
+
                 if (navToken.RenderClasses.Count > 0)
                 {
                     navIcon = navToken.RenderClasses.First();
@@ -231,7 +236,7 @@ namespace APIViewWeb.Helpers
                         Kind = navIcon,
                         Icon = navIcon
                     },
-                    Expanded = true,
+                    Expanded = expanded,
                 };
             }
             return navTreeNode;
@@ -308,7 +313,8 @@ namespace APIViewWeb.Helpers
                 CrossLanguageId = reviewLine.CrossLanguageId,
                 Indent = indent,
                 DiffKind = reviewLine.DiffKind,
-                IsHiddenAPI = (reviewLine.IsHidden == true)
+                IsHiddenAPI = (reviewLine.IsHidden == true),
+                RenderTokensAsTableCells = reviewLine.RenderTokensAsCells
             };
 
             var tokensInRow = codePanelRowData.RowOfTokensObj;

@@ -62,7 +62,7 @@ To understand how the evaluation framework works, let's walk through a complete 
 A developer needs to create a release plan for a new Azure service. They provide all the necessary details in a natural language request:
 
 ```text
-Create a release plan for the Contoso Widget Manager, no need to get it afterwords only create. 
+Create a release plan for the Contoso Widget Manager, no need to get it afterwards only create. 
 Here is all the context you need: TypeSpec project located at 
 "c:\azure-rest-api-specs\specification\contosowidgetmanager\Contoso.WidgetManager". 
 Use service tree ID "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f", 

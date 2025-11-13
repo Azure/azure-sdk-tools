@@ -970,7 +970,7 @@ def _build_auth_header(base_url):
     if "apiview.dev" in base_url:
         scope = "api://apiview/.default"
     else:
-        scope = "api://66bad3f5-7326-4160-b644-987e6da42d1c/user_impersonation"
+        scope = "api://66bad3f5-7326-4160-b644-987e6da42d1c/.default"
     token = credential.get_token(scope)
     return {"Authorization": f"Bearer {token.token}"}
 

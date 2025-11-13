@@ -7,9 +7,8 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Set
 
-import httpx
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -21,7 +20,6 @@ APP_ID = "66bad3f5-7326-4160-b644-987e6da42d1c"  # your API application (client)
 REQUIRED_SCOPES_DEFAULT = {"user_impersonation"}  # default scope for routes
 
 ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
-ACCEPTED_AUDIENCES = {APP_ID, f"api://{APP_ID}"}  # accept GUID or api://GUID
 
 # Keep a tiny in-memory cache for OIDC discovery + JWKS
 _security = HTTPBearer(auto_error=True)
@@ -29,23 +27,30 @@ _jwks_keys: Optional[list[dict]] = None
 _jwks_uri: Optional[str] = None
 _lock = asyncio.Lock()
 
+# Choose ONE canonical audience for PyJWT to verify.
+CANONICAL_AUD = f"api://{APP_ID}"
+# Optionally accept alternates after decode (defensive)
+ACCEPTED_AUDIENCES: Set[str] = {CANONICAL_AUD, APP_ID}
 
-async def _ensure_jwks_loaded() -> list[dict]:
-    global _jwks_keys, _jwks_uri
-    if _jwks_keys is not None:
-        return _jwks_keys
+REQUIRED_SCOPES_DEFAULT: Set[str] = {"user_impersonation"}
 
-    async with _lock:
-        if _jwks_keys is not None:
-            return _jwks_keys
-        async with httpx.AsyncClient(timeout=5) as client:
-            oidc = (await client.get(f"{ISSUER}/.well-known/openid-configuration")).json()
-            _jwks_uri = oidc["jwks_uri"]
-            _jwks_keys = (await client.get(_jwks_uri)).json()["keys"]
-    return _jwks_keys
+_security = HTTPBearer(auto_error=True)
+
+# Cache the JWK client (it caches keys internally)
+_JWK_CLIENT = PyJWKClient(f"{ISSUER}/discovery/v2.0/keys")
 
 
-def _check_audience(aud_claim) -> bool:
+def _safe_get_scopes(claims: dict) -> Set[str]:
+    """Return delegated scopes from 'scp' as a set; empty set if none."""
+    scp = claims.get("scp")
+    if not scp:
+        return set()
+    # 'scp' is a space-delimited string per MSFT v2 tokens
+    return set(scp.split())
+
+
+def _aud_ok(aud_claim) -> bool:
+    """Secondary audience check allowing an alternate AAD format."""
     if isinstance(aud_claim, str):
         return aud_claim in ACCEPTED_AUDIENCES
     if isinstance(aud_claim, Iterable):
@@ -53,67 +58,63 @@ def _check_audience(aud_claim) -> bool:
     return False
 
 
-def _check_scopes(claims: dict, required_scopes: set[str]) -> bool:
-    token_scopes = set((claims.get("scp") or "").split())
-    return required_scopes.issubset(token_scopes)
-
-
 async def require_auth(
     cred: HTTPAuthorizationCredentials = Depends(_security),
-    required_scopes: Optional[set[str]] = None,
+    required_scopes: Optional[Set[str]] = None,
 ) -> dict:
-    """
-    Validates a JWT access token from Microsoft Entra ID and (optionally) enforces scopes.
-    Returns claims dict on success or raises 401/403.
-    """
-    # Use PyJWT's PyJWKClient to fetch and cache keys
-    jwks_url = f"{ISSUER}/discovery/v2.0/keys"
-    jwk_client = PyJWKClient(jwks_url)
-    try:
-        signing_key = jwk_client.get_signing_key_from_jwt(cred.credentials)
-    except Exception:
-        # Try to refresh JWKS if key not found (key rollover)
-        jwk_client = PyJWKClient(jwks_url, cache_keys=False)
-        try:
-            signing_key = jwk_client.get_signing_key_from_jwt(cred.credentials)
-        except Exception:
-            raise HTTPException(status_code=401, detail="Unknown signing key (kid)")
+    """Validate JWT (issuer, signature, audience) and enforce delegated scopes."""
+    token = cred.credentials
 
+    # 1) Resolve signing key (handles rollover via kid)
+    try:
+        signing_key = _JWK_CLIENT.get_signing_key_from_jwt(token)
+    except Exception:
+        # One retry without cache in rare rollover race
+        signing_key = PyJWKClient(f"{ISSUER}/discovery/v2.0/keys", cache_keys=False).get_signing_key_from_jwt(token)
+
+    # 2) Decode + verify issuer and canonical audience
     try:
         claims = jwt.decode(
-            cred.credentials,
+            token,
             signing_key.key,
             algorithms=["RS256"],
-            audience=list(ACCEPTED_AUDIENCES),
+            audience=CANONICAL_AUD,  # single canonical value
             issuer=ISSUER,
-            options={"verify_aud": True},
+            options={"verify_aud": True, "verify_iss": True},
         )
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except InvalidTokenError as e:
+        # Fall back to a clearer message
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-    # Secondary audience check (defensive)
-    if not _check_audience(claims.get("aud")):
+    # 3) Secondary audience acceptance (accept GUID or api://GUID)
+    if not _aud_ok(claims.get("aud")):
         raise HTTPException(status_code=401, detail="Invalid audience")
 
-    # Scopes (only for delegated user tokens)
+    # 4) Delegated scope enforcement (only for user tokens with 'scp')
     scopes_to_enforce = required_scopes if required_scopes is not None else REQUIRED_SCOPES_DEFAULT
-    if scopes_to_enforce and not _check_scopes(claims, scopes_to_enforce):
-        raise HTTPException(status_code=403, detail="Insufficient scope")
+    if scopes_to_enforce:
+        token_scopes = _safe_get_scopes(claims)
+        if not scopes_to_enforce.issubset(token_scopes):
+            # Explicit 403 = token valid but insufficient permissions
+            raise HTTPException(status_code=403, detail="Insufficient scope")
 
-    # You can also add role checks here if you later adopt app roles (claims["roles"])
+    # NOTE: If you later add App Roles (application permissions),
+    # check 'roles' claim here, e.g.:
+    # required_roles = {"Reviewer"}
+    # if required_roles and not required_roles.intersection(set(claims.get("roles", []))):
+    #     raise HTTPException(status_code=403, detail="Missing required app role")
+
     return claims
 
 
-# Helpers to create route-specific dependencies
 def require_scopes(*scopes: str):
     required = set(scopes)
 
     async def _dep(claims: dict = Depends(require_auth)):
-        # require_auth already checked default scopes; re-check if custom were given
-        if required and not _check_scopes(claims, required):
-            raise HTTPException(status_code=403, detail="Insufficient scope")
+        if required:
+            token_scopes = _safe_get_scopes(claims)
+            if not required.issubset(token_scopes):
+                raise HTTPException(status_code=403, detail="Insufficient scope")
         return claims
-
-    return _dep

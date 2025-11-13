@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Test]
         public async Task Evaluate_ValidateTypespec()
         {
-            const string prompt = "Validate my typespec project. It is already confirmed we are in a public repository. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
+            const string prompt = "Validate my typespec project. It is already confirmed we are in a public repository. The path to my typespec is azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
             string[] expectedTools =
             [
                 "azsdk_run_typespec_validation",

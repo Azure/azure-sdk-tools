@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 param(
     [Parameter(Mandatory=$false)]
-    [string]$AzsdkCliPath = "$PSScriptRoot/../../artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk.exe",
+    [string]$AzsdkCliPath = "$PSScriptRoot/../../artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk",
     
     [Parameter(Mandatory=$false)]
     [string]$CsprojPath = "$PSScriptRoot/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj"

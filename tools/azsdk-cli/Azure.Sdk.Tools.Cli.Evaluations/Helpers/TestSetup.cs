@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         
         private static readonly bool UseMCPRelease = bool.Parse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE")) ?? false;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
-        private static readonly string localMcpPowershellScriptPath = @"../../../../..//eng/common/mcp/azure-sdk-mcp.ps1";
+        private static readonly string localMcpPowershellScriptPath = @"../../../../../eng/common/mcp/azure-sdk-mcp.ps1";
         public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 

@@ -111,7 +111,7 @@ public class MetadataUpdateTool : LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
-            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the running logs for details about the error", "resolve the issue", "re-run the tool"]);
+            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
         }
     }
 }

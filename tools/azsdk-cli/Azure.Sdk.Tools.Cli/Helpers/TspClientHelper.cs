@@ -56,7 +56,7 @@ public class TspClientHelper : ITspClientHelper
         };
     }
 
-    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha = null, bool isCli = false, CancellationToken ct = default)
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default)
     {
         logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}, commit: {commit}", tspLocationPath, outputDirectory, commitSha ?? "");
         
@@ -102,7 +102,7 @@ public class TspClientHelper : ITspClientHelper
         };
     }
 
-    public async Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[] additionalArgs = null, CancellationToken ct = default)
+    public async Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
     {
         logger.LogInformation("tsp-client init: {tspConfig} in {workingDir}", tspConfigPath, workingDirectory);
 

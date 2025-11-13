@@ -89,7 +89,7 @@ public class SdkGenerationToolTests
         var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
         { 
             IsSuccessful = true, 
-            TypeSpecProject = Path.GetDirectoryName(tspLocationPath)
+            TypeSpecProject = Path.GetDirectoryName(tspLocationPath)!
         };
         _mockTspClientHelper
             .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))

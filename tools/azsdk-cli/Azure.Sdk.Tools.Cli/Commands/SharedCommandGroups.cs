@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
         );
 
         public static readonly CommandGroup PackageSample = new(
-            Verb: "sample",
+            Verb: "samples",
             Description: "Sample operations for SDK packages"
         );
 

@@ -63,6 +63,15 @@ public async Task Evaluate_MyNewScenario()
 
 #### Option B: From Chat History JSON (For complex scenarios)
 Load pre-recorded chat conversations from JSON files in the `TestData/` directory.
+```csharp
+[Test]
+public async Task Evaluate_MyNewScenario()
+{
+    var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");
+    var scenarioData = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
+    // ... rest of evaluation logic
+}
+```
 
 ### Step 2: Create a New Test Method
 
@@ -72,10 +81,9 @@ Load pre-recorded chat conversations from JSON files in the `TestData/` director
 [Test]
 public async Task Evaluate_YourScenarioName()
 {
-    // Option A: Define the user prompt
+    // Option A: From Simple Prompt
     const string prompt = "Generate SDK for my TypeSpec project";
     
-    // Specify expected tools (in order they should be called)
     string[] expectedTools = 
     [
         "azsdk_typespec_check_project_in_public_repo",
@@ -84,10 +92,6 @@ public async Task Evaluate_YourScenarioName()
 
     // Build scenario data from prompt
     var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-    
-    // Option B: Load from JSON file (for complex scenarios with chat history)
-    // var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");
-    // var scenarioData = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
 
     // Configure input validation (set to false to skip parameter checking)
     bool checkInputs = true;

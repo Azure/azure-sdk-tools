@@ -10,6 +10,7 @@ public class TspClientHelper : ITspClientHelper
 {
     private readonly INpxHelper npxHelper;
     private readonly ILogger<TspClientHelper> logger;
+    private const int CommandTimeoutInMinutes = 30;
 
     public TspClientHelper(INpxHelper npxHelper, ILogger<TspClientHelper> logger)
     {
@@ -80,7 +81,8 @@ public class TspClientHelper : ITspClientHelper
             "@azure-tools/typespec-client-generator-cli",
             args.ToArray(),
             logOutputStream: true,
-            workingDirectory: workingDir
+            workingDirectory: workingDir,
+            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
         );
 
         var result = await npxHelper.Run(npxOptions, ct);
@@ -118,7 +120,8 @@ public class TspClientHelper : ITspClientHelper
             "@azure-tools/typespec-client-generator-cli",
             arguments.ToArray(),
             logOutputStream: true,
-            workingDirectory: workingDirectory
+            workingDirectory: workingDirectory,
+            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
         );
 
         var result = await npxHelper.Run(npxOptions, ct);

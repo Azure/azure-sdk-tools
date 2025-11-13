@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         // Command names
         private const string GenerateSdkCommandName = "generate";
-        private const int CommandTimeoutInMinutes = 30;
 
         // Generate command options
         private readonly Option<string> localSdkRepoPathOpt = new("--local-sdk-repo-path", "-r")

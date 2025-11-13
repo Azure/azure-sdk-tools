@@ -126,6 +126,7 @@ public class SdkGenerationToolTests
         // Arrange
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
         { 
@@ -157,6 +158,7 @@ public class SdkGenerationToolTests
 
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
@@ -186,6 +188,7 @@ public class SdkGenerationToolTests
         // Arrange
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         // Act - Use a non-existent file path
         var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, "/nonexistent/" + TspConfigFileName, null, null);
@@ -200,6 +203,7 @@ public class SdkGenerationToolTests
         // Arrange
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         var failedResult = new Models.Responses.TypeSpec.TspToolResponse 
         { 
@@ -224,6 +228,7 @@ public class SdkGenerationToolTests
         // Arrange
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         // Act - Use invalid remote URL that doesn't match GitHub blob pattern
         var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, InvalidRemoteTspConfigUrl, null, null);
@@ -238,6 +243,7 @@ public class SdkGenerationToolTests
         // Arrange
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         _mockTspClientHelper
             .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
@@ -270,6 +276,7 @@ public class SdkGenerationToolTests
 
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
@@ -306,6 +313,7 @@ public class SdkGenerationToolTests
 
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
         { 
@@ -340,6 +348,7 @@ public class SdkGenerationToolTests
 
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 

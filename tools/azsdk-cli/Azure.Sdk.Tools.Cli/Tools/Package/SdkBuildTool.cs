@@ -114,7 +114,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the build logs for details about the error", "Resolve the issue", "Re-run the tool"]);
+                return PackageOperationResponse.CreateFailure(
+                    $"An error occurred: {ex.Message}",
+                    nextSteps: [
+                        "Check the build logs for details about the error",
+                        "Resolve the issue",
+                        "Re-run the tool",
+                        "Run verify setup tool if the issue is environment related"
+                        ]);
             }
         }
     }

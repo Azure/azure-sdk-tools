@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.Samples;
+using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Samples;

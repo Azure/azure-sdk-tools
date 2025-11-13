@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
-using Azure.Sdk.Tools.Cli.Tools.Samples;
+using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using LibGit2Sharp;
 using Moq;
 

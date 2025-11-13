@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 [McpServerToolType, Description("Processes and analyzes test results from TRX files")]
 public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTool> logger) : MCPTool()
 {
-    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.PackageTest];
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
 
     // Options
     private readonly Option<string> trxPathOpt = new("--trx-file")

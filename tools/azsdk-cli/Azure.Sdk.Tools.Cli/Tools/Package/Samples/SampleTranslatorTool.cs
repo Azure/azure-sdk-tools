@@ -13,8 +13,9 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Samples;
 
-namespace Azure.Sdk.Tools.Cli.Tools.Samples
+namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 {
     /// <summary>
     /// Represents a translated sample with its filename and content.
@@ -51,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Samples
             this.microagentHostService = microagentHostService;
         }
 
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.PackageSample];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageSample];
 
         private readonly Option<string> fromOption = new("--from")
         {

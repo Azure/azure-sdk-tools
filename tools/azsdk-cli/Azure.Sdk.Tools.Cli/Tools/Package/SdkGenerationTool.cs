@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     logger.LogInformation("SDK Repository Name: {SdkRepoName}", sdkRepoName);
                     
                     // Run tsp-client update using the existing tsp-location.yaml
-                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspLocationDirectory, isCli: true, ct: ct);
+                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspLocationDirectory, ct: ct);
                     
                     if (!tspResult.IsSuccessful)
                     {

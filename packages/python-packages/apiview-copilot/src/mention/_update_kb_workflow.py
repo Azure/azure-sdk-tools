@@ -93,11 +93,7 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
         prompt_path = get_prompt_path(folder="mention", filename=self.memory_to_github_issue_prompt_file)
         prompt_inputs = self._build_issue_prompt_inputs(memory, guidelines, examples)
         
-        try:
-            raw_issue = prompty.execute(prompt_path, inputs=prompt_inputs)
-        except Exception as exc:
-            print(f"Error generating GitHub issue plan: {exc}")
-            raise
+        raw_issue = prompty.execute(prompt_path, inputs=prompt_inputs)
 
         return json.loads(raw_issue)
 

@@ -56,9 +56,9 @@ public class TspClientHelper : ITspClientHelper
         };
     }
 
-    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha, bool isCli, CancellationToken ct)
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha = null, bool isCli = false, CancellationToken ct = default)
     {
-        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}, commit: {commit}", tspLocationPath, outputDirectory, commitSha);
+        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}, commit: {commit}", tspLocationPath, outputDirectory, commitSha ?? "");
         
         if (!File.Exists(tspLocationPath))
         {
@@ -69,7 +69,12 @@ public class TspClientHelper : ITspClientHelper
         }
         var workingDir = Path.GetDirectoryName(Path.GetFullPath(tspLocationPath))!;
         
-        var args = new List<string> { "tsp-client", "update", "--commit", commitSha };
+        var args = new List<string> { "tsp-client", "update" };
+        if (!string.IsNullOrEmpty(commitSha))
+        {
+            args.Add("--commit");
+            args.Add(commitSha);
+        }
         
         var npxOptions = new NpxOptions(
             "@azure-tools/typespec-client-generator-cli",
@@ -94,6 +99,42 @@ public class TspClientHelper : ITspClientHelper
         {
             IsSuccessful = true,
             TypeSpecProject = outputDirectory
+        };
+    }
+
+    public async Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[] additionalArgs = null, CancellationToken ct = default)
+    {
+        logger.LogInformation("tsp-client init: {tspConfig} in {workingDir}", tspConfigPath, workingDirectory);
+
+        // Build arguments list dynamically
+        var arguments = new List<string> { "tsp-client", "init", "--update-if-exists", "--tsp-config", tspConfigPath };
+
+        if (additionalArgs != null && additionalArgs.Length > 0)
+        {
+            arguments.AddRange(additionalArgs);
+        }
+
+        var npxOptions = new NpxOptions(
+            "@azure-tools/typespec-client-generator-cli",
+            arguments.ToArray(),
+            logOutputStream: true,
+            workingDirectory: workingDirectory
+        );
+
+        var result = await npxHelper.Run(npxOptions, ct);
+        if (result.ExitCode != 0)
+        {
+            return new TspToolResponse
+            {
+                ResponseError = "Failed to initialize TypeSpec generation, see details in the logs.",
+                TypeSpecProject = workingDirectory
+            };
+        }
+
+        return new TspToolResponse
+        {
+            IsSuccessful = true,
+            TypeSpecProject = workingDirectory
         };
     }
 }

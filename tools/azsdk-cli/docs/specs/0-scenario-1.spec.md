@@ -256,7 +256,7 @@ Use MCP tool to run the tests and validation samples.
 **Expected Agent Activity:**
 
 1. Execute `azsdk_package_run_tests` in [playback mode](#playback-mode)
-2. Execute `validate-samples` to ensure samples are valid
+2. Execute `azsdk_package_run_check` to ensure samples are valid
 3. Report the result
 
 ### Update Package Metadata

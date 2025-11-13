@@ -7,7 +7,7 @@
 - Validate package names before adding to release plan
 - Allow forced creation when a release plan already exists
 - Add support for sample translation from one language to another
-- Updated CLI commands hierarchy
+- Updated CLI commands hierarchy to move all package related commands under `package` command group, all TypeSpec based commands under `tsp` command and similarly all release plan related commands under `release-plan`.
 - Added ChangelogContentUpdateTool, MetadataUpdateTool, and VersionUpdateTool
 
 ### Bugs Fixed

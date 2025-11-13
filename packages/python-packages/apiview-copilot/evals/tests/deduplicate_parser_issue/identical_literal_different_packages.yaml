@@ -1,0 +1,38 @@
+testcase: identical_literal_different_packages
+language: python
+package_name: azure.storage
+code: "foo: Literal[bar]"
+issue_context: |
+  [Python APIView] Literal values are not quoted
+  
+  The parser is failing to handle unquoted string values in Literal type annotations.
+  
+  **Bad code:**
+  ```python
+  foo: Literal[bar]
+  ```
+  
+  **Should be:**
+  ```python
+  foo: Literal["bar"]
+  ```
+existing_issues: |
+  [
+    {
+      "number": 123,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/123",
+      "title": "[Python APIView] Literal values are not quoted",
+      "body": "The parser is failing to handle unquoted string values in Literal type annotations.\n\n**Bad code:**\n```python\nval: Literal[baz]\n```\n\n**Should be:**\n```python\nval: Literal[\"baz\"]\n```\n\n**Package:** azure.widget",
+      "created_at": "2025-10-15T10:00:00Z"
+    },
+    {
+      "number": 456,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/456",
+      "title": "[Python APIView] Complex generics cause parser failure",
+      "body": "Parser crashes on deeply nested generic types like Optional[Union[List[Tuple[int, str]], Dict[str, Any]]]",
+      "created_at": "2025-10-12T15:30:00Z"
+    }
+  ]
+response:
+  action: no-op
+  issue: 123

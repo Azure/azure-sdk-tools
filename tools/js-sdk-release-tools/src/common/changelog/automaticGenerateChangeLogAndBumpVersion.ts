@@ -20,12 +20,13 @@ import {
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
-import { SDKType } from "../types.js"
+import { ModularSDKType, SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog, extractNpmPackage, extractNextVersionPackage, cleanupResources } from '../utils.js';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
 import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
 import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
+import { getModularSDKType } from '../../utils/generateInputUtils.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -37,6 +38,12 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
     const nextVersion = getNextBetaVersion(npmViewResult);
+
+    const modularSDKType = getModularSDKType(packageFolderPath);
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        logger.info(`Skipping changelog generation for DataPlane SDK: ${packageName}`);
+        return;
+    }
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
@@ -58,6 +65,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
             const clientType = getSDKType(packageFolderPath);
             if (sdkType && sdkType === 'mgmt' || clientType === SDKType.RestLevelClient) {
                 logger.info(`Package ${packageName} released before is track2 sdk.`);
+                
                 logger.info('Start to generate changelog by comparing api.md.');
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);

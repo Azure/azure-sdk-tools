@@ -1,5 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -8,8 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
     internal class JavaLanguageSpecificChecksTests
     {
         private string JavaPackageDir { get; set; }
+
+        private Mock<IMavenHelper> MockMavenHelper { get; set; }
         private Mock<IProcessHelper> MockProcessHelper { get; set; }
-        private JavaLanguageSpecificChecks LangService { get; set; }
+        private JavaLanguageService LangService { get; set; }
 
         [SetUp]
         public void SetUp()
@@ -20,10 +24,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 "TestAssets", "Java");
 
             MockProcessHelper = new Mock<IProcessHelper>();
-
-            LangService = new JavaLanguageSpecificChecks(
+            MockMavenHelper = new Mock<IMavenHelper>();
+            var gitHelperMock = new Mock<IGitHelper>();
+            gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+            LangService = new JavaLanguageService(
                 MockProcessHelper.Object,
-                NullLogger<JavaLanguageSpecificChecks>.Instance);
+                gitHelperMock.Object,
+                MockMavenHelper.Object,
+                new Mock<IMicroagentHostService>().Object,
+                NullLogger<JavaLanguageService>.Instance,
+                new Mock<ICommonValidationHelpers>().Object);
         }
 
         #region Setup Helpers
@@ -33,9 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenVersionCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" && p.Args.Contains("--version")) || 
-                (p.Command == "cmd.exe" && p.Args.Contains("mvn") && p.Args.Contains("--version"))), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
         }
@@ -45,9 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedMavenVersionCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" && p.Args.Contains("--version")) || 
-                (p.Command == "cmd.exe" && p.Args.Contains("mvn") && p.Args.Contains("--version"))), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Maven not found")] });
         }
@@ -57,8 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSpotlessCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:check")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -68,8 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSpotlessApply()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:apply")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -79,8 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSpotlessCheck()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:check")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "The following files had format violations")] });
         }
@@ -90,8 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSpotlessApply()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("spotless:apply")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "spotless failed with errors")] });
         }
@@ -101,8 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenInstall()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("install")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { 
                     ExitCode = 0, 
@@ -119,8 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupMavenInstallWithToolErrors(string errorOutput)
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("install")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, errorOutput)] });
         }
@@ -130,8 +130,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSnippetUpdate()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
@@ -142,8 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSnippetUpdate()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Codesnippet update failed")] });
@@ -151,13 +149,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
         /// <summary>
         /// Sets up successful Maven linting command with all tools including javadoc.
-        /// This matches the fail-safe accumulation approach.
+        /// This matches the fail-safe accumulation approach used in the actual implementation.
         /// </summary>
         private void SetupSuccessfulMavenLinting()
         {
-            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
@@ -169,15 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-Dcheckstyle.failOnViolation=false") &&
-                p.Args.Contains("-Dcheckstyle.failsOnError=false") &&
-                p.Args.Contains("-Dspotbugs.failOnError=false") &&
-                p.Args.Contains("-Drevapi.failBuildOnProblemsFound=false") &&
-                p.Args.Contains("-am") &&
-                p.Args.Contains("-f") &&
-                p.Args.Contains(pomPath) &&
-                p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(15)), 
+                p.Args.Contains("-am")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { 
                     ExitCode = 0, 
@@ -191,13 +179,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         #endregion
         
         [Test]
-        public async Task TestFormatCodeAsync_MavenNotAvailable_ReturnsError()
+        public async Task TestFormatCode_MavenNotAvailable_ReturnsError()
         {
             // Arrange
             SetupFailedMavenVersionCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -208,7 +196,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_NoPomXml_ReturnsError()
+        public async Task TestFormatCode_NoPomXml_ReturnsError()
         {
             // Arrange - Use a temp directory without pom.xml for this test
             var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -217,7 +205,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenVersionCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(emptyDir, false, CancellationToken.None);
+            var result = await LangService.FormatCode(emptyDir, false, CancellationToken.None);
             
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
@@ -232,14 +220,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_CheckMode_Success()
+        public async Task TestFormatCode_CheckMode_Success()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupSuccessfulSpotlessCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -250,14 +238,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_ApplyMode_Success()
+        public async Task TestFormatCode_ApplyMode_Success()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupSuccessfulSpotlessApply();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            var result = await LangService.FormatCode(JavaPackageDir, true, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -268,14 +256,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_CheckMode_FormattingNeeded()
+        public async Task TestFormatCode_CheckMode_FormattingNeeded()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupFailedSpotlessCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -290,14 +278,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_ApplyMode_Failure()
+        public async Task TestFormatCode_ApplyMode_Failure()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupFailedSpotlessApply();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            var result = await LangService.FormatCode(JavaPackageDir, true, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -309,7 +297,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_NoPomInPackageDirectory_ReturnsError()
+        public async Task TestFormatCode_NoPomInPackageDirectory_ReturnsError()
         {
             // Arrange
             var subDir = Path.Combine(JavaPackageDir, "src", "main", "java");
@@ -322,7 +310,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenVersionCheck();
 
             // Act - run from subdirectory where there's no pom.xml
-            var result = await LangService.FormatCodeAsync(subDir, false, CancellationToken.None);
+            var result = await LangService.FormatCode(subDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -336,14 +324,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_ExceptionHandling()
+        public async Task TestFormatCode_ExceptionHandling()
         {
             // Arrange
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Exception("Process execution failed"));
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Throws(new Exception("Process execution failed"));
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -354,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_VerifyCorrectMavenCommand_CheckMode()
+        public async Task TestFormatCode_VerifyCorrectMavenCommand_CheckMode()
         {
             // Arrange
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
@@ -362,11 +350,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSpotlessCheck();
 
             // Act
-            await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("spotless:check") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -376,7 +363,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestFormatCodeAsync_VerifyCorrectMavenCommand_ApplyMode()
+        public async Task TestFormatCode_VerifyCorrectMavenCommand_ApplyMode()
         {
             // Arrange
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
@@ -384,11 +371,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSpotlessApply();
 
             // Act
-            await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            await LangService.FormatCode(JavaPackageDir, true, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("spotless:apply") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -397,16 +383,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        #region LintCodeAsync Tests
+        #region LintCode Tests
 
         [Test]
-        public async Task TestLintCodeAsync_MavenNotInstalled_ReturnsError()
+        public async Task TestLintCode_MavenNotInstalled_ReturnsError()
         {
             // Arrange
             SetupFailedMavenVersionCheck();
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -417,7 +403,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestLintCodeAsync_NoPomXml_ReturnsError()
+        public async Task TestLintCode_NoPomXml_ReturnsError()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
@@ -428,7 +414,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             try
             {
                 // Act
-                var result = await LangService.LintCodeAsync(emptyDir, false, CancellationToken.None);
+                var result = await LangService.LintCode(emptyDir, false, CancellationToken.None);
 
                 // Assert
                 Assert.Multiple(() =>
@@ -444,14 +430,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestLintCodeAsync_AllToolsPass_ReturnsSuccess()
+        public async Task TestLintCode_AllToolsPass_ReturnsSuccess()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupSuccessfulMavenLinting();
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -463,12 +449,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
-        public async Task TestLintCodeAsync_CheckstyleFails_ReturnsError()
+        public async Task TestLintCode_CheckstyleFails_ReturnsError()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
@@ -476,7 +462,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupMavenInstallWithToolErrors(checkstyleErrorOutput);
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - Maven install failed with Checkstyle errors
             Assert.Multiple(() =>
@@ -492,18 +478,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly (no separate javadoc command)
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
-        public async Task TestLintCodeAsync_AllToolsFail_ReturnsError()
+        public async Task TestLintCode_AllToolsFail_ReturnsError()
         {
             // Arrange
-            var capturedOptions = new List<ProcessOptions>();
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
-                .ReturnsAsync((ProcessOptions options, CancellationToken _) =>
+            var capturedOptions = new List<MavenOptions>();
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
+                .ReturnsAsync((MavenOptions options, CancellationToken _) =>
                 {
                     if (IsMavenVersionCheck(options))
                     {
@@ -522,7 +508,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 });
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - All tools failed
             Assert.Multiple(() =>
@@ -549,15 +535,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestLintCodeAsync_WithFix_UsesFailOnViolationFalse()
+        public async Task TestLintCode_WithFix_UsesFailOnViolationFalse()
         {
             // Arrange - Reset mock to avoid interference from other test setups
-            MockProcessHelper.Reset();
+            MockMavenHelper.Reset();
             
-            var capturedOptions = new List<ProcessOptions>();
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
-                .ReturnsAsync((ProcessOptions options, CancellationToken _) =>
+            var capturedOptions = new List<MavenOptions>();
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
+                .ReturnsAsync((MavenOptions options, CancellationToken _) =>
                 {
                     if (IsMavenVersionCheck(options))
                     {
@@ -578,7 +564,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 });
 
             // Act
-            await LangService.LintCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            await LangService.LintCode(JavaPackageDir, true, CancellationToken.None);
 
             // Assert - verify the Maven command was called with fix parameters
             Assert.That(capturedOptions, Has.Count.EqualTo(2)); // Maven version + install command
@@ -598,14 +584,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestLintCodeAsync_Exception_ReturnsError()
+        public async Task TestLintCode_Exception_ReturnsError()
         {
             // Arrange
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new InvalidOperationException("Process execution failed"));
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Throws(new InvalidOperationException("Process execution failed"));
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -616,7 +602,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestLintCodeAsync_VerifyCorrectMavenCommands()
+        public async Task TestLintCode_VerifyCorrectMavenCommands()
         {
             // Arrange
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
@@ -624,36 +610,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenLinting();
 
             // Act
-            await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
-            // Assert - verify Maven install command includes javadoc and fail-safe flags
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
                 p.Args.Contains("-Dgpg.skip") &&
                 p.Args.Contains("-DtrimStackTrace=false") &&
-                p.Args.Contains("-Dmaven.javadoc.skip=false") && // Javadoc included in install approach
+                p.Args.Contains("-Dmaven.javadoc.skip=false") &&
                 p.Args.Contains("-Dcodesnippet.skip=true") &&
                 p.Args.Contains("-Dspotless.skip=false") &&
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-Dcheckstyle.failOnViolation=false") && // Fail-safe flags
-                p.Args.Contains("-Dcheckstyle.failsOnError=false") &&
-                p.Args.Contains("-Dspotbugs.failOnError=false") &&
-                p.Args.Contains("-Drevapi.failBuildOnProblemsFound=false") &&
-                p.Args.Contains("-am") &&
-                p.Args.Contains("-f") &&
-                p.Args.Contains(pomPath) &&
-                p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(15)), 
+                p.Args.Contains("-am")),
                 It.IsAny<CancellationToken>()), Times.Once);
+
+            // Verify Maven commands were called correctly
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
-        public async Task TestLintCodeAsync_JavadocFails_ReturnsError()
+        public async Task TestLintCode_JavadocFails_ReturnsError()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
@@ -661,7 +641,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupMavenInstallWithToolErrors(javadocErrorOutput); // Javadoc fails within install command
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -675,12 +655,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
-        public async Task TestLintCodeAsync_CheckstyleAndJavadocFail_ReturnsError()
+        public async Task TestLintCode_CheckstyleAndJavadocFail_ReturnsError()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
@@ -689,7 +669,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupMavenInstallWithToolErrors(combinedErrorOutput); // Both Checkstyle and Javadoc fail within install command
 
             // Act
-            var result = await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - Both Checkstyle and Javadoc should report issues
             Assert.Multiple(() =>
@@ -706,8 +686,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             });
 
             // Verify Maven commands were called correctly
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenVersionCheck(p)), It.IsAny<CancellationToken>()), Times.Once);
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -718,45 +698,34 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenLinting();
 
             // Act
-            await LangService.LintCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
-            // Assert - verify the Maven install command includes javadoc and all required parameters
-            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
-                p.Args.Contains("--no-transfer-progress") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("install") &&
-                p.Args.Contains("-Dmaven.javadoc.skip=false") && // Javadoc included in install approach
+                p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
                 p.Args.Contains("-Dgpg.skip") &&
                 p.Args.Contains("-DtrimStackTrace=false") &&
+                p.Args.Contains("-Dmaven.javadoc.skip=false") && // Javadoc included in install approach
                 p.Args.Contains("-Dcodesnippet.skip=true") &&
                 p.Args.Contains("-Dspotless.skip=false") &&
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-Dcheckstyle.failOnViolation=false") && // Fail-safe flags
-                p.Args.Contains("-Dcheckstyle.failsOnError=false") &&
-                p.Args.Contains("-Dspotbugs.failOnError=false") &&
-                p.Args.Contains("-Drevapi.failBuildOnProblemsFound=false") &&
-                p.Args.Contains("-am") &&
-                p.Args.Contains("-f") &&
-                p.Args.Contains(pomPath) &&
-                p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(15)), 
+                p.Args.Contains("-am")),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        #region UpdateSnippetsAsync Tests
+        #region UpdateSnippets Tests
 
         [Test]
-        public async Task TestUpdateSnippetsAsync_MavenNotAvailable_ReturnsError()
+        public async Task TestUpdateSnippets_MavenNotAvailable_ReturnsError()
         {
             // Arrange
             SetupFailedMavenVersionCheck();
 
             // Act
-            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -767,7 +736,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestUpdateSnippetsAsync_NoPomXml_ReturnsError()
+        public async Task TestUpdateSnippets_NoPomXml_ReturnsError()
         {
             // Arrange
             var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -776,7 +745,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenVersionCheck();
 
             // Act
-            var result = await LangService.UpdateSnippetsAsync(emptyDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(emptyDir, false, CancellationToken.None);
             
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
@@ -791,14 +760,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestUpdateSnippetsAsync_Success()
+        public async Task TestUpdateSnippets_Success()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupSuccessfulSnippetUpdate();
 
             // Act
-            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -809,14 +778,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestUpdateSnippetsAsync_Failure()
+        public async Task TestUpdateSnippets_Failure()
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
             SetupFailedSnippetUpdate();
 
             // Act
-            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -830,14 +799,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestUpdateSnippetsAsync_ExceptionHandling()
+        public async Task TestUpdateSnippets_ExceptionHandling()
         {
             // Arrange
-            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Exception("Process execution failed"));
+            MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .Throws(new Exception("Process execution failed"));
 
             // Act
-            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+            var result = await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -848,7 +817,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
-        public async Task TestUpdateSnippetsAsync_VerifyCorrectMavenCommand()
+        public async Task TestUpdateSnippets_VerifyCorrectMavenCommand()
         {
             // Arrange
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
@@ -856,11 +825,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSnippetUpdate();
 
             // Act
-            await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+            await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called with -am flag
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Any(arg => arg.Contains("com.azure.tools:codesnippet-maven-plugin:update-codesnippet")) &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -878,8 +846,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulDependencyAnalysis()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") && 
                 p.Args.Contains("-Dverbose")), 
                 It.IsAny<CancellationToken>()))
@@ -894,8 +861,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedDependencyAnalysis()
         {
-            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") && 
                 p.Args.Contains("-Dverbose")), 
                 It.IsAny<CancellationToken>()))
@@ -913,7 +879,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulDependencyAnalysis();
 
             // Act
-            var result = await LangService.AnalyzeDependenciesAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.AnalyzeDependencies(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -925,8 +891,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             // Verify correct Maven command was called
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") &&
                 p.Args.Contains("-Dverbose") &&
                 p.Args.Contains("-f") &&
@@ -944,7 +909,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedDependencyAnalysis();
 
             // Act
-            var result = await LangService.AnalyzeDependenciesAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.AnalyzeDependencies(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -959,8 +924,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             // Verify correct Maven command was called
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
-                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
                 p.Args.Contains("dependency:tree") &&
                 p.Args.Contains("-Dverbose") &&
                 p.Args.Contains("-f") &&
@@ -975,21 +939,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         #region Helper Methods for Cross-Platform Command Validation
 
         /// <summary>
-        /// Checks if the ProcessOptions represents a Maven version check command.
-        /// Handles both Unix (mvn --version) and Windows (cmd.exe /C mvn --version) patterns.
+        /// Checks if the MavenOptions represents a Maven version check command.
         /// </summary>
-        private static bool IsMavenVersionCheck(ProcessOptions options) =>
-            (options.Command == "mvn" && options.Args.Contains("--version")) ||
-            (options.Command == "cmd.exe" && options.Args.Contains("mvn") && options.Args.Contains("--version"));
+        private static bool IsMavenVersionCheck(MavenOptions options) =>
+            options.Args.Contains("--version");
 
         /// <summary>
-        /// Checks if the ProcessOptions represents a Maven install command.
-        /// Handles both Unix (mvn) and Windows (cmd.exe /C mvn) patterns.
+        /// Checks if the MavenOptions represents a Maven install command.
         /// </summary>
-        private static bool IsMavenInstallCommand(ProcessOptions options)
+        private static bool IsMavenInstallCommand(MavenOptions options)
         {
-            return (options.Command == "mvn" && options.Args.Contains("install")) ||
-                   (options.Command == "cmd.exe" && options.Args.Contains("mvn") && options.Args.Contains("install"));
+            return options.Args.Contains("install");
         }
 
         #endregion

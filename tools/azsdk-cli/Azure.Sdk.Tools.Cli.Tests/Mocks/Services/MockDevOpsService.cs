@@ -1,14 +1,14 @@
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
-        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             throw new NotImplementedException();
         }
@@ -74,6 +74,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
+        Task<List<ReleasePlanDetails>> IDevOpsService.GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan)
+        {
+            var releasePlans = new List<ReleasePlanDetails>();
+            return Task.FromResult(releasePlans);
+        }
+        
         Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
         {
             var releasePlan = new ReleasePlanDetails

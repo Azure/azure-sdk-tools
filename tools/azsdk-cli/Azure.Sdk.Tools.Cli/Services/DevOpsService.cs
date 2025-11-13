@@ -14,7 +14,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -88,6 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId);
         public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
+        public Task<List<ReleasePlanDetails>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
@@ -97,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
-        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
+        public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
@@ -134,6 +135,43 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
+        }
+
+        public async Task<List<ReleasePlanDetails>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan=false)
+        {
+            try
+            {
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANER_APP_TEST}'";
+                query += $" AND [Custom.ProductServiceTreeID] = '{productTreeId}'";
+                query += $" AND [Custom.SDKtypetobereleased] = '{sdkReleaseType}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] IN ('New','Not Started','In Progress')";
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("Release plan does not exist for the given product id {productTreeId}",productTreeId);
+                    return new List<ReleasePlanDetails>();
+                }
+
+                var releasePlans = new List<ReleasePlanDetails>();
+
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    if (releasePlan.SpecAPIVersion == specApiVersion)
+                    {
+                        releasePlans.Add(releasePlan);
+                    }
+                }
+
+                return releasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plans for product id {productTreeId}", productTreeId);
+                throw new Exception($"Failed to get release plans for product id {productTreeId}. Error: {ex.Message}");
+            }
         }
 
         private async Task<ReleasePlanDetails> MapWorkItemToReleasePlanAsync(WorkItem workItem)
@@ -922,7 +960,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// If package version is given, then it will find the package work item for that version.
         /// If package version is empty, then it will find the latest package work item for that package name and language.
         /// </summary>
-        public async Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        public async Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             language = MapLanguageIdToName(language);
             if (packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersion.Contains(' ') || packageVersion.Contains('\'') || packageVersion.Contains('"'))
@@ -946,22 +984,19 @@ namespace Azure.Sdk.Tools.Cli.Services
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
         }
 
-        public static PackageResponse MapPackageWorkItemToModel(WorkItem workItem)
+        public static PackageWorkitemResponse MapPackageWorkItemToModel(WorkItem workItem)
         {
             if (workItem == null)
             {
                 throw new ArgumentNullException(nameof(workItem), "Work item cannot be null.");
             }
-
-            PackageResponse packageModel = new()
+            PackageWorkitemResponse packageModel = new()
             {
-                Name = GetWorkItemValue(workItem, "Custom.Package"),
+                PackageName = GetWorkItemValue(workItem, "Custom.Package"),
                 Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),
-                Language = GetWorkItemValue(workItem, "Custom.Language"),
                 WorkItemId = workItem.Id ?? 0,
                 WorkItemUrl = workItem.Url,
                 State = GetWorkItemValue(workItem, "System.State"),
-                PackageType = GetWorkItemValue(workItem, "Custom.PackageType"),
                 DisplayName = GetWorkItemValue(workItem, "Custom.PackageDisplayName"),
                 PackageRepoPath = GetWorkItemValue(workItem, "Custom.PackageRepoPath"),
                 changeLogStatus = GetWorkItemValue(workItem, "Custom.ChangeLogStatus"),
@@ -973,7 +1008,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
                 LatestPipelineRun = GetWorkItemValue(workItem, "Custom.LatestPipelineRun")
             };
-
+            packageModel.SetLanguage(GetWorkItemValue(workItem, "Custom.Language"));
+            packageModel.SetPackageType(GetWorkItemValue(workItem, "Custom.PackageType"));
             var plannedPackages = GetWorkItemValue(workItem, "Custom.PlannedPackages");
             packageModel.PlannedReleases = ParseHtmlPackageData(plannedPackages);
             var releasedPackages = GetWorkItemValue(workItem, "Custom.ShippedPackages");

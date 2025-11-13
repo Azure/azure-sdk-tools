@@ -1,0 +1,48 @@
+---
+name: Analyze Comment Themes
+description: A prompt that analyzes API review comments to identify recurring themes and group them accordingly.
+authors: 
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    api_version: 2025-03-01-preview
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-5
+  parameters:
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 80000
+    reasoning_effort: "medium"
+    response_format: ${file:analyze_comment_themes_result_schema.json}
+---
+# Analyze and Bucket Comment Themes
+
+You are an expert API reviewer. Given a list of review comments, analyze them for recurring themes, patterns, or issues. Group the comments into buckets by theme, and provide a short summary for each bucket. If possible, give each bucket a descriptive name and list the comments that belong to it.
+
+## Input
+Comments:
+{{ comments }}
+
+
+## Output
+Return a JSON object matching the following schema:
+
+{
+  "themes": [
+    {
+      "name": "Theme Name",
+      "summary": "Short summary of the theme.",
+      "examples": [
+        "Comment text 1",
+        "Comment text 2",
+        "Comment text 3"
+      ]
+    },
+    ...
+  ]
+}
+
+Each theme should have a descriptive name, a short summary, and a list of example comments (as strings) that fit the theme. If a comment fits multiple themes, include its text in all relevant buckets.

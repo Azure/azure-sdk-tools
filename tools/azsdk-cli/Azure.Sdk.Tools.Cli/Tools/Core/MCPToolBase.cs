@@ -2,6 +2,10 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.Diagnostics;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -69,6 +73,11 @@ public abstract class MCPToolBase
                 activity?.SetStatus(ActivityStatusCode.Error);
             }
 
+            if (activity != null)
+            {
+                AddCustomTelemetryFromResponse(activity, response);
+            }
+
             output.OutputCommandResponse(response);
 
             return response.ExitCode;
@@ -78,6 +87,26 @@ public abstract class MCPToolBase
             activity?.AddException(ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
+        }
+    }
+
+    private static void AddCustomTelemetryFromResponse(Activity activity, CommandResponse response)
+    {
+        var responseProperties = response.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var prop in responseProperties)
+        {
+            // Check if property is tagged for telemetry
+            var telemetryAttr = prop.GetCustomAttributes<TelemetryAttribute>();
+            if (telemetryAttr != null)
+            {
+                var value = prop.GetValue(response);
+                var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
+                string propertyName = jsonAttr?.Name ?? prop.Name;
+                if (value != null)
+                {
+                    activity.AddTag(propertyName, JsonSerializer.Serialize(value));
+                }
+            }
         }
     }
 

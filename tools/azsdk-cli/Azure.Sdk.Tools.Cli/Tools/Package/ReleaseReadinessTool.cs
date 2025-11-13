@@ -8,8 +8,8 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -45,19 +45,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
-        public async Task<PackageResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
+        public async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
             {
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
-                    package = new PackageResponse
+                    package = new PackageWorkitemResponse
                     {
-                        Name = packageName,
-                        Language = language,
+                        PackageName = packageName,   
                         ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language."
                     };
+                    package.SetLanguage(language);
                     return package;
                 }
 
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
                 bool isPreviewRelease = releaseType.Equals("Beta");
-                bool isDataPlanePackage = !package.PackageType.Equals("mgmt");
+                bool isDataPlanePackage = package.PackageType != SdkType.Management;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -127,13 +127,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             catch (Exception ex)
             {
-                var package = new PackageResponse
+                var package = new PackageWorkitemResponse
                 {
-                    Name = packageName,
-                    Language = language,
+                    PackageName = packageName,
                     IsPackageReady = false,
                     ResponseError = $"Failed to check package readiness for '{packageName}' in language '{language}'. Error {ex.Message}"
                 };
+                package.SetLanguage(language);
                 return package;
             }
         }

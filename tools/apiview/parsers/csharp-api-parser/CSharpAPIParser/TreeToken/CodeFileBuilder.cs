@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Immutable;
+using System.ComponentModel;
+using ApiView;
 using APIView.Analysis;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
-using System.Collections.Immutable;
-using System.ComponentModel;
-using ApiView;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -81,7 +81,7 @@ namespace CSharpAPIParser.TreeToken
                 Language = "C#",
                 ParserVersion = CurrentVersion,
                 PackageName = assemblySymbol.Name,
-                PackageVersion = assemblySymbol.Identity.Version.ToString()
+                PackageVersion = GetAssemblyInformationalVersion(assemblySymbol) ?? assemblySymbol.Identity.Version.ToString()
             };
 
             if (dependencies != null)
@@ -1078,6 +1078,23 @@ namespace CSharpAPIParser.TreeToken
                 throw new InvalidOperationException(
                     $"Duplicate LineId values found: {string.Join(", ", duplicates.Distinct())}");
             }
+        }
+
+        private static string? GetAssemblyInformationalVersion(IAssemblySymbol assemblySymbol)
+        {
+            var attr = assemblySymbol
+                .GetAttributes()
+                .FirstOrDefault(a => a.AttributeClass?.Name == "AssemblyInformationalVersionAttribute");
+
+            if (attr == null || attr.ConstructorArguments.Length == 0)
+                return null;
+            
+            var infoVersion = attr.ConstructorArguments[0].Value as string;
+            if (string.IsNullOrWhiteSpace(infoVersion))
+                return null;
+
+            var version = infoVersion.Split('+')[0].Trim();
+            return version.Length == 0 ? null : version;
         }
     }
 }

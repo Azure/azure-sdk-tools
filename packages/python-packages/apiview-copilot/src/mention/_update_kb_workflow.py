@@ -83,12 +83,16 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
         if not self.reasoning:
             raise ValueError("Cannot generate GitHub issue plan without reasoning from parse_conversation_action assigned in self.reasoning")
         
+        #   TODO: Running sample in parse_conversation_to_github yields no related guidelines.
+        #   What is the desired behavior in this case? 
+        #   Should we proceed to create an issue anyway, or handle it differently?
+        
         # if not memory.related_guidelines:
         #     raise RuntimeError("No related guidelines found; cannot generate GitHub issue plan.")
 
         prompt_path = get_prompt_path(folder="mention", filename=self.memory_to_github_issue_prompt_file)
-
         prompt_inputs = self._build_issue_prompt_inputs(memory, guidelines, examples)
+        
         try:
             raw_issue = prompty.execute(prompt_path, inputs=prompt_inputs)
         except Exception as exc:
@@ -105,13 +109,10 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
     ) -> dict:
         """Serialize knowledge-base entities into the format expected by the GitHub issue prompt."""
 
-        def dump_model(model):
-            return model.model_dump(exclude_none=True)
-
         return {
-            "memory": dump_model(memory),
-            "guidelines": [dump_model(g) for g in guidelines],
-            "examples": [dump_model(ex) for ex in examples],
+            "memory": memory.model_dump(exclude_none=True),
+            "guidelines": [g.model_dump(exclude_none=True) for g in guidelines],
+            "examples": [ex.model_dump(exclude_none=True) for ex in examples],
             "reasoning": self.reasoning,
         }
 

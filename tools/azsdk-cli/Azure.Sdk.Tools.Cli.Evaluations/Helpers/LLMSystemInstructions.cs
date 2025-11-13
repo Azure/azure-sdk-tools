@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var linkRegex = new Regex(@"\[([^\]]+)\]\(([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
 
             var matches = linkRegex.Matches(copilotInstructions);
-            var instruction = matches
+            var instructions = matches
                 .Select(match => GetMentionedInstructions(match.Groups[2].Value));
             
             var builder = new StringBuilder(copilotInstructions);
@@ -44,8 +44,13 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             instructionRelativePath = instructionRelativePath.Replace('\\', '/');
             var instructionUri = new Uri(Path.Combine(copilotBaseDirectory, instructionRelativePath));
             string instructionPath = Path.GetFullPath(instructionUri.LocalPath);
-            return File.ReadAllText(instructionPath);
 
+            if(!Path.Exists(instructionPath))
+            {
+                throw new FileNotFoundException($"Could not find instruction file mentioned inside of copilot instructions at path: {instructionPath}");
+            }
+
+            return File.ReadAllText(instructionPath);
         }
 
         private static readonly string DefaultToolInstructions =

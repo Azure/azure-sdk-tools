@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
             ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
         
-        private static readonly bool UseMCPRelease = bool.Parse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE")) ?? false;
+        private static readonly bool UseMCPRelease = bool.TryParse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE"), out var result) && result;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
         private static readonly string localMcpPowershellScriptPath = @"../../../../../eng/common/mcp/azure-sdk-mcp.ps1";
         public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
@@ -100,6 +100,11 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             {
                 throw new InvalidOperationException(
                     "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH must be provided.");
+            }
+
+            if(!Path.Exists(GetCopilotInstructionsPath))
+            {
+                throw new FileNotFoundException($"Could not find copilot instructions file at path: {GetCopilotInstructionsPath}");
             }
         }
     }

@@ -127,28 +127,26 @@ public async Task Evaluate_YourScenarioName()
     ];
 
     // Build scenario data from prompt
-    var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-    var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
+    var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
 
     // Configure input validation (set to false to skip parameter checking)
     bool checkInputs = true;
-    var additionalContexts = new EvaluationContext[]
-    {
-        new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-    };
 
     // Run the evaluation
     var result = await EvaluationHelper.RunScenarioAsync(
         scenarioName: this.ScenarioName,
         scenarioData: scenarioData,
-        expectedToolResults: expectedToolResults,
         chatCompletion: s_chatCompletion!,
         chatConfig: s_chatConfig!,
         executionName: s_executionName,
         reportingPath: ReportingPath,
+        toolNames: s_toolNames!,
         evaluators: [new ExpectedToolInputEvaluator()],
         enableResponseCaching: true,
-        additionalContexts: additionalContexts);
+        additionalContexts: new EvaluationContext[]
+        {
+            new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
+        });
 
     // Assert the results
     EvaluationHelper.ValidateToolInputsEvaluator(result);

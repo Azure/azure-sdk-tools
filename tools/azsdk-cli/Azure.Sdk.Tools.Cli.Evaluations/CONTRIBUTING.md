@@ -72,7 +72,7 @@ Load pre-recorded chat conversations from JSON files in the `TestData/` director
 [Test]
 public async Task Evaluate_YourScenarioName()
 {
-    // Define the user prompt
+    // Option A: Define the user prompt
     const string prompt = "Generate SDK for my TypeSpec project";
     
     // Specify expected tools (in order they should be called)
@@ -84,7 +84,10 @@ public async Task Evaluate_YourScenarioName()
 
     // Build scenario data from prompt
     var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-    var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
+    
+    // Option B: Load from JSON file (for complex scenarios with chat history)
+    // var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");
+    // var scenarioData = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
 
     // Configure input validation (set to false to skip parameter checking)
     bool checkInputs = true;
@@ -180,8 +183,25 @@ dotnet test --filter "TestName~YourScenarioName"
 dotnet test
 ```
 
-
 ## Custom Evaluators
+
+### Available Evaluators
+
+#### Current Custom Evaluators
+
+- **ExpectedToolInputEvaluator**: Validates that the agent calls the correct tools with the proper input parameters in the expected sequence.
+
+#### Built-in Library Evaluators
+
+The Microsoft.Extensions.AI.Evaluation library provides several built-in evaluators. Here are the top 5 most useful for our scenarios:
+
+- **ToolCallAccuracyEvaluator**: Evaluates an AI system's effectiveness at using the tools supplied to it
+- **RelevanceEvaluator**: Measures how relevant the response is to the user's query
+- **GroundednessEvaluator**: Checks if the response is grounded in the provided context
+- **CoherenceEvaluator**: Assesses how well the response flows logically
+- **IntentResolutionEvaluator**: Evaluates an AI system's effectiveness at identifying and resolving user intent
+
+For a complete list of built-in evaluators, see the [Microsoft.Extensions.AI.Evaluation.Quality Namespace documentation](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.ai.evaluation.quality?view=net-9.0-pp).
 
 ### Creating Custom Evaluators
 
@@ -211,3 +231,8 @@ public class CustomEvaluator : IEvaluator
     }
 }
 ```
+
+Additional custom evaluators can be created to explore different evaluation areas, such as:
+- Evaluating the responses returned by MCP tools
+- Custom overall confidence of response
+- etc...

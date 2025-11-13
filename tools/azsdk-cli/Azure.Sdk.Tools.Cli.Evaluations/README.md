@@ -32,15 +32,9 @@ Configure the following environment variables for the evaluation framework:
 #### Required Variables
 
 ```bash
-# Azure OpenAI Configuration
 AZURE_OPENAI_ENDPOINT=https://your-openai-resource.openai.azure.com/
 AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=your-deployment-name
 COPILOT_INSTRUCTIONS_REPOSITORY_NAME=azure-sdk-tools
-COPILOT_INSTRUCTIONS_REPOSITORY_OWNER=Azure
-```
-
-**Optional Local File Path**
-```bash
 COPILOT_INSTRUCTIONS_PATH=path/to/copilot-instructions.md
 ```
 
@@ -52,6 +46,12 @@ dotnet test
 ```
 
 The framework automatically generates HTML reports in the `reports/` directory after test execution.
+
+### Pipeline Integration
+
+The evaluation framework runs automatically in CI/CD pipelines when pull requests modify azsdk cli. Changes to `.github/copilot-instructions.md` or any instruction files in `eng/common/instructions/` would also be triggered but in progress. This ensures instruction or mcp changes don't negatively impact agent behavior before merging. The evaluations run alongside other PR validation tests and must pass for the PR to be merged.
+
+**Pipeline**: [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) - Configuration in `eng/common/pipelines/copilot-instruction-evals.yml`
 
 ## Walkthrough: Release Plan Creation Evaluation
 

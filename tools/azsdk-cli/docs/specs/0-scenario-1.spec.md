@@ -279,6 +279,8 @@ _Direct command-line interface usage for [CLI mode](#cli-mode):_
 
 ### 1. Verify Setup
 
+For Python requirements, set environment variable `AZSDKTOOLS_PYTHON_VENV_PATH` to the path to the desired virtual environment to check.
+
 **Command:**
 ```bash
 azsdk verify setup --languages Dotnet Java JavaScript Python Go
@@ -287,7 +289,6 @@ azsdk verify setup --languages Dotnet Java JavaScript Python Go
 **Options:**
 - `--languages <list>`: Space-separated list of languages to check (default: language of current repository)
 - `--packagePath <string>`: Path to package to use
-- `--venvPath <string>`: Path to virtual environment to use (for Python requirements)
 - `--verbose`: Show detailed output for each check
 - `--fix`: Attempt to automatically install missing dependencies
 

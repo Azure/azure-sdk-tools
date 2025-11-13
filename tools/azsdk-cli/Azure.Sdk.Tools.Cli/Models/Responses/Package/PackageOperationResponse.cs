@@ -74,8 +74,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         /// <param name="message">The error message to include in the response.</param>
         /// <param name="packageInfo">Optional package information to include in the response.</param>
         /// <param name="nextSteps">Optional next steps to include in the response. If null, standard failure next steps will be used.</param>
+        /// <param name="sdkRepoName">Optional SDK repository name to include in the response.</param>
         /// <returns>A PackageOperationResponse indicating failure.</returns>
-        public static PackageOperationResponse CreateFailure(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null)
+        public static PackageOperationResponse CreateFailure(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null, string? sdkRepoName = null)
         {
             return new PackageOperationResponse
             {
@@ -84,7 +85,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 Language = packageInfo?.Language ?? SdkLanguage.Unknown,
                 PackageType = packageInfo?.SdkType ?? SdkType.Unknown,
                 Result = "failed",
-                NextSteps = nextSteps?.ToList() ?? StandardFailureNextSteps.ToList()
+                NextSteps = nextSteps?.ToList() ?? StandardFailureNextSteps.ToList(),
+                SdkRepoName = sdkRepoName ?? string.Empty
             };
         }
 
@@ -95,8 +97,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         /// <param name="packageInfo">Optional package information to include in the response.</param>
         /// <param name="nextSteps">Optional next steps to include in the response.</param>
         /// <param name="result">Optional result status to include in the response.</param>
+        /// <param name="sdkRepoName">Optional SDK repository name to include in the response.</param>
         /// <returns>A PackageOperationResponse indicating success.</returns>
-        public static PackageOperationResponse CreateSuccess(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null, string? result = "succeeded")
+        public static PackageOperationResponse CreateSuccess(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null, string? result = "succeeded", string? sdkRepoName = null)
         {
             return new PackageOperationResponse
             {
@@ -106,7 +109,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 Version = packageInfo?.PackageVersion ?? string.Empty,
                 Language = packageInfo?.Language ?? SdkLanguage.Unknown,
                 PackageType = packageInfo?.SdkType ?? SdkType.Unknown,
-                NextSteps = nextSteps?.ToList() ?? []
+                NextSteps = nextSteps?.ToList() ?? [],
+                SdkRepoName = sdkRepoName ?? string.Empty
             };
         }
     }

@@ -128,6 +128,8 @@ internal class MockTspHelper : ITspClientHelper
 {
     public Task<TspToolResponse> ConvertSwaggerAsync(string swaggerReadmePath, string outputDirectory, bool isArm, bool fullyCompatible, bool isCli, CancellationToken ct)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = outputDirectory });
-    public Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha, bool isCli, CancellationToken ct)
+    public Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = outputDirectory });
+    public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
+        => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
 }

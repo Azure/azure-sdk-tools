@@ -970,13 +970,9 @@ def _build_auth_header(base_url):
     from src._credential import get_credential
 
     credential = get_credential()
-    # Determine correct scope based on endpoint
-    if "apiview.dev" in base_url:
-        scope = "api://apiview/.default"
-    else:
-        settings = SettingsManager()
-        app_id = settings.get("APP_ID")
-        scope = f"api://{app_id}/.default"
+    settings = SettingsManager()
+    app_id = settings.get("APP_ID")
+    scope = f"api://{app_id}/.default"
     try:
         token = credential.get_token(scope)
     except ClientAuthenticationError as e:

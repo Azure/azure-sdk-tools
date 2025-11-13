@@ -388,14 +388,21 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
-    let filterdData = this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&
-      row.type === updateData.type);
+    // Find the actual index in codePanelRowData
+    let targetIndex = this.codePanelRowData.findIndex(row => {
+      if (row.nodeIdHashed === updateData.nodeIdHashed && row.type === updateData.type) {
+        if (updateData.type === CodePanelRowDatatype.CommentThread) {
+          return row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup;
+        }
+        return true;
+      }
+      return false;
+    });
 
-    if (updateData.type === CodePanelRowDatatype.CommentThread) {
-      filterdData = filterdData.filter(row => row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup);
+    // Update the actual array reference
+    if (targetIndex !== -1) {
+      this.codePanelRowData[targetIndex] = updateData;
     }
-
-    filterdData[0] = updateData;
       
     await this.codePanelRowSource?.adapter?.relax();
     await this.codePanelRowSource?.adapter?.update({
@@ -1075,10 +1082,13 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = 
-      (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
-    this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]});
+    const commentThread = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!];
+    const isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
+    
+    commentThread.isResolvedCommentThread = isResolved;
+    commentThread.commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
+  
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 

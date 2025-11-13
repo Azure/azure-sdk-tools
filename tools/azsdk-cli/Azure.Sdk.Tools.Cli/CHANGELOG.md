@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Added support for sample translation from one language to another
+- Validate package names before adding to release plan
 - Allow forced creation when a release plan already exists
 - Add support for sample translation from one language to another
 - Added ChangelogContentUpdateTool, MetadataUpdateTool, and VersionUpdateTool

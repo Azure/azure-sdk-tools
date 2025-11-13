@@ -44,7 +44,7 @@ namespace IssueLabelerService
             var replacements = new Dictionary<string, string>
             {
                 { "repositoryName", repositoryName },
-                { "numIssues", "100"},
+                { "numIssues", "50"},
                 { "applicableServiceLabels", applicableServiceLabels},
                 { "applicableCategoryLabels", applicableCategoryLabels}
             };
@@ -61,6 +61,22 @@ namespace IssueLabelerService
             // var formattedResponse = FormatResponse(SuggestionsAnswerType, issue, response);
 
             // _logger.LogInformation($"Open AI generated issue for {repositoryName} using the Complete Triage model: \n{response}");
+            var issues = JsonConvert.DeserializeObject<IEnumerable<IssueTriageContent>>(response);
+
+            // Write answer to JSON file - answerData is an array of objects
+            var jsonFileName = $"issue_answer_{repositoryName}_3.json";
+            var fileName = $"issue_answer_{repositoryName}_3.tsv";
+            using StreamWriter writer = new StreamWriter(fileName);
+            writer.WriteLine(FormatIssueRecord("CategoryLabel", "ServiceLabel", "Title", "Body"));
+            foreach (var issue in issues)
+            {
+                if (issue.Category is null || issue.Service is null || issue.Title is null || issue.Body is null
+                || !applicableCategoryLabels.Contains(issue.Category) || !applicableServiceLabels.Contains(issue.Service)) continue;
+
+                writer.WriteLine(FormatIssueRecord(issue.Category, issue.Service, issue.Title, issue.Body));
+            }
+            await File.WriteAllTextAsync(jsonFileName, response);
+            _logger.LogInformation($"Answer written to file: {fileName}");
             return response;
         }
 
@@ -174,5 +190,42 @@ namespace IssueLabelerService
 
             return string.Join(", ", serviceLabels);
         }
+
+                public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)
+        {
+            if (string.IsNullOrEmpty(template))
+                return string.Empty;
+
+            string result = template;
+
+            foreach (var replacement in replacements)
+            {
+                if (!result.Contains($"{{{replacement.Key}}}"))
+                {
+                    logger.LogWarning($"Replacement value for {replacement.Key} does not exist in {template}.");
+                }
+                result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
+            }
+
+            // Replace escaped newlines with actual newlines
+            return result.Replace("\\n", "\n");
+        }
+
+        public static string FormatIssueRecord(string categoryLabel, string serviceLabel, string title, string body)
+        => string.Join('\t',
+        [
+            SanitizeText(categoryLabel),
+            SanitizeText(serviceLabel),
+            SanitizeText(title),
+            SanitizeText(body)
+        ]);
+        
+        public static string SanitizeText(string text)
+        => text
+        .Replace('\r', ' ')
+        .Replace('\n', ' ')
+        .Replace('\t', ' ')
+        .Replace('"', '`')
+        .Trim();
     }
 }

@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             ];
 
             // Build scenario data
-            var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
+            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
 
             // External construction of evaluation context

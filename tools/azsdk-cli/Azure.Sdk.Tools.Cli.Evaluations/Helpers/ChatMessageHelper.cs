@@ -85,11 +85,11 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             };
         }
 
-        public static async Task<ScenarioData> LoadScenarioFromPrompt(string prompt, IEnumerable<string> tools)
+        public static ScenarioData LoadScenarioFromPrompt(string prompt, IEnumerable<string> tools)
         {
             var history = new List<ChatMessage>
             {
-                new ChatMessage(ChatRole.System, await LLMSystemInstructions.BuildLLMInstructions())
+                new ChatMessage(ChatRole.System, LLMSystemInstructions.BuildLLMInstructions())
             };
             var nextMessage = new ChatMessage(ChatRole.User, prompt);
             var toolCalls = ToolMocks.ToolMocks.GetToolMocks(tools);

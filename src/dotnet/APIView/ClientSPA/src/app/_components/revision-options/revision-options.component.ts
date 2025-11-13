@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -17,14 +17,19 @@ export class RevisionOptionsComponent implements OnChanges {
   @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
   @Input() samplesRevisions: SamplesRevision[] = [];
+  @Input() crossLanguageAPIRevisions: APIRevision[] = [];
+
+  @Output() crossLangaugeAPIRevisionChange : EventEmitter<APIRevision> = new EventEmitter<APIRevision>();
 
   mappedApiRevisions: any[] = [];
   activeApiRevisionsMenu: any[] = [];
   activeSamplesRevisionsMenu: any[] = [];
   diffApiRevisionsMenu: any[] = [];
+  crossLanguageAPIRevisionsMenu: any[] = [];
   selectedActiveAPIRevision: any;
   selectedActiveSamplesRevision: any;
   selectedDiffAPIRevision: any = null;
+  selectedCrossLanguageAPIRevision: any = null;
 
   manualIcon = MANUAL_ICON;
   prIcon = PR_ICON;
@@ -33,10 +38,12 @@ export class RevisionOptionsComponent implements OnChanges {
   ACTIVE_API_REVISION_SELECT : string = 'active-api';
   ACTIVE_SAMPLES_REVISION_SELECT : string = 'active-samples';
   DIFF_API_REVISION_SELECT : string = 'diff-api';
+  CROSS_LANGUAGE_API_REVISION_SELECT : string = 'cross-language';
 
   activeApiRevisionsSearchValue: string = '';
   activeSamplesRevisionsSearchValue: string = '';
   diffApiRevisionsSearchValue: string = '';
+  crossLangaugeRevisionsSearchValue: string = '';
 
   activeApiRevisionsFilterValue: string | undefined = '';
   diffApiRevisionsFilterValue: string | undefined = '';
@@ -78,6 +85,13 @@ export class RevisionOptionsComponent implements OnChanges {
         this.selectedActiveSamplesRevision = this.samplesRevisions.find((samplesRevision: SamplesRevision) => samplesRevision.id === this.activeSamplesRevisionId);
       }
     }
+
+    if (changes['crossLanguageAPIRevisions']) {
+      if (this.crossLanguageAPIRevisions.length > 0) {
+        this.crossLanguageAPIRevisionsMenu = this.mapRevisionToMenu(this.crossLanguageAPIRevisions)
+        this.selectedCrossLanguageAPIRevision = this.crossLanguageAPIRevisionsMenu[0];
+      }
+    }
   }
 
   activeApiRevisionSearchFunction(event: KeyboardEvent) {
@@ -105,6 +119,15 @@ export class RevisionOptionsComponent implements OnChanges {
     let newQueryParams = getQueryParams(this.route);
     newQueryParams[ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM] = event.value.id;
     this.router.navigate([], { queryParams: newQueryParams });
+  }
+
+  activeCrossLanguageRevisionChange(event: any) {
+    this.crossLangaugeAPIRevisionChange.emit(event.value);
+  }
+
+  crossLangApiRevisionSearchFunction(event: KeyboardEvent) {
+    this.crossLangaugeRevisionsSearchValue = (event.target as HTMLInputElement).value;
+    this.searchAndFilterDropdown(this.crossLangaugeRevisionsSearchValue, undefined, this.CROSS_LANGUAGE_API_REVISION_SELECT);
   }
 
   diffApiRevisionSearchFunction(event: KeyboardEvent) {
@@ -168,13 +191,19 @@ export class RevisionOptionsComponent implements OnChanges {
           this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
         }
       }
-    } else {
-      filtered = this.activeSamplesRevisionsMenu.filter((samplesRevision: SamplesRevision) => {
-        return samplesRevision.title.toLowerCase().includes(searchValue.toLowerCase());
+    } else if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
+      this.activeSamplesRevisionsMenu = this.samplesRevisions.filter((samplesRevision: SamplesRevision) => {
+        return (searchValue) ? samplesRevision.title?.toLowerCase().includes(searchValue.toLowerCase()) : true;
       });
-
-      if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
-        this.activeSamplesRevisionsMenu = filtered.filter((samplesRevision: APIRevision) => samplesRevision.id !== this.activeSamplesRevisionId);
+      if (this.selectedActiveSamplesRevision && !this.activeSamplesRevisionsMenu.includes(this.selectedActiveSamplesRevision)) {
+        this.activeSamplesRevisionsMenu.unshift(this.selectedActiveSamplesRevision);
+      }
+    } else if (dropDownMenu === this.CROSS_LANGUAGE_API_REVISION_SELECT) {
+      this.crossLanguageAPIRevisionsMenu = this.crossLanguageAPIRevisionsMenu.filter((apiRevision: APIRevision) => {
+        return apiRevision.resolvedLabel.toLowerCase().includes(searchValue.toLowerCase());
+      });
+      if (this.selectedCrossLanguageAPIRevision && !this.crossLanguageAPIRevisionsMenu.includes(this.selectedCrossLanguageAPIRevision)) {
+        this.crossLanguageAPIRevisionsMenu.unshift(this.selectedCrossLanguageAPIRevision);
       }
     }
   }
@@ -193,8 +222,13 @@ export class RevisionOptionsComponent implements OnChanges {
     }
 
     if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
-      this.activeSamplesRevisionId = '';
+      this.activeSamplesRevisionsSearchValue = '';
       this.searchAndFilterDropdown(this.activeSamplesRevisionsSearchValue, undefined, this.ACTIVE_SAMPLES_REVISION_SELECT);
+    }
+
+    if (dropDownMenu === this.CROSS_LANGUAGE_API_REVISION_SELECT) {
+      this.crossLangaugeRevisionsSearchValue = '';
+      this.searchAndFilterDropdown(this.crossLangaugeRevisionsSearchValue, undefined, this.CROSS_LANGUAGE_API_REVISION_SELECT);
     }
   }
 
@@ -206,9 +240,11 @@ export class RevisionOptionsComponent implements OnChanges {
         resolvedLabel: apiRevision.resolvedLabel,
         language: apiRevision.language,
         label: apiRevision.label,
+        files: apiRevision.files,
+        packageName: apiRevision.packageName,
         typeClass: getTypeClass(apiRevision.apiRevisionType),
         apiRevisionType: apiRevision.apiRevisionType,
-        version: apiRevision.packageVersion,
+        packageVersion: apiRevision.packageVersion,
         prNo: apiRevision.pullRequestNo,
         createdOn: apiRevision.createdOn,
         createdBy: apiRevision.createdBy,
@@ -238,8 +274,8 @@ export class RevisionOptionsComponent implements OnChanges {
     const gaRevisions : any [] = [];
 
     for (let apiRevision of apiRevisions) {
-      if (apiRevision.isReleased && apiRevision.version) {
-        const semVar = new AzureEngSemanticVersion(apiRevision.version, apiRevision.language);
+      if (apiRevision.isReleased && apiRevision.packageVersion) {
+        const semVar = new AzureEngSemanticVersion(apiRevision.packageVersion, apiRevision.language);
         if (semVar.versionType == "GA") {
           apiRevision.semanticVersion = semVar;
           gaRevisions.push(apiRevision);

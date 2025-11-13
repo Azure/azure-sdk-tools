@@ -1,0 +1,84 @@
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
+
+schedules:
+  - cron: "0 1 * * 1"  # Runs every Monday at 01:00 UTC
+    displayName: "Weekly Monday Morning Trigger"
+    branches:
+      include:
+        - main
+    always: true
+
+trigger: none
+pr: none
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: 'evaluation'
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+        jobs:
+          - job: 'evaluation'
+            displayName: 'online evaluation'
+            steps:
+              - template: /eng/pipelines/templates/steps/use-python-version.yml
+                parameters:
+                  versionSpec: '${{ parameters.PythonVersion }}'
+              - script: |
+                  python --version
+                displayName: 'check python'
+              - task: AzureCLI@2
+                inputs:
+                  azureSubscription: 'azuresdkqabot'
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=BOT_AGENT_ACCESS_TOKEN]$(az account get-access-token --resource api://azure-sdk-qa-bot --query accessToken -o tsv)"
+
+              - script: |
+                  pip install -r requirements.txt
+                displayName: 'install requirements'
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+              - script: |
+                  current_date=$(date +%Y_%m_%d)
+                  echo "Current date: $current_date"
+
+                  python download-md-dataset.py
+                  python convert-md-to-jsonl.py --source_md_path "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-qa-tests" --dest_jsonl_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests"
+                  python run.py --evaluation_name_prefix "performance-evaluation-$current_date" --test_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests" --baseline_check False
+                displayName: 'Run Evals'
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                env:
+                  AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
+                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                  AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+                  AZURE_FOUNDRY_RESOURCE_GROUP: $(AZURE_FOUNDRY_RESOURCE_GROUP)
+                  AZURE_FOUNDRY_PROJECT_NAME: $(AZURE_FOUNDRY_PROJECT_NAME)
+                  BOT_AGENT_ACCESS_TOKEN: $(BOT_AGENT_ACCESS_TOKEN)
+                  AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
+                  AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
+                  AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
+                  AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
+                  AZURE_API_VERSION: $(AZURE_API_VERSION)
+                  BOT_SERVICE_ENDPOINT: $(BOT_SERVICE_ENDPOINT)
+                  STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
+                  AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER: $(AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER)
+                  BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
+                  BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)

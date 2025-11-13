@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -31,7 +32,8 @@ namespace Microsoft.Crank.Agent
             Action<int> onStop = null,
             CancellationToken cancellationToken = default(CancellationToken),
             bool captureOutput = false,
-            bool captureError = false
+            bool captureError = false,
+            bool trackStatistics = false
         )
         {
             var logWorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
@@ -136,34 +138,76 @@ namespace Microsoft.Crank.Agent
 
             var cancelledTcs = new TaskCompletionSource<object>();
             await using var _ = cancellationToken.Register(() => cancelledTcs.TrySetResult(null));
+            Task timeoutTask = Task.Delay(timeout.HasValue ? (int)timeout.Value.TotalMilliseconds : -1);
 
-            var result = await Task.WhenAny(processLifetimeTask.Task, cancelledTcs.Task, Task.Delay(timeout.HasValue ? (int)timeout.Value.TotalMilliseconds : -1));
+            // For measuring statistics
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            TimeSpan lastCpuTime = TimeSpan.Zero;
+            List<double> cpuSamples = [];
+            List<long> memorySamples = [];
 
-            if (result != processLifetimeTask.Task)
+            while (!processLifetimeTask.Task.IsCompleted)
             {
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                var delayTask = Task.Delay(1000);
+                var completedTask = await Task.WhenAny(processLifetimeTask.Task, cancelledTcs.Task, timeoutTask, delayTask);
+
+                if (completedTask == processLifetimeTask.Task)
                 {
-                    sys_kill(process.Id, sig: 2); // SIGINT
-
-                    var cancel = new CancellationTokenSource();
-
-                    await Task.WhenAny(processLifetimeTask.Task, Task.Delay(TimeSpan.FromSeconds(5), cancel.Token));
-
-                    cancel.Cancel();
+                    break;
                 }
-
-                if (!process.HasExited)
+                else if (completedTask == cancelledTcs.Task || completedTask == timeoutTask)
                 {
-                    process.CloseMainWindow();
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        sys_kill(process.Id, sig: 2); // SIGINT
+
+                        var cancel = new CancellationTokenSource();
+
+                        await Task.WhenAny(processLifetimeTask.Task, Task.Delay(TimeSpan.FromSeconds(5), cancel.Token));
+
+                        cancel.Cancel();
+                    }
 
                     if (!process.HasExited)
                     {
-                        process.Kill();
+                        process.CloseMainWindow();
+
+                        if (!process.HasExited)
+                        {
+                            process.Kill();
+                        }
+                    }
+                    break;
+                }
+
+                if (trackStatistics && !process.HasExited)
+                {
+                    try
+                    {
+                        process.Refresh();
+
+                        // CPU usage
+                        TimeSpan currentCpuTime = process.TotalProcessorTime;
+                        double cpuUsage = (currentCpuTime - lastCpuTime).TotalMilliseconds / (1000.0 * Environment.ProcessorCount) * 100;
+                        lastCpuTime = currentCpuTime;
+                        cpuSamples.Add(cpuUsage);
+
+                        // Memory usage
+                        long memoryUsage = process.WorkingSet64;
+                        memorySamples.Add(memoryUsage);
+                    }
+                    catch (InvalidOperationException e)
+                    {
+                        // Process may have exited while checking stats, ignore
+                        Log.WriteLine($"Exception when reading process statistics: {e.Message}");
                     }
                 }
             }
 
             var processResult = await processLifetimeTask.Task;
+            processResult.AverageCpu = cpuSamples.Count > 0 ? cpuSamples.Average() : -1;
+            processResult.AverageMemory = memorySamples.Count > 0 ? (long)memorySamples.Average() : -1;
+
             onStop?.Invoke(processResult.ExitCode);
             return processResult;
         }

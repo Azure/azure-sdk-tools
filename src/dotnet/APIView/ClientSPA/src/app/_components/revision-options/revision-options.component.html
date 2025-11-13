@@ -1,10 +1,11 @@
 <div style="display: flex; justify-content: space-between;">
     <span *ngIf="activeApiRevisionsMenu.length > 0" class="border-start ps-2">
-        <p-dropdown 
+        <p-dropdown
             [options]="activeApiRevisionsMenu"
             [(ngModel)]="selectedActiveAPIRevision"
             optionLabel="label"
             inputId="active-api-revision-select"
+            data-clarity-region="active-api-revision-dropdown"
             [panelStyle]="{'width':'40dvw'}"
             [filter]="true"
             [resetFilterOnHide]="true"
@@ -21,8 +22,8 @@
                     </div>
                     <p-selectButton
                     class="api-revision-filter-button"
-                    [options]="filterOptions" 
-                    [(ngModel)]="activeApiRevisionsFilterValue" 
+                    [options]="filterOptions"
+                    [(ngModel)]="activeApiRevisionsFilterValue"
                     (onChange)="activeApiRevisionFilterFunction($event)"
                     [style]="{'margin-top':'8px'}">
                         <ng-template let-item pTemplate>
@@ -38,7 +39,7 @@
                 <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveAPIRevision">
                     <i class="{{ selectedActiveAPIRevision.typeClass }}"></i>
                     <span *ngIf="selectedActiveAPIRevision.prNo"> {{ selectedActiveAPIRevision.prNo }}</span>
-                    <span *ngIf="selectedActiveAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedActiveAPIRevision.version }}</span>
+                    <span *ngIf="selectedActiveAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedActiveAPIRevision.packageVersion }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedActiveAPIRevision.isApproved"></i>
                     <span *ngIf="selectedActiveAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedActiveAPIRevision.createdBy }}</span>
                     <span *ngIf="selectedActiveAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedActiveAPIRevision.releasedOn | timeago }}</span>
@@ -48,7 +49,7 @@
                 <div class="flex align-items-center gap-2">
                     <i class="{{ apiRevision.typeClass }}"></i>
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
-                    <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.version }}</span>
+                    <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
                     <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
                     <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
@@ -65,14 +66,15 @@
             </ng-template>
         </p-dropdown>
     </span>
-    
+
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
         <label class="small fw-semibold" for="diff-api-revision-select">Diff :</label>
-        <p-dropdown 
+        <p-dropdown
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
             optionLabel="label"
             inputId="diff-api-revision-select"
+            data-clarity-region="diff-api-revision-dropdown"
             [panelStyle]="{'width':'40dvw'}"
             [filter]="true"
             [resetFilterOnHide]="true"
@@ -91,8 +93,8 @@
                     </div>
                     <p-selectButton
                     class="api-revision-filter-button"
-                    [options]="filterOptions" 
-                    [(ngModel)]="diffApiRevisionsFilterValue" 
+                    [options]="filterOptions"
+                    [(ngModel)]="diffApiRevisionsFilterValue"
                     (onChange)="diffApiRevisionFilterFunction($event)"
                     [style]="{'margin-top':'8px'}">
                         <ng-template let-item pTemplate>
@@ -108,7 +110,7 @@
                 <div class="flex align-items-center selected-item-content" *ngIf="selectedDiffAPIRevision">
                     <i class="{{ selectedDiffAPIRevision.typeClass }}"></i>
                     <span *ngIf="selectedDiffAPIRevision.prNo"> {{ selectedDiffAPIRevision.prNo }}</span>
-                    <span *ngIf="selectedActiveAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedDiffAPIRevision.version }}</span>
+                    <span *ngIf="selectedActiveAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedDiffAPIRevision.packageVersion }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedDiffAPIRevision.isApproved"></i>
                     <span *ngIf="selectedDiffAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedDiffAPIRevision.createdBy }}</span>
                     <span *ngIf="selectedDiffAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedDiffAPIRevision.releasedOn | timeago }}</span>
@@ -118,7 +120,7 @@
                 <div class="flex align-items-center gap-2">
                     <i class="{{ apiRevision.typeClass }}"></i>
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
-                    <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.version }}</span>
+                    <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
                     <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
                     <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
@@ -135,8 +137,8 @@
     </span>
 
     <span *ngIf="samplesRevisions.length > 0" class="border-start ps-2">
-        <p-dropdown 
-            [options]="samplesRevisions"
+        <p-dropdown
+            [options]="activeSamplesRevisionsMenu"
             [(ngModel)]="selectedActiveSamplesRevision"
             optionLabel="label"
             inputId="active-samples-revision-select"
@@ -151,7 +153,7 @@
                 <div class="flex gap-1">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" aria-label="Active APIRevision Filter" placeholder="Filter"
+                        <input type="text" class="form-control" aria-label="Active samplesRevisions Filter" placeholder="Filter"
                         [(ngModel)]="activeSamplesRevisionsSearchValue" (keyup)="activeSamplesRevisionSearchFunction($event)">
                     </div>
                 </div>
@@ -171,6 +173,60 @@
                         <span class="emphasis-badge secondary me-2" *ngIf="apiRevision.createdOn">created: {{ apiRevision.createdOn | timeago }}</span>
                         <span class="emphasis-badge secondary me-2" *ngIf="apiRevision.createdBy">author: {{ apiRevision.createdBy }}</span>
                     </div>
+                </div>
+            </ng-template>
+        </p-dropdown>
+    </span>
+
+    <span *ngIf="crossLanguageAPIRevisions.length > 0" class="ms-2 ps-2">
+        <p-dropdown
+            [options]="crossLanguageAPIRevisionsMenu"
+            [(ngModel)]="selectedCrossLanguageAPIRevision"
+            optionLabel="label"
+            inputId="cross-language-revision-select"
+            [panelStyle]="{'width':'30dvw'}"
+            [filter]="true"
+            [resetFilterOnHide]="true"
+            (onHide)="resetDropDownFilter(CROSS_LANGUAGE_API_REVISION_SELECT)"
+            (onChange)="activeCrossLanguageRevisionChange($event)"
+            scrollHeight="400px"
+            class="me-2">
+            <ng-template pTemplate="filter" let-options="options">
+                <div class="flex gap-1">
+                    <div class="input-group" (click)="$event.stopPropagation()">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" aria-label="Cross Language APIRevision Filter" placeholder="Filter"
+                        [(ngModel)]="crossLangaugeRevisionsSearchValue" (keyup)="crossLangApiRevisionSearchFunction($event)">
+                    </div>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem">
+                <div class="flex align-items-center selected-item-content" *ngIf="selectedCrossLanguageAPIRevision">
+                    <i class="{{ selectedCrossLanguageAPIRevision.typeClass }}"></i>
+                    <span *ngIf="selectedCrossLanguageAPIRevision.prNo"> {{ selectedCrossLanguageAPIRevision.prNo }}</span>
+                    <span *ngIf="selectedCrossLanguageAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedCrossLanguageAPIRevision.packageVersion }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedCrossLanguageAPIRevision.isApproved"></i>
+                    <span *ngIf="selectedCrossLanguageAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedCrossLanguageAPIRevision.createdBy }}</span>
+                    <span *ngIf="selectedCrossLanguageAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedCrossLanguageAPIRevision.releasedOn | timeago }}</span>
+                    <span class="emphasis-badge secondary ms-2">created: {{ selectedCrossLanguageAPIRevision.createdOn | timeago }}</span>
+                    <span class="emphasis-badge secondary ms-2">last updated: {{ selectedCrossLanguageAPIRevision | lastUpdatedOn | timeago }}</span>
+                </div>
+            </ng-template>
+            <ng-template let-apiRevision pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                    <i class="{{ apiRevision.typeClass }}"></i>
+                    <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
+                    <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
+                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
+                    <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
+                    <span *ngIf="apiRevision.isLatestApproved" class="emphasis-badge warn small ms-2">Latest Approved</span>
+                    <span *ngIf="apiRevision.isLatestMain" class="emphasis-badge warn small ms-2">Latest Main</span>
+                    <span *ngIf="apiRevision.isLatestReleased" class="emphasis-badge warn small ms-2">Latest Released</span>
+                    <div class="small"><span class="emphasis-badge secondary">created: {{ apiRevision.createdOn | timeago }}</span>
+                        <span class="emphasis-badge secondary ms-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                        <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span></div>
+                    <div *ngIf="(apiRevision.apiRevisionType === 'Manual' || apiRevision.language === 'TypeSpec') && apiRevision.label">{{ apiRevision.label }}</div>
                 </div>
             </ng-template>
         </p-dropdown>

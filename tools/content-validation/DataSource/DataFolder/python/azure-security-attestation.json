@@ -1,0 +1,26 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/attestation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/security-attestation-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.aio.attestationadministrationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.aio.attestationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationadministrationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationpolicycertificateresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationpolicyresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationpolicytoken?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationsigner?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationtoken?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationtokenvalidationexception?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.attestationtype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.certificatemodification?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-security-attestation/azure.security.attestation.policymodification?view=azure-python\u0026branch=main"
+    ]
+  }
+]

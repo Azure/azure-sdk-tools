@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using APIViewWeb.Repositories;
-using APIViewWeb.Models;
 using System;
 using APIViewWeb.Helpers;
 using Microsoft.AspNetCore.Hosting;

@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{C2A2A2A2-A2A2-A2A2-A2A2-A2A2A2A2A2A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Tools.ErrorAnalyzers", "src\Azure.Tools.ErrorAnalyzers\Azure.Tools.ErrorAnalyzers.csproj", "{289C389E-00E9-4ACA-AC32-2B1705DC874E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Tools.ErrorAnalyzers.Tests", "tests\Azure.Tools.ErrorAnalyzers.Tests\Azure.Tools.ErrorAnalyzers.Tests.csproj", "{D89C389E-00E9-4ACA-AC32-2B1705DC874E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicUsage", "samples\basic-usage\BasicUsage.csproj", "{E21DA819-F4DE-44AA-B9C8-C3C0E7319CBC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{289C389E-00E9-4ACA-AC32-2B1705DC874E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{289C389E-00E9-4ACA-AC32-2B1705DC874E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{289C389E-00E9-4ACA-AC32-2B1705DC874E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{289C389E-00E9-4ACA-AC32-2B1705DC874E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D89C389E-00E9-4ACA-AC32-2B1705DC874E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D89C389E-00E9-4ACA-AC32-2B1705DC874E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D89C389E-00E9-4ACA-AC32-2B1705DC874E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D89C389E-00E9-4ACA-AC32-2B1705DC874E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E21DA819-F4DE-44AA-B9C8-C3C0E7319CBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E21DA819-F4DE-44AA-B9C8-C3C0E7319CBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E21DA819-F4DE-44AA-B9C8-C3C0E7319CBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E21DA819-F4DE-44AA-B9C8-C3C0E7319CBC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{289C389E-00E9-4ACA-AC32-2B1705DC874E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{D89C389E-00E9-4ACA-AC32-2B1705DC874E} = {C1A1A1A1-A1A1-A1A1-A1A1-A1A1A1A1A1A1}
+		{E21DA819-F4DE-44AA-B9C8-C3C0E7319CBC} = {C2A2A2A2-A2A2-A2A2-A2A2-A2A2A2A2A2A2}
+	EndGlobalSection
+EndGlobal

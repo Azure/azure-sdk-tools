@@ -1,0 +1,29 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication-rooms-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.aio.roomsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.communicationidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.communicationroom?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.communicationuseridentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.communicationuserproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.microsoftteamsappidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.microsoftteamsappproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.microsoftteamsuseridentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.microsoftteamsuserproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.phonenumberidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.phonenumberproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.roomparticipant?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.roomsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.unknownidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.communicationcloudenvironment?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.communicationidentifierkind?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-rooms/azure.communication.rooms.participantrole?view=azure-python\u0026branch=main"
+    ]
+  }
+]

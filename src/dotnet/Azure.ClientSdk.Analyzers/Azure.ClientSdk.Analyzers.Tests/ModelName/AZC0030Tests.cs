@@ -36,7 +36,7 @@ namespace Azure.ResourceManager
         }
     }
 }";
-            var expectedMessage = $"Suggest to rename it to 'ResponseContent' or 'ResponsePatch' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'ResourceManagerResponseParametersContent' or 'ResourceManagerResponseParametersPatch' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(4, 18, 4, 36).WithArguments("ResponseParameters", "Parameters", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
@@ -55,7 +55,7 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expectedMessage = $"Suggest to rename it to 'DiskConfig' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'ResourceManagerDiskOptionConfig' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(4, 18, 4, 28).WithArguments("DiskOption", "Option", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
@@ -73,7 +73,7 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expectedMessage = $"Suggest to rename it to 'DiskConfig' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'SubTestDiskOptionConfig' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(6, 22, 6, 32).WithArguments("DiskOption", "Option", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
@@ -95,7 +95,7 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expectedMessage = $"Suggest to rename it to 'CreationResults' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'SubTestCreationResponsesResults' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(6, 22, 6, 39).WithArguments("CreationResponses", "Responses", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }

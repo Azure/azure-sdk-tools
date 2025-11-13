@@ -77,8 +77,8 @@ namespace Azure.ResourceManager.Network
     }
 }";
             DiagnosticResult[] expected = {
-                VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 30).WithArguments("DnsOperation", "Operation", "DnsData", "DnsInfo"),
-                VerifyCS.Diagnostic(diagnosticId).WithSpan(11, 18, 11, 33).WithArguments("DnsArmOperation", "Operation", "DnsArmData", "DnsArmInfo")
+                VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 30).WithArguments("DnsOperation", "Operation", "We suggest renaming it to 'NetworkDnsOperationData' or 'NetworkDnsOperationInfo' or another name with these suffixes."),
+                VerifyCS.Diagnostic(diagnosticId).WithSpan(11, 18, 11, 33).WithArguments("DnsArmOperation", "Operation", "We suggest renaming it to 'NetworkDnsArmOperationData' or 'NetworkDnsArmOperationInfo' or another name with these suffixes.")
             };
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }

@@ -1,0 +1,37 @@
+parameters:
+  - name: REPO
+    type: string
+    default: "Azure/azure-sdk-for-python"
+  - name: CLONE_LOCATION
+    type: string
+    default: "$(Agent.BuildDirectory)/python_repo"
+
+steps:
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - template: /eng/pipelines/templates/steps/use-python-version.yml
+    parameters:
+      versionSpec: '3.9'
+
+  - pwsh: |
+      git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+    displayName: Clone Repo
+
+  - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+    parameters:
+      runProxy: true
+      rootFolder: $(CLONE_LOCATION)
+
+  - pwsh: |
+      python -m pip install -r dev_requirements.txt
+      python -m pip install .
+    displayName: 'Install requirements and package'
+    workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+
+  - pwsh: |
+      pytest .
+    displayName: 'Invoke Tests'
+    workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+    env:
+      PROXY_URL: "http://localhost:5000"
+      PROXY_MANUAL_START: true

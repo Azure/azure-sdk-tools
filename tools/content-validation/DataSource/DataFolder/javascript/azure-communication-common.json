@@ -1,0 +1,28 @@
+[
+  {
+    "version": "view=azure-node-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/communication-common-readme?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/?view=azure-node-preview",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/azurecommunicationtokencredential?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationgettokenoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationtokencredential?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationtokenrefreshoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationuseridentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationuserkind?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/entracommunicationtokencredentialoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/microsoftteamsappidentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/microsoftteamsappkind?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/microsoftteamsuseridentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/microsoftteamsuserkind?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/phonenumberidentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/phonenumberkind?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/teamsextensionuseridentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/teamsextensionuserkind?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/unknownidentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/unknownidentifierkind?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationidentifier?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-common/communicationidentifierkind?view=azure-node-preview\u0026branch=main"
+    ]
+  }
+]

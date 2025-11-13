@@ -1,0 +1,17 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/iot?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/digitaltwins-core-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core.aio.digitaltwinsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core.digitaltwinsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core.digitaltwinseventroute?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core.digitaltwinsmodeldata?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-digitaltwins-core/azure.digitaltwins.core.incomingrelationship?view=azure-python\u0026branch=main"
+    ]
+  }
+]

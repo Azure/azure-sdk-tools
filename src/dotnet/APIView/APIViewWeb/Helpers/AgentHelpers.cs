@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using APIView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 
@@ -12,30 +14,47 @@ public class AgentHelpers
     private static readonly Regex azureSdkAgentTag = new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.AzureSdkBotName)}\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public static List<ApiViewAgentComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
-        RenderedCodeFile codeFile)
+    private static Dictionary<string, int> BuildElementIdToLineNumberMapping(RenderedCodeFile codeFile)
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
-        
-        Dictionary<string, int> elementIdToLineNumber = activeCodeLines
+        return activeCodeLines
             .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
             .Where(x => !string.IsNullOrEmpty(x.lineId))
             .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
+    }
 
-        List<ApiViewAgentComment> commentsForAgent = comments
-            .Select(threadComment => new ApiViewAgentComment
+    public static List<ApiViewAgentComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
+        RenderedCodeFile codeFile)
+    {
+        Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
+
+        return (from comment in comments
+            where comment.ElementId != null && elementIdToLineNumber.ContainsKey(comment.ElementId)
+            select new ApiViewAgentComment
             {
-                LineNumber = elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
-                CreatedOn = threadComment.CreatedOn,
-                Upvotes = threadComment.Upvotes.Count,
-                Downvotes = threadComment.Downvotes.Count,
-                CreatedBy = threadComment.CreatedBy,
-                CommentText = threadComment.CommentText,
-                IsResolved = threadComment.IsResolved
-            })
-            .ToList();
+                LineNumber = elementIdToLineNumber[comment.ElementId],
+                CreatedOn = comment.CreatedOn,
+                Upvotes = comment.Upvotes.Count,
+                Downvotes = comment.Downvotes.Count,
+                CreatedBy = comment.CreatedBy,
+                CommentText = comment.CommentText,
+                IsResolved = comment.IsResolved,
+                Severity = comment.Severity?.ToString() ?? String.Empty
+            }).ToList();
+    }
 
-        return commentsForAgent;
+    public static List<ApiViewAgentComment> BuildDiagnosticsForAgent(IEnumerable<CodeDiagnostic> diagnostics,
+        RenderedCodeFile codeFile)
+    {
+        Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
+
+        return (from diagnostic in diagnostics
+                where diagnostic.TargetId != null && elementIdToLineNumber.ContainsKey(diagnostic.TargetId)
+            select new ApiViewAgentComment
+            {
+                LineNumber = elementIdToLineNumber[diagnostic.TargetId],
+                CommentText = diagnostic.Text,
+            }).ToList();
     }
 
     public static string GetCodeLineForElement(RenderedCodeFile codeFile, string elementId)

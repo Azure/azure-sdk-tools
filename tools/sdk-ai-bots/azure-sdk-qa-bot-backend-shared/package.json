@@ -1,0 +1,31 @@
+{
+  "name": "azure-sdk-qa-bot-backend-shared",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev:local": "cross-env NODE_ENV=local tsx --watch src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@azure/cognitiveservices-computervision": "^8.2.0",
+    "@azure/identity": "^4.10.0",
+    "@octokit/rest": "^21.1.1",
+    "axios": "^1.12.0",
+    "express": "^4.19.2",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "@types/multer": "^1.4.12",
+    "dotenv-cli": "^8.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.5.0",
+    "vitest": "^3.2.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

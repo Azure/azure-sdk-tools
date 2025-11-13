@@ -149,6 +149,22 @@
             }
           }
         },
+        "updateChangelogContentScript": {
+          // Update changelog content.
+          "$ref": "#/definitions/RunOptions"
+        },
+        "updateCiScript": {
+          // Update ci.yml files.
+          "$ref": "#/definitions/RunOptions"
+        },
+        "updateMetadataScript": {
+          // Update metadata files.
+          "$ref": "#/definitions/RunOptions"
+        },
+        "updateVersionScript": {
+          // Update version and release data.
+          "$ref": "#/definitions/RunOptions"
+        },
         "breakingChangeLabel": {
           // Label to be added in spec PR if breaking change is found
           "type": "string"
@@ -200,6 +216,10 @@
       "properties": {
         "path": {
           // Script path related to repo root
+          "type": "string"
+        },
+        "command": {
+          // Command to run, it only allows single line of command.
           "type": "string"
         },
         "envs": {
@@ -255,8 +275,7 @@
             "result": "error"
           }
         }
-      },
-      "required": ["path"]
+      }
     },
     "RunLogOptions": {
       // How should SDK Automation handle the log stream.

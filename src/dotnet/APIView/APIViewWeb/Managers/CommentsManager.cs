@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
@@ -16,6 +17,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -37,6 +39,7 @@ namespace APIViewWeb.Managers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CommentsManager> _logger;
+        private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -54,6 +57,7 @@ namespace APIViewWeb.Managers
             UserProfileCache userProfileCache,
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
+            IBackgroundTaskQueue backgroundTaskQueue,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -67,6 +71,7 @@ namespace APIViewWeb.Managers
             _userProfileCache = userProfileCache;
             _configuration = configuration;
             _Options = options.Value;
+            _backgroundTaskQueue = backgroundTaskQueue;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -172,6 +177,25 @@ namespace APIViewWeb.Managers
             return comment;
         }
 
+        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await AssertOwnerAsync(user, comment);
+            
+            comment.ChangeHistory.Add(
+                new CommentChangeHistoryModel()
+                {
+                    ChangeAction = CommentChangeAction.Edited,
+                    ChangedBy = user.GetGitHubLogin(),
+                    ChangedOn = DateTime.Now,
+                });
+            comment.LastEditedOn = DateTime.Now;
+            comment.Severity = severity;
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+            return comment;
+        }
+
         public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
         {
             ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
@@ -192,8 +216,17 @@ namespace APIViewWeb.Managers
                 return;
             }
 
+            _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
+            {
+                await ProcessAgentReplyRequest(user, comment, activeRevisionId, cancellationToken);
+            });
+        }
+
+        private async Task ProcessAgentReplyRequest(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId, CancellationToken cancellationToken)
+        {
             try
             {
+                ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
                 IEnumerable<CommentItemModel> threadComments =
                     await _commentsRepository.GetCommentsAsync(reviewId: comment.ReviewId, lineId: comment.ElementId);
 
@@ -228,6 +261,8 @@ namespace APIViewWeb.Managers
                 AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
 
                 await AddAgentComment(comment, agentChatResponse?.Response);
+                
+                _logger.LogInformation("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
             }
             catch (Exception ex)            
             {
@@ -383,30 +418,52 @@ namespace APIViewWeb.Managers
             }
         }
 
+        public async Task<List<CommentItemModel>> ResolveBatchConversationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
+        {
+            var response = new List<CommentItemModel>();
+            
+            foreach (string commentId in request.CommentIds)
+            {
+                CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+                if (request.Vote != FeedbackVote.None)
+                {
+                    await ToggleVoteAsync(user, comment, request.Vote);
+                }
+
+                if (!string.IsNullOrEmpty(request.CommentReply))
+                {
+                    var commentUpdate = new CommentItemModel
+                    {
+                        ReviewId = reviewId,
+                        APIRevisionId = comment.APIRevisionId,
+                        SampleRevisionId = comment.SampleRevisionId,
+                        ElementId = comment.ElementId,
+                        CommentText = request.CommentReply,
+                        CreatedBy = user.GetGitHubLogin(),
+                        CreatedOn = DateTime.UtcNow,
+                        CommentType = comment.CommentType,
+                        IsResolved = true
+                    };
+                    await AddCommentAsync(user, commentUpdate);
+                    response.Add(commentUpdate);
+                }
+
+                await ResolveConversation(user, reviewId, comment.ElementId);
+            }
+            
+            return response;
+        }
+
         public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
-            {
-                comment.Upvotes.Add(user.GetGitHubLogin());
-                comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin());
-            }
-
-            await _commentsRepository.UpsertCommentAsync(comment);
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await ToggleVoteAsync(user, comment, FeedbackVote.Up);
         }
 
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
-            {
-                comment.Downvotes.Add(user.GetGitHubLogin());
-                comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin());
-            }
-
-            await _commentsRepository.UpsertCommentAsync(comment);
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
@@ -417,6 +474,33 @@ namespace APIViewWeb.Managers
             {
                 throw new AuthorizationFailedException();
             }
+        }
+
+        private async Task ToggleVoteAsync(ClaimsPrincipal user, CommentItemModel comment, FeedbackVote voteType)
+        {
+            string userName = user.GetGitHubLogin();
+            switch (voteType)
+            {
+                case FeedbackVote.Up:
+                    if (comment.Upvotes.RemoveAll(u => u == userName) == 0)
+                    {
+                        comment.Upvotes.Add(userName);
+                        comment.Downvotes.RemoveAll(u => u == userName);
+                    }
+                    break;
+                case FeedbackVote.Down:
+                    if (comment.Downvotes.RemoveAll(u => u == userName) == 0)
+                    {
+                        comment.Downvotes.Add(userName);
+                        comment.Upvotes.RemoveAll(u => u == userName);
+                    }
+                    break;
+                case FeedbackVote.None:
+                default:
+                    return;
+            }
+
+            await _commentsRepository.UpsertCommentAsync(comment);
         }
     }
 }

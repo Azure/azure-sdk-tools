@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -112,13 +113,14 @@ namespace APIViewWeb.LeanControllers
         /// <param name="baselineCodeFile"></param>
         /// <param name="language"></param>
         /// <param name="project"></param>
+        /// <param name="packageType"></param>
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet("CreateAPIRevisionIfAPIHasChanges", Name = "CreateAPIRevisionIfAPIHasChanges")]
         public async Task<ActionResult<IEnumerable<CreateAPIRevisionAPIResponse>>> CreateAPIRevisionIfAPIHasChanges(
             string buildId, string artifactName, string filePath, string commitSha,string repoName, string packageName,
             int pullRequestNumber = 0, string codeFile = null, string baselineCodeFile = null, string language = null,
-            string project = "internal")
+            string project = "internal", string packageType = null)
         {
             var responseContent = new CreateAPIRevisionAPIResponse();
             if (!ValidateInputParams())
@@ -134,7 +136,7 @@ namespace APIViewWeb.LeanControllers
                     artifactName: artifactName, originalFileName: filePath, commitSha: commitSha, repoName: repoName,
                     packageName: packageName, prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     responseContent: responseContent, codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    language: language, project: project);
+                    language: language, project: project, packageType: packageType);
 
                 responseContent.APIRevisionUrl = apiRevisionUrl;
 
@@ -143,6 +145,12 @@ namespace APIViewWeb.LeanControllers
             catch (AuthorizationFailedException)
             {
                 return new LeanJsonResult(responseContent, StatusCodes.Status401Unauthorized);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating API revision if API has changes.");
+                responseContent.Message = ex.Message;
+                return new LeanJsonResult(responseContent, StatusCodes.Status500InternalServerError);
             }
         }
 

@@ -1,7 +1,7 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType, RunMode } from './types.js';
+import { SDKType, RunMode, ModularSDKType } from './types.js';
 import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
@@ -11,6 +11,8 @@ import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
+import { exists } from 'fs-extra';
+import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -111,21 +113,41 @@ export function getNpmPackageName(packageRoot: string): string {
     return packageName;
 }
 
-export function getApiReviewPath(packageRoot: string): string {
+export function getApiReviewBasePath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
+    let apiReviewPath: string;
     switch (sdkType) {
         case SDKType.ModularClient:
             const modularPackageName = npmPackageName.substring('@azure/'.length);
-            const apiViewFileName = `${modularPackageName}.api.md`;
-            return path.join(packageRoot, 'review', apiViewFileName);
+            const apiViewFileName = `${modularPackageName}`;
+            apiReviewPath = path.join(packageRoot, 'review', apiViewFileName);
+            break;
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
             const packageName = npmPackageName.split('/')[1];
-            return path.join(packageRoot, 'review', `${packageName}.api.md`);
+            apiReviewPath = path.join(packageRoot, 'review', `${packageName}`);
     }
+    return apiReviewPath;
+}
+
+export function getApiReviewPath(packageRoot: string): string {
+    const NODE_API_MD_SUFFIX = '-node.api.md';
+    const API_REVIEW_SUFFIX = '.api.md';
+    const apiReviewPath = getApiReviewBasePath(packageRoot);
+
+    // First check if node.api.md exists
+    const nodePath = `${apiReviewPath}${NODE_API_MD_SUFFIX}`;
+    if (fs.existsSync(nodePath)) {
+        logger.info(`Using node API review file: ${nodePath}`);
+        return nodePath;
+    }
+
+    // If node.api.md doesn't exist, return the standard .api.md path
+    const standardPath = `${apiReviewPath}${API_REVIEW_SUFFIX}`;
+    return standardPath;
 }
 
 export function getTsSourceFile(filePath: string): SourceFile | undefined {
@@ -186,10 +208,17 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const tspConfig = await resolveOptions(typeSpecDirectory, sdkRepoRoot);
+    const emitterOptions = tspConfig.options?.[emitterName];
+    // Try to get package directory from emitter-output-dir first    
+    const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
+    if (emitterOutputDir) {
+        // emitter-output-dir is an absolute path, return it directly
+        return emitterOutputDir;
+    }
+
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
-    const emitterOptions = tspConfig.options?.[emitterName];
     const serviceDirFromEmitter = emitterOptions?.['service-dir'];
     if (serviceDirFromEmitter) {
         serviceDir = serviceDirFromEmitter;
@@ -207,7 +236,6 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     const packageDirFromRoot = posix.join(sdkRepoRoot, serviceDir, packageDir);
     return packageDirFromRoot;
 }
-
 
 export async function runCommand(
     command: string,
@@ -294,13 +322,16 @@ export async function existsAsync(path: string): Promise<boolean> {
     }
 }
 
-export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+export async function resolveOptions(typeSpecDirectory: string, sdkRepoRoot?: string): Promise<Exclude<any, null | undefined>> {
     const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
             cwd: process.cwd(),
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
+            overrides: {
+                outputDir: sdkRepoRoot || process.cwd() // Use sdkRepoRoot if provided, otherwise use current directory
+            }
         });
     return options
 }
@@ -318,7 +349,7 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
         tspConfig = yamlLoad(tspConfigContent);
     } catch (error) {
         throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
-    }    
+    }
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {
@@ -348,15 +379,15 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpDirectory(
-    directory: string, 
+    directory: string,
     entriesToPreserve: string[] = []
-): Promise<void> {      
+): Promise<void> {
     // Check if directory exists first
     if (!fs.existsSync(directory)) {
         logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
         return;
     }
-    
+
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
@@ -364,13 +395,13 @@ export async function cleanUpDirectory(
         await mkdir(directory, { recursive: true });
         return;
     }
-    
+
     // If we need to preserve some entries, selectively remove others
     logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
-    
+
     // Get all subdirectories and files
     const entries = await readdir(directory);
-    
+
     // Filter entries to exclude those that should be preserved
     const filteredEntries = entries.filter(entry => !entriesToPreserve.includes(entry));
 
@@ -393,20 +424,68 @@ export async function cleanUpPackageDirectory(
 ): Promise<void> {
     // Preserve test directory and assets.json file only in Release and Local modes
     // In SpecPullRequest and Batch modes, remove everything
-    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
+    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
+    const entriesToPreserveForMgmtPackages = pipelineRunMode ? ["test", "assets.json"] : [];
 
-    await cleanUpDirectory(packageDirectory, entriesToPreserve);
+    const modularSDKType = getModularSDKType(packageDirectory);
+    if (modularSDKType === ModularSDKType.DataPlane && pipelineRunMode) {
+        return;
+    }
+    await cleanUpDirectory(packageDirectory, entriesToPreserveForMgmtPackages);
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
-    
+
     // Get from package-details.name which is the actual NPM package name
     if (emitterOptions?.['package-details']?.name) {
         return emitterOptions['package-details'].name;
     }
-    
+
     return undefined;
+}
+
+/**
+ * Extracts an npm package to the changelog-temp directory
+ * @param packageFolderPath - Path to the package folder
+ * @param packageName - Name of the npm package
+ * @param version - Version of the package to extract
+ */
+export function extractNpmPackage(packageFolderPath: string, packageName: string, version: string): void {
+    shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
+    shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+    // TODO: consider get all npm package from github instead
+    shell.exec(`npm pack ${packageName}@${version}`, { silent: true });
+    const files = shell.ls('*.tgz');
+    shell.exec(`tar -xzf ${files[0]}`);
+    shell.cd(packageFolderPath);
+}
+
+/**
+ * Extracts the next version npm package to the changelog-temp/next directory
+ * @param packageFolderPath - Path to the package folder
+ * @param packageName - Name of the npm package
+ * @param nextVersion - Next version of the package to extract
+ */
+export function extractNextVersionPackage(packageFolderPath: string, packageName: string, nextVersion: string): void {
+    shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+    shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
+    shell.cd(path.join(packageFolderPath, 'changelog-temp', 'next'));
+    // TODO: consider get all npm package from github instead
+    shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true });
+    const files = shell.ls('*.tgz');
+    shell.exec(`tar -xzf ${files[0]}`);
+    shell.cd(packageFolderPath);
+}
+
+/**
+ * Cleans up temporary resources and restores the original working directory
+ * @param packageFolderPath - Path to the package folder
+ * @param jsSdkRepoPath - Path to the JS SDK repository
+ */
+export function cleanupResources(packageFolderPath: string, jsSdkRepoPath: string): void {
+    shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
+    shell.rm('-r', `${path.join(packageFolderPath, '~/.tmp-breaking-change-detect')}`);
+    shell.cd(jsSdkRepoPath);
 }

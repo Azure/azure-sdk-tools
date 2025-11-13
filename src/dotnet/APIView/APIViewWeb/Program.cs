@@ -4,6 +4,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
@@ -31,6 +32,12 @@ namespace APIViewWeb
                         options.Connect(new Uri(appConfigUrl), new DefaultAzureCredential()).ConfigureKeyVault(kv => 
                         { 
                             kv.SetCredential(new DefaultAzureCredential());
+                        })
+                        .Select(KeyFilter.Any)
+                        .ConfigureRefresh(refresh =>
+                        {
+                            refresh.Register("Sentinel", refreshAll: true)
+                                .SetCacheExpiration(TimeSpan.FromMinutes(5));
                         });
                     });
                     config.AddUserSecrets(typeof(Program).Assembly);

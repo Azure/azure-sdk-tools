@@ -1,5 +1,11 @@
 import { Logger } from "./log.js";
-import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
+import {
+  joinPaths,
+  NodeHost,
+  normalizePath,
+  resolveCompilerOptions,
+  resolvePath,
+} from "@typespec/compiler";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import {
   createTempDirectory,
@@ -21,32 +27,191 @@ import {
   getServiceDir,
   makeSparseSpecDir,
   getPathToDependency,
+  updateExistingTspLocation,
+  parseTspClientRepoConfig,
+  TspClientConfig,
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
+import { createTspClientMetadata } from "./metadata.js";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
-export async function initCommand(argv: any) {
-  let outputDir = argv["output-dir"];
-  let tspConfig = argv["tsp-config"];
-  const skipSyncAndGenerate = argv["skip-sync-and-generate"];
-  const commit = argv["commit"] ?? "<replace with your value>";
-  const repo = argv["repo"] ?? "<replace with your value>";
+/**
+ * Initializes client library directory and writes the tsp-location.yaml file by processing tspconfig.yaml data.
+ *
+ * This function reads and processes the tspconfig.yaml file, resolves emitter configuration,
+ * determines the output directory based on emitter settings, and creates the tsp-location.yaml
+ * file in the appropriate location. It handles both new installations and updates to existing
+ * configurations when the update-if-exists flag is set.
+ *
+ * @param outputDir - The base output directory where the generated files should be placed
+ * @param repoRoot - The root directory of the repository containing the project
+ * @param tspConfigPath - The path to the tspconfig.yaml file to process
+ * @param tspLocationData - tsp-location.yaml data containing repository, commit, and directory information
+ * @param argv - Command line arguments object containing various options including:
+ *   - update-if-exists: If true, updates existing tsp-location.yaml while preserving existing data
+ *   - emitter-package-json-path: Optional path to override the default emitter package.json location
+ * @returns Promise that resolves to the final package directory path where tsp-location.yaml was written
+ * @throws Error if tspconfig.yaml cannot be read, is empty, or if required emitter configuration is missing
+ */
+async function initProcessDataAndWriteTspLocation(
+  outputDir: string,
+  repoRoot: string,
+  tspConfigPath: string,
+  tspLocationData: TspLocation,
+  argv: any,
+): Promise<string> {
+  // Read the global tsp-client-config.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
+  const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
 
-  const repoRoot = await getRepoRoot(outputDir);
+  // Read tspconfig.yaml contents
+  let tspConfigData;
+  try {
+    tspConfigData = parseYaml(await readFile(tspConfigPath, "utf8"));
+  } catch (err) {
+    throw new Error(`Could not read tspconfig.yaml at ${tspConfigPath}. Error: ${err}`);
+  }
+  if (!tspConfigData) {
+    throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
+  }
+
+  // Finish processing tsp-location.yaml data using the tspconfig.yaml contents
+  tspLocationData.additionalDirectories =
+    tspConfigData?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+      "additionalDirectories"
+    ] ?? [];
 
   const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
-
-  const emitter = await getEmitterFromRepoConfig(
-    emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
+  const emitterData = await getEmitter(
+    repoRoot,
+    tspConfigData,
+    tspclientGlobalConfigData,
+    emitterPackageOverride,
   );
-  if (!emitter) {
-    throw new Error("Couldn't find emitter-package.json in the repo");
+  if (emitterData.path) {
+    // store relative path to repo root
+    tspLocationData.emitterPackageJsonPath = emitterData.path;
   }
+
+  // Check for relevant package path variables and resolve
+  let emitterOutputDir = tspConfigData?.options?.[emitterData.emitter]?.["emitter-output-dir"];
+  const packageDir = tspConfigData?.options?.[emitterData.emitter]?.["package-dir"];
+  let newPackageDir;
+  if (packageDir) {
+    // Warn that this behavior is deprecated
+    Logger.warn(
+      `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
+    );
+    // If no emitter-output-dir is specified, fall back to the legacy package-dir path resolution for the new package directory
+    newPackageDir = resolve(
+      joinPaths(outputDir, getServiceDir(tspConfigData, emitterData.emitter), packageDir!),
+    );
+  } else if (emitterOutputDir) {
+    const [options, _] = await resolveCompilerOptions(NodeHost, {
+      cwd: process.cwd(),
+      entrypoint: "main.tsp",
+      configPath: tspConfigPath,
+      overrides: {
+        outputDir: repoRoot,
+      },
+    });
+    emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];
+    newPackageDir = resolve(emitterOutputDir);
+  } else {
+    throw new Error(
+      `Missing emitter-output-dir in ${emitterData.emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
+    );
+  }
+
+  Logger.info(`The resolved package directory path is ${newPackageDir}`);
+
+  if (argv["update-if-exists"]) {
+    // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
+    // and update it with the new values while maintaining previously existing data.
+    Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
+    tspLocationData = await updateExistingTspLocation(
+      tspLocationData,
+      newPackageDir,
+      emitterPackageOverride,
+    );
+  }
+  await mkdir(newPackageDir, { recursive: true });
+  await writeTspLocationYaml(tspLocationData, newPackageDir);
+  return newPackageDir;
+}
+
+/**
+ * Resolves the correct emitter to use in a language repository based on the provided arguments and configuration files.
+ *
+ * The function determines the emitter name and the path to the emitter's package.json file relative to the repository root.
+ * It supports the following resolution order:
+ * 1. If an emitter-package.json override is provided, it is used directly and stored relative to the repository root.
+ * 2. If a global config file exists with supported emitters, it checks for a match in tspconfig.yaml options.
+ * 3. Default to the emitter-package.json in the repository's eng/ directory. If the default emitter-package.json is used,
+ * the path will be undefined.
+ *
+ * @param repoRoot - The root directory of the repository.
+ * @param tspConfigData - The parsed tspconfig.yaml data.
+ * @param globalConfigFile - Optional global tsp-client-config.yaml configuration.
+ * @param emitterPackageJsonOverride - Optional explicit override path to an emitter-package.json file.
+ * @returns An object containing the emitter name and an optional relative path to the emitter package.json file.
+ * @throws If no valid emitter can be resolved or if the default emitter-package.json is missing or invalid.
+ */
+async function getEmitter(
+  repoRoot: string,
+  tspConfigData: any, // tspconfig.yaml data
+  globalConfigFile?: TspClientConfig,
+  emitterPackageJsonOverride?: string,
+): Promise<{ emitter: string; path?: string }> {
+  // If an emitter-package.json override value is explicitly provided, use it to get the emitter
+  if (emitterPackageJsonOverride) {
+    return {
+      emitter: await getEmitterFromRepoConfig(emitterPackageJsonOverride),
+      path: relative(repoRoot, emitterPackageJsonOverride),
+    };
+  }
+
+  // If a global config file exists with supportedEmitters configured, use it to
+  // find the right emitter. The list of supported emitters will be checked in order, stopping
+  // at the first match in tspconfig.yaml.
+  if (globalConfigFile && globalConfigFile.supportedEmitters) {
+    // Create a Set of config emitter names for lookup
+    const configEmitterNames = new Set(Object.keys(tspConfigData.options) ?? []);
+
+    for (const supportedEmitter of globalConfigFile.supportedEmitters) {
+      if (configEmitterNames.has(supportedEmitter.name)) {
+        Logger.debug(
+          `Using emitter: ${supportedEmitter.name} from tspconfig.yaml. There will be no further processing for other supported emitters.`,
+        );
+        return { emitter: supportedEmitter.name, path: supportedEmitter.path };
+      }
+    }
+  }
+
+  try {
+    // If no emitter is found in the global config, fall back to the default emitter-package.json
+    return {
+      emitter: await getEmitterFromRepoConfig(
+        joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
+      ),
+    };
+  } catch (err) {
+    throw new Error(
+      `Failed to get emitter from default emitter-package.json. Please add a valid emitter-package.json file in the eng/ directory of the repository. Error: ${err}`,
+    );
+  }
+}
+
+export async function initCommand(argv: any) {
+  let outputDir = argv["output-dir"];
+  let tspConfigPath = argv["tsp-config"];
+  const skipSyncAndGenerate = argv["skip-sync-and-generate"];
+
+  const repoRoot = await getRepoRoot(outputDir);
 
   let isUrl = true;
   if (argv["local-spec-repo"]) {
@@ -55,105 +220,64 @@ export async function initCommand(argv: any) {
       throw new Error(`Local spec repo not found: ${localSpecRepo}`);
     }
     isUrl = false;
-    tspConfig = localSpecRepo;
-  } else if (await doesFileExist(tspConfig)) {
+    tspConfigPath = localSpecRepo;
+  } else if (await doesFileExist(tspConfigPath)) {
     isUrl = false;
   }
+  let tspLocationData: TspLocation = {
+    directory: "",
+    commit: "",
+    repo: "",
+    additionalDirectories: [],
+  };
   if (isUrl) {
     // URL scenario
-    const resolvedConfigUrl = resolveTspConfigUrl(tspConfig);
+    const resolvedConfigUrl = resolveTspConfigUrl(tspConfigPath);
     const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
     await sparseCheckout(cloneDir);
-    const tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
+    tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
     await addSpecFiles(cloneDir, tspConfigPath);
     await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
-    let data;
-    try {
-      data = await readFile(joinPaths(cloneDir, tspConfigPath), "utf8");
-    } catch (err) {
-      throw new Error(`Could not read tspconfig.yaml at ${tspConfigPath}. Error: ${err}`);
-    }
-    if (!data) {
-      throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
-    }
-    const configYaml = parseYaml(data);
-    const serviceDir = getServiceDir(configYaml, emitter);
-    const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
-    if (!packageDir) {
-      throw new Error(
-        `Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
-      );
-    }
-    const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!);
-    await mkdir(newPackageDir, { recursive: true });
-    const tspLocationData: TspLocation = {
-      directory: resolvedConfigUrl.path,
-      commit: resolvedConfigUrl.commit,
-      repo: resolvedConfigUrl.repo,
-      additionalDirectories:
-        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
-          "additionalDirectories"
-        ] ?? [],
-    };
-    if (argv["emitter-package-json-path"]) {
-      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
-    }
-    await writeTspLocationYaml(tspLocationData, newPackageDir);
+
+    tspLocationData.directory = resolvedConfigUrl.path;
+    tspLocationData.commit = resolvedConfigUrl.commit;
+    tspLocationData.repo = resolvedConfigUrl.repo;
+
+    outputDir = await initProcessDataAndWriteTspLocation(
+      outputDir,
+      repoRoot,
+      joinPaths(cloneDir, tspConfigPath),
+      tspLocationData,
+      argv,
+    );
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
-    outputDir = newPackageDir;
   } else {
     // Local directory scenario
-    if (!tspConfig.endsWith("tspconfig.yaml")) {
-      tspConfig = joinPaths(tspConfig, "tspconfig.yaml");
-    }
-    let data;
-    try {
-      data = await readFile(tspConfig, "utf8");
-    } catch (err) {
-      throw new Error(`Could not read tspconfig.yaml at ${tspConfig}`);
-    }
-    if (!data) {
-      throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
-    }
-    const configYaml = parseYaml(data);
-    const serviceDir = getServiceDir(configYaml, emitter);
-    const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
-    if (!packageDir) {
-      throw new Error(
-        `Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
-      );
-    }
-    const newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
-    await mkdir(newPackageDir, { recursive: true });
-    tspConfig = tspConfig.replaceAll("\\", "/");
-    const matchRes = tspConfig.match(".*/(?<path>specification/.*)/tspconfig.yaml$");
-    var directory = "";
-    if (matchRes) {
-      if (matchRes.groups) {
-        directory = matchRes.groups!["path"]!;
-      }
+    if (!tspConfigPath.endsWith("tspconfig.yaml")) {
+      tspConfigPath = joinPaths(tspConfigPath, "tspconfig.yaml");
     }
 
-    const tspLocationData: TspLocation = {
-      directory: directory,
-      commit: commit ?? "",
-      repo: repo ?? "",
-      additionalDirectories:
-        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
-          "additionalDirectories"
-        ] ?? [],
-    };
-    const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
-    if (emitterPackageOverride) {
-      // store relative path to repo root
-      tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
+    tspConfigPath = tspConfigPath.replaceAll("\\", "/");
+    const matchRes = tspConfigPath.match(".*/(?<path>specification/.*)/tspconfig.yaml$");
+    if (matchRes) {
+      if (matchRes.groups) {
+        tspLocationData.directory = matchRes.groups!["path"]!;
+      }
     }
-    await writeTspLocationYaml(tspLocationData, newPackageDir);
-    outputDir = newPackageDir;
+    tspLocationData.commit = argv["commit"] ?? "<replace with your value>";
+    tspLocationData.repo = argv["repo"] ?? "<replace with your value>";
+
+    outputDir = await initProcessDataAndWriteTspLocation(
+      outputDir,
+      repoRoot,
+      tspConfigPath,
+      tspLocationData,
+      argv,
+    );
   }
 
   if (!skipSyncAndGenerate) {
@@ -161,10 +285,18 @@ export async function initCommand(argv: any) {
     argv["output-dir"] = outputDir;
     if (!isUrl) {
       // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
-      argv["local-spec-repo"] = tspConfig;
+      argv["local-spec-repo"] = tspConfigPath;
     }
     await syncCommand(argv);
     await generateCommand(argv);
+  } else {
+    // If skip-sync-and-generate is set, just check if we should create the tsp-client-metadata.yaml file.
+    const tspLocation: TspLocation = await readTspLocation(outputDir);
+    await createTspClientMetadata(
+      outputDir,
+      repoRoot,
+      getEmitterPackageJsonPath(repoRoot, tspLocation),
+    );
   }
   return outputDir;
 }
@@ -246,7 +378,7 @@ export async function syncCommand(argv: any) {
   }
 
   try {
-    let emitterLockPath = getEmitterLockPath(getEmitterPackageJsonPath(repoRoot, tspLocation));
+    let emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
 
     // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
@@ -269,6 +401,8 @@ export async function generateCommand(argv: any) {
   const saveInputs = argv["save-inputs"];
   const skipInstall = argv["skip-install"];
 
+  const repoRoot = await getRepoRoot(outputDir);
+
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
   const dirSplit = tspLocation.directory.split("/");
@@ -277,14 +411,32 @@ export async function generateCommand(argv: any) {
     throw new Error("cannot find project name");
   }
   const srcDir = joinPaths(tempRoot, projectName);
-  const emitter = await getEmitterFromRepoConfig(
-    getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation),
-  );
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
+  const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
+
+  // Check if we should create tsp-client-metadata.yaml file
+  await createTspClientMetadata(outputDir, repoRoot, emitterPackageJsonPath);
+
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
+  // Read tspconfig.yaml contents
+  const tspConfigPath = joinPaths(srcDir, "tspconfig.yaml");
+  let tspConfigData;
+  try {
+    tspConfigData = parseYaml(await readFile(tspConfigPath, "utf8"));
+  } catch (err) {
+    Logger.warn(
+      `Could not read tspconfig.yaml at ${tspConfigPath}. Will use the repo root as the target output directory during compilation, this may cause unexpected behavior. Error: ${err}`,
+    );
+  }
+
+  // Give preference to package-dir if both are specified
+  // This is to avoid breaking existing behavior
+  const legacyPathResolution = tspConfigData?.options?.[emitter]?.["package-dir"];
+
   if (skipInstall) {
     Logger.info("Skipping installation of dependencies");
   } else {
@@ -300,7 +452,7 @@ export async function generateCommand(argv: any) {
     }
     // NOTE: This environment variable should be used for developer testing only. A force
     // install may ignore any conflicting dependencies and result in unexpected behavior.
-    dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+    dotenvConfig({ path: resolve(repoRoot, ".env") });
     if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
       args.push("--force");
     }
@@ -310,20 +462,20 @@ export async function generateCommand(argv: any) {
     try {
       await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
     } catch (err) {}
-
   }
-  const [success, exampleCmd] = await compileTsp({
+  const result = await compileTsp({
     emitterPackage: emitter,
-    outputPath: outputDir,
+    outputPath: legacyPathResolution ? outputDir : repoRoot, // always use repo root when using emitter-output-dir
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,
     trace: argv["trace"],
+    legacyPathResolution: legacyPathResolution,
   });
 
   if (argv["debug"]) {
     Logger.warn(`Example of how to compile using the tsp commandline. NOTE: tsp-client does NOT directly run this command, results may vary:
-        ${exampleCmd}
+        ${result.exampleCmd}
         `);
   }
 
@@ -334,7 +486,7 @@ export async function generateCommand(argv: any) {
     await removeDirectory(tempRoot);
   }
 
-  if (!success) {
+  if (!result.success) {
     Logger.error("Failed to generate client");
     process.exit(1);
   }
@@ -440,10 +592,28 @@ export async function generateConfigFilesCommand(argv: any) {
   Logger.info("Generating emitter-package.json file...");
   const content = await readFile(packageJsonPath);
   const packageJson: Record<string, any> = JSON.parse(content.toString());
-  const emitterPackageJson: Record<string, any> = {
-    main: "dist/src/index.js",
-    dependencies: {},
-  };
+
+  const emitterPath =
+    resolveEmitterPathFromArgs(argv) ??
+    joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
+
+  // Start with the existing emitter-package.json if it exists, otherwise create a new one
+  let emitterPackageJson: Record<string, any>;
+  try {
+    emitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
+    Logger.debug(`Updating existing ${basename(emitterPath)}`);
+  } catch (err) {
+    Logger.debug(`Couldn't read ${basename(emitterPath)}. Creating a new file. Error: ${err}`);
+    emitterPackageJson = {};
+  }
+
+  // Always set the main field
+  emitterPackageJson["main"] = "dist/src/index.js";
+
+  // Initialize dependencies if not present
+  if (!emitterPackageJson["dependencies"]) {
+    emitterPackageJson["dependencies"] = {};
+  }
 
   let overrideJson: Record<string, any> = {};
   if (overridePath) {
@@ -468,65 +638,22 @@ export async function generateConfigFilesCommand(argv: any) {
     }
   }
 
+  // Update devDependencies with new pinned packages
   if (Object.keys(devDependencies).length > 0) {
-    emitterPackageJson["devDependencies"] = devDependencies;
+    if (!emitterPackageJson["devDependencies"]) {
+      emitterPackageJson["devDependencies"] = {};
+    }
+    // Merge new devDependencies with existing ones
+    emitterPackageJson["devDependencies"] = {
+      ...emitterPackageJson["devDependencies"],
+      ...devDependencies,
+    };
   }
+
   if (Object.keys(overrideJson).length > 0) {
     emitterPackageJson["overrides"] = overrideJson;
   }
 
-  const emitterPath =
-    resolveEmitterPathFromArgs(argv) ??
-    joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
-
-  let existingEmitterPackageJson: Record<string, any> | undefined;
-  try {
-    existingEmitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
-  } catch (err) {
-    Logger.debug(
-      `Couldn't read ${basename(emitterPath)}. If the file exists it will be over-written. Error: ${err}`,
-    );
-  }
-  // If there's an existing emitter-package.json, we need to check for any manually added dependencies and devDependencies
-  if (existingEmitterPackageJson) {
-    // Register all manually added regular dependencies and their current values
-    const manualDependencies = {};
-    for (const [key, value] of Object.entries(
-      existingEmitterPackageJson["dependencies"] ?? {},
-    )) {
-      if (!Object.keys(emitterPackageJson["dependencies"] ?? {}).includes(key)) {
-        Object.assign(manualDependencies, { [key]: value });
-      }
-    }
-
-    // Preserve manually added regular dependencies
-    emitterPackageJson["dependencies"] = {
-      ...manualDependencies,
-      ...emitterPackageJson["dependencies"],
-    };
-
-    // Register all manually pinned dev dependencies and their current values
-    const manualDevDependencies = {};
-    for (const [key, value] of Object.entries(
-      existingEmitterPackageJson["devDependencies"] ?? {},
-    )) {
-      if (!Object.keys(emitterPackageJson["devDependencies"] ?? {}).includes(key)) {
-        Object.assign(manualDevDependencies, { [key]: value });
-      }
-    }
-
-    if (
-      Object.keys(manualDevDependencies).length > 0 &&
-      emitterPackageJson["devDependencies"] === undefined
-    ) {
-      // Add a devDependencies entry in the new emitter-package.json content to create
-      emitterPackageJson["devDependencies"] = {};
-    }
-    emitterPackageJson["devDependencies"] = {
-      ...manualDevDependencies,
-      ...emitterPackageJson["devDependencies"],
-    };
-  }
   await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
 

@@ -1,8 +1,10 @@
 
+using Amazon.Runtime.Internal.Transform;
 using ApiView;
 using APIView;
 using APIView.Model.V2;
 using APIView.TreeToken;
+using APIViewWeb.DTOs;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
 using System;
@@ -14,6 +16,8 @@ namespace APIViewWeb.Helpers
 {
     public class CodeFileHelpers
     {
+        public static readonly string FirstRowElementId = "FIRST_ROW";
+
         public static async Task<CodePanelData> GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
         {
             var codePanelData = new CodePanelData();
@@ -72,6 +76,69 @@ namespace APIViewWeb.Helpers
             return codePanelData;
         }
 
+        public static async Task GrabCrossLanguageReviewLines(
+            CrossLanguageProcessingDto crossLanguageProcessingData, IEnumerable<ReviewLine> reviewLines, int indent = 0)
+        {
+            string currentCrossLangId = null;
+            foreach (var line in reviewLines)
+            {
+                if (crossLanguageProcessingData.ContextEndLine != null && line.IsContextEndLine == true)
+                {
+                    GrabLinesForCrossLanguageView(crossLanguageProcessingData, line, indent);
+                    crossLanguageProcessingData.ContextEndLine = null;
+                    continue;
+                }
+
+                if (!String.IsNullOrEmpty(line.CrossLanguageId) && line.CrossLanguageId != currentCrossLangId)
+                {
+                    currentCrossLangId = line.CrossLanguageId;
+                    crossLanguageProcessingData.GrabLines = true;
+                    crossLanguageProcessingData.CurrentRoot = line;
+                    crossLanguageProcessingData.GrabIndent = indent;
+
+                    if (crossLanguageProcessingData.Content.ContainsKey(line.CrossLanguageId.ToLower()))
+                    {
+                        crossLanguageProcessingData.Content[line.CrossLanguageId.ToLower()].Add(new CodePanelRowData() {
+                            Type = CodePanelRowDatatype.Separator,
+                            Indent = indent,
+                        });
+                    }
+                    else
+                    {
+                        crossLanguageProcessingData.Content.Add(line.CrossLanguageId.ToLower(), new List<CodePanelRowData>());
+                    }
+                }
+
+                if (crossLanguageProcessingData.GrabLines)
+                {
+                    GrabLinesForCrossLanguageView(crossLanguageProcessingData, line, indent);
+                }
+
+                await GrabCrossLanguageReviewLines(crossLanguageProcessingData, line.Children, indent + 1);
+                if (indent == crossLanguageProcessingData.GrabIndent)
+                {
+                    crossLanguageProcessingData.GrabLines = false;
+                    crossLanguageProcessingData.ContextEndLine = crossLanguageProcessingData.CurrentRoot;
+                    crossLanguageProcessingData.CurrentRoot = null;
+                }
+            }
+        }
+
+        private static void GrabLinesForCrossLanguageView(CrossLanguageProcessingDto crossLanguageProcessingData, ReviewLine line, int indent)
+        {
+            CodePanelRowData rowData = GetCodePanelRowData(crossLanguageProcessingData.CodePanelData, line, null, indent);
+            if (rowData.Type == CodePanelRowDatatype.CodeLine)
+            {
+                if (crossLanguageProcessingData.CurrentRoot != null)
+                {
+                    crossLanguageProcessingData.Content[crossLanguageProcessingData.CurrentRoot.CrossLanguageId.ToLower()].Add(rowData);
+                }
+                else
+                {
+                    crossLanguageProcessingData.Content[crossLanguageProcessingData.ContextEndLine.CrossLanguageId.ToLower()].Add(rowData);
+                }
+            }
+        }
 
         private static async Task<string> BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string parentNodeIdHashed, int nodePositionAtLevel,
             string prevNodeHashId, Dictionary<string, string> relatedLineMap, int indent = 1)
@@ -238,6 +305,7 @@ namespace APIViewWeb.Helpers
                 Type = reviewLine.Tokens.Any(t => t.IsDocumentation == true) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                 NodeIdHashed = nodeIdHashed,
                 NodeId = reviewLine.LineId,
+                CrossLanguageId = reviewLine.CrossLanguageId,
                 Indent = indent,
                 DiffKind = reviewLine.DiffKind,
                 IsHiddenAPI = (reviewLine.IsHidden == true)
@@ -296,7 +364,6 @@ namespace APIViewWeb.Helpers
             return codePanelRowData;
         }
 
-
         private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, CodePanelRowData codePanelRowData)
         {
             var commentRowData = new CodePanelRowData();
@@ -308,9 +375,9 @@ namespace APIViewWeb.Helpers
             }
             else
             {
-                if (!codePanelRawData.IsFirstCodeLineAdded && codePanelRawData.Comments.Any(c => c.ElementId == "FIRST_ROW"))
+                if (!codePanelRawData.IsFirstCodeLineAdded && codePanelRawData.Comments.Any(c => c.ElementId == FirstRowElementId))
                 {
-                    commentsForRow.Add(codePanelRawData.Comments.First(c => c.ElementId == "FIRST_ROW"));
+                    commentsForRow.Add(codePanelRawData.Comments.First(c => c.ElementId == FirstRowElementId));
                 }
                 codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text hide";
             }
@@ -344,7 +411,7 @@ namespace APIViewWeb.Helpers
                 rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
                 if (!codePanelRawData.IsFirstCodeLineAdded && String.IsNullOrEmpty(rowData.NodeId))
                 {
-                    rowData.NodeId = "FIRST_ROW"; // Used to ensure the first codeline has an id regardless of what is occurring in the parser
+                    rowData.NodeId = FirstRowElementId; // Used to ensure the first codeline has an id regardless of what is occurring in the parser
                     codePanelRawData.IsFirstCodeLineAdded = true;
                 }
                 codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
@@ -395,7 +462,6 @@ namespace APIViewWeb.Helpers
             return AreReviewLinesSame(codeFileA.ReviewLines, codeFileB.ReviewLines);
         }
 
-
         private static bool AreReviewLinesSame(List<ReviewLine> reviewLinesA, List<ReviewLine> reviewLinesB)
         {
             var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
@@ -440,7 +506,6 @@ namespace APIViewWeb.Helpers
         public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
         {
             List<ReviewLine> resultLines = [];
-            Dictionary<string, int> refCountMap = [];
 
             //Set lines from diff revision as not from active revision
             foreach (var line in diffLines)
@@ -451,45 +516,67 @@ namespace APIViewWeb.Helpers
             UpdateMissingRelatedLineId(activeLines);
             UpdateMissingRelatedLineId(diffLines);
 
-            var intersectLines = diffLines.Intersect(activeLines);
-            var interleavedLines = activeLines.InterleavedUnion(diffLines);
+            List<ReviewLine> intersectLines = diffLines.Intersect(activeLines).ToList();
+            IEnumerable<ReviewLine> interleavedLines = activeLines.InterleavedUnion(diffLines);
 
             foreach (var line in interleavedLines)
             {
                 if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()))
                     continue;
 
+                //Check if diff revision has a line at same level with same Line Id. This is to handle where an API was removed and added back in different order.
+                // This will also ensure added and modified lines are visible next to each other in the review.
+                ReviewLine relatedLine = line.IsActiveRevisionLine ? diffLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId) :
+                    activeLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId);
 
                 // Current node is not in both revisions. Mark current node as added or removed and then go to next sibling.
-                // If a node is diff then no need to check it's children as they will be marked as diff as well.
                 if (!intersectLines.Contains(line))
                 {
-                    //Recursively mark line as added or removed if line is not skipped from diff
+                    //Mark line as added or removed if line is not skipped from diff
                     if (!line.IsSkippedFromDiff())
                     {
-                        MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                        DiffKind lineDiffKind = line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed;
+                        if (relatedLine != null)
+                        {
+                            line.DiffKind = lineDiffKind;
+                        }
+                        else
+                        {
+                            MarkTreeNodeAsModified(line, lineDiffKind);
+                        }
                     }
 
-                    //Check if diff revision has a line at same level with same Line Id. This is to handle where a API was removed and added back in different order.
-                    // This will also ensure added and modified lines are visible next to each other in the review.
-                    var relatedLine = line.IsActiveRevisionLine ? diffLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId) :
-                        activeLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId);
                     if (relatedLine != null)
                     {
                         relatedLine.Processed = true;
                         if (!relatedLine.IsSkippedFromDiff())
                         {
-                            MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
-                            //Identify the tokens within modified lines and highlight them in the UI
-                            FindModifiedTokens(line, relatedLine);
-                        }                        
-                    }
+                            DiffKind relatedLineDiffKind = relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed;
+                            relatedLine.DiffKind = relatedLineDiffKind;
 
-                    if (relatedLine != null)
-                    {
-                        // First add removed line and then added line
-                        resultLines.Add(line.IsActiveRevisionLine ? relatedLine : line);
-                        resultLines.Add(line.IsActiveRevisionLine ? line : relatedLine);
+                            if (relatedLine.Children.Count > 0 && line.Children.Count > 0)
+                            {
+                                // Process children based on which line is active revision
+                                (ReviewLine primaryLine, ReviewLine secondaryLine) = line.IsActiveRevisionLine ? (line, relatedLine) : (relatedLine, line);
+                                List<ReviewLine> resultantChildSubTree = FindDiff(primaryLine.Children ?? [],
+                                    secondaryLine.Children ?? []);
+                                
+                                primaryLine.Children.Clear();
+                                primaryLine.Children.AddRange(resultantChildSubTree);
+                                secondaryLine.Children.Clear();
+                                resultLines.Add(secondaryLine);
+                            }
+                            else
+                            {
+                                MarkTreeNodeAsModified(relatedLine, relatedLineDiffKind);
+                                resultLines.Add(line.IsActiveRevisionLine ? relatedLine : line);
+                            }
+                            
+                            FindModifiedTokens(line, relatedLine);
+                        }
+                        
+                        ReviewLine changedActiveLine = line.IsActiveRevisionLine ? line : relatedLine;
+                        resultLines.Add(changedActiveLine);
                     }
                     else
                     {
@@ -563,7 +650,6 @@ namespace APIViewWeb.Helpers
                     CollectDocumentationLines(codePanelData, line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
             }
         }
-
 
         // Documentation rows are collected from active revision using node hash ID generated for corresponding code line.
         // Hash ID uses diff kind type to generate the hashed node ID and it will be different after diff calculation for same code line token

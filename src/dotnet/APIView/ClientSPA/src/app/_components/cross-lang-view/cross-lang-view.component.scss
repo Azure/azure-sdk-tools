@@ -1,0 +1,29 @@
+:host ::ng-deep {    
+    .cross-language-view-container {
+        .tab-content {
+            max-height: 35dvh;
+            overflow-y: auto;
+
+            ::-webkit-scrollbar {
+                display: none;
+            }
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+            background-color: var(--base-fg-color);
+            color: var(--primary-btn-color);
+            border-left: solid 4px var(--link-color);
+            border-radius: 0px;
+        }
+
+        .lang-link {
+            font-family: var(--font-family);
+            display: inline-block;
+            margin-top: 10px;
+            font: inherit;
+            font-size: smaller;
+        }
+    }
+}

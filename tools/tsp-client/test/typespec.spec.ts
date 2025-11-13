@@ -60,6 +60,16 @@ describe("Check diagnostic reporting", function () {
     assert.equal(entrypointFile, "client.tsp");
   });
 
+  it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {
+    try {
+      await discoverEntrypointFile(
+        joinPaths(process.cwd(), "test", "examples", "specification", "unexpected-entrypoint-name"),
+      );
+    } catch (e) {
+      assert.equal(e.message, "No main.tsp or client.tsp found");
+    }
+  });
+
   describe("tryParseEmitterOptionAsObject", function () {
     it("returns object for JSON object string", function () {
       const str = `{"name":"@azure/eventgrid-namespaces-2","version":"1.0.3"}`;

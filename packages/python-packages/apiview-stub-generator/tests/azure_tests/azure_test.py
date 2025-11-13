@@ -19,6 +19,9 @@ SDK_PARAMS = [
     ("azure-core", "1.32.0", "core", "azure.core", "src"),
     ("azure-core", "1.32.0", "core", "azure.core", "whl"),
     ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "whl"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "src"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "sdist"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
@@ -75,8 +78,25 @@ def _get_src(src_dir, subdirectory, package_name, version):
     
     _copy_directory_from_github(src_dir, repo_url, directory, tag)
     print(f"Directory copied to: {src_dir}")
-    return src_dir
+    # Check if apiview-properties.json exists in the source directory
+    mapping_file_src = os.path.join(src_dir, "apiview-properties.json")
+    mapping_file = mapping_file_src if os.path.exists(mapping_file_src) else None
+    return src_dir, mapping_file
 
+def _get_mapping_file(dest_dir, subdirectory, package_name, version):
+    """
+    Download the apiview-properties.json mapping file from the GitHub repository.
+    
+    :param dest_dir: Destination directory to copy the file to
+    :param subdirectory: Subdirectory within sdk/ where the package is located
+    :param package_name: Name of the package
+    :return: Path to the copied mapping file, or None if not found
+    """
+    # Construct the raw GitHub URL for the file
+    tag = f"{package_name}_{version}"  # Optional: specify a tag to clone
+    raw_url = f"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/{tag}/sdk/{subdirectory}/{package_name}/apiview-properties.json"
+    return _download_file(dest_dir, raw_url)
+    
 def _download_file(dest_folder, url):
     """
     Download a file from a URL to a destination folder.
@@ -86,14 +106,18 @@ def _download_file(dest_folder, url):
     :return: Path to the downloaded file
     """
     local_filename = os.path.join(dest_folder, url.split('/')[-1])
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    return local_filename
+    try:
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return local_filename
+    except requests.RequestException as e:
+        print(f"Error downloading {url}: {e}")
+        return None
 
-def _get_pypi_files(temp_dir, package_name, version, pkg_type):
+def _get_pypi_files(temp_dir, package_name, version, pkg_type, subdirectory):
     """
     Get the wheel and tar.gz files from PyPI for a specific version of a package.
 
@@ -120,6 +144,8 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type):
         raise ValueError(f"Could not find {pkg_type} file for the specified version.")
     
     pkg_path = _download_file(temp_dir, url)
+    # Copy apiview-properties.json to pkg_path from github repo if it exists
+    mapping_file = _get_mapping_file(temp_dir, subdirectory, package_name, version)
 
     # Linting errors like `do-not-import-asyncio` are ignored in pkg `azure.core`.
     # Since the whl file does not have a `azure/__init__.py` file, pylint does not recognize it as the `azure.core` pkg.
@@ -128,7 +154,7 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type):
     # If whl file, add an empty __init__.py file to the azure directory.
     if pkg_type == "whl":
         _add_init_for_whl(pkg_path)
-    return pkg_path
+    return pkg_path, mapping_file
 
 def _add_init_for_whl(pkg_path):
     # Create a temporary directory to extract and rebuild the wheel
@@ -212,16 +238,16 @@ class TestApiViewAzure:
         temp_path = os.path.join(temp_dir, package_name)
         # copy src to tmp/tmp**/azure-*
         if pkg_type == "src":
-            src_path = _get_src(temp_path, directory, package_name, version)
+            src_path, mapping_file = _get_src(temp_path, directory, package_name, version)
             print(f"Source directory copied to: {src_path}")
-            return src_path
+            return src_path, mapping_file
         # copy whl and sdist files to tmp/tmp**
-        pkg_path = _get_pypi_files(temp_dir, package_name, version, pkg_type)
+        pkg_path, mapping_file = _get_pypi_files(temp_dir, package_name, version, pkg_type, directory)
         if pkg_type == "whl":
             print(f"Wheel file downloaded to: {pkg_path}")
         else:
             print(f"Tar.gz file downloaded to: {pkg_path}")
-        return pkg_path
+        return pkg_path, mapping_file
 
     def _diff_token_file(self, old_file, new_file):
         """
@@ -259,10 +285,11 @@ class TestApiViewAzure:
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
         print("Pip freeze before test")
         check_call(["pip", "freeze"])
-        pkg_path = self._download_packages(directory, pkg_name, version, pkg_type)
+        pkg_path, mapping_file = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
+        # Explicitly pass through mapping file path
         stub_gen = StubGenerator(
-            pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path,
+            pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path, mapping_path=mapping_file
         )
         apiview = self._write_tokens(stub_gen)
         self._validate_line_ids(apiview)

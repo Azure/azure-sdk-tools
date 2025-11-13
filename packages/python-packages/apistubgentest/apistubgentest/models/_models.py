@@ -12,7 +12,7 @@ from collections.abc import Sequence
 import datetime
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar, Protocol
+from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar, Protocol, Literal
 from typing_extensions import runtime_checkable
 
 from ._mixin import MixinWithOverloads
@@ -330,3 +330,21 @@ AliasNewType = NewType('AliasNewType', Dict[str, str])
 @runtime_checkable
 class SomeProtocolDecorator(Protocol):
     pass
+
+class SomeEnum(str, Enum):
+    ONE_ENUM = "one"
+    TWO_ENUM = "two"
+
+class SomethingWithLiterals:
+    literal_ivar: Literal["active", "inactive", SomeEnum.ONE_ENUM]
+    literal_cvar: ClassVar[Union[Literal["production", "development"], bool]]
+
+    def literal_mixed(self, option: Literal["auto", 42, True, SomeEnum.TWO_ENUM]) -> None:
+        pass
+
+    def literal_return(self) -> Literal["success", 2]:
+        pass
+
+    @property
+    def literal_property(self) -> Literal["read", "write", "admin"]:
+        pass

@@ -1,0 +1,27 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/event-grid?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/eventgrid-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.aio.eventgridconsumerclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.aio.eventgridpublisherclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.acknowledgeresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.brokerproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.failedlocktoken?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.receivedetails?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.rejectresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.releaseresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.renewlocksresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.models.releasedelay?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.eventgridconsumerclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.eventgridevent?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.eventgridpublisherclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventgrid/azure.eventgrid.systemeventnames?view=azure-python\u0026branch=main"
+    ]
+  }
+]

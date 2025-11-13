@@ -1,0 +1,33 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/key-vault?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/keyvault-certificates-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.aio.certificateclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.administratorcontact?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificatecontact?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateissuer?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateoperation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateoperationerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificatepolicy?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.deletedcertificate?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.issuerproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.keyvaultcertificate?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.keyvaultcertificateidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.lifetimeaction?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.apiversion?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificatecontenttype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificatepolicyaction?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.keycurvename?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.keytype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.keyusagetype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.wellknownissuernames?view=azure-python\u0026branch=main"
+    ]
+  }
+]

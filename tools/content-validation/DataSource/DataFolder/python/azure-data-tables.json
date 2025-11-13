@@ -1,0 +1,35 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/tables?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/data-tables-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.aio.tableclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.aio.tableserviceclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.accountsaspermissions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.entitymetadata?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.entityproperty?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.requesttoolargeerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.resourcetypes?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableaccesspolicy?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableanalyticslogging?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tablecorsrule?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableentity?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tablemetrics?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableretentionpolicy?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tablesaspermissions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableserviceclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tabletransactionerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.edmtype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.sasprotocol?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.tableerrorcode?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.transactionoperation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.updatemode?view=azure-python\u0026branch=main"
+    ]
+  }
+]

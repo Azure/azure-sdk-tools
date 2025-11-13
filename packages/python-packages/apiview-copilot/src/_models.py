@@ -1,7 +1,18 @@
-from enum import Enum
-from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Optional, Dict, Set
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for defining data models used in APIView Copilot.
+"""
+
 from datetime import datetime
+from enum import Enum
+from typing import Dict, List, Optional, Set
+
+from pydantic import BaseModel, Field, PrivateAttr
 
 from ._sectioned_document import Section
 
@@ -26,7 +37,65 @@ class ExistingComment(BaseModel):
     )
 
     class Config:
+        """Pydantic configuration for ExistingComment."""
+
         populate_by_name = True
+
+
+class APIViewComment(BaseModel):
+    """
+    Represents a comment in the APIView.
+    """
+
+    id: Optional[str] = Field(description="Unique identifier for the comment.")
+    review_id: Optional[str] = Field(
+        description="Unique identifier for the review this comment belongs to.", alias="ReviewId"
+    )
+    api_revision_id: Optional[str] = Field(
+        description="Unique identifier for the API revision this comment belongs to.", alias="APIRevisionId"
+    )
+    element_id: Optional[str] = Field(
+        description="Unique identifier for the element this comment belongs to, such as a function or class.",
+        alias="ElementId",
+    )
+    comment_text: Optional[str] = Field(description="The contents of the comment.", alias="CommentText")
+    created_by: Optional[str] = Field(description="The author of the comment.", alias="CreatedBy")
+    created_on: Optional[datetime] = Field(
+        description="The datetime the comment was created, in ISO 8601 format (e.g., '2023-10-01T12:00:00Z').",
+        alias="CreatedOn",
+    )
+    is_resolved: Optional[bool] = Field(
+        default=False, description="Whether the comment is marked resolved.", alias="IsResolved"
+    )
+    upvotes: Optional[list[str]] = Field(
+        default_factory=list,
+        description="List of user IDs who have upvoted the comment.",
+        alias="Upvotes",
+    )
+    downvotes: Optional[list[str]] = Field(
+        default_factory=list,
+        description="List of user IDs who have down-voted the comment.",
+        alias="Downvotes",
+    )
+    comment_type: Optional[str] = Field(
+        description="The type of comment",
+        alias="CommentType",
+    )
+    comment_source: Optional[str] = Field(
+        description="The source of the comment: UserGenerated, AIGenerated, or Diagnostic",
+        alias="CommentSource",
+        default="UserGenerated",
+    )
+    resolution_locked: Optional[bool] = Field(
+        default=False,
+        description="Whether the comment resolution is locked and cannot be changed.",
+        alias="ResolutionLocked",
+    )
+    is_deleted: Optional[bool] = Field(
+        default=False,
+        description="Whether the comment is deleted.",
+        alias="IsDeleted",
+    )
 
 
 class Comment(BaseModel):
@@ -34,7 +103,11 @@ class Comment(BaseModel):
     Represents a comment in the review result.
     """
 
-    rule_ids: List[str] = Field(description="Unique guideline ID or IDs that were violated.")
+    guideline_ids: List[str] = Field(default_factory=list, description="Unique guideline ID or IDs that were violated.")
+    memory_ids: List[str] = Field(default_factory=list, description="Unique memory ID or IDs that were referenced.")
+    is_generic: bool = Field(
+        default=False, description="Whether any portion of the comment was formulated from generic guidance."
+    )
     line_no: int = Field(description="Line number of the comment.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
@@ -43,7 +116,16 @@ class Comment(BaseModel):
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
     comment: str = Field(description="the contents of the comment.")
-    source: str = Field(description="unique tag for the prompt that produced the comment.")
+    correlation_id: Optional[str] = Field(
+        default=None, description="a correlation ID for grouping similar comments together."
+    )
+    confidence_score: Optional[float] = Field(
+        default=None, description="Confidence score from the judge prompt (0.0 - 1.0)."
+    )
+    severity: Optional[str] = Field(
+        default=None,
+        description="The severity level of the comment: 'SUGGESTION', 'SHOULD', 'MUST', or 'QUESTION'.",
+    )
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -63,6 +145,7 @@ class Guideline(BaseModel):
     # Classification fields
     language: Optional[str] = Field(
         None,
+        # pylint: disable=line-too-long
         description="If this guideline is specific to a language (e.g., 'python'). If omitted, the guideline is language-agnostic.",
     )
     tags: Optional[List[str]] = Field(
@@ -83,6 +166,8 @@ class Guideline(BaseModel):
 
 
 class ExampleType(str, Enum):
+    """Represents the type of example, either 'good' or 'bad'."""
+
     GOOD = "good"
     BAD = "bad"
 
@@ -117,15 +202,6 @@ class Example(BaseModel):
         default_factory=list, description="List of guideline IDs to which this example applies."
     )
     memory_ids: List[str] = Field(default_factory=list, description="List of memory IDs to which this example applies.")
-    related_guidelines: List[str] = Field(
-        default_factory=list, description="List of guideline IDs that are related to this example."
-    )
-    related_examples: List[str] = Field(
-        default_factory=list, description="List of example IDs that are related to this example."
-    )
-    related_memories: List[str] = Field(
-        default_factory=list, description="List of memory IDs that are related to this example."
-    )
 
 
 class Memory(BaseModel):
@@ -166,6 +242,8 @@ class Memory(BaseModel):
 
 
 class ReviewResult(BaseModel):
+    """Represents the result of a review, containing comments and metadata."""
+
     comments: List[Comment] = Field(description="List of comments, if any")
 
     # truly private, never part of Pydantic’s schema or serialization
@@ -174,12 +252,13 @@ class ReviewResult(BaseModel):
     def __init__(
         self,
         *,
+        comments: List[Dict] = None,
         allowed_ids: Optional[List[str]] = None,
-        **data,
+        section: Optional[Section] = None,
     ):
-        comments = data.pop("comments", [])
-        data["comments"] = []
-        super().__init__(**data)
+        comments = comments or []
+        # initialize with no comments since we are going to process them
+        super().__init__(comments=[])
 
         # sanitize allowed_ids to convert the search IDs to the proper format
         allowed_ids = [x.replace("=html=", ".html#") for x in allowed_ids] if allowed_ids else None
@@ -190,15 +269,16 @@ class ReviewResult(BaseModel):
             "_allowed_ids",
             set(allowed_ids) if allowed_ids else set(),
         )
-        self._process_comments(comments)
+        self._process_comments(comments=comments, section=section)
 
-    def _process_comments(self, comments: List[Dict]):
+    def _process_comments(self, *, comments: List[Dict], section: Optional[Section] = None):
         """
         Process comment dictionaries, handling various line_no formats:
         - single number (e.g., "10"): Use as is, cast to int
         - range (e.g., "10-20"): Take the first number
         - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the comment for each line
         - invalid (e.g., "abc"): Use a fallback value of 0
+        If section is provided, fix line numbers and only add valid comments.
         """
         result_comments = []
         default_line_no = 0
@@ -206,8 +286,8 @@ class ReviewResult(BaseModel):
             raw_line_no = str(comment.get("line_no", "0")).replace(" ", "").strip()
 
             # Ensure all required fields exist
-            if "rule_ids" not in comment:
-                comment["rule_ids"] = []
+            if "guideline_ids" not in comment:
+                comment["guideline_ids"] = []
             if "source" not in comment:
                 comment["source"] = "unknown"
 
@@ -223,7 +303,11 @@ class ReviewResult(BaseModel):
                     except ValueError:
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
-                    result_comments.append(Comment(**comment_copy))
+                    new_comment = Comment(**comment_copy)
+                    self._filter_guideline_ids(new_comment)
+                    new_comment.line_no = self._find_line_number(section, new_comment)
+                    if new_comment.line_no is not None:
+                        result_comments.append(new_comment)
                 else:
                     try:
                         # Handle single number format (e.g., "10")
@@ -231,27 +315,18 @@ class ReviewResult(BaseModel):
                     except ValueError:
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
-                    result_comments.append(Comment(**comment_copy))
-        self.comments.extend(result_comments)
-
-    def merge(
-        self,
-        other: "ReviewResult",
-        *,
-        section: Section,
-    ):
-        """
-        Merge two ReviewResult objects.
-        """
-        self._allowed_ids.update(other._allowed_ids)
-        filtered_comments = [x for x in other.comments if self._validate(item=x, section=section)]
-        self.comments.extend(filtered_comments)
+                    new_comment = Comment(**comment_copy)
+                    self._filter_guideline_ids(new_comment)
+                    new_comment.line_no = self._find_line_number(section, new_comment)
+                    if new_comment.line_no is not None:
+                        result_comments.append(new_comment)
+        self.comments.extend(result_comments)  # pylint: disable=no-member
 
     def sort(self):
         """
         Sort the comments by line number.
         """
-        self.comments.sort(key=lambda x: x.line_no)
+        self.comments.sort(key=lambda x: x.line_no)  # pylint: disable=no-member
 
     def sorted(self) -> "ReviewResult":
         """
@@ -260,47 +335,22 @@ class ReviewResult(BaseModel):
         self.sort()
         return self
 
-    def _validate(self, *, item: Comment, section: Section) -> bool:
+    def _filter_guideline_ids(self, item: Comment):
         """
-        Validate a comment against a section of code.
-
-        This method:
-        1. Corrects line numbers by finding the actual line in the section
-        2. Validates rule IDs against known guidelines
-        3. Handles general comments that don't have specific rule IDs
-
-        Args:
-            item: The comment to validate
-            section: The section of code the comment applies to
-
-        Returns:
-            bool: True if the comment is valid, False otherwise
+        Filter out invalid guideline IDs from a comment, keeping only those that resolve.
         """
-        # Cure minor deviations in line numbers. If the line number can't be resolved, it is invalid
-        item.line_no = self._find_line_number(section, item)
-        if not item.line_no:
-            print(f"WARNING: Invalid line number {item.line_no} for comment: {item.comment}")
-            return False
+        if not item.guideline_ids:
+            return
+        resolved_guideline_ids = set()
+        for guideline_id in item.guideline_ids:
+            resolved_guideline_id = self._resolve_guideline_id(guideline_id)
+            if resolved_guideline_id:
+                resolved_guideline_ids.add(resolved_guideline_id)
+        item.guideline_ids = list(resolved_guideline_ids)
 
-        # If the rule IDs are empty, assume valid. These come from the
-        # general prompts as opposed to the guideline-specific ones.
-        if not item.rule_ids:
-            return True
-
-        # Validate and sanitize rule IDs, if provided
-        resolved_rule_ids = set()
-        for rule_id in item.rule_ids:
-            resolved_rule_id = self._resolve_rule_id(rule_id)
-            if resolved_rule_id:
-                resolved_rule_ids.add(resolved_rule_id)
-        # rule IDs only apply to *guidelines* so the IDs associated with memories
-        # and examples aren't relevant here anyways.
-        item.rule_ids = list(resolved_rule_ids)
-        return True
-
-    def _resolve_rule_id(self, rid: str) -> str | None:
+    def _resolve_guideline_id(self, rid: str) -> str | None:
         """
-        Ensure that the rule ID matches with an actual guideline ID.
+        Ensure that the guideline ID matches with an actual guideline ID.
         This ensures that the links that appear in APIView should never be broken (404).
         Allows for specific partial matches.
         """
@@ -314,10 +364,12 @@ class ReviewResult(BaseModel):
                 return gid
         return None
 
-    def _find_line_number(self, chunk: Section, comment: Comment) -> Optional[int]:
+    def _find_line_number(self, chunk: Optional[Section], comment: Comment) -> Optional[int]:
         """
-        Algorithm to correct line numbers that are slightly off.
+        Algorithm to correct line numbers that are slightly off. If chunk is None, return the original line_no.
         """
+        if chunk is None:
+            return comment.line_no
         bad_code = comment.bad_code
         target_idx = chunk.idx_for_line_no(comment.line_no)
         if target_idx is None:
@@ -359,3 +411,25 @@ class ReviewResult(BaseModel):
         print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
         comment.comment = f"{comment.comment} (general comment)"
         return comment.line_no
+
+
+class CosmosMetricsPeriod(BaseModel):
+    """Represents the period information for CosmosDB metrics."""
+
+    start_epoch_s: int
+    end_epoch_s: int
+    label: str
+
+
+class CosmosMetricDocument(BaseModel):
+    """Pydantic model for CosmosDB metric document."""
+
+    id: str  # "overview|2025-09-13|2025-10-03"
+    pk: str  # "overview"  // partition by series, not time
+    metric_name: str  # "overview"
+    dimensions: Dict[str, str]  # {"language": "python"}
+    period: CosmosMetricsPeriod
+    label: str  # "2025-09-13_to_2025-10-03"    // or "2025-TW-0"
+    values: dict
+    updated_at_epoch_s: int  # 1759449600
+    source: str = "aggregator@1.0"

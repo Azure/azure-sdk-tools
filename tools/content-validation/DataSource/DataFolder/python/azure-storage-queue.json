@@ -1,0 +1,33 @@
+[
+  {
+    "version": "view=azure-python-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/storage-queue-readme?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue/?view=azure-python-preview",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.aio?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.aio.queueclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.aio.queueserviceclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.accesspolicy?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.accountsaspermissions?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.binarybase64decodepolicy?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.binarybase64encodepolicy?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.corsrule?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.exponentialretry?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.linearretry?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.locationmode?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.metrics?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueanalyticslogging?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queuemessage?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueproperties?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queuesaspermissions?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueserviceclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.resourcetypes?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.retentionpolicy?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.services?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.textbase64decodepolicy?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.textbase64encodepolicy?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.storageerrorcode?view=azure-python-preview\u0026branch=main"
+    ]
+  }
+]

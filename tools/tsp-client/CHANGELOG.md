@@ -1,5 +1,50 @@
 # Release
 
+## 2025-11-05 - 0.30.0
+
+- Make metadata generation for tsp-client an opt-in feature. If you want to generate `tsp-client-metadata.yaml`, set `generateMetadata: true` in `tsp-client-config.yaml`.
+- Rename `tsp_client_metadata.yaml` to `tsp-client-metadata.yaml`.
+- Rename `tspclientconfig.yaml` to `tsp-client-config.yaml`.
+
+## 2025-11-04 - 0.29.1
+
+- Updated `generate-config-files` command to preserve all existing fields in emitter-package.json when updating. Previously, only dependencies and devDependencies were retained; now all extra fields are preserved.
+- Output a tsp_client_metadata.yaml file during code generation with information like tsp-client version, date created or modified, and emitter-package.json content. The metadata file will be outputted when using the following commands: `init`, `update`, `generate`. NOTE: This file can and will change format and is for tsp-client usage.
+
+## 2025-09-29 - 0.29.0
+
+- When running the `init` command with the `update-if-exists` flag, if there is an existing tsp-location.yaml do not add or modify the `emitterPackageJsonPath` option, unless the `emitter-package-json-path` flag is passed to the command.
+- Ensure that the `output-dir` value is set to repo root when resolving `emitter-output-dir` in the `init` command.
+
+## 2025-09-22 - 0.28.3
+
+- Fix a bug where tsp-client was always setting the `save-inputs` option under a given emitter to `false` when the --save-inputs flag wasn't passed to the tool.
+
+## 2025-09-16 - 0.28.2
+
+- If `package-dir` and `emitter-output-dir` are both specified in a given tspconfig.yaml give preference to `package-dir` until the legacy behavior is officially deprecated.
+
+## 2025-08-15 - 0.28.1
+
+- Fix bug when using `emitter-output-dir` in tspconfig.yaml, always pass the repo root path for the `{output-dir}` variable.
+
+## 2025-08-13 - 0.28.0
+
+- Support `emitter-output-dir` when generating a client library. `emitter-output-dir` will be given preference over client library path parsing with the `package-dir` option under the emitter.
+- Add a warning when `package-dir` is used to explain that support for this option will be deprecated in the future.
+
+## 2025-08-05 - 0.27.0
+
+- Support multiple emitter language repositories through a global `tspclientconfig.yaml` file checked in under `<repo root>/eng`. If this file is added to a language repository the default emitter used for a library might change based on the emitters configured in their tspconfig.yaml and the order of emitters listed in the `tspclientconfig.yaml` file.
+
+## 2025-07-29 - 0.26.1
+
+- Support an `--update-if-exists` flag when using `tsp-client init`. This flag will update the tsp-location.yaml file based on new inputs to the command and keep any other existing config in the file.
+
+## 2025-07-21 - 0.26.0
+
+- Fix bug when discovering entrypoint files to only accept `main.tsp` or `client.tsp` unless otherwise specified in tsp-location.yaml.
+
 ## 2025-07-09 - 0.25.0
 
 - Extend dependency retention in `generate-config-files` command to include regular dependencies, not just devDependencies.

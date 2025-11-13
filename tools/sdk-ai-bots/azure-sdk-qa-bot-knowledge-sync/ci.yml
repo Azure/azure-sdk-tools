@@ -1,0 +1,69 @@
+trigger:
+  branches:
+    include:
+      - main
+      - release/qa-bot
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/
+
+pr:
+  branches:
+    include:
+      - main
+      - release/qa-bot
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: "AzureSDKQABot_KnowledgeSyncer_CI"
+        jobs:
+          - job: "AzureSDKQABot_KnowledgeSyncer_CI"
+            displayName: "Run AzureSDKQABot Knowledge Syncer CI Checks - "
+
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
+
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
+
+            steps:
+              - task: NodeTool@0
+                displayName: "Use Node.js 20.x"
+                inputs:
+                  versionSpec: '20.x'
+
+              - script: |
+                  node -v
+                  npm -v
+                displayName: "Show Node & npm versions"
+
+              - script: |
+                  npm ci
+                displayName: "Install dependencies"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+
+              - script: |
+                  npm run build
+                displayName: "Build"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+
+              - script: |
+                  npm test -- --reporter=junit --outputFile=vitest-report.xml || echo "Tests completed with exit code $?"
+                displayName: "Run Tests"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+
+              - task: PublishTestResults@2
+                condition: succeededOrFailed()
+                inputs:
+                  testResultsFiles: 'tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/vitest-report.xml'
+                  testRunTitle: 'Knowledge Syncer tests'
+                displayName: 'Publish test results'

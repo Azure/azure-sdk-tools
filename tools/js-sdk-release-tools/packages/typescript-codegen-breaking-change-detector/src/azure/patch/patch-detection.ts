@@ -19,6 +19,7 @@ const detectorOptions: DeclarationDifferenceDetectorOptions = {
   OptionalToRequiredAsBreakingChange: true,
   ReadonlyToMutableAsBreakingChange: true,
   MutableToReadonlyAsBreakingChange: true,
+  ConcretTypeToAnyAsBreakingChange: false,
 };
 const detector = new DeclarationDifferenceDetector(detectorOptions);
 

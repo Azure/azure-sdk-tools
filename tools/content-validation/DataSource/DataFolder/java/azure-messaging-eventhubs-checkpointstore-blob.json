@@ -1,0 +1,12 @@
+[
+  {
+    "version": "view=azure-java-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/event-hubs?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/messaging-eventhubs-checkpointstore-blob-readme?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventhubs.checkpointstore.blob?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.messaging.eventhubs.checkpointstore.blob.blobcheckpointstore?view=azure-java-preview\u0026branch=main"
+    ]
+  }
+]

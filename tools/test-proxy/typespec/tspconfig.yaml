@@ -7,3 +7,8 @@ options:
     crate-version: "0.1.0"
     emitter-output-dir: "{project-root}/generated"
     service-dir: "sdk/core"
+  "@typespec/http-client-csharp":
+    package-name: "Microsoft.ClientModel.TestFramework"
+    license:
+      name: "MIT License"
+      company: "Microsoft Corporation"

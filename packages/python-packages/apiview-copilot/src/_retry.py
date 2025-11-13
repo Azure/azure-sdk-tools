@@ -1,3 +1,13 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module containing retry logic with smart defaults, support for 'Retry-After' headers, and per-call timeout.
+"""
+
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
@@ -6,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 class TimeoutException(Exception):
     """Custom exception for timeouts."""
 
+    # pylint: disable=unnecessary-pass
     pass
 
 
@@ -77,8 +88,8 @@ def retry_with_backoff(
 
         # Check for 'Retry-After' header if the exception has it
         retry_after = None
-        if e is not None and hasattr(e, "response") and e.response is not None:
-            retry_after = e.response.headers.get("Retry-After")
+        if e is not None and hasattr(e, "response") and e.response is not None:  # pylint: disable=no-member
+            retry_after = e.response.headers.get("Retry-After")  # pylint: disable=no-member
             if retry_after:
                 try:
                     retry_after = int(retry_after)
@@ -104,7 +115,7 @@ def retry_with_backoff(
         if attempt == max_retries - 1:
             if on_failure:
                 return on_failure(e, attempt)
-            raise  # Re-raise the exception if no on_failure handler
+            raise e  # Raise the last caught exception
 
     # This shouldn't be reached, but just in case
     raise RuntimeError(f"Failed after {max_retries} attempts")

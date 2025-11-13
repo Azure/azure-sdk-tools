@@ -1,0 +1,36 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/monitor?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/monitor-query-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.logsqueryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.metricsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.metricsqueryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logsbatchquery?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logsqueryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logsqueryerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logsquerypartialresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logsqueryresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logstable?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logstablerow?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metric?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricavailability?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricdefinition?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricnamespace?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricvalue?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricsqueryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricsqueryresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.timeserieselement?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.logsquerystatus?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricaggregationtype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricclass?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricnamespaceclassification?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.metricunit?view=azure-python\u0026branch=main"
+    ]
+  }
+]

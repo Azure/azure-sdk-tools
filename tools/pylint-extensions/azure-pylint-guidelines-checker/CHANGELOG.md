@@ -1,5 +1,8 @@
 # Release History
 
+## 0.5.7 (2025-07-15)
+- Bug fix for `do-not-use-logging-exception` checker
+
 ## 0.5.6 (2025-04-23)
 - Documentation updates and fixing checkers
 

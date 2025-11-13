@@ -3,9 +3,6 @@ trigger:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/azsdk-cli
@@ -14,9 +11,6 @@ pr:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/azsdk-cli
@@ -24,22 +18,31 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      SkipReleaseStage: false
+    PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
-    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests    
+    VerifyChangelog: true
     StandaloneExeMatrix:
-    - rid: osx-x64
-      framework: net8.0
-      assembly: azsdk
-    - rid: osx-arm64
-      framework: net8.0
-      assembly: azsdk
-    - rid: win-x64
-      framework: net8.0
-      assembly: azsdk
-    - rid: linux-x64
-      framework: net8.0
-      assembly: azsdk
-    - rid: linux-arm64
-      framework: net8.0
-      assembly: azsdk
+      - rid: linux-x64
+        framework: net8.0
+        assembly: azsdk
+      - rid: linux-arm64
+        framework: net8.0
+        assembly: azsdk
+      - rid: osx-x64
+        framework: net8.0
+        assembly: azsdk
+      - rid: osx-arm64
+        framework: net8.0
+        assembly: azsdk
+      - rid: win-x64
+        framework: net8.0
+        assembly: azsdk
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
+      CustomJobs:
+      - template: /tools/azsdk-cli/run-ai-eval.yml
+        parameters:
+          EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations

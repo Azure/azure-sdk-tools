@@ -14,7 +14,7 @@
     "@microsoft/signalr": "^8.0.7",
     "acorn": "^8.0.0",
     "core-js": "^3.3.2",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.4",
     "jquery": "3.6.0",
     "underscore": "^1.13.4"
   },

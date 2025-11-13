@@ -3,6 +3,7 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Models;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -47,6 +48,11 @@ namespace Azure.Sdk.Tools.TestProxy
             else if(!String.IsNullOrEmpty(file))
             {
                 await _recordingHandler.StartPlaybackAsync(file, Response, RecordingType.FilePersisted, assetsJson);
+                if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
+                {
+                    Startup.ProxyConfiguration.RecordingId = Response.Headers["x-recording-id"];
+                    Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardPlayback;
+                }
             }
             else
             {
@@ -58,11 +64,33 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task Stop()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            string id = string.Empty;
 
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
+            {
+                id = Startup.ProxyConfiguration.RecordingId;
+            }
+            else
+            {
+                id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            }
+
             bool.TryParse(RecordingHandler.GetHeader(Request, "x-purge-inmemory-recording", true), out var shouldPurgeRecording);
 
-            await _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
+
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "The proxy is currently in record mode. <proxyurl>/Playback/Stop is not a valid operation in playback mode. Start a playback session using /Playback/Start before calling Playback/Stop.");
+            }
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
+            {
+                await _recordingHandler.StopPlayback(Startup.ProxyConfiguration.RecordingId, purgeMemoryStore: shouldPurgeRecording);
+                Startup.ProxyConfiguration.RecordingId = null;
+            }
+            else
+            {
+                await _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
+            }
         }
 
         [HttpPost]
@@ -89,10 +117,17 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandleRequest()
         {
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            string id = string.Empty;
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)
+            {
+                id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            }
+            else
+            {
+                id = Startup.ProxyConfiguration.RecordingId;
+            }
 
             await _recordingHandler.HandlePlaybackRequest(id, Request, Response);
         }
-
     }
 }

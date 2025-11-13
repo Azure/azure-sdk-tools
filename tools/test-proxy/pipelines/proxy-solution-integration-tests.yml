@@ -1,0 +1,20 @@
+steps:
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
+    displayName: 'Test'
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_MULTILEVEL_LOOKUP: 0
+      GIT_TOKEN: $(azuresdk-github-pat)
+      GIT_COMMIT_OWNER: azure-sdk
+      GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/*.trx'
+      testRunTitle: '$(OS) AssetSync tests against .NET'
+      testResultsFormat: 'VSTest'
+      mergeTestResults: true

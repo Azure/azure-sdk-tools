@@ -4,6 +4,7 @@ import {
     specifyApiVersionToGenerateSDKByTypeSpec,
     cleanUpPackageDirectory,
     getPackageNameFromTspConfig,
+    getApiReviewPath,
 } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
@@ -218,8 +219,10 @@ describe("getReleaseStatus", () => {
 });
 
 describe("cleanUpPackageDirectory", () => {
-    async function createTestDirectoryStructure(baseDir: string): Promise<string> {
-        const tempPackageDir = path.join(baseDir, `tmp/package-${getRandomInt(10000)}`);
+    async function createTestDirectoryStructure(baseDir: string, packageType: 'management' | 'dataplane' = 'management'): Promise<string> {
+        // Create different directory names based on package type to trigger correct logic
+        const dirName = packageType === 'management' ? `tmp/arm-package-${getRandomInt(10000)}` : `tmp/package-${getRandomInt(10000)}`;
+        const tempPackageDir = path.join(baseDir, dirName);
         
         // Create main directories
         await ensureDir(tempPackageDir);
@@ -248,25 +251,29 @@ describe("cleanUpPackageDirectory", () => {
     }
     
     test("preserves test directory and assets.json in non-SpecPullRequest mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        // Create a management plane package (arm-*) to test the preservation logic
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management');
         
         try {            
-            // Run the function with Release mode
+            // Run the function with Release mode (non-SpecPullRequest mode)
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
-            // Check if test directory and assets.json are preserved
+            // Verify that test directory and its contents are preserved (Management Plane logic)
             const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
-            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
-            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
-            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
-            
-            // Check if test subfolders and files are preserved
             const testCommonDirExists = await pathExists(path.join(tempPackageDir, "test", "common"));
             const testUtilsDirExists = await pathExists(path.join(tempPackageDir, "test", "utils"));
             const testIndexFileExists = await pathExists(path.join(tempPackageDir, "test", "index.test.ts"));
             const testUtilsFileExists = await pathExists(path.join(tempPackageDir, "test", "common", "utils.test.ts"));
             
-            // Assertions for directories and files
+            // Verify that assets.json is preserved (Management Plane logic)
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            
+            // Verify that other files and directories are removed
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
+            
+            // Assert preserved files/directories for Management Plane
             expect(testDirExists).toBe(true);
             expect(testCommonDirExists).toBe(true);
             expect(testUtilsDirExists).toBe(true);
@@ -274,8 +281,9 @@ describe("cleanUpPackageDirectory", () => {
             expect(testUtilsFileExists).toBe(true);
             expect(assetsFileExists).toBe(true);
 
-            // Verify removed directories and files
+            // Assert removed files/directories
             expect(srcDirExists).toBe(false);
+            expect(distDirExists).toBe(false);
             expect(packageJsonExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
@@ -283,30 +291,62 @@ describe("cleanUpPackageDirectory", () => {
     });
     
     test("removes all files and directories in SpecPullRequest mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        // Test with management plane package first
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management');
         
         try {
+            // Verify initial structure exists
+            const initialEntries = await readdir(tempPackageDir);
+            expect(initialEntries.length).toBeGreaterThan(0);
+            
             // Run the function with SpecPullRequest mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.SpecPullRequest);
 
-            // Check if everything is removed
-            const entries = await readdir(tempPackageDir);
-            expect(entries.length).toBe(0);
+            // Verify all files and directories are removed
+            const finalEntries = await readdir(tempPackageDir);
+            expect(finalEntries.length).toBe(0);
+            
+            // Explicitly verify that test directory and assets.json are also removed
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            
+            expect(testDirExists).toBe(false);
+            expect(assetsFileExists).toBe(false);
+            expect(srcDirExists).toBe(false);
+            expect(distDirExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
         }
     });
     
     test("removes all files and directories in Batch mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        // Test with management plane package first
+        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management');
         
         try {
+            // Verify initial structure exists
+            const initialEntries = await readdir(tempPackageDir);
+            expect(initialEntries.length).toBeGreaterThan(0);
+            
             // Run the function with Batch mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Batch);
 
-            // Check if everything is removed
-            const entries = await readdir(tempPackageDir);
-            expect(entries.length).toBe(0);
+            // Verify all files and directories are removed
+            const finalEntries = await readdir(tempPackageDir);
+            expect(finalEntries.length).toBe(0);
+            
+            // Explicitly verify that test directory and assets.json are also removed
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            
+            expect(testDirExists).toBe(false);
+            expect(assetsFileExists).toBe(false);
+            expect(srcDirExists).toBe(false);
+            expect(distDirExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
         }
@@ -507,5 +547,89 @@ describe("getPackageNameFromTspConfig", () => {
         } finally {
             await remove(tempSpecFolder);
         }
+    });
+});
+
+describe("getApiReviewPath - File Priority Tests", () => {
+    let tempDir: string;
+    
+    beforeEach(async () => {
+        tempDir = path.join(__dirname, "temp-getApiReviewPath-test-" + Date.now());
+        await ensureDir(tempDir);
+    });
+
+    afterEach(async () => {
+        await remove(tempDir);
+    });
+
+    // Helper function to create a basic package structure
+    async function createPackage(packageName: string, isHighLevelClient = false) {
+        const packageDir = path.join(tempDir, packageName);
+        const reviewDir = path.join(packageDir, "review");
+        await ensureDir(reviewDir);
+        
+        await writeFile(
+            path.join(packageDir, "package.json"),
+            JSON.stringify({ name: packageName })
+        );
+        
+        // Create parameters.ts for HighLevelClient identification
+        if (isHighLevelClient) {
+            await ensureDir(path.join(packageDir, "src", "models"));
+            await writeFile(
+                path.join(packageDir, "src", "models", "parameters.ts"),
+                "// parameters file"
+            );
+        }
+        
+        return { packageDir, reviewDir };
+    }
+
+    test("should prioritize -node.api.md when both files exist", async () => {
+        const { packageDir, reviewDir } = await createPackage("@azure/test-package", true);
+        
+        // Create both API review files
+        const standardApiFile = path.join(reviewDir, "test-package.api.md");
+        const nodeApiFile = path.join(reviewDir, "test-package-node.api.md");
+        
+        await writeFile(standardApiFile, "// Standard API content");
+        await writeFile(nodeApiFile, "// Node API content");
+        
+        const result = getApiReviewPath(packageDir);
+        
+        expect(result).toBe(nodeApiFile);
+        expect(result.endsWith("-node.api.md")).toBe(true);
+    });
+
+    test("should fallback to standard .api.md when -node.api.md doesn't exist", async () => {
+        const { packageDir, reviewDir } = await createPackage("@azure/test-package", true);
+        
+        // Create only standard API review file
+        const standardApiFile = path.join(reviewDir, "test-package.api.md");
+        await writeFile(standardApiFile, "// Standard API content");
+        
+        const result = getApiReviewPath(packageDir);
+        
+        expect(result).toBe(standardApiFile);
+        expect(result.endsWith(".api.md")).toBe(true);
+        expect(result.endsWith("-node.api.md")).toBe(false);
+    });
+
+    test("should work with different package types (Modular, Rest, HLC)", async () => {
+        // Test with ModularClient package (no parameters.ts)
+        const { packageDir: modularDir, reviewDir: modularReview } = await createPackage("@azure/modular-package");
+        const nodeApiFile = path.join(modularReview, "modular-package-node.api.md");
+        await writeFile(nodeApiFile, "// Modular Node API content");
+        
+        const modularResult = getApiReviewPath(modularDir);
+        expect(modularResult).toBe(nodeApiFile);
+        
+        // Test with RestLevelClient package
+        const { packageDir: restDir, reviewDir: restReview } = await createPackage("@azure-rest/rest-package");
+        const standardApiFile = path.join(restReview, "rest-package.api.md");
+        await writeFile(standardApiFile, "// Rest API content");
+        
+        const restResult = getApiReviewPath(restDir);
+        expect(restResult).toBe(standardApiFile);
     });
 });

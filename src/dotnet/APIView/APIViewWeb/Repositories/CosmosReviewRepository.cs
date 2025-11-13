@@ -68,6 +68,28 @@ namespace APIViewWeb
             return reviews;
         }
 
+        public async Task<IEnumerable<ReviewListItemModel>> GetPendingNamespaceApprovalReviewsAsync(IEnumerable<string> sdkLanguages)
+        {
+            var languageArray = sdkLanguages.ToArray();
+            var languageList = string.Join(",", languageArray.Select(l => $"'{l}'"));
+            var queryText = $@"
+                SELECT * FROM Reviews r 
+                WHERE r.Language IN ({languageList}) 
+                AND r.NamespaceReviewStatus = 'Pending'
+                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)
+                AND r.IsDeleted = false";
+            
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryText);
+            var reviews = new List<ReviewListItemModel>();
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviews.AddRange(result.Resource);
+            }
+
+            return reviews;
+        }
+
         public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null)
         {
             var reviewIdsAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(reviewIds);

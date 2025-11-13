@@ -214,9 +214,10 @@ export class ChangelogGenerator {
   private generateContentCore() {
     let content = '';
     const featureItems = this.getItemsFromCategoryMap(this.changelogItems.features);
-    content += this.generateSection(featureItems, 'Features Added');
-
     const breakingChangeItems = this.getItemsFromCategoryMap(this.changelogItems.breakingChanges);
+
+    content += this.generateSection(featureItems, 'Features Added');
+    if (featureItems.length > 0 && breakingChangeItems.length > 0) content += '\n';
     content += this.generateSection(breakingChangeItems, 'Breaking Changes');
 
     return content;

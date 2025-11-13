@@ -1,0 +1,166 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reportStatus > generateHtmlFromFilteredLog > should generate HTML from filtered log successfully 1`] = `
+"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>spec-gen-sdk-js result</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            line-height: 1.6;
+            padding: 40px;
+        }
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        a {
+            text-decoration: underline!important;
+            text-underline-offset: .2rem!important;
+        }
+         /* GitHub Special prompt block */
+        .markdown-alert.markdown-alert-note {
+            border-left-color: #0969da;
+        }
+        .markdown-alert.markdown-alert-note .markdown-alert-title {
+            color: #0969da;
+        }
+        .markdown-body>*:first-child {
+            margin-top: 0 !important;
+        }
+        .markdown-alert {
+           padding: 0.5rem 1rem;
+           margin-bottom: 1rem;
+           color: inherit;
+           border-left: .25em solid #d1d9e0;
+        }
+        .markdown-alert .markdown-alert-title {
+            display: flex;
+            font-weight: 500;
+            align-items: center;
+            line-height: 1;
+        }
+        .markdown-alert>:first-child {
+            margin-top: 0;
+        }
+        .markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol, .markdown-body dl, .markdown-body table, .markdown-body pre, .markdown-body details {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        .mr-2 {
+            margin-right: 0.5rem !important;
+        }
+        .octicon {
+            display: inline-block;
+            overflow: visible !important;
+            vertical-align: text-bottom;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <article class="markdown-body">
+        
+<div class="markdown-alert markdown-alert-note" dir="auto">
+    <p class="markdown-alert-title" dir="auto">
+    <svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>
+        Note
+    </p>
+    <p dir="auto">This is a note block</p>
+</div>
+<ul><li>List item 1</li><li>List item 2</li></ul>
+    </article>
+</body>
+</html>
+"
+`;
+
+exports[`reportStatus > generateHtmlFromFilteredLog > should handle markdown without note blocks 1`] = `
+"# Simple Markdown
+
+This is a simple paragraph."
+`;
+
+exports[`reportStatus > generateReport > should generate report successfully with valid context 1`] = `
+{
+  "executionResult": "succeeded",
+  "filteredLogPath": "/tmp/filtered.log",
+  "fullLogPath": "/tmp/full.log",
+  "generateFromTypeSpec": false,
+  "isSdkConfigDuplicated": false,
+  "packages": [
+    {
+      "absentBreakingChangeSuppressions": [],
+      "apiViewArtifact": "apiview.json",
+      "areBreakingChangeSuppressed": false,
+      "artifactPaths": [
+        "artifact1.zip",
+        "artifact2.zip",
+      ],
+      "breakingChangeLabel": "breaking-change",
+      "hasBreakingChange": false,
+      "installInstructions": "npm install test-package",
+      "language": "JavaScript",
+      "packageName": "test-package",
+      "presentBreakingChangeSuppressions": [],
+      "readmeMd": [
+        "README.md",
+      ],
+      "result": "succeeded",
+      "serviceName": "test-service",
+      "shouldLabelBreakingChange": false,
+      "typespecProject": undefined,
+      "version": "1.0.0",
+    },
+  ],
+  "sdkArtifactFolder": "/tmp/sdk-artifacts",
+  "stagedArtifactsFolder": "/tmp/artifacts",
+  "vsoLogPath": "/tmp/vso.log",
+}
+`;
+
+exports[`reportStatus > generateReport > should write markdown file when pullNumber is provided 1`] = `
+"## Package Name
+test-package
+## Version
+1.0.0
+## Result
+succeeded
+## Spec Configuration
+README.md
+## Has Breaking Change
+false
+## Is Beta Management SDK
+false
+## Has Suppressions
+false
+## Has Absent Suppressions
+false
+
+"
+`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 1`] = `"{"type":"Markdown","mode":"replace","level":"Error","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 2`] = `"{"type":"Markdown","mode":"replace","level":"Error","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 3`] = `"{"type":"Markdown","mode":"replace","level":"Error","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 4`] = `"{"type":"Markdown","mode":"replace","level":"Warning","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 5`] = `"{"type":"Markdown","mode":"replace","level":"Info","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 6`] = `"{"type":"Markdown","mode":"replace","level":"Warning","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should save filtered log successfully 1`] = `"{"type":"Markdown","mode":"replace","level":"Info","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;

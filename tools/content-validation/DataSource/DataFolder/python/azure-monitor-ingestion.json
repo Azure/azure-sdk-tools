@@ -1,0 +1,15 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/monitor?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/monitor-ingestion-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-ingestion/azure.monitor.ingestion?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-ingestion/azure.monitor.ingestion.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-ingestion/azure.monitor.ingestion.aio.logsingestionclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-ingestion/azure.monitor.ingestion.logsingestionclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-monitor-ingestion/azure.monitor.ingestion.logsuploaderror?view=azure-python\u0026branch=main"
+    ]
+  }
+]

@@ -1,21 +1,20 @@
-using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
-using Xunit;
-using System.Text.Json;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class PlaybackTests
     {
-
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
         [Fact]

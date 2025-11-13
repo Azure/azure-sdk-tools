@@ -1,5 +1,5 @@
 beautifulsoup4>=4.11.1
 requests>=2.27.1
 urllib3<3
-twine==3.1.1
+twine==6.1.0
 pipgrip>=0.8.0

@@ -147,7 +147,7 @@ namespace Azure.Test
     {
     }
 
-    // Empty class with explicit public constructor - should NOT be flagged  
+    // Empty class with explicit public constructor - should NOT be flagged
     public class EmptyModelExplicit
     {
         public EmptyModelExplicit() { }
@@ -211,7 +211,7 @@ namespace Azure.Test
     {
         public int Age { get; }
         public string Name { get; }
-        
+
         public ExampleModel(string name)
         {
             Name = name;
@@ -229,8 +229,6 @@ namespace Azure.Test
 
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
-
-
 
         [Fact]
         public async Task AZC0035_RealWorldExamples()
@@ -305,6 +303,273 @@ namespace Azure.Storage.Blobs
         public virtual Response<ReleasedObjectInfo> GetReleasedObjectInfo() => null;
         public virtual Response<PrivateConstructorModel> GetPrivateConstructorModel() => null;
         public virtual Response<ReadOnlyModel> GetReadOnlyModel() => null;
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_IgnoresSystemTypes()
+        {
+            const string code = @"
+using Azure;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace System
+{
+    // System.BinaryData - should be ignored
+    public class BinaryData
+    {
+        public string Content { get; }
+    }
+}
+
+namespace System.Threading
+{
+    // System.Threading.Thread - should be ignored
+    public class Thread
+    {
+        public string Name { get; set; }
+        public bool IsAlive { get; }
+    }
+}
+
+namespace Azure.Test
+{
+    public class TestClient
+    {
+        // These should NOT produce diagnostics because BinaryData and Thread are System types
+        public virtual Response<BinaryData> GetBinaryData()
+        {
+            return null;
+        }
+
+        public virtual Task<Response<Thread>> GetThreadAsync()
+        {
+            return null;
+        }
+
+        // This should also work with generic unwrapping
+        public virtual Task<Operation<BinaryData>> GetOperationOfBinaryDataAsync()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_AllowsSystemClientModelTypes()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace System.ClientModel
+{
+    // Types in System.ClientModel should still be checked - this one should be flagged
+    public class {|AZC0035:CustomClientModel|}
+    {
+        private CustomClientModel() { }
+        public string Name { get; }
+    }
+
+    // This one should not be flagged - has public constructor with settable properties
+    public class AllowedClientModel
+    {
+        public AllowedClientModel(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+    }
+}
+
+namespace System.ClientModel.Primitives
+{
+    // Types in System.ClientModel subnamespaces should also be checked now with the fix
+    public class {|AZC0035:PrimitiveModel|}
+    {
+        private PrimitiveModel() { }
+        public string Value { get; }
+    }
+}
+
+namespace Azure.Test
+{
+    public class TestClient
+    {
+        public virtual Response<System.ClientModel.CustomClientModel> GetCustomClientModel()
+        {
+            return null;
+        }
+
+        public virtual Response<System.ClientModel.AllowedClientModel> GetAllowedClientModel()
+        {
+            return null;
+        }
+
+        public virtual Response<System.ClientModel.Primitives.PrimitiveModel> GetPrimitiveModel()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_GenericUnwrappingWithSystemTypes()
+        {
+            const string code = @"
+using Azure;
+using System;
+using System.Threading.Tasks;
+
+namespace System
+{
+    public class BinaryData
+    {
+        public string Content { get; }
+    }
+}
+
+namespace Azure.Test
+{
+    // This should be flagged because it's not a System type and has no public constructor
+    public class {|AZC0035:CustomModel|}
+    {
+        private CustomModel() { }
+        public string Name { get; }
+    }
+
+    public class TestClient
+    {
+        // All these should NOT be flagged because BinaryData is a System type
+        // even when wrapped in generics - unwrapping should still work correctly
+        public virtual Task<Response<BinaryData>> GetBinaryDataInTaskResponseAsync()
+        {
+            return null;
+        }
+
+        public virtual Task<Operation<BinaryData>> GetBinaryDataInTaskOperationAsync()
+        {
+            return null;
+        }
+
+        public virtual Task<Pageable<BinaryData>> GetBinaryDataInTaskPageableAsync()
+        {
+            return null;
+        }
+
+        // This SHOULD be flagged because CustomModel is not a System type
+        public virtual Task<Response<CustomModel>> GetCustomModelAsync()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_SystemClientModelGenericTypes()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace System.ClientModel
+{
+    // System.ClientModel type that should be flagged
+    public class {|AZC0035:ClientResult|}
+    {
+        private ClientResult() { }
+        public string Value { get; }
+    }
+
+    // System.ClientModel type that should NOT be flagged (easily constructible)
+    public class EasyClientModel
+    {
+        public string Name { get; set; }
+        public int Value { get; set; }
+    }
+}
+
+namespace Azure.Test
+{
+    public class TestClient
+    {
+        // ClientResult should be flagged even though it's in System.ClientModel
+        public virtual Response<System.ClientModel.ClientResult> GetClientResult()
+        {
+            return null;
+        }
+
+        // EasyClientModel should NOT be flagged
+        public virtual Response<System.ClientModel.EasyClientModel> GetEasyClientModel()
+        {
+            return null;
+        }
+
+        // Test unwrapping with System.ClientModel types
+        public virtual Task<Response<System.ClientModel.ClientResult>> GetClientResultAsync()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+
+        [Fact]
+        public async Task AZC0035_OnlyAnalyzesSourceDefinedClientTypes()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // Source-defined model that should be flagged
+    public class {|AZC0035:MyCustomModel|}
+    {
+        private MyCustomModel() { }
+        public string Value { get; }
+    }
+
+    // Source-defined client - should be analyzed
+    public class MyClient
+    {
+        public virtual Response<MyCustomModel> GetModel()
+        {
+            return null;
+        }
+    }
+
+    // Source-defined model factory - should be analyzed
+    public static class MyModelFactory
+    {
+        // This factory method doesn't cover MyCustomModel, so MyCustomModel should be flagged
+        public static SomeOtherModel SomeOtherModel()
+        {
+            return null;
+        }
+    }
+
+    public class SomeOtherModel
+    {
+        public string Name { get; set; }
     }
 }";
 

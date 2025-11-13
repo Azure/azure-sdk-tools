@@ -1,0 +1,186 @@
+---
+name: Context-based APIView Review
+description: A prompt that generates comments for APIView based on a RAG context.
+authors:
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: o3-mini
+    api_version: 2025-03-01-preview
+  parameters:
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 80000
+    reasoning_effort: "high"
+    response_format: ${file:comment_result_schema.json}
+sample:
+  language: python
+  context: |
+    > **memory_id:** memory-abc<br>**score:** 78<br>
+    ## Don't use the term "Crops" in enum values
+
+    It was suggested to avoid using the term "Crops" in enum values, as it may not accurately represent the underlying data or functionality. Instead, use Noodles.
+
+    ### BAD Examples
+
+    ```python
+    FARM_CROPS = 'farmCrops'
+    ```
+
+    ### GOOD Examples
+
+    ```python
+    FARM_NOODLES = 'farmNoodles'
+    ```
+
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 51<br>
+    ## Use keyword-only arguments for optional or less-used arguments in Python 3
+
+    DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.
+
+    Note that you can even have required keyword-only arguments.
+
+    ### GOOD Examples
+
+    ```python
+    def foo(a, b, *, c, d=None):
+        # Note that I can even have required keyword-only arguments...
+        ...
+    ```
+
+    > **guideline_id:** python_implementation.html#python-codestyle-positional-params<br>**score:** 65<br>
+    ## Specify parameter names when calling methods with more than two required positional parameters
+
+    DO specify the parameter name when calling methods with more than two required positional parameters.
+
+    ### GOOD Examples
+
+    ```python
+    def foo(a, b, c):
+        pass
+
+    def bar(d, e):
+        pass
+
+    # Yes:
+    foo(a=1, b=2, c=3)
+    bar(1, 2)
+    bar(e=3, d=4)
+    ```
+
+    ### BAD Examples
+
+    ```python
+    def foo(a, b, c):
+        pass
+
+    # No:
+    foo(1, 2, 3)
+    ```
+
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-param-calling<br>**score:** 64<br>
+    ## Specify parameter names for optional parameters when calling functions
+
+    DO specify the parameter name for optional parameters when calling functions.
+
+    ### GOOD Examples
+
+    ```python
+    def foo(a, b=1, c=None):
+        pass
+
+    # Yes:
+    foo(1, b=2, c=3)
+    ```
+
+    ### BAD Examples
+
+    ```python
+    def foo(a, b=1, c=None):
+        pass
+
+    # No:
+    foo(1, 2, 3)
+    ```
+
+    > **guideline_id:** python_design.html#python-models-enum-name-uppercase<br>**score:** 66<br>
+    ## Use UPPERCASE names for enum members
+
+    DO use UPPERCASE names for enum names.
+
+    ### GOOD Examples
+
+    ```python
+    class MyGoodEnum(str, Enum):
+        ONE = 'one'
+        TWO = 'two'
+
+    ```
+
+    ### BAD Examples
+
+    ```python
+    class MyBadEnum(str, Enum):
+        One = 'one' # No - using PascalCased name.
+        two = 'two' # No - using all lower case name.
+
+    ```
+  content: |
+    ```python
+    500: class azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):
+    501:     CAPTION = 'caption'
+    502:     DENSE_CAPTIONS = 'denseCaptions'
+    503:     OBJECTS = 'objects'
+    504:     PEOPLE = 'people'
+    505:     READ = 'read'
+    506:     SMART_CROPS = 'smartCrops'
+    507:     tags = 'tags'
+    ```
+---
+system:
+  You are an expert code reviewer of SDKs. You will analyze an entire client library APIView surface for {{language}}, provided with contextual information. Your goal is to
+  determine if any of the issues in the provided context are present in the APIView.
+
+  # RULES
+  - ONLY mention if the library is clearly and visibly violating something in the context.
+
+  - Each line of the APIView is prepended with a line number and a colon (ex: "1: # Package parsed").
+
+  - Evaluate each piece of code against all items in the context.
+
+  - Code may violate multiple context items.
+
+  - Each class will contain its namespace, like `class azure.contoso.ClassName` where 'azure.contoso' is the namespace and `ClassName` is the name of the class. 
+
+  - APIView does not contain runnable code or implementations. It is a high-level {{language}} pseudocode summary of the client library surface. 
+
+  - Always cite guideline IDs VERBATIM. Examples (GOOD: `python_implementation.html#python-codestyle-kwargs`, BAD: `python-codestyle-kwargs`).
+
+  # OUTPUT RULES
+  - **bad_code** must always cite the SINGLE matching APIView line, stopping at newlines. NEVER concatenate multiple lines. NEVER include the line number.
+    - GOOD: `def __init__(`
+    - BAD: `def __init__(self, *, ...)`
+    - BAD: `10: def __init__(self, *, ...)`
+  - **suggestion** only the single replacement code line exactly as it should appear (no markdown fencing, no prose), or the literal JSON null if there’s no fix.
+    - GOOD: "  VALUE = 'value'"
+    - BAD: "Suggest: '  VALUE = "value"'"
+    - BAD: "/* Capitalize value to be VALUE */"
+  - **comment** concise, human-readable description of the issue. DO NOT use code snippets. DO NOT cite line numbers or guideline IDs.
+    - GOOD: "Enum values should always be capitalized."
+    - GOOD: "This class has too many methods. I suggest breaking it up into smaller classes."
+    - BAD: "Per guideline python_implementation.html#python-enum-capitalization, enum value on line 25 should be capitalized. Suggest: `   VALUE = 'value'`"
+    - BAD: "Some comment.. Suggest: `   VALUE = 'value'`"
+
+  # CONTEXT
+  These items are the most relevant context for this review. Ground your responses solely within this context.
+  {{context}}
+
+user:
+  Evaluate the following APIView and make comments.
+  ```{{language}}
+  {{content}}
+  ```

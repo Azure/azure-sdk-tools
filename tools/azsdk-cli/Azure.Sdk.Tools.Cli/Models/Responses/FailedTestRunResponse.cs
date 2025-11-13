@@ -2,34 +2,48 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class FailedTestRunResponse : Response
+public class FailedTestRunResponse : CommandResponse
 {
     [JsonPropertyName("run_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int RunId { get; set; } = 0;
 
     [JsonPropertyName("test_case_title")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string TestCaseTitle { get; set; }
 
     [JsonPropertyName("error_message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string ErrorMessage { get; set; }
 
     [JsonPropertyName("stack_trace")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string StackTrace { get; set; }
 
     [JsonPropertyName("outcome")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Outcome { get; set; }
 
-    [JsonPropertyName("url")]
-    public string Url { get; set; }
+    [JsonPropertyName("uri")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string Uri { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
-        var output = $"### Run ID: {RunId}" + Environment.NewLine +
-                     $"### Test Case Title: {TestCaseTitle}" + Environment.NewLine +
-                     $"### Outcome: {Outcome}" + Environment.NewLine +
-                     $"### URL: {Url}" +
-                     $"### Stack Trace:{Environment.NewLine}{StackTrace}" + Environment.NewLine +
-                     $"### Error Message:{Environment.NewLine}{ErrorMessage}" + Environment.NewLine;
-        return ToString(output);
+        var output = "";
+        output += $"## {TestCaseTitle}{Environment.NewLine}";
+        if (RunId != 0)
+        {
+            output += $"Run ID: {RunId}{Environment.NewLine}";
+        }
+        output += $"Outcome: {Outcome}{Environment.NewLine}";
+        if (!string.IsNullOrEmpty(Uri))
+        {
+            output += $"URI: {Uri}{Environment.NewLine}";
+        }
+        output += $"{Environment.NewLine}### Stack Trace{Environment.NewLine}{StackTrace}{Environment.NewLine}";
+        output += $"### Error Message{Environment.NewLine}{ErrorMessage}{Environment.NewLine}";
+
+        return output;
     }
 }

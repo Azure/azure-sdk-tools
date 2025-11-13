@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Azure.Sdk.Tools.TestProxy.Store;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Models;
+using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -24,7 +25,6 @@ namespace Azure.Sdk.Tools.TestProxy
             _recordingHandler = recordingHandler;
             _logger = loggerFactory.CreateLogger<Record>();
         }
-
 
         [HttpPost]
         public async Task Start()
@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     _recordingHandler.ContextDirectory);
 
                 DebugLogger.LogAdminRequestDetails(_logger, Request);
-                _logger.LogDebug($"Attempting to start recording for {file} {assetsJson??string.Empty}");
+                _logger.LogDebug($"Attempting to start recording for {file} {assetsJson ?? string.Empty}");
 
                 if (string.IsNullOrWhiteSpace(file))
                 {
@@ -52,9 +52,15 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
 
                 await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
+
+                if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
+                {
+                    Startup.ProxyConfiguration.RecordingId = Response.Headers["x-recording-id"];
+                    // we use Start() to transition from StandardPlayback to StandardRecord and vice-versa
+                    Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardRecord;
+                }
             }
         }
-
 
         [HttpPost]
         public async Task Push()
@@ -70,7 +76,16 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Stop()
         {
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            string id = string.Empty;
+
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
+            {
+                id = Startup.ProxyConfiguration.RecordingId;
+            }
+            else
+            {
+                id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            }
 
             var variables = await HttpRequestInteractions.GetBody<Dictionary<string, string>>(Request);
 
@@ -89,12 +104,32 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.LogAdminRequestDetails(_logger, Request);
 
-            await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "The proxy is currently in playback mode. <proxyurl>/Record/Stop is not a valid operation in playback mode. Start a recording session using  /Record/Start before calling Record/Stop.");
+            }
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
+            {
+                await _recordingHandler.StopRecording(Startup.ProxyConfiguration.RecordingId, variables: variables, saveRecording: save);
+                Startup.ProxyConfiguration.RecordingId = null;
+            }
+            else
+            {
+                await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
+            }
         }
+
         public async Task HandleRequest()
         {
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
-
+            string id = string.Empty;
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)
+            {
+                id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            }
+            else
+            {
+                id = Startup.ProxyConfiguration.RecordingId;
+            }
             await _recordingHandler.HandleRecordRequestAsync(id, Request, Response);
         }
     }

@@ -1,0 +1,147 @@
+<p-dialog 
+  [(visible)]="visible" 
+  [modal]="true" 
+  [closable]="true"
+  [resizable]="true"
+  [draggable]="false"
+  [dismissableMask]="true"
+  header="Resolve Issues"
+  [style]="{width: '70vw', height: '80vh'}"
+  appendTo="body"
+  (onHide)="onHide()">
+  
+  <div class="dialog-content">
+    <div class="mb-3">
+      <small class="text-muted">
+        The following issues are reporting a related feedback:
+      </small>
+    </div>
+
+    <!-- Select All Checkbox -->
+    <div class="d-flex align-items-center justify-content-between mb-3 p-2 bg-light rounded select-all-section">
+      <div class="d-flex align-items-center">
+        <p-checkbox 
+          [binary]="true"
+          [ngModel]="selectAll"
+          (onChange)="onSelectAllChange($event)"
+          styleClass="me-2">
+        </p-checkbox>
+        <label class="form-check-label fw-semibold mb-0">
+          Select All ({{ relatedComments.length }} issues)
+        </label>
+      </div>
+    </div>
+
+    <!-- Related Comments List -->
+    <div class="related-comments-list mb-4" style="max-height: 50vh; overflow-y: auto;">
+      <div *ngFor="let comment of relatedComments" 
+           class="comment-item border rounded p-3 mb-3" 
+           [class.selected]="isCommentSelected(comment.id)">
+        
+        <!-- Code Context - First and most prominent -->
+        <div *ngIf="getCodeContextForComment(comment)" class="mb-3">
+          <div class="code-github p-3 bg-light border rounded position-relative">
+            <code class="d-block text-dark">{{ getCodeContextForComment(comment) }}</code>
+          </div>
+        </div>
+        
+        <!-- Comment Header -->
+        <div class="d-flex align-items-center mb-2">
+          <p-checkbox 
+            [binary]="true"
+            [ngModel]="isCommentSelected(comment.id)"
+            (ngModelChange)="toggleCommentSelection(comment.id)"
+            styleClass="me-3">
+          </p-checkbox>
+          
+          <img 
+            *ngIf="comment.createdBy !== 'azure-sdk'" 
+            [alt]="comment.createdBy" 
+            src="https://github.com/{{ comment.createdBy }}.png?size=32" 
+            width="32" 
+            height="32" 
+            class="user-avatar rounded-circle me-2"/>
+          <img 
+            *ngIf="comment.createdBy === 'azure-sdk'" 
+            alt="Azure SDK Copilot" 
+            src="{{assetsPath}}/icons/copilot.svg" 
+            width="32" 
+            height="32" 
+            class="user-avatar me-2"/>
+          
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center">
+              <span class="fw-bold me-2">{{ comment.createdBy }}</span>
+              <!-- Current Comment Badge -->
+              <span *ngIf="isTriggeringComment(comment.id)" 
+                    class="badge bg-success text-white me-2" 
+                    title="This is the comment you clicked on">
+                Source
+              </span>
+              <small class="text-muted">{{ comment.createdOn | timeago }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comment Content -->
+        <div class="comment-content ms-5 ps-2">
+          <div [innerHTML]="(comment.commentText | markdownToHtml | async)" 
+               class="rendered-comment-content">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="resolution-comment-section mt-4">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <label class="form-label fw-semibold mb-0">
+          Message (Optional):
+        </label>
+        <div class="d-flex align-items-center vote-section">
+          <button 
+            type="button"
+            class="btn btn-link p-2 vote-btn"
+            title="Upvote selected issues"
+            (click)="toggleBatchVote('up')">
+            <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
+          </button>
+          <button 
+            type="button"
+            class="btn btn-link p-2 vote-btn"
+            title="Downvote selected issues"
+            (click)="toggleBatchVote('down')">
+            <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
+          </button>
+        </div>
+      </div>
+      <textarea 
+        class="form-control resolution-comment-textarea"
+        [(ngModel)]="resolutionComment"
+        placeholder=" Add a comment when resolving the selected issues."
+        rows="3">
+      </textarea>
+    </div>
+  </div>
+
+  <!-- Dialog Footer -->
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end w-100">
+      <!-- Action Buttons -->
+      <div class="btn-group">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary" 
+          (click)="onHide()">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          [disabled]="selectedCommentIds.size === 0"
+          (click)="resolveSelected()">
+          Resolve selected issues ({{ getSelectedCount() }})
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

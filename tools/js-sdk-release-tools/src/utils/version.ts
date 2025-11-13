@@ -27,7 +27,7 @@ function isStringStringRecord(
 
 export function getUsedVersions(npmViewResult: Record<string, unknown>): string[] {
     const versions = npmViewResult['versions'];
-    if (!isStringStringRecord(versions)) return [];
+    if (typeof versions !== 'object' || versions === null) return [];
     return Object.keys(versions);    
 }
 
@@ -43,6 +43,35 @@ export function getversionDate(npmViewResult: Record<string, unknown>, version :
         return undefined;
     }
     return time[version];
+}
+
+/**
+ * Get the latest preview version from both "beta" and "next" distribution tags
+ * @param npmViewResult The result from npm view command
+ * @returns The latest preview version or undefined if no preview version exists
+ */
+export function getNextBetaVersion(npmViewResult: Record<string, unknown> | undefined): string | undefined {
+    if (!npmViewResult) {
+        return undefined;
+    }
+    
+    const betaVersion = getVersion(npmViewResult, "beta");
+    const nextVersion = getVersion(npmViewResult, "next");
+    
+    // If only one version exists, return it
+    if (!betaVersion) return nextVersion;
+    if (!nextVersion) return betaVersion;
+    
+    // If both versions exist, compare their dates and return the more recent one
+    const betaDate = getversionDate(npmViewResult, betaVersion);
+    const nextDate = getversionDate(npmViewResult, nextVersion);
+    
+    if (betaDate && nextDate) {
+        return betaDate > nextDate ? betaVersion : nextVersion;
+    }
+    
+    // If dates can't be compared, prefer betaVersion as default
+    return betaVersion;
 }
 
 // NOTE: The latest tag used to contains beta version when there's the sdk is not GA.

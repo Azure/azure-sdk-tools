@@ -14,10 +14,10 @@ namespace APIViewWeb.Helpers
 
             foreach (var language in languages)
             {
-                if (language.Equals("TypeSpec") || language.Equals("Cadl"))
+                if (language.Equals(ApiViewConstants.TypeSpecLanguage) || language.Equals("Cadl"))
                 {
                     result.Add("Cadl");
-                    result.Add("TypeSpec");
+                    result.Add(ApiViewConstants.TypeSpecLanguage);
                 }
                 result.Add(language);
             }
@@ -37,30 +37,24 @@ namespace APIViewWeb.Helpers
                 return "JavaScript";
 
             if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
-                return "TypeSpec";
+                return ApiViewConstants.TypeSpecLanguage;
 
             return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
         }
 
-        public static string GetLanguageAliasForCopilotService(string language)
+        public static string GetLanguageAliasForCopilotService(string language, string languageVariant = null)
         {
-            switch (language)
+            return language switch
             {
-                case "C":
-                    return "clang";
-                case "C#":
-                    return "dotnet";
-                case "C++":
-                    return "cpp";
-                case "JavaScript":
-                    return "typescript";
-                case "Swift":
-                    return "ios";
-                case "Go":
-                    return "golang";
-                default:
-                    return language.ToLower();
-            }
+                "C" => "clang",
+                "C#" => "dotnet",
+                "C++" => "cpp",
+                "JavaScript" => "typescript",
+                "Swift" => "ios",
+                "Go" => "golang",
+                "Java" => languageVariant == "Android" ? "android" : "java",
+                _ => language?.ToLowerInvariant()
+            };
         }
 
         public static string GetLanguageFromRepoName(string repoName)

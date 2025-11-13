@@ -1,0 +1,12 @@
+[
+  {
+    "version": "view=azure-python-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication-email-readme?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-email/azure.communication.email/?view=azure-python-preview",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-email/azure.communication.email.aio?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-email/azure.communication.email.aio.emailclient?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-email/azure.communication.email.emailclient?view=azure-python-preview\u0026branch=main"
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/web-pubsub?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/messaging-webpubsubservice-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubservice/azure.messaging.webpubsubservice?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubservice/azure.messaging.webpubsubservice.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubservice/azure.messaging.webpubsubservice.aio.webpubsubserviceclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubservice/azure.messaging.webpubsubservice.groupmember?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubservice/azure.messaging.webpubsubservice.webpubsubserviceclient?view=azure-python\u0026branch=main"
+    ]
+  }
+]

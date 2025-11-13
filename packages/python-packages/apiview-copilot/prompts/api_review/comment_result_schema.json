@@ -1,0 +1,67 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "comment_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "guideline_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Unique guideline ID or IDs that were violated."
+              },
+              "memory_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Unique memory ID or IDs that were violated."
+              },
+              "is_generic": {
+                "type": "boolean",
+                "description": "True if the comment is a general suggestion not tied to a specific guideline or memory."
+              },
+              "line_no": {
+                "type": "integer",
+                "description": "Line number of the violation."
+              },
+              "bad_code": {
+                "type": "string",
+                "description": "must always cite the SINGLE matching APIView line, stopping at newlines. OMIT the line number. NEVER concatenate multiple lines."
+              },
+              "suggestion": {
+                "type": ["string", "null"],
+                "description": "only the single replacement code line exactly as it should appear (no markdown fencing, no prose), or the literal JSON null if there’s no fix."
+              },
+              "comment": {
+                "type": "string",
+                "description": "concise, human-readable description of the issue. DO NOT use code snippets. DO NOT cite line numbers or guideline IDs."
+              }
+            },
+            "required": [
+              "guideline_ids",
+              "memory_ids",
+              "line_no",
+              "bad_code",
+              "suggestion",
+              "comment",
+              "is_generic"
+            ]
+          },
+          "description": "list of comments if any"
+        }
+      },
+      "required": ["comments"],
+      "additionalProperties": false
+    }
+  }
+}

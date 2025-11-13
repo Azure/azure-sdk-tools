@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -25,9 +24,9 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
             var name = typeSymbol.Name;
-            var nameWithoutSuffix = name.Substring(0, name.Length - suffix.Length);
-            return Diagnostic.Create(Descriptors.AZC0033, context.Symbol.Locations[0],
-                name, suffix, $"{nameWithoutSuffix}Data", $"{nameWithoutSuffix}Info");
+            var suggestedName = NamingSuggestionHelper.GetNamespacedSuggestion(name, typeSymbol, "Data", "Info");
+            var additionalMessage = $"We suggest renaming it to {suggestedName} or another name with these suffixes.";
+            return Diagnostic.Create(Descriptors.AZC0033, context.Symbol.Locations[0], name, suffix, additionalMessage);
         }
     }
 }

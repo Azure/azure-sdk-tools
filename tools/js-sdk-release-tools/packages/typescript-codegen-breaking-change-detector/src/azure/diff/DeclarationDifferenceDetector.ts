@@ -59,8 +59,10 @@ export class DeclarationDifferenceDetector {
     const sourceTypeNode = getTypeNode(source);
 
     // check if concrete type -> any. e.g. string -> any
-    const isConcretTypeToAny = this.canConvertConcretTypeToAny(targetTypeNode?.getKind(), sourceTypeNode?.getKind());
-    if (isConcretTypeToAny) breakingReasons |= DiffReasons.TypeChanged;
+    if (this.options.ConcretTypeToAnyAsBreakingChange) {
+      const isConcretTypeToAny = this.canConvertConcretTypeToAny(targetTypeNode?.getKind(), sourceTypeNode?.getKind());
+      if (isConcretTypeToAny) breakingReasons |= DiffReasons.TypeChanged;
+    }
 
     // check type predicates
     if (

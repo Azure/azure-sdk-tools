@@ -1,0 +1,173 @@
+{
+  "python": {
+    "azure-functions-durable": {
+      "readme": "functions/durablefunctions"
+    },
+    "azure-functions": {
+      "readme": "functions/functions"
+    },
+    "azure-iot-device": {
+      "readme": "iot/iotdevice"
+    },
+
+    "azure-iot-hub": {
+      "readme": "iot/iothub"
+    }
+  },
+  "java": {
+    "azure-cognitiveservices-speech": {
+      "readme": "cognitiveservices/speech"
+    },
+    "azure-durablefunctions-javalibrary": {
+      "readme": "functions/durablefunctions-javalibrary"
+    },
+    "azure-functions-javalibrary": {
+      "readme": "functions/functions-javalibrary"
+    },
+    "azure-iot-iotdeps": {
+      "readme": "iot/iotdeps"
+    },
+    "azure-iot-iotplugandplay-deviceclient": {
+      "readme": "iot/iotplugandplay-deviceclient"
+    },
+    "azure-iot-iotserviceclient": {
+      "readme": "iot/iotserviceclient"
+    },
+    "azure-iot-provisioningdeviceclient": {
+      "readme": "iot/provisioningdeviceclient"
+    },
+    "azure-iot-provisioningserviceclient": {
+      "readme": "iot/provisioningserviceclient"
+    },
+    "azure-loganalytics-client": {
+      "readme": "loganalytics/client"
+    },
+    "azure-sql-client": {
+      "readme": "sql/client"
+    }
+  },
+  "javascript": {
+    "azure-batch": {
+      "readme": "batch/batch",
+      "csvPackage": "@azure/batch"
+    },
+    "azure-communication-calling-effects": {
+      "readme": "communication/@azure/communication-calling-effects",
+      "csvPackage": "@azure/communication-calling-effects"
+    },
+    "azure-communication-messages": {
+      "readme": "communication-messages-rest-readme",
+      "csvPackage": "azure-rest/communication-messages"
+    },
+    "azure-communication-react": {
+      "readme": "communication/@azure/communication-react",
+      "csvPackage": "@azure/communication-react"
+    },
+    "azure-servicefabric": {
+      "readme": "servicefabric/servicefabric",
+      "csvPackage": "@azure/servicefabric"
+    },
+    "typespec-ts-http-runtime": {
+      "readme": "ts-http-runtime-readme",
+      "csvPackage": "@typespec/ts-http-runtime"
+    }
+  },
+  "dotnet": {
+    "azure-ai-agents-persistent": {
+      "readme": "ai.agents.persistent-readme",
+      "csvPackage": "Azure.Ai.Agents.Persistent"
+    },
+    "azure-ai-anomalydetector": {
+      "readme": "cognitiveservices/anomalydetector",
+      "csvPackage": "Azure.Ai.Anomalydetector"
+    },
+    "azure-ai-inference": {
+      "readme": "cognitiveservices/aimodelinference",
+      "csvPackage": "Azure.Ai.Inference"
+    },
+    "azure-ai-language-conversations-authoring": {
+      "readme": "cognitiveservices/conversationsauthoring",
+      "csvPackage": "Azure.Ai.Language.Conversations.Authoring"
+    },
+    "azure-ai-language-text-authoring": {
+      "readme": "cognitiveservices/textauthoring",
+      "csvPackage": "Azure.Ai.Language.Text.Authoring"
+    },
+    "azure-ai-openai-assistants": {
+      "readme": "cognitiveservices/openaiassistants",
+      "csvPackage": "Azure.Ai.Openai.Assistants"
+    },
+    "azure-ai-personalizer": {
+      "readme": "cognitiveservices/personalizer",
+      "csvPackage": "Azure.Ai.Personalizer"
+    },
+    "azure-ai-projects": {
+      "readme": "cognitiveservices/aifoundry",
+      "csvPackage": "Azure.Ai.Projects"
+    },
+    "azure-ai-vision-face": {
+      "readme": "cognitiveservices/face",
+      "csvPackage": "Azure.Ai.Vision.Face"
+    },
+    "azure-analytics-purview-datamap": {
+      "readme": "purview/purviewdatamap",
+      "csvPackage": "Azure.Analytics.Purview.Datamap"
+    },
+    "azure-analytics-purview-sharing": {
+      "readme": "purview/purviewsharing",
+      "csvPackage": "Azure.Analytics.Purview.Sharing"
+    },
+    "azure-analytics-purview-workflows": {
+      "readme": "purview/purviewworkflow",
+      "csvPackage": "Azure.Analytics.Purview.Workflows"
+    },
+    "azure-communication-programmableconnectivity": {
+      "readme": "communication/programmableconnectivity",
+      "csvPackage": "Azure.Communication.Programmableconnectivity"
+    },
+    "azure-compute-batch": {
+      "readme": "batch/computebatch",
+      "csvPackage": "Azure.Compute.Batch"
+    },
+    "azure-cosmos": {
+      "readme": "cosmosdb/cosmosdb",
+      "csvPackage": "Azure.Cosmos"
+    },
+    "azure-health-insights-cancerprofiling": {
+      "readme": "cognitiveservices/healthinsightscancerprofiling",
+      "csvPackage": "Azure.Health.Insights.Cancerprofiling"
+    },
+    "azure-health-insights-clinicalmatching": {
+      "readme": "cognitiveservices/healthinsightsclinicalmatching",
+      "csvPackage": "Azure.Health.Insights.Clinicalmatching"
+    },
+    "azure-provisioning-resources": {
+      "readme": "provisioning/provisioning-resources",
+      "csvPackage": "Azure.Provisioning.Resources"
+    },
+    "azure-resourcemanager-defendereasm": {
+      "readme": "defendereasm/defendereasm",
+      "csvPackage": "Azure.Resourcemanager.Defendereasm"
+    },
+    "azure-resourcemanager-notificationhubs": {
+      "readme": "notificationhubs/notificationhubs",
+      "csvPackage": "Azure.Resourcemanager.Notificationhubs"
+    },
+    "azure-security-codetransparency": {
+      "readme": "confidentialledger/codetransparency",
+      "csvPackage": "Azure.Security.Codetransparency"
+    },
+    "azure-storage-datamovement": {
+      "readme": "storage/datamovement",
+      "csvPackage": "Azure.Storage.Datamovement"
+    },
+    "azure-storage-files-datalake": {
+      "readme": "storage/storage-filesdatalake",
+      "csvPackage": "Azure.Storage.Files.Datalake"
+    },
+    "azure-verticals-agrifood-farming": {
+      "readme": "farmbeats/farmbeats",
+      "csvPackage": "Azure.Verticals.Agrifood.Farming"
+    }
+  }
+}

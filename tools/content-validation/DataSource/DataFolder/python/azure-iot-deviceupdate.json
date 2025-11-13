@@ -1,0 +1,20 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/iot?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/iot-deviceupdate-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.aio.operations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.aio.operations.devicemanagementoperations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.aio.operations.deviceupdateoperations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.aio.deviceupdateclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.operations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.operations.devicemanagementoperations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.operations.deviceupdateoperations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-iot-deviceupdate/azure.iot.deviceupdate.deviceupdateclient?view=azure-python\u0026branch=main"
+    ]
+  }
+]

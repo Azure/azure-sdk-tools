@@ -15,25 +15,48 @@ pr:
     include:
       - packages/python-packages/apiview-copilot
 
-steps:
-  # Step 1: Package the app into a zip file
-  - script: |
-      zip -r app.zip .
-    workingDirectory: packages/python-packages/apiview-copilot
-    displayName: 'Package app into a zip file'
+stages:
+  - stage: apiview_copilot
+    variables:
+      - template: /eng/pipelines/templates/variables/image.yml
 
-  # Step 2: Run unit tests
-  - script: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-      pip install pytest
-      pytest tests --junitxml=pytest-results.xml
-    workingDirectory: packages/python-packages/apiview-copilot
-    displayName: 'Run unit tests'
+    jobs:
+      - job: Package
+        displayName: 'Package app'
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        steps:
+          - script: |
+              zip -r app.zip .
+            workingDirectory: packages/python-packages/apiview-copilot
+            displayName: 'Package app into a zip file'
+          - publish: packages/python-packages/apiview-copilot/app.zip
+            artifact: drop
 
-  # Step 3: Publish build artifacts
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: 'packages/python-packages/apiview-copilot/app.zip'
-      artifactName: 'drop'
-      publishLocation: 'Container'
+      - job: UnitTests
+        displayName: 'Run Unit Tests'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r dev_requirements.txt
+              pip install pytest
+              pytest tests --junitxml=pytest-results.xml
+            workingDirectory: packages/python-packages/apiview-copilot
+            displayName: 'Run Unit Tests'
+
+      - job: Lint
+        displayName: 'Run Pylint'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r dev_requirements.txt
+              pip install pylint
+              pylint src scripts tests
+            workingDirectory: packages/python-packages/apiview-copilot
+            displayName: 'Run Pylint'

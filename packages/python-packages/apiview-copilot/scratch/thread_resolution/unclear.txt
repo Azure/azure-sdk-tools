@@ -1,0 +1,27 @@
+{
+  "language": "python",
+  "package_name": "azure.widgets",
+  "code": "class WidgetObject:",
+  "comments": [
+        {
+            "CreatedBy": "azure-sdk",
+            "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.\n\n**GUIDELINES**\n\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.",
+            "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+        },
+        {
+            "CreatedBy": "noodle",
+            "CommentText": "We discussed it internally and want to keep it as is because we used that name in the JS SDK and we want to keep them the same.",
+            "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+        },
+        {
+            "CreatedBy": "tjprescott",
+            "CommentText": "Noodle, sorry, that's not a valid reason. If you wanted the names to be consistent you should have had them reviewed at the same time. The suffix `Object` adds no useful information and just results in a longer name.",
+            "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+        },
+        {
+            "CreatedBy": "noodle",
+            "CommentText": "But it actually is important and we use it elsewhere, for example BloopObject.",
+            "CreatedOn": "2025-03-19T17:48:26.920445-04:00"
+        }
+    ]
+}

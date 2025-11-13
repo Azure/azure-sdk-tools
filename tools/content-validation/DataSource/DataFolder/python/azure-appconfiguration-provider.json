@@ -1,0 +1,17 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/app-configuration?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/appconfiguration-provider-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider.aio.azureappconfigurationprovider?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider.azureappconfigurationkeyvaultoptions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider.azureappconfigurationprovider?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider.settingselector?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration-provider/azure.appconfiguration.provider.watchkey?view=azure-python\u0026branch=main"
+    ]
+  }
+]

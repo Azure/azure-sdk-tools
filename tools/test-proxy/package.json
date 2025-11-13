@@ -1,0 +1,21 @@
+{
+  "name": "test-proxy",
+  "version": "0.1.0",
+  "type": "module",
+  "peerDependencies": {
+    "@typespec/compiler": "1.3.0",
+    "@typespec/http": "1.3.0",
+    "@typespec/openapi3": "1.3.0",
+    "@typespec/rest": "0.73.0"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "1.3.0",
+    "@typespec/http": "1.3.0",
+    "@typespec/openapi3": "1.3.0",
+    "@typespec/rest": "0.73.0"
+  },
+  "private": true,
+  "dependencies": {
+    "@azure-tools/typespec-client-generator-core": "^0.59.0"
+  }
+}

@@ -197,11 +197,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.SetMatcherForRecording(recordingId, m);
+                await _recordingHandler.SetMatcherForRecording(recordingId, m);
             }
             else
             {
-                _recordingHandler.Matcher = m;
+                await _recordingHandler.SanitizerRegistry.SessionSanitizerLock.WaitAsync();
+
+                try
+                {
+                    _recordingHandler.Matcher = m;
+                }
+                finally
+                {
+                    _recordingHandler.SanitizerRegistry.SessionSanitizerLock.Release();
+                }
             }
         }
 

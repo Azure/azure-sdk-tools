@@ -1,0 +1,83 @@
+name: Sync Knowledge Sources
+
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 2 * * *"  # Daily at 2 AM UTC
+  displayName: Daily knowledge sync
+  branches:
+    include:
+    - main
+
+resources:
+  repositories:
+    - repository: azure-sdk-docs-eng.ms
+      type: git
+      name: internal/azure-sdk-docs-eng.ms
+      ref: main
+
+variables:
+  - group: Release Secrets for GitHub
+  - template: /eng/pipelines/templates/variables/image.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/knowledge_sources'
+
+stages:
+- stage: SyncKnowledge
+  displayName: 'Sync Knowledge Sources'
+  jobs:
+  - job: BuildAndSync
+    displayName: 'Build and Execute Knowledge Sync'
+    pool:
+      name: $(LINUXPOOL)
+      image: $(LINUXVMIMAGE)
+      os: linux
+    steps:
+    - checkout: self
+      displayName: 'Checkout current repository'
+
+    - checkout: azure-sdk-docs-eng.ms
+      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(SERVICE_CONNECTION)
+        addSpnToEnvironment: true
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+          echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+          echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+          echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+          echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: '20.x'
+        
+    - script: |
+        npm ci
+      displayName: 'Install dependencies'
+      workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+      
+    - script: |
+        npm run build
+      displayName: 'Build TypeScript project'
+      workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+      
+    - script: |
+        npm run start
+      displayName: 'Execute knowledge sync'
+      workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+      env:
+        # Azure App Configuration
+        AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+        AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
+
+        # Set working directory for temporary files
+        TMPDIR: $(Agent.TempDirectory)
+        HOME: $(Agent.HomeDirectory)

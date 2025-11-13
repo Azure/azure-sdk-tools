@@ -185,15 +185,17 @@ class FunctionNode(NodeEntityBase):
 
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:
-                self.kwargs[argname] = parsed_docstring.kwargs[argname]
+                # if kwargs are explicitly set in docstring, ignore since they should be in param args
+                if argname not in ["\\**kwargs", "**kwargs", "kwargs"]:
+                    self.kwargs[argname] = parsed_docstring.kwargs[argname]
 
-            # retrieve the special *args type from docstrings
+            # retrieve the special **kwargs type from docstrings
             if self.special_kwarg and not self.special_kwarg.argtype:
                 match = parsed_docstring.pos_args.get(self.special_kwarg.argname, None)
                 if match:
                     self.special_kwarg.argtype = match.argtype
 
-            # retrieve the special **kwargs type from docstrings
+            # retrieve the special *args type from docstrings
             if self.special_vararg and not self.special_vararg.argtype:
                 match = parsed_docstring.pos_args.get(self.special_vararg.argname, None)
                 if match:
@@ -211,7 +213,7 @@ class FunctionNode(NodeEntityBase):
             review_line.add_children(children)
             review_lines.append(review_line)
             # new token list for next line if multi-line
-            review_line = review_lines.create_review_line()
+            review_line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         return review_line
 
     def _argument_count(self) -> int:
@@ -272,7 +274,7 @@ class FunctionNode(NodeEntityBase):
             for err in self.pylint_errors:
                 err.generate_tokens(self.apiview, self.namespace_id)
             param_lines = self.children
-            review_line = review_lines.create_review_line(line_id=self.namespace_id)
+            review_line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         else:
             param_lines = review_lines
 
@@ -336,6 +338,8 @@ class FunctionNode(NodeEntityBase):
                 indent = " " * 4
             review_line.add_text(f"{indent}*", has_suffix_space=False)
             review_line.add_punctuation(",")
+            # treat '*' as a param for LineId
+            review_line.add_line_marker(f"{self.namespace_id}.param(*)")
             review_line = self._reviewline_if_needed(
                 param_lines, review_line, use_multi_line
             )
@@ -380,7 +384,7 @@ class FunctionNode(NodeEntityBase):
 
         # after children are added, add the review line
         def_line.add_children(self.children)
-        def_line.line_id = self.namespace_id
+        def_line.add_line_marker(self.namespace_id)
         review_lines.append(def_line)
 
     def generate_tokens(self, review_lines):
@@ -396,11 +400,12 @@ class FunctionNode(NodeEntityBase):
         # Add tokens for annotations
         for annot in self.annotations:
             review_line = review_lines.create_review_line(
-                related_to_line=self.namespace_id
+                related_to_line=self.namespace_id,
+                is_handwritten=self.is_handwritten
             )
             review_line.add_keyword(annot, has_suffix_space=False)
             review_lines.append(review_line)
-        review_line = review_lines.create_review_line()
+        review_line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         review_line.add_line_marker(
             self.namespace_id, add_cross_language_id=True, apiview=self.apiview
         )
@@ -414,11 +419,12 @@ class FunctionNode(NodeEntityBase):
         navigation_display_name = None
         if self.is_module_level:
             navigation_display_name = self.name
+        render_classes = ["method"]
         review_line.add_text(
             value,
             has_suffix_space=False,
             navigation_display_name=navigation_display_name,
-            render_classes=["method"],
+            render_classes=render_classes,
         )
         # Add parameters
         review_line = self._generate_signature_token(

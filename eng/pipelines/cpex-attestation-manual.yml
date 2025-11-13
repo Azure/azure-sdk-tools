@@ -1,0 +1,54 @@
+trigger: none
+pr: none 
+
+pool:
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-24.04
+
+parameters:
+- name: TableName
+  type: string
+  default: 'ProdKpiEvidenceStream'
+  displayName: Table Name
+- name: ActionItemId
+  type: string
+  displayName: KPI ID
+- name: TargetId
+  type: string
+  displayName: Product ID
+- name: TargetType
+  type: string
+  values:
+    - Service
+    - Offering
+    - ProductSku
+    - Feature
+  displayName: Target Type
+- name: Status
+  type: number
+  displayName: Status (0 - Incomplete, 1 - Complete, 3 - N/A)
+  values:
+    - 0
+    - 1
+    - 3
+- name: EvidenceUrl
+  type: string
+  displayName: Evidence Link
+
+jobs:
+  - job: ManualAttestationEntry
+    steps: 
+      - checkout: self
+      - task: AzureCLI@2
+        displayName: Submit Manual CPEX KPI Entry
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptPath: eng/scripts/Add-CPEX-Attestation-Entry.ps1
+          arguments: >
+            -TableName "${{ parameters.TableName }}"
+            -ActionItemId "${{ parameters.ActionItemId }}"
+            -TargetId "${{ parameters.TargetId }}"
+            -TargetType "${{ parameters.TargetType }}"
+            -Status ${{ parameters.Status }}
+            -EvidenceUrl "${{ parameters.EvidenceUrl }}"

@@ -1,2 +1,5 @@
 exceptions: |
-  1. Comment on lack of XML documentation comments
+  1. DO NOT make comments that don't actually identify a problem.
+  2. DO NOT comment on lack of XML documentation comments
+  3. DO NOT comment on the following method on any types 'JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)'
+  4. DO NOT comment about Output-only model properties missing an internal setter to allow for proper deserialization.

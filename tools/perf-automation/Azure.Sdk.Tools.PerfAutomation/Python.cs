@@ -107,7 +107,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 $"{testName} {arguments}",
                 Path.Combine(projectDirectory, "tests"),
                 outputBuilder: outputBuilder,
-                errorBuilder: errorBuilder
+                errorBuilder: errorBuilder,
+                trackStatistics: true
             );
 
             // TODO: Why does Python perf framework write to StdErr instead of StdOut?
@@ -124,7 +125,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 PackageVersions = runtimePackageVersions,
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = outputBuilder.ToString(),
-                StandardError = errorBuilder.ToString()
+                StandardError = errorBuilder.ToString(),
+                AverageCpu = processResult.AverageCpu,
+                AverageMemory = processResult.AverageMemory
             };
         }
 

@@ -1,0 +1,39 @@
+testcase: completely_different_parser_issues
+language: python
+package_name: azure.search
+code: "def __init__(self, *args, **kwargs):"
+issue_context: |
+  [Python APIView] Method signature parsing error
+  
+  The parser is incorrectly handling constructor methods with *args and **kwargs.
+  
+  **Bad code:**
+  ```python
+  def __init__(self, *args, **kwargs):
+  ```
+existing_issues: |
+  [
+    {
+      "number": 555,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/555",
+      "title": "[Python APIView] Literal values are not quoted",
+      "body": "Parser fails on unquoted Literal types like Literal[value] instead of Literal[\"value\"]",
+      "created_at": "2025-10-15T12:00:00Z"
+    },
+    {
+      "number": 666,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/666",
+      "title": "[Python APIView] Docstring formatting problems", 
+      "body": "APIView is not correctly parsing and displaying docstrings in class methods",
+      "created_at": "2025-10-14T09:30:00Z"
+    },
+    {
+      "number": 777,
+      "url": "https://github.com/tjprescott/azure-sdk-tools/issues/777",
+      "title": "[Python APIView] Import statement ordering issues",
+      "body": "The parser reorders import statements in a way that changes their meaning",
+      "created_at": "2025-10-13T15:45:00Z"
+    }
+  ]
+response:
+  action: create

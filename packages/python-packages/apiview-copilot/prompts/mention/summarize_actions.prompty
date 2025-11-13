@@ -1,0 +1,127 @@
+---
+name: Summarize Parse APIView Conversation to Memory
+description: A prompt that parses the results of an @mention request
+authors: 
+  - tjprescott
+version: 1.0.0
+inputs:
+  results:
+    description: The results of the @mention request to summarize.
+    type: object
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+sample:
+  results: | 
+    {
+      "success": [
+        {
+          "_attachments": "attachments/",
+          "_etag": "\"4301e360-0000-0200-0000-687596f20000\"",
+          "_rid": "Wk44AIzD2OZYBgAAAAAAAA==",
+          "_self": "dbs/Wk44AA==/colls/Wk44AIzD2OY=/docs/Wk44AIzD2OZYBgAAAAAAAA==/",
+          "_ts": 1752536818,
+          "content": "DO use the async/await keywords (requires Python 3.5+). Do not use the yield from coroutine or asyncio.coroutine (https://docs.python.org/3.4/library/asyncio-task.html) syntax.",
+          "id": "python_design=html=python-client-async-keywords",
+          "language": "python",
+          "related_examples": [],
+          "related_guidelines": [],
+          "related_memories": [
+            "python-async-list-operations-exception",
+            "thread-123"
+          ],
+          "tags": [
+            "method"
+          ],
+          "title": "Use async/await keywords for asynchronous code"
+        },
+        {
+          "_attachments": "attachments/",
+          "_etag": "\"b5025303-0000-0200-0000-687596f20000\"",
+          "_rid": "Wk44AKF5kSEQGQAAAAAAAA==",
+          "_self": "dbs/Wk44AA==/colls/Wk44AKF5kSE=/docs/Wk44AKF5kSEQGQAAAAAAAA==/",
+          "_ts": 1752536818,
+          "content": "def list_widgets() -> AsyncIterator[Widget]:\n    ...",
+          "example_type": "good",
+          "guideline_ids": [],
+          "id": "thread-123-example-1",
+          "is_exception": false,
+          "language": null,
+          "memory_ids": [
+            "thread-123"
+          ],
+          "service": null,
+          "tags": null,
+          "title": "Correct: No 'async' keyword for async iterator return type"
+        },
+        {
+          "_attachments": "attachments/",
+          "_etag": "\"b5025903-0000-0200-0000-687596f20000\"",
+          "_rid": "Wk44AKF5kSERGQAAAAAAAA==",
+          "_self": "dbs/Wk44AA==/colls/Wk44AKF5kSE=/docs/Wk44AKF5kSERGQAAAAAAAA==/",
+          "_ts": 1752536818,
+          "content": "async def list_widgets() -> AsyncIterator[Widget]:\n    ...",
+          "example_type": "bad",
+          "guideline_ids": [],
+          "id": "thread-123-example-2",
+          "is_exception": false,
+          "language": null,
+          "memory_ids": [
+            "thread-123"
+          ],
+          "service": null,
+          "tags": null,
+          "title": "Incorrect: Using 'async' keyword for async iterator return type"
+        },
+        {
+          "_attachments": "attachments/",
+          "_etag": "\"21020a40-0000-0200-0000-687596f30000\"",
+          "_rid": "Wk44AOnQ2RspEQAAAAAAAA==",
+          "_self": "dbs/Wk44AA==/colls/Wk44AOnQ2Rs=/docs/Wk44AOnQ2RspEQAAAAAAAA==/",
+          "_ts": 1752536819,
+          "content": "The architect clarified that for async list operations in Python, when the return type is an async iterator (e.g., AsyncIterator[Widget]), the method itself should not be marked with the 'async' keyword. Instead, users are expected to iterate asynchronously over the returned iterator. This is a specific exception to the general guideline that async operations should use the 'async' keyword, and applies to async list operations on async clients.",
+          "id": "thread-123",
+          "is_exception": true,
+          "language": "python",
+          "related_examples": [
+            "thread-123-example-1",
+            "thread-123-example-2"
+          ],
+          "related_guidelines": [
+            "python_design.html#python-client-async-keywords"
+          ],
+          "related_memories": [],
+          "service": "azure.widgets",
+          "source": "mention_agent",
+          "tags": null,
+          "title": "Exception: Do not use 'async' keyword for async list operations returning async iterators"
+        }
+      ]
+    }
+---
+system:
+You are an AI that summarized the results of an @mention request from APIView.
+
+# INSTRUCTIONS
+
+## NO FAILURES
+- Simply thank the user for their feedback and note that you have updated your knowledge base. DO NOT show a summary of what you have done. Don't list items created. 
+  Do provide the memory id you created. Example: "Thank you for your feedback! I've updated my knowledge base with the new information (memory id: `abc-123`)."
+
+## FAILURES
+- If there were successes, say so and provide the memory ID if possible. Example: "Thank you for your feedback! I've tried to update my knowledge base with the new information (memory id: `abc-123`)."
+- Mention that there were some failures and summarize any information that might be useful to the user.
+- DO NOT invite the user to provide more information or ask more questions. Invite them to reach out to `trpresco@microsoft.com`.
+
+user:
+Please summarize the results described:
+  {{results}}

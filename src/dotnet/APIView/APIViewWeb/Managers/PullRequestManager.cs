@@ -11,6 +11,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
@@ -21,8 +22,6 @@ namespace APIViewWeb.Managers
 {
     public class PullRequestManager : IPullRequestManager
     {
-        static readonly GitHubClient _githubClient = new GitHubClient(new ProductHeaderValue("apiview"));
-        
         private readonly TelemetryClient _telemetryClient;
         private readonly ILogger<PullRequestManager> _logger;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
@@ -32,13 +31,19 @@ namespace APIViewWeb.Managers
         private readonly ICodeFileManager _codeFileManager;
         private readonly IConfiguration _configuration;
         private readonly IEnumerable<LanguageService> _languageServices;
+        private readonly IGitHubClientFactory _gitHubClientFactory;
         private readonly int _pullRequestCleanupDays;
-        private readonly bool _isGitClientAvailable;
 
-        public PullRequestManager(
-            ICosmosPullRequestsRepository pullRequestsRepository, ICosmosAPIRevisionsRepository apiRevisionsRepository,
-            IAPIRevisionsManager apiRevisionsManager, IConfiguration configuration, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, TelemetryClient telemetryClient, ILogger<PullRequestManager> logger, IEnumerable<LanguageService> languageServices)
+        public PullRequestManager(ICosmosPullRequestsRepository pullRequestsRepository,
+            ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            IAPIRevisionsManager apiRevisionsManager,
+            IConfiguration configuration, 
+            ICodeFileManager codeFileManager,
+            IReviewManager reviewManager,
+            TelemetryClient telemetryClient, 
+            ILogger<PullRequestManager> logger, 
+            IEnumerable<LanguageService> languageServices,
+            IGitHubClientFactory gitHubClientFactory)
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -49,14 +54,9 @@ namespace APIViewWeb.Managers
             _telemetryClient = telemetryClient;
             _languageServices = languageServices;
             _logger = logger;
+            _gitHubClientFactory = gitHubClientFactory;
 
-            var ghToken = _configuration["github-access-token"];
-            if (!string.IsNullOrEmpty(ghToken))
-            {
-                _githubClient.Credentials = new Credentials(ghToken);
-                _isGitClientAvailable = true;
-            }
-            var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
+            string pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
         public async Task UpsertPullRequestAsync(PullRequestModel pullRequestModel)
@@ -78,8 +78,16 @@ namespace APIViewWeb.Managers
             var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName, language);
             if (pullRequestModel == null)
             {
-                var repoInfo = repoName.Split("/");
-                var pullRequest = await _githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
+                string[] repoInfo = repoName.Split("/");
+                GitHubClient githubClient = await _gitHubClientFactory.CreateGitHubClientAsync(repoInfo[0], repoInfo[1]);
+
+                if (githubClient == null)
+                {
+                    _logger.LogError("GitHub client not available to get PR {PullRequestNumber} in {RepoName}", prNumber, repoName);
+                    return null;
+                }
+
+                PullRequest pullRequest = await githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
                 pullRequestModel = new PullRequestModel()
                 {
                     RepoName = repoName,
@@ -134,7 +142,7 @@ namespace APIViewWeb.Managers
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
             string codeFileName = null, string baselineCodeFileName = null, string language = null,
-            string project = "internal")
+            string project = "internal", string packageType = null)
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             originalFileName = originalFileName ?? codeFileName;
@@ -150,6 +158,12 @@ namespace APIViewWeb.Managers
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
                 project: project, language: language);
 
+            if (codeFile == null)
+            {
+                responseContent.ActionsTaken.Add($"Failed to process code file. Language processor for '{language}' may not be available or file format is unsupported.");
+                return "";
+            }
+
             if (codeFile.PackageName != null && (packageName == null || packageName != codeFile.PackageName))
             {
                 packageName = codeFile.PackageName;
@@ -164,12 +178,12 @@ namespace APIViewWeb.Managers
             if (pullRequestModel.Commits.Any(c => c == commitSha))
             {
                 // PR commit is already processed. No need to reprocess it again.
-                responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed.");
+                responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed. Return with no further actions.");
                 return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices) : "";
             }
 
             pullRequestModel.Commits.Add(commitSha);
-            responseContent.ActionsTaken.Add($"Pull Request data for PR updated with new CommitSha '{commitSha}'");
+            responseContent.ActionsTaken.Add($"Pull Request data for PR updated with new CommitSha '{commitSha}' in memory - not yet saved to database.");
 
             try
             {
@@ -182,7 +196,7 @@ namespace APIViewWeb.Managers
                 if (codeFile != null)
                 {
                     await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
-                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent);
+                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent, packageType: packageType);
                 }
                 else
                 {
@@ -195,13 +209,16 @@ namespace APIViewWeb.Managers
                     });
                 }
 
-                List<PullRequestModel> pullRequests = new List<PullRequestModel>();
                 //Add pull request info only if API revision is created
                 if (!string.IsNullOrEmpty(pullRequestModel.APIRevisionId))
                 {
                     // Update pull request metadata in DB
                     await UpsertPullRequestAsync(pullRequestModel);
-                    pullRequests = (await GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
+                    responseContent.ActionsTaken.Add($"Pull Request data changes saved to database.");
+                }
+                else
+                {
+                    responseContent.ActionsTaken.Add("Pull Request data has no APIRevisionId, changes not saved to database.");
                 }
             }
             finally
@@ -216,11 +233,17 @@ namespace APIViewWeb.Managers
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
         {
-            if (!_isGitClientAvailable)
+            string[] repoInfo = prModel.RepoName.Split("/");
+            GitHubClient githubClient = await _gitHubClientFactory.CreateGitHubClientAsync(repoInfo[0], repoInfo[1]);
+            if (githubClient == null)
+            {
+                _logger.LogWarning(
+                    "GitHub client not available for cleanup check of PR {PullRequestNumber} in {RepoName}",
+                    prModel.PullRequestNumber, prModel.RepoName);
                 return false;
+            }
 
-            var repoInfo = prModel.RepoName.Split("/");
-            var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
+            Issue issue = await githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
             // Close review created for pull request if pull request was closed more than _pullRequestCleanupDays days ago
             if (issue.ClosedAt != null)
             {
@@ -245,17 +268,31 @@ namespace APIViewWeb.Managers
         }
 
         private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
-            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent)
+            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent, string packageType = null)
         {
+            var validPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var result) ? (Models.PackageType?)result : null;
+            
             // fetch review for the package or create brand new review
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
             if (review == null)
             {
-                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false);
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
+                responseContent.ActionsTaken.Add($"Review created with packageType: '{validPackageType}'.");
+            }
+            else
+            {
+                // Update existing review with packageType if provided and different from current value
+                if (validPackageType.HasValue && (!review.PackageType.HasValue || review.PackageType.Value != validPackageType.Value))
+                {
+                    review.PackageType = validPackageType;
+                    review = await _reviewManager.UpdateReviewAsync(review);
+                    responseContent.ActionsTaken.Add($"Updated existing review '{review.Id}' with PackageType: '{validPackageType}'.");
+                }
             }
             pullRequestModel.ReviewId = review.Id;
+            responseContent.ActionsTaken.Add($"Pull Request data ReviewId set to '{pullRequestModel.ReviewId}' in memory - not yet saved to database.");
 
             // Base line file is sent in request only for swagger and TypeSpec
             if (baselineCodeFile == null)
@@ -296,6 +333,7 @@ namespace APIViewWeb.Managers
                 responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
 
                 prModel.APIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data APIRevisionId set to '{prModel.APIRevisionId}' in memory - not yet saved to database.");
             } 
         }
 
@@ -387,8 +425,11 @@ namespace APIViewWeb.Managers
                     userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                     label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
                     originalName: originalFileName);
-                prModel.BaselineAPIRevisionId = newAPIRevision.Id;
                 responseContent.ActionsTaken.Add($"Created new Baseline APIRevisions with Id '{newAPIRevision.Id}'.");
+
+                prModel.BaselineAPIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data BaselineAPIRevisionId set to '{prModel.BaselineAPIRevisionId}' in memory - not yet saved to database.");
+                
             }
 
             // Create modified revision
@@ -398,8 +439,11 @@ namespace APIViewWeb.Managers
                     userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                     label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
                     originalName: originalFileName);
-                prModel.APIRevisionId = newAPIRevision.Id;
                 responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
+
+                prModel.APIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data APIRevisionId set to '{prModel.APIRevisionId}' in memory - not yet saved to database.");
+
             }
 
             //Calculate the diff if it's for swagger as an async task.

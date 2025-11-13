@@ -1,3 +1,7 @@
+# 2.0.7
+
+- Add support for cross-language IDs to correlate APIs across different languages
+
 # 2.0.6
 
 - support `@deprecated` tag

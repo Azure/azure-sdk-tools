@@ -1,0 +1,729 @@
+[
+    {
+        "Rule": "CommonValidation",
+        "IgnoreList": [
+            {
+                "IgnoreText": "from_dict",
+                "Usage": "contains",
+                "Description": "Example: from_dict(data, key_extractors=None, content_type=None) , Link: https://learn.microsoft.com/en-us/python/api/azure-iot-hub/azure.iot.hub.protocol.models.authentication_mechanism.authenticationmechanism?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "deserialize",
+                "Usage": "contains",
+                "Description": "Example: deserialize(data, content_type=None) , Link: https://learn.microsoft.com/en-us/python/api/azure-iot-hub/azure.iot.hub.protocol.models.authentication_mechanism.authenticationmechanism?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "serialize",
+                "Usage": "contains",
+                "Description": "Example: serialize(keep_readonly=False, **kwargs) , Link: https://learn.microsoft.com/en-us/python/api/azure-iot-hub/azure.iot.hub.protocol.models.authentication_mechanism.authenticationmechanism?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "get",
+                "Usage": "contains",
+                "Description": "Example: get(key, default=None) , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-file-datalake/azure.storage.filedatalake.accesscontrolchangecounters?view=azure-python-preview&branch=main"
+            },
+            {
+                "IgnoreText": "lowerker_items",
+                "Usage": "contains",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "is_xml_model",
+                "Usage": "contains",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "pop",
+                "Usage": "contains",
+                "Description": "Example: pop(k, [d]) , Link: https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.messagecontent?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "setdefault",
+                "Usage": "contains",
+                "Description": "Example: setdefault(key, default=None, /) , Link: https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.messagecontent?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "popitem",
+                "Usage": "contains",
+                "Description": "Example: popitem() , Link: https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.messagecontent?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "count",
+                "Usage": "contains",
+                "Description": "Example: count(value, /) , Link: https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.entityproperty?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "index",
+                "Usage": "contains",
+                "Description": "Example: index(value, start=0, stop=9223372036854775807, /) , Link: https://learn.microsoft.com/en-us/python/api/azure-cosmos/azure.cosmos.cosmoslist?view=azure-python-preview&branch=main"
+            },
+            {
+                "IgnoreText": "close",
+                "Usage": "contains",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "update",
+                "Usage": "contains",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "enable_additional_properties_sending",
+                "Usage": "contains",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "has_key",
+                "Usage": "contains",
+                "Description": "Example: has_key , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.blobprefix?view=azure-python#methods"
+            },
+            {
+                "IgnoreText": "clear",
+                "Usage": "contains",
+                "Description": "Example: clear , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-python#methods"
+            },
+            {
+                "IgnoreText": "copy",
+                "Usage": "contains",
+                "Description": "Example: copy , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-python#methods"
+            },
+            {
+                "IgnoreText": "items",
+                "Usage": "contains",
+                "Description": "Example: items , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-python#methods"
+            },
+            {
+                "IgnoreText": "keys",
+                "Usage": "contains",
+                "Description": "Example: keys , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-python#methods"
+            },
+            {
+                "IgnoreText": "values",
+                "Usage": "contains",
+                "Description": "Example: values , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-python#methods"
+            },
+            {
+                "IgnoreText": "fromkeys",
+                "Usage": "contains",
+                "Description": "Example: fromkeys(value=None, /) , Link: https://learn.microsoft.com/en-us/python/api/azure-data-tables/azure.data.tables.entitymetadata?view=azure-python&branch=main#azure-data-tables-entitymetadata-fromkeys"
+            },
+            {
+                "IgnoreText": "\\[\\s*-?\\d+\\s*,\\s*-?\\d+\\s*\\]",
+                "Usage":"regular",
+                "Description": "Matches expressions like [1, 2] or [-1, 5]"
+            },
+            {
+                "IgnoreText": "\\[\\s*-?\\d+\\s*,\\s*-?\\d+\\s*\\)",
+                "Usage":"regular",
+                "Description": "Matches expressions like [1, 2) or [-1, 5)"
+            },
+            {
+                "IgnoreText": "\\(\\s*-?\\d+\\s*,\\s*-?\\d+\\s*\\]",
+                "Usage":"regular",
+                "Description": "Matches expressions like (1, 2] or (-1, 5]"
+            },
+            {
+                "IgnoreText": "\\(\\s*-?\\d+\\s*,\\s*-?\\d+\\s*\\)",
+                "Usage":"regular",
+                "Description": "Matches expressions like (1, 2) or (-1, 5)"
+            },
+            {
+                "IgnoreText": "\\s\\[\\s*[-+]?[a-zA-Z]+\\s*,\\s*[-+]?[a-zA-Z]+\\s*\\]",
+                "Usage":"regular",
+                "Description": "Matches expressions like [min, max] with alphabetic values"
+            },
+            {
+                "IgnoreText": "\\s\\[\\s*[-+]?[a-zA-Z]+\\s*,\\s*[-+]?[a-zA-Z]+\\s*\\)",
+                "Usage":"regular",
+                "Description": "Matches expressions like [min, max) with alphabetic values"
+            },
+            {
+                "IgnoreText": "\\s\\(\\s*[-+]?[a-zA-Z]+\\s*,\\s*[-+]?[a-zA-Z]+\\s*\\]",
+                "Usage":"regular",
+                "Description": "Matches expressions like (min, max] with alphabetic values"
+            },
+            {
+                "IgnoreText": "\\s\\(\\s*[-+]?[a-zA-Z]+\\s*,\\s*[-+]?[a-zA-Z]+\\s*\\)",
+                "Usage":"regular",
+                "Description": "Matches expressions like (min, max) with alphabetic values"
+            },
+            {
+                "IgnoreText": "\\[\\s*[-+]?\\d+(\\.\\d+)?\\s*,\\s*[-+]?\\d+(\\.\\d+)?\\s*\\]",
+                "Usage": "regular",
+                "Description": "Matches expressions like [0.25, 0.75]"
+            },
+            {
+                "IgnoreText": "\\[\\s*[-+]?\\d+(\\.\\d+)?\\s*,\\s*[-+]?\\d+(\\.\\d+)?\\s*\\)",
+                "Usage": "regular",
+                "Description": "Matches expressions like [0.25, 0.75)"
+            },
+            {
+                "IgnoreText": "\\(\\s*[-+]?\\d+(\\.\\d+)?\\s*,\\s*[-+]?\\d+(\\.\\d+)?\\s*\\]",
+                "Usage": "regular",
+                "Description": "Matches expressions like (0.25, 0.75]"
+            },
+            {
+                "IgnoreText": "\\(\\s*[-+]?\\d+(\\.\\d+)?\\s*,\\s*[-+]?\\d+(\\.\\d+)?\\s*\\)",
+                "Usage": "regular",
+                "Description": "Matches expressions like (0.25, 0.75)"
+            }     
+        ]
+    },
+    {
+        "Rule": "ExtraLabelValidation",
+        "IgnoreList": [
+            {
+                "IgnoreText": "<true",
+                "Usage":"contains",
+                "Description": "Example: highlight-<true/false>, '<true' , Link: https://learn.microsoft.com/en-us/python/api/azure-search-documents/azure.search.documents.models.querycaptiontype?view=azure-python"
+            },
+            {
+                "IgnoreText": "<img",
+                "Usage":"contains",
+                "Description": "Example: <img src=\"cid:inline_image\"> , Link: https://learn.microsoft.com/en-us/java/api/overview/azure/communication-email-readme?view=azure-java-preview&branch=main"
+            },
+            {
+                "IgnoreText": "<table",
+                "Usage":"contains",
+                "Description": "Example: --name <table-name> , Link: https://learn.microsoft.com/en-us/java/api/overview/azure/data-tables-readme?view=azure-java-stable&branch=main"
+            }
+        ]
+    },
+    {
+        "Rule": "UnnecessarySymbolsValidation",
+        "IgnoreList": [
+            {
+                "IgnoreText": "datetime",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.containerclient?view=azure-python-preview&branch=main"
+            },
+            {
+                "IgnoreText": "BlobPrefix",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.containerclient?view=azure-python-preview&branch=main"
+            },
+            {
+                "IgnoreText": "bytes, <xref:PrimitiveTypes>",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-servicebus/azure.servicebus.servicebusmessage?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "LogsQueryError",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.logsqueryclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "str",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-keyvault-keys/azure.keyvault.keys.deletedkey?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "CertificateOperation",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "DocumentError",
+                "Usage":"before]",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.aio.textanalyticsclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "as_dict",
+                "Usage":"prefix",
+                "Description": "Example: as_dict(keep_readonly: bool = True, key_transformer: ~typing.Callable , Link: https://learn.microsoft.com/en-us/python/api/azure-search-documents/azure.search.documents.indexes.models.aiservicesaccountidentity?view=azure-python-preview&branch=main"
+            },
+            {
+                "IgnoreText": "generate_account_sas",
+                "Usage":"prefix",
+                "Description": "Example: generate_account_sas(account_name: str , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-file-datalake/azure.storage.filedatalake?view=azure-python-preview"
+            },
+            {
+                "IgnoreText": "LROPoller",
+                "Usage":"prefix",
+                "Description": "Example: LROPoller[KeyVaultCertificate | CertificateOperation] , Link: https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "/indexes/",
+                "Usage":"prefix",
+                "Description": "Example: include /indexes/[index name]/docs for a given index name , Link: https://learn.microsoft.com/en-us/java/api//com.azure.search.documents.searchclient?view=azure-java-stable"
+            },
+            {
+                "IgnoreText": "dist",
+                "Usage":"prefix",
+                "Description": "Example: dict[str, str] , If the prefix is 'dist' / 'list' / 'optional' ..., the symbol [ is considered meaningful. , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.containerclient?view=azure-python#azure-storage-blob-aio-containerclient-from-connection-string"
+            },
+            {
+                "IgnoreText": "list",
+                "Usage":"prefix",
+                "Description": "Example: list[RecognizedForm] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-formrecognizer/azure.ai.formrecognizer.aio.formrecognizerclient?view=azure-python"
+            },
+            {
+                "IgnoreText": "List",
+                "Usage":"prefix",
+                "Description": "Example: List[KeyOperation,str] , Link: https://learn.microsoft.com/en-us/python/api/azure-keyvault-keys/azure.keyvault.keys.deletedkey?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "dict",
+                "Usage":"prefix",
+                "Description": "Example: dict[str, str] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-formrecognizer/azure.ai.formrecognizer.aio.documentmodeladministrationclient?view=azure-python"
+            },
+            {
+                "IgnoreText": "Literal",
+                "Usage":"prefix",
+                "Description": "Example: Literal[\"High\", \"Low\"] , Link: https://learn.microsoft.com/en-us/python/api/azure-cosmos/azure.cosmos.aio.containerproxy?view=azure-python"
+            },
+            {
+                "IgnoreText": "Callable",
+                "Usage":"prefix",
+                "Description": "Example: Callable[[Dict[str, str], Dict[str, Any]], None] , Link: https://learn.microsoft.com/en-us/python/api/azure-cosmos/azure.cosmos.aio.containerproxy?view=azure-python"
+            },
+            {
+                "IgnoreText": "Tuple",
+                "Usage":"prefix",
+                "Description": "Example: Tuple[Any] , Link: https://learn.microsoft.com/en-us/python/api/azure-cosmos/azure.cosmos.aio.containerproxy?view=azure-python"
+            },
+            {
+                "IgnoreText": "Awaitable",
+                "Usage":"prefix",
+                "Description": "Example: Awaitable[None] , Link: https://learn.microsoft.com/en-us/python/api/azure-cosmos/azure.cosmos.aio.containerproxy?view=azure-python"
+            },
+            {
+                "IgnoreText": "Optional",
+                "Usage":"prefix",
+                "Description": "Example: Optional[int] , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.blobclient?view=azure-python"
+            },
+            {
+                "IgnoreText": "\"",
+                "Usage":"prefix",
+                "Description": "Example: \"[scope:][type]:[id]\" , If the prefix is ':' / ':' / ':]' ..., the symbol [ is considered meaningful."
+            },
+            {
+                "IgnoreText": ":",
+                "Usage":"prefix",
+                "Description": "Example: \"[scope:][type]:[id]\" , If the prefix is ':' / ':' / ':]' ..., the symbol [ is considered meaningful."
+            },
+            {
+                "IgnoreText": ":]",
+                "Usage":"prefix",
+                "Description": "Example: \"[scope:][type]:[id]\" , If the prefix is ':' / ':' / ':]' ..., the symbol [ is considered meaningful."
+            },
+            {
+                "IgnoreText": "port",
+                "Usage":"[contains]",
+                "Description": "Example:{protocol}://{fully-qualified-domain-name}[:{port#}] , Link: https://learn.microsoft.com/en-us/python/api/azure-search-documents/azure.search.documents.indexes.models.corsoptions?view=azure-python" 
+            },
+            {
+                "IgnoreText": " str",
+                "Usage":"[contains]",
+                "Description": "Example: dict[str, str] , If the prefix is 'str' / 'int' ..., the symbol [ is considered meaningful. , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.containerclient?view=azure-python#azure-storage-blob-aio-containerclient-from-connection-string"
+            },
+            {
+                "IgnoreText": "str,",
+                "Usage":"[contains]",
+                "Description": "Example: Union[bytes, str, Iterable[AnyStr] , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.aio.containerclient?view=azure-python "
+            },
+            {
+                "IgnoreText": "int,",
+                "Usage":"[contains]",
+                "Description": "Example: Callable[[int, int], None] , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.blobclient?view=azure-python"
+            },
+            {
+                "IgnoreText": " int",
+                "Usage":"[contains]",
+                "Description": "Example: Callable[[int, int], None] , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.blobclient?view=azure-python"
+            },
+            {
+                "IgnoreText": " or ",
+                "Usage":"[contains]",
+                "Description": "Example: List[KeyOperation or str] , Link: https://learn.microsoft.com/en-us/python/api/azure-keyvault-keys/azure.keyvault.keys.keyclient?view=azure-python"
+            },
+            {
+                "IgnoreText": "None",
+                "Usage":"[contains]",
+                "Description": "Example: Optional[Callable[[str], None]], Link: https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob?view=azure-python"
+            },
+            {
+                "IgnoreText": "...",
+                "Usage":"[contains]",
+                "Description": "Example: sleep for [0.0s, 0.2s, 0.4s, ...] "
+            },
+            {
+                "IgnoreText": "0.0",
+                "Usage":"[contains]",
+                "Description": "Example:  Value is between [0.0, 1.0], Link: https://learn.microsoft.com/en-us/python/api/azure-ai-formrecognizer/azure.ai.formrecognizer.formword?view=azure-python "
+            },
+            {
+                "IgnoreText": "list",
+                "Usage":"[contains]",
+                "Description": "Example: AsyncLROPoller[list[RecognizedForm]] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-formrecognizer/azure.ai.formrecognizer.aio.formrecognizerclient?view=azure-python"
+            },
+            {
+                "IgnoreText": ",",
+                "Usage":"[contains]",
+                "Description": "Example: like pages=[\"1-3\", \"5-6\"] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-formrecognizer/azure.ai.formrecognizer.aio.formrecognizerclient?view=azure-python"
+            },
+            {
+                "IgnoreText": "list",
+                "Usage":"[contains]",
+                "Description": "Example: list[dict[str, str]] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.textanalyticsclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "ItemPaged",
+                "Usage":"[contains]",
+                "Description": "Example: TextAnalysisLROPoller[ItemPaged[ AbstractiveSummaryResult, DocumentError]] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.textanalyticsclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "PiiEntityCategory.US",
+                "Usage":"[contains]",
+                "Description": "Example: [PiiEntityCategory.US_SOCIAL_SECURITY_NUMBER] for this kwarg , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics//azure.ai.textanalytics.recognizepiientitiesaction?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "str",
+                "Usage":"[contains]",
+                "Description": "Example: list[dict[str, str]] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.textanalyticsclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "DocumentError",
+                "Usage":"[contains]",
+                "Description": "Example: input a list[TextDocumentInput] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.aio.textanalyticsclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "NotRequired",
+                "Usage":"[contains]",
+                "Description": "Example: NotRequired[Literal[\"azure_openai\"]] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-evaluation/azure.ai.evaluation.azureopenaimodelconfiguration?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "abc",
+                "Usage":"[contains]",
+                "Description": "Example:  [abc] matches , Link: https://learn.microsoft.com/en-us/python/api/azure-batch/azure.batch.models.outputfile?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "<xref",
+                "Usage":"[contains]",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "AppExtension",
+                "Usage":"[contains]",
+                "Description": ""
+            },
+
+            {
+                "IgnoreText": "azure_core_exception",
+                "Usage":"[contains]",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "1-3",
+                "Usage":"[contains]",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "DocumentStatus",
+                "Usage":"[contains]",
+                "Description": "Example: AsyncDocumentTranslationLROPoller[AsyncItemPaged[DocumentStatus]] , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-translation-document/azure.ai.translation.document.aio.documenttranslationclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "CertificateOperation",
+                "Usage":"[contains]",
+                "Description": "Example: LROPoller[KeyVaultCertificate,CertificateOperation] , Link: https://learn.microsoft.com/en-us/python/api/azure-keyvault-certificates/azure.keyvault.certificates.certificateclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "LogsQueryError",
+                "Usage":"[contains]",
+                "Description": "Example: list[LogsQueryResult,LogsQueryPartialResult,LogsQueryError] , Link: https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.logsqueryclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "java.util.",
+                "Usage":"<contains>",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "List<",
+                "Usage":"<contains>",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "Set<",
+                "Usage":"<contains>",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "<? super T>",
+                "Usage":"<contains>",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "Collection<? extends",
+                "Usage":"<contains>",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "Mono<>",
+                "Usage":"<contains>",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "azure.core.",
+                "Usage":"<contains>",
+                "Description": "Example: <class 'azure.core.pipeline.policies._universal._Unset'> , Link: https://learn.microsoft.com/en-us/python/api/azure-core//azure.core.pipeline.policies.requestidpolicy?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "tempfile.gettempdir()",
+                "Usage":"<contains>",
+                "Description": "Example: Defaults to <tempfile.gettempdir()> , Link: https://learn.microsoft.com/en-us/python/api/azure-monitor-opentelemetry/azure.monitor.opentelemetry?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "azure.servicebus.",
+                "Usage":"<contains>",
+                "Description": "Example: Default value: <azure.servicebus.management._models.TrueRuleFilter object at 0x000002262FB86210> , Link: https://learn.microsoft.com/en-us/python/api/azure-servicebus//azure.servicebus.management.servicebusadministrationclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": ">=",
+                "Usage":"<contains>",
+                "Description": "Example: starting_position is inclusive(>=) or not (>) , Link: https://learn.microsoft.com/en-us/python/api/azure-eventhub//azure.eventhub.eventhubconsumerclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "<=",
+                "Usage":"<contains>",
+                "Description": "Example: Permission size is <= 8KB , Link: https://learn.microsoft.com/en-us/python/api/azure-storage-file-share//azure.storage.fileshare.aio.sharedirectoryclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "<xref",
+                "Usage":"<contains>",
+                "Description": "Example:  , Link: https://learn.microsoft.com/en-us/java/api//com.microsoft.azure.elasticdb.shard.base.shardrange?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": "lhs>",
+                "Usage":"<contains>",
+                "Description": "Example: True if lhs> rhs , Link: https://learn.microsoft.com/en-us/java/api//com.microsoft.azure.elasticdb.shard.base.shardrange?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": "<rhs",
+                "Usage":"<contains>",
+                "Description": "Example: True if lhs <rhs , Link: https://learn.microsoft.com/en-us/java/api//com.microsoft.azure.elasticdb.shard.base.shardrange?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": "Event<>",
+                "Usage":"<contains>",
+                "Description": "Example: shardExecutionBegan= new Event<>() , Link: https://learn.microsoft.com/en-us/java/api//com.microsoft.azure.elasticdb.query.multishard.multishardstatement?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": "<<2",
+                "Usage":"<contains>",
+                "Description": "Example: LOOKUP_IN_STORE= new LookupOptions(1 <<2) , Link: https://learn.microsoft.com/en-us/java/api//com.microsoft.azure.elasticdb.shard.base.lookupoptions?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": "'>', '<'",
+                "Usage":"<contains>",
+                "Description": ""
+            }
+        ]
+    },
+    {
+        "Rule": "GarbledTextValidation",
+        "IgnoreList": [
+            {
+                "IgnoreText": ":mm:",
+                "Usage":"contains",
+                "Description": "specified in the format 'hh:mm:ss', ':mm:' , Link: https://learn.microsoft.com/en-us/python/api/azure-search-documents/azure.search.documents.indexes.models.indexingparametersconfiguration?view=azure-python"
+            },
+            {
+                "IgnoreText": ":05:",
+                "Usage":"contains",
+                "Description": "specified in the format 'hh:mm:ss'.Default value: 00:05:00, '05' , Link: https://learn.microsoft.com/en-us/python/api/azure-search-documents/azure.search.documents.indexes.models.indexingparametersconfiguration?view=azure-python"
+            },
+            {
+                "IgnoreText": ":10:",
+                "Usage":"contains",
+                "Description": "Date: Fri, 19 May 2023 17:10:33 GMT, ':10:' , Link: https://learn.microsoft.com/en-us/python/api/overview/azure/storage?view=azure-python"
+            },
+            {
+                "IgnoreText": ":00:",
+                "Usage":"contains",
+                "Description": "2020-02-20 00:00:00, ':00:' , Link: https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.aio.conversationanalysisclient?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": ":24:",
+                "Usage":"contains",
+                "Description": " for example, 2015-01-28T16:24:48.789Z., ':24:' , Link: https://learn.microsoft.com/en-us/python/api/azure-iot-hub/azure.iot.hub.protocol.models.twin(class)?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": ":51:",
+                "Usage":"contains",
+                "Description": "2021-12-08T23:51:14.1104269Z, ':51:' , Link: https://learn.microsoft.com/en-us/python/api/overview/azure/monitor-ingestion-readme?view=azure-python"
+            },
+            {
+                "IgnoreText": ":29:",
+                "Usage":"contains",
+                "Description": " 2017-09-28T16:29:42.3447817Z, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.service.configs.deviceregistrationstate?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":34:",
+                "Usage":"contains",
+                "Description": " 2017-11-14T12:34:18, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.service.configs.enrollmentgroup?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":22:",
+                "Usage":"contains",
+                "Description": " 2016-06-01T21:22:43.7996883Z, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.service.configs.enrollmentgroup?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":07:",
+                "Usage":"contains",
+                "Description": " 2017-09-21T02:07:44.238Z, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.provisioning.service.configs.twincollection?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":13:",
+                "Usage":"contains",
+                "Description": " 2021-06-17T07:13:07Z, Link: https://learn.microsoft.com/en-us/java/api/com.azure.security.keyvault.administration?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":04:",
+                "Usage":"contains",
+                "Description": " 2008-10-01T17:04:32.0000000, Link: https://learn.microsoft.com/en-us/java/api//com.microsoft.azure.sdk.iot.device.message?view=azure-java-stable"
+            },
+            {
+                "IgnoreText": ":31:",
+                "Usage":"contains",
+                "Description": " e.g. 2020-11-19T16:31:49.048Z, Link: https://learn.microsoft.com/en-us/java/api//com.azure.communication.phonenumbers.models.phonenumbersearchresult?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":48:",
+                "Usage":"contains",
+                "Description": " 2020-03-06T18:48:27.896Z, Link: https://learn.microsoft.com/en-us/javascript/api/overview/azure/search-documents-readme?view=azure-node-latest&branch=main"
+            },
+            {
+                "IgnoreText": ":dtdl:",
+                "Usage":"contains",
+                "Description": " @context: dtmi:dtdl:context;2, Link: https://learn.microsoft.com/en-us/python/api/overview/azure/digitaltwins-core-readme?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": ":acs:",
+                "Usage":"contains",
+                "Description": " CommunicationUserIdentifier(\"8:acs:...\"), Link: https://learn.microsoft.com/en-us/python/api/overview/azure/communication-callautomation-readme?view=azure-python-preview&branch=main"
+            },
+            {
+                "IgnoreText": ":23:",
+                "Usage":"contains",
+                "Description": " 2015-04-13T05:23:39, Link: https://learn.microsoft.com/en-us/javascript/api/@azure/cognitiveservices-websearch/websearchmodels.webpage?view=azure-node-latest&branch=main"
+            },
+            {
+                "IgnoreText": ":19:",
+                "Usage":"contains",
+                "Description": " 2021-02-16T14:19:29Z, Link: https://learn.microsoft.com/en-us/javascript/api/@azure/functions/cosmosdbv4functionoptions?view=azure-node-latest&branch=main"
+            },
+            {
+                "IgnoreText": ":01:",
+                "Usage":"contains",
+                "Description": " 2014-10-02T15:01:23.045123456Z, Link: https://learn.microsoft.com/en-us/javascript/api/@azure/notification-hubs/admnativenotification?view=azure-node-latest&branch=main"
+            },
+            {
+                "IgnoreText": ":44:",
+                "Usage":"contains",
+                "Description": " 2018-12-31T03:44:23.882Z, Link: https://learn.microsoft.com/en-us/javascript/api/@azure/storage-file-datalake/datalakefilesystemclient?view=azure-node-preview&branch=main"
+            },
+            {
+                "IgnoreText": ":connection:",
+                "Usage":"contains",
+                "Description": " amqp:connection:forced, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.device.transport.amqps.exceptions?view=azure-java-preview&branch=main"
+            },
+            {
+                "IgnoreText": ":link:",
+                "Usage":"contains",
+                "Description": " amqp:link:detach-forced, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.device.transport.amqps.exceptions?view=azure-java-preview&branch=main"
+            },
+            {
+                "IgnoreText": ":session:",
+                "Usage":"contains",
+                "Description": " amqp:session:errant-link, Link: https://learn.microsoft.com/en-us/java/api/com.microsoft.azure.sdk.iot.device.transport.amqps.exceptions?view=azure-java-preview&branch=main"
+            },
+            {
+                "IgnoreText": ":https:",
+                "Usage":"contains",
+                "Description": " model :https://learn.microsoft.com, Link: https://learn.microsoft.com/en-us/java/api/com.azure.developer.loadtesting.models.loadtestingappcomponent?view=azure-java-preview&branch=main"
+            },
+            {
+                "IgnoreText": ":com:",
+                "Usage":"contains",
+                "Description": " dtmi:com:samples:Building;1, Link: https://learn.microsoft.com/en-us/java/api/com.azure.digitaltwins.core.digitaltwinsasyncclient?view=azure-java-stable&branch=main"
+            },
+            {
+                "IgnoreText": ":44:",
+                "Usage":"contains",
+                "Description": " :connection:, Link: "
+            }
+        ]
+    },
+    {
+        "Rule": "TypeAnnotationValidation",
+        "IgnoreList": [
+            {
+                "IgnoreText": ":",
+                "Usage":"equal",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "*",
+                "Usage":"equal",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "/",
+                "Usage":"equal",
+                "Description": "Example: <class 'azure.core"
+            },
+            {
+                "IgnoreText": "**kwargs",
+                "Usage":"equal",
+                "Description": "Example: AuthenticationMechanism(**kwargs) , Link: https://learn.microsoft.com/en-us/python/api/azure-iot-hub/azure.iot.hub.protocol.models.authentication_mechanism.authenticationmechanism?view=azure-python&branch=main"
+            },
+            {
+                "IgnoreText": "*args",
+                "Usage":"equal",
+                "Description": "Example: AsyncSearchItemPaged(*args, **kwargs) , Link: https://learn.microsoft.com/en-us/python/api/azure-search-documents/azure.search.documents.aio.asyncsearchitempaged?view=azure-python"
+            },
+            {
+                "IgnoreText": "**kw",
+                "Usage":"equal",
+                "Description": "Example: "
+            }
+        ]
+    },
+    {
+        "Rule": "MissingContentValidation",
+        "IgnoreList": [
+            {
+                "IgnoreText": "message",
+                "Usage":"subsetOfErrorClass",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/javascript/api/azure-iot-common/errors.argumenterror?view=azure-node-latest&branch=main#constructors"
+            },
+            {
+                "IgnoreText": "name",
+                "Usage":"subsetOfErrorClass",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/javascript/api/azure-iot-common/errors.argumenterror?view=azure-node-latest&branch=main#constructors"
+            },
+            {
+                "IgnoreText": "stack",
+                "Usage":"subsetOfErrorClass",
+                "Description": "Example: , Link: https://learn.microsoft.com/en-us/javascript/api/azure-iot-common/errors.argumenterror?view=azure-node-latest&branch=main#constructors"
+            },
+            {
+                "IgnoreText": "entries",
+                "Usage":"subset",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "reduce",
+                "Usage":"subset",
+                "Description": ""
+            },
+            {
+                "IgnoreText": "reduceRight",
+                "Usage":"subset",
+                "Description": ""
+            }
+        ]
+    }
+
+]

@@ -12,16 +12,16 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     public class EnforceToolsExceptionHandlingAnalyzer : DiagnosticAnalyzer
     {
         public const string Id = "MCP001";
-        private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor rule = new DiagnosticDescriptor(
             Id,
-            "McpServerTool methods must wrap body in try/catch, see the README within the tools directory for examples",
-            "Method '{0}' must have its entire body inside try{{}}catch(Exception)",
+            "McpServerTool methods must wrap body in try/catch, see 'docs/new-tool.md' for examples",
+            "Method '{0}' must have its entire body inside 'try {} catch(Exception) {}'",
             "Reliability",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(Rule);
+            => ImmutableArray.Create(rule);
 
         public override void Initialize(AnalysisContext ctx)
         {
@@ -57,21 +57,28 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 return;
             }
 
-            // check that there is one statement surrounding the body
+            // Enforce the rule that try statements must surround the entire method body
+            // with an exception for variable declarations (this way vars can be declared that are used in both try and catch blocks).
             var stmts = body.Statements;
-            if (stmts.Count != 1 || !(stmts[0] is TryStatementSyntax tryStmt))
+            foreach (var stmt in stmts)
             {
-                ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
-                return;
+                if (stmt is LocalDeclarationStatementSyntax)
+                {
+                    continue;
+                }
+                if (!(stmt is TryStatementSyntax tryStmt))
+                {
+                    ctx.ReportDiagnostic(Diagnostic.Create(rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                    continue;
+                }
+                // verify there’s a catch(Exception)
+                bool hasExCatch = tryStmt.Catches.Any(c => c.Declaration?.Type.ToString() == "Exception");
+                if (!hasExCatch)
+                {
+                    ctx.ReportDiagnostic(Diagnostic.Create(rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                }
             }
 
-            // verify there’s a catch(Exception)
-            bool hasExCatch = tryStmt.Catches
-                .Any(c => c.Declaration?.Type.ToString() == "Exception");
-            if (!hasExCatch)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
-            }
         }
     }
 }

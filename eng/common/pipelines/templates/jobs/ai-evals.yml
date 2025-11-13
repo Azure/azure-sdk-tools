@@ -28,6 +28,15 @@ jobs:
     steps:
     - checkout: self
     - template: /eng/pipelines/templates/steps/install-dotnet.yml
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        SkipCheckoutNone: true
+        Repositories:
+          - Name: Azure/azure-sdk-tools
+            Commitish: main
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools
+        Paths:
+          - 'tools/azsdk-cli/**'
     
     - task: AzureCLI@2
       displayName: 'Run eval'
@@ -36,7 +45,7 @@ jobs:
         azureSubscription: opensource-api-connection
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
-        workingDirectory: '${{ parameters.EvalProject }}'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/azure-sdk-tools/${{ parameters.EvalProject }}'
         inlineScript: |
           echo "Logged in to Azure"
           echo "Running eval in project ${{ parameters.EvalProject }}"
@@ -48,7 +57,7 @@ jobs:
         USE_MCP_RELEASE: true
         AZURE_OPENAI_MODEL_DEPLOYMENT_NAME: ${{ parameters.Model }}
         AZURE_OPENAI_ENDPOINT: ${{ parameters.OpenAIEndPoint }}
-        COPILOT_INSTRUCTIONS_PATH: $(System.DefaultWorkingDirectory)/${{ parameters.RepoName }}/.github/copilot-instructions.md
+        COPILOT_INSTRUCTIONS_PATH: $(System.DefaultWorkingDirectory)/.github/copilot-instructions.md
 
     - task: PublishTestResults@2
       condition: succeededOrFailed()

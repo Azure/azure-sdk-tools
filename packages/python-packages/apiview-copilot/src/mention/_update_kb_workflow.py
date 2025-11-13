@@ -81,7 +81,7 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
     def _generate_issue_plan(self, memory: Memory, guidelines: list[Guideline], examples: list[Example]):
         """Produce a GitHub issue draft when the reasoning indicates guideline updates are needed."""
         if not self.reasoning:
-            raise ValueError("Cannot generate GitHub issue plan without reasoning from parse_conversation_action assigned in self.reasoning")
+            raise ValueError("Cannot generate GitHub issue plan: reasoning is required but not provided")
         
         #   TODO: Running sample in parse_conversation_to_github yields no related guidelines.
         #   What is the desired behavior in this case? 

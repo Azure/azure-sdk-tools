@@ -6,6 +6,7 @@ using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -20,6 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILogger<ReleaseReadinessTool> logger
     ) : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
         private readonly Option<string> packageNameOpt = new("--package-name")
         {
             Description = "SDK package name",
@@ -34,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
         protected override Command GetCommand() =>
-            new("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
+            new("release-readiness", "Checks release readiness of a SDK package") { packageNameOpt, languageOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

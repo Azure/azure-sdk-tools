@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Text.RegularExpressions;
 
 using ModelContextProtocol.Server;
@@ -14,17 +13,16 @@ using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 {
-    [Description("Tool that validates and manipulates codeowners files.")]
+    [Description("Validate and manipulate GitHub codeowners")]
     [McpServerToolType]
-    public class CodeownersTools : MCPMultiCommandTool
+    public class CodeownersTool : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [
-            SharedCommandGroups.EngSys,
-            new CommandGroup("codeowners", "A tool to validate and modify codeowners.")
+            SharedCommandGroups.Config,
+            new CommandGroup("codeowners", "Validate and modify GitHub codeowners")
         ];
 
         // Core command options
@@ -79,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         };
 
         private readonly IGitHubService githubService;
-        private readonly ILogger<CodeownersTools> logger;
+        private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidator;
 
         // URL constants
@@ -89,9 +87,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
 
-        public CodeownersTools(
+        public CodeownersTool(
             IGitHubService githubService,
-            ILogger<CodeownersTools> logger,
+            ILogger<CodeownersTool> logger,
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator
         )

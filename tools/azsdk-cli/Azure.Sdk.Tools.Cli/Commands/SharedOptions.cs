@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.GitHub;

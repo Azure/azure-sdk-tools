@@ -47,12 +47,17 @@ TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec
 - Azure API developers want to add new resources, operations, or other components to Azure services following ARM/DP/SDK/TypeSpec guidelines
 - Generic AI (like standard GitHub Copilot) cannot provide effective help because it lacks domain-specific knowledge about Azure TypeSpec patterns and standards
 - **Example**: When a user asks to "create an ARM resource named 'Asset' with CRUD operations," generic AI generates incorrect code that doesn't follow Azure Resource Manager patterns or use proper decorators like `@armResourceOperations`
-
-**Problem 2: Updating TypeSpec for Expected Compilation Outputs**
+ 
+**Problem 2: Updating TypeSpec for expected compilation outputs**
 - Azure API developers need to update TypeSpec to achieve expected outputs after compilation (e.g., correct API paths in generated OpenAPI)
-- TypeSpec syntax is hard to understand, especially for complex scenarios like routing paths and resource hierarchies
+- For simple routes, TypeSpec is straightforward. For complex resource hierarchies and nested paths, the syntax can feel unintuitive because it relies on multiple decorators and conventions that are not self-explanatory.
 - Generic AI cannot provide effective help for these domain-specific challenges
 - **Example**: After compiling TypeSpec, developers notice that generated paths in `openapi.json` are incorrect. For instance, when "assets" belong to an "employee," the expected paths should include `employees/{employeeName}` before `assets/{assetName}`, but the generic AI cannot guide developers on how to properly use `@route` and `@parentResource` decorators to fix this
+ 
+**Problem 3: Adding a New version following Azure versioning guidelines**
+- TypeSpec versioning is intricate, involving decorators such as @added, @removed, and @useDependency to manage preview vs stable versions. These rules are nuanced and tied to Azure’s breaking-change policies, making them hard for generic AI to infer without domain-specific context.
+- Generic AI currently cannot reliably provide effective guidance for scenarios requiring integrated knowledge of TypeSpec versioning decorators and Azure-specific conversion and breaking-change policies.
+- **Example**: When a user asks to "add a new preview version", generic AI may add a new version without replacing the older one.
 
 ### Why This Matters
 
@@ -91,45 +96,6 @@ What are we trying to achieve with this design?
 ### Exceptions and Limitations
 
 _Known cases where this approach doesn't work or has limitations._
-
-#### Exception 1: Highly Complex Custom Scenarios
-
-**Description:**
-When services require highly customized TypeSpec patterns that deviate significantly from standard Azure ARM/DP patterns, the AI may not have sufficient examples in the knowledge base to provide accurate guidance.
-
-**Impact:**
-Developers may receive generic suggestions that don't fully address their specific edge case, requiring them to fall back to manual documentation review or expert consultation.
-
-**Workaround:**
-- Users can explicitly reference specific documentation or examples in their prompts
-- The knowledge base can be incrementally enhanced with new patterns as they emerge
-- Complex scenarios may still require human expert review
-
-#### Exception 2: Real-time TypeSpec Language Updates
-
-**Description:**
-When TypeSpec introduces breaking changes or new syntax features, there may be a lag between the language update and the knowledge base/RAG service being updated with the latest patterns.
-
-**Impact:**
-AI may suggest patterns that are outdated or incompatible with the latest TypeSpec version.
-
-**Workaround:**
-- Regular updates to the RAG knowledge base to incorporate latest TypeSpec changes
-- Users should verify generated code against the latest TypeSpec compiler version
-- Documentation should indicate the supported TypeSpec version range
-
-#### Exception 3: Multi-file Refactoring Across Large Projects
-
-**Description:**
-When changes span multiple TypeSpec files with complex interdependencies (e.g., refactoring shared models across many service versions), the AI may not have full context of all affected files.
-
-**Impact:**
-Suggestions may be correct for individual files but create inconsistencies across the broader project.
-
-**Workaround:**
-- Users should review changes across all affected files
-- The tool should warn when changes might impact other files
-- This is acceptable as complex refactoring typically requires human oversight regardless
 
 #### Language-Specific Limitations
 

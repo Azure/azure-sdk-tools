@@ -87,6 +87,7 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
 
             // Check for package type
             var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+            packageInfo.SdkType = SdkType.Management; // Forcing management type for testing purposes
             if (packageInfo?.SdkType == SdkType.Management)
             {
                 // For management-plane packages, execute configured changelog update script

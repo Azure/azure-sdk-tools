@@ -1,3 +1,7 @@
+import logging
+
+from azure.core.exceptions import ClientAuthenticationError
+
 # -------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
@@ -973,7 +977,12 @@ def _build_auth_header(base_url):
         settings = SettingsManager()
         app_id = settings.get("APP_ID")
         scope = f"api://{app_id}/.default"
-    token = credential.get_token(scope)
+    try:
+        token = credential.get_token(scope)
+    except ClientAuthenticationError as e:
+        logging.error("Authentication failed: %s", e)
+        print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
+        raise SystemExit(1)
     return {"Authorization": f"Bearer {token.token}"}
 
 

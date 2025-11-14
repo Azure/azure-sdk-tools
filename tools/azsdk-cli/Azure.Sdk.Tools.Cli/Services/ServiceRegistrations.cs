@@ -3,19 +3,18 @@
 using System.IO.Enumeration;
 using System.Reflection;
 using System.Text.Json;
+using System.ClientModel;
 using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Samples;
-using Azure.Sdk.Tools.Cli.Services.Tests;
-using Azure.Sdk.Tools.Cli.Services.VerifySetup;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -36,31 +35,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAiCompletionService, AiCompletionService>();
 
-            // Language Check Services (Composition-based)
-            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
-            {
-                Python = typeof(PythonLanguageSpecificChecks),
-                Java = typeof(JavaLanguageSpecificChecks),
-                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
-                DotNet = typeof(DotNetLanguageSpecificChecks),
-                Go = typeof(GoLanguageSpecificChecks),
-            });
-
-            // Client update language services
-            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
-            {
-                Java = typeof(JavaUpdateLanguageService),
-                // Future: Python = typeof(PythonUpdateLanguageService), etc
-            });
-
-            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetPackageInfoHelper),
-                Java = typeof(JavaPackageInfoHelper),
-                Python = typeof(PythonPackageInfoHelper),
-                JavaScript = typeof(JavaScriptPackageInfoHelper),
-                Go = typeof(GoPackageInfoHelper),
-            });
+            services.AddScoped<LanguageService, DotnetLanguageService>();
+            services.AddScoped<LanguageService, JavaLanguageService>();
+            services.AddScoped<LanguageService, JavaScriptLanguageService>();
+            services.AddScoped<LanguageService, PythonLanguageService>();
+            services.AddScoped<LanguageService, GoLanguageService>();
 
             services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
             {
@@ -69,24 +48,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Python = typeof(PythonSampleLanguageContext),
                 JavaScript = typeof(TypeScriptSampleLanguageContext),
                 Go = typeof(GoSampleLanguageContext),
-            });
-
-            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
-            {
-                Java = typeof(JavaTestRunner),
-                JavaScript = typeof(JavaScriptTestRunner),
-                Go = typeof(GoLanguageSpecificChecks),
-                Python = typeof(PythonTestRunner),
-                DotNet = typeof(DotNetTestRunner),
-            });
-
-            services.AddLanguageSpecific<IEnvRequirementsCheck>(new LanguageSpecificImplementations
-            {
-                Python = typeof(PythonRequirementsCheck),
-                Java = typeof(JavaRequirementsCheck),
-                JavaScript = typeof(JavaScriptRequirementsCheck),
-                DotNet = typeof(DotNetRequirementsCheck),
-                Go = typeof(GoRequirementsCheck),
             });
 
             // Helper classes
@@ -108,6 +69,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<INpxHelper, NpxHelper>();
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
+            services.AddSingleton<IMavenHelper, MavenHelper>();
+            services.AddSingleton<IPythonHelper, PythonHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
@@ -131,19 +94,46 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection
                 var service = new AzureService();
                 clientBuilder.UseCredential(service.GetCredential());
+            });
 
-                // Azure OpenAI client does not, for some reason, have an
-                // in-package facade for this, so register manually.
-                clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
-                    (options, credential, _) =>
-                    {
-                        var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-                        var ep = string.IsNullOrWhiteSpace(endpointEnvVar) ?
-                            "https://openai-shared.openai.azure.com"
-                            : endpointEnvVar;
+            // Register OpenAI client with endpoint and authentication
+            services.AddSingleton<OpenAIClient>(sp =>
+            {
+                var azureService = sp.GetRequiredService<IAzureService>();
+                var credential = azureService.GetCredential();
 
-                        return new AzureOpenAIClient(new Uri(ep), credential, options);
-                    });
+                var openAiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                var openAiBaseUrl = Environment.GetEnvironmentVariable("OPENAI_BASE_URL");
+                var azureOpenAiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+
+                Uri? endpoint = null;
+
+                // Priority 1: Use OPENAI_BASE_URL if it exists
+                if (!string.IsNullOrWhiteSpace(openAiBaseUrl))
+                {
+                    endpoint = new Uri(openAiBaseUrl);
+                }
+                // Priority 2: Use AZURE_OPENAI_ENDPOINT with /openai/v1 postfix if it exists
+                else if (!string.IsNullOrWhiteSpace(azureOpenAiEndpoint))
+                {
+                    var baseEndpoint = azureOpenAiEndpoint.TrimEnd('/') + "/openai/v1";
+                    endpoint = new Uri(baseEndpoint);
+                }
+                // Priority 3: If no OPENAI_API_KEY but no Azure endpoint, use openai-shared
+                else if (string.IsNullOrWhiteSpace(openAiApiKey))
+                {
+                    endpoint = new Uri("https://openai-shared.openai.azure.com/openai/v1");
+                }
+                // Priority 4: OPENAI_API_KEY exists but no Azure endpoint - use standard OpenAI (no endpoint)
+
+                // If we have an endpoint, use the Azure helper which handles bearer token vs API key
+                if (endpoint != null)
+                {
+                    return AzureOpenAIClientHelper.CreateAzureOpenAIClient(endpoint, credential);
+                }
+
+                // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)
+                return new OpenAIClient(new ApiKeyCredential(openAiApiKey!));
             });
         }
 

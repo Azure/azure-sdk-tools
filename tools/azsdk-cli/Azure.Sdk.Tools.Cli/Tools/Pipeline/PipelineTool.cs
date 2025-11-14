@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
@@ -14,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
     [McpServerToolType]
     public class PipelineTool(IDevOpsService devopsService, ILogger<PipelineTool> logger) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("pipeline", "Commands to help with DevOps pipeline")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
         // Commands
         private const string getPipelineStatusCommandName = "status";

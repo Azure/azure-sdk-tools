@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using ModelContextProtocol.Server;
@@ -14,14 +13,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkGenerationTool(
         IGitHelper gitHelper,
         ILogger<SdkGenerationTool> logger,
-        INpxHelper npxHelper
+        ITspClientHelper tspClientHelper
     ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         // Command names
         private const string GenerateSdkCommandName = "generate";
-        private const int CommandTimeoutInMinutes = 30;
 
         // Generate command options
         private readonly Option<string> localSdkRepoPathOpt = new("--local-sdk-repo-path", "-r")
@@ -42,14 +40,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
         };
 
-        private readonly Option<string> emitterOpt = new("--emitter-options", "-o")
+        private readonly Option<string> emitterOpt = new("--emitter-options", "-e")
         {
             Description = "Emitter options in key-value format. Example: 'package-version=1.0.0-beta.1'",
             Required = false,
         };
 
         protected override Command GetCommand() =>
-            new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.")
+            new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'")
             {
                 localSdkRepoPathOpt, tspConfigPathOpt, tspLocationPathOpt, emitterOpt,
             };
@@ -80,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Validate inputs
                 if (string.IsNullOrEmpty(tspConfigPath) && string.IsNullOrEmpty(tspLocationPath))
                 {
-                    return CreateFailureResponse("Both 'tspconfig.yaml' and 'tsp-location.yaml' paths aren't provided. At least one of them is required.", null);
+                    return PackageOperationResponse.CreateFailure("Both 'tspconfig.yaml' and 'tsp-location.yaml' paths aren't provided. At least one of them is required.");
                 }
 
                 // Handle tsp-location.yaml case
@@ -88,9 +86,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     if (!tspLocationPath.EndsWith("tsp-location.yaml", StringComparison.OrdinalIgnoreCase))
                     {
-                        return CreateFailureResponse($"The specified 'tsp-location.yaml' path is invalid: {tspLocationPath}. It must be an absolute path to local 'tsp-location.yaml' file.", null);
+                        return PackageOperationResponse.CreateFailure($"The specified 'tsp-location.yaml' path is invalid: {tspLocationPath}. It must be an absolute path to local 'tsp-location.yaml' file.");
                     }
-                    return await RunTspUpdate(tspLocationPath, ct);
+                    
+                    if (!File.Exists(tspLocationPath))
+                    {
+                        return PackageOperationResponse.CreateFailure($"The 'tsp-location.yaml' file does not exist at the specified path: {tspLocationPath}");
+                    }
+                    
+                    var tspLocationDirectory = Path.GetDirectoryName(tspLocationPath);
+                    string sdkRepoName = gitHelper.GetRepoName(tspLocationPath);
+                    logger.LogInformation("SDK Repository Name: {SdkRepoName}", sdkRepoName);
+                    
+                    // Run tsp-client update using the existing tsp-location.yaml
+                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspLocationDirectory, ct: ct);
+                    
+                    if (!tspResult.IsSuccessful)
+                    {
+                        return PackageOperationResponse.CreateFailure(tspResult.ResponseError, sdkRepoName: sdkRepoName);
+                    }
+                    
+                    return PackageOperationResponse.CreateSuccess(
+                        $"SDK re-generation completed successfully using tsp-location.yaml.",
+                        nextSteps: ["If the SDK is not Python, build the code"],
+                        sdkRepoName: sdkRepoName
+                    );
                 }
 
                 // Handle tspconfig.yaml case
@@ -99,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while generating SDK");
-                return CreateFailureResponse($"An error occurred: {ex.Message}", null);
+                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
             }
         }
 
@@ -115,14 +135,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Generating SDK at repo: {LocalSdkRepoPath}", localSdkRepoPath);
             if (string.IsNullOrEmpty(localSdkRepoPath) || !Directory.Exists(localSdkRepoPath))
             {
-                return CreateFailureResponse($"The directory for the local sdk repo does not provide or exist at the specified path: {localSdkRepoPath}. Prompt user to clone the matched SDK repository users want to generate SDK against.", null);
+                return PackageOperationResponse.CreateFailure($"The directory for the local sdk repo does not provide or exist at the specified path: {localSdkRepoPath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
             }
 
             // Get the generate script path
             string sdkRepoRoot = gitHelper.DiscoverRepoRoot(localSdkRepoPath);
             if (string.IsNullOrEmpty(sdkRepoRoot))
             {
-                return CreateFailureResponse($"Failed to discover local sdk repo with path: {localSdkRepoPath}.", null);
+                return PackageOperationResponse.CreateFailure($"Failed to discover local sdk repo with path: {localSdkRepoPath}.");
             }
 
             string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
@@ -131,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Validate arguments for local tspconfig.yaml case
                 if (!File.Exists(tspConfigPath))
                 {
-                    return CreateFailureResponse($"The 'tspconfig.yaml' file does not exist at the specified path: {tspConfigPath}. Prompt user to clone the azure-rest-api-specs repository locally if it does not have a local copy.", sdkRepoName);
+                    return PackageOperationResponse.CreateFailure($"The 'tspconfig.yaml' file does not exist at the specified path: {tspConfigPath}. Prompt user to clone the azure-rest-api-specs repository locally if it does not have a local copy.", sdkRepoName: sdkRepoName);
                 }
                 specRepoFullName = await gitHelper.GetRepoFullNameAsync(tspConfigPath, findUpstreamParent: false);
             }
@@ -141,79 +161,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 logger.LogInformation("Remote 'tspconfig.yaml' URL detected: {TspConfigPath}.", tspConfigPath);
                 if (!IsValidRemoteGitHubUrlWithCommit(tspConfigPath))
                 {
-                    return CreateFailureResponse($"Invalid remote GitHub URL with commit: {tspConfigPath}. The URL must include a valid commit SHA. Example: https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml", sdkRepoName);
+                    return PackageOperationResponse.CreateFailure($"Invalid remote GitHub URL with commit: {tspConfigPath}. The URL must include a valid commit SHA. Example: https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml", sdkRepoName: sdkRepoName);
                 }
             }
 
-            return await RunTspInit(localSdkRepoPath, tspConfigPath, specRepoFullName, emitterOptions, sdkRepoName, ct);
-        }
-
-        // Run tsp-client update command to re-generate the SDK code
-        private async Task<PackageOperationResponse> RunTspUpdate(string tspLocationPath, CancellationToken ct)
-        {
-            if (!File.Exists(tspLocationPath))
-            {
-                return CreateFailureResponse($"The 'tsp-location.yaml' file does not exist at the specified path: {tspLocationPath}", null);
-            }
-
-            var tspLocationDirectory = Path.GetDirectoryName(tspLocationPath);
-            logger.LogInformation("Running tsp-client update command in directory: {TspLocationDirectory}", tspLocationDirectory);
-            string sdkRepoName = gitHelper.GetRepoName(tspLocationPath);
-            logger.LogInformation("SDK Repository Name: {SdkRepoName}", sdkRepoName);
-            var npxOptions = new NpxOptions(
-                "@azure-tools/typespec-client-generator-cli",
-                ["tsp-client", "update"],
-                logOutputStream: true,
-                workingDirectory: tspLocationDirectory,
-                timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-            );
-
-            var tspClientResult = await npxHelper.Run(npxOptions, ct);
-            if (tspClientResult.ExitCode != 0)
-            {
-                return CreateFailureResponse($"tsp-client update failed with exit code {tspClientResult.ExitCode}. Output:\n{tspClientResult.Output}", sdkRepoName);
-            }
-
-            logger.LogInformation("tsp-client update completed successfully");
-            return CreateSuccessResponse($"SDK re-generation completed successfully using tsp-location.yaml. Output:\n{tspClientResult.Output}", sdkRepoName);
-        }
-
-        // Run tsp-client init command to re-generate the SDK code
-        private async Task<PackageOperationResponse> RunTspInit(string localSdkRepoPath, string tspConfigPath, string specRepoFullName, string emitterOptions, string sdkRepoName, CancellationToken ct)
-        {
-            logger.LogInformation("Running tsp-client init command.");
-
-            // Build arguments list dynamically
-            var arguments = new List<string> { "tsp-client", "init", "--update-if-exists", "--tsp-config", tspConfigPath };
-
+            // Build additional arguments for tsp-client init
+            var additionalArgs = new List<string>();
+            
             if (!string.IsNullOrEmpty(specRepoFullName))
             {
-                arguments.Add("--repo");
-                arguments.Add(specRepoFullName);
+                additionalArgs.Add("--repo");
+                additionalArgs.Add(specRepoFullName);
             }
 
             if (!string.IsNullOrEmpty(emitterOptions))
             {
-                arguments.Add("--emitter-options");
-                arguments.Add(emitterOptions);
+                additionalArgs.Add("--emitter-options");
+                additionalArgs.Add(emitterOptions);
             }
 
-            var npxOptions = new NpxOptions(
-                "@azure-tools/typespec-client-generator-cli",
-                arguments.ToArray(),
-                logOutputStream: true,
-                workingDirectory: localSdkRepoPath,
-                timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-            );
+            // Use the helper to initialize generation
+            var tspResult = await tspClientHelper.InitializeGenerationAsync(
+                localSdkRepoPath, 
+                tspConfigPath,
+                additionalArgs.Count > 0 ? additionalArgs.ToArray() : null,
+                ct);
 
-            var tspClientResult = await npxHelper.Run(npxOptions, ct);
-            if (tspClientResult.ExitCode != 0)
+            if (!tspResult.IsSuccessful)
             {
-                return CreateFailureResponse($"tsp-client init failed with exit code {tspClientResult.ExitCode}. Output:\n{tspClientResult.Output}", sdkRepoName);
+                return PackageOperationResponse.CreateFailure(tspResult.ResponseError, sdkRepoName: sdkRepoName);
             }
 
-            logger.LogInformation("tsp-client init completed successfully");
-            return CreateSuccessResponse($"SDK generation completed successfully using tspconfig.yaml. Output:\n{tspClientResult.Output}", sdkRepoName);
+            return PackageOperationResponse.CreateSuccess(
+                $"SDK generation completed successfully using tspconfig.yaml.",
+                nextSteps: ["If the SDK is not Python, build the code"],
+                sdkRepoName: sdkRepoName
+            );
         }
 
 
@@ -251,27 +234,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             return false;
-        }
-
-        // Helper method to create failure responses along with setting the failure state
-        private PackageOperationResponse CreateFailureResponse(string message, string sdkRepoName)
-        {
-            return new PackageOperationResponse
-            {
-                ResponseErrors = [message],
-                SdkRepoName = sdkRepoName
-            };
-        }
-
-        // Helper method to create success responses (no SetFailure needed)
-        private PackageOperationResponse CreateSuccessResponse(string message, string sdkRepoName)
-        {
-            return new PackageOperationResponse
-            {
-                Result = "succeeded",
-                Message = message,
-                SdkRepoName = sdkRepoName
-            };
         }
     }
 }

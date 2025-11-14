@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools supported by the Azure SDK MCP server version 0.5.5.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools supported by the Azure SDK MCP server version 0.5.7.
 
 ## Tools list
 
@@ -37,10 +37,14 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_package_generate_code | Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally. |
 | azsdk_package_run_check | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | Run tests for the specified SDK package. Provide package path. |
+| azsdk_package_update_changelog_content | Updates the changelog content for a specified package. |
+| azsdk_package_update_metadata | Updates the package metadata content for a specified package. |
+| azsdk_package_update_version | Updates the version and release date for a specified package. |
 | azsdk_release_sdk | Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness |
 | azsdk_run_generate_sdk | Generate SDK from a TypeSpec project using pipeline. |
 | azsdk_run_typespec_validation | Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation. |
-| azsdk_tsp_update | Update customized TypeSpec-generated client code |
+| azsdk_customized_code_update | Update customized TypeSpec-generated client code |
 | azsdk_typespec_check_project_in_public_repo | Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param. |
 | azsdk_update_language_exclusion_justification | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_sdk_details_in_release_plan | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |
+| azsdk_verify_setup | Verifies that the user's environment is setup with the necessary installations to use SDK MCP tools. |

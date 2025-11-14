@@ -18,10 +18,28 @@ namespace APIViewWeb.Services
         {
             _configuration = configuration;
             _logger = logger;
-            _credential = new ChainedTokenCredential(
-                new ManagedIdentityCredential(),
-                new AzureCliCredential()
-            );
+            
+            // Check if user-assigned managed identity is configured
+            var managedIdentityClientId = configuration["ManagedIdentityClientId"] ?? 
+                                          configuration["AZURE_CLIENT_ID"] ?? 
+                                          Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+            
+            if (!string.IsNullOrEmpty(managedIdentityClientId))
+            {
+                _logger.LogInformation("Initializing Copilot authentication with user-assigned Managed Identity. ClientId: {ClientId}", managedIdentityClientId);
+                _credential = new ChainedTokenCredential(
+                    new ManagedIdentityCredential(managedIdentityClientId),
+                    new AzureCliCredential()
+                );
+            }
+            else
+            {
+                _logger.LogInformation("Initializing Copilot authentication with system-assigned Managed Identity (no client ID configured)");
+                _credential = new ChainedTokenCredential(
+                    new ManagedIdentityCredential(),
+                    new AzureCliCredential()
+                );
+            }
         }
 
         public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
@@ -34,18 +52,18 @@ namespace APIViewWeb.Services
             }
 
             var scope = $"api://{copilotAppId}/.default";
-            _logger.LogInformation("Requesting Copilot access token with scope: {Scope}", scope);
+            _logger.LogInformation("Requesting Copilot access token. CopilotAppId: {CopilotAppId}, Scope: {Scope}", copilotAppId, scope);
 
             try
             {
                 var tokenRequestContext = new TokenRequestContext([scope]);
                 var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
                 
-                // Log token details (but not the actual token)
+                // Log token details (but not the actual token value)
                 _logger.LogInformation(
-                    "Successfully obtained Copilot access token. ExpiresOn: {ExpiresOn}, TenantId: {TenantId}", 
+                    "Successfully obtained Copilot access token. ExpiresOn: {ExpiresOn}, HasToken: {HasToken}", 
                     token.ExpiresOn, 
-                    token.Token.Length > 0 ? "obtained" : "empty");
+                    token.Token.Length > 0);
                 
                 return token.Token;
             }

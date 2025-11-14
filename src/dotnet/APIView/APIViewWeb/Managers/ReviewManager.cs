@@ -579,11 +579,13 @@ namespace APIViewWeb.Managers
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorBody = await response.Content.ReadAsStringAsync();
+                    var responseHeaders = string.Join(", ", response.Headers.Select(h => $"{h.Key}={string.Join(";", h.Value)}"));
                     _logger.LogError(
-                        "Copilot request failed. StatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}, ResponseBody: {ResponseBody}, Endpoint: {Endpoint}", 
+                        "Copilot request failed. StatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}, ResponseBody: {ResponseBody}, ResponseHeaders: {ResponseHeaders}, Endpoint: {Endpoint}", 
                         (int)response.StatusCode, 
                         response.ReasonPhrase, 
                         errorBody,
+                        responseHeaders,
                         startUrl);
                     response.EnsureSuccessStatusCode(); // This will throw with details
                 }

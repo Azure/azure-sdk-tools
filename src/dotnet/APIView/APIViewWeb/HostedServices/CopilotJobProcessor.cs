@@ -68,7 +68,7 @@ namespace APIViewWeb.HostedServices
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         
-                        var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
+                        using var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
                         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
 
                         HttpResponseMessage response = await client.SendAsync(request, cancellationToken);

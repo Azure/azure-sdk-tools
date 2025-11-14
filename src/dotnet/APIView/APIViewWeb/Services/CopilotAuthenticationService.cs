@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Services
 {
@@ -11,14 +12,12 @@ namespace APIViewWeb.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ChainedTokenCredential _credential;
+        private readonly ILogger<CopilotAuthenticationService> _logger;
 
-        public CopilotAuthenticationService(IConfiguration configuration)
+        public CopilotAuthenticationService(IConfiguration configuration, ILogger<CopilotAuthenticationService> logger)
         {
             _configuration = configuration;
-            _credential = new ChainedTokenCredential(
-                new ManagedIdentityCredential(),
-                new AzureCliCredential()
-            );
+            _logger = logger;
         }
 
         public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
@@ -26,13 +25,40 @@ namespace APIViewWeb.Services
             string copilotAppId = _configuration["CopilotAppId"];
             if (string.IsNullOrEmpty(copilotAppId))
             {
+                _logger.LogError("CopilotAppId configuration is missing");
                 throw new InvalidOperationException("CopilotAppId configuration is missing");
             }
 
             var scope = $"api://{copilotAppId}/.default";
-            var tokenRequestContext = new TokenRequestContext([scope]);
-            var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
-            return token.Token;
+            _logger.LogInformation("Requesting Copilot access token with scope: {Scope}", scope);
+
+            try
+            {
+                var tokenRequestContext = new TokenRequestContext([scope]);
+                var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
+                
+                // Log token details (but not the actual token)
+                _logger.LogInformation(
+                    "Successfully obtained Copilot access token. ExpiresOn: {ExpiresOn}, TenantId: {TenantId}", 
+                    token.ExpiresOn, 
+                    token.Token.Length > 0 ? "obtained" : "empty");
+                
+                return token.Token;
+            }
+            catch (AuthenticationFailedException ex)
+            {
+                _logger.LogError(ex, 
+                    "Failed to obtain Copilot access token. Scope: {Scope}, CopilotAppId: {CopilotAppId}, Error: {ErrorMessage}", 
+                    scope, copilotAppId, ex.Message);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, 
+                    "Unexpected error obtaining Copilot access token. Scope: {Scope}, CopilotAppId: {CopilotAppId}", 
+                    scope, copilotAppId);
+                throw;
+            }
         }
     }
 }

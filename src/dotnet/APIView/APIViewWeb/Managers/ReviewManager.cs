@@ -564,15 +564,30 @@ namespace APIViewWeb.Managers
                 _logger.LogInformation("Starting Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}, Language: {Language}", 
                     reviewId, activeApiRevision.Id, activeApiRevision.Language);
                 
+                var accessToken = await _copilotAuthService.GetAccessTokenAsync();
+                _logger.LogInformation("Successfully obtained access token for Copilot request. Endpoint: {Endpoint}", startUrl);
 
                 var request = new HttpRequestMessage(HttpMethod.Post, startUrl)
                 {
                     Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
                 };
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 
+                _logger.LogInformation("Sending request to Copilot service: {Method} {Url}", request.Method, startUrl);
                 var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(
+                        "Copilot request failed. StatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}, ResponseBody: {ResponseBody}, Endpoint: {Endpoint}", 
+                        (int)response.StatusCode, 
+                        response.ReasonPhrase, 
+                        errorBody,
+                        startUrl);
+                    response.EnsureSuccessStatusCode(); // This will throw with details
+                }
+                
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
                 

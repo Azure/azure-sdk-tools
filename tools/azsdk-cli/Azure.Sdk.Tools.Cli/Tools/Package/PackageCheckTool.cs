@@ -582,7 +582,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private static bool IsNotImplemented(PackageCheckResponse response)
         {
-            return response.ResponseError != null && response.ResponseError.Contains("not implemented", StringComparison.OrdinalIgnoreCase);
+            return response.ResponseError != null && response.ResponseError.Contains("This is not an applicable operation for this language", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

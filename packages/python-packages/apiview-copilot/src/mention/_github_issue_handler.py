@@ -121,7 +121,7 @@ class GitHubIssueHandler:
 
     def _add_metadata_to_body(self, body: str) -> str:
         """Inject workflow metadata into issue body."""
-        return f"""<!-- workflow: {self.workflow_tag} -->\n <!-- source: {self.source_tag} -->\n {body}"""
+        return f"""<!-- workflow: {self.workflow_tag} source: {self.source_tag} -->\n\n{body}"""
 
     def _build_issue_labels(self, language: str = None) -> list[str]:
         """Build labels for the GitHub issue including language-specific tag when available."""

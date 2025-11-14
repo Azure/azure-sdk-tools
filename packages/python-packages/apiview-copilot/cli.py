@@ -1,7 +1,3 @@
-import logging
-
-from azure.core.exceptions import ClientAuthenticationError
-
 # -------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
@@ -16,6 +12,7 @@ Command line interface for APIView Copilot.
 
 import asyncio
 import json
+import logging
 import os
 import pathlib
 import sys
@@ -27,6 +24,7 @@ import colorama
 import prompty
 import prompty.azure
 import requests
+from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup

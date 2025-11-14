@@ -9,6 +9,7 @@ FastAPI application for APIView Copilot.
 """
 
 import asyncio
+import html
 import json
 import logging
 import os
@@ -123,7 +124,7 @@ async def get_api_review_job_status(job_id: str, _claims=Depends(require_auth)):
         job = db_manager.review_jobs.get(job_id)
         return job
     except CosmosResourceNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Job with id {job_id} not found")
+        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found")
 
 
 def cleanup_job_store():

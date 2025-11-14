@@ -66,7 +66,7 @@ def _safe_get_scopes(claims: dict) -> Set[str]:
 
 async def require_auth(
     cred: HTTPAuthorizationCredentials = Depends(_SECURITY),
-    required_scopes: Optional[Set[str]] = None,
+    required_scopes: Optional[Set[str]] = ...,
 ) -> dict:
     """
     Validate JWT (issuer, signature, audience) and enforce delegated scopes.
@@ -115,7 +115,12 @@ async def require_auth(
         raise HTTPException(status_code=401, detail="Invalid audience")
 
     # 4) Delegated scope enforcement (only for user tokens with 'scp')
-    scopes_to_enforce = required_scopes if required_scopes is not None else _REQUIRED_SCOPES_DEFAULT
+    if required_scopes is ...:
+        scopes_to_enforce = _REQUIRED_SCOPES_DEFAULT
+    elif required_scopes is None:
+        scopes_to_enforce = set()
+    else:
+        scopes_to_enforce = required_scopes
     if scopes_to_enforce:
         token_scopes = _safe_get_scopes(claims)
         if not scopes_to_enforce.issubset(token_scopes):
@@ -146,3 +151,5 @@ def require_scopes(*scopes: str):
             if not required.issubset(token_scopes):
                 raise HTTPException(status_code=403, detail="Insufficient scope")
         return claims
+
+    return _dep

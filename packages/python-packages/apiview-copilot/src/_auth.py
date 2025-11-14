@@ -7,11 +7,10 @@
 from __future__ import annotations
 
 import asyncio
-import threading
 from typing import Optional, Set
 
+import aiohttp
 import jwt
-import requests
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import ExpiredSignatureError, InvalidTokenError, PyJWKClient
@@ -24,14 +23,15 @@ APP_ID = settings.get("APP_ID")
 _SECURITY = HTTPBearer(auto_error=True)
 _JWK_CLIENT = None
 _JWK_URI = None
-_JWK_CLIENT_LOCK = threading.Lock()
+
+_JWK_CLIENT_LOCK = asyncio.Lock()
 
 _CANONICAL_AUD = f"api://{APP_ID}"
 _ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
 _REQUIRED_SCOPES_DEFAULT: Set[str] = {"user_impersonation"}
 
 
-def _get_jwk_client():
+async def _get_jwk_client():
     """
     Get (and cache) the PyJWKClient for the issuer's JWKS URI.
     Originally fetched from the OpenID Connect discovery document.
@@ -40,14 +40,16 @@ def _get_jwk_client():
     global _JWK_CLIENT, _JWK_URI
     if _JWK_CLIENT is not None:
         return _JWK_CLIENT
-    with _JWK_CLIENT_LOCK:
+    async with _JWK_CLIENT_LOCK:
         if _JWK_CLIENT is not None:
             return _JWK_CLIENT
-        # Fetch OpenID config
+        # Fetch OpenID config asynchronously
         config_url = f"{_ISSUER}/.well-known/openid-configuration"
-        resp = requests.get(config_url, timeout=5)
-        resp.raise_for_status()
-        jwks_uri = resp.json()["jwks_uri"]
+        async with aiohttp.ClientSession() as session:
+            async with session.get(config_url, timeout=5) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+        jwks_uri = data["jwks_uri"]
         _JWK_URI = jwks_uri
         _JWK_CLIENT = PyJWKClient(jwks_uri)
         return _JWK_CLIENT
@@ -77,7 +79,7 @@ async def require_auth(
     token = cred.credentials
 
     # 1) Resolve signing key (handles rollover via kid)
-    jwk_client = _get_jwk_client()
+    jwk_client = await _get_jwk_client()
     try:
         signing_key = jwk_client.get_signing_key_from_jwt(token)
     except Exception as e1:

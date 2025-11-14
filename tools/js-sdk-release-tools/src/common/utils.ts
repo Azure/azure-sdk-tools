@@ -463,6 +463,28 @@ export async function cleanUpPackageDirectory(
     }
 }
 
+/**
+ * Cleans up the samples folder for management plane packages
+ * @param packageDirectory - Package directory to clean up
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanupSamplesFolder(packageDirectory: string): Promise<void> {
+    if (!fs.existsSync(packageDirectory)) {
+        logger.info(`Directory ${packageDirectory} doesn't exist yet, nothing to clean up.`);
+        return;
+    }
+
+    const modularSDKType = getModularSDKType(packageDirectory);
+    if (modularSDKType === ModularSDKType.ManagementPlane) {
+        const samplesPath = path.join(packageDirectory, 'samples');
+        // Check if directory exists first
+        if (fs.existsSync(samplesPath)) {
+            logger.info(`Cleaning up samples folder: ${samplesPath}`);
+            await rm(samplesPath, { recursive: true, force: true });
+        }
+    }
+}
+
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];

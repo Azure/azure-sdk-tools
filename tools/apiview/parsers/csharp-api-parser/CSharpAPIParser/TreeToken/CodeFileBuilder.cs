@@ -81,7 +81,7 @@ namespace CSharpAPIParser.TreeToken
                 Language = "C#",
                 ParserVersion = CurrentVersion,
                 PackageName = assemblySymbol.Name,
-                PackageVersion = GetAssemblyInformationalVersion(assemblySymbol) ?? assemblySymbol.Identity.Version.ToString()
+                PackageVersion = GetPackageVersion(assemblySymbol) ?? assemblySymbol.Identity.Version.ToString()
             };
 
             if (dependencies != null)
@@ -1080,7 +1080,7 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
-        private static string? GetAssemblyInformationalVersion(IAssemblySymbol assemblySymbol)
+        public static string? GetPackageVersion(IAssemblySymbol assemblySymbol)
         {
             var attr = assemblySymbol
                 .GetAttributes()

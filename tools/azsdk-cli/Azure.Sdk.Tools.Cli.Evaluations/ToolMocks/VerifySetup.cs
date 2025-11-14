@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                         ToolName,
                         new Dictionary<string, object?>
                         {
-                            { "packagePath", "C:/azure-rest-api-specs" },
+                            { "packagePath", "C:\\azure-rest-api-specs" },
                         }
                     )
                 ]

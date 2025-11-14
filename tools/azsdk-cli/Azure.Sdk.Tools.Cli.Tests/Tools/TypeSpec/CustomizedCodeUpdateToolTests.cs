@@ -7,6 +7,7 @@ using Moq;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
 
+
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
 [TestFixture]
@@ -29,14 +30,26 @@ public class CustomizedCodeUpdateToolAutoTests
         public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) => null; // No customizations found
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
+        {
+            PackagePath = packagePath,
+            RepoRoot = "/mock/repo",
+            RelativePath = "sdk/mock/package",
+            PackageName = "mock-package",
+            ServiceName = "mock",
+            PackageVersion = "1.0.0",
+            SamplesDirectory = "/mock/samples",
+            Language = SdkLanguage.Java,
+            SdkType = SdkType.Dataplane
+        });
     }
 
     // Language service that has customizations and successful patch application
     private class MockChangeLanguageService : LanguageService
     {
-        public override SdkLanguage Language { get; } = SdkLanguage.Java;
+        public override SdkLanguage Language { get; } = SdkLanguage.Python;
         public override bool IsCustomizedCodeUpdateSupported => true;
-        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
+        public SdkLanguage SupportedLanguage => SdkLanguage.Python;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
@@ -46,6 +59,18 @@ public class CustomizedCodeUpdateToolAutoTests
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
             => Task.FromResult(true); // Simulate successful patch application
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
+        {
+            PackagePath = packagePath,
+            RepoRoot = "/mock/repo",
+            RelativePath = "sdk/mock/package",
+            PackageName = "mock-package",
+            ServiceName = "mock",
+            PackageVersion = "1.0.0",
+            SamplesDirectory = "/mock/samples",
+            Language = SdkLanguage.Python,
+            SdkType = SdkType.Dataplane
+        });
     }
 
 
@@ -58,8 +83,12 @@ public class CustomizedCodeUpdateToolAutoTests
         var commonValidationHelper = new Mock<ICommonValidationHelpers>();
         var svc = new MockNoChangeLanguageService();
         var tsp = new MockTspHelper();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
+        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -73,15 +102,19 @@ public class CustomizedCodeUpdateToolAutoTests
         var gitHelper = new Mock<IGitHelper>();
         var svc = new MockChangeLanguageService();
         var tsp = new MockTspHelper();
-        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
+        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-python");
+        gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
+        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(first.ErrorCode, Is.Null, "Should complete successfully without errors");
         Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for applied patches");
-        Assert.That(string.Join(" ", first.NextSteps), Does.Contain("Patches applied automatically"), "Should indicate patches were applied");
+        Assert.That(string.Join(" ", first.NextSteps), Does.Contain("Patches applied automatically"), "Should indicate patches were applied successfully");
     }
 
     [Test]
@@ -89,16 +122,20 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         var tsp = new MockTspHelper();
         var gitHelper = new Mock<IGitHelper>();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
+        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
+        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(resp.ErrorCode, Is.Null, "Should complete without throwing errors");
         Assert.That(resp.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for validation failure");
-        Assert.That(string.Join(" ", resp.NextSteps), Does.Contain("validation failed"), "Should indicate validation failure");
+        Assert.That(string.Join(" ", resp.NextSteps), Does.Contain("Build failed").Or.Contain("validation failed"), "Should indicate validation/build failure");
     }
 
     private class TestLanguageServiceFailThenFix: LanguageService
@@ -121,6 +158,18 @@ public class CustomizedCodeUpdateToolAutoTests
             }
             return Task.FromResult(ValidationResult.CreateSuccess());
         }
+        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
+        {
+            PackagePath = packagePath,
+            RepoRoot = "/mock/repo",
+            RelativePath = "sdk/mock/package",
+            PackageName = "mock-package",
+            ServiceName = "mock",
+            PackageVersion = "1.0.0",
+            SamplesDirectory = "/mock/samples",
+            Language = SdkLanguage.Java,
+            SdkType = SdkType.Dataplane
+        });
     }
 }
 

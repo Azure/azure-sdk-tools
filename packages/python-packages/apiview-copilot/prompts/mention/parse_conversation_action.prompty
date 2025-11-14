@@ -85,6 +85,7 @@ is actually a bug with the underlying APIView language parser.
 - "@azure-sdk this is a problem with the APIView parser."
 
 `open_guidelines_issue` is similar to `update_kb` but specifically indicates that the architect requests to open an issue to update the official language guidelines.
+In this case, you must not choose `update_kb` but choose `open_guidelines_issue` instead.
 It is different from `open_parser_issue` because it relates to the guidelines documentation rather than a parser bug.
 
 ## open_guidelines_issue

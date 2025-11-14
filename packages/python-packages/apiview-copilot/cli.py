@@ -998,6 +998,46 @@ def list_reviews(environment: str = "production"):
     print(f"Total filtered reviews: {len(filtered)}")
 
 
+def revision_metrics(revision_id: str, environment: str = "production") -> dict:
+    """
+    Retrieves metrics for a specific APIView revision.
+    """
+    apiview = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    # Retrieve all comments for the revision
+    comments = list(
+        apiview.query_items(
+            query="SELECT * FROM c WHERE c.APIRevisionId = @revision_id AND c.IsResolved = false",
+            parameters=[{"name": "@revision_id", "value": revision_id}],
+            enable_cross_partition_query=True,
+        )
+    )
+    # count the number of comments that have an upvote, downvote, or neither
+    upvotes = 0
+    downvotes = 0
+    neutral = 0
+    total_count = 0
+    for c in comments:
+        if c.get("IsDeleted", False) or c.get("IsResolved", False) or c.get("CommentSource") != "AIGenerated":
+            continue
+        total_count += 1
+        upvote_count = len(c.get("Upvotes", []))
+        downvote_count = len(c.get("Downvotes", []))
+        if upvote_count == 0 and downvote_count == 0:
+            neutral += 1
+        else:
+            if upvote_count:
+                upvotes += 1
+            if downvote_count:
+                downvotes += 1
+    metrics = {
+        "total_comments": total_count,
+        "upvoted_comments": upvotes,
+        "downvoted_comments": downvotes,
+        "neutral_comments": neutral,
+    }
+    return metrics
+
+
 def _build_auth_header():
     """
     Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
@@ -1055,6 +1095,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("purge", "db_purge")
         with CommandGroup(self, "metrics", "__main__#{}") as g:
             g.command("report", "report_metrics")
+            g.command("revision", "revision_metrics")
         with CommandGroup(self, "permissions", "__main__#{}") as g:
             g.command("grant", "grant_permissions")
             g.command("revoke", "revoke_permissions")

@@ -18,6 +18,10 @@ namespace APIViewWeb.Services
         {
             _configuration = configuration;
             _logger = logger;
+            _credential = new ChainedTokenCredential(
+                new ManagedIdentityCredential(),
+                new AzureCliCredential()
+            );
         }
 
         public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)

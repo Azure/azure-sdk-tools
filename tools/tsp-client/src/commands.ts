@@ -490,6 +490,16 @@ export async function generateCommand(argv: any) {
       await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
     } catch (err) {}
   }
+
+  // Run npm link @azure-tools/typespec-ts in TempTypeSpecFiles before tsp compile
+  Logger.info("Linking @azure-tools/typespec-ts in TempTypeSpecFiles...");
+  try {
+    await npmCommand(tempRoot, ["link", "@azure-tools/typespec-ts"]);
+    Logger.info("Successfully linked @azure-tools/typespec-ts");
+  } catch (err) {
+    Logger.warn(`Failed to link @azure-tools/typespec-ts: ${err}`);
+  }
+
   const result = await compileTsp({
     emitterPackage: emitter,
     outputPath: legacyPathResolution ? outputDir : repoRoot, // always use repo root when using emitter-output-dir

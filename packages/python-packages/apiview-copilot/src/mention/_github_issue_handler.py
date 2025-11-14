@@ -132,3 +132,54 @@ class GitHubIssueHandler:
             if language_label:
                 labels.append(language_label)
         return labels
+
+    def execute_workflow_with_dedup(
+        self, plan: dict, language: str = None, package_name: str = None, code: str = None
+    ) -> dict:
+        """
+        Complete workflow: fetch recent issues, check for duplicates, and create issue if needed.
+
+        Args:
+            plan: The planned issue with title and body
+            language: Programming language context
+            package_name: Package name context
+            code: Code snippet context
+
+        Returns:
+            Dict with action, url, title, body, and created_at
+        """
+        # Fetch recent issues
+        recent_issues = self.fetch_recent_issues()
+
+        # Check for duplicates
+        dedup_result = self.check_for_duplicate_issue(
+            plan=plan,
+            recent_issues=recent_issues,
+            language=language,
+            package_name=package_name,
+            code=code,
+        )
+
+        # Handle no-op case
+        if dedup_result["action"] == "no-op":
+            issue_number = dedup_result["issue"]
+            for issue in recent_issues:
+                if issue["number"] == issue_number:
+                    return {
+                        "action": "no-op",
+                        "url": issue["html_url"],
+                        "title": issue["title"],
+                        "body": issue.get("body", ""),
+                        "created_at": issue["created_at"],
+                    }
+            raise ValueError(f"Issue number {issue_number} from deduplication prompt not found in recent issues.")
+
+        # Create new issue
+        issue = self.create_issue(plan=plan, language=language)
+        return {
+            "action": "create",
+            "url": issue["html_url"],
+            "title": issue["title"],
+            "body": issue["body"],
+            "created_at": issue["created_at"],
+        }

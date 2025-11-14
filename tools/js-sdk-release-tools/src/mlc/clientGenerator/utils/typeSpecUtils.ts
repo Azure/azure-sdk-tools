@@ -18,18 +18,35 @@ export async function generateTypeScriptCodeFromTypeSpec(
     const tspConfigPath = join(options.typeSpecDirectory, 'tspconfig.yaml');
     logger.info('Start to generate code by tsp-client.');
     const repoUrl = generateRepoDataInTspLocation(options.repoUrl);
-    const tspClientDir = join(process.cwd(), 'eng', 'common', 'tsp-client');
+    const tspClientDir = join('..', 'azure-sdk-tools', 'tools', 'tsp-client');
     
     logger.info(`Using tsp-client from: ${tspClientDir}`);
+    
+    // Install dependencies before building tsp-client
+    logger.info('Installing tsp-client dependencies...');
     await runCommand(
         'npm',
+        ['install'],
+        { shell: true, stdio: 'inherit', cwd: tspClientDir },
+        false
+    );
+    logger.info('tsp-client dependencies installed.');
+    
+    // Build tsp-client before using it
+    logger.info('Building tsp-client...');
+    await runCommand(
+        'npm',
+        ['run', 'build'],
+        { shell: true, stdio: 'inherit', cwd: tspClientDir },
+        false
+    );
+    logger.info('tsp-client build completed.');
+    
+    const tspClientJsPath = join(tspClientDir, 'cmd', 'tsp-client.js');
+    await runCommand(
+        'node',
         [
-            '--prefix',
-            tspClientDir,
-            'exec',
-            '--no',
-            '--',
-            'tsp-client',
+            tspClientJsPath,
             'init',
             '--update-if-exists',
             '--debug',

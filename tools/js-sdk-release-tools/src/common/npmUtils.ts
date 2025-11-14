@@ -203,11 +203,10 @@ export async function checkDirectoryExistsInGithub(
             const result = executeCommand(gitCommand);
 
             if (result && result.code === 0 && result.stdout.trim()) {
-                logger.info(`Directory ${directoryPath} exists in GitHub tag ${tag} for package ${packageName}`);
+                logger.info(`Directory ${dirPath} exists in GitHub tag ${tag} for package ${packageName}`);
                 return true;
             } else {
-                logger.info(`Directory ${directoryPath} does not exist in GitHub tag ${tag} for package ${packageName}`);
-                return false;
+                logger.info(`Directory ${dirPath} does not exist in GitHub tag ${tag} for package ${packageName}`);
             }
         }
 

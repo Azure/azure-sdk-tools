@@ -1,6 +1,6 @@
 using System.ClientModel;
 using System.ClientModel.Primitives;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Microagents;
 
 internal class MicroagentHostServiceTests
 {
-    private Mock<AzureOpenAIClient> openAIClientMock;
+    private Mock<OpenAIClient> openAIClientMock;
     private Mock<Microsoft.Extensions.Logging.ILogger<MicroagentHostService>> loggerMock;
     private Mock<ChatClient> chatClientMock;
     private Mock<Microsoft.Extensions.Logging.ILogger<ConversationLogger>> conversationLoggerLoggerMock;
@@ -22,7 +22,7 @@ internal class MicroagentHostServiceTests
     [SetUp]
     public void Setup()
     {
-        openAIClientMock = new Mock<AzureOpenAIClient>();
+        openAIClientMock = new Mock<OpenAIClient>();
         loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<MicroagentHostService>>();
         chatClientMock = new Mock<ChatClient>();
         conversationLoggerLoggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<ConversationLogger>>();

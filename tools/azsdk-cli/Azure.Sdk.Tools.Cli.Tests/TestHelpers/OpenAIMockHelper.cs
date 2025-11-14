@@ -1,4 +1,4 @@
-using Azure.AI.OpenAI;
+using OpenAI;
 using Moq;
 using OpenAI.Chat;
 
@@ -11,9 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers
         /// </summary>
         /// <param name="expectedDeploymentName">The expected deployment name</param>
         /// <returns></returns>
-        public static (Mock<AzureOpenAIClient> OpenAIClient, Mock<ChatClient> ChatClient) Create(string expectedDeploymentName)
+        public static (Mock<OpenAIClient> OpenAIClient, Mock<ChatClient> ChatClient) Create(string expectedDeploymentName)
         {
-            Mock<AzureOpenAIClient> openAIClientMock = new();
+            Mock<OpenAIClient> openAIClientMock = new();
             Mock<ChatClient> chatClient = new();
 
             openAIClientMock

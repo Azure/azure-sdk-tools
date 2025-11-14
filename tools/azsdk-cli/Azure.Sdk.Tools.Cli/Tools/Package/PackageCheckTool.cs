@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
@@ -18,14 +19,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run validation checks for SDK packages")]
     [McpServerToolType]
     public class PackageCheckTool(
-        ILogger<PackageCheckTool> logger,
-        ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoHelpers
-    ) : MCPMultiCommandTool
+        ILogger<LanguageMcpTool> logger,
+        IGitHelper gitHelper,
+        IEnumerable<LanguageService> languageServices
+    ) : LanguageMcpTool(languageServices, logger: logger, gitHelper: gitHelper)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.Package,
+        ];
 
-        private const string RunChecksCommandName = "run-checks";
+        private readonly Argument<PackageCheckType> checkTypeArg = new("check-type")
+        {
+            Description = "Type of validation check to run",
+            DefaultValueFactory = _ => PackageCheckType.All
+        };
 
         private readonly Option<bool> fixOption = new("--fix")
         {
@@ -33,49 +40,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
         };
 
-        protected override List<Command> GetCommands()
-        {
-            // Add the package path option to the parent command so it can be used without subcommands
-            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
-
-            // Create sub-commands for each check type
-            var checkTypeValues = Enum.GetValues<PackageCheckType>();
-            foreach (var checkType in checkTypeValues)
-            {
-                var checkName = checkType.ToString().ToLowerInvariant();
-                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
-                parentCommand.Subcommands.Add(subCommand);
-            }
-
-            // Return all commands - parent and subcommands so the handlers get registered
-            return [parentCommand, .. parentCommand.Subcommands];
-        }
+        protected override Command GetCommand() =>
+            new("validate", "Run validation checks for SDK packages") { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
             var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
+            var checkType = parseResult.GetValue(checkTypeArg);
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
             var fixCheckErrors = parseResult.GetValue(fixOption);
-
-            // If this is the parent command (run-checks), default to All
-            if (commandName == RunChecksCommandName)
-            {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
-            }
-
-            // Check if this is a subcommand by checking if its parent is the run-checks command
-            if (command.Parents.Any(p => p.Name == RunChecksCommandName))
-            {
-                // Parse the subcommand name back to enum
-                if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
-                {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
-                }
-            }
-
-            throw new ArgumentException($"Unknown command: {commandName}");
+            return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
@@ -128,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var notImplementedChecks = new List<string>();
 
             // Run dependency check
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -384,7 +360,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running changelog validation");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -418,7 +394,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running dependency check");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -451,7 +427,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running README validation");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -484,7 +460,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -498,7 +474,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running snippet update");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -512,7 +488,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code linting");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -526,7 +502,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code formatting");
 
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -539,7 +515,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running generated code checks");
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -552,7 +528,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running AOT compatibility checks");
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -565,7 +541,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running sample validation");
-            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
@@ -579,10 +555,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                var packageInfoHelper = await packageInfoHelpers.Resolve(packagePath);
-                if (packageInfoHelper != null)
+                var languageService = GetLanguageService(packagePath);
+                if (languageService != null)
                 {
-                    var info = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
+                    var info = await languageService.GetPackageInfo(packagePath, ct);
                     response.PackageName = info.PackageName;
                     response.Version = info.PackageVersion;
                     response.PackageType = info.SdkType;
@@ -593,12 +569,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
-        }
-        
-        private async Task<ILanguageSpecificChecks?> ResolveLanguageChecks(string packagePath, CancellationToken ct)
-        {
-            return await languageSpecificChecks.Resolve(packagePath, ct);
-        }
+        }        
 
         private static PackageCheckResponse CreateUnsupportedLanguageResponse(string packagePath)
         {

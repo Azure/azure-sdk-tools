@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IInputSanitizer inputSanitizer
     ) : MCPMultiCommandTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-workflow", "Tools to help with the TypeSpec SDK generation.")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-workflow", "TypeSpec SDK generation commands")];
 
         // Commands
         private const string checkApiReadinessCommandName = "check-api-readiness";
@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 languageOpt, pipelineRunIdOpt, workItemIdOpt,
             },
-            new(linkSdkPrCommandName, "Link SDK pull request to release plan.")
+            new(linkSdkPrCommandName, "Link SDK pull request to release plan")
             {
                 languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt,
             }

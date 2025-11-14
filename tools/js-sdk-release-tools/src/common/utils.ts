@@ -422,16 +422,67 @@ export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
 ): Promise<void> {
-    // Preserve test directory and assets.json file only in Release and Local modes
-    // In SpecPullRequest and Batch modes, remove everything
-    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserveForMgmtPackages = pipelineRunMode ? ["test", "assets.json"] : [];
-
-    const modularSDKType = getModularSDKType(packageDirectory);
-    if (modularSDKType === ModularSDKType.DataPlane && pipelineRunMode) {
+    // Check if directory exists first
+    if (!fs.existsSync(packageDirectory)) {
+        logger.info(`Directory ${packageDirectory} doesn't exist yet, nothing to clean up.`);
         return;
     }
-    await cleanUpDirectory(packageDirectory, entriesToPreserveForMgmtPackages);
+
+    const modularSDKType = getModularSDKType(packageDirectory);
+    const sdkType = getSDKType(packageDirectory);
+    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
+
+    if (sdkType === SDKType.RestLevelClient || modularSDKType === ModularSDKType.DataPlane) {
+        // For RestLevelClient or Data Plane packages
+        const packageType = sdkType === SDKType.RestLevelClient ? 'RestLevelClient' : 'Data Plane';
+        if (pipelineRunMode) {
+            // Perform clean up by the emitter in Release/Local modes (src folder)
+            logger.info(`[${packageType}] Skipping cleanup in ${runMode} mode - emitter handles cleanup for: ${packageDirectory}`);
+            return;
+        } else {
+            // In SpecPullRequest and Batch modes, clean up everything
+            logger.info(`[${packageType}] Performing full cleanup in ${runMode} mode for: ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+        }
+    } else {
+        // For management plane packages
+        // Check if package.json exists before trying to determine SDK type
+        const packageJsonPath = path.join(packageDirectory, 'package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+            logger.info(`package.json not found at ${packageJsonPath}. Skipping cleanup as package hasn't been generated yet.`);
+            return;
+        }
+
+        const managementSDKType = getSDKType(packageDirectory);
+        if (managementSDKType === SDKType.HighLevelClient) {
+            logger.info(`Cleaning up all files for high-level client package: ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+            return;
+        }
+        logger.info(`Skipping cleanup for management plane package (handled by emitter): ${packageDirectory}`);
+    }
+}
+
+/**
+ * Cleans up the samples folder for management plane packages
+ * @param packageDirectory - Package directory to clean up
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanupSamplesFolder(packageDirectory: string): Promise<void> {
+    if (!fs.existsSync(packageDirectory)) {
+        logger.info(`Directory ${packageDirectory} doesn't exist yet, nothing to clean up.`);
+        return;
+    }
+
+    const modularSDKType = getModularSDKType(packageDirectory);
+    if (modularSDKType === ModularSDKType.ManagementPlane) {
+        const samplesPath = path.join(packageDirectory, 'samples');
+        // Check if directory exists first
+        if (fs.existsSync(samplesPath)) {
+            logger.info(`Cleaning up samples folder: ${samplesPath}`);
+            await rm(samplesPath, { recursive: true, force: true });
+        }
+    }
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {

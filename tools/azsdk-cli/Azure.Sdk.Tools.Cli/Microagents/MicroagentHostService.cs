@@ -1,16 +1,16 @@
 using System.ComponentModel;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
 using OpenAI.Chat;
 using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Microagents;
 
-public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentHostService> logger, TokenUsageHelper tokenUsageHelper, ConversationLogger conversationLogger) : IMicroagentHostService
+public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostService> logger, TokenUsageHelper tokenUsageHelper, ConversationLogger conversationLogger) : IMicroagentHostService
 {
     private const string ExitToolName = "Exit";
 
-    private AzureOpenAIClient openAI = openAI;
+    private readonly OpenAIClient openAI = openAI;
     private ILogger logger = logger;
     private ConversationLogger conversationLogger = conversationLogger;
 
@@ -33,7 +33,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
         // with a result, indicating success, or we hit the max number of iterations.
         var conversationHistory = new List<ChatMessage>
         {
-            new SystemChatMessage(agentDefinition.Instructions)
+            new UserChatMessage(agentDefinition.Instructions)
         };
 
         var chatCompletionOptions = new ChatCompletionOptions

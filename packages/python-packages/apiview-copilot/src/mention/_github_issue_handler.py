@@ -31,15 +31,15 @@ class GitHubIssueHandler:
             workflow_tag: Tag to identify this workflow type (e.g., "parser-issue")
             source_tag: Tag to identify the source (default: "APIView Copilot")
             deduplication_prompt_file: Prompty file for deduplication logic
-            base_labels: Base labels to apply to all issues (default: ["APIView"])
-            language_labels: Mapping of language names to GitHub labels
+            base_labels: Optional base labels to apply to all issues
+            language_labels: Optional mapping of language names to GitHub labels
         """
         self.repo_owner = repo_owner
         self.repo_name = repo_name
         self.workflow_tag = workflow_tag
         self.source_tag = source_tag
         self.deduplication_prompt_file = deduplication_prompt_file
-        self.base_labels = base_labels or ["APIView"]
+        self.base_labels = base_labels or []
         self.language_labels = language_labels or {}
 
     def fetch_recent_issues(self):

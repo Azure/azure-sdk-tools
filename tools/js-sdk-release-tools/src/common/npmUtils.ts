@@ -89,7 +89,7 @@ function executeCommand(
         }
     }
 
-    logger.error(`Failed to execute command after ${maxRetries} attempts: ${command}`);
+    logger.warn(`Failed to execute command after ${maxRetries} attempts: ${command}`);
     return null;
 }
 

@@ -31,7 +31,7 @@ namespace APIViewWeb.Services
 
             var scope = $"api://{copilotAppId}/.default";
             var tokenRequestContext = new TokenRequestContext([scope]);
-            var token = await _credential.GetTokenAsync(tokenRequestContext);
+            var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
             return token.Token;
         }
     }

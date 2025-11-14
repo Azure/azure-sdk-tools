@@ -35,6 +35,7 @@ class OpenParserIssueWorkflow(MentionWorkflow):
             source_tag="APIView Copilot",
             deduplication_prompt_file="deduplicate_parser_issue.prompty",
             base_labels=["APIView"],
+            language_labels=self.LANGUAGE_LABELS,
         )
 
         recent_issues = github_handler.fetch_recent_issues()

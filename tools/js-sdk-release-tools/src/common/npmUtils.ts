@@ -68,7 +68,7 @@ function executeCommand(
     retryDelayMs = 1000
 ): shell.ShellString | null {
     logger.info(`Executing command with retry mode (max attempts: ${maxRetries}): ${command}`);
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const result = shell.exec(command, { silent: true });
@@ -79,16 +79,16 @@ function executeCommand(
         } catch (err) {
             logger.warn(`Exception executing command (attempt ${attempt}/${maxRetries}): ${err}`);
         }
-        
+
         if (attempt < maxRetries) {
             logger.info(`Retrying in ${retryDelayMs}ms...`);
             // Simple non-blocking sleep using shelljs
-            shell.exec(process.platform === 'win32' 
-                ? `ping -n ${Math.ceil(retryDelayMs/1000) + 1} 127.0.0.1 >nul`
-                : `sleep ${retryDelayMs/1000}`, { silent: true });
+            shell.exec(process.platform === 'win32'
+                ? `ping -n ${Math.ceil(retryDelayMs / 1000) + 1} 127.0.0.1 >nul`
+                : `sleep ${retryDelayMs / 1000}`, { silent: true });
         }
     }
-    
+
     logger.error(`Failed to execute command after ${maxRetries} attempts: ${command}`);
     return null;
 }
@@ -123,9 +123,9 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     // Check if tag exists
     if (!checkGitTagExists(tag)) {
         logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-        if(file !== "CHANGELOG.md") {
+        if (file !== "CHANGELOG.md") {
             fs.writeFileSync(targetFilePath, defaultContent, { encoding: 'utf-8' });
-        }        
+        }
         return;
     }
 
@@ -178,13 +178,13 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
  */
 export async function checkDirectoryExistsInGithub(
     packageRoot: string,
-    directoryPath: string,
+    directoryPath: string[],
     packageName: string,
     version: string
 ): Promise<boolean> {
     try {
         const tag = `${packageName}_${version}`;
-        
+
         // Check if tag exists
         if (!checkGitTagExists(tag)) {
             logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
@@ -193,21 +193,27 @@ export async function checkDirectoryExistsInGithub(
 
         // Get SDK root path
         const sdkRootPath = process.cwd(); // Assuming we're running from SDK root
-        
-        // Construct the path relative to SDK root
-        const relativePath = relative(sdkRootPath, join(packageRoot, directoryPath)).replace(/\\/g, "/");
-        
-        // Use git ls-tree to check if directory exists
-        const gitCommand = `git ls-tree -d ${tag} ${relativePath}`;
-        const result = executeCommand(gitCommand);
 
-        if (result && result.code === 0 && result.stdout.trim()) {
-            logger.info(`Directory ${directoryPath} exists in GitHub tag ${tag} for package ${packageName}`);
-            return true;
-        } else {
-            logger.info(`Directory ${directoryPath} does not exist in GitHub tag ${tag} for package ${packageName}`);
-            return false;
+        // directoryPath is expected to be an array of candidate paths
+        for (const dirPath of directoryPath) {
+            const relativePath = relative(sdkRootPath, join(packageRoot, dirPath)).replace(/\\/g, "/");
+
+            // Use git ls-tree to check if directory exists
+            const gitCommand = `git ls-tree -d ${tag} ${relativePath}`;
+            const result = executeCommand(gitCommand);
+
+            if (result && result.code === 0 && result.stdout.trim()) {
+                logger.info(`Directory ${directoryPath} exists in GitHub tag ${tag} for package ${packageName}`);
+                return true;
+            } else {
+                logger.info(`Directory ${directoryPath} does not exist in GitHub tag ${tag} for package ${packageName}`);
+                return false;
+            }
         }
+
+        // If none of the paths exist
+        logger.info(`None of the directories [${directoryPath.join(", ")}] exist in GitHub tag ${tag} for package ${packageName}`);
+        return false;
     } catch (error) {
         logger.error(`Error checking directory existence in GitHub: ${error}`);
         return false;

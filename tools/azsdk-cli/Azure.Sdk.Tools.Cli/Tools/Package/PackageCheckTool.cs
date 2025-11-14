@@ -1,12 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.ComponentModel;
-using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -16,172 +19,293 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run validation checks for SDK packages")]
     [McpServerToolType]
     public class PackageCheckTool(
-        ILogger<PackageCheckTool> logger,
-        ILanguageChecks languageChecks
-    ) : MCPMultiCommandTool
+        ILogger<LanguageMcpTool> logger,
+        IGitHelper gitHelper,
+        IEnumerable<LanguageService> languageServices
+    ) : LanguageMcpTool(languageServices, logger: logger, gitHelper: gitHelper)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.Package,
+        ];
 
-        private const string RunChecksCommandName = "run-checks";
-
-        private readonly Option<bool> fixOption = new(["--fix"], "Enable fix mode for supported checks (like spelling)") { IsRequired = false };
-
-        protected override List<Command> GetCommands()
+        private readonly Argument<PackageCheckType> checkTypeArg = new("check-type")
         {
-            var parentCommand = new Command(RunChecksCommandName, "Run validation checks for SDK packages");
-            // Add the package path option to the parent command so it can be used without subcommands
-            parentCommand.AddOption(SharedOptions.PackagePath);
-            parentCommand.AddOption(fixOption);
+            Description = "Type of validation check to run",
+            DefaultValueFactory = _ => PackageCheckType.All
+        };
 
-            var commands = new List<Command> { parentCommand };
+        private readonly Option<bool> fixOption = new("--fix")
+        {
+            Description = "Enable fix mode for supported checks (like spelling)",
+            Required = false,
+        };
 
-            // Create sub-commands for each check type
-            var checkTypeValues = Enum.GetValues<PackageCheckType>();
-            foreach (var checkType in checkTypeValues)
-            {
-                var checkName = checkType.ToString().ToLowerInvariant();
-                var subCommand = new Command(checkName, $"Run {checkName} validation check");
-                subCommand.AddOption(SharedOptions.PackagePath);
-                subCommand.AddOption(fixOption);
+        protected override Command GetCommand() =>
+            new("validate", "Run validation checks for SDK packages") { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
-                parentCommand.AddCommand(subCommand);
-                commands.Add(subCommand);
-            }
-
-            // Return all commands - parent and subcommands
-            return commands;
-        }
-
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
-            var command = ctx.ParseResult.CommandResult.Command;
+            var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
-            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-            var fixCheckErrors = ctx.ParseResult.GetValueForOption(fixOption);
-
-            // If this is the parent command (run-checks), default to All
-            if (commandName == RunChecksCommandName)
-            {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
-            }
-
-            // Check if this is a subcommand by checking if its parent is the run-checks command
-            if (command.Parents.Any(p => p.Name == RunChecksCommandName))
-            {
-                // Parse the subcommand name back to enum
-                if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
-                {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
-                }
-            }
-
-            throw new ArgumentException($"Unknown command: {commandName}");
+            var checkType = parseResult.GetValue(checkTypeArg);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+            var fixCheckErrors = parseResult.GetValue(fixOption);
+            return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors, CancellationToken ct = default)
+        public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
             {
                 logger.LogInformation("Starting {checkType} check for package at: {packagePath}", checkType, packagePath);
                 if (!Directory.Exists(packagePath))
                 {
-                    return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                    return new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
-                return checkType switch
+                var response = checkType switch
                 {
                     PackageCheckType.All => await RunAllChecks(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
-                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
-                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
+                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
+                    PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.CheckAotCompat => await RunCheckAotCompat(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.GeneratedCodeChecks => await RunCheckGeneratedCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Samples => await RunSampleValidation(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
                         $"Unknown check type. Valid values are: {string.Join(", ", Enum.GetNames(typeof(PackageCheckType)))}")
                 };
+                await AddPackageDetailsInResponse(response, packagePath, ct);
+                return response;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package check");
-                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
+                return new PackageCheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
             }
         }
 
-        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors, CancellationToken ct)
+        private async Task<PackageCheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running all validation checks");
 
-            var results = new List<CLICheckResponse>();
+            var results = new List<PackageCheckResponse>();
             var overallSuccess = true;
             var failedChecks = new List<string>();
+            var successfulChecks = new List<string>();
+            var notImplementedChecks = new List<string>();
 
             // Run dependency check
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var dependencyCheckResult = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Dependency");
+                if (IsNotImplemented(dependencyCheckResult))
+                {
+                    notImplementedChecks.Add("Dependency");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Dependency");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Dependency");
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Changelog");
+                if (IsNotImplemented(changelogValidationResult))
+                {
+                    notImplementedChecks.Add("Changelog");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Changelog");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Changelog");
             }
 
             // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, ct);
+            var readmeValidationResult = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("README");
+                if (IsNotImplemented(readmeValidationResult))
+                {
+                    notImplementedChecks.Add("README");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("README");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("README");
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var spellingCheckResult = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Spelling");
+                if (IsNotImplemented(spellingCheckResult))
+                {
+                    notImplementedChecks.Add("Spelling");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Spelling");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Spelling");
             }
 
             // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
+            var snippetUpdateResult = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Snippets");
+                if (IsNotImplemented(snippetUpdateResult))
+                {
+                    notImplementedChecks.Add("Snippets");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Snippets");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Snippets");
             }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var lintCodeResult = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Linting");
+                if (IsNotImplemented(lintCodeResult))
+                {
+                    notImplementedChecks.Add("Linting");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Linting");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Linting");
             }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var formatCodeResult = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Format");
+                if (IsNotImplemented(formatCodeResult))
+                {
+                    notImplementedChecks.Add("Format");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Format");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Format");
+            }
+
+            // Run AOT compatibility check
+            var aotCompatResult = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
+            results.Add(aotCompatResult);
+            if (aotCompatResult.ExitCode != 0)
+            {
+                if (IsNotImplemented(aotCompatResult))
+                {
+                    notImplementedChecks.Add("AOT Compatibility");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("AOT Compatibility");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("AOT Compatibility");
+            }
+
+            // Run generated code check
+            var generatedCodeResult = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+            results.Add(generatedCodeResult);
+            if (generatedCodeResult.ExitCode != 0)
+            {
+                if (IsNotImplemented(generatedCodeResult))
+                {
+                    notImplementedChecks.Add("Generated Code");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Generated Code");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Generated Code");
+            }
+            // Run sample validation
+            var sampleValidationResult = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
+            results.Add(sampleValidationResult);
+            if (sampleValidationResult.ExitCode != 0)
+            {
+                if (IsNotImplemented(sampleValidationResult))
+                {
+                    notImplementedChecks.Add("Sample Validation");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Sample Validation");
+                }
+            }
+            else
+            {
+                successfulChecks.Add("Sample Validation");
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
@@ -192,31 +316,57 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             if (overallSuccess)
             {
                 nextSteps.Add("All package validation checks passed! Your package is ready for the next steps in the development process.");
+                if (successfulChecks.Any())
+                {
+                    nextSteps.Add($"Successful checks: {string.Join(", ", successfulChecks)}");
+                }
+                if (notImplementedChecks.Any())
+                {
+                    nextSteps.Add($"Note: The following checks are not implemented for this language: {string.Join(", ", notImplementedChecks)}");
+                }
                 nextSteps.Add("Consider running package release readiness checks if preparing for release.");
             }
             else
             {
-                nextSteps.Add($"The following checks failed: {string.Join(", ", failedChecks)}");
-                nextSteps.Add("Address the issues identified above before proceeding with package release.");
-                nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
+                if (successfulChecks.Any())
+                {
+                    nextSteps.Add($"Successful checks: {string.Join(", ", successfulChecks)}");
+                }
+                if (failedChecks.Any())
+                {
+                    nextSteps.Add($"Failed checks: {string.Join(", ", failedChecks)}");
+                    nextSteps.Add("Address the issues identified above before proceeding with package release.");
+                    nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
+                }
+                
+                if (notImplementedChecks.Any())
+                {
+                    logger.LogDebug("Note: The following checks are not implemented for this language: {NotImplementedChecks}", string.Join(", ", notImplementedChecks));
+                }
 
-                // Add specific guidance from individual check failures
-                foreach (var result in results.Where(r => r.ExitCode != 0 && r.NextSteps?.Any() == true))
+                // Add specific guidance from individual check failures (exclude not implemented ones)
+                foreach (var result in results.Where(r => r.ExitCode != 0 && !IsNotImplemented(r) && r.NextSteps?.Any() == true))
                 {
                     nextSteps.AddRange(result.NextSteps);
                 }
             }
 
             return overallSuccess
-                ? new CLICheckResponse(0, combinedOutput) { NextSteps = nextSteps }
-                : new CLICheckResponse(1, combinedOutput, message) { NextSteps = nextSteps };
+                ? new PackageCheckResponse(0, combinedOutput) { NextSteps = nextSteps }
+                : new PackageCheckResponse(1, combinedOutput, message) { NextSteps = nextSteps };
         }
 
-        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, CancellationToken ct)
+        private async Task<PackageCheckResponse> RunChangelogValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageChecks.ValidateChangelogAsync(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -227,7 +377,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Check that version numbers and release dates are correctly formatted",
                     "Refer to the Azure SDK changelog guidelines for proper formatting"
                 };
-                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
+                return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
             }
             else
             {
@@ -240,11 +390,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
+        private async Task<PackageCheckResponse> RunDependencyCheck(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running dependency check");
 
-            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -267,11 +423,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunReadmeValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running README validation");
 
-            var result = await languageChecks.ValidateReadmeAsync(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -294,36 +456,133 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunSpellingValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSnippetUpdate(string packagePath, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunSnippetUpdate(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running snippet update");
 
-            var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
             return result;
         }
 
-        private async Task<CLICheckResponse> RunLintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunLintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running code linting");
 
-            var result = await languageChecks.LintCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
             return result;
         }
 
-        private async Task<CLICheckResponse> RunFormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        private async Task<PackageCheckResponse> RunFormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running code formatting");
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
             return result;
+        }
+
+        private async Task<PackageCheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running generated code checks");
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<PackageCheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running AOT compatibility checks");
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<PackageCheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running sample validation");
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task AddPackageDetailsInResponse(PackageCheckResponse response, string packagePath, CancellationToken ct)
+        {
+            try
+            {
+                var languageService = GetLanguageService(packagePath);
+                if (languageService != null)
+                {
+                    var info = await languageService.GetPackageInfo(packagePath, ct);
+                    response.PackageName = info.PackageName;
+                    response.Version = info.PackageVersion;
+                    response.PackageType = info.SdkType;
+                    response.Language = info.Language;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddPackageDetailsInResponse");
+            }
+        }        
+
+        private static PackageCheckResponse CreateUnsupportedLanguageResponse(string packagePath)
+        {
+            return new PackageCheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        private static bool IsNotImplemented(PackageCheckResponse response)
+        {
+            return response.ResponseError != null && response.ResponseError.Contains("not implemented", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

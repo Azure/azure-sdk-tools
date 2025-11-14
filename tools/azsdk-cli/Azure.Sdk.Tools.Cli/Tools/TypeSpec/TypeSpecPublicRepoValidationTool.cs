@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
@@ -16,30 +17,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType]
     public class TypeSpecPublicRepoValidationTool(ITypeSpecHelper typeSpecHelper, ILogger<TypeSpecPublicRepoValidationTool> logger) : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+
         // Commands
         private const string checkPublicRepoCommandName = "check-public-repo";
 
         // Options
-        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
+        {
+            Description = "Path to typespec project",
+            Required = true,
+        };
 
         protected override Command GetCommand() =>
             new(checkPublicRepoCommandName, "Check if TypeSpec project is in public spec repo") { typeSpecProjectPathOpt };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             await Task.CompletedTask;
-            var command = ctx.ParseResult.CommandResult.Command.Name;
+            var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
             {
                 case checkPublicRepoCommandName:
-                    var typeSpecProjectPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
+                    var typeSpecProjectPath = parseResult.GetValue(typeSpecProjectPathOpt);
                     var checkResult = CheckTypeSpecProjectInPublicRepo(typeSpecProjectPath);
                     checkResult.Message = "Public repo check result:";
                     return checkResult;
 
                 default:
-                    return new() { ResponseError = $"Unknown command: '{command}'" };
+                    return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
             }
         }
 

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -20,69 +19,65 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IMicroagentHostService microAgentHostService
     ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageReadme];
 
-        private readonly Option<string> packagePathOption = new(
-            name: "--package-path",
-            getDefaultValue: () => ".",
-            description: "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)")
+        private readonly Option<string> packagePathOption = new("--package-path")
         {
-            IsRequired = true,
+            Description = "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)",
+            Required = true,
+            DefaultValueFactory = _ => ".",
         };
 
-        private readonly Option<string> outputPathOption = new(
-                name: "--output-path",
-                getDefaultValue: () => "README.output.md",
-                description: "Path to write the generated README contents")
+        private readonly Option<string> outputPathOption = new("--output-path")
         {
-            IsRequired = true,
+            Description = "Path to write the generated README contents",
+            Required = true,
+            DefaultValueFactory = _ => "README.output.md",
         };
 
-        private readonly Option<string> templatePathOption = new("--template-path", "Path to the README template file (ie: Templates/ReadMeGenerator/README-template.go.md)")
+        private readonly Option<string> templatePathOption = new("--template-path")
         {
-            IsRequired = true,
+            Description = "Path to the README template file (ie: Templates/ReadMeGenerator/README-template.go.md)",
+            Required = true,
         };
 
-        private readonly Option<string> serviceDocumentationOption = new(
-                "--service-url", "URL to the service documentation (ex: https://learn.microsoft.com/azure/service-bus-messaging)")
+        private readonly Option<string> serviceDocumentationOption = new("--service-url")
         {
-            IsRequired = true
+            Description = "URL to the service documentation (ex: https://learn.microsoft.com/azure/service-bus-messaging)",
+            Required = true,
         };
 
-        private readonly Option<string> modelOption = new(
-            name: "--model",
-            getDefaultValue: () => "gpt-4.1",
-            description: "The OpenAI model to use when generating the readme. Note, this will match the name of your Azure OpenAI model deployment.")
+        private readonly Option<string> modelOption = new("--model")
         {
-            IsRequired = true,
+            Description = "The OpenAI model to use when generating the readme. Note, this will match the name of your Azure OpenAI model deployment.",
+            Required = true,
+            DefaultValueFactory = _ => "gpt-4.1",
         };
 
-        protected override Command GetCommand() =>
-            new("readme", "README generator tool") {
-                modelOption,
-                outputPathOption,
-                packagePathOption,
-                serviceDocumentationOption,
-                templatePathOption,
-            };
+        protected override Command GetCommand() => new("generate", "Generate README content for a package")
+        {
+            modelOption,
+            outputPathOption,
+            packagePathOption,
+            serviceDocumentationOption,
+            templatePathOption,
+        };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             try
             {
-                var pr = ctx.ParseResult;
-
-                var templatePath = pr.GetValueForOption(templatePathOption);
-                var serviceDocumentation = pr.GetValueForOption(serviceDocumentationOption);
-                var outputPath = pr.GetValueForOption(outputPathOption);
-                var model = pr.GetValueForOption(modelOption);
+                var templatePath = parseResult.GetValue(templatePathOption);
+                var serviceDocumentation = parseResult.GetValue(serviceDocumentationOption);
+                var outputPath = parseResult.GetValue(outputPathOption);
+                var model = parseResult.GetValue(modelOption);
 
                 var generator = new ReadmeGenerator(
                     logger: logger,
                     microAgentHostService: microAgentHostService,
                     templatePath: templatePath,
                     serviceDocumentation: new Uri(serviceDocumentation),
-                    packagePath: pr.GetValueForOption(packagePathOption),
+                    packagePath: parseResult.GetValue(packagePathOption),
                     outputPath: outputPath,
                     model: model);
 
@@ -295,4 +290,3 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public ReadmeValidationException(string message) : base(message) { }
     }
 }
-

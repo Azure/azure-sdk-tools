@@ -2,13 +2,11 @@
 // Licensed under the MIT License.
 using System.ComponentModel;
 using System.Text.Json;
+using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
-using ModelContextProtocol.Server;
-using System.CommandLine;
-using System.CommandLine.Invocation;
 
 namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 {
@@ -19,58 +17,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
         ILogger<PullRequestTools> logger
-    ) : MCPMultiCommandTool
+    ) : MCPNoCommandTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-pr", "Pull request tools")];
-
-        // Commands
-        private const string getPullRequestForCurrentBranchCommandName = "get-pr-for-current-branch";
-        private const string createPullRequestCommandName = "create-pr";
-        private const string getPullRequestCommandName = "get-pr-details";
-
-        // Options
-        private readonly Option<string> repoPathOpt = new(["--repo-path"], "Path to repository root") { IsRequired = true };
-        private readonly Option<string> titleOpt = new(["--title"], "Title for the pull request") { IsRequired = true };
-        private readonly Option<string> descriptionOpt = new(["--description"], "Description for the pull request") { IsRequired = true };
-        private readonly Option<bool> draftOpt = new(["--draft"], () => true, "Create pull request as draft (default: true)");
-        private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch for the pull request") { IsRequired = false };
-        private readonly Option<int> pullRequestNumberOpt = new(["--pr"], "Pull request number") { IsRequired = true };
-
-        protected override List<Command> GetCommands() => [
-            new(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { repoPathOpt },
-            new(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, repoPathOpt, targetBranchOpt, draftOpt },
-            new(getPullRequestCommandName, "Get pull request details") { pullRequestNumberOpt, repoPathOpt }
-        ];
-
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
-        {
-            var commandName = ctx.ParseResult.CommandResult.Command.Name;
-            var commandParser = ctx.ParseResult;
-            switch (commandName)
-            {
-                case getPullRequestForCurrentBranchCommandName:
-                    var repoPath = commandParser.GetValueForOption(repoPathOpt);
-                    var pullRequestLink = await GetPullRequestForCurrentBranch(repoPath);
-                    return new DefaultCommandResponse { Result = "Pull request link: " + pullRequestLink };
-                case createPullRequestCommandName:
-                    var title = commandParser.GetValueForOption(titleOpt);
-                    var description = commandParser.GetValueForOption(descriptionOpt);
-                    var createPrRepoPath = commandParser.GetValueForOption(repoPathOpt);
-                    var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
-                    var draft = commandParser.GetValueForOption(draftOpt);
-                    var createPullRequestResponse = await CreatePullRequest(title, description, createPrRepoPath, targetBranch, draft);
-                    return new DefaultCommandResponse { Result = "Create pull request response: " + string.Join("\n", createPullRequestResponse) };
-                case getPullRequestCommandName:
-                    var pullRequestNumber = commandParser.GetValueForOption(pullRequestNumberOpt);
-                    var getPRrepoPath = commandParser.GetValueForOption(repoPathOpt);
-                    var pullRequestDetails = await GetPullRequest(pullRequestNumber, getPRrepoPath);
-                    return new DefaultCommandResponse { Result = "Pull request details: " + pullRequestDetails };
-                default:
-                    return new DefaultCommandResponse { ResponseError = "Unknown command: " + commandName };
-            }
-        }
-
-
         [McpServerTool(Name = "azsdk_get_github_user_details"), Description("Connect to GitHub using personal access token.")]
         public async Task<DefaultCommandResponse> GetGitHubUserDetails()
         {
@@ -95,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             try
             {
                 var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
-                logger.LogInformation($"GitHub repo root path: {repoRootPath}");
+                logger.LogInformation("GitHub repo root path: {RepoRootPath}", repoRootPath);
                 if (string.IsNullOrEmpty(repoRootPath))
                 {
                     return new DefaultCommandResponse { ResponseError = "Failed to get repo root path. Please make sure to provide a valid repository path." };
@@ -103,14 +51,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
                 var repoName = gitHelper.GetRepoName(repoRootPath);
                 var headBranchName = gitHelper.GetBranchName(repoRootPath);
-                var headBranchRef = $"{repoOwner}:{headBranchName}";
-                logger.LogInformation($"Repo name: {repoName}, Repo owner: {repoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
+                var forkOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
+                var headBranchRef = $"{forkOwner}:{headBranchName}";
+                logger.LogInformation(
+                    "Repo name: {RepoName}, Repo owner: {RepoOwner}, Head branch name: {HeadBranchName}, Head branch ref: {HeadBranchRef}",
+                    repoName,
+                    repoOwner,
+                    headBranchName,
+                    headBranchRef);
                 if (string.IsNullOrEmpty(repoOwner))
                 {
                     return new DefaultCommandResponse { ResponseError = "Failed to get repo details. Please make sure to provide a valid repository path and try again." };
                 }
 
-                logger.LogInformation("Getting pull request for branch {headBranchRef}...", headBranchRef);
+                logger.LogInformation("Getting pull request for branch {HeadBranchRef}...", headBranchRef);
                 var pullRequest = await gitHubService.GetPullRequestForBranchAsync(repoOwner, repoName, headBranchRef);
                 if (pullRequest == null)
                 {

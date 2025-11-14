@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Diagnostics;
 using ModelContextProtocol.Server;
@@ -16,35 +16,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger) : MCPTool
     {
         // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-tool", "TypeSpec project tools for Azure REST API Specs")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecProject];
 
         // Options
-        private readonly Option<string> repoRootOpt = new(["--repo-root"], "Path to azure-rest-api-spec repo root") { IsRequired = true };
-        private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch to compare the changes") { IsRequired = true };
+        private readonly Option<string> repoRootOpt = new("--repo-root")
+        {
+            Description = "Path to azure-rest-api-spec repo root",
+            Required = true,
+        };
+
+        private readonly Option<string> targetBranchOpt = new("--target-branch")
+        {
+            Description = "Target branch to compare the changes",
+            Required = true,
+            DefaultValueFactory = _ => "main",
+        };
 
         static readonly string GET_CHANGED_TYPESPEC_PROJECT_SCRIPT = "eng/scripts/Get-TypeSpec-Folders.ps1";
 
         // Commands
-        private const string getModifiedProjectsCommandName = "get-modified-projects";
+        private const string getModifiedProjectsCommandName = "modified-projects";
 
-        protected override Command GetCommand() => new(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects") { repoRootOpt, targetBranchOpt };
+        protected override Command GetCommand() =>
+            new(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects") { repoRootOpt, targetBranchOpt };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             await Task.CompletedTask;
-            var command = ctx.ParseResult.CommandResult.Command.Name;
+            var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
             {
                 case getModifiedProjectsCommandName:
-                    var repoRootPath = ctx.ParseResult.GetValueForOption(repoRootOpt);
-                    var targetBranch = ctx.ParseResult.GetValueForOption(targetBranchOpt);
+                    var repoRootPath = parseResult.GetValue(repoRootOpt);
+                    var targetBranch = parseResult.GetValue(targetBranchOpt);
                     var modifiedProjects = GetModifiedTypeSpecProjects(repoRootPath, targetBranch);
                     modifiedProjects.Message = "Modified TypeSpec projects:";
                     return modifiedProjects;
 
                 default:
-                    return new() { ResponseError = $"Unknown command: '{command}'" };
+                    return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
             }
         }
 

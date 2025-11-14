@@ -2,14 +2,15 @@
 // Licensed under the MIT License.
 
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -20,35 +21,45 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILogger<ReleaseReadinessTool> logger
     ) : MCPTool
     {
-        private readonly Option<string> packageNameOpt = new(["--package-name"], "SDK package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]") { IsRequired = true };
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        private readonly Option<string> packageNameOpt = new("--package-name")
+        {
+            Description = "SDK package name",
+            Required = true,
+        };
+
+        private readonly Option<string> languageOpt = new("--language")
+        {
+            Description = "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]",
+            Required = true,
+        };
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
         protected override Command GetCommand() =>
-            new("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
+            new("release-readiness", "Checks release readiness of a SDK package") { packageNameOpt, languageOpt };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
             logger.LogInformation("Running release readiness check for {packageName} in {language}", packageName, language);
             return await CheckPackageReleaseReadinessAsync(packageName, language);
         }
 
         [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
-        public async Task<PackageResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
+        public async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
             {
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
-                    package = new PackageResponse
+                    package = new PackageWorkitemResponse
                     {
-                        Name = packageName,
-                        Language = language,
+                        PackageName = packageName,   
                         ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language."
                     };
+                    package.SetLanguage(language);
                     return package;
                 }
 
@@ -65,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
                 bool isPreviewRelease = releaseType.Equals("Beta");
-                bool isDataPlanePackage = !package.PackageType.Equals("mgmt");
+                bool isDataPlanePackage = package.PackageType != SdkType.Management;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {
@@ -118,13 +129,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             catch (Exception ex)
             {
-                var package = new PackageResponse
+                var package = new PackageWorkitemResponse
                 {
-                    Name = packageName,
-                    Language = language,
+                    PackageName = packageName,
                     IsPackageReady = false,
                     ResponseError = $"Failed to check package readiness for '{packageName}' in language '{language}'. Error {ex.Message}"
                 };
+                package.SetLanguage(language);
                 return package;
             }
         }
@@ -141,7 +152,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     var pipelineRun = await devopsService.GetPipelineRunAsync(buildId);
                     if (pipelineRun != null)
                     {
-                        logger.LogInformation($"Pipeline status: {pipelineRun.Status}, Result: {pipelineRun.Result}");
+                        logger.LogInformation(
+                            "Pipeline status: {PipelineStatus}, Result: {PipelineResult}",
+                            pipelineRun.Status,
+                            pipelineRun.Result);
                         var status = (pipelineRun.Status == BuildStatus.Completed ? pipelineRun.Result?.ToString() : pipelineRun.Status.ToString()) ?? "Unknown";
                         if (!status.Contains(Pipeline_Success_Status))
                         {
@@ -154,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             catch (Exception ex)
             {
-                logger.LogError("Failed to get pipeline run details. Error: {exception}", ex.Message);
+                logger.LogError(ex, "Failed to get pipeline run details for URL {PipelineRunUrl}", pipelineRunUrl);
                 return $"Failed to get pipeline run details. Error: {ex.Message}";
             }
         }

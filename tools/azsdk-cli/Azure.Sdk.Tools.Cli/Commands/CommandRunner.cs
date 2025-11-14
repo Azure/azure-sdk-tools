@@ -1,6 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
+using System.CommandLine.Help;
 using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
@@ -21,30 +20,34 @@ namespace Azure.Sdk.Tools.Cli.Commands
         )
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.");
-            rootCommand.AddOption(SharedOptions.ToolOption);
 
-            rootCommand.AddGlobalOption(SharedOptions.Debug);
+            var help = rootCommand.Options.OfType<HelpOption>().Single();
+            help.Aliases.Clear();  // get rid of stuff like '-?' which just doesn't even work in some shells
+            help.Aliases.Add("-h");
 
-            SharedOptions.Format.AddValidator(result =>
+            rootCommand.Options.Add(SharedOptions.Debug);
+
+            SharedOptions.Format.Validators.Add(result =>
             {
-                var value = result.GetValueForOption(SharedOptions.Format);
+                var value = result.GetValue(SharedOptions.Format);
                 if (value != "plain" && value != "json" && value != "hidden")
                 {
                     // hidden is used for tests, don't include in help text
-                    result.ErrorMessage = $"Invalid output format '{value}'. Supported formats are: plain, json";
+                    result.AddError($"Invalid output format '{value}'. Supported formats are: plain, json");
                 }
             });
-            rootCommand.AddGlobalOption(SharedOptions.Format);
+            rootCommand.Options.Add(SharedOptions.Format);
 
             // Create the MCP server command at the root as the MCP SDK has injected
             // singletons within WithStdioServerTransport() and will not run
             // within the DI scope we create for CLI commands.
             var hostServer = ActivatorUtilities.CreateInstance<HostServerCommand>(serviceProvider);
-            rootCommand.AddCommand(hostServer.GetCommand());
+            foreach (var cmd in hostServer.GetCommands())
+            {
+                rootCommand.Subcommands.Add(cmd);
+            }
 
-            var toolTypes = SharedOptions
-                                .GetFilteredToolTypes(args)
-                                .Where(t => t.Name != nameof(HostServerCommand));
+            var toolTypes = SharedOptions.ToolsList.Where(t => t.Name != nameof(HostServerCommand));
 
             // Many services are injected as scoped so they will be unique
             // per request when running in MCP server mode. Create a base scope
@@ -65,12 +68,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             PopulateToolHierarchy(rootCommand, toolInstances);
 
-            var parsedCommands = new CommandLineBuilder(rootCommand)
-                   .UseDefaults()            // adds help, version, error reporting, suggestions…
-                   .UseExceptionHandler()    // catches unhandled exceptions and writes them out
-                   .Build();
+#if DEBUG
+            ValidateCommandTree(rootCommand);
+#endif
 
-            return await parsedCommands.InvokeAsync(args);
+            var parseResult = rootCommand.Parse(args);
+            return await parseResult.InvokeAsync();
         }
 
         private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPToolBase> toolList)
@@ -88,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     // if there is no hierarchy, add the command directly to the root command
                     foreach (var cmd in subCommands)
                     {
-                        rootCommand.AddCommand(cmd);
+                        rootCommand.Subcommands.Add(cmd);
                     }
                     continue;
                 }
@@ -100,13 +103,21 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     // populate the dictionary lookup for the command so we don't create it multiple times as we walk the hieararchy across multiple tools
                     if (!parentMap.ContainsKey(segment.Verb))
                     {
-                        var groupCommand = new Command(segment.Verb, segment.Description);
+                        Command groupCommand = new(segment.Verb, segment.Description);
 
                         if (segment.Options != null && segment.Options.Count > 0)
                         {
                             foreach (var option in segment.Options)
                             {
-                                groupCommand.AddGlobalOption(option);
+                                groupCommand.Options.Add(option);
+                            }
+                        }
+
+                        if (segment.Aliases != null)
+                        {
+                            foreach (var alias in segment.Aliases)
+                            {
+                                groupCommand.Aliases.Add(alias);
                             }
                         }
 
@@ -117,9 +128,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     var currentNode = parentMap[segment.Verb];
 
                     // if the previous parent doesn't already have this node, add it, gotta maintain that hierarchy!
-                    if (!previousParent.Children.Contains(currentNode))
+                    if (!previousParent.Subcommands.Contains(currentNode))
                     {
-                        previousParent.AddCommand(currentNode);
+                        previousParent.Subcommands.Add(currentNode);
                     }
 
                     // if we are on the last segment of the hierarchy, add the leaf command to the current node
@@ -128,7 +139,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                         // if we're at the end of the hierarchy, add the leaf command
                         foreach (var cmd in subCommands)
                         {
-                            currentNode.AddCommand(cmd);
+                            currentNode.Subcommands.Add(cmd);
                         }
                     }
                     else
@@ -140,5 +151,24 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 }
             }
         }
+
+#if DEBUG
+        private static void ValidateCommandTree(Command command)
+        {
+            var nameSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var sub in command.Subcommands)
+            {
+                if (!nameSet.Add(sub.Name))
+                {
+                    Console.WriteLine($"Duplicate command '{sub.Name}' under '{command.Name}'. Current children: {string.Join(", ", command.Subcommands.Select(c => c.Name))}");
+                }
+            }
+
+            foreach (var sub in command.Subcommands)
+            {
+                ValidateCommandTree(sub);
+            }
+        }
+#endif
     }
 }

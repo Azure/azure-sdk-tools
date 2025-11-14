@@ -48,7 +48,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             {
                 var command = tool.GetCommandInstances().First();
 
-                int exitCode = command.Invoke($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
+                var parseResult = command.Parse($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
+                int exitCode = parseResult.Invoke();
 
                 Assert.Multiple(() =>
                 {
@@ -86,7 +87,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             var readmeOutputPath = Path.GetTempFileName();
             var readmeTemplatePath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "README-template.go.md");
 
-            int exitCode = command.Invoke($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {Path.Join(languageRepo, "sdk", "messaging", "azservicebus")}");
+            var parseResult = command.Parse($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {Path.Join(languageRepo, "sdk", "messaging", "azservicebus")}");
+            int exitCode = parseResult.Invoke();
             Assert.That(exitCode, Is.EqualTo(0), "Command should execute successfully");
 
             Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");
@@ -128,7 +130,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             {
                 var command = tool.GetCommandInstances().First();
 
-                int exitCode = command.Invoke($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
+                var parseResult = command.Parse($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
+                int exitCode = parseResult.Invoke();
 
                 Assert.Multiple(() =>
                 {

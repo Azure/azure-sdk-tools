@@ -7,7 +7,9 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -17,22 +19,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run tests for the specified SDK package")]
     [McpServerToolType]
     public class TestTool(
-        ILogger<TestTool> logger,
-        ILanguageSpecificResolver<ITestRunner> testRunnerResolver
-    ) : MCPTool
+        ILogger<TestTool> _logger,
+        IGitHelper gitHelper,
+        IEnumerable<LanguageService> _languageServices
+    ) : LanguageMcpTool(_languageServices, gitHelper, _logger)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
 
-        private const string TestCommandName = "test";
+        private const string RunCommandName = "run";
 
-        protected override Command GetCommand() => new Command(TestCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new Command(RunCommandName, "Run tests for SDK packages")
         {
             SharedOptions.PackagePath,
         };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
 
             return await RunPackageTests(packagePath, ct);
         }
@@ -43,24 +46,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             try
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
-                var testRunner = await testRunnerResolver.Resolve(packagePath, ct);
+                var languageService = GetLanguageService(packagePath);
+                var success = await languageService.RunAllTests(packagePath, ct);
 
-                if(testRunner == null)
+                if (success)
                 {
-                    logger.LogError("No test runner found for package at: {packagePath}", packagePath);
+                    return new DefaultCommandResponse
+                    {
+                        ExitCode = 0,
+                        Result = $"Test run for package at '{packagePath}' completed successfully.",
+                    };
+                }
+                else
+                {
                     return new DefaultCommandResponse
                     {
                         ExitCode = 1,
-                        ResponseError = $"No test runner found for package at '{packagePath}'."
+                        Result = $"Test run for package at '{packagePath}' was not successful.",
+                        NextSteps = ["Analyze the test output to identify the cause of the failure."],
                     };
                 }
-
-                await testRunner.RunAllTests(packagePath, ct);
-
-                return new DefaultCommandResponse
-                {
-                    Result = $"Tests for package at '{packagePath}' completed successfully."
-                };
             }
             catch (Exception ex)
             {

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
@@ -14,25 +13,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
     [McpServerToolType]
     public class PipelineTool(IDevOpsService devopsService, ILogger<PipelineTool> logger) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("pipeline", "Commands to help with DevOps pipeline")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
         // Commands
         private const string getPipelineStatusCommandName = "status";
 
         // Options
-        private readonly Option<int> pipelineRunIdOpt = new(["--pipeline-id"], "pipeline run id") { IsRequired = true };
+        private readonly Option<int> pipelineRunIdOpt = new("--pipeline-id")
+        {
+            Description = "pipeline run id",
+            Required = true,
+        };
 
         protected override Command GetCommand() =>
             new(getPipelineStatusCommandName, "Get pipeline run status") { pipelineRunIdOpt };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            var commandParser = ctx.ParseResult;
+            var command = parseResult.CommandResult.Command.Name;
             switch (command)
             {
                 case getPipelineStatusCommandName:
-                    var pipelineRunStatus = await GetPipelineRunStatus(commandParser.GetValueForOption(pipelineRunIdOpt));
+                    var pipelineRunStatus = await GetPipelineRunStatus(parseResult.GetValue(pipelineRunIdOpt));
                     return new DefaultCommandResponse { Message = $"Pipeline run status: {pipelineRunStatus}" };
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };

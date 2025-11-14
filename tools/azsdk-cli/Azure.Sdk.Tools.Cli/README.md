@@ -41,37 +41,6 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
 
 ## Usage Modes
 
-```text
-Description:
-  azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.
-
-Usage:
-  azsdk [command] [options]
-
-Options:
-  --tools <tools>        If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.
-  --debug                Enable debug logging [default: False]
-  -o, --output <output>  The format of the output. Supported formats are: plain, json [default: plain]
-  --version              Show version information
-  -?, -h, --help         Show help and usage information
-
-Commands:
-  eng                       Internal azsdk engineering system commands
-  download-prompts
-  log                       Log processing commands
-  validate-workspace-files
-  start                     Starts the MCP server (stdio mode)
-  azp                       Azure Pipelines Tool
-  release-plan              Manage release plans in AzureDevops
-  releaseReadiness          Checks release readiness of a SDK package.
-  sdk-release               Run the release pipeline for the package
-  spec-tool                 TypeSpec project tools for Azure REST API Specs
-  spec-pr                   Pull request tools
-  spec-workflow             Tools to help with the TypeSpec SDK generation.
-  validate-typespec         Run typespec validation
-  test-results              Analyze test results
-```
-
 ### 1. MCP Server Mode
 
 The `<repo root>/.vscode/mcp.json` config file can be updated to change which version of the MCP server is used (local or release).

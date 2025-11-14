@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class TypeSpecInitTool(
         INpxHelper npxHelper,
         ITypeSpecHelper typespecHelper,
+        IFileHelper fileHelper,
         ILogger<TypeSpecInitTool> logger
     ) : MCPTool
     {
@@ -31,9 +32,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private const string InitCommandName = "init";
 
         // command options
-        private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
-        private readonly Option<string> templateArg = new("--template", "The template to use for the TypeSpec project. Use azure-arm for resource management services, or azure-core for data plane services.") { IsRequired = true };
-        private readonly Option<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.") { IsRequired = true };
+        private readonly Option<string> outputDirectoryArg = new("--output-directory")
+        {
+            Description = "The output directory for the generated TypeSpec project. This directory must already exist and be empty.",
+            Required = true,
+        };
+
+        private readonly Option<string> templateArg = new("--template")
+        {
+            Description = "The template to use for the TypeSpec project. Use azure-arm for resource management services, or azure-core for data plane services.",
+            Required = true,
+        };
+
+        private readonly Option<string> serviceNamespaceArg = new("--service-namespace")
+        {
+            Description = "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.",
+            Required = true,
+        };
 
         private enum ServiceType
         {
@@ -47,40 +62,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             { "azure-core", ServiceType.DataPlane }
         };
 
-        protected override Command GetCommand()
-        {
-            // Add validator to serviceNamespaceArg
-            serviceNamespaceArg.AddValidator(result =>
-            {
-                var value = result.GetValueOrDefault<string>();
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    result.ErrorMessage = "The service namespace cannot be empty or whitespace.";
-                }
-            });
-            Command command = new(InitCommandName, "Initialize a new TypeSpec project") {
-                outputDirectoryArg,
-                templateArg,
-                serviceNamespaceArg
-            };
+        protected override Command GetCommand() => BuildCommand();
 
-            return command;
+        private Command BuildCommand()
+        {
+            if (serviceNamespaceArg.Validators.Count == 0)
+            {
+                serviceNamespaceArg.Validators.Add(result =>
+                {
+                    var value = result.GetValueOrDefault<string>();
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        result.AddError("The service namespace cannot be empty or whitespace.");
+                    }
+                });
+            }
+
+            return new(InitCommandName, "Initialize a new TypeSpec project")
+            {
+                outputDirectoryArg, templateArg, serviceNamespaceArg,
+            };
         }
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             try
             {
-                var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
-                var template = ctx.ParseResult.GetValueForOption(templateArg);
-                var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
+                var outputDirectory = parseResult.GetValue(outputDirectoryArg);
+                var template = parseResult.GetValue(templateArg);
+                var serviceNamespace = parseResult.GetValue(serviceNamespaceArg);
 
                 return await InitTypeSpecProjectAsync(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace, isCli: true, ct);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error initializing TypeSpec project");
-                return new() { ResponseError = ex.Message };
+                return new DefaultCommandResponse { ResponseError = ex.Message };
             }
         }
 
@@ -106,7 +123,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --template, '{template}'. Must be one of: {string.Join(", ", templateMap.Keys)}."
+                        ResponseError = $"Failed: Invalid --template, '{template}'. Must be one of: {string.Join(", ", templateMap.Keys)}.",
+                        TypeSpecProject = outputDirectory
                     };
                 }
 
@@ -122,7 +140,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --service-namespace, '{serviceNamespace}'."
+                        ResponseError = $"Failed: Invalid --service-namespace, '{serviceNamespace}'.",
+                        TypeSpecProject = outputDirectory
                     };
                 }
 
@@ -140,7 +159,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 logger.LogError(ex, "Error occurred while initializing TypeSpec project: {outputDirectory}, {template}, {serviceNamespace}", outputDirectory, template, serviceNamespace);
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}"
+                    ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}",
+                    TypeSpecProject = outputDirectory
                 };
             }
         }
@@ -158,11 +178,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 Directory.CreateDirectory(fullOutputDirectory);
             }
 
-            if (FileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
+            if (fileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
             {
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
+                    ResponseError = $"Failed: Invalid --output-directory, {validationResult}",
+                    TypeSpecProject = string.Empty
                 };
             }
 
@@ -170,7 +191,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             {
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo",
+                    TypeSpecProject = string.Empty
                 };
             }
 
@@ -178,7 +200,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             {
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification",
+                    TypeSpecProject = string.Empty
                 };
             }
 
@@ -206,21 +229,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 {
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed to initialize TypeSpec project, see details in the above logs."
+                        ResponseError = $"Failed to initialize TypeSpec project, see details in the above logs.",
+                        TypeSpecProject = string.Empty
                     };
                 }
                 return new TspToolResponse
                 {
                     ResponseError = $"Failed to initialize TypeSpec project, see generator output below" +
                                     Environment.NewLine +
-                                    result.Output
+                                    result.Output,
+                    TypeSpecProject = string.Empty
                 };
             }
 
             return new TspToolResponse
             {
                 IsSuccessful = true,
-                TypeSpecProjectPath = outputDirectory,
+                TypeSpecProject = outputDirectory,
                 NextSteps = [
                     $"Your project has been generated at {outputDirectory}. From here you can build and edit the project using these commands:",
                     $"  1. cd {outputDirectory}",

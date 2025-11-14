@@ -25,6 +25,11 @@
 /eng/common/pipelines/codeowners-linter.yml @weshaggard
 
 ###########
+# Files used to manage tsp-client version and installation
+###########
+/eng/common/tsp-client @catalinaperalta @raych1
+
+###########
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
@@ -59,8 +64,12 @@
 # Azure SDK Tools MCP
 #####################
 /eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
-/tools/azsdk-cli/                       @azure/azsdk-cli
+# PRLabel: %azsdk-cli
 /tools/ai-evals/azsdk-mcp/              @jeo02 @smw-ms @praveenkuttappan @maririos
+# PRLabel: %azsdk-cli
+/tools/azsdk-cli/                       @azure/azsdk-cli
+# PRLabel: %azsdk-cli %design-discussion
+/tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
 
 
 ###########
@@ -73,14 +82,14 @@
 # .NET Client Tools
 ###########
 /src/dotnet/                            @azure/azsdknet @jsquire
-/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
+/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
 /tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
+/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @maririos
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
+#if DEBUG
 [McpServerToolType, Description("Cleans up various engsys resources")]
 public class CleanupTool : MCPTool
 {
@@ -17,7 +18,11 @@ public class CleanupTool : MCPTool
     private readonly IAzureAgentServiceFactory agentServiceFactory;
     private readonly ILogger<CleanupTool> logger;
 
-    public Option<string> projectEndpointOpt = new(["--project-endpoint", "-e"], "The AI foundry project to clean up") { IsRequired = false };
+    public Option<string> projectEndpointOpt = new("--project-endpoint", "-e")
+    {
+        Description = "The AI foundry project to clean up",
+        Required = false,
+    };
 
     public CleanupTool(
         IAzureAgentServiceFactory agentServiceFactory,
@@ -35,14 +40,14 @@ public class CleanupTool : MCPTool
 
     protected override Command GetCommand() => new(CleanupAgentsCommandName, "Cleanup ai agents") { projectEndpointOpt };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        if (ctx.ParseResult.CommandResult.Command.Name != CleanupAgentsCommandName)
+        if (parseResult.CommandResult.Command.Name != CleanupAgentsCommandName)
         {
-            logger.LogError("Unknown command: {command}", ctx.ParseResult.CommandResult.Command.Name);
-            return new DefaultCommandResponse { ResponseError = $"Unknown command {ctx.ParseResult.CommandResult.Command.Name}" };
+            logger.LogError("Unknown command: {command}", parseResult.CommandResult.Command.Name);
+            return new DefaultCommandResponse { ResponseError = $"Unknown command {parseResult.CommandResult.Command.Name}" };
         }
-        var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
+        var projectEndpoint = parseResult.GetValue(projectEndpointOpt);
         return await CleanupAgents(projectEndpoint, ct);
     }
 
@@ -62,3 +67,4 @@ public class CleanupTool : MCPTool
         }
     }
 }
+#endif

@@ -28,7 +28,7 @@ namespace Azure.Tools.GeneratorAgent
         
         public async Task InstallTypeSpecDependencies(CancellationToken cancellationToken)
         {
-            Logger.LogDebug("Installing TypeSpec dependencies globally");
+            Logger.LogInformation("Installing TypeSpec dependencies globally");
 
             string arguments;
             
@@ -41,29 +41,26 @@ namespace Azure.Tools.GeneratorAgent
                 arguments = $"install --global {AppSettings.TypespecCompiler} {AppSettings.TypespecEmitterPackage}";
             }
 
-            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (argValidation.IsFailure)
-            {
-                throw new InvalidOperationException($"Invalid npm install arguments: {argValidation.Exception?.Message}", argValidation.Exception);
-            }
+            string validatedArguments = InputValidator.ValidateProcessArguments(arguments);
 
             Result<object> result = await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.NpmExecutable,
-                argValidation.Value!,
+                validatedArguments,
                 Path.GetTempPath(),
                 cancellationToken,
                 TimeSpan.FromMinutes(3)).ConfigureAwait(false);
 
             if (result.IsFailure)
             {
-                string errorMessage = result.ProcessException?.Error ?? result.Exception?.Message ?? "Unknown error";
-                throw new InvalidOperationException($"Failed to install TypeSpec dependencies: {errorMessage}", result.Exception);
+                string errorMessage = result.ProcessException!.Error;
+                throw new InvalidOperationException($"Failed to install TypeSpec dependencies: {errorMessage}");
             }
         }
 
         public async Task<Result<object>> CompileTypeSpecAsync(ValidationContext validationContext, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(validationContext);
+            
             Logger.LogDebug("Compiling TypeSpec project");
 
             string tspOutputPath = Path.Combine(validationContext.ValidatedSdkDir);
@@ -79,31 +76,14 @@ namespace Azure.Tools.GeneratorAgent
                 arguments = $"tsp compile . --emit {AppSettings.TypespecEmitterPackage} --option \"{AppSettings.TypespecEmitterPackage}.emitter-output-dir={tspOutputPath}\"";
             }
             
-            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (argValidation.IsFailure)
-            {
-                return Result<object>.Failure(argValidation.Exception!);
-            }
+            string validatedArguments = InputValidator.ValidateProcessArguments(arguments);
 
-            Result<object> result = await ProcessExecutionService.ExecuteAsync(
+            return await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.NpxExecutable,
-                argValidation.Value!,
+                validatedArguments,
                 currentTypeSpecDir,
                 cancellationToken,
                 TimeSpan.FromMinutes(5)).ConfigureAwait(false);
-
-            if (result.IsFailure && result.ProcessException != null)
-            {
-                return Result<object>.Failure(
-                    new TypeSpecCompilationException(
-                        result.ProcessException.Command,
-                        result.ProcessException.Output,
-                        result.ProcessException.Error,
-                        result.ProcessException.ExitCode ?? -1,
-                        result.ProcessException));
-            }
-
-            return result;
         }
     }
 }

@@ -1,0 +1,11 @@
+testcase: mention_summarize_open_parser_issue
+results: | 
+  {
+    "url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6",
+    "repository_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools",
+    "title": "[Python APIView] Literal values are not quoted in type annotations",
+    "created_at": "2025-10-15T19:36:45Z",
+    "body": "**Bad code snippet:**\n```python\nfoo: Literal[Foo]\n```\n\n**Description:**\nThe APIView parser is incorrectly displaying literal values in type annotations without quotes. According to Python typing conventions, literal values should be quoted, e.g., `Literal[\"Foo\"]`.\n\n**Expected (good) code snippet:**\n```python\nfoo: Literal[\"Foo\"]\n```\n\nPlease update the parser to ensure literal values are properly quoted in the APIView output.",
+  }
+response: |
+  Thank you for your feedback! An issue has been opened to address this in the APIView parser: https://github.com/tjprescott/azure-sdk-tools/issues/6.

@@ -65,6 +65,9 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
+  - name: CustomJobs
+    type: jobList
+    default: []
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -214,6 +217,10 @@ extends:
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
+
+          - ${{ each job in parameters.CustomJobs }}:
+            - ${{ job }}
+
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml
               parameters:
@@ -233,6 +240,7 @@ extends:
               PublishEnvironment: ${{ parameters.PublishEnvironment }}
             dependsOn: BuildTestAndPackage
             VerifyChangelog: ${{ parameters.VerifyChangelog }}
+            ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

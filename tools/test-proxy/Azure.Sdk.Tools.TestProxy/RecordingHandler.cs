@@ -1251,7 +1251,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback) 
+            var hostValue = GetHeader(request, "x-recording-upstream-base-uri", allowNulls: true);
+
+            if ((Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback) && null == hostValue) 
             {
                 // remember from above, if we use UriBuilder or similar, we get auto-decoding of escaped characters in the path/query, which will break 
                 // some requests.
@@ -1304,8 +1306,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
                 // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
                 var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-                var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
-
                 // it is easy to forget the x-recording-upstream-base-uri value
                 if (string.IsNullOrWhiteSpace(hostValue))
                 {

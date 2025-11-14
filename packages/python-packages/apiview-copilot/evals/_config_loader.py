@@ -14,9 +14,14 @@ from __future__ import annotations
 import dataclasses
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Type
+from typing import Dict, Type
 
 import yaml
+from evals._custom import (
+    CustomAPIViewEvaluator,
+    PromptyEvaluator,
+    PromptySummaryEvaluator,
+)
 
 # Global evaluator registry
 _EVALUATOR_REGISTRY: Dict[str, Type] = {}
@@ -26,16 +31,7 @@ _EVALUATOR_REGISTRY: Dict[str, Type] = {}
 class WorkflowConfig:
     name: str
     kind: str
-    prompty_path: Path | None
-    evaluation_config: EvaluationConfig | None
     source_file: Path | None = None  # for diagnostics
-
-
-@dataclasses.dataclass(slots=True)
-class EvaluationConfig:
-    comparison_field: str
-    display_name: str
-    breakdown_categories: dict[str, dict[str, int]]
 
 
 class WorkflowConfigError(ValueError):
@@ -93,13 +89,21 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     input_path = Path(path).resolve()
 
     # require a directory (we expect a folder containing test-config.yaml)
-    if not input_path.exists() or not input_path.is_dir():
-        _fail(f"Workflow path must be a directory containing 'test-config.yaml': {input_path}")
+    if not input_path.exists():
+        _fail(
+            f"Workflow path must be either a directory containing 'test-config.yaml' or a sibling of 'test-config.yaml': {input_path}"
+        )
 
     base_dir = input_path
 
-    # look for "test-config.yaml" or "test-config.yml" inside the directory
-    candidates = [base_dir / "test-config.yaml", base_dir / "test-config.yml"]
+    # look for "test-config.yaml" or "test-config.yml" inside the directory, or as a sibling of the input path
+    parent_dir = base_dir.parent
+    candidates = [
+        base_dir / "test-config.yaml",
+        base_dir / "test-config.yml",
+        parent_dir / "test-config.yaml",
+        parent_dir / "test-config.yml",
+    ]
     yaml_path = None
     for c in candidates:
         if c.exists() and c.is_file():
@@ -117,7 +121,7 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
         _fail(f"Top-level YAML must be a mapping (file: {yaml_path})")
 
     # Derive the workflow name from the directory basename (folder name).
-    name = base_dir.name
+    name = base_dir.name if yaml_path.parent == base_dir else yaml_path.parent.name
     if not name or not isinstance(name, str):
         _fail("Could not derive workflow name from the directory path")
 
@@ -129,36 +133,25 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if kind not in supported_workflows:
         _fail(f"Invalid kind: {kind!r}. Supported: {sorted(supported_workflows)}")
 
-    prompty_path: Path | None = None
-    if kind == "prompt":
-        prompty_rel = raw.get("prompty")
-        if not prompty_rel or not isinstance(prompty_rel, str):
-            _fail("kind=prompt requires field: prompty")
-        prompty_path = (yaml_path.parent / prompty_rel).resolve()
-        if not prompty_path.exists():
-            _fail(f"Prompty file not found: {prompty_path}")
-        if not prompty_path.suffix.startswith(".prompty"):
-            _fail("Prompty path does not point to a prompty file")
-
     runs = raw.get("runs", 1)
     if not isinstance(runs, int) or runs < 1:
         _fail(f"runs must be positive integer (got: {runs!r})")
 
-    evaluator_class = get_evaluator_class(kind)
-    evaluation_config = evaluator_class.validate_config_schema(raw.get("evaluation_config"))
-
     return WorkflowConfig(
         name=name,
         kind=kind,
-        prompty_path=prompty_path,
-        evaluation_config=evaluation_config,
         source_file=yaml_path,
     )
 
 
+# Register evaluators at module load time to prevent circular imports
+register_evaluator("apiview", CustomAPIViewEvaluator)
+register_evaluator("prompt", PromptyEvaluator)
+register_evaluator("summarize_prompt", PromptySummaryEvaluator)
+
+
 __all__ = [
     "WorkflowConfig",
-    "EvaluationConfig",
     "WorkflowConfigError",
     "register_evaluator",
     "get_evaluator_class",

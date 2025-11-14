@@ -1,7 +1,7 @@
 import argparse
-
 import dotenv
-from _runner import EvalRunner
+from _discovery import discover_targets
+from _runner import EvaluationRunner
 
 dotenv.load_dotenv()
 
@@ -18,12 +18,17 @@ if __name__ == "__main__":
         "--test-paths",
         "-p",
         type=str,
-        nargs="+",
-        required=True,
+        nargs="*",
         help="Paths to directories containing test files.",
     )
+    parser.add_argument(
+        "--use-cache",
+        action="store_true",
+        help="Enable caching of evaluation results to speed up runs.",
+    )
     args = parser.parse_args()
-    test_paths = args.test_paths
-    for test_path in test_paths or [test_paths]:
-        runner = EvalRunner(test_path=test_path, num_runs=args.num_runs)
-        runner.run()
+    targets = discover_targets(args.test_paths)
+    runner = EvaluationRunner(num_runs=args.num_runs, use_cache=args.use_cache)
+    results = runner.run(targets)
+    runner.show_results(results)
+    runner.show_summary(results)

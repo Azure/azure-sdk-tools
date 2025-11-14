@@ -10,30 +10,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     public class TspConvertToolTests
     {
         [Test]
-        public void GetCommand_ShouldReturnCommand()
-        {
-            // Arrange
-            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
-            var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
-
-            // Act
-            var command = tool.GetCommandInstances().First();
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(command.Name, Is.EqualTo("convert-swagger"));
-                Assert.That(command.Description, Does.Contain("Convert an existing Azure service swagger definition to a TypeSpec project"));
-            });
-        }
-
-        [Test]
         public async Task ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {
             // Arrange
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
+            var fileHelper = new Mock<IFileHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper, fileHelper);
 
             // Act
             var result = await tool.ConvertSwaggerAsync("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
@@ -49,7 +32,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
+            var fileHelper = new Mock<IFileHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper, fileHelper);
 
             // Act
             var result = await tool.ConvertSwaggerAsync(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);

@@ -238,6 +238,21 @@ export class ConversationsComponent implements OnChanges {
     }
   }
 
+  handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
+    
+    switch (commentUpdates.commentThreadUpdateAction) {
+      case CommentThreadUpdateAction.CommentCreated:
+        if (commentUpdates.comment) {
+          this.addCommentToCommentThread(commentUpdates);
+        }
+        break;
+      case CommentThreadUpdateAction.CommentResolved:
+        this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe();
+        break;
+    }
+  }
+
   private updateCommentTextInCommentThread(commentUpdates: CommentUpdatesDto) {
     if (this.comments.some(c => c.id === commentUpdates.commentId!)) {
       this.comments.find(c => c.id === commentUpdates.commentId!)!.commentText = commentUpdates.commentText!;

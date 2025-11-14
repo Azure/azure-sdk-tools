@@ -5,7 +5,6 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
-import { FooterComponent } from '../shared/footer/footer.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { ReviewsListComponent } from '../reviews-list/reviews-list.component';
@@ -39,7 +38,6 @@ describe('ReviewPageComponent', () => {
         PageOptionsSectionComponent,
         NavBarComponent,
         ReviewInfoComponent,
-        FooterComponent,
         CodePanelComponent,
         ReviewsListComponent,
         RevisionsListComponent,

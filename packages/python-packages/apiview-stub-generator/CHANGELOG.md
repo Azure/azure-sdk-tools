@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.25 (Unreleased)
+Fixed a bug where the overload implementations were being included in the APIView, causing issues with extra APIView Copilot comments being generated.
+
 ## Version 0.3.24 (2025-10-24)
 Fixed a bug where the old cross language mapping path was not being used when the new one was not found.
 Added the cross language metadata to the end of the token file for the cross language feature.

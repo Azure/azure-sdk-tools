@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                 new GetPullRequestLinkForCurrentBranch(),
                 new CreatePullRequest(),
                 new CreateReleasePlan(),
+                new VerifySetup(),
             };
 
             foreach (var mock in mockInstances)

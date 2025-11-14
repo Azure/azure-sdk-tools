@@ -114,7 +114,6 @@ export async function buildPackage(
 ) {
     const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
-    
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     let buildStatus = `succeeded`;
     if (isRushRepo(options.sdkRepoRoot)) {

@@ -127,9 +127,15 @@ async def get_api_review_job_status(job_id: str, _claims=Depends(require_auth)):
         raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found")
 
 
-@app.get("/test")
-async def health_check(_claims=Depends(require_auth)):
-    """Health check endpoint to verify service is running and authenticated."""
+@app.get("/auth-test")
+async def auth_test(_claims=Depends(require_auth)):
+    """Test endpoint to verify authentication is working."""
+    return {"status": "ok"}
+
+
+@app.get("/health-test")
+async def health_check():
+    """Health check endpoint to verify service is running."""
     return {"status": "ok"}
 
 

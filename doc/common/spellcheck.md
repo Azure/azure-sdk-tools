@@ -92,7 +92,7 @@ For example (note the words list is sorted alphabetically):
 
 ```yaml
 import:
-  - ../../.vscode/cspell.yaml
+  - ../../.vscode/cspell.json
 words:
   - aardvark
   - zoology
@@ -132,7 +132,7 @@ to spell check the rest of the file and not ignore it.
 
 ```yaml
 import:
-  - ../../.vscode/cspell.yaml
+  - ../../.vscode/cspell.json
 
 overrides:
   - filename: '**/sdk/core/Azure.Core/CHANGELOG.md'

@@ -15,26 +15,24 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 
             // Load scenario data from JSON
             var scenarioData = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
-            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
 
             // This test enables deeper input checking
             bool checkInputs = true;
-            var additionalContexts = new EvaluationContext[]
-            {
-                new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-            };
 
             var result = await EvaluationHelper.RunScenarioAsync(
                 scenarioName: this.ScenarioName,
                 scenarioData: scenarioData,
-                expectedToolResults: expectedToolResults,
                 chatCompletion: s_chatCompletion!,
                 chatConfig: s_chatConfig!,
                 executionName: s_executionName,
                 reportingPath: ReportingPath,
+                toolNames: s_toolNames,
                 evaluators: [new ExpectedToolInputEvaluator()],
                 enableResponseCaching: true,
-                additionalContexts: additionalContexts);
+                additionalContexts: new EvaluationContext[]
+                {
+                    new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
+                });
 
             EvaluationHelper.ValidateToolInputsEvaluator(result);
         }

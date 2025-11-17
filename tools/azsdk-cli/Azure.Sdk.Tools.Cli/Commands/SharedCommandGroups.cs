@@ -1,3 +1,5 @@
+using System.CommandLine;
+
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -5,56 +7,65 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static readonly CommandGroup AzurePipelines = new(
             Verb: "azp",
-            Description: "Azure Pipelines Tool",
-            Options: []
+            Description: "Azure Pipelines commands",
+            Aliases: ["pipeline"]
         );
 
         public static readonly CommandGroup EngSys = new(
             Verb: "eng",
-            Description: "Internal azsdk engineering system commands",
-            Options: []
-        );
-
-        public static readonly CommandGroup Generators = new(
-            Verb: "generators",
-            Description: "Commands that generate files",
-            Options: []
+            Description: "Internal azsdk engineering system commands"
         );
 
         public static readonly CommandGroup Cleanup = new(
             Verb: "cleanup",
-            Description: "Cleanup commands",
-            Options: []
+            Description: "Cleanup commands"
+        );
+
+        public static readonly CommandGroup Config = new(
+            Verb: "config",
+            Description: "SDK service configuration commands"
         );
 
         public static readonly CommandGroup Log = new(
             Verb: "log",
-            Description: "Log processing commands",
-            Options: []
+            Description: "Log processing commands"
         );
 
         public static readonly CommandGroup Package = new(
-            Verb: "package",
-            Description: "Package management and validation commands",
-            Options: []
+            Verb: "pkg",
+            Description: "Package operations",
+            Aliases: ["package"]
         );
 
-        public static readonly CommandGroup Samples = new(
+        public static readonly CommandGroup PackageReadme = new(
+            Verb: "readme",
+            Description: "README operations for SDK packages"
+        );
+
+        public static readonly CommandGroup PackageSample = new(
             Verb: "samples",
-            Description: "Sample generation and management commands",
-            Options: []
+            Description: "Sample operations for SDK packages"
         );
 
-        public static readonly CommandGroup SourceCode = new(
-            Verb: "source-code",
-            Description: "Source code generation and build commands",
-            Options: []
+        public static readonly CommandGroup PackageTest = new(
+            Verb: "test",
+            Description: "Test operations for SDK packages"
         );
 
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
-            Description: "Tools for setting up or working with TypeSpec projects",
-            Options: []
+            Description: "Commands for setting up or working with TypeSpec projects",
+            Aliases: ["typespec"]
+        );
+
+        public static readonly CommandGroup TypeSpecProject = new(
+            Verb: "project",
+            Description: "TypeSpec project utilities"
+        );
+
+        public static readonly CommandGroup TypeSpecClient = new(
+            Verb: "client",
+            Description: "TypeSpec client update helpers"
         );
 
         public static readonly CommandGroup Verify = new(

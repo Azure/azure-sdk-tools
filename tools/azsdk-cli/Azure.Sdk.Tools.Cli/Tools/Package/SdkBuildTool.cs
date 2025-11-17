@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -39,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const int CommandTimeoutInMinutes = 30;
 
         protected override Command GetCommand() =>
-            new(BuildSdkCommandName, "Builds SDK source code for a specified language and project.") { SharedOptions.PackagePath };
+            new(BuildSdkCommandName, "Builds SDK source code for a specified language and project") { SharedOptions.PackagePath };
 
         public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -114,7 +113,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the build logs for details about the error", "Resolve the issue", "Re-run the tool"]);
+                return PackageOperationResponse.CreateFailure(
+                    $"An error occurred: {ex.Message}",
+                    nextSteps: [
+                        "Check the build logs for details about the error",
+                        "Resolve the issue",
+                        "Re-run the tool",
+                        "Run verify setup tool if the issue is environment related"
+                        ]);
             }
         }
     }

@@ -14,11 +14,12 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             const string prompt = "Validate my typespec project. It is already confirmed we are in a public repository. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
             string[] expectedTools =
             [
+                "azsdk_verify_setup",
                 "azsdk_run_typespec_validation",
             ];
 
             // Build scenario data from prompt
-            var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
+            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
 
             // External contexts (no deep input checking for this one)

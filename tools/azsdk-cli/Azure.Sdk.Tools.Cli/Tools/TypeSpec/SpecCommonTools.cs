@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger) : MCPTool
     {
         // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-tool", "TypeSpec project tools for Azure REST API Specs")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecProject];
 
         // Options
         private readonly Option<string> repoRootOpt = new("--repo-root")
@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         static readonly string GET_CHANGED_TYPESPEC_PROJECT_SCRIPT = "eng/scripts/Get-TypeSpec-Folders.ps1";
 
         // Commands
-        private const string getModifiedProjectsCommandName = "get-modified-projects";
+        private const string getModifiedProjectsCommandName = "modified-projects";
 
         protected override Command GetCommand() =>
             new(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects") { repoRootOpt, targetBranchOpt };

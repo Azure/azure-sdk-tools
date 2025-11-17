@@ -10,19 +10,19 @@ using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Azure.Sdk.Tools.Cli.Tools.Samples;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
+using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
-            typeof(PackageCheckTool),
-            typeof(CleanupTool),
-            typeof(CodeownersTools),
+            typeof(PipelineTool),
+            typeof(PipelineAnalysisTool),            
+            typeof(CodeownersTool),
             typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),
-            typeof(PipelineTool),
-            typeof(PipelineAnalysisTool),
+            typeof(PackageCheckTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
             typeof(ReadMeGeneratorTool),
@@ -30,14 +30,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SampleTranslatorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
+            typeof(SpecWorkflowTool),
             typeof(SdkBuildTool),
             typeof(SdkGenerationTool),
             typeof(MetadataUpdateTool),
             typeof(ChangelogContentUpdateTool),
+            typeof(VersionUpdateTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
-            typeof(PullRequestTools),
-            typeof(SpecWorkflowTool),
+            typeof(PullRequestTools),            
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
             typeof(TypeSpecConvertTool),
@@ -49,16 +50,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TestTool),
 #if DEBUG
             // only add these tools in debug mode
+            typeof(CleanupTool),
             typeof(ExampleTool),
             typeof(HelloWorldTool),
 #endif
         ];
-
-        public static Option<string> ToolOption = new("--tools")
-        {
-            Description = "If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.",
-            Required = false,
-        };
 
         public static Option<string> Format = new("--output", "-o")
         {
@@ -107,14 +103,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.Options.Add(ToolOption);
+            Option<string> toolOption = new("--tools");
+            root.Options.Add(toolOption);
 
             var result = root.Parse(args);
 
-            var raw = result.GetValue(ToolOption);
+            var raw = result.GetValue(toolOption);
             if (string.IsNullOrWhiteSpace(raw))
             {
-                return new string[] { };
+                return [];
             }
 
             return raw

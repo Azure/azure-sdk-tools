@@ -37,6 +37,13 @@ public class CommentsManagerTests
         commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         hubContextMock = new Mock<IHubContext<SignalRHub>>();
 
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+        mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         Mock<IConfiguration> configMock = new();
         configMock.Setup(c => c["approvers"]).Returns("architect1");
         configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");

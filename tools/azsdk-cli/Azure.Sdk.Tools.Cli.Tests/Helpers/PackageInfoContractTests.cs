@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using LibGit2Sharp;
-using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
@@ -82,7 +82,14 @@ public class PackageInfoContractTests
 
     private void SetupGoPackage(string packagePath, string version)
     {
-        CreateTestFile(packagePath, "version.go", $"package azkeys\n\nconst (\n    moduleName = \"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys\"\n    version    = \"{version}\"\n)\n");
+        var gitHelper = new GitHelper(Mock.Of<IGitHubService>(), Mock.Of<ILogger<GitHelper>>());
+
+        CreateTestFile(Path.Join(gitHelper.DiscoverRepoRoot(packagePath), "eng", "common", "scripts"), "common.ps1",
+            $@"function Get-GoModuleProperties($goModPath) {{
+                return @{{
+                    Version = ""{version}""
+                }}
+            }}");
     }
 
     private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version)
@@ -149,6 +156,11 @@ public class PackageInfoContractTests
 
         SetupPackageForLanguage(language, pkgPath, package, expectedVersion);
 
+        if (language == SdkLanguage.Go)
+        {
+            processHelper = new ProcessHelper(Mock.Of<ILogger<ProcessHelper>>(), Mock.Of<IRawOutputHelper>());
+        }
+
         var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper);
         var info = await helper.GetPackageInfo(pkgPath);
         Assert.That(info.PackageVersion, Is.EqualTo(expectedVersion));
@@ -177,7 +189,7 @@ public class PackageInfoContractTests
         SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper),
         SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper),
         SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper),
-        SdkLanguage.Go => new GoLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper),
+        SdkLanguage.Go => new GoLanguageService(processHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

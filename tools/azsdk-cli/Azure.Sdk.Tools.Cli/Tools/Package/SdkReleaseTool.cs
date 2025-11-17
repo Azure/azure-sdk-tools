@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -11,8 +12,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
     public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
     {
-        private readonly string commandName = "sdk-release";
-        private readonly Option<string> packageNameOpt = new("--package")
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+
+        private readonly string commandName = "release";
+        private readonly Option<string> packageNameOpt = new("--package-name")
         {
             Description = "Package name",
             Required = true,

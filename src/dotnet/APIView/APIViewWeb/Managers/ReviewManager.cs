@@ -538,7 +538,7 @@ namespace APIViewWeb.Managers
             var startUrl = $"{copilotEndpoint}/api-review/start";
             var client = _httpClientFactory.CreateClient();
             
-            var jobRequest = new Dictionary<string, object>
+            var payload = new Dictionary<string, object>
             {
                 { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language, activeCodeFile.CodeFile.LanguageVariant) },
                 { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
@@ -552,13 +552,9 @@ namespace APIViewWeb.Managers
                 var diffApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: diffApiRevisionId);
                 var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(diffApiRevision, false);
                 var diffCodeLines = diffCodeFile.CodeFile.GetApiLines(skipDocs: true);
-                jobRequest.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+                payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+
             }
-            
-            var payload = new Dictionary<string, object>
-            {
-                { "job_request", jobRequest }
-            };
 
             try {
                 _logger.LogInformation("Starting Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}, Language: {Language}", 

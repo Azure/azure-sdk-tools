@@ -184,8 +184,6 @@ public partial class GoLanguageService : LanguageService
     /// </summary>
     /// <param name="goModPath">Path to a go.mod file</param>
     /// <param name="ct"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
     public static async Task<Version> GetGoModVersionAsync(string goModPath, CancellationToken ct = default)
     {
         var text = await File.ReadAllTextAsync(goModPath, ct);

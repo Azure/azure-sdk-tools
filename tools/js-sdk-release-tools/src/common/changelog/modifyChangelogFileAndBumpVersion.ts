@@ -31,7 +31,7 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
 }
 
 export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
-    const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
+    const newVersion = '1.0.0-beta.1';
     const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
     const content = `# Release History
     

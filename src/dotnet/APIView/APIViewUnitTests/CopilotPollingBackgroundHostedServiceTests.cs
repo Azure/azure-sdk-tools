@@ -17,6 +17,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -31,6 +32,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<ICosmosCommentsRepository> _mockCommentsRepository;
         private readonly Mock<IHubContext<SignalRHub>> _mockSignalRHubContext;
+        private readonly Mock<ICopilotAuthenticationService> _mockCopilotAuth;
         private readonly Mock<ILogger<CopilotJobProcessor>> _mockLogger;
         private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
         private readonly Mock<IConfiguration> _mockConfiguration;
@@ -43,6 +45,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
             _mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
+            _mockCopilotAuth = new Mock<ICopilotAuthenticationService>();   
             _mockLogger = new Mock<ILogger<CopilotJobProcessor>>();
             _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 
@@ -65,6 +68,7 @@ namespace APIViewUnitTests
                 _mockHttpClientFactory.Object,
                 _mockApiRevisionsManager.Object,
                 _mockCommentsRepository.Object,
+                _mockCopilotAuth.Object,
                 _mockSignalRHubContext.Object,
                 _mockLogger.Object);
         }

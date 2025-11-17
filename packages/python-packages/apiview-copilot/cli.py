@@ -12,6 +12,7 @@ Command line interface for APIView Copilot.
 
 import asyncio
 import json
+import logging
 import os
 import pathlib
 import sys
@@ -23,6 +24,7 @@ import colorama
 import prompty
 import prompty.azure
 import requests
+from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -330,7 +332,7 @@ def review_job_start(
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/start"
 
-    resp = requests.post(api_endpoint, json=payload, timeout=60)
+    resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
     if resp.status_code == 202:
         return resp.json()
     else:
@@ -343,7 +345,9 @@ def review_job_get(job_id: str):
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
-    resp = requests.get(url, timeout=10)
+
+    headers = _build_auth_header(base_url)
+    resp = requests.get(url, headers=headers, timeout=10)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -445,7 +449,8 @@ def review_summarize(language: str, target: str, base: str = None):
     settings = SettingsManager()
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/summarize"
-    response = requests.post(api_endpoint, json=payload, timeout=60)
+
+    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
         print(summary)
@@ -471,6 +476,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
             base_url = settings.get("WEBAPP_ENDPOINT")
             api_endpoint = f"{base_url}/agent/chat"
             session = requests.Session()
+            # Inline _build_auth_header in requests below
             while True:
                 try:
                     user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -494,7 +500,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     payload = {"user_input": user_input}
                     if current_thread_id:
                         payload["thread_id"] = current_thread_id
-                    resp = session.post(api_endpoint, json=payload, timeout=60)
+                    resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
@@ -568,6 +574,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(base_url),
                 timeout=60,
             )
             data = resp.json()
@@ -615,6 +622,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(base_url),
                 timeout=60,
             )
             data = resp.json()
@@ -702,7 +710,7 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
-    reviews = _get_active_reviews(start_date, end_date, environment)
+    reviews = _get_active_reviews(start_date, end_date, environment=environment)
     pretty_language = get_language_pretty_name(language).lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
@@ -951,6 +959,25 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     print(f"Comment count: {len(comment_texts)}")
     created_by_set = {comment.created_by for comment in comments if comment.created_by}
     print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
+
+
+def _build_auth_header(base_url):
+    """
+    Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
+    """
+    from src._credential import get_credential
+
+    credential = get_credential()
+    settings = SettingsManager()
+    app_id = settings.get("APP_ID")
+    scope = f"api://{app_id}/.default"
+    try:
+        token = credential.get_token(scope)
+    except ClientAuthenticationError as e:
+        logging.error("Authentication failed: %s", e)
+        print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
+        raise SystemExit(1)
+    return {"Authorization": f"Bearer {token.token}"}
 
 
 class CliCommandsLoader(CLICommandsLoader):

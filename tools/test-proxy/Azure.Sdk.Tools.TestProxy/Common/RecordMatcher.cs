@@ -175,7 +175,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 ReadOnlySequence<byte> requestMinusBoundary = MultipartUtilities.RemoveBoundaries(requestBody, encoding.GetBytes(requestBoundary), encoding);
                 ReadOnlySequence<byte> recordMinusBoundary = MultipartUtilities.RemoveBoundaries(recordBody, encoding.GetBytes(recordBoundary), encoding);
 
-                if (!requestMinusBoundary.SequenceEqual(recordMinusBoundary, out int index, out int length))
+                if (!requestMinusBoundary.SequenceEqual(recordMinusBoundary, encoding, out int index, out int length))
                 {
                     descriptionBuilder?.AppendLine("Multipart bodies differ after removing boundaries.");
                     if (length > 0)

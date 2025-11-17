@@ -171,6 +171,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                                 newValue = new StringValues(newBody.Length.ToString());
                             }
                         }
+                        if (h.Key == "Content-Disposition")
+                        {
+                            newValue = MultipartUtilities.NormalizeFilenameFromContentDispositionValue(h.Value);
+                        }
                         var headerLine = $"{h.Key}: {newValue}\r\n";
                         outStream.Write(Encoding.ASCII.GetBytes(headerLine));
                     }

@@ -1,10 +1,13 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Web;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
@@ -431,6 +434,115 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             }
         }
 
+        public static string NormalizeFilenameFromContentDispositionValue(string value)
+        {
+            if (string.IsNullOrEmpty(value) || !value.Contains("filename"))
+            {
+                return value;
+            }
+
+            var spanValue = value.AsSpan();
+            var semicolonIndex = spanValue.IndexOf(';');
+            if (semicolonIndex == -1) // no header parameters
+            {
+                return value;
+            }
+
+            var outputValue = new StringBuilder(value.Length + 5);
+            var dispositionType = spanValue[..(semicolonIndex + 1)];
+            outputValue.Append(dispositionType); // disposition type with ;
+
+            var remaining = spanValue[(semicolonIndex + 1)..];
+
+            // parse each parameter
+            while (!remaining.IsEmpty)
+            {
+                // leading white space
+                int nonWhitespace = 0;
+                while (nonWhitespace < remaining.Length && char.IsWhiteSpace(remaining[nonWhitespace]))
+                {
+                    nonWhitespace++;
+                }
+                outputValue.Append(remaining[..nonWhitespace]);
+                remaining = remaining[nonWhitespace..];
+
+                // get param slice: "name=value" and param name and value
+                var nextSemicolon = remaining.IndexOf(';');
+                var param = nextSemicolon == -1 ? remaining : remaining.Slice(0, nextSemicolon + 1);
+                var equalIndex = param.IndexOf('=');
+                var paramName = equalIndex == -1 ? param : param.Slice(0, equalIndex);
+                var paramValue = equalIndex == -1 ? ReadOnlySpan<char>.Empty : param.Slice(equalIndex + 1);
+
+                if (paramName.SequenceEqual("filename".AsSpan()))
+                {
+                    outputValue.Append(paramName);
+                    outputValue.Append('=');
+                    
+                    // normalize \ to /
+                    var backslash = paramValue.IndexOf("\\");
+                    while (backslash != -1)
+                    {
+                        var first = paramValue[..backslash];
+                        var second = paramValue[(backslash + 1)..];
+                        outputValue.Append(first);
+                        outputValue.Append('/');
+                        paramValue = second;
+                        backslash = paramValue.IndexOf("\\");
+                    }
+                    outputValue.Append(paramValue);
+                }
+                else if (paramName.SequenceEqual("filename*".AsSpan()))
+                {
+                    outputValue.Append(paramName);
+                    outputValue.Append('=');
+
+                    // Get encoding
+                    var firstQuote = paramValue.IndexOf('\'');
+                    var encodingSpan = firstQuote == -1 ? ReadOnlySpan<char>.Empty : paramValue[..firstQuote].ToString();
+                    var encodingString = encodingSpan.IsEmpty ? "UTF-8" : encodingSpan.ToString();
+                    outputValue.Append(encodingSpan);
+                    outputValue.Append('\'');
+                    Encoding encoding = Encoding.GetEncoding(encodingString);
+
+                    // Get value
+                    var encodedValue = paramValue[(firstQuote + 1)..];
+                    var secondQuote = encodedValue.IndexOf('\'');
+                    var lang = encodedValue[..secondQuote];
+                    outputValue.Append(lang);
+                    outputValue.Append('\'');
+                    encodedValue = encodedValue[(secondQuote + 1)..];
+
+                    // Decode
+                    var decoded = HttpUtility.UrlDecode(encodedValue.ToString(), encoding);
+                    var decodedSpan = decoded.AsSpan();
+
+                    // normalize \ to /
+                    StringBuilder normalizedEncoded = new(decodedSpan.Length);
+                    var backslash = decodedSpan.IndexOf("\\");
+                    while (backslash != -1)
+                    {
+                        var first = decodedSpan[..backslash];
+                        var second = decodedSpan[(backslash + 1)..];
+                        normalizedEncoded.Append(first);
+                        normalizedEncoded.Append('/');
+                        decodedSpan = second;
+                        backslash = decodedSpan.IndexOf("\\");
+                    }
+                    normalizedEncoded.Append(decodedSpan);
+
+                    // Encode again
+                    var reEncoded = HttpUtility.UrlEncode(normalizedEncoded.ToString(), encoding);
+                    outputValue.Append(reEncoded);
+                }
+                else
+                {
+                    outputValue.Append(param); // append entire param if not filename or filename*
+                }
+                remaining = nextSemicolon == -1 ? ReadOnlySpan<char>.Empty : remaining[(nextSemicolon + 1)..];
+            }
+            return outputValue.ToString();
+        }
+
         /// <summary>
         /// A class representing a segment in a <see cref="ReadOnlySequence{T}"/>.
         /// </summary>
@@ -455,10 +567,11 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
         /// </summary>
         /// <param name="a">The first sequence to compare.</param>
         /// <param name="b">The second sequence to compare.</param>
+        /// <param name="encoding">The encoding of the bytes to compare.</param>
         /// <param name="index">The index of the first difference.</param>
         /// <param name="length">The length of the differing segment.</param>
         /// <returns>True if the sequences are equal; otherwise, false.</returns>
-        public static bool SequenceEqual(this in ReadOnlySequence<byte> a, in ReadOnlySequence<byte> b, out int index, out int length)
+        public static bool SequenceEqual(this in ReadOnlySequence<byte> a, in ReadOnlySequence<byte> b, Encoding encoding, out int index, out int length)
         {
             index = 0;
             length = 0;
@@ -485,8 +598,13 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 length = Math.Min(sa.Length, sb.Length);
 
                 index = (int)ra.Consumed;
-                if (!sa.Slice(0, length).SequenceEqual(sb.Slice(0, length)))
+                var slice1 = sa.Slice(0, length);
+                var slice2 = sb.Slice(0, length);
+                if (!slice1.SequenceEqual(slice2))
+                {
+                    // TODO
                     return false;
+                }
 
                 ra.Advance(length);
                 rb.Advance(length);

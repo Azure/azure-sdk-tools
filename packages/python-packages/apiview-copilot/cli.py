@@ -905,12 +905,14 @@ def check_health(include_auth: bool = False):
     """
     settings = SettingsManager()
     base_url = settings.get("WEBAPP_ENDPOINT")
+    headers = []
     if include_auth:
+        headers = _build_auth_header(base_url)
         api_endpoint = f"{base_url}/auth-test"
     else:
         api_endpoint = f"{base_url}/health-test"
     try:
-        resp = requests.get(api_endpoint, headers=_build_auth_header(base_url), timeout=10)
+        resp = requests.get(api_endpoint, headers=headers, timeout=10)
         if resp.status_code == 200:
             print("✅ APIView Copilot service is healthy.")
         else:

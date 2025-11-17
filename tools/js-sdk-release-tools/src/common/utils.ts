@@ -27,6 +27,18 @@ const messageToTspConfigSample =
 
 const errorKeywordsInLowercase = new Set<string>(['error', 'err_pnpm_no_matching_version']);
 
+/**
+ * Get current date in YYYY-MM-DD format
+ * @returns Current date string
+ */
+export function getCurrentDate(): string {
+    const todayDate = new Date();
+    const dd = String(todayDate.getDate()).padStart(2, '0');
+    const mm = String(todayDate.getMonth() + 1).padStart(2, '0');
+    const yyyy = todayDate.getFullYear();
+    return yyyy + '-' + mm + '-' + dd;
+}
+
 function removeLastNewline(line: string): string {
     return line.replace(/\n$/, '')
 }

@@ -171,3 +171,20 @@ export async function isStableSDKReleaseTypeForCli(apiVersionType: string, sdkRe
     }
     return isStableRelease;
 }
+
+export function getCurrentVersion(
+    stableVersion: string | undefined,
+    usedVersions: string[] | undefined
+): string | undefined {
+    if (!stableVersion) {
+        logger.warn(`Invalid stableVersion '${stableVersion}'.`);
+        return undefined;
+    }
+
+    // Validate that the version exists in usedVersions if provided
+    if (usedVersions && !usedVersions.includes(stableVersion)) {
+        logger.warn(`Version ${stableVersion} not found in used versions.`);
+    }
+
+    return stableVersion;
+}

@@ -3,20 +3,22 @@
 import { generateChangelog } from "./common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { logger } from "./utils/logger.js";
 
-const generateChangelogCli = async (packageFolderPath: string | undefined) => {
-    if (!packageFolderPath) {
-        logger.error(`PackagePath is required. Usage: generateChangelogCli <PackagePath>`);
-        return;
+const generateChangelogCli = async (sdkRepoPath: string | undefined, packageFolderPath: string | undefined) => {
+    if (!sdkRepoPath || !packageFolderPath) {
+        logger.error(`SdkRepoPath and PackagePath are required.`);
+        logger.error(`Usage: generateChangelogCli --sdkRepoPath <SdkRepoPath> --packagePath <PackagePath>`);
+        process.exit(1);
     }
 
-    await generateChangelog(packageFolderPath);
+    await generateChangelog(sdkRepoPath, packageFolderPath);
 };
 
 const optionDefinitions = [
-    { name: "PackagePath", type: String, defaultOption: true },
+    { name: "sdkRepoPath", type: String },
+    { name: "packagePath", type: String },
 ];
 
 import commandLineArgs from "command-line-args";
 const options = commandLineArgs(optionDefinitions);
 
-generateChangelogCli(options.PackagePath);
+generateChangelogCli(options["sdkRepoPath"], options["packagePath"]);

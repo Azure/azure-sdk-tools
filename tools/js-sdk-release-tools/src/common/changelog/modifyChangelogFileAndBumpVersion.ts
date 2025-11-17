@@ -3,14 +3,136 @@ import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 
 import fs from 'fs';
 import * as path from 'path';
-import { getSDKType} from "../utils.js";
-import { SDKType } from "../types.js";
-const todayDate = new Date();
-const dd = String(todayDate.getDate()).padStart(2, '0');
-const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!
-const yyyy = todayDate.getFullYear();
+import { getSDKType, getCurrentDate, getApiReviewPath, fixChangelogFormat, tryReadNpmPackageChangelog, extractNextVersionPackage } from "../utils.js";
+import { SDKType, ModularSDKType } from "../types.js";
+import { getModularSDKType } from "../../utils/generateInputUtils.js";
+import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from '../npmUtils.js';
+import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
+import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
+import { getversionDate } from "../../utils/version.js";
+import { 
+    bumpPatchVersion, 
+    bumpPreviewVersion, 
+    getNewVersion, 
+    isBetaVersion 
+} from "../../utils/version.js";
+import { execSync } from "child_process";
+import { logger } from "../../utils/logger.js";
 
-const date = yyyy + '-' + mm + '-' + dd;
+/**
+ * Generate changelog by comparing API review files
+ * Sets up API comparison environment, detects differences, and generates changelog
+ */
+export async function generateChangelogFromApiComparison(packageFolderPath: string, packageName: string, stableVersion: string, jsSdkRepoPath: string): Promise<any> {
+    logger.info('Start to generate changelog by comparing api.md.');
+    const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
+    const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
+    const apiMdFileLocal = getApiReviewPath(packageFolderPath);
+    const lastestStableApiView: NpmViewParameters = {
+        file: "ApiView",
+        version: stableVersion,
+        packageName: packageName,
+        packageFolderPath: packageFolderPath,
+        sdkRootPath: jsSdkRepoPath,
+        npmPackagePath: npmPackageRoot,
+    }
+    if (!fs.existsSync(apiMdFileNPM)) {
+        fs.mkdirSync(path.join(npmPackageRoot, "review"));
+        await tryCreateLastestStableNpmViewFromGithub(lastestStableApiView);
+    }
+    const oldSDKType = getSDKType(npmPackageRoot);
+    const newSDKType = getSDKType(packageFolderPath);
+    const diffDetector = new DifferenceDetector(
+        { path: apiMdFileNPM, sdkType: oldSDKType },
+        { path: apiMdFileLocal, sdkType: newSDKType },
+    );
+    const detectResult = await diffDetector.detect();
+    const detectContext = diffDetector.getDetectContext();
+    const changelogGenerator = new ChangelogGenerator(
+        detectContext,
+        detectResult,
+    );
+    const changelog = changelogGenerator.generate();
+    return changelog;
+}
+
+/**
+ * Calculate new version based on changelog changes
+ * If changelog has no breaking changes or features, bumps fix version
+ * Otherwise calculates version based on breaking changes and release type
+ */
+export function calculateNewVersion(
+    changelog: any,
+    stableVersion: string,
+    usedVersions: string[],
+    isStableRelease: boolean,
+    packageFolderPath: string,
+    jsSdkRepoPath: string
+): string {
+    let newVersion = '';
+    if (!changelog.hasBreakingChange && !changelog.hasFeature) {
+        logger.warn('Failed to generate changelog because the codes of local and npm may be the same.');
+        logger.info('Start to bump a fix version.');
+        const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, { encoding: 'utf-8' });
+        const oriVersion = JSON.parse(oriPackageJson).version;
+        const oriVersionReleased = !usedVersions ? false : usedVersions.includes(oriVersion);
+        newVersion = oriVersion;
+        if (oriVersionReleased) {
+            newVersion = isBetaVersion(oriVersion) ? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
+        }
+    } else {
+        newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
+    }
+    return newVersion;
+}
+
+/**
+ * Get and process original changelog content from npm or next version
+ * Handles fetching changelog from stable or next version and applies necessary fixes
+ */
+export async function getProcessedOriginalChangelog(packageFolderPath: string, packageName: string, stableVersion: string, nextVersion: string | undefined, npmViewResult: any, jsSdkRepoPath: string): Promise<string> {
+    const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
+    const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
+    const lastStableChangelog: NpmViewParameters = {
+        file: "CHANGELOG.md",
+        version: stableVersion,
+        packageName: packageName,
+        packageFolderPath: packageFolderPath,
+        sdkRootPath: jsSdkRepoPath,
+        npmPackagePath: npmPackageRoot,
+    }
+    let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, lastStableChangelog);
+
+    if (nextVersion) {
+        logger.info(`Next version is ${nextVersion}, start to prepare next version package.`);
+        extractNextVersionPackage(packageFolderPath, packageName, nextVersion);
+        logger.info("Created next folder successfully.")
+
+        const latestDate = getversionDate(npmViewResult, stableVersion);
+        const nextDate = getversionDate(npmViewResult, nextVersion);
+        if (latestDate && nextDate && latestDate <= nextDate) {
+            const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
+            const nextNPMPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'next', 'package');
+            const latestNextChangelog: NpmViewParameters = {
+                file: "CHANGELOG.md",
+                version: nextVersion,
+                packageName: packageName,
+                packageFolderPath: packageFolderPath,
+                sdkRootPath: jsSdkRepoPath,
+                npmPackagePath: nextNPMPackageRoot,
+            }
+            originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, latestNextChangelog);
+            logger.info('Keep previous preview changelog.');
+        }
+    }
+
+    if (originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")) {
+        originalChangeLogContent = originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart", "https://aka.ms/azsdk/js/mgmt/quickstart");
+    }
+    originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
+
+    return originalChangeLogContent;
+}
 
 export function getFirstReleaseContent(packageFolderPath: string, isStableRelease: boolean) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
@@ -30,9 +152,10 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
     }
 }
 
-export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+export async function generateChangelogForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
     const newVersion = '1.0.0-beta.1';
     const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
+    const date = getCurrentDate();
     const content = `# Release History
     
 ## ${newVersion} (${date})
@@ -54,6 +177,7 @@ export async function makeChangesForFirstRelease(packageFolderPath: string, isSt
 
 export async function generateChangelogForMigratingToTrack2(packageFolderPath: string, nextPackageVersion: string) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
+    const date = getCurrentDate();
     const content = `# Release History
     
 ## ${nextPackageVersion} (${date})
@@ -84,6 +208,7 @@ export function changePackageJSON(packageFolderPath: string, packageVersion: str
 }
 
 export async function generateChangelogForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: string, originalChangeLogContent: string, comparedVersion: string) {
+    const date = getCurrentDate();
     let packageVersionDetail = `## ${packageVersion} (${date})`;
     if (packageVersion.includes("beta")) {
         packageVersionDetail += `\nCompared with version ${comparedVersion}`

@@ -1,0 +1,51 @@
+<div class="severity-container">
+  <!-- Always show dropdown mode (for bulk dialog where editable=false) -->
+  <div *ngIf="!editable">
+    <p-dropdown 
+      [options]="severityOptions" 
+      [ngModel]="currentSeverityValue"
+      (ngModelChange)="onSeverityChange($event)"
+      optionLabel="label" 
+      optionValue="value"
+      placeholder="Severity"
+      [style]="{'width': '140px'}"
+      styleClass="severity-dropdown"
+      (click)="$event.stopPropagation()">
+    </p-dropdown>
+  </div>
+
+  <!-- Click-to-edit mode (for comment threads where editable=true) -->
+  <div *ngIf="editable && hasSeverity">
+    <div *ngIf="canEdit">
+      <!-- Edit mode -->
+      <div *ngIf="isEditingMode" class="severity-edit-container">
+        <p-dropdown 
+          [options]="severityOptions" 
+          [ngModel]="currentSeverityValue"
+          (ngModelChange)="onSeverityChange($event)"
+          (onHide)="onDropdownHide()"
+          optionLabel="label" 
+          optionValue="value"
+          [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
+          styleClass="severity-dropdown"
+          (click)="$event.stopPropagation()">
+        </p-dropdown>
+      </div>
+      <!-- Badge with edit icon -->
+      <div *ngIf="!isEditingMode" 
+           class="severity-badge-editable d-flex align-items-center" 
+           [ngClass]="severityBadgeClass"
+           (click)="startEditing(); $event.stopPropagation()">
+        <span class="severity-text">{{ severityLabel }}</span>
+        <i class="pi pi-pencil ms-1 severity-edit-icon"></i>
+      </div>
+    </div>
+
+    <!-- Read-only mode (no edit permission) -->
+    <div *ngIf="!canEdit">
+      <span [ngClass]="severityBadgeClass" class="severity-badge px-2 py-1 rounded text-xs">
+        {{ severityLabel }}
+      </span>
+    </div>
+  </div>
+</div>

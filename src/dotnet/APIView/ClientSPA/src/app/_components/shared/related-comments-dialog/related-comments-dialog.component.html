@@ -92,42 +92,78 @@
       </div>
     </div>
 
-    <div class="resolution-comment-section mt-4">
+    <!-- Bulk Actions Section -->
+    <div class="bulk-actions-section mt-4 pt-3 border-top">
       <div class="d-flex align-items-center justify-content-between mb-2">
         <label class="form-label fw-semibold mb-0">
           Message (Optional):
         </label>
-        <div class="d-flex align-items-center vote-section">
-          <button 
-            type="button"
-            class="btn btn-link p-2 vote-btn"
-            title="Upvote selected issues"
-            (click)="toggleBatchVote('up')">
-            <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
-          </button>
-          <button 
-            type="button"
-            class="btn btn-link p-2 vote-btn"
-            title="Downvote selected issues"
-            (click)="toggleBatchVote('down')">
-            <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
-          </button>
+        <div class="d-flex align-items-center gap-2">          
+          <!-- Disposition Dropdown -->
+          <p-dropdown 
+            [options]="dispositionOptions" 
+            [(ngModel)]="selectedDisposition"
+            optionLabel="label" 
+            optionValue="value"
+            [style]="{'min-width': '150px'}"
+            placeholder="Disposition">
+            <ng-template let-option pTemplate="item">
+              <div class="d-flex align-items-center">
+                <i [class]="option.icon + ' me-2'"></i>
+                <span>{{ option.label }}</span>
+              </div>
+            </ng-template>
+            <ng-template let-option pTemplate="selectedItem">
+              <div class="d-flex align-items-center">
+                <i [class]="option.icon + ' me-2'"></i>
+                <span>{{ option.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+
+           <!-- Vertical Separator -->
+          <div class="vr mx-2"></div>
+
+          <!-- Severity Component -->
+          <app-comment-severity
+            [severity]="selectedSeverity"
+            [canEdit]="true"
+            [editable]="true"
+            (severityChange)="selectedSeverity = $event">
+          </app-comment-severity>
+          
+          <!-- Vertical Separator -->
+          <div class="vr mx-2"></div>
+          
+          <!-- Vote Buttons -->
+          <div class="d-flex align-items-center vote-section">
+            <button 
+              type="button"
+              class="btn btn-link p-2 vote-btn"
+              title="Upvote selected issues"
+              (click)="toggleBatchVote('up')">
+              <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
+            </button>
+            <button 
+              type="button"
+              class="btn btn-link p-2 vote-btn"
+              title="Downvote selected issues"
+              (click)="toggleBatchVote('down')">
+              <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
+            </button>
+          </div>
         </div>
       </div>
+      
       <textarea 
-        class="form-control resolution-comment-textarea"
+        class="form-control resolution-comment-textarea mb-3"
         [(ngModel)]="resolutionComment"
-        placeholder=" Add a comment when resolving the selected issues."
+        [placeholder]="getPlaceholderText()"
         rows="3">
       </textarea>
-    </div>
-  </div>
 
-  <!-- Dialog Footer -->
-  <ng-template pTemplate="footer">
-    <div class="d-flex justify-content-end w-100">
       <!-- Action Buttons -->
-      <div class="btn-group">
+      <div class="d-flex justify-content-end gap-2">
         <button 
           type="button" 
           class="btn btn-outline-secondary" 
@@ -137,11 +173,14 @@
         <button 
           type="button" 
           class="btn btn-primary" 
-          [disabled]="selectedCommentIds.size === 0"
+          [disabled]="getSelectedCount() === 0"
           (click)="resolveSelected()">
-          Resolve selected issues ({{ getSelectedCount() }})
+          <i class="pi pi-check"></i>
+          Apply Changes ({{ getSelectedCount() }})
         </button>
       </div>
     </div>
+  </div>
+  <ng-template pTemplate="footer">
   </ng-template>
 </p-dialog>

@@ -195,7 +195,8 @@ namespace APIViewWeb.Managers
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
                     NodeId = comment.ElementId,
-                    CommentText = comment.CommentText
+                    CommentText = comment.CommentText,
+                    Severity = comment.Severity,
                 });
 
             return comment;
@@ -204,6 +205,12 @@ namespace APIViewWeb.Managers
         public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
         {
             var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            return await UpdateCommentSeverityAsync(user, comment, severity);
+        }
+
+
+        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, CommentItemModel comment, CommentSeverity? severity)
+        {
             await AssertOwnerAsync(user, comment);
             
             comment.ChangeHistory.Add(
@@ -477,7 +484,7 @@ namespace APIViewWeb.Managers
             }
         }
 
-        public async Task<List<CommentItemModel>> ResolveBatchConversationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
+        public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
         {
             var response = new List<CommentItemModel>();
             
@@ -501,13 +508,29 @@ namespace APIViewWeb.Managers
                         CreatedBy = user.GetGitHubLogin(),
                         CreatedOn = DateTime.UtcNow,
                         CommentType = comment.CommentType,
-                        IsResolved = true
+                        IsResolved = request.Disposition == ConversationDisposition.Resolve
                     };
                     await AddCommentAsync(user, commentUpdate);
                     response.Add(commentUpdate);
                 }
 
-                await ResolveConversation(user, reviewId, comment.ElementId);
+                if (request.Severity != comment.Severity)
+                {
+                    await UpdateCommentSeverityAsync(user, comment, request.Severity);
+                }
+
+                switch (request.Disposition)
+                {
+                    case ConversationDisposition.Delete:
+                        await SoftDeleteCommentAsync(user, comment);
+                        break;
+                    case ConversationDisposition.Resolve:
+                        await ResolveConversation(user, reviewId, comment.ElementId);
+                        break;
+                    case ConversationDisposition.KeepOpen:
+                    default:
+                        break;
+                }
             }
             
             return response;

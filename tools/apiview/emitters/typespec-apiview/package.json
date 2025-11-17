@@ -74,7 +74,7 @@
     "eslint-plugin-unicorn": "^53.0.0",
     "eslint-plugin-vitest": "^0.5.4",
     "prettier": "~3.2.5",
-    "rimraf": "~6.1.0",
+    "rimraf": "~5.0.7",
     "source-map-support": "^0.5.19",
     "typescript": "~5.4.5",
     "vitest": "^3.0.7"

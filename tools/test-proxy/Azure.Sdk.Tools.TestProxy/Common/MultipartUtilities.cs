@@ -567,11 +567,10 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
         /// </summary>
         /// <param name="a">The first sequence to compare.</param>
         /// <param name="b">The second sequence to compare.</param>
-        /// <param name="encoding">The encoding of the bytes to compare.</param>
         /// <param name="index">The index of the first difference.</param>
         /// <param name="length">The length of the differing segment.</param>
         /// <returns>True if the sequences are equal; otherwise, false.</returns>
-        public static bool SequenceEqual(this in ReadOnlySequence<byte> a, in ReadOnlySequence<byte> b, Encoding encoding, out int index, out int length)
+        public static bool SequenceEqual(this in ReadOnlySequence<byte> a, in ReadOnlySequence<byte> b, out int index, out int length)
         {
             index = 0;
             length = 0;
@@ -598,13 +597,8 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 length = Math.Min(sa.Length, sb.Length);
 
                 index = (int)ra.Consumed;
-                var slice1 = sa.Slice(0, length);
-                var slice2 = sb.Slice(0, length);
-                if (!slice1.SequenceEqual(slice2))
-                {
-                    // TODO
+                if (!sa.Slice(0, length).SequenceEqual(sb.Slice(0, length)))
                     return false;
-                }
 
                 ra.Advance(length);
                 rb.Advance(length);

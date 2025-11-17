@@ -71,17 +71,17 @@
             },
             {
                 "requirement": "gocov",
-                "check": ["gocov", "--version"],
+                "check": ["gocov", "-help"],
                 "instructions": ["go install github.com/axw/gocov/gocov@v1.2.1"]
             },
             {
                 "requirement": "gocov-xml",
-                "check": ["gocov-xml", "--version"],
+                "check": ["gocov-xml", "-help"],
                 "instructions": ["go install github.com/AlekSi/gocov-xml@v1.1.0"]
             },
             {
                 "requirement": "gocov-html",
-                "check": ["gocov-html", "--version"],
+                "check": ["gocov-html", "-v"],
                 "instructions": ["go install github.com/matm/gocov-html/cmd/gocov-html@v1.4.0"]
             },
             {

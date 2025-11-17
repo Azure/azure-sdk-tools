@@ -1,0 +1,45 @@
+{
+  "Entries": [
+    {
+      "RequestUri": "https://REDACTED/transcriptions",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        "Accept": "application/json, text/event-stream",
+        "Authorization": "Sanitized",
+        "Content-Length": "470",
+        "Content-Type": "multipart/form-data; boundary=\"GvVFZ9=ZCyp5jSEed6vjkD_Ww3vpc8Inh_FBB=L=pcNyhgd76_2TakLUlfvXTfcITYb2_f\"",
+        "User-Agent": "OpenAI/2.4.0 (.NET 9.0.9; Microsoft Windows 10.0.26100)"
+      },
+      "RequestBody": [
+        "--GvVFZ9=ZCyp5jSEed6vjkD_Ww3vpc8Inh_FBB=L=pcNyhgd76_2TakLUlfvXTfcITYb2_f\r\n",
+        "Content-Disposition: form-data; name=file; filename=\"Assets/audio_hello_world.mp3\"; filename*=utf-8''Assets%2faudio_hello_world.mp3\r\n",
+        "\r\n",
+        "VGVzdCBhdWRpbyBmaWxlIGNvbnRlbnQ=",
+        "\r\n",
+        "--GvVFZ9=ZCyp5jSEed6vjkD_Ww3vpc8Inh_FBB=L=pcNyhgd76_2TakLUlfvXTfcITYb2_f\r\n",
+        "Content-Type: text/plain; charset=utf-8\r\n",
+        "Content-Disposition: form-data; name=model\r\n",
+        "\r\n",
+        "whisper-1",
+        "\r\n",
+        "--GvVFZ9=ZCyp5jSEed6vjkD_Ww3vpc8Inh_FBB=L=pcNyhgd76_2TakLUlfvXTfcITYb2_f--\r\n"
+      ],
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Content-Length": "80",
+        "Content-Type": "application/json",
+        "Date": "Wed, 24 Sep 2025 17:07:17 GMT"
+      },
+      "ResponseBody": {
+        "text": "Hello, world! This is a test.",
+        "usage": {
+          "type": "duration",
+          "seconds": 2
+        }
+      }
+    }
+  ],
+  "Variables": {
+    "OPEN-API-KEY": "api-key"
+  }
+}

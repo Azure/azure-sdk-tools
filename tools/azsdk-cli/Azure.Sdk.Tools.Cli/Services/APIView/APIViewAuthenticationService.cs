@@ -16,9 +16,12 @@ public interface IAPIViewAuthenticationService
 public class APIViewAuthenticationService : IAPIViewAuthenticationService
 {
     private readonly ILogger<APIViewAuthenticationService> _logger;
+    private readonly IAzureService _azureService;
 
-    public APIViewAuthenticationService(ILogger<APIViewAuthenticationService> logger)
+    public APIViewAuthenticationService(IAzureService azureService,
+        ILogger<APIViewAuthenticationService> logger)
     {
+        _azureService = azureService;
         _logger = logger;
     }
 
@@ -26,15 +29,9 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
     {
         try
         {
-            var credential = new ChainedTokenCredential(
-                new AzureCliCredential(),
-                new AzurePowerShellCredential(),
-                new AzureDeveloperCliCredential(),
-                new VisualStudioCredential()
-            );
+            var credential = _azureService.GetCredential();
 
             string scope = APIViewConfiguration.ApiViewScopes[environment];
-            
             if (string.IsNullOrEmpty(scope))
             {
                 _logger.LogWarning("Environment '{Environment}' not valid.", environment);
@@ -42,10 +39,10 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
             }
 
             TokenRequestContext tokenRequest = new([scope]);
-            AccessToken tokenResponse = await credential.GetTokenAsync(tokenRequest);
+            AccessToken? tokenResponse = await credential.GetTokenAsync(tokenRequest, CancellationToken.None);
 
             _logger.LogInformation("Successfully obtained Azure token with scope {Scope}", scope);
-            return tokenResponse.Token;
+            return tokenResponse?.Token;
         }
         catch (Exception ex)
         {

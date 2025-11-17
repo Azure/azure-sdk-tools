@@ -1,33 +1,32 @@
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.APIView;
 
+public enum ContentType
+{
+    Text,
+    CodeFile
+}
+
 [McpServerToolType]
 [Description("APIView revision operations including comments and content")]
-public class APIViewRevisionTool : MCPMultiCommandTool
+public class APIViewReviewTool : MCPMultiCommandTool
 {
     // Sub-command constants
-    private const string GetComments = "get-comments";
+    private const string GetCommentsCmd = "get-comments";
     private const string GetContent = "get-content";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.APIView];
 
-    private static readonly string[] validContentTypes = ["Text", "CodeFile"];
-
     private readonly IAPIViewService _apiViewService;
-    private readonly ILogger<APIViewRevisionTool> _logger;
-
-    private readonly Option<string> environmentOption = new("--environment")
-    {
-        Description = "The APIView environment (defaults to production)",
-        DefaultValueFactory = _ => "production"
-    };
+    private readonly ILogger<APIViewReviewTool> _logger;
 
     private readonly Option<string> outputFileOption = new("--output-file"){Description = "Output file path to save the revision content"};
     private readonly Option<string> contentReturnTypeOption = new("--content-return-type")
@@ -36,9 +35,13 @@ public class APIViewRevisionTool : MCPMultiCommandTool
         DefaultValueFactory = _ => "text"
     };
 
-    private readonly Option<string> apiViewUrlOption = new("--url"){Description = "The full APIView URL"};
+    private readonly Option<string> apiViewUrlOption = new("--url")
+    {
+        Description = "The URL to the API review in APIView (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})",
+        Required = true
+    };
 
-    public APIViewRevisionTool(ILogger<APIViewRevisionTool> logger, IAPIViewService apiViewService)
+    public APIViewReviewTool(ILogger<APIViewReviewTool> logger, IAPIViewService apiViewService)
     {
         _logger = logger;
         _apiViewService = apiViewService;
@@ -46,10 +49,10 @@ public class APIViewRevisionTool : MCPMultiCommandTool
 
     protected override List<Command> GetCommands() =>
     [
-        new(GetComments, "Get comments for a specific revision ID or APIView URL") { apiViewUrlOption, environmentOption },
+        new(GetCommentsCmd, "Get comments for a specific revision ID or APIView URL") { apiViewUrlOption },
         new(GetContent, "Get revision content by revision ID, review ID, or APIView URL (for revision)") 
         {
-            apiViewUrlOption, environmentOption, outputFileOption, contentReturnTypeOption
+            apiViewUrlOption, outputFileOption, contentReturnTypeOption
         }
     ];
 
@@ -58,7 +61,7 @@ public class APIViewRevisionTool : MCPMultiCommandTool
         string commandName = parseResult.CommandResult.Command.Name;
         APIViewResponse result = commandName switch
         {
-            GetComments => await GetRevisionComments(parseResult, ct),
+            GetCommentsCmd => await GetComments(parseResult, ct),
             GetContent => await GetRevisionContent(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown revision command: {commandName}" }
         };
@@ -68,28 +71,21 @@ public class APIViewRevisionTool : MCPMultiCommandTool
 
     [McpServerTool(Name = "azsdk_apiview_get_comments")]
     [Description("Get all the comments of an APIView API using the APIView URL")]
-    public async Task<APIViewResponse> GetRevisionComments(
-        string apiViewUrl,
-        string? environment = null)
+    public async Task<APIViewResponse> GetComments(string apiViewUrl)
     {
         try
         {
-            (string? revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
-            
-            if (string.IsNullOrWhiteSpace(revisionId))
-            {
-                return new APIViewResponse { ResponseError = "APIView URL must contain 'activeApiRevisionId' query parameter to retrieve comments" };
-            }
+            (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
             if (result == null)
             {
-                return new APIViewResponse { ResponseError = $"Failed to retrieve comments for revision {revisionId}" };
+                return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
             }
 
             return new APIViewResponse
             {
-                Success = true, Message = $"Comments retrieved successfully", Result = result
+               Message = $"Comments retrieved successfully", Result = result
             };
         }
         catch (Exception ex)
@@ -98,41 +94,28 @@ public class APIViewRevisionTool : MCPMultiCommandTool
         }
     }
 
-    private async Task<APIViewResponse> GetRevisionComments(ParseResult parseResult, CancellationToken ct)
+    private async Task<APIViewResponse> GetComments(ParseResult parseResult, CancellationToken ct)
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        string? environment = parseResult.GetValue(environmentOption);
-
-        if ( string.IsNullOrEmpty(apiViewUrl))
-        {
-            _logger.LogError("--url must be provided");
-            return new APIViewResponse { ResponseError = "--url must be provided" };
-        }
-
-        return await GetRevisionComments(apiViewUrl, environment);
+        return await GetComments(apiViewUrl!);
     }
 
     private async Task<APIViewResponse> GetRevisionContent(ParseResult parseResult, CancellationToken ct)
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        string? environment = parseResult.GetValue(environmentOption);
         string? outputFile = parseResult.GetValue(outputFileOption);
         string? contentType = parseResult.GetValue(contentReturnTypeOption);
 
-        if (!validContentTypes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
+        if (!Enum.TryParse<ContentType>(contentType, ignoreCase: true, out _))
         {
-            return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {string.Join(", ", validContentTypes)}." };
+            var validValues = string.Join(", ", Enum.GetNames<ContentType>());
+            return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {validValues}." };
         }
 
-        if (string.IsNullOrEmpty(apiViewUrl))
-        {
-            return new APIViewResponse { ResponseError = "--url must be provided" };
-        }
-
-        (string? revisionId, string? reviewId) = ExtractIdsFromUrl(apiViewUrl);
+        (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, environment);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Revision content not found" };
@@ -144,14 +127,12 @@ public class APIViewRevisionTool : MCPMultiCommandTool
 
                 return new APIViewResponse
                 {
-                    Success = true,
                     Message = $"Revision content saved to file: {outputFile} ({result.Length:N0} characters)",
                 };
             }
 
             return new APIViewResponse
             {
-                Success = true,
                 Message = $"Revision content retrieved successfully ({result.Length:N0} characters)",
                 Content = result
             };
@@ -166,7 +147,7 @@ public class APIViewRevisionTool : MCPMultiCommandTool
         }
     }
 
-    private (string? revisionId, string? reviewId) ExtractIdsFromUrl(string url)
+    private (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -178,36 +159,22 @@ public class APIViewRevisionTool : MCPMultiCommandTool
             throw new ArgumentException("Input needs to be a valid APIView URL (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})", nameof(url));
         }
 
-        string? reviewId = null;
-
         try
         {
-            // Extract revision ID from query string
-            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-            string? revisionId = query["activeApiRevisionId"];
-
-            // Extract review ID from path
-            const string reviewSegment = "/review/";
-            int reviewIndex = uri.AbsolutePath.IndexOf(reviewSegment, StringComparison.OrdinalIgnoreCase);
+            // Pattern: /review/{reviewId} in path and activeApiRevisionId={revisionId} in query string
+            var match = Regex.Match(url, @"/review/([^/?]+).*[?&]activeApiRevisionId=([^&#]+)", RegexOptions.IgnoreCase);
             
-            if (reviewIndex >= 0)
-            {
-                int startIndex = reviewIndex + reviewSegment.Length;
-                int endIndex = uri.AbsolutePath.IndexOf('/', startIndex);
-                
-                reviewId = endIndex > startIndex 
-                    ? uri.AbsolutePath.Substring(startIndex, endIndex - startIndex)
-                    : uri.AbsolutePath.Substring(startIndex);
-            }
-
-            if (string.IsNullOrWhiteSpace(revisionId) || string.IsNullOrWhiteSpace(reviewId))
+            if (!match.Success)
             {
                 throw new ArgumentException("APIView URL must contain both 'activeApiRevisionId' query parameter AND '/review/{reviewId}' path segment");
             }
 
+            string reviewId = match.Groups[1].Value;
+            string revisionId = match.Groups[2].Value;
+
             return (revisionId, reviewId);
         }
-        catch (Exception ex) when (!(ex is ArgumentException))
+        catch (Exception ex) when (ex is not ArgumentException)
         {
             _logger.LogError(ex, "Failed to parse APIView URL {Url}", url);
             throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url));

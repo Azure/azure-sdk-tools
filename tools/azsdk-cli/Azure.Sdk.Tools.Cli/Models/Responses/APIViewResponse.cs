@@ -5,9 +5,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
 public class APIViewResponse : CommandResponse
 {
-    [JsonPropertyName("success")]
-    public bool Success { get; set; } = false;
-
     [JsonPropertyName("message")]
     public string? Message { get; set; }
 
@@ -18,11 +15,15 @@ public class APIViewResponse : CommandResponse
     [JsonPropertyName("result")]
     public object? Result { get; set; }
 
+    [JsonPropertyName("language")]
+    public object? Language { get; set; }
+
+    [JsonPropertyName("package_name")]
+    public object? PackageName { get; set; }
+
     protected override string Format()
     {
         var output = new StringBuilder();
-
-        output.AppendLine(Success ? "✓ Operation completed successfully" : "✗ Operation failed");
 
         if (!string.IsNullOrEmpty(Message))
         {

@@ -1,11 +1,9 @@
-using Azure.Sdk.Tools.Cli.Services.APIView;
-
-namespace Azure.Sdk.Tools.Cli.Services;
+namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewService
 {
-    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string environment = "production");
-    Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production");
+    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType);
+    Task<string?> GetCommentsByRevisionAsync(string revisionId);
 }
 
 public class APIViewService : IAPIViewService
@@ -21,10 +19,10 @@ public class APIViewService : IAPIViewService
         _logger = logger;
     }
 
-    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production")
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId)
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint, "comments", environment);
+        string? result = await _httpService.GetAsync(endpoint);
 
         if (result == null)
         {
@@ -34,10 +32,10 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string environment = "production")
+    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType)
     {
         string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&contentReturnType={contentReturnType}";
-        string? result = await _httpService.GetAsync(revisionContentEndpoint, "get revision content", environment);
+        string? result = await _httpService.GetAsync(revisionContentEndpoint);
         if (string.IsNullOrWhiteSpace(result))
         {
             _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", apiRevisionId);

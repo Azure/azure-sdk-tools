@@ -56,15 +56,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
 
-                // Validate inputs
-                if (string.IsNullOrEmpty(packagePath))
+                // Validate package path
+                var validationError = ValidatePackagePath(packagePath);
+                if (validationError != null)
                 {
-                    return PackageOperationResponse.CreateFailure("Package path is required.");
-                }
-
-                if (!Directory.Exists(packagePath))
-                {
-                    return PackageOperationResponse.CreateFailure($"Path does not exist: {packagePath}");
+                    return validationError;
                 }
 
                 // Get repository root path from project path

@@ -162,6 +162,17 @@ public class ChangelogContentUpdateToolTests
     }
 
     [Test]
+    public async Task UpdateChangelogContentAsync_WithRelativePath_ShouldReturnFailure()
+    {
+        // Act
+        var result = await _tool.UpdateChangelogContentAsync("relative/path/to/package", CancellationToken.None);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("must be an absolute path"));
+    }
+
+    [Test]
     public async Task UpdateChangelogContentAsync_WithValidPath_WhenRepoRootNotFound_ShouldReturnFailure()
     {
         // Arrange

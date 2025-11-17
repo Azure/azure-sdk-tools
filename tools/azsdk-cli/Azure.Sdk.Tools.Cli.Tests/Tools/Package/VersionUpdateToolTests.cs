@@ -166,6 +166,17 @@ public class VersionUpdateToolTests
     }
 
     [Test]
+    public async Task UpdateVersionAsync_WithRelativePath_ShouldReturnFailure()
+    {
+        // Act
+        var result = await _tool.UpdateVersionAsync("relative/path/to/package", null, null, null, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("must be an absolute path"));
+    }
+
+    [Test]
     public async Task UpdateVersionAsync_WithValidPath_WhenRepoRootNotFound_ShouldReturnFailure()
     {
         // Arrange

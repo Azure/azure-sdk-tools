@@ -21,7 +21,7 @@ public class SdkBuildToolTests
     private const string InvalidJsonContent = "{ invalid json }";
 
     // Common error message patterns
-    private const string InvalidProjectPathError = "Path does not exist";
+    private const string InvalidProjectPathError = "Package path does not exist";
     private const string FailedToDiscoverRepoError = "Failed to discover local sdk repo";
     private const string ConfigFileNotFoundError = "Configuration file not found";
     private const string JsonParsingError = "Error parsing JSON configuration";
@@ -91,6 +91,26 @@ public class SdkBuildToolTests
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
+    }
+
+    [Test]
+    public async Task BuildSdkAsync_RelativeProjectPath_ReturnsFailure()
+    {
+        // Act
+        var result = await _tool.BuildSdkAsync("relative/path/to/project");
+
+        // Assert
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("must be an absolute path"));
+    }
+
+    [Test]
+    public async Task BuildSdkAsync_EmptyPath_ReturnsFailure()
+    {
+        // Act
+        var result = await _tool.BuildSdkAsync(string.Empty);
+
+        // Assert
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("required and cannot be empty"));
     }
 
     [Test]

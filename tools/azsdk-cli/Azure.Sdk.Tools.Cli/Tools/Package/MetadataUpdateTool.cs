@@ -59,14 +59,10 @@ public class MetadataUpdateTool : LanguageMcpTool
             logger.LogInformation("Updating package metadata content for package at: {packagePath}", packagePath);
 
             // Validate package path
-            if (string.IsNullOrWhiteSpace(packagePath))
+            var validationError = ValidatePackagePath(packagePath);
+            if (validationError != null)
             {
-                return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
-            }
-
-            if (!Directory.Exists(packagePath))
-            {
-                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+                return validationError;
             }
 
             // Discover the repository root

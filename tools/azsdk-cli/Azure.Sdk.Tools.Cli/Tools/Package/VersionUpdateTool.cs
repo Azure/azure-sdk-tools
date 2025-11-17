@@ -95,14 +95,10 @@ public class VersionUpdateTool : LanguageMcpTool
                 packagePath, releaseType ?? "not specified", version ?? "not specified", releaseDate ?? "not specified");
 
             // Validate package path
-            if (string.IsNullOrWhiteSpace(packagePath))
+            var validationError = ValidatePackagePath(packagePath);
+            if (validationError != null)
             {
-                return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
-            }
-
-            if (!Directory.Exists(packagePath))
-            {
-                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+                return validationError;
             }
 
             // Validate and set release date

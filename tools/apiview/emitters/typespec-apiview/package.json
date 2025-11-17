@@ -66,7 +66,7 @@
     "@typespec/prettier-plugin-typespec": ">=0.67 <1.0",
     "@typespec/rest": ">=0.67 <1.0",
     "@typespec/http": "^1.0.0",
-    "@vitest/coverage-v8": "^4.0.10",
+    "@vitest/coverage-v8": "^3.0.7",
     "c8": "^9.1.0",
     "cspell": "^8.8.1",
     "eslint": "^9.11.1",

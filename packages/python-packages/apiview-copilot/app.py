@@ -127,6 +127,12 @@ async def get_api_review_job_status(job_id: str, _claims=Depends(require_auth)):
         raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found")
 
 
+@app.get("/test")
+async def health_check(_claims=Depends(require_auth)):
+    """Health check endpoint to verify service is running and authenticated."""
+    return {"status": "ok"}
+
+
 def cleanup_job_store():
     """Cleanup completed jobs from the Cosmos DB periodically."""
     while True:

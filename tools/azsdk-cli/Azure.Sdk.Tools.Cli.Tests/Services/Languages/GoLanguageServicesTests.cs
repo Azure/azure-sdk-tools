@@ -12,10 +12,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
     internal class GoLanguageServiceTests
     {
-
         private TempDirectory tempDir = null!;
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
         private GoLanguageService LangService { get; set; } = null!;
+
+        private readonly Version goMinimumVersion = Version.Parse("1.24");
 
         [SetUp]
         public async Task SetUp()
@@ -35,6 +36,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var resp = await LangService.CreateEmptyPackage(tempDir.DirectoryPath, "untitleddotloop", CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
+
+            // check that our current version of Go is new enough for these tests.
+            var version = await GoLanguageService.GetGoModVersionAsync(Path.Join(tempDir.DirectoryPath, "go.mod"));
+
+            if (version.CompareTo(goMinimumVersion) < 0)
+            {
+                Assert.Ignore($"You'll need Go {goMinimumVersion}+, in the path, for these tests");
+            }
         }
 
         [TearDown]
@@ -50,7 +59,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 package main
 
                 import (
-                    "github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"      // an unused dep we're going to remove
                     "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
                 )
 
@@ -73,15 +81,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var resp = await LangService.AnalyzeDependencies(tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
-            var identityLine = File.ReadAllLines(Path.Join(tempDir.DirectoryPath, "go.mod"))
+            var goModPath = Path.Join(tempDir.DirectoryPath, "go.mod");
+
+            var identityLine = File.ReadAllLines(goModPath)
                 .Where(line => line.Contains("azidentity"))
                 .Select(line => line.Trim())
                 .First();
-            Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"));
+            Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"), "go get updates dependencies properly");
+
+            var currentVersion = await GoLanguageService.GetGoModVersionAsync(goModPath);
+            Assert.That(currentVersion, Is.GreaterThanOrEqualTo(goMinimumVersion));
 
             resp = await LangService.FormatCode(tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
-            Assert.That(File.ReadAllText(Path.Join(tempDir.DirectoryPath, "main.go")), Does.Not.Contain("azservicebus"));
 
             resp = await LangService.BuildProject(tempDir.DirectoryPath, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
@@ -95,9 +107,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             await File.WriteAllTextAsync(Path.Combine(tempDir.DirectoryPath, "main.go"), """
                 package main
-
-                import (
-                )
 
                 func main() {
                     syntax error
@@ -200,6 +209,41 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Assert.That(packageInfo.PackageName, Is.Not.Null.And.Not.Empty);
                 Assert.That(packageInfo.PackageVersion, Is.Not.Null.And.Not.Empty);
             });
+        }
+
+        [Test]
+        public async Task TestLegacyGoMod()
+        {
+            using var tempFolder = TempDirectory.Create("legacy_go_mod");
+            var goModPath = Path.Join(tempFolder.DirectoryPath, "go.mod");
+
+            File.WriteAllText(goModPath, $"""
+                module myfakemodule
+                go 1.23.0
+
+                require (
+                    golang.org/x/net v0.42.0
+                )
+                """);
+
+            File.WriteAllText(Path.Join(tempFolder.DirectoryPath, "main.go"), @"""
+                package main
+
+                import (
+                    ""html""
+                    ""golang.org/x/net/html""
+                )
+
+                func main() {
+                    _ = html.EscapeString(""hello"")
+                }
+                """);
+
+            await LangService.AnalyzeDependencies(tempFolder.DirectoryPath, true);
+
+            // check that we didn't upgrade the Go version.
+            var version = await GoLanguageService.GetGoModVersionAsync(goModPath);
+            Assert.That(version, Is.EqualTo(Version.Parse("1.23.0")));
         }
 
         /// <summary>

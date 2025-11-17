@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 
@@ -25,6 +26,8 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() visible: boolean = false;
   @Input() selectedCommentId: string = '';
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
+  @Input() userProfile: UserProfile | undefined;
+  @Input() preferredApprovers: string[] = [];
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() resolveSelectedComments = new EventEmitter<CommentResolutionData>();
 
@@ -43,6 +46,24 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     { label: 'Resolve', value: 'resolve' as ConversationDisposition, icon: 'pi pi-check-circle' },
     { label: 'Delete', value: 'delete' as ConversationDisposition, icon: 'pi pi-trash' }
   ];
+
+  // Permission check: User can edit severity if they can edit ALL selected comments
+  get canEditSeverity(): boolean {
+    if (!this.userProfile || this.relatedComments.length === 0) {
+      return false;
+    }
+
+    // Get the comments that are currently selected (or all if none selected)
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+
+    // User can edit if they are the owner of ALL comments, or if they are an architect and ALL comments are from azure-sdk bot
+    return commentsToCheck.every(comment => 
+      comment.createdBy === this.userProfile?.userName || 
+      (comment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!))
+    );
+  }
 
   // Performance optimization: Cache for code context
   private codeContextCache = new Map<string, string>();

@@ -127,8 +127,8 @@
           <!-- Severity Component -->
           <app-comment-severity
             [severity]="selectedSeverity"
-            [canEdit]="true"
-            [editable]="true"
+            [canEdit]="canEditSeverity"
+            [editable]="canEditSeverity"
             (severityChange)="selectedSeverity = $event">
           </app-comment-severity>
           

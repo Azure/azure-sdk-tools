@@ -514,7 +514,7 @@ namespace APIViewWeb.Managers
                     response.Add(commentUpdate);
                 }
 
-                if (request.Severity != comment.Severity)
+                if (request.Severity.HasValue && request.Severity != comment.Severity)
                 {
                     await UpdateCommentSeverityAsync(user, comment, request.Severity);
                 }

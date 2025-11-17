@@ -19,7 +19,7 @@ namespace APIViewWeb.LeanModels
     public enum ConversationDisposition
     {
         [EnumMember(Value = "keepOpen")]
-        KeepOpen,
+        KeepOpen, //default
         [EnumMember(Value = "resolve")]
         Resolve,
         [EnumMember(Value = "delete")]
@@ -31,7 +31,7 @@ namespace APIViewWeb.LeanModels
         public List<string> CommentIds { get; set; }
         public FeedbackVote Vote { get; set; } = FeedbackVote.None;
         public string CommentReply { get; set; }
-        public ConversationDisposition Disposition { get; set; }
-        public CommentSeverity Severity { get; set; }
+        public ConversationDisposition? Disposition { get; set; }
+        public CommentSeverity? Severity { get; set; }
     }
 }

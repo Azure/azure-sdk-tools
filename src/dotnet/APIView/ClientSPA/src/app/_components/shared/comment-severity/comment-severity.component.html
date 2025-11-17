@@ -1,17 +1,26 @@
 <div class="severity-container">
   <!-- Always show dropdown mode (for bulk dialog where editable=false) -->
   <div *ngIf="!editable">
-    <p-dropdown 
-      [options]="severityOptions" 
-      [ngModel]="currentSeverityValue"
-      (ngModelChange)="onSeverityChange($event)"
-      optionLabel="label" 
-      optionValue="value"
-      placeholder="Severity"
-      [style]="{'width': '140px'}"
-      styleClass="severity-dropdown"
-      (click)="$event.stopPropagation()">
-    </p-dropdown>
+    <!-- Editable dropdown -->
+    <div *ngIf="canEdit">
+      <p-dropdown 
+        [options]="severityOptions" 
+        [ngModel]="currentSeverityValue"
+        (ngModelChange)="onSeverityChange($event)"
+        optionLabel="label" 
+        optionValue="value"
+        placeholder="Severity"
+        [style]="{'width': '140px'}"
+        styleClass="severity-dropdown"
+        (click)="$event.stopPropagation()">
+      </p-dropdown>
+    </div>
+    <!-- Read-only badge when no edit permission -->
+    <div *ngIf="!canEdit && hasSeverity">
+      <span [ngClass]="severityBadgeClass" class="severity-badge px-2 py-1 rounded text-xs">
+        {{ severityLabel }}
+      </span>
+    </div>
   </div>
 
   <!-- Click-to-edit mode (for comment threads where editable=true) -->

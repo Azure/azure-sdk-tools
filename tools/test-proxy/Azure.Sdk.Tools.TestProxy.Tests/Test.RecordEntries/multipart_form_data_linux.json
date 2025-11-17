@@ -40,6 +40,6 @@
     }
   ],
   "Variables": {
-    "OPEN-API-KEY": "api-key"
+    "OPENAI-API-KEY": "api-key"
   }
 }

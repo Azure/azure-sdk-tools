@@ -434,6 +434,12 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             }
         }
 
+        /// <summary>
+        /// Normalizes file paths in Content-Disposition header values by converting Windows-style backslashes to forward slashes.
+        /// This ensures cross-platform compatibility when comparing multipart/form-data requests.
+        /// </summary>
+        /// <param name="value">The Content-Disposition header value to normalize.</param>
+        /// <returns>The normalized Content-Disposition header value with forward slashes in filenames.</returns>
         public static string NormalizeFilenameFromContentDispositionValue(string value)
         {
             if (string.IsNullOrEmpty(value) || !value.Contains("filename"))

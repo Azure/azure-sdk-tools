@@ -16,22 +16,22 @@ public enum ContentType
 }
 
 [McpServerToolType]
-[Description("APIView revision operations including comments and content")]
+[Description("APIView operations including comments and content")]
 public class APIViewReviewTool : MCPMultiCommandTool
 {
     // Sub-command constants
     private const string GetCommentsCmd = "get-comments";
-    private const string GetContent = "get-content";
+    private const string GetContentCmd = "get-content";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.APIView];
 
     private readonly IAPIViewService _apiViewService;
     private readonly ILogger<APIViewReviewTool> _logger;
 
-    private readonly Option<string> outputFileOption = new("--output-file"){Description = "Output file path to save the revision content"};
+    private readonly Option<string> outputFileOption = new("--output-file"){Description = "Output file path to save the content"};
     private readonly Option<string> contentReturnTypeOption = new("--content-return-type")
     {
-        Description = "The APIView revision content type (text or codefile). Defaults to 'text'.",
+        Description = "The APIView content type (text or codefile). Defaults to 'text'.",
         DefaultValueFactory = _ => "text"
     };
 
@@ -49,8 +49,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     protected override List<Command> GetCommands() =>
     [
-        new(GetCommentsCmd, "Get comments for a specific revision ID or APIView URL") { apiViewUrlOption },
-        new(GetContent, "Get revision content by revision ID, review ID, or APIView URL (for revision)") 
+        new(GetCommentsCmd, "Get comments for a specific APIView URL") { apiViewUrlOption },
+        new(GetContentCmd, "Get content by APIView URL") 
         {
             apiViewUrlOption, outputFileOption, contentReturnTypeOption
         }
@@ -62,8 +62,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
         APIViewResponse result = commandName switch
         {
             GetCommentsCmd => await GetComments(parseResult, ct),
-            GetContent => await GetRevisionContent(parseResult, ct),
-            _ => new APIViewResponse { ResponseError = $"Unknown revision command: {commandName}" }
+            GetContentCmd => await GetContent(parseResult, ct),
+            _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
         
         return result;
@@ -100,7 +100,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         return await GetComments(apiViewUrl!);
     }
 
-    private async Task<APIViewResponse> GetRevisionContent(ParseResult parseResult, CancellationToken ct)
+    private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
         string? outputFile = parseResult.GetValue(outputFileOption);
@@ -118,7 +118,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
             if (result == null)
             {
-                return new APIViewResponse { ResponseError = $"Revision content not found" };
+                return new APIViewResponse { ResponseError = $"Content not found" };
             }
 
             if (!string.IsNullOrEmpty(outputFile))
@@ -127,13 +127,13 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
                 return new APIViewResponse
                 {
-                    Message = $"Revision content saved to file: {outputFile} ({result.Length:N0} characters)",
+                    Message = $"Content saved to file: {outputFile} ({result.Length:N0} characters)",
                 };
             }
 
             return new APIViewResponse
             {
-                Message = $"Revision content retrieved successfully ({result.Length:N0} characters)",
+                Message = $"Content retrieved successfully ({result.Length:N0} characters)",
                 Content = result
             };
         }
@@ -143,7 +143,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
         catch (Exception ex)
         {
-            return new APIViewResponse { ResponseError = $"Failed to get revision content: {ex.Message}" };
+            return new APIViewResponse { ResponseError = $"Failed to get content: {ex.Message}" };
         }
     }
 

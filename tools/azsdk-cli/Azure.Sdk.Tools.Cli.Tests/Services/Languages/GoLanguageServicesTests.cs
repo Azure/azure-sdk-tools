@@ -226,7 +226,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 )
                 """);
 
-            File.WriteAllText(Path.Join(tempFolder.DirectoryPath, "main.go"), @"""
+            File.WriteAllText(Path.Join(tempFolder.DirectoryPath, "main.go"), """
                 package main
 
                 import (

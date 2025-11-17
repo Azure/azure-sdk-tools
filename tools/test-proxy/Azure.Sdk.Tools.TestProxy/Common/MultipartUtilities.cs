@@ -504,16 +504,28 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
                     // Get encoding
                     var firstQuote = paramValue.IndexOf('\'');
-                    var encodingSpan = firstQuote == -1 ? ReadOnlySpan<char>.Empty : paramValue[..firstQuote].ToString();
+                    var encodingSpan = firstQuote == -1 ? [] : paramValue[..firstQuote];
                     var encodingString = encodingSpan.IsEmpty ? "UTF-8" : encodingSpan.ToString();
-                    outputValue.Append(encodingSpan);
-                    outputValue.Append('\'');
                     Encoding encoding = Encoding.GetEncoding(encodingString);
+                    if (firstQuote == -1) // filename* is malformed
+                    {
+                        outputValue.Append(paramValue);
+                        remaining = nextSemicolon == -1 ? [] : remaining[(nextSemicolon + 1)..];
+                        continue;
+                    }
 
-                    // Get value
+                    // Get language
                     var encodedValue = paramValue[(firstQuote + 1)..];
                     var secondQuote = encodedValue.IndexOf('\'');
+                    if (secondQuote == -1) // filename* is malformed
+                    {
+                        outputValue.Append(paramValue);
+                        remaining = nextSemicolon == -1 ? [] : remaining[(nextSemicolon + 1)..];
+                        continue;
+                    }
                     var lang = encodedValue[..secondQuote];
+                    outputValue.Append(encodingSpan);
+                    outputValue.Append('\'');
                     outputValue.Append(lang);
                     outputValue.Append('\'');
                     encodedValue = encodedValue[(secondQuote + 1)..];

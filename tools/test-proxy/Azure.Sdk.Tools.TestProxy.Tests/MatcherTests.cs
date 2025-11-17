@@ -391,8 +391,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void MultiPartFormDataNormalizesFilePath()
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_form_data_linux.json");
-            var differentBoundaryRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_form_data_windows.json").Session.Entries[0];
-            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBoundaryRequest, new RecordMatcher(), sanitizers: [new RecordedTestSanitizer()], remove: false);
+            var differentFilePathRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_form_data_windows.json").Session.Entries[0];
+            var expectedMatch = sessionForRetrieval.Session.Lookup(differentFilePathRequest, new RecordMatcher(), sanitizers: [new RecordedTestSanitizer()], remove: false);
         }
     }
 }

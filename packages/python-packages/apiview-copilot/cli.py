@@ -899,6 +899,28 @@ def revoke_permissions(assignee_id: str = None):
         print(f"✅ Re-created 'CanNotDelete' lock for resource group '{rg_name}'...")
 
 
+def check_health(include_auth: bool = False):
+    """
+    Checks that the APIView Copilot service is healthy and accessible.
+    """
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    headers = []
+    if include_auth:
+        headers = _build_auth_header(base_url)
+        api_endpoint = f"{base_url}/auth-test"
+    else:
+        api_endpoint = f"{base_url}/health-test"
+    try:
+        resp = requests.get(api_endpoint, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            print("✅ APIView Copilot service is healthy.")
+        else:
+            print(f"❌ Service health check failed: {resp.status_code} - {resp.text}")
+    except Exception as e:
+        print(f"❌ Service health check error: {e}")
+
+
 ANALYZE_COMMENT_LANGUAGES = [
     "C",
     "C#",
@@ -1005,6 +1027,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
+            g.command("check", "check_health")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
@@ -1061,6 +1084,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Path to a JSON file containing comments.",
                 options_list=["--comments-path", "-c"],
+            )
+            ac.argument(
+                "include_auth",
+                action="store_true",
+                help="Include authentication in the health check.",
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")

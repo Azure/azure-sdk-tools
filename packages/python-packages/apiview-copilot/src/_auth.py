@@ -66,7 +66,7 @@ def _safe_get_scopes(claims: dict) -> Set[str]:
 
 async def require_auth(
     cred: HTTPAuthorizationCredentials = Depends(_SECURITY),
-    required_scopes: Optional[Set[str]] = ...,
+    required_scopes: Optional[Set[str]] = None,
 ) -> dict:
     """
     Validate JWT (issuer, signature, audience) and enforce delegated scopes.

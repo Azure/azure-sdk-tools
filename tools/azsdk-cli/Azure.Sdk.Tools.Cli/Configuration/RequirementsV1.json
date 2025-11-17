@@ -62,7 +62,7 @@
             {
                 "requirement": "go",
                 "check": ["go", "version"],
-                "instructions": ["Download and install the Go version specified in globals.yml", "Ensure your GOPATH environment variable is set correctly", "Ensure GOPATH/bin is set in your PATH environment variable"]
+                "instructions": ["Download and install the latest Go versiop of the compiler on https://go.dev/dl/"]
             },
             {
                 "requirement": "go-junit-report",

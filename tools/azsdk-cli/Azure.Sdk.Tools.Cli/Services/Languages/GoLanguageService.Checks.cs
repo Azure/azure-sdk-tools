@@ -188,8 +188,12 @@ public partial class GoLanguageService : LanguageService
     {
         var text = await File.ReadAllTextAsync(goModPath, ct);
 
-        var match = GoModVersionRegex().Match(text)
-            ?? throw new Exception($"{goModPath} doesn't contain a valid go version");
+        var match = GoModVersionRegex().Match(text);
+
+        if (!match.Success)
+        {
+            throw new Exception($"{goModPath} doesn't contain a go version directive");
+        }
 
         return Version.Parse(match.Groups[1].Value);
     }

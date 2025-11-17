@@ -246,6 +246,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(version, Is.EqualTo(Version.Parse("1.23.0")));
         }
 
+        [Test]
+        public void TestGetGoModVersionAsync()
+        {
+            using var tempDir = TempDirectory.Create("go_mod_test");
+            var goModPath = Path.Join(tempDir.DirectoryPath, "go.mod");
+            File.WriteAllText(goModPath, "there's no version in here!");
+
+            Assert.ThrowsAsync(typeof(Exception), async () => await GoLanguageService.GetGoModVersionAsync(goModPath));
+        }
+
         /// <summary>
         /// Ignores the test if you don't have a path to a real Go repo configured.
         /// </summary>

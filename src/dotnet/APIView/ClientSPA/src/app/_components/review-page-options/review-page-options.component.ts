@@ -421,14 +421,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setNamespaceReviewStates() {
-    // Only show namespace review request for TypeSpec language AND if feature is enabled
-    // AND there are associated API revisions (SDK language reviews) AND namespace is not already approved
+    // Show namespace review section for TypeSpec language when feature is enabled
+    // and there are associated API revisions (SDK language reviews)
+    // Display different states: approved, requested, or available to request
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
                                       this.namespaceReviewEnabled &&
-                                      !this.review?.isApproved &&
-                                      this.review?.namespaceReviewStatus !== 'approved' &&
                                       this.pullRequestsOfAssociatedAPIRevisions.length > 0;
-    console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
 

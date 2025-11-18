@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from enum import Enum
 from typing import Optional, Set, Union
 
 import aiohttp
@@ -35,13 +36,28 @@ _ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
 _logger = logging.getLogger("uvicorn")
 
 
+# Enum for app/user roles
+class AppRole(Enum):
+    """
+    Application roles defined in Azure AD.
+    Maps the role name to the role value.
+    """
+
+    READER = "Read"
+    WRITER = "Write"
+    APP_READER = "App.Read"
+    APP_WRITER = "App.Write"
+
+
 def require_roles(*roles: str):
     """
     Require that the token contains at least one of the specified roles.
     No implicit inclusion: all required roles must be present for endpoints requiring both.
     Logs relevant JWT info to Uvicorn for debugging.
     """
-    required = set(roles)
+    if not all(isinstance(r, AppRole) for r in roles):
+        raise TypeError("All arguments to require_roles must be AppRole enum values.")
+    required = set(r.value for r in roles)
 
     async def _dep(claims: dict = Depends(_require_auth)):
         token_roles = _safe_get_app_roles(claims)

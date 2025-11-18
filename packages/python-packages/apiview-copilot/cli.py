@@ -998,7 +998,7 @@ def _build_auth_header(base_url):
     except ClientAuthenticationError as e:
         logging.error("Authentication failed: %s", e)
         print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
-        raise SystemExit(1)
+        sys.exit(1)
     return {"Authorization": f"Bearer {token.token}"}
 
 

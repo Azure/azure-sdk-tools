@@ -29,7 +29,7 @@ namespace APIViewWeb.Services
                 throw new InvalidOperationException("CopilotAppId configuration is missing");
             }
 
-            var scope = $"api://{copilotAppId}/.default";
+            var scope = $"api://{copilotAppId}/user_impersonation";
             var tokenRequestContext = new TokenRequestContext([scope]);
             var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
             return token.Token;

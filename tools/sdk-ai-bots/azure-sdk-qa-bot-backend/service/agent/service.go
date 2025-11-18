@@ -86,14 +86,20 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Handle general tenant routing: if intention contains recommended_tenant, route to that tenant
 	if req.TenantID == model.TenantID_GeneralQaBot && intention != nil {
 		routedTenantID := model.TenantID(intention.RouteTenant)
-		if _, hasConfig := config.GetTenantConfig(routedTenantID); hasConfig {
-			log.Printf("General tenant routing: %s → %s (category: %s)", req.TenantID, routedTenantID, intention.Category)
-			// Create a new request with the recommended tenant
-			routedReq := *req
-			routedReq.TenantID = routedTenantID
-			return s.ChatCompletion(ctx, &routedReq)
+		if routedConfig, hasConfig := config.GetTenantConfig(routedTenantID); hasConfig && routedTenantID != model.TenantID_GeneralQaBot {
+			log.Printf("General tenant routing: %s → %s", req.TenantID, routedTenantID)
+			// Update tenant ID and config to use the routed tenant for the rest of the flow
+			req.TenantID = routedTenantID
+			tenantConfig = routedConfig
+			// Update sources if not explicitly set
+			if req.Sources == nil {
+				req.Sources = tenantConfig.Sources
+			}
+			// Re-run intention recognition with the routed tenant's prompt template
+			query, intention = s.buildQueryForSearch(req, reasoningModelMessages)
+		} else {
+			log.Printf("General tenant: Recommended tenant '%s' not found, falling back to general tenant", routedTenantID)
 		}
-		log.Printf("General tenant: Recommended tenant '%s' not found, falling back to general tenant", routedTenantID)
 	}
 
 	// 4. Check if we need RAG processing

@@ -207,10 +207,18 @@ def require_permissions(
 
         if allow_either:
             if not (scope_ok or role_ok):
-                raise HTTPException(status_code=403, detail="Required permissions not satisfied")
+                # TODO: Revert the detail after debugging APIView issues
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Required permissions not satisfied: scopes {token_scopes}, roles {token_roles}",
+                )
         else:
+            # TODO: Revert the detail after debugging APIView issues
             if not (scope_ok and role_ok):
-                raise HTTPException(status_code=403, detail="Required permissions not satisfied")
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Required permissions not satisfied: scopes {token_scopes}, roles {token_roles}",
+                )
         return claims
 
     return _dep

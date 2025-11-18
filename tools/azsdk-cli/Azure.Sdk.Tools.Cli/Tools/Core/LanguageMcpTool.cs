@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
         /// <returns>A PackageOperationResponse with failure details if validation fails, otherwise null.</returns>
         protected PackageOperationResponse? ValidatePackagePath(string packagePath)
         {
-            if (string.IsNullOrEmpty(packagePath) || string.IsNullOrWhiteSpace(packagePath))
+            if (string.IsNullOrWhiteSpace(packagePath))
             {
                 return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }

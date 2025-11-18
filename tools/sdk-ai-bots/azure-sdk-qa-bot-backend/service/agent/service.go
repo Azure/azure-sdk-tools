@@ -83,7 +83,26 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 2. Build query for search
 	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Check if we need RAG processing
+	// 3. Handle general tenant routing: if intention contains recommended_tenant, route to that tenant
+	if req.TenantID == model.TenantID_GeneralQaBot && intention != nil {
+		routedTenantID := model.TenantID(intention.RouteTenant)
+		if routedConfig, hasConfig := config.GetTenantConfig(routedTenantID); hasConfig && routedTenantID != model.TenantID_GeneralQaBot {
+			log.Printf("General tenant routing: %s → %s", req.TenantID, routedTenantID)
+			// Update tenant ID and config to use the routed tenant for the rest of the flow
+			req.TenantID = routedTenantID
+			tenantConfig = routedConfig
+			// Update sources if not explicitly set
+			if req.Sources == nil {
+				req.Sources = tenantConfig.Sources
+			}
+			// Re-run intention recognition with the routed tenant's prompt template
+			query, intention = s.buildQueryForSearch(req, reasoningModelMessages)
+		} else {
+			log.Printf("General tenant: Recommended tenant '%s' not found, falling back to general tenant", routedTenantID)
+		}
+	}
+
+	// 4. Check if we need RAG processing
 	var chunks []string
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
@@ -102,14 +121,14 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 	}
 
-	// 4. Build prompt
+	// 5. Build prompt
 	prompt, err = s.buildPrompt(intention, chunks, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
 	}
 
-	// 5. Get answer from LLM
+	// 6. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
 	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
@@ -117,7 +136,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 6. Process the result
+	// 7. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")
@@ -277,10 +296,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 
 	// Preprocess HTML content if it contains HTML entities or tags
 	preprocessService := preprocess.NewPreprocessService()
-	if strings.Contains(req.Message.Content, "\\u003c") || strings.Contains(req.Message.Content, "&lt;") || strings.Contains(req.Message.Content, "<") {
-		log.Printf("Detected HTML content, preprocessing...")
-		req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
-	}
+	req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
 
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
@@ -290,11 +306,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	// process history messages
 	for _, message := range req.History {
 		// Preprocess HTML content in history messages
-		content := message.Content
-		if strings.Contains(content, "\\u003c") || strings.Contains(content, "&lt;") || strings.Contains(content, "<") {
-			log.Printf("Detected HTML content in history message, preprocessing...")
-			content = preprocessService.PreprocessHTMLContent(content)
-		}
+		content := preprocessService.PreprocessHTMLContent(message.Content)
 
 		if message.Role == model.Role_Assistant {
 			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
@@ -313,6 +325,22 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				content := info.Content
+				info.Link = preprocessService.PreprocessHTMLContent(info.Link)
+
+				// Check if this is a pipeline link and analyze it
+				if utils.IsPipelineLink(info.Link) {
+					log.Printf("Detected Azure DevOps pipeline link: %s", info.Link)
+					analysisText, err := utils.AnalyzePipeline(info.Link, "", true) // Use agent analysis
+					if err != nil {
+						log.Printf("Failed to analyze pipeline: %v", err)
+						// Fall back to regular link processing
+					} else {
+						// Use the pipeline analysis as content
+						content = analysisText
+						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				}
+
 				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]

@@ -128,35 +128,43 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     }
     if (string.IsNullOrWhiteSpace(packageVersion))
     {
-        var modulePath = packageName.Replace('-', Path.DirectorySeparatorChar);
-        
-        var versionPyPath = Path.Combine(packagePath, modulePath, "_version.py");
-
-        if (File.Exists(versionPyPath))
+        // Search for _version.py files in the package directory
+        try
         {
-            try
+            var versionFiles = Directory.GetFiles(packagePath, "_version.py", SearchOption.AllDirectories);
+            
+            foreach (var versionPyPath in versionFiles)
             {
-                logger.LogTrace("Reading version file from {versionPyPath}", versionPyPath);
-                var content = await File.ReadAllTextAsync(versionPyPath, ct);
-                var match = VersionFieldRegex().Match(content);
-                if (match.Success)
+                try
                 {
-                    packageVersion = match.Groups[1].Value.Trim();
-                    logger.LogTrace("Found version from version file: {packageVersion}", packageVersion);
+                    logger.LogTrace("Reading version file from {versionPyPath}", versionPyPath);
+                    var content = await File.ReadAllTextAsync(versionPyPath, ct);
+                    var match = VersionFieldRegex().Match(content);
+                    if (match.Success)
+                    {
+                        packageVersion = match.Groups[1].Value.Trim();
+                        logger.LogTrace("Found version from version file: {packageVersion}", packageVersion);
+                        break; // Stop after finding the first valid version
+                    }
+                    else
+                    {
+                        logger.LogTrace("No VERSION found in version file at {versionPyPath}", versionPyPath);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    logger.LogTrace("No VERSION found in version file");
+                    logger.LogTrace(ex, "Error reading version file from {versionPyPath}", versionPyPath);
                 }
             }
-            catch (Exception ex)
+            
+            if (string.IsNullOrWhiteSpace(packageVersion))
             {
-                logger.LogTrace(ex, "Error reading version file from {versionPyPath}", versionPyPath);
+                logger.LogTrace("No version file found with valid VERSION in {packagePath}", packagePath);
             }
         }
-        else
+        catch (Exception ex)
         {
-            logger.LogTrace("No version file found for package {packageName}", packageName);
+            logger.LogTrace(ex, "Error searching for version files in {packagePath}", packagePath);
         }
     }
 

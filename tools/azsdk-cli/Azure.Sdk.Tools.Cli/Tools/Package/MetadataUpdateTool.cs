@@ -59,11 +59,21 @@ public class MetadataUpdateTool : LanguageMcpTool
             logger.LogInformation("Updating package metadata content for package at: {packagePath}", packagePath);
 
             // Validate package path
-            var validationError = ValidatePackagePath(packagePath);
-            if (validationError != null)
+            if (string.IsNullOrWhiteSpace(packagePath))
             {
-                return validationError;
+                return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }
+
+            // Resolves relative paths to absolute
+            string fullPath = Path.GetFullPath(packagePath);
+            
+            if (!Directory.Exists(fullPath))
+            {
+                return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
+            }
+
+            packagePath = fullPath;
+            logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
             // Discover the repository root
             var sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);

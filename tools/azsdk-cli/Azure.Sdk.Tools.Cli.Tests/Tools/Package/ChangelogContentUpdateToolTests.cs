@@ -158,18 +158,7 @@ public class ChangelogContentUpdateToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
-    }
-
-    [Test]
-    public async Task UpdateChangelogContentAsync_WithRelativePath_ShouldReturnFailure()
-    {
-        // Act
-        var result = await _tool.UpdateChangelogContentAsync("relative/path/to/package", CancellationToken.None);
-
-        // Assert
-        Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("must be an absolute path"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("does not exist"));
     }
 
     [Test]

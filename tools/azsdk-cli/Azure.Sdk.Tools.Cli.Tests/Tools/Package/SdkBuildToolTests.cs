@@ -21,7 +21,7 @@ public class SdkBuildToolTests
     private const string InvalidJsonContent = "{ invalid json }";
 
     // Common error message patterns
-    private const string InvalidProjectPathError = "Package path does not exist";
+    private const string InvalidProjectPathError = "does not exist";
     private const string FailedToDiscoverRepoError = "Failed to discover local sdk repo";
     private const string ConfigFileNotFoundError = "Configuration file not found";
     private const string JsonParsingError = "Error parsing JSON configuration";
@@ -94,16 +94,6 @@ public class SdkBuildToolTests
     }
 
     [Test]
-    public async Task BuildSdkAsync_RelativeProjectPath_ReturnsFailure()
-    {
-        // Act
-        var result = await _tool.BuildSdkAsync("relative/path/to/project");
-
-        // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain("must be an absolute path"));
-    }
-
-    [Test]
     public async Task BuildSdkAsync_EmptyPath_ReturnsFailure()
     {
         // Act
@@ -111,6 +101,43 @@ public class SdkBuildToolTests
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("required and cannot be empty"));
+    }
+
+    [Test]
+    public async Task BuildSdkAsync_RelativePath_ResolvesToAbsolute()
+    {
+        // Arrange - create a test directory structure
+        var projectDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "project");
+        Directory.CreateDirectory(projectDir);
+        
+        // Save the current directory
+        var originalDir = Directory.GetCurrentDirectory();
+        
+        try
+        {
+            // Change to the temp directory
+            Directory.SetCurrentDirectory(_tempDirectory.DirectoryPath);
+            
+            // Mock GitHelper for the resolved path
+            _mockGitHelper
+                .Setup(x => x.DiscoverRepoRoot(projectDir))
+                .Returns(_tempDirectory.DirectoryPath);
+            _mockGitHelper
+                .Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath))
+                .Returns("azure-sdk-for-python");
+
+            // Act - use relative path
+            var result = await _tool.BuildSdkAsync("./sdk/project");
+
+            // Assert - should successfully resolve and process
+            Assert.That(result.Result, Is.EqualTo("noop")); // Python project skips build
+            Assert.That(result.Message, Does.Contain("Python SDK project detected"));
+        }
+        finally
+        {
+            // Restore the original directory
+            Directory.SetCurrentDirectory(originalDir);
+        }
     }
 
     [Test]

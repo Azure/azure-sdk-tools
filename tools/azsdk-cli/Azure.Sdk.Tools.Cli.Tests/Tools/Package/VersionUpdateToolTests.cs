@@ -160,20 +160,9 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("does not exist"));
         Assert.That(result.NextSteps, Is.Not.Null);
         Assert.That(result.NextSteps![0], Does.Contain("Check the running logs"));
-    }
-
-    [Test]
-    public async Task UpdateVersionAsync_WithRelativePath_ShouldReturnFailure()
-    {
-        // Act
-        var result = await _tool.UpdateVersionAsync("relative/path/to/package", null, null, null, CancellationToken.None);
-
-        // Assert
-        Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("must be an absolute path"));
     }
 
     [Test]

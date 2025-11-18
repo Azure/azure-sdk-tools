@@ -159,18 +159,7 @@ public class MetadataUpdateToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
-    }
-
-    [Test]
-    public async Task UpdateMetadataAsync_WithRelativePath_ShouldReturnFailure()
-    {
-        // Act
-        var result = await _tool.UpdateMetadataAsync("relative/path/to/package", CancellationToken.None);
-
-        // Assert
-        Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("must be an absolute path"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("does not exist"));
     }
 
     [Test]

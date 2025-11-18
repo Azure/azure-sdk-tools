@@ -51,17 +51,17 @@ namespace APIViewWeb.Services
                 var handler = new JwtSecurityTokenHandler();
                 var jwtToken = handler.ReadJwtToken(token);
                 
-                _logger.LogInformation("Token claims decoded:");
-                _logger.LogInformation("  aud (audience): {Audience}", jwtToken.Audiences.FirstOrDefault());
-                _logger.LogInformation("  iss (issuer): {Issuer}", jwtToken.Issuer);
-                _logger.LogInformation("  appid: {AppId}", jwtToken.Claims.FirstOrDefault(c => c.Type == "appid")?.Value);
-                _logger.LogInformation("  oid (object ID): {ObjectId}", jwtToken.Claims.FirstOrDefault(c => c.Type == "oid")?.Value);
+                _logger.LogWarning("=== TOKEN CLAIMS DECODED ===");
+                _logger.LogWarning("  aud (audience): {Audience}", jwtToken.Audiences.FirstOrDefault());
+                _logger.LogWarning("  iss (issuer): {Issuer}", jwtToken.Issuer);
+                _logger.LogWarning("  appid: {AppId}", jwtToken.Claims.FirstOrDefault(c => c.Type == "appid")?.Value);
+                _logger.LogWarning("  oid (object ID): {ObjectId}", jwtToken.Claims.FirstOrDefault(c => c.Type == "oid")?.Value);
                 
                 // Log roles claim - this is what we're debugging
                 var roles = jwtToken.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToList();
                 if (roles.Any())
                 {
-                    _logger.LogInformation("  roles: [{Roles}]", string.Join(", ", roles));
+                    _logger.LogWarning("  roles: [{Roles}]", string.Join(", ", roles));
                 }
                 else
                 {
@@ -69,11 +69,12 @@ namespace APIViewWeb.Services
                 }
                 
                 // Log all claims for complete picture
-                _logger.LogInformation("  All claims:");
+                _logger.LogWarning("  === ALL CLAIMS ===");
                 foreach (var claim in jwtToken.Claims)
                 {
-                    _logger.LogInformation("    {Type}: {Value}", claim.Type, claim.Value);
+                    _logger.LogWarning("    {Type}: {Value}", claim.Type, claim.Value);
                 }
+                _logger.LogWarning("=== END TOKEN CLAIMS ===");
             }
             catch (Exception ex)
             {

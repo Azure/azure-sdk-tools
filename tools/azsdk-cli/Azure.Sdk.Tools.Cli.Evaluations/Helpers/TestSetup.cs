@@ -18,9 +18,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
             ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
         
+        private static readonly bool UseMCPRelease = bool.TryParse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE"), out var result) && result;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
-        public static string? GetRepoName => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_REPOSITORY_NAME");
-        public static string? GetRepoOwner => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_REPOSITORY_OWNER");
+        private static readonly string localMcpPowershellScriptPath = @"../../../../../eng/common/mcp/azure-sdk-mcp.ps1";
         public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
@@ -53,6 +53,20 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
             try
             {
+                if (UseMCPRelease)
+                {
+                    // Use MCP release
+                    return await McpClientFactory.CreateAsync(
+                        new StdioClientTransport(
+                            new()
+                            {
+                                Command = "pwsh",
+                                Arguments = [localMcpPowershellScriptPath, "-Run"]
+                            }
+                        )
+                    );
+                }
+                
                 // Run your local MCP server directly with dotnet run
                 var mcpClient = await McpClientFactory.CreateAsync(
                     new StdioClientTransport(
@@ -81,30 +95,16 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
         public static void ValidateCopilotEnvironmentConfiguration()
         {
-            var repoName = GetRepoName;
-            var repoOwner = GetRepoOwner;
-            var copilotInstructionsPath = GetCopilotInstructionsPath;
-            bool hasRepoName = !string.IsNullOrEmpty(repoName);
-            bool hasRepoOwner = !string.IsNullOrEmpty(repoOwner);
-            bool hasCopilotPath = !string.IsNullOrEmpty(copilotInstructionsPath);
-
-            // Check if both repo name and owner are provided
-            bool hasRepoInfo = hasRepoName && hasRepoOwner;
-
             // Validate that we have at least one valid configuration
-            if (!hasRepoInfo && !hasCopilotPath)
+            if (string.IsNullOrEmpty(GetCopilotInstructionsPath))
             {
                 throw new InvalidOperationException(
-                    "Invalid environment configuration: Either both COPILOT_INSTRUCTIONS_REPOSITORY_NAME and " +
-                    "COPILOT_INSTRUCTIONS_REPOSITORY_OWNER must be provided, OR COPILOT_INSTRUCTIONS_PATH must be provided.");
+                    "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH must be provided.");
             }
 
-            // If repo info is partially provided, it's also an error
-            if (hasRepoOwner ^ hasRepoName)
+            if(!Path.Exists(GetCopilotInstructionsPath))
             {
-                throw new InvalidOperationException(
-                    "Invalid repository configuration: Both COPILOT_INSTRUCTIONS_REPOSITORY_NAME and " +
-                    "COPILOT_INSTRUCTIONS_REPOSITORY_OWNER must be provided together.");
+                throw new FileNotFoundException($"Could not find copilot instructions file at path: {GetCopilotInstructionsPath}");
             }
         }
     }

@@ -11,34 +11,32 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Test]
         public async Task Evaluate_GetPullRequestLinkForCurrentBranch()
         {
-            const string prompt = "What's the status of the spec PR in my current branch? Only check the status once. Path to my repository root: C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs";
+            const string prompt = "What's the status of the spec PR in my current branch? Only check the status once. Do not verify my setup, I've already verified it. Path to my repository root: C:\\azure-rest-api-specs";
             string[] expectedTools =
             [
                 "azsdk_get_pull_request_link_for_current_branch",
             ];
 
             // Build scenario data
-            var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames!);
+            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
 
             // External construction of evaluation context
             bool checkInputs = false;
-            var additionalContexts = new EvaluationContext[]
-            {
-                new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-            };
 
             var result = await EvaluationHelper.RunScenarioAsync(
                 scenarioName: this.ScenarioName,
                 scenarioData: scenarioData,
-                expectedToolResults: expectedToolResults,
                 chatCompletion: s_chatCompletion!,
                 chatConfig: s_chatConfig!,
                 executionName: s_executionName,
                 reportingPath: ReportingPath,
+                toolNames: s_toolNames!,
                 evaluators: [new ExpectedToolInputEvaluator()],
                 enableResponseCaching: true,
-                additionalContexts: additionalContexts);
+                additionalContexts: new EvaluationContext[]
+                {
+                    new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
+                });
 
             EvaluationHelper.ValidateToolInputsEvaluator(result);
         }

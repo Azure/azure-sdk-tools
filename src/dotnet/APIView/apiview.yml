@@ -94,6 +94,11 @@ extends:
               image: $(WINDOWSVMIMAGE)
               os: windows
 
+            templateContext:
+              sdl: 
+                componentgovernance:
+                  enabled: true # Enable CG only on the build job
+
             steps:
               - task: NodeTool@0
                 inputs:
@@ -182,6 +187,11 @@ extends:
               name: $(WINDOWSPOOL)
               image: $(WINDOWSVMIMAGE)
               os: windows
+
+            templateContext:
+              sdl: 
+                componentgovernance:
+                  enabled: true # Enable CG temporarily in the Test job to clear CG history
 
             steps:
               - script: |

@@ -660,18 +660,20 @@ export class CommentThreadComponent {
         row.comments?.some(c => c.id === commentId)
       );
       
-      if (commentCodeRow) {
-        const voteAction = voteType === 'up' 
-          ? CommentThreadUpdateAction.CommentUpVoteToggled 
-          : CommentThreadUpdateAction.CommentDownVoteToggled;
-          
-        this.batchResolutionActionEmitter.emit({
-          commentThreadUpdateAction: voteAction,
-          commentId: commentId,
-          nodeIdHashed: commentCodeRow.nodeIdHashed,
-          associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
-        } as CommentUpdatesDto);
+      if (!commentCodeRow) {
+        return;
       }
+
+      const voteAction = voteType === 'up' 
+        ? CommentThreadUpdateAction.CommentUpVoteToggled 
+        : CommentThreadUpdateAction.CommentDownVoteToggled;
+
+      this.batchResolutionActionEmitter.emit({
+        commentThreadUpdateAction: voteAction,
+        commentId: commentId,
+        nodeIdHashed: commentCodeRow.nodeIdHashed,
+        associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
+      } as CommentUpdatesDto);
     });
   }
 

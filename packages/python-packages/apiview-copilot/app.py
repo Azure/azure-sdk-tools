@@ -24,7 +24,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
-from src._auth import require_permissions
+from src._auth import require_roles
 from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
@@ -78,7 +78,7 @@ class ApiReviewJobStatusResponse(BaseModel):
 @app.post("/api-review/start", status_code=202)
 async def submit_api_review_job(
     job_request: ApiReviewJobRequest,
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
+    _claims=Depends(require_roles("Write", "App.Write")),
 ):
     """Submit a new API review job."""
     # Validate language
@@ -123,7 +123,7 @@ async def submit_api_review_job(
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(
     job_id: str,
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True)),
+    _claims=Depends(require_roles("Read", "App.Read")),
 ):
     """Get the status of an API review job."""
     try:
@@ -135,7 +135,7 @@ async def get_api_review_job_status(
 
 @app.get("/auth-test")
 async def auth_test(
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True)),
+    _claims=Depends(require_roles("Read", "App.Read")),
 ):
     """Test endpoint to verify authentication is working."""
     return {"status": "ok"}
@@ -173,7 +173,7 @@ class AgentChatResponse(BaseModel):
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat(
     request: AgentChatRequest,
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
+    _claims=Depends(require_roles("Write", "App.Write")),
 ):
     """Handle chat requests to the agent."""
     logger.info("Received /agent/chat request: user_input=%s, thread_id=%s", request.user_input, request.thread_id)
@@ -211,7 +211,7 @@ class SummarizeResponse(BaseModel):
 @app.post("/api-review/summarize", response_model=SummarizeResponse)
 async def summarize_api(
     request: SummarizeRequest,
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True)),
+    _claims=Depends(require_roles("Read", "App.Read")),
 ):
     """Summarize API changes based on the provided request."""
     if request.language not in SUPPORTED_LANGUAGES:
@@ -262,7 +262,7 @@ class MentionRequest(BaseModel):
 @app.post("/api-review/mention", response_model=AgentChatResponse)
 async def handle_mention(
     request: MentionRequest,
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
+    _claims=Depends(require_roles("Write", "App.Write")),
 ):
     """Handle mentions in API reviews."""
     logger.info(
@@ -290,7 +290,7 @@ async def handle_mention(
 @app.post("/api-review/resolve", response_model=AgentChatResponse)
 async def handle_thread_resolution(
     request: MentionRequest,
-    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
+    _claims=Depends(require_roles("Write", "App.Write")),
 ):
     """Handle thread resolution in API reviews."""
     logger.info(

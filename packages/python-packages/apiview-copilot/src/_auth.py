@@ -7,7 +7,8 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Iterable, Optional, Set, Union
+import logging
+from typing import Optional, Set, Union
 
 import aiohttp
 import jwt
@@ -29,13 +30,36 @@ _JWK_CLIENT_LOCK = asyncio.Lock()
 _CANONICAL_AUD = f"api://{APP_ID}"
 _ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
 
-_REQUIRED_SCOPES_DEFAULT: Set[str] = {"user_impersonation"}
-_REQUIRED_APP_ROLES_DEFAULT: Set[str] = {"Reader"}
 
-# TODO: If we want to allow-list specific client IDs
-ALLOWED_CALLER_APP_IDS: Set[str] = {
-    # "<APIView-client-id-guid>",  # fill this in to pin the caller
-}
+# Uvicorn logger for debug output
+_logger = logging.getLogger("uvicorn")
+
+
+def require_roles(*roles: str):
+    """
+    Require that the token contains at least one of the specified roles.
+    No implicit inclusion: all required roles must be present for endpoints requiring both.
+    Logs relevant JWT info to Uvicorn for debugging.
+    """
+    required = set(roles)
+
+    async def _dep(claims: dict = Depends(_require_auth)):
+        token_roles = _safe_get_app_roles(claims)
+        aud = claims.get("aud")
+        appid = _caller_app_id(claims)
+        subject = claims.get("sub")
+        # Log relevant info for debugging
+        _logger.info(
+            "AUTH DEBUG: sub=%s, aud=%s, appid=%s, roles=%s, required=%s", subject, aud, appid, token_roles, required
+        )
+        if not required.intersection(token_roles):
+            _logger.warning(
+                "AUTH DENY: sub=%s, aud=%s, appid=%s, roles=%s, required=%s", subject, aud, appid, token_roles, required
+            )
+            raise HTTPException(status_code=403, detail="Missing required role(s): %s" % ", ".join(required))
+        return claims
+
+    return _dep
 
 
 def _safe_get_app_roles(claims: dict) -> Set[str]:
@@ -88,15 +112,6 @@ async def _get_jwk_client():
         return _JWK_CLIENT
 
 
-def _safe_get_scopes(claims: dict) -> Set[str]:
-    """Return delegated scopes from 'scp' as a set; empty set if none."""
-    scp = claims.get("scp")
-    if not scp:
-        return set()
-    # 'scp' is a space-delimited string per MSFT v2 tokens
-    return set(scp.split())
-
-
 async def _require_auth(
     cred: HTTPAuthorizationCredentials = Depends(_SECURITY),
 ) -> dict:
@@ -137,107 +152,10 @@ async def _require_auth(
 
     # 3) Audience enforcement (supports both APP_ID and api://APP_ID)
     aud_values = _normalize_audience(claims.get("aud"))
-
-    # Accept either raw client id or api:// form, but normalize to canonical
-    acceptable = {APP_ID, _CANONICAL_AUD}
-    if not aud_values.intersection(acceptable):
-        raise HTTPException(status_code=401, detail="Invalid audience")
+    if not aud_values.intersection({APP_ID, _CANONICAL_AUD}):
+        raise HTTPException(status_code=401, detail="Invalid token audience")
 
     # Canonicalize for downstream logic/telemetry
     claims["aud"] = _CANONICAL_AUD
 
     return claims
-
-
-def require_app_roles(*roles: str):
-    """
-    Require specific application roles (from 'roles') for app-only tokens
-    issued to managed identities / service principals.
-    """
-    required = set(roles) if roles else _REQUIRED_APP_ROLES_DEFAULT
-
-    async def _dep(claims: dict = Depends(_require_auth)):
-        token_roles = _safe_get_app_roles(claims)
-        if not token_roles:
-            # No 'roles' => not an app token (or no roles assigned)
-            raise HTTPException(status_code=403, detail="Application roles required")
-        if required and not required.issubset(token_roles):
-            raise HTTPException(status_code=403, detail="Missing required app role")
-        return claims
-
-    return _dep
-
-
-def require_caller_app_ids(*allowed_appids: str):
-    """
-    Restrict access to specific calling applications by client id (GUID).
-    """
-    allowed = set(allowed_appids) if allowed_appids else ALLOWED_CALLER_APP_IDS
-
-    async def _dep(claims: dict = Depends(_require_auth)):
-        appid = _caller_app_id(claims)
-        if allowed and appid not in allowed:
-            raise HTTPException(status_code=403, detail="Unauthorized caller application")
-        return claims
-
-    return _dep
-
-
-def require_permissions(
-    scopes: Iterable[str] = None,
-    roles: Iterable[str] = None,
-    allow_either: bool = True,
-):
-    """
-    Require delegated scopes and/or application roles.
-    If allow_either=True, accept tokens that satisfy either set.
-    If False, require both (rare).
-    Passing None for scopes/roles uses the default required values.
-    Passing an empty iterable disables the requirement for that type.
-    """
-    scopes = _REQUIRED_SCOPES_DEFAULT.copy() if scopes is None else set(scopes)
-    roles = _REQUIRED_APP_ROLES_DEFAULT.copy() if roles is None else set(roles)
-
-    async def _dep(claims: dict = Depends(_require_auth)):
-        token_scopes = _safe_get_scopes(claims)
-        token_roles = _safe_get_app_roles(claims)
-
-        scope_ok = (not scopes) or (scopes.issubset(token_scopes))
-        role_ok = (not roles) or (roles.issubset(token_roles))
-
-        if allow_either:
-            if not (scope_ok or role_ok):
-                # TODO: Revert the detail after debugging APIView issues
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"Required permissions not satisfied: scopes {token_scopes}, roles {token_roles}",
-                )
-        else:
-            # TODO: Revert the detail after debugging APIView issues
-            if not (scope_ok and role_ok):
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"Required permissions not satisfied: scopes {token_scopes}, roles {token_roles}",
-                )
-        return claims
-
-    return _dep
-
-
-def require_scopes(*scopes: str):
-    """
-    Require specific delegated scopes in addition to basic auth.
-
-    :param scopes: scopes to require
-    :type scopes: str
-    """
-    required = set(scopes)
-
-    async def _dep(claims: dict = Depends(_require_auth)):
-        if required:
-            token_scopes = _safe_get_scopes(claims)
-            if not required.issubset(token_scopes):
-                raise HTTPException(status_code=403, detail="Insufficient scope")
-        return claims
-
-    return _dep

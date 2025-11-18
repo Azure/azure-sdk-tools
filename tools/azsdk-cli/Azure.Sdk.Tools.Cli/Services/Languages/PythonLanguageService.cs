@@ -92,13 +92,6 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
                 packageName = nameMatch.Groups[1].Value.Trim();
                 logger.LogTrace("Found package name from pyproject.toml: {packageName}", packageName);
             }
-            
-            var versionMatch = PyprojectVersionRegex().Match(content);
-            if (versionMatch.Success)
-            {
-                packageVersion = versionMatch.Groups[1].Value.Trim();
-                logger.LogTrace("Found version from pyproject.toml: {packageVersion}", packageVersion);
-            }
         }
         catch (Exception ex)
         {
@@ -172,9 +165,6 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
 
     [GeneratedRegex(@"^\s*name\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled | RegexOptions.Multiline, "")]
     private static partial Regex PyprojectNameRegex();
-
-    [GeneratedRegex(@"^\s*version\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled | RegexOptions.Multiline, "")]
-    private static partial Regex PyprojectVersionRegex();
 
     [GeneratedRegex(@"(?:PACKAGE_NAME|name)\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled | RegexOptions.Multiline, "")]
     private static partial Regex SetupPyPackageNameRegex();

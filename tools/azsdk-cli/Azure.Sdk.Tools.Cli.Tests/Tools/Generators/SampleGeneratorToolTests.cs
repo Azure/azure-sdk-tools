@@ -133,23 +133,6 @@ public class SampleGeneratorToolTests
                 }));
         }
 
-        var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
-        sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
-        {
-            // Use a real FileHelper instance instead of mock
-            var fileHelper = new FileHelper(new TestLogger<FileHelper>());
-
-            return language switch
-            {
-                SdkLanguage.DotNet => new DotNetSampleLanguageContext(fileHelper),
-                SdkLanguage.Java => new JavaSampleLanguageContext(fileHelper),
-                SdkLanguage.Python => new PythonSampleLanguageContext(fileHelper),
-                SdkLanguage.JavaScript => new TypeScriptSampleLanguageContext(fileHelper),
-                SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
-                _ => throw new InvalidOperationException($"Unexpected language value '{language}' in test sample context resolver.")
-            };
-        });
-
         var mockGitHelper = new Mock<IGitHelper>();
         mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(repoRoot);
         mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns(() =>

@@ -40,15 +40,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
 
-            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetSampleLanguageContext),
-                Java = typeof(JavaSampleLanguageContext),
-                Python = typeof(PythonSampleLanguageContext),
-                JavaScript = typeof(TypeScriptSampleLanguageContext),
-                Go = typeof(GoSampleLanguageContext),
-            });
-
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

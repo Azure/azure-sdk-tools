@@ -18,7 +18,6 @@ public class SampleTranslatorToolTests
 {
     private TestLogger<SampleTranslatorTool> _logger;
     private Mock<IGitHelper> _mockGitHelper;
-    private Mock<ILanguageSpecificResolver<SampleLanguageContext>> _mockSampleContextResolver;
     private Mock<IMicroagentHostService> _mockMicroagentHostService;
     private Mock<IFileHelper> _mockFileHelper;
     private SampleTranslatorTool _sampleTranslatorTool;
@@ -28,7 +27,6 @@ public class SampleTranslatorToolTests
     {
         _logger = new TestLogger<SampleTranslatorTool>();
         _mockGitHelper = new Mock<IGitHelper>();
-        _mockSampleContextResolver = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
         _mockMicroagentHostService = new Mock<IMicroagentHostService>();
         _mockFileHelper = new Mock<IFileHelper>();
 

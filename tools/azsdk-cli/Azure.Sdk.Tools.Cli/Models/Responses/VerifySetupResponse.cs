@@ -15,7 +15,24 @@ public class VerifySetupResponse : CommandResponse
     protected override string Format()
     {
         var sb = new StringBuilder();
+        
+        // Check if we have any Python-related requirements that need virtual environment activation
+        bool hasPythonRequirements = Results?.Any(r => 
+            r.Requirement.Contains("azpysdk", StringComparison.OrdinalIgnoreCase) ||
+            r.Requirement.Contains("sdk_generator", StringComparison.OrdinalIgnoreCase) ||
+            r.Requirement.Contains("ghtools", StringComparison.OrdinalIgnoreCase) ||
+            r.Requirement.Contains("pytest", StringComparison.OrdinalIgnoreCase)) == true;
+
         sb.AppendLine("Results:");
+
+        // Add important note about Python virtual environment immediately after heading if Python tools are failing
+        if (hasPythonRequirements)
+        {
+            sb.AppendLine();
+            sb.AppendLine("⚠️ IMPORTANT: Before installing Python tools, ensure your Python virtual environment is activated.");
+            sb.AppendLine("   Set the AZSDKTOOLS_PYTHON_VENV_PATH environment variable to your desired virtual environment path.");
+            sb.AppendLine();
+        }
 
         if (Results != null)
         {

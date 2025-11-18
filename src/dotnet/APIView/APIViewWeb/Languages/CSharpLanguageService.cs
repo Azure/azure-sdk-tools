@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using APIView.Languages;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 
@@ -14,7 +15,7 @@ namespace APIViewWeb
         public override string Name { get; } = "C#";
         public override string[] Extensions { get; } = { ".dll" };
         public override string ProcessName => _csharpParserToolPath;
-        public override string VersionString { get; } = "29.9";
+        public override string VersionString { get; } = CodeFileBuilder.CurrentVersion;
 
         public CSharpLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {

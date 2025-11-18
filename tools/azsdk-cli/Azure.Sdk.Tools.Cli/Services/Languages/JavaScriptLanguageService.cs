@@ -3,6 +3,7 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -15,13 +16,15 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         INpxHelper npxHelper,
         IGitHelper gitHelper,        
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         this.npxHelper = npxHelper;
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
 
@@ -134,5 +137,4 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     {
         return categories.TryGetValue("javascript", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
-
 }

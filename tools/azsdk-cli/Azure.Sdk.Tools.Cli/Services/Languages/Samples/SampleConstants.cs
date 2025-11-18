@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace Azure.Sdk.Tools.Cli.Tools.Samples
+namespace Azure.Sdk.Tools.Cli.Services.Languages.Samples
 {
     /// <summary>
     /// Shared constants for sample generation and translation tools.

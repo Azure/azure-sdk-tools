@@ -3,6 +3,7 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -16,12 +17,14 @@ public partial class GoLanguageService : LanguageService
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
 
     private readonly string goUnix = "go";

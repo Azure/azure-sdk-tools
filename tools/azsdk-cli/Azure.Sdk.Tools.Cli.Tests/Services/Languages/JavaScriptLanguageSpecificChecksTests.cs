@@ -30,7 +30,8 @@ internal class JavaScriptLanguageSpecificChecksTests
             _npxHelperMock.Object,
             _gitHelperMock.Object,
             NullLogger<JavaScriptLanguageService>.Instance,
-            _commonValidationHelpersMock.Object);
+            _commonValidationHelpersMock.Object,
+            Mock.Of<IFileHelper>());
 
         _packagePath = "/tmp/javascript-package";
     }

@@ -4,9 +4,9 @@
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Moq;
@@ -41,7 +41,6 @@ public class SampleTranslatorToolTests
             _logger,
             _mockGitHelper.Object,
             languageServices,
-            _mockSampleContextResolver.Object,
             _mockFileHelper.Object);
     }
 

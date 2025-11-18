@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Iterable, Optional, Set
+from typing import Iterable, Optional, Set, Union
 
 import aiohttp
 import jwt
@@ -57,7 +57,7 @@ def _caller_app_id(claims: dict) -> Optional[str]:
     return claims.get("azp") or claims.get("appid")
 
 
-def _normalize_audience(aud_value):
+def _normalize_audience(aud_value: Union[str, list[str], None]) -> Set[str]:
     # aud can be string or list of strings
     if isinstance(aud_value, list):
         return set(aud_value)
@@ -192,9 +192,11 @@ def require_permissions(
     Require delegated scopes and/or application roles.
     If allow_either=True, accept tokens that satisfy either set.
     If False, require both (rare).
+    Passing None for scopes/roles uses the default required values.
+    Passing an empty iterable disables the requirement for that type.
     """
-    scopes = set(scopes) if scopes is not None else _REQUIRED_SCOPES_DEFAULT.copy()
-    roles = set(roles) if roles is not None else _REQUIRED_APP_ROLES_DEFAULT.copy()
+    scopes = _REQUIRED_SCOPES_DEFAULT.copy() if scopes is None else set(scopes)
+    roles = _REQUIRED_APP_ROLES_DEFAULT.copy() if roles is None else set(roles)
 
     async def _dep(claims: dict = Depends(_require_auth)):
         token_scopes = _safe_get_scopes(claims)

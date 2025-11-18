@@ -78,7 +78,7 @@ class ApiReviewJobStatusResponse(BaseModel):
 @app.post("/api-review/start", status_code=202)
 async def submit_api_review_job(
     job_request: ApiReviewJobRequest,
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True))],
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
 ):
     """Submit a new API review job."""
     # Validate language
@@ -123,7 +123,7 @@ async def submit_api_review_job(
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(
     job_id: str,
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True))],
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True)),
 ):
     """Get the status of an API review job."""
     try:
@@ -135,7 +135,7 @@ async def get_api_review_job_status(
 
 @app.get("/auth-test")
 async def auth_test(
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True))]
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True)),
 ):
     """Test endpoint to verify authentication is working."""
     return {"status": "ok"}
@@ -173,7 +173,7 @@ class AgentChatResponse(BaseModel):
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat(
     request: AgentChatRequest,
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True))],
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
 ):
     """Handle chat requests to the agent."""
     logger.info("Received /agent/chat request: user_input=%s, thread_id=%s", request.user_input, request.thread_id)
@@ -211,7 +211,7 @@ class SummarizeResponse(BaseModel):
 @app.post("/api-review/summarize", response_model=SummarizeResponse)
 async def summarize_api(
     request: SummarizeRequest,
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True))],
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Reader"}, allow_either=True)),
 ):
     """Summarize API changes based on the provided request."""
     if request.language not in SUPPORTED_LANGUAGES:
@@ -262,7 +262,7 @@ class MentionRequest(BaseModel):
 @app.post("/api-review/mention", response_model=AgentChatResponse)
 async def handle_mention(
     request: MentionRequest,
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True))],
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
 ):
     """Handle mentions in API reviews."""
     logger.info(
@@ -290,7 +290,7 @@ async def handle_mention(
 @app.post("/api-review/resolve", response_model=AgentChatResponse)
 async def handle_thread_resolution(
     request: MentionRequest,
-    dependencies=[Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True))],
+    _claims=Depends(require_permissions(scopes={"user_impersonation"}, roles={"Writer"}, allow_either=True)),
 ):
     """Handle thread resolution in API reviews."""
     logger.info(

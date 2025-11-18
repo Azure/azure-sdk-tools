@@ -13,13 +13,15 @@ namespace APIViewWeb.Services
     public class CopilotAuthenticationService : ICopilotAuthenticationService
     {
         private readonly IConfiguration _configuration;
-        private readonly ChainedTokenCredential _credential;
+        private readonly TokenCredential _credential;
         private readonly ILogger<CopilotAuthenticationService> _logger;
 
         public CopilotAuthenticationService(IConfiguration configuration, ILogger<CopilotAuthenticationService> logger)
         {
             _configuration = configuration;
             _logger = logger;
+         
+            _logger.LogWarning("Using ChainedTokenCredential (ManagedIdentity/AzureCli) for Copilot authentication");
             _credential = new ChainedTokenCredential(
                 new ManagedIdentityCredential(),
                 new AzureCliCredential()
@@ -34,19 +36,20 @@ namespace APIViewWeb.Services
                 throw new InvalidOperationException("CopilotAppId configuration is missing");
             }
 
-            // For managed identity tokens to include app roles, we need to ensure the token
-            // audience (aud claim) is the full Application ID URI (api://guid), not just the GUID.
-            // 
-            // Azure IMDS has a quirk: when you request api://guid/.default, it sometimes returns
-            // a token with aud=guid (no api:// prefix), which doesn't include app roles.
-            //
-            // We'll try multiple approaches to get the right audience in the token.
-            
-            // Approach 1: Try with full URI
+            string tenantId = _configuration["AzureAd:TenantId"] ?? "72f988bf-86f1-41af-91ab-2d7cd011db47";
+
+        
             var scopeWithPrefix = $"api://{copilotAppId}/.default";
-            _logger.LogWarning("Attempt 1: Requesting token with scope: {Scope}", scopeWithPrefix);
+            _logger.LogWarning("Requesting token with scope: {Scope}, tenantId: {TenantId}", scopeWithPrefix, tenantId);
             
-            var tokenRequestContext = new TokenRequestContext(new[] { scopeWithPrefix });
+            var tokenRequestContext = new TokenRequestContext(
+                scopes: new[] { scopeWithPrefix },
+                parentRequestId: null,
+                claims: null,
+                tenantId: tenantId,
+                isCaeEnabled: false
+            );
+            
             var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
             
             _logger.LogWarning("Token acquired, checking audience and roles...");
@@ -61,10 +64,14 @@ namespace APIViewWeb.Services
             if (!hasRoles)
             {
                 _logger.LogError("Token does not contain roles claim! Audience: {Audience}", audience);
-                _logger.LogError("This means app role assignments are not being included in the token.");
+                _logger.LogError("This suggests managed identity tokens don't support app roles for this resource.");
                 _logger.LogError("Managed identity principal: bcb0cf5a-9d34-4ae2-8e9d-c0302c9e7902");
                 _logger.LogError("Target resource: {CopilotAppId}", copilotAppId);
-                _logger.LogError("App roles SHOULD be assigned but are not appearing in the token.");
+            }
+            else
+            {
+                var roles = jwtToken.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToArray();
+                _logger.LogWarning("SUCCESS! Token contains roles: {Roles}", string.Join(", ", roles));
             }
             
             return token.Token;

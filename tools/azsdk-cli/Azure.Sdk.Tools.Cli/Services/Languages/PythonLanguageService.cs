@@ -95,7 +95,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
         }
         catch (Exception ex)
         {
-            logger.LogTrace(ex, "Error reading pyproject.toml from {pyprojectPath}", pyprojectPath);
+            logger.LogWarning(ex, "Error reading pyproject.toml from {pyprojectPath}", pyprojectPath);
         }
     }
     
@@ -118,12 +118,12 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
             }
             catch (Exception ex)
             {
-                logger.LogTrace(ex, "Error reading setup.py from {setupPyPath}", setupPyPath);
+                logger.LogWarning(ex, "Error reading setup.py from {setupPyPath}", setupPyPath);
             }
         }
         else
         {
-            logger.LogTrace("No pyproject.toml or setup.py file found at {packagePath}", packagePath);
+            logger.LogWarning("No pyproject.toml or setup.py file found at {packagePath}", packagePath);
         }
     }
     if (string.IsNullOrWhiteSpace(packageVersion))
@@ -148,23 +148,23 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
                     }
                     else
                     {
-                        logger.LogTrace("No VERSION found in version file at {versionPyPath}", versionPyPath);
+                        logger.LogWarning("No VERSION found in version file at {versionPyPath}", versionPyPath);
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogTrace(ex, "Error reading version file from {versionPyPath}", versionPyPath);
+                    logger.LogWarning(ex, "Error reading version file from {versionPyPath}", versionPyPath);
                 }
             }
             
             if (string.IsNullOrWhiteSpace(packageVersion))
             {
-                logger.LogTrace("No version file found with valid VERSION in {packagePath}", packagePath);
+                logger.LogWarning("No version file found with valid VERSION in {packagePath}", packagePath);
             }
         }
         catch (Exception ex)
         {
-            logger.LogTrace(ex, "Error searching for version files in {packagePath}", packagePath);
+            logger.LogWarning(ex, "Error searching for version files in {packagePath}", packagePath);
         }
     }
 

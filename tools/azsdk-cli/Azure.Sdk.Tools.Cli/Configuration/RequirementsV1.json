@@ -62,27 +62,31 @@
             {
                 "requirement": "go",
                 "check": ["go", "version"],
-                "instructions": ["Download and install the latest Go versiop of the compiler on https://go.dev/dl/"]
+                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/"]
             },
             {
                 "requirement": "go-junit-report",
                 "check": ["go-junit-report", "--version"],
-                "instructions": ["go install github.com/jstemmer/go-junit-report/v2@v2.1.0"]
+                "instructions": ["go install github.com/jstemmer/go-junit-report/v2@v2.1.0"],
+                "is_ci_only": true
             },
             {
                 "requirement": "gocov",
                 "check": ["gocov", "-help"],
-                "instructions": ["go install github.com/axw/gocov/gocov@v1.2.1"]
+                "instructions": ["go install github.com/axw/gocov/gocov@v1.2.1"],
+                "is_ci_only": true
             },
             {
                 "requirement": "gocov-xml",
                 "check": ["gocov-xml", "-help"],
-                "instructions": ["go install github.com/AlekSi/gocov-xml@v1.1.0"]
+                "instructions": ["go install github.com/AlekSi/gocov-xml@v1.1.0"],
+                "is_ci_only": true
             },
             {
                 "requirement": "gocov-html",
                 "check": ["gocov-html", "-v"],
-                "instructions": ["go install github.com/matm/gocov-html/cmd/gocov-html@v1.4.0"]
+                "instructions": ["go install github.com/matm/gocov-html/cmd/gocov-html@v1.4.0"],
+                "is_ci_only": true
             },
             {
                 "requirement": "golangci-lint",

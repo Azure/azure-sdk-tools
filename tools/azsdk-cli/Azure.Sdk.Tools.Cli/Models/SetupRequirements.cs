@@ -18,5 +18,8 @@ public class SetupRequirements
         
         [JsonPropertyName("instructions")]
         public List<string> instructions { get; set; }
+
+        [JsonPropertyName("is_ci_only")]
+        public bool? isCiOnly { get; set; }
     }
 }

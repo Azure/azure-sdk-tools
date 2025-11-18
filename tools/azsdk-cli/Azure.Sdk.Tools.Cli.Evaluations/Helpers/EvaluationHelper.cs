@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             ChatConfiguration chatConfig,
             string executionName,
             string reportingPath,
-            IEnumerable<string>? toolNames = null,
+            IEnumerable<string> toolNames,
             IEnumerable<IEvaluator>? evaluators = null,
             bool enableResponseCaching = true,
             IEnumerable<EvaluationContext>? additionalContexts = null,

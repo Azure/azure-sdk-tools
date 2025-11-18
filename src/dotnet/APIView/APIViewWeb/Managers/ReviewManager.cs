@@ -568,7 +568,20 @@ namespace APIViewWeb.Managers
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
                 
                 var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    var responseHeaders = string.Join(", ", response.Headers.Select(h => $"{h.Key}={string.Join(";", h.Value)}"));
+                    _logger.LogError(
+                        "Copilot request failed. StatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}, ResponseBody: {ResponseBody}, ResponseHeaders: {ResponseHeaders}, Endpoint: {Endpoint}",
+                        (int)response.StatusCode,
+                        response.ReasonPhrase,
+                        errorBody,
+                        responseHeaders,
+                        startUrl);
+                    response.EnsureSuccessStatusCode();
+                }
+
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
                 

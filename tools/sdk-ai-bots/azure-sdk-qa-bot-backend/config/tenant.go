@@ -24,6 +24,13 @@ var typespecSources = []model.Source{
 	model.Source_StaticAzureDocs,
 }
 
+var allSources = append(typespecSources,
+	model.Source_AzureSDKForGo,
+	model.Source_AzureSDKForPython,
+	model.Source_AzureSDKForPythonWiki,
+	model.Source_AzureSDKGuidelines,
+	model.Source_AzureSDKDocsEng)
+
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration: 3,
 	model.Source_TypeSpecQA:        3,
@@ -60,6 +67,12 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
 	},
+	model.TenantID_GeneralQaBot: {
+		PromptTemplate:          "general/qa.md",
+		IntentionPromptTemplate: "general/intention.md",
+		Sources:                 allSources,
+		AgenticSearchPrompt:     "general/agentic_search.md",
+	},
 }
 
 func GetTenantConfig(tenantID model.TenantID) (TenantConfig, bool) {
@@ -68,4 +81,10 @@ func GetTenantConfig(tenantID model.TenantID) (TenantConfig, bool) {
 		return TenantConfig{}, false
 	}
 	return config, true
+}
+
+// GetAllSources returns all available knowledge sources for fallback scenarios
+// Used when the general tenant cannot route to a specific tenant
+func GetAllSources() []model.Source {
+	return allSources
 }

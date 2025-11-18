@@ -83,7 +83,20 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 2. Build query for search
 	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Check if we need RAG processing
+	// 3. Handle general tenant routing: if intention contains recommended_tenant, route to that tenant
+	if req.TenantID == model.TenantID_GeneralQaBot && intention != nil {
+		routedTenantID := model.TenantID(intention.RouteTenant)
+		if _, hasConfig := config.GetTenantConfig(routedTenantID); hasConfig {
+			log.Printf("General tenant routing: %s → %s (category: %s)", req.TenantID, routedTenantID, intention.Category)
+			// Create a new request with the recommended tenant
+			routedReq := *req
+			routedReq.TenantID = routedTenantID
+			return s.ChatCompletion(ctx, &routedReq)
+		}
+		log.Printf("General tenant: Recommended tenant '%s' not found, falling back to general tenant", routedTenantID)
+	}
+
+	// 4. Check if we need RAG processing
 	var chunks []string
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
@@ -102,14 +115,14 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 	}
 
-	// 4. Build prompt
+	// 5. Build prompt
 	prompt, err = s.buildPrompt(intention, chunks, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
 	}
 
-	// 5. Get answer from LLM
+	// 6. Get answer from LLM
 	llmMessages = append([]azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
 	}, llmMessages...)
@@ -119,7 +132,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 6. Process the result
+	// 7. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")

@@ -1,0 +1,142 @@
+.primer-text-secondary {
+  color: var(--text-muted-color);
+  font-size: 14px;
+}
+
+.primer-fieldset {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  background-color: var(--base-fg-color);
+}
+
+.primer-legend {
+  font-weight: 600;
+  color: var(--base-text-color);
+}
+
+.primer-label-required {
+  color: #cf222e;
+}
+
+.primer-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.primer-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.primer-checkbox-label {
+  cursor: pointer;
+}
+
+.primer-validation-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #9a6700;
+  background-color: #fff8c5;
+  border: 1px solid #d4a72c;
+  border-radius: 6px;
+  
+  [data-theme="dark"] & {
+    color: #e09b13;
+    background-color: rgba(187, 128, 9, 0.15);
+    border-color: rgba(187, 128, 9, 0.4);
+  }
+}
+
+.primer-label {
+  font-weight: 600;
+}
+
+.primer-label-optional {
+  font-weight: 400;
+  color: var(--text-muted-color);
+}
+
+.primer-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  color: var(--base-text-color);
+  background-color: var(--base-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  resize: vertical;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+}
+
+.primer-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primer-btn {
+  padding: 5px 16px;
+  font-weight: 500;
+  border-radius: 6px;
+  
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.primer-btn-primary {
+  color: #ffffff;
+  background-color: #1f883d;
+  border: 1px solid rgba(31, 136, 61, 0.4);
+  
+  &:hover:not(:disabled) {
+    background-color: #1a7f37;
+  }
+  
+  &:disabled {
+    background-color: #94d3a2;
+  }
+}
+
+.primer-btn-invisible {
+  color: var(--base-text-color);
+  background-color: transparent;
+  border: 1px solid transparent;
+  
+  &:hover:not(:disabled) {
+    background-color: var(--base-bg-color);
+  }
+}
+
+::ng-deep .primer-dialog {
+  .p-dialog {
+    border-radius: 12px;
+  }
+  
+  .p-dialog-header {
+    background-color: var(--base-fg-color);
+    border-bottom: 1px solid var(--border-color);
+    
+    .p-dialog-title {
+      font-weight: 600;
+    }
+  }
+  
+  .p-dialog-content {
+    background-color: var(--base-bg-color);
+  }
+  
+  .p-dialog-footer {
+    background-color: var(--base-fg-color);
+    border-top: 1px solid var(--border-color);
+  }
+}

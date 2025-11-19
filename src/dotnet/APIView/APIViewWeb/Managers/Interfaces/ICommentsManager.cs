@@ -25,6 +25,7 @@ namespace APIViewWeb.Managers
         public Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId);
         public Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
+        public Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback);
         public Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId);
 
         public HashSet<GithubUser> GetTaggableUsers();

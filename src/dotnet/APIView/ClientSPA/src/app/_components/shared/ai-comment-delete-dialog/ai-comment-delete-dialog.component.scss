@@ -1,0 +1,35 @@
+.dialog-content {
+  .delete-description {
+    color: #605e5c;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+
+  .deletion-reason {
+    .form-label {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      font-size: 14px;
+      resize: vertical;
+      min-height: 100px;
+
+      &::placeholder {
+        color: #a19f9d;
+      }
+
+      &:focus {
+        border-color: #0078d4;
+        box-shadow: 0 0 0 0.2rem rgba(0, 120, 212, 0.25);
+      }
+    }
+  }
+
+  .alert {
+    font-size: 13px;
+    border-radius: 4px;
+  }
+}

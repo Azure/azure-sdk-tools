@@ -129,6 +129,24 @@ export class CommentsService {
     });
   }
 
+  submitAICommentFeedback(reviewId: string, commentId: string, reasons: string[], comment: string, isDelete: boolean = false) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    })
+
+    const body = {
+      reasons: reasons,
+      comment: comment,
+      isDelete: isDelete
+    };
+
+    return this.http.post(this.baseUrl + `/${reviewId}/${commentId}/feedback`, body, { 
+      headers: headers,
+      observe: 'response',
+      withCredentials: true
+    });
+  }
+
   deleteComment(reviewId: string, commentId: string) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

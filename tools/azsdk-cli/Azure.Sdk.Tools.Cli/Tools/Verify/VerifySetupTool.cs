@@ -84,8 +84,8 @@ public class VerifySetupTool : LanguageMcpTool
             
             foreach (var req in reqsToCheck)
             {
-                logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}",
-                    req.requirement, req.check);
+                logger.LogInformation("Checking requirement: {Requirement}",
+                    req.requirement);
 
                 var task = RunCheck(req, packagePath, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
                 checkTasks.Add(task);

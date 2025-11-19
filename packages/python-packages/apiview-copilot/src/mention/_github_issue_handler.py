@@ -42,7 +42,7 @@ class GitHubIssueHandler:
         self.base_labels = base_labels or []
         self.language_labels = language_labels or {}
 
-    def fetch_recent_issues(self):
+    def _fetch_recent_issues(self):
         """Fetch recent open issues from GitHub matching workflow metadata."""
         client = GithubManager.get_instance()
         metadata_query = [f"workflow: {self.workflow_tag}", f"source: {self.source_tag}"]
@@ -53,7 +53,7 @@ class GitHubIssueHandler:
         )
         return issues
 
-    def check_for_duplicate_issue(
+    def _check_for_duplicate_issue(
         self, plan: dict, recent_issues: list, language: str = None, package_name: str = None, code: str = None
     ) -> dict:
         """

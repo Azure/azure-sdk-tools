@@ -35,7 +35,7 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         logger.LogDebug("Resolving Python package info for path: {packagePath}", packagePath);
         var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
-        var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
+        var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, repoRoot, ct);
         
         if (packageName == null)
         {
@@ -73,112 +73,50 @@ public sealed partial class PythonLanguageService : LanguageService
         return model;
     }
 
-private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
+private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, string repoRoot, CancellationToken ct)
 {
     string? packageName = null;
     string? packageVersion = null;
-
-    var pyprojectPath = Path.Combine(packagePath, "pyproject.toml");
-    if (File.Exists(pyprojectPath))
-    {
-        try
-        {
-            logger.LogTrace("Reading pyproject.toml from {pyprojectPath}", pyprojectPath);
-            var content = await File.ReadAllTextAsync(pyprojectPath, ct);
-            
-            var nameMatch = PyprojectNameRegex().Match(content);
-            if (nameMatch.Success)
-            {
-                packageName = nameMatch.Groups[1].Value.Trim();
-                logger.LogTrace("Found package name from pyproject.toml: {packageName}", packageName);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error reading pyproject.toml from {pyprojectPath}", pyprojectPath);
-        }
-    }
     
-    if (string.IsNullOrWhiteSpace(packageName))
+    try
     {
-        var setupPyPath = Path.Combine(packagePath, "setup.py");
-        if (File.Exists(setupPyPath))
+        logger.LogTrace("Calling get_package_properties.py for {packagePath}", packagePath);
+        var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "get_package_properties.py");
+        
+        var result = await pythonHelper.Run(new PythonOptions(
+                "python",
+                [scriptPath, "-s", packagePath],
+                workingDirectory: repoRoot,
+                logOutputStream: false
+            ),
+            ct
+        );
+        
+        if (result.ExitCode == 0 && !string.IsNullOrWhiteSpace(result.Output))
         {
-            try
+            // Parse the output from get_package_properties.py
+            // Format: <name> <version> <is_new_sdk> <directory> <dependent_packages>
+            var lines = result.Output.Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length > 0)
             {
-                logger.LogTrace("Reading setup.py from {setupPyPath}", setupPyPath);
-                var content = await File.ReadAllTextAsync(setupPyPath, ct);
+                var parts = lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                packageName = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]) ? parts[0] : null;
+                packageVersion = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? parts[1] : null;
                 
-                var match = SetupPyPackageNameRegex().Match(content);
-                if (match.Success)
-                {
-                    packageName = match.Groups[1].Value.Trim();
-                    logger.LogTrace("Found package name from setup.py: {packageName}", packageName);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error reading setup.py from {setupPyPath}", setupPyPath);
+                logger.LogTrace("Python script returned: name={packageName}, version={packageVersion}", packageName, packageVersion);
+                return (packageName, packageVersion);
             }
         }
-        else
-        {
-            logger.LogWarning("No pyproject.toml or setup.py file found at {packagePath}", packagePath);
-        }
+        
+        logger.LogWarning("Python script failed with exit code {exitCode}. Output: {output}", result.ExitCode, result.Output);
     }
-    if (string.IsNullOrWhiteSpace(packageVersion))
+    catch (Exception ex)
     {
-        // Search for _version.py files in the package directory
-        try
-        {
-            var versionFiles = Directory.GetFiles(packagePath, "_version.py", SearchOption.AllDirectories);
-            
-            foreach (var versionPyPath in versionFiles)
-            {
-                try
-                {
-                    logger.LogTrace("Reading version file from {versionPyPath}", versionPyPath);
-                    var content = await File.ReadAllTextAsync(versionPyPath, ct);
-                    var match = VersionFieldRegex().Match(content);
-                    if (match.Success)
-                    {
-                        packageVersion = match.Groups[1].Value.Trim();
-                        logger.LogTrace("Found version from version file: {packageVersion}", packageVersion);
-                        break; // Stop after finding the first valid version
-                    }
-                    else
-                    {
-                        logger.LogWarning("No VERSION found in version file at {versionPyPath}", versionPyPath);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Error reading version file from {versionPyPath}", versionPyPath);
-                }
-            }
-            
-            if (string.IsNullOrWhiteSpace(packageVersion))
-            {
-                logger.LogWarning("No version file found with valid VERSION in {packagePath}", packagePath);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error searching for version files in {packagePath}", packagePath);
-        }
+        logger.LogWarning(ex, "Error running Python script for {packagePath}, falling back to file-based parsing", packagePath);
+        
     }
-
     return (packageName, packageVersion);
 }
-
-    [GeneratedRegex(@"^\s*name\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled | RegexOptions.Multiline, "")]
-    private static partial Regex PyprojectNameRegex();
-
-    [GeneratedRegex(@"(?:PACKAGE_NAME|name)\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled | RegexOptions.Multiline, "")]
-    private static partial Regex SetupPyPackageNameRegex();
-
-    [GeneratedRegex(@"^\s*VERSION\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled | RegexOptions.Multiline, "")]
-    private static partial Regex VersionFieldRegex();
 
     public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {

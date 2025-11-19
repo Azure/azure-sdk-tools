@@ -65,38 +65,41 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             // Ensure team name fits within maximum 64 character limit
             // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
-            teamName = StringHelper.MaxLength(teamName, MaxTeamNameLength);
-            if (teamName.Length > MaxTeamNameLength)
-            {
+            if (teamName.Length > MaxTeamNameLength) {
                 logger.LogWarning($"Notification team name (length {teamName.Length}) will be truncated to {teamName}");
             }
+            teamName = StringHelper.MaxLength(teamName, MaxTeamNameLength);
+
 
             var result = teams.FirstOrDefault(team => team.Name == teamName);
 
             if (result == default)
             {
                 logger.LogInformation($"Create Team for Pipeline PipelineId = {pipeline.Id} Name = '{teamName}'");
+                var newTeam = new WebApiTeam
+                {
+                    Name = teamName,
+                    Description = teamDescription
+                };
                 if (persistChanges)
                 {
-                    var newTeam = new WebApiTeam
-                    {
-                        Name = teamName,
-                        Description = teamDescription
-                    };
                     result = await service.CreateTeamForProjectAsync(pipeline.Project.Id.ToString(), newTeam);
                 }
             }
             else
             {
                 logger.LogInformation($"Updating Team for Pipeline PipelineId = {pipeline.Id} Name = '{teamName}'");
+                result.Description = teamDescription;
                 if (persistChanges)
                 {
-                    result.Description = teamDescription;
                     result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
                 }
             }
-            await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, true);
-            await SyncTeamWithCodeownersFile(pipeline, result, gitHubToAADConverter, persistChanges);
+            if (result != default)
+            {
+                await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, persistChanges);
+                await SyncTeamWithCodeownersFile(pipeline, result, gitHubToAADConverter, persistChanges);
+            }
         }
 
         private async Task SyncTeamWithCodeownersFile(

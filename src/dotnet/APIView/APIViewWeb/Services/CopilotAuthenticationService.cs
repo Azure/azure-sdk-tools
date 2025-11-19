@@ -1,13 +1,10 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
-using Azure.Security.KeyVault.Certificates;
-using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -24,47 +21,17 @@ namespace APIViewWeb.Services
             _configuration = configuration;
             _logger = logger;
          
-            _credential = CreateCertificateCredential();
-
-        }
-
-        private TokenCredential CreateCertificateCredential()
-        {
-            try
-            {
-                string tenantId = _configuration["AzureAd:TenantId"];
-                string clientId = _configuration["AzureAd:ClientId"];
-                string keyVaultUrl = _configuration["CopilotAuth:KeyVaultUrl"] ?? "https://apiviewuatkv.vault.azure.net/";
-                string certName = _configuration["CopilotAuth:CertificateName"] ?? "apiview-ux-copilot-auth-1m";
-
-                _logger.LogWarning("Loading certificate {CertName} from Key Vault {KeyVaultUrl}", certName, keyVaultUrl);
-
-                // Use managed identity to access Key Vault
-                var kvCredential = new ChainedTokenCredential(
-                    new ManagedIdentityCredential(),
-                    new AzureCliCredential()
-                );
-
-                // Get the certificate from Key Vault
-                var secretClient = new SecretClient(new Uri(keyVaultUrl), kvCredential);
-                var certificateSecret = secretClient.GetSecret(certName).Value;
-                
-                // Convert the secret (which contains the full certificate with private key) to X509Certificate2
-                byte[] certBytes = Convert.FromBase64String(certificateSecret.Value);
-                var certificate = new X509Certificate2(certBytes, (string)null, X509KeyStorageFlags.MachineKeySet);
-
-                _logger.LogWarning("Certificate loaded successfully, creating ClientCertificateCredential for client {ClientId}", clientId);
-
-                return new ClientCertificateCredential(tenantId, clientId, certificate);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to create certificate credential, falling back to managed identity");
-                return new ChainedTokenCredential(
-                    new ManagedIdentityCredential(),
-                    new AzureCliCredential()
-                );
-            }
+            // Use federated identity: managed identity → app registration (with app roles!)
+            string tenantId = _configuration["AzureAd:TenantId"] ;
+            string clientId = _configuration["AzureAd:ClientId"];
+            
+            _logger.LogWarning("🔐 Using ManagedIdentityCredential with Federated Identity");
+            _logger.LogWarning("🔐 Managed Identity → App Registration: {ClientId}", clientId);
+            _logger.LogWarning("🔐 This will get app roles: App.Write, App.Read");
+            
+            // Create credential that uses managed identity to get token for the app registration
+            // The federated credential we created allows this exchange
+            _credential = new ManagedIdentityCredential(clientId);
         }
 
         public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
@@ -79,7 +46,7 @@ namespace APIViewWeb.Services
 
         
             var scopeWithPrefix = $"api://{copilotAppId}/.default";
-            _logger.LogWarning("Requesting token with scope: {Scope}, tenantId: {TenantId}", scopeWithPrefix, tenantId);
+            _logger.LogWarning("🎫 Scope: {Scope}, TenantId: {TenantId}", scopeWithPrefix, tenantId);
             
             var tokenRequestContext = new TokenRequestContext(
                 scopes: new[] { scopeWithPrefix },
@@ -88,10 +55,20 @@ namespace APIViewWeb.Services
                 tenantId: tenantId,
                 isCaeEnabled: false
             );
+
+            AccessToken token;
+            try
+            {
+                 token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
             
-            var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
-            
-            _logger.LogWarning("Token acquired, checking audience and roles...");
+            _logger.LogWarning("✅ Token acquired, checking audience and roles...");
             LogTokenClaims(token.Token);
             
             // Check if we got the roles claim
@@ -99,18 +76,24 @@ namespace APIViewWeb.Services
             var jwtToken = handler.ReadJwtToken(token.Token);
             var hasRoles = jwtToken.Claims.Any(c => c.Type == "roles");
             var audience = jwtToken.Audiences.FirstOrDefault();
+            var oid = jwtToken.Claims.FirstOrDefault(c => c.Type == "oid")?.Value;
+            var appid = jwtToken.Claims.FirstOrDefault(c => c.Type == "appid")?.Value;
             
             if (!hasRoles)
             {
-                _logger.LogError("Token does not contain roles claim! Audience: {Audience}", audience);
-                _logger.LogError("This suggests managed identity tokens don't support app roles for this resource.");
-                _logger.LogError("Managed identity principal: bcb0cf5a-9d34-4ae2-8e9d-c0302c9e7902");
-                _logger.LogError("Target resource: {CopilotAppId}", copilotAppId);
+                _logger.LogError("❌ Token does NOT contain roles claim!");
+                _logger.LogError("❌ Object ID (oid): {ObjectId}", oid);
+                _logger.LogError("❌ App ID (appid): {AppId}", appid);
+                _logger.LogError("❌ Expected App ID: 51ca54a9-657b-4c49-a58c-5a0a59f2cc0c (APIView UX)");
+                _logger.LogError("❌ Federated credential may not be working correctly!");
             }
             else
             {
                 var roles = jwtToken.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToArray();
-                _logger.LogWarning("SUCCESS! Token contains roles: {Roles}", string.Join(", ", roles));
+                _logger.LogWarning("✅✅✅ SUCCESS! Token contains roles: {Roles}", string.Join(", ", roles));
+                _logger.LogWarning("✅ Object ID (oid): {ObjectId}", oid);
+                _logger.LogWarning("✅ App ID (appid): {AppId} - Should be APIView (UX) app registration", appid);
+                _logger.LogWarning("✅ Expected App ID: 51ca54a9-657b-4c49-a58c-5a0a59f2cc0c");
             }
             
             return token.Token;

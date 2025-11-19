@@ -65,6 +65,11 @@
                 "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/"]
             },
             {
+                "requirement": "goimports",
+                "check": ["pwsh", "-Command", "Get-Command", "goimports"],
+                "instructions": ["go install golang.org/x/tools/cmd/goimports@latest"]
+            },
+            {
                 "requirement": "golangci-lint",
                 "check": ["golangci-lint", "--version"],
                 "instructions": ["https://golangci-lint.run/docs/welcome/install/"]

@@ -14,7 +14,7 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
-import { npmCommand, nodeCommand } from "./npm.js";
+import { npmCommand, nodeCommand, tspClientCommand } from "./npm.js";
 import {
   compileTsp,
   discoverEntrypointFile,
@@ -312,6 +312,9 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
+  if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
+    throw new Error("tsp-location.yaml is missing required fields for sync operation");
+  }
   const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
@@ -405,6 +408,9 @@ export async function generateCommand(argv: any) {
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
+  if (!tspLocation.directory) {
+    throw new Error("tsp-location.yaml is missing required fields for generate operation");
+  }
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   if (!projectName) {
@@ -492,24 +498,52 @@ export async function generateCommand(argv: any) {
   }
 }
 
+async function processBatchUpdate(tspLocation: TspLocation, outputDir: string, argv: any) {
+  // Process each directory in the batch
+  for (const batchDir of tspLocation.batch ?? []) {
+    const fullBatchPath = resolve(outputDir, batchDir);
+    Logger.info(`Processing batch directory: ${batchDir}`);
+
+    try {
+      argv["output-dir"] = fullBatchPath;
+      await updateCommand(argv);
+      Logger.info(`Successfully processed batch directory: ${batchDir}`);
+    } catch (error) {
+      Logger.error(`Failed to process batch directory ${batchDir}: ${error}`);
+      throw error; // Stop processing and propagate the error immediately
+    }
+  }
+
+  Logger.info("All batch directories processed successfully");
+  return;
+}
+
 export async function updateCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repo = argv["repo"];
   const commit = argv["commit"];
   let tspConfig = argv["tsp-config"];
 
+  const tspLocation: TspLocation = await readTspLocation(outputDir);
+
+  // Check if this is a batch configuration
+  if (tspLocation.batch) {
+    Logger.info(`Found batch configuration with ${tspLocation.batch.length} directories`);
+    await processBatchUpdate(tspLocation, outputDir, argv);
+    return;
+  }
+
+  // Original non-batch logic
   if (repo && !commit) {
     throw new Error(
       "Commit SHA is required when specifying `--repo`; please specify a commit using `--commit`",
     );
   }
   if (commit) {
-    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspLocation.commit = commit ?? tspLocation.commit;
     tspLocation.repo = repo ?? tspLocation.repo;
     await writeTspLocationYaml(tspLocation, outputDir);
   } else if (tspConfig) {
-    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspConfig = resolveTspConfigUrl(tspConfig);
     tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
     tspLocation.repo = tspConfig.repo ?? tspLocation.repo;

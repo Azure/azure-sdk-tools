@@ -26,15 +26,24 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
     if (fileStat.isFile()) {
       const fileContents = await readFile(yamlPath, "utf8");
       const tspLocation: TspLocation = parseYaml(fileContents);
-      if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
+
+      if (
+        !tspLocation.batch &&
+        (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo)
+      ) {
+        // For non-batch configurations, require the standard fields
         throw new Error("Invalid tsp-location.yaml");
+      } else if (tspLocation.batch) {
+        if (!Array.isArray(tspLocation.batch)) {
+          throw new Error("Invalid tsp-location.yaml: batch must be an array of directory paths");
+        }
       }
       if (!tspLocation.additionalDirectories) {
         tspLocation.additionalDirectories = [];
       }
 
       // Normalize the directory path and remove trailing slash
-      tspLocation.directory = normalizeDirectory(tspLocation.directory);
+      tspLocation.directory = normalizeDirectory(tspLocation.directory ?? "");
       if (typeof tspLocation.additionalDirectories === "string") {
         tspLocation.additionalDirectories = [normalizeDirectory(tspLocation.additionalDirectories)];
       } else {

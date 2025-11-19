@@ -9,11 +9,9 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
-using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 {
@@ -37,16 +35,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Translates sample files from one language to another")]
     public class SampleTranslatorTool : LanguageMcpTool
     {
-        //private readonly ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
         private readonly IMicroagentHostService microagentHostService;
         public SampleTranslatorTool(
             IMicroagentHostService microagentHostService,
             ILogger<SampleTranslatorTool> logger,
             IGitHelper gitHelper,
-            IEnumerable<LanguageService> languageServices,            
+            IEnumerable<LanguageService> languageServices,
             IFileHelper fileHelper
         ) : base(languageServices, gitHelper, logger)
-        {            
+        { 
             this.microagentHostService = microagentHostService;
         }
 

@@ -3,7 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected IFileHelper fileHelper;
 
         public abstract SdkLanguage Language { get; }
-        public virtual bool IsCustomizedCodeUpdateSupported => false;        
+        public virtual bool IsCustomizedCodeUpdateSupported => false;
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
         {
@@ -293,7 +293,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
                     _ => throw new NotImplementedException($"Sample language context is not implemented for language: {Language}"),
                 };
-            }            
+            }
         }
     }
 }

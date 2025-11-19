@@ -3,7 +3,6 @@
 
 using System.Text;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
-using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Samples;

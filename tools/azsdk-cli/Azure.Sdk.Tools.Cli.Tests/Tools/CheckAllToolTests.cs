@@ -40,8 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object, Mock.Of<IFileHelper>());
 
             var languageChecks = new List<PythonLanguageService> { pythonCheck };
-            var mockPowershellHelper = new Mock<IPowershellHelper>();            
-           
+ 
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockGitHelper.Object, languageChecks);
 
             // Setup default mock responses

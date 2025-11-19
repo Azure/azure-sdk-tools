@@ -7,7 +7,6 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 

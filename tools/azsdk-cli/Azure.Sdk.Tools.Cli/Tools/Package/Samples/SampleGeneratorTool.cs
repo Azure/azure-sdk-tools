@@ -11,7 +11,6 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
-using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 {
@@ -25,7 +24,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Generates sample files")]
     public class SampleGeneratorTool: LanguageMcpTool
     {
-        //private ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
         private IMicroagentHostService microagentHostService;
         public SampleGeneratorTool(
             IMicroagentHostService microagentHostService,

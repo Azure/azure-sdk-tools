@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using LibGit2Sharp;
 using Moq;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Azure.Sdk.Tools.Cli.Services.Languages.Samples.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 

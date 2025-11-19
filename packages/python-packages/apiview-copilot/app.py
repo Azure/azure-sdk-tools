@@ -24,7 +24,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
-from src._auth import require_auth
+from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
@@ -76,7 +76,10 @@ class ApiReviewJobStatusResponse(BaseModel):
 
 
 @app.post("/api-review/start", status_code=202)
-async def submit_api_review_job(job_request: ApiReviewJobRequest, _claims=Depends(require_auth)):
+async def submit_api_review_job(
+    job_request: ApiReviewJobRequest,
+    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+):
     """Submit a new API review job."""
     # Validate language
     if job_request.language not in SUPPORTED_LANGUAGES:
@@ -118,7 +121,10 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest, _claims=Depend
 
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
-async def get_api_review_job_status(job_id: str, _claims=Depends(require_auth)):
+async def get_api_review_job_status(
+    job_id: str,
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER)),
+):
     """Get the status of an API review job."""
     try:
         job = db_manager.review_jobs.get(job_id)
@@ -128,7 +134,9 @@ async def get_api_review_job_status(job_id: str, _claims=Depends(require_auth)):
 
 
 @app.get("/auth-test")
-async def auth_test(_claims=Depends(require_auth)):
+async def auth_test(
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER)),
+):
     """Test endpoint to verify authentication is working."""
     return {"status": "ok"}
 
@@ -163,7 +171,10 @@ class AgentChatResponse(BaseModel):
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
-async def agent_chat(request: AgentChatRequest, _claims=Depends(require_auth)):
+async def agent_chat(
+    request: AgentChatRequest,
+    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+):
     """Handle chat requests to the agent."""
     logger.info("Received /agent/chat request: user_input=%s, thread_id=%s", request.user_input, request.thread_id)
     try:
@@ -198,7 +209,10 @@ class SummarizeResponse(BaseModel):
 
 
 @app.post("/api-review/summarize", response_model=SummarizeResponse)
-async def summarize_api(request: SummarizeRequest, _claims=Depends(require_auth)):
+async def summarize_api(
+    request: SummarizeRequest,
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER)),
+):
     """Summarize API changes based on the provided request."""
     if request.language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{request.language}`")
@@ -246,7 +260,10 @@ class MentionRequest(BaseModel):
 
 
 @app.post("/api-review/mention", response_model=AgentChatResponse)
-async def handle_mention(request: MentionRequest, _claims=Depends(require_auth)):
+async def handle_mention(
+    request: MentionRequest,
+    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+):
     """Handle mentions in API reviews."""
     logger.info(
         "Received /api-review/mention request: language=%s, package_name=%s, comments_count=%d",
@@ -271,7 +288,10 @@ async def handle_mention(request: MentionRequest, _claims=Depends(require_auth))
 
 
 @app.post("/api-review/resolve", response_model=AgentChatResponse)
-async def handle_thread_resolution(request: MentionRequest, _claims=Depends(require_auth)):
+async def handle_thread_resolution(
+    request: MentionRequest,
+    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+):
     """Handle thread resolution in API reviews."""
     logger.info(
         "Received /api-review/resolve request: language=%s, package_name=%s, comments_count=%d",

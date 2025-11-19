@@ -84,8 +84,8 @@ public class VerifySetupTool : LanguageMcpTool
             
             foreach (var req in reqsToCheck)
             {
-                logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
-                    req.requirement, req.check, req.instructions);
+                logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}",
+                    req.requirement, req.check);
 
                 var task = RunCheck(req, packagePath, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
                 checkTasks.Add(task);
@@ -97,8 +97,6 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 if (result.ExitCode != 0)
                 {
-                    logger.LogWarning("Requirement check failed for {Requirement}. Suggested install command: {Instruction}", req.requirement, req.instructions);
-
                     response.ResponseErrors ??= new List<string>() ;
                     response.ResponseErrors.Add($"Requirement check failed for {req.requirement}. Error: {result.ResponseError}");
 
@@ -128,7 +126,7 @@ public class VerifySetupTool : LanguageMcpTool
             command[0],
             args: command.Skip(1).ToArray(),
             timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-            logOutputStream: true,
+            logOutputStream: false,
             workingDirectory: packagePath
         );
 
@@ -143,7 +141,7 @@ public class VerifySetupTool : LanguageMcpTool
                 logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", string.Join(' ', command), result.ExitCode, trimmed);
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}. Output: {trimmed}."
+                    ResponseError = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}.\n Instructions for resolving: {string.Join(", ", req.instructions)}.\n Output: {trimmed}."
                 };
             }
 
@@ -151,7 +149,6 @@ public class VerifySetupTool : LanguageMcpTool
 
             if (!versionCheckResult.Equals(string.Empty))
             {
-                logger.LogError("Command {Command} failed version check.", string.Join(' ', command));
                 return new DefaultCommandResponse
                 {
                     ResponseError = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
@@ -160,14 +157,11 @@ public class VerifySetupTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Command {Command} failed to execute.", string.Join(' ', command));
             return new DefaultCommandResponse
             {
-                ResponseError = $"Command {string.Join(' ', command)} failed to execute. Exception: {ex.Message}"
+                ResponseError = $"Command {string.Join(' ', command)} failed to execute.\n Instructions for resolving: {string.Join(", ", req.instructions)}.\n Exception: {ex.Message}"
             };
         }
-
-        logger.LogInformation("Command {Command} succeeded. Output: {Output}", string.Join(' ', command), trimmed);
 
         return new DefaultCommandResponse
         {
@@ -260,7 +254,7 @@ public class VerifySetupTool : LanguageMcpTool
         string operatorSymbol = match.Groups[1].Value;
         string requiredVersion = match.Groups[2].Value.Trim();
 
-        logger.LogInformation("Requires version: {requiredVersion}", requiredVersion);
+        logger.LogDebug("Requires version: {requiredVersion}", requiredVersion);
 
         // Parse the output version
         var outputVersionMatch = System.Text.RegularExpressions.Regex.Match(output, OUTPUT_VERSION_PATTERN);
@@ -272,7 +266,7 @@ public class VerifySetupTool : LanguageMcpTool
 
         string installedVersion = outputVersionMatch.Value.Trim();
 
-        logger.LogInformation("Installed version: {installedVersion}", installedVersion);
+        logger.LogDebug("Installed version: {installedVersion}", installedVersion);
 
 
         if (Version.TryParse(requiredVersion, out var requiredVer) && Version.TryParse(installedVersion, out var installedVer))

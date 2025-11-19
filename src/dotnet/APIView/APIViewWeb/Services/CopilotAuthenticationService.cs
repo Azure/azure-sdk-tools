@@ -4,19 +4,20 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Services
 {
     public class CopilotAuthenticationService : ICopilotAuthenticationService
     {
         private readonly IConfiguration _configuration;
-        private readonly ChainedTokenCredential _credential;
+        private readonly TokenCredential _credential;
 
-        public CopilotAuthenticationService(IConfiguration configuration)
+        public CopilotAuthenticationService(IConfiguration configuration, ILogger<CopilotAuthenticationService> logger)
         {
             _configuration = configuration;
             _credential = new ChainedTokenCredential(
-                new ManagedIdentityCredential(),
+                new ManagedIdentityCredential(_configuration["CopilotUserAssignedIdentity"]),
                 new AzureCliCredential()
             );
         }
@@ -29,9 +30,17 @@ namespace APIViewWeb.Services
                 throw new InvalidOperationException("CopilotAppId configuration is missing");
             }
 
-            var scope = $"api://{copilotAppId}/.default";
-            var tokenRequestContext = new TokenRequestContext([scope]);
-            var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
+            string tenantId = _configuration["AzureAd:TenantId"];
+
+            var tokenRequestContext = new TokenRequestContext(
+                scopes: new[] { $"api://{copilotAppId}/.default" },
+                parentRequestId: null,
+                claims: null,
+                tenantId: tenantId,
+                isCaeEnabled: false
+            );
+
+            AccessToken token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
             return token.Token;
         }
     }

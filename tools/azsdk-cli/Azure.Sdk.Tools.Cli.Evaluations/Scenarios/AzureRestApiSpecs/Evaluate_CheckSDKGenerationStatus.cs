@@ -9,6 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
     public partial class Scenario
     {
         [Test]
+        [Category(RepositoryCategories.AzureRestApiSpecs)]
         public async Task Evaluate_CheckSDKGenerationStatus()
         {
             var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example2.json");

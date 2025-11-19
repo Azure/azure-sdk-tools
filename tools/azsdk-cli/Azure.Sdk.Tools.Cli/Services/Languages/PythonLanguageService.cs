@@ -35,7 +35,7 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         logger.LogDebug("Resolving Python package info for path: {packagePath}", packagePath);
         var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
-        var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, repoRoot, ct);
+        var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
         {
@@ -73,7 +73,7 @@ public sealed partial class PythonLanguageService : LanguageService
         return model;
     }
 
-private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, string repoRoot, CancellationToken ct)
+private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
 {
     string? packageName = null;
     string? packageVersion = null;
@@ -81,6 +81,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     try
     {
         logger.LogTrace("Calling get_package_properties.py for {packagePath}", packagePath);
+        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
         var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "get_package_properties.py");
         
         var result = await pythonHelper.Run(new PythonOptions(

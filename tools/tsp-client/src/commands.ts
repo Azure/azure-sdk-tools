@@ -313,7 +313,9 @@ export async function syncCommand(argv: any) {
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
   if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
-    throw new Error("tsp-location.yaml is missing required fields for sync operation");
+    throw new Error(
+      "tsp-location.yaml is missing required field(s) for sync operation: directory, commit, repo",
+    );
   }
   const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
   const dirSplit = tspLocation.directory.split("/");
@@ -409,7 +411,9 @@ export async function generateCommand(argv: any) {
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
   if (!tspLocation.directory) {
-    throw new Error("tsp-location.yaml is missing required fields for generate operation");
+    throw new Error(
+      "tsp-location.yaml is missing required field(s) for generate operation: directory",
+    );
   }
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];

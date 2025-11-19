@@ -56,16 +56,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
 
-                // Validate inputs
-                if (string.IsNullOrEmpty(packagePath))
+                // Validate package path
+                if (string.IsNullOrWhiteSpace(packagePath))
                 {
-                    return PackageOperationResponse.CreateFailure("Package path is required.");
+                    return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
                 }
 
-                if (!Directory.Exists(packagePath))
+                // Resolves relative paths to absolute
+                string fullPath = Path.GetFullPath(packagePath);
+                
+                if (!Directory.Exists(fullPath))
                 {
-                    return PackageOperationResponse.CreateFailure($"Path does not exist: {packagePath}");
+                    return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
                 }
+
+                packagePath = fullPath;
+                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
@@ -100,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         { "PackagePath", packagePath }
                     };
-                    
+
                     // Create and execute process options for the build script
                     var processOptions = this.specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, CommandTimeoutInMinutes);
                     if (processOptions != null)

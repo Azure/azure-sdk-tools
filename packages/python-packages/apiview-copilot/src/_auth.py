@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from enum import Enum
 from typing import Optional, Set, Union
 
@@ -32,10 +31,6 @@ _CANONICAL_AUD = f"api://{APP_ID}"
 _ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
 
 
-# Uvicorn logger for debug output
-_logger = logging.getLogger("uvicorn")
-
-
 # Enum for app/user roles
 class AppRole(Enum):
     """
@@ -49,11 +44,9 @@ class AppRole(Enum):
     APP_WRITER = "App.Write"
 
 
-def require_roles(*roles: str):
+def require_roles(*roles: AppRole):
     """
     Require that the token contains at least one of the specified roles.
-    No implicit inclusion: all required roles must be present for endpoints requiring both.
-    Logs relevant JWT info to Uvicorn for debugging.
     """
     if not all(isinstance(r, AppRole) for r in roles):
         raise TypeError("All arguments to require_roles must be AppRole enum values.")
@@ -61,18 +54,8 @@ def require_roles(*roles: str):
 
     async def _dep(claims: dict = Depends(_require_auth)):
         token_roles = _safe_get_app_roles(claims)
-        aud = claims.get("aud")
-        appid = _caller_app_id(claims)
-        subject = claims.get("sub")
-        # Log relevant info for debugging
-        _logger.info(
-            "AUTH DEBUG: sub=%s, aud=%s, appid=%s, roles=%s, required=%s", subject, aud, appid, token_roles, required
-        )
         if not required.intersection(token_roles):
-            _logger.warning(
-                "AUTH DENY: sub=%s, aud=%s, appid=%s, roles=%s, required=%s", subject, aud, appid, token_roles, required
-            )
-            raise HTTPException(status_code=403, detail="Missing required role(s): %s" % ", ".join(required))
+            raise HTTPException(status_code=403, detail="Unauthorized.")
         return claims
 
     return _dep
@@ -98,7 +81,10 @@ def _caller_app_id(claims: dict) -> Optional[str]:
 
 
 def _normalize_audience(aud_value: Union[str, list[str], None]) -> Set[str]:
-    # aud can be string or list of strings
+    """
+    Normalize the audience claim to a set of strings.
+    Handles both string and list types.
+    """
     if isinstance(aud_value, list):
         return set(aud_value)
     return {aud_value} if aud_value else set()
@@ -132,7 +118,8 @@ async def _require_auth(
     cred: HTTPAuthorizationCredentials = Depends(_SECURITY),
 ) -> dict:
     """
-    Validate JWT (issuer, signature, audience).
+    FastAPI dependency to validate JWT (issuer, signature, audience).
+    Returns decoded token claims if valid, else raises HTTPException.
     :param cred: HTTP auth credentials (injected)
     :return: decoded token claims
     :rtype: dict

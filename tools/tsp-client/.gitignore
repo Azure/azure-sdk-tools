@@ -6,3 +6,7 @@ temp
 tsp-output/
 output/
 test/examples/specification/convert/examples/*
+.tmp-test-*
+TempTypeSpecFiles/
+# Ignore generated SDK files in test examples
+test/examples/sdk/contosowidgetmanager/

@@ -46,11 +46,7 @@ export async function generateChangelog(jsSdkRepoPath: string, packageFolderPath
     // Check if this is a Data-Plane package
     const modularSDKType = getModularSDKType(packageFolderPath);
     if (modularSDKType === ModularSDKType.DataPlane) {
-        // Execution Steps (Data-Plane):
-        // Return noop result advising manual edit and future version bump timing
-        logger.info('Data-Plane package detected.');
-        logger.info('Please manually update the changelog with the appropriate changes.');
-        logger.info('Run the version bump command when you are ready to release.');
+        logger.info('Skipping changelog generation for DataPlane SDK.');
         return;
     }
 
@@ -90,15 +86,14 @@ export async function generateChangelog(jsSdkRepoPath: string, packageFolderPath
                 const changelogContent = changelog.content.length === 0 ? `### Features Added\n` : changelog.content;
                 await generateChangelogForReleasingTrack2(packageFolderPath, newVersion, changelogContent, originalChangeLogContent, stableVersion);
                 logger.info('Generated changelogs for track2 release successfully.');
-                logger.info(`Changelog entry added for ${currentDate}`);
             } else {
                 logger.info(`Package ${packageName} released before is track1 sdk.`);
                 logger.info('Start to generate changelog of migrating track1 to track2 sdk.');
                 const newVersion = getNewVersion(stableVersion, usedVersions, true, isStableRelease);
                 await generateChangelogForMigratingToTrack2(packageFolderPath, newVersion);
                 logger.info('Generated changelogs for migrating track1 to track2 successfully.');
-                logger.info(`Changelog entry added for ${currentDate}`);
             }
+            logger.info(`Changelog entry added for ${currentDate}`);
         } finally {
             cleanupResources(packageFolderPath, jsSdkRepoPath);
         }
@@ -107,6 +102,13 @@ export async function generateChangelog(jsSdkRepoPath: string, packageFolderPath
 
 export async function updateBumpVersion(jsSdkRepoPath: string, packageFolderPath: string, sdkReleaseType: string | undefined, sdkVersion: string | undefined, sdkReleaseDate: string | undefined): Promise<void> {
     logger.info(`Start to update bump version for ${packageFolderPath}`);
+
+    const modularSDKType = getModularSDKType(packageFolderPath);
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        logger.info('Skipping changelog generation for DataPlane SDK.');
+        return;
+    }
+
     const apiVersionType = await getApiVersionType(packageFolderPath);
     const isStableRelease = await isStableSDKReleaseTypeForCli(apiVersionType, sdkReleaseType)
     const packageName = getNpmPackageName(packageFolderPath);
@@ -160,7 +162,7 @@ export async function updateBumpVersion(jsSdkRepoPath: string, packageFolderPath
     }
 }
 
-export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
+export async function generateChangelogAndBumpVersion(packageFolderPath: string, options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
@@ -197,7 +199,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
             const clientType = getSDKType(packageFolderPath);
             if (sdkType && sdkType === 'mgmt' || clientType === SDKType.RestLevelClient) {
                 logger.info(`Package ${packageName} released before is track2 sdk.`);
-                
+
                 logger.info('Start to generate changelog by comparing api.md.');
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
@@ -278,7 +280,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
                 }
-                const changelogContent = changelog.content.length === 0 ? `### Features Added\n` : changelog.content; 
+                const changelogContent = changelog.content.length === 0 ? `### Features Added\n` : changelog.content;
                 await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelogContent, originalChangeLogContent, stableVersion);
                 return changelog;
             } else {

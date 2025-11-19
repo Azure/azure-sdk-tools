@@ -113,7 +113,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     }
     catch (Exception ex)
     {
-        logger.LogWarning(ex, "Error running Python script for {packagePath}, falling back to file-based parsing", packagePath);
+        logger.LogWarning(ex, "Error running Python script for {packagePath}", packagePath);
         
     }
     return (packageName, packageVersion);

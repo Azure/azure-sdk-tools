@@ -17,11 +17,12 @@ function generate(item: ApiItem, deprecated: boolean): ReviewToken[] {
 
     tokens.push({ Kind: TokenKind.MemberName, Value: item.displayName });
     tokens.push({Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true, HasSuffixSpace: true, IsDeprecated: deprecated});
+    
     // Enum members
-    const enumMembers = item.getSortedMemberItems();
+    const enumMembers = item.members;
     for (const member of enumMembers) {
-        tokens.push({Kind: TokenKind.MemberName, Value: member.displayName, IsDeprecated: member.isDeprecated});
-        tokens.push({Kind: TokenKind.Punctuation, Value: ",", HasPrefixSpace: true, HasSuffixSpace: true, IsDeprecated: member.isDeprecated});
+        tokens.push({Kind: TokenKind.MemberName, Value: member.displayName, IsDeprecated: deprecated});
+        tokens.push({Kind: TokenKind.Punctuation, Value: ",", HasPrefixSpace: true, HasSuffixSpace: true, IsDeprecated: deprecated});
     }
     // Remove last comma
     if (enumMembers.length > 0) {

@@ -21,17 +21,14 @@ namespace APIViewWeb.Services
             _configuration = configuration;
             _logger = logger;
          
-            // Use federated identity: managed identity → app registration (with app roles!)
-            string tenantId = _configuration["AzureAd:TenantId"] ;
-            string clientId = _configuration["AzureAd:ClientId"];
+            _logger.LogWarning("🔐 Using user-assigned managed identity with federated credential");
             
-            _logger.LogWarning("🔐 Using ManagedIdentityCredential with Federated Identity");
-            _logger.LogWarning("🔐 Managed Identity → App Registration: {ClientId}", clientId);
-            _logger.LogWarning("🔐 This will get app roles: App.Write, App.Read");
-            
-            // Create credential that uses managed identity to get token for the app registration
-            // The federated credential we created allows this exchange
-            _credential = new ManagedIdentityCredential(clientId);
+            // Use user-assigned managed identity - this will get proper app roles via federated credential
+            // Client ID: d85c2b60-59f1-4dab-89e1-77f24986672a (apiview-copilot-staging-id)
+            _credential = new ChainedTokenCredential(
+                new ManagedIdentityCredential("d85c2b60-59f1-4dab-89e1-77f24986672a"),
+                new AzureCliCredential()
+            );
         }
 
         public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)

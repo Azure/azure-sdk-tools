@@ -21,6 +21,10 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         private static readonly bool UseMCPRelease = bool.TryParse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE"), out var result) && result;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
         private static readonly string localMcpPowershellScriptPath = @"../../../../../eng/common/mcp/azure-sdk-mcp.ps1";
+        
+        // Repository configuration for conditional testing
+        public static string? RepositoryName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
+        
         public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 

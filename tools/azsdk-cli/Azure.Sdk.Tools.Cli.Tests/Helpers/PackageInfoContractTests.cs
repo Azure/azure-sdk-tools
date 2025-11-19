@@ -75,9 +75,20 @@ public class PackageInfoContractTests
         CreateTestFile(packagePath, $"{modulePath}/_version.py", $"VERSION = \"{version}\"\n");
     }
 
-    private void SetupJavaScriptPackage(string packagePath, string packageName, string version)
+    private void SetupJavaScriptPackage(string packagePath, string packageName, string version, SdkType sdkType)
     {
-        CreateTestFile(packagePath, "package.json", $"{{\n  \"name\": \"@azure/{packageName}\",\n  \"version\": \"{version}\"\n}}");
+        CreateTestFile(packagePath, "package.json", $$"""
+{
+  "name": "@azure/{{packageName}}",
+  "version": "{{version}}",
+  "sdk-type": "{{sdkType switch
+    {
+        SdkType.Dataplane => "client",
+        SdkType.Management => "mgmt",
+        _ => ""
+    }}}" 
+}
+""");
     }
 
     private void SetupGoPackage(string packagePath, string version)
@@ -92,7 +103,7 @@ public class PackageInfoContractTests
             }}");
     }
 
-    private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version)
+    private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version, SdkType sdkType)
     {
         switch (language)
         {
@@ -106,7 +117,7 @@ public class PackageInfoContractTests
                 SetupPythonPackage(packagePath, packageName, version);
                 break;
             case SdkLanguage.JavaScript:
-                SetupJavaScriptPackage(packagePath, packageName, version);
+                SetupJavaScriptPackage(packagePath, packageName, version, sdkType);
                 break;
             case SdkLanguage.Go:
                 SetupGoPackage(packagePath, version);
@@ -154,7 +165,7 @@ public class PackageInfoContractTests
         var servicePath = language == SdkLanguage.Go ? "security/keyvault" : "ai";
         var (pkgPath, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper) = CreateSdkPackage(servicePath, package);
 
-        SetupPackageForLanguage(language, pkgPath, package, expectedVersion);
+        SetupPackageForLanguage(language, pkgPath, package, expectedVersion, SdkType.Unknown);
 
         if (language == SdkLanguage.Go)
         {
@@ -164,6 +175,22 @@ public class PackageInfoContractTests
         var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper);
         var info = await helper.GetPackageInfo(pkgPath);
         Assert.That(info.PackageVersion, Is.EqualTo(expectedVersion));
+    }
+    
+    [Test]
+    [TestCase(SdkLanguage.JavaScript, SdkType.Dataplane)]
+    [TestCase(SdkLanguage.JavaScript, SdkType.Management)]
+    public async Task SdkType_IsDerivedCorrectly(SdkLanguage language, SdkType sdkType)
+    {
+        var servicePath = "storage";
+        var package = "azure-storage-blob";
+        var (pkgPath, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper) = CreateSdkPackage(servicePath, package);
+
+        SetupJavaScriptPackage(pkgPath, package, "1.2.3", sdkType);
+
+        var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper);
+        var info = await helper.GetPackageInfo(pkgPath);
+        Assert.That(info.SdkType, Is.EqualTo(sdkType));
     }
 
     [Test]

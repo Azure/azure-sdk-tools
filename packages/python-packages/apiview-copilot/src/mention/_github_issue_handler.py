@@ -101,7 +101,7 @@ class GitHubIssueHandler:
         ]
         return json.dumps(formatted_issues)
 
-    def create_issue(self, plan: dict, language: str = None):
+    def _create_issue(self, plan: dict, language: str = None):
         """
         Create a new issue on GitHub.
 
@@ -149,10 +149,10 @@ class GitHubIssueHandler:
             Dict with action, url, title, body, and created_at
         """
         # Fetch recent issues
-        recent_issues = self.fetch_recent_issues()
+        recent_issues = self._fetch_recent_issues()
 
         # Check for duplicates
-        dedup_result = self.check_for_duplicate_issue(
+        dedup_result = self._check_for_duplicate_issue(
             plan=plan,
             recent_issues=recent_issues,
             language=language,
@@ -175,7 +175,7 @@ class GitHubIssueHandler:
             raise ValueError(f"Issue number {issue_number} from deduplication prompt not found in recent issues.")
 
         # Create new issue
-        issue = self.create_issue(plan=plan, language=language)
+        issue = self._create_issue(plan=plan, language=language)
         return {
             "action": "create",
             "url": issue["html_url"],

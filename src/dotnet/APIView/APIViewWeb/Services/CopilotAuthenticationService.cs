@@ -11,7 +11,7 @@ namespace APIViewWeb.Services
     public class CopilotAuthenticationService : ICopilotAuthenticationService
     {
         private readonly IConfiguration _configuration;
-        private readonly TokenCredential _credential;
+        private readonly ChainedTokenCredential _credential;
 
         public CopilotAuthenticationService(IConfiguration configuration, ILogger<CopilotAuthenticationService> logger)
         {
@@ -30,13 +30,11 @@ namespace APIViewWeb.Services
                 throw new InvalidOperationException("CopilotAppId configuration is missing");
             }
 
-            string tenantId = _configuration["AzureAd:TenantId"];
-
             var tokenRequestContext = new TokenRequestContext(
                 scopes: new[] { $"api://{copilotAppId}/.default" },
                 parentRequestId: null,
                 claims: null,
-                tenantId: tenantId,
+                tenantId: _configuration["AzureAd:TenantId"],
                 isCaeEnabled: false
             );
 

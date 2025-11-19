@@ -99,17 +99,21 @@ Before making your decision, follow these steps:
 
 # Example
 
-`no-op` means the new issue is a duplicate of an existing issue.
+`no-op` means the proposed issue is essentially a duplicate of an existing issue.
 
 ## no-op
-- NEW issue: Guideline about naming conventions at python_design.html#naming-conventions is outdated
+- PROPOSED issue: Guideline about naming conventions at python_design.html#naming-conventions is outdated
 - EXISTING issues: Guideline about class naming at python_design.html#naming-conventions needs update
 
-`create` means the new issue is NOT a duplicate of any existing issue.
+These are functionally the same, and thus `no-op` is the appropriate result.
+
+`create` means the proposed issue is materially different from any existing issue.
 
 ## create
-- NEW issue: Guideline about naming conventions at python_design.html#naming-conventions is outdated
+- PROPOSED issue: Guideline about naming conventions at python_design.html#naming-conventions is outdated
 - EXISTING issues: none address the naming conventions guideline
+
+The existing issue is materially different from the proposed issue (they apply to different languages) so the value should be `create`.
 
 user:
 **NEW ISSUE:**

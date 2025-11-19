@@ -15,7 +15,7 @@ class OpenGuidelinesIssueWorkflow(MentionWorkflow):
             source_tag="APIView Copilot",
             deduplication_prompt_file="deduplicate_guidelines_issue.prompty",
         )
-        return handler.execute_workflow_with_dedup(
+        return handler.execute_workflow(
             plan=plan,
             language=self.language,
             package_name=self.package_name,

@@ -37,7 +37,7 @@ class OpenParserIssueWorkflow(MentionWorkflow):
             base_labels=["APIView"],
             language_labels=self.LANGUAGE_LABELS,
         )
-        return handler.execute_workflow_with_dedup(
+        return handler.execute_workflow(
             plan=plan,
             language=self.language,
             package_name=self.package_name,

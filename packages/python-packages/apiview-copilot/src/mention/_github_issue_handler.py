@@ -133,7 +133,7 @@ class GitHubIssueHandler:
                 labels.append(language_label)
         return labels
 
-    def execute_workflow_with_dedup(
+    def execute_workflow(
         self, plan: dict, language: str = None, package_name: str = None, code: str = None
     ) -> dict:
         """

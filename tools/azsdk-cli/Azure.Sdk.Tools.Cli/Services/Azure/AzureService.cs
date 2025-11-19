@@ -1,6 +1,5 @@
 using Azure.Core;
 using Azure.Identity;
-using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -17,7 +16,7 @@ public class AzureService : IAzureService
         // called as part of a token refresh flow.
         // Currently this isn't used enough across one instance of the app
         // that we need to optimize for a cached credential.
-        if (PipelineHelper.IsRunningInPipeline())
+        if (IsRunningInPipeline())
         {
             return new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId });
         }
@@ -35,5 +34,11 @@ public class AzureService : IAzureService
         {
             return new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = tenantId });
         }
+    }
+
+    private static bool IsRunningInPipeline()
+    {
+        return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
+               Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
     }
 }

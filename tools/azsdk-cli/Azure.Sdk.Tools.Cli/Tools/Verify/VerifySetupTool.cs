@@ -214,15 +214,8 @@ public class VerifySetupTool : LanguageMcpTool
                 logger.LogError("Could not resolve requirements checker for one of the specified languages.");
                 continue;
             }
-            
-            reqsToCheck.AddRange(getter.GetRequirements(packagePath, parsedReqs, ct));
-        }
 
-        // filter out CI-only requirements if not running in CI
-        if (reqsToCheck != null && !PipelineHelper.IsRunningInPipeline())
-        {
-            logger.LogInformation("Not running in CI pipeline; filtering out CI-only requirements.");
-            reqsToCheck = reqsToCheck.Where(r => r.isCiOnly != true || r.isCiOnly == null).ToList();
+            reqsToCheck.AddRange(getter.GetRequirements(packagePath, parsedReqs, ct));
         }
 
         return reqsToCheck ?? new List<SetupRequirements.Requirement>();

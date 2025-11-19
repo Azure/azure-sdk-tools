@@ -13,7 +13,7 @@ namespace APIViewWeb.Services
         private readonly IConfiguration _configuration;
         private readonly ChainedTokenCredential _credential;
 
-        public CopilotAuthenticationService(IConfiguration configuration, ILogger<CopilotAuthenticationService> logger)
+        public CopilotAuthenticationService(IConfiguration configuration)
         {
             _configuration = configuration;
             _credential = new ChainedTokenCredential(

@@ -13,6 +13,7 @@ import {
   ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { buildToken, splitAndBuild, splitAndBuildMultipleLine } from "./jstokens";
+import { generators } from "./tokenGenerators";
 
 interface Metadata {
   Name: string;
@@ -310,6 +311,14 @@ function mayHaveChildren(item: ApiItem): boolean {
  * @param deprecated Whether the Api is deprecated or not
  */
 function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: boolean) {
+   for (const generator of generators) {
+    if (generator.isValid(item)) {
+      line.Tokens.push(...generator.generate(item, deprecated));
+      console.log(`Generated tokens for ${item.canonicalReference.toString()} using custom generator: ${generator.constructor.name}`);
+      console.log(generator.generate(item, deprecated));
+      return;
+    }
+  }
   if (item instanceof ApiDeclaredItem) {
     if (item.kind === ApiItemKind.Namespace) {
       splitAndBuild(line.Tokens, `declare namespace ${item.displayName} `, item, deprecated);

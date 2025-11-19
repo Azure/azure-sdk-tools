@@ -15,7 +15,8 @@ export interface ITokenGenerator {
     /**
      * Generates ReviewTokens from the given ApiItem.
      * @param item - The ApiItem to process.
+     * @param deprecated - Indicates if the Api is deprecated.
      * @returns An array of ReviewTokens generated from the ApiItem.
      */
-    generate(item: ApiItem): ReviewToken[];
+    generate(item: ApiItem, deprecated: boolean): ReviewToken[];
 }

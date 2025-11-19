@@ -98,7 +98,7 @@ public class VerifySetupTool : LanguageMcpTool
                 if (result.ExitCode != 0)
                 {
                     response.ResponseErrors ??= new List<string>() ;
-                    response.ResponseErrors.Add($"Requirement check failed for {req.requirement}. Error: {result.ResponseError}");
+                    response.ResponseErrors.Add($"Requirement failed: {req.requirement}. Error: {result.ResponseError}");
 
                     response.Results.Add(new RequirementCheckResult
                     {
@@ -138,10 +138,10 @@ public class VerifySetupTool : LanguageMcpTool
 
             if (result.ExitCode != 0)
             {
-                logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", string.Join(' ', command), result.ExitCode, trimmed);
+                logger.LogError("Command {Command} failed with exit code {ExitCode}.\n\nInstructions: {Instructions}", string.Join(' ', command), result.ExitCode, req.instructions);
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}.\n Instructions for resolving: {string.Join(", ", req.instructions)}.\n Output: {trimmed}."
+                    ResponseError = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}.\n Output: {trimmed}."
                 };
             }
 
@@ -149,6 +149,7 @@ public class VerifySetupTool : LanguageMcpTool
 
             if (!versionCheckResult.Equals(string.Empty))
             {
+                logger.LogError("Command {Command} failed, requires upgrade to version {Version}.", string.Join(' ', command), versionCheckResult);
                 return new DefaultCommandResponse
                 {
                     ResponseError = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
@@ -157,9 +158,10 @@ public class VerifySetupTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Command {Command} failed to execute.\n\nInstructions: {Instructions}", string.Join(' ', command), req.instructions);
             return new DefaultCommandResponse
             {
-                ResponseError = $"Command {string.Join(' ', command)} failed to execute.\n Instructions for resolving: {string.Join(", ", req.instructions)}.\n Exception: {ex.Message}"
+                ResponseError = $"Command {string.Join(' ', command)} failed to execute.\n Exception: {ex.Message}"
             };
         }
 

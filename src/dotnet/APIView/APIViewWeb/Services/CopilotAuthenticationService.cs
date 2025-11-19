@@ -1,10 +1,13 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Security.KeyVault.Certificates;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -21,11 +24,47 @@ namespace APIViewWeb.Services
             _configuration = configuration;
             _logger = logger;
          
-            _logger.LogWarning("Using ChainedTokenCredential (ManagedIdentity/AzureCli) for Copilot authentication");
-            _credential = new ChainedTokenCredential(
-                new ManagedIdentityCredential(),
-                new AzureCliCredential()
-            );
+            _credential = CreateCertificateCredential();
+
+        }
+
+        private TokenCredential CreateCertificateCredential()
+        {
+            try
+            {
+                string tenantId = _configuration["AzureAd:TenantId"];
+                string clientId = _configuration["AzureAd:ClientId"];
+                string keyVaultUrl = _configuration["CopilotAuth:KeyVaultUrl"] ?? "https://apiviewuatkv.vault.azure.net/";
+                string certName = _configuration["CopilotAuth:CertificateName"] ?? "apiview-ux-copilot-auth-1m";
+
+                _logger.LogWarning("Loading certificate {CertName} from Key Vault {KeyVaultUrl}", certName, keyVaultUrl);
+
+                // Use managed identity to access Key Vault
+                var kvCredential = new ChainedTokenCredential(
+                    new ManagedIdentityCredential(),
+                    new AzureCliCredential()
+                );
+
+                // Get the certificate from Key Vault
+                var secretClient = new SecretClient(new Uri(keyVaultUrl), kvCredential);
+                var certificateSecret = secretClient.GetSecret(certName).Value;
+                
+                // Convert the secret (which contains the full certificate with private key) to X509Certificate2
+                byte[] certBytes = Convert.FromBase64String(certificateSecret.Value);
+                var certificate = new X509Certificate2(certBytes, (string)null, X509KeyStorageFlags.MachineKeySet);
+
+                _logger.LogWarning("Certificate loaded successfully, creating ClientCertificateCredential for client {ClientId}", clientId);
+
+                return new ClientCertificateCredential(tenantId, clientId, certificate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create certificate credential, falling back to managed identity");
+                return new ChainedTokenCredential(
+                    new ManagedIdentityCredential(),
+                    new AzureCliCredential()
+                );
+            }
         }
 
         public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)

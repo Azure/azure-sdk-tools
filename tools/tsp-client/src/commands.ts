@@ -534,15 +534,15 @@ export async function updateCommand(argv: any) {
 
   // Check if this is a batch configuration
   if (tspLocation.batch) {
+    Logger.info(`Found batch configuration with ${tspLocation.batch.length} directories`);
     if (argv["local-spec-repo"]) {
       const specRepoRoot = await getRepoRoot(argv["local-spec-repo"]);
       Logger.info(
-        `Will use local spec repo root with tsp-location.yaml data to resolve path to typespec project directory: ${specRepoRoot}`,
+        `During batch processing will use local spec repo root with child library tsp-location.yaml data to resolve path to typespec project directory: ${specRepoRoot}`,
       );
       argv["local-spec-repo"] = specRepoRoot;
       argv["batch"] = true;
     }
-    Logger.info(`Found batch configuration with ${tspLocation.batch.length} directories`);
     await processBatchUpdate(tspLocation, outputDir, argv);
     return;
   }

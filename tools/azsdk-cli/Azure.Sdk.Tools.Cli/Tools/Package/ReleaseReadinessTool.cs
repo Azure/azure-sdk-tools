@@ -111,15 +111,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Check last pipeline run status for the package and verify it completed successfully
                 package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
-                if (string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status))
-                {
-                    package.IsPackageReady = false;
-                }
+                bool hasPipelineWarning = string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status);
 
                 // Package release readiness status
                 if (package.IsPackageReady)
                 {
                     package.PackageReadinessDetails = $"Package '{packageName}' is ready for release. Queue a release pipeline run using the link {package.PipelineDefinitionUrl} to release the package.";
+                    
+                    // Add warning about pipeline status if not successful
+                    if (hasPipelineWarning)
+                    {
+                        package.PackageReadinessDetails += $"\n\nWARNING: The last known CI pipeline status for this package is failed. This might cause issues when running the release pipeline if the error was not a transient failure. Please review the last pipeline run at {package.LatestPipelineRun} to verify the failure was transient before proceeding with the release.";
+                    }
                 }
                 else
                 {

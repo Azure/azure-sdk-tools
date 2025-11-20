@@ -89,15 +89,24 @@ type CompletionResp struct {
 type QuestionScope string
 
 const (
-	QuestionScope_Unknown   QuestionScope = "unknown"
-	QuestionScope_Branded   QuestionScope = "branded"
-	QuestionScope_Unbranded QuestionScope = "unbranded"
+	QuestionScope_DATA_PLANE       QuestionScope = "data-plane"
+	QuestionScope_MANAGEMENT_PLANE QuestionScope = "management-plane"
+	QuestionScope_Unbranded        QuestionScope = "unbranded"
+	QuestionScope_Unknown          QuestionScope = "unknown"
+)
+
+type SpecLanguage string
+
+const (
+	SpecLanguage_TypeSpec SpecLanguage = "typespec"
+	SpecLanguage_OpenAPI  SpecLanguage = "openapi"
+	SpecLanguage_Unknown  SpecLanguage = "unknown"
 )
 
 type IntentionResult struct {
 	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
 	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	SpecLanguage       SpecLanguage  `json:"spec_language,omitempty" jsonschema:"omitempty,description=The language of the spec"`
 	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
 	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
 }

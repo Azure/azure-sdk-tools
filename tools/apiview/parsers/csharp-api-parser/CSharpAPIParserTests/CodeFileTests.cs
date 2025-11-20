@@ -41,9 +41,9 @@ namespace CSharpAPIParserTests
 
         public static IEnumerable<object[]> CodeFiles => new List<object[]>
         {
-            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 9},
-            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 15},
-            new object[] { coreCodeFile, "Azure.Core", "1.47.3.0", 27},
+            new object[] { templateCodeFile, "Azure.Template" , "1.0.3-beta.4055065", 9},
+            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2", 15},
+            new object[] { coreCodeFile, "Azure.Core", "1.47.3", 27},
         };
 
         [Theory]
@@ -560,6 +560,40 @@ namespace TestNamespace
                 Assert.True(hasExtensionKeyword || hasCompilerGeneratedClasses || extensionsClass.Children.Any(), 
                     "Should either have extension keyword or compiler-generated nested structure");
             }
+        }
+
+        [Fact]
+        public void CodeFile_Has_IJsonModel_Implementation_Rendered_Correctly()
+        {
+            // Load Azure.AI.Translation.Text assembly
+            Assembly testAssembly = Assembly.Load("Azure.AI.Translation.Text");
+            var dllStream = testAssembly.GetFile("Azure.AI.Translation.Text.dll");
+            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            // Verify that the codeFile has some content
+            Assert.True(codeFile.ReviewLines.Any(), "CodeFile should have some review lines");
+
+            // Find types that implement IJsonModel
+            var typesWithIJsonModel = new List<ReviewLine>();
+            foreach (var namespaceLine in codeFile.ReviewLines)
+            {
+                if (namespaceLine.Children != null)
+                {
+                    foreach (var typeLine in namespaceLine.Children)
+                    {
+                        // Check if the type implements IJsonModel by looking for it in the tokens
+                        if (typeLine.Tokens != null && typeLine.Tokens.Any(t => t.Value?.Contains("IJsonModel") == true))
+                        {
+                            typesWithIJsonModel.Add(typeLine);
+                        }
+                    }
+                }
+            }
+
+            // Assert that we found at least one type implementing IJsonModel
+            Assert.True(typesWithIJsonModel.Any(), 
+                "Should find at least one type implementing IJsonModel in Azure.AI.Translation.Text assembly");
         }
     }
 }

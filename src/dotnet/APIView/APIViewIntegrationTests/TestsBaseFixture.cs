@@ -156,8 +156,8 @@ namespace APIViewIntegrationTests
 
             var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
             var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();
+            var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
             var reviewManagerLoggerMoq = new Mock<ILogger<ReviewManager>>();
-            
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object,
                 reviewsRepository: ReviewRepository,
@@ -175,6 +175,7 @@ namespace APIViewIntegrationTests
                 pollingJobQueueManager: pollingJobQueueManagerMoq.Object,
                 notificationManager: notificationManager,
                 pullRequestsRepository: pullRequestsRepositoryMoq.Object,
+                copilotAuthService: copilotAuthServiceMoq.Object,
                 logger: reviewManagerLoggerMoq.Object);
 
             TestDataPath = _config["TestPkgPath"];

@@ -23,11 +23,11 @@
 
 ## Overview
 
-Scenario 2 defines an expanded end-to-end workflow that **builds upon and fully encompasses [Scenario 1](./0-scenario-1.spec.md#overview)**. It includes every step from Scenario 1 (environment setup, SDK generation, package updates, validation) and **adds new stages for [automated environment remediation](#1-environment-setup), [TypeSpec customizations](#typespec-customizations) and [code customizations](#code-customizations)**, plus both [live tests](#live-test) and [test recordings](#test-recording).
+Scenario 2 extends **[Scenario 1](./0-scenario-1.spec.md#overview)** by adding: automated environment remediation, customization (TypeSpec + code), and live / recorded testing. All Scenario 1 stages (environment setup, generation, package metadata & docs updates, validation) remain; the inner loop now also covers customization and test asset creation.
 
-**Tool Automation Strategy**: Scenario 2 completes the set of tools that enable fully automatable SDK development processes, providing agents with access to deterministic, repeatable operations. Future scenarios will focus on AI-powered tools for tasks that require intelligent decision-making and cannot be fully automated—such as data plane README generation, content updates, and other activities that benefit from micro-agent collaboration or AI reasoning.
+**Tool Automation Strategy**: Scenario 2 rounds out deterministic inner-loop tooling. Future scenarios will layer AI assistance onto judgment-heavy tasks (for example, README authoring and broader doc updates).
 
-**Unified Customization Experience**: Although Scenario 2 distinguishes between [TypeSpec customizations](#typespec-customizations) and [code customizations](#code-customizations) at the tooling level, users should experience a **single, seamless customization workflow**. The agent automatically determines whether requested changes should be implemented via TypeSpec edits or handwritten code overlays, routing to the appropriate tool transparently. Clear decision criteria and smooth handoffs between customization types are critical to the user experience.
+**Unified Customization Experience**: Users describe the change; tooling chooses TypeSpec or code. The **[Customization Playbook](#customization-playbook)** drives the decision and hides mechanism details unless needed.
 
 **Service**: Health Deidentification
 
@@ -38,11 +38,11 @@ Scenario 2 defines an expanded end-to-end workflow that **builds upon and fully 
 
 Scenario 2 validates:
 
-- Complete inner-loop SDK workflow from environment setup → [TypeSpec customizations](#typespec-customizations) → generation → [code customizations](#code-customizations) → testing ([live](#live-test) and [recorded](#test-recording)) → validation
+- Expanded inner loop: setup → customization → generation → layering → testing (live / recorded) → validation
 - Support for **[Net-New SDKs](#net-new-sdk)** and existing SDKs
-- Workflows across **all five SDK languages** (.NET, Java, JavaScript, Python, Go)
-- Health Deidentification service as the end-to-end test service
-- Both **Agent Mode** and **CLI Mode**, mirroring [Scenario 1 coverage](./0-scenario-1.spec.md#overview)
+- All five languages (.NET, Java, JavaScript, Python, Go)
+- Health Deidentification service end to end
+- Both **Agent Mode** and **CLI Mode** paths
 
 ---
 
@@ -57,18 +57,26 @@ The terminology from [Scenario 1 Definitions](./0-scenario-1.spec.md#definitions
 - **<a id="live-test"></a>Live Test**: An automated test that executes against Azure resources. When recording is explicitly enabled, it produces recordings for later playback validation.
 - **<a id="test-recording"></a>Test Recording**: Captured HTTP interactions produced by live tests when recording is enabled, reused for playback-based validation.
 - **<a id="test-infrastructure"></a>Test Infrastructure**: Azure resources, credentials, configuration, and environment settings required to execute or re-record live tests.
+- **<a id="customization-playbook"></a>Customization Playbook**: Tool that recommends TypeSpec, code, or both for a requested change and explains why.
+- **<a id="handwritten-layer"></a>Handwritten Layer**: Language-specific code area for user-added features kept separate from regenerated output.
+- **<a id="project-scaffolding"></a>Project Scaffolding**: Initial directory, build, test, and metadata structure for a **[Net-New SDK](#net-new-sdk)**.
+- **<a id="test-asset"></a>Test Asset**: Generated file or config (for example, `test-resources.json`) needed to provision or run tests.
+- **<a id="test-mode"></a>Test Mode**: Execution context: live, live-record, or playback.
+- **<a id="live-record-mode"></a>Live-Record Mode**: Live test execution with recording capture enabled.
+- **<a id="playback-test"></a>Playback Test**: Test run using recorded HTTP interactions instead of live Azure calls.
+- **<a id="environment-remediation"></a>Environment Remediation**: Automated install/upgrade actions after verification to reach required tool baselines.
 
 ---
 
 ## Why Scenario 2 Matters
 
-Without a workflow that covers customization, live testing, and [Net-New SDK](#net-new-sdk) creation, tooling risks fragmentation and gaps in the developer experience. Scenario 2 ensures:
+Without coverage for customization, live testing, and **[Net-New SDK](#net-new-sdk)** creation the toolset would remain fragmented. Scenario 2 delivers:
 
-- Clear success benchmarks for a broader, more realistic SDK workflow including [Net-New SDK](#net-new-sdk) scaffolding
-- Repeatable validation that covers customization, testing, and validation stages
-- Defined scope for [TypeSpec customizations](#typespec-customizations) and [code customizations](#code-customizations) alongside [test infrastructure](#test-infrastructure)
-- A foundation for **cross-language consistency** across the expanded stages
-- Confidence that [Scenario 1](./0-scenario-1.spec.md) capabilities remain integrated with the new tooling
+- Clear success benchmarks (including scaffolding)
+- Repeatable validation across customization and testing
+- Explicit scope for TypeSpec vs. code customization and supporting **[Test Infrastructure](#test-infrastructure)**
+- Cross-language consistency for new stages
+- Confirmation that Scenario 1 capabilities integrate cleanly
 
 ---
 
@@ -78,8 +86,8 @@ Without a workflow that covers customization, live testing, and [Net-New SDK](#n
 
 - Windows machine with freshly cloned repositories (`azure-rest-api-specs` plus all five language repositories)
 - TypeSpec modifications are **local only**
-- All agent-mode interactions occur in **VS Code with GitHub Copilot**, with the `azure-rest-api-specs` repository open
-- Azure subscription access allows on-demand creation and teardown of test resources
+- Agent-mode interactions occur in **VS Code with GitHub Copilot** with `azure-rest-api-specs` open
+- Azure subscription permits on-demand resource provisioning and teardown
 
 ### In Scope for Scenario 2
 
@@ -91,12 +99,12 @@ Without a workflow that covers customization, live testing, and [Net-New SDK](#n
 - Both **Agent Mode and CLI Mode** validation
 - VS Code with GitHub Copilot guidance and automation
 - AI models: Claude Sonnet 4 / 4.1, GPT-4, GPT-5
-- **Automated environment remediation** to install or upgrade missing/out-of-date tooling
-- **[TypeSpec customizations](#typespec-customizations)** to tailor generated SDK surfaces before or after initial generation
-- **[Code customizations](#code-customizations)** to add handwritten code layers on top of generated output
-- Creation of **[live tests](#live-test)**, **[test infrastructure](#test-infrastructure)** assets, and new **[test recordings](#test-recording)** for [Net-New SDKs](#net-new-sdk)
+- Automated **[Environment Remediation](#environment-remediation)** (install/upgrade tooling)
+- **[TypeSpec Customizations](#typespec-customizations)** to shape generated surfaces
+- **[Code Customizations](#code-customizations)** to add handwritten layers
+- Creation of **[Live Tests](#live-test)**, **[Test Assets](#test-asset)**, and new **[Test Recordings](#test-recording)** for [Net-New SDKs](#net-new-sdk)
 - Re-recording flows for existing SDKs
-- Automated teardown of Azure resources following live-test runs
+- Automated teardown of Azure resources after live runs
 
 ### Out of Scope for Scenario 2
 
@@ -158,7 +166,7 @@ Without a workflow that covers customization, live testing, and [Net-New SDK](#n
 8. **Validating** → `azsdk_package_run_check`
    - Run final validation checks across languages and stages (see [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating))
 
-⚠️  STOP: This is a test scenario only. Do NOT commit these changes or create release PRs.
+⚠️  STOP: Test scenario only. Do NOT commit or create release PRs.
 
 ---
 

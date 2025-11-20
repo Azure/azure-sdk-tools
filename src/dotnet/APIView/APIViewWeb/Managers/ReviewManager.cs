@@ -553,6 +553,7 @@ namespace APIViewWeb.Managers
                 var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(diffApiRevision, false);
                 var diffCodeLines = diffCodeFile.CodeFile.GetApiLines(skipDocs: true);
                 payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+
             }
 
             try {

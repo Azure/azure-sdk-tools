@@ -257,7 +257,7 @@ Although TypeSpec edits conceptually precede generation, in practice they are of
 
 **Tool:** `azsdk_package_customize_typespec`
 
-**Action:****
+**Action:**
 
 - Modify `client.tsp` to introduce or refine SDK library customizations based on feedback from the generated SDK.
 - Validate updated TypeSpec files to ensure compilation across all target languages.

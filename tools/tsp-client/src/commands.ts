@@ -304,6 +304,7 @@ export async function initCommand(argv: any) {
 export async function syncCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let localSpecRepo = argv["local-spec-repo"];
+  const batch = argv["batch"] ?? false;
 
   const tempRoot = await createTempDirectory(outputDir);
   const repoRoot = await getRepoRoot(outputDir);
@@ -328,6 +329,12 @@ export async function syncCommand(argv: any) {
   await mkdir(srcDir, { recursive: true });
 
   if (localSpecRepo) {
+    if (batch) {
+      localSpecRepo = resolve(localSpecRepo, tspLocation.directory);
+      Logger.info(
+        `Resolved local spec repo path using tsp-location.yaml directory: ${localSpecRepo}`,
+      );
+    }
     if (localSpecRepo.endsWith("tspconfig.yaml")) {
       // If the path is to tspconfig.yaml, we need to remove it to get the spec directory
       localSpecRepo = localSpecRepo.split("tspconfig.yaml")[0];
@@ -532,6 +539,14 @@ export async function updateCommand(argv: any) {
 
   // Check if this is a batch configuration
   if (tspLocation.batch) {
+    if (argv["local-spec-repo"]) {
+      const specRepoRoot = await getRepoRoot(argv["local-spec-repo"]);
+      Logger.info(
+        `Will use local spec repo root with tsp-location.yaml data to resolve path to typespec project directory: ${specRepoRoot}`,
+      );
+      argv["local-spec-repo"] = specRepoRoot;
+      argv["batch"] = true;
+    }
     Logger.info(`Found batch configuration with ${tspLocation.batch.length} directories`);
     await processBatchUpdate(tspLocation, outputDir, argv);
     return;

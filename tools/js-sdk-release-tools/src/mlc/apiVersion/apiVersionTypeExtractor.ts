@@ -63,17 +63,17 @@ export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promi
         // Check if src/api exists in the GitHub repository
         const hasOperationsInGithub = await checkDirectoryExistsInGithub(
             packageRoot,
-            "src/api",
+            ["src/api", "src/operations"],
             packageName,
             stableVersion
         );
 
         if (!hasOperationsInGithub) {
-            logger.warn(`No parameters.ts found in ${packageRoot} and no src/api directory found in GitHub for ${packageName}, this is a model-only service`);
+            logger.warn(`No parameters.ts found in ${packageRoot} and neither "src/api" nor "src/operations" found in GitHub for ${packageName}; treating as a model-only service.`);
             return true;
         }
     }
 
-    logger.info(`Found parameters.ts locally or src/api in GitHub for ${packageRoot}, this is not a model-only service`);
+    logger.info(`Found parameters.ts locally or one of "src/api" / "src/operations" in GitHub for ${packageRoot}; this is not a model-only service.`);
     return false;
 };

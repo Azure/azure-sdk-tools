@@ -22,11 +22,11 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         public static async Task<EvaluationResult> RunScenarioAsync(
             string scenarioName,
             ScenarioData scenarioData,
-            Dictionary<string, ChatMessage> expectedToolResults,
             ChatCompletion chatCompletion,
             ChatConfiguration chatConfig,
             string executionName,
             string reportingPath,
+            IEnumerable<string> toolNames,
             IEnumerable<IEvaluator>? evaluators = null,
             bool enableResponseCaching = true,
             IEnumerable<EvaluationContext>? additionalContexts = null,
@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             evaluators ??= [new ExpectedToolInputEvaluator()];
 
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
+            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, toolNames);
 
             var reportingConfiguration = DiskBasedReportingConfiguration.Create(
                 executionName: executionName,

@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [OneTimeSetUp]
         public async Task GlobalSetup()
         {
-            if(!TestSetup.ValidateCopilotEnvironmentConfiguration())
+            if (!TestSetup.ValidateCopilotEnvironmentConfiguration())
             {
                 Assert.Ignore("Skipping all tests: Required environment variables are not configured. " +
                     "Set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_MODEL_DEPLOYMENT_NAME, REPOSITORY_NAME, and COPILOT_INSTRUCTIONS_PATH_MCP_EVALS.");

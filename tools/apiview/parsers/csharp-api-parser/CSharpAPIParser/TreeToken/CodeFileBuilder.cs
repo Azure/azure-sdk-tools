@@ -188,14 +188,13 @@ namespace CSharpAPIParser.TreeToken
 
         private void BuildNamespace(List<ReviewLine> reviewLines, INamespaceSymbol namespaceSymbol)
         {
-            bool isHidden = HasOnlyHiddenTypes(namespaceSymbol);
             var namespaceLine = new ReviewLine()
             {
                 LineId = namespaceSymbol.GetId(),
                 Tokens = [
                     ReviewToken.CreateKeywordToken("namespace")
                 ],
-                IsHidden = isHidden
+                IsHidden = false // Will be updated after building children
             };
 
             BuildNamespaceName(namespaceLine, namespaceSymbol);
@@ -209,10 +208,14 @@ namespace CSharpAPIParser.TreeToken
             namespaceLine.Tokens.Add(ReviewToken.CreatePunctuationToken("{"));
 
             // Add each members in the namespace
-            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()).OrderBy(s => s.GetId()))
+            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
             {
-                BuildType(namespaceLine.Children, namedTypeSymbol, isHidden);
+                BuildType(namespaceLine.Children, namedTypeSymbol, false); // Don't propagate namespace-level hidden flag
             }
+
+            // Namespace is only hidden if ALL its children are hidden or if it has no children
+            bool isHidden = namespaceLine.Children.Count == 0 || namespaceLine.Children.All(c => c.IsHidden == true);
+            namespaceLine.IsHidden = isHidden;
 
             reviewLines.Add(namespaceLine);
             reviewLines.Add(new ReviewLine()

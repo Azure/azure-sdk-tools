@@ -13,6 +13,9 @@ parameters:
 - name: rules
   type: string
   default: ""
+- name: runTestCase
+  type: string
+  default: ""
 
 steps:
 - task: UseDotNet@2
@@ -59,12 +62,23 @@ steps:
     command: 'run'
     workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/DataSource'
 
+# - task: DotNetCoreCLI@2
+#   displayName: Run common test case
+#   condition: eq('${{ parameters.runTestCase }}', '')
+#   inputs:
+#     command: 'test'
+#     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
+#     arguments: '-e BROWSER=chromium --filter Category=CommonTest'
+#     testRunTitle: 'Content Validation Testing Start'
+#   continueOnError: false
+
 - task: DotNetCoreCLI@2
-  displayName: Run common test case
+  displayName: Run specific test method
+  condition: ne('${{ parameters.runTestCase }}', '')
   inputs:
     command: 'test'
     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
-    arguments: '-e BROWSER=chromium --filter Category=CommonTest'
+    arguments: '-e BROWSER=chromium --filter FullyQualifiedName~${{ parameters.runTestCase }}'
     testRunTitle: 'Content Validation Testing Start'
   continueOnError: false
 

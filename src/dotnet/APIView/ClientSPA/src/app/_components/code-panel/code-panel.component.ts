@@ -388,7 +388,6 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
-    // Find the actual index in codePanelRowData
     let targetIndex = this.codePanelRowData.findIndex(row => {
       if (row.nodeIdHashed === updateData.nodeIdHashed && row.type === updateData.type) {
         if (updateData.type === CodePanelRowDatatype.CommentThread) {
@@ -399,7 +398,6 @@ export class CodePanelComponent implements OnChanges{
       return false;
     });
 
-    // Update the actual array reference
     if (targetIndex !== -1) {
       this.codePanelRowData[targetIndex] = updateData;
     }
@@ -408,7 +406,7 @@ export class CodePanelComponent implements OnChanges{
     await this.codePanelRowSource?.adapter?.update({
       predicate: ({ $index, data, element}) => {
         if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
-          return [updateData];
+          return updateData;
         }
         return true;
       }

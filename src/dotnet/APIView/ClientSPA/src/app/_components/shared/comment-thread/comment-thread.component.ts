@@ -321,6 +321,7 @@ export class CommentThreadComponent {
     const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
+      this.codePanelRowData!.draftCommentText = '';
       this.selectedSeverity = null;
       this.cancelCommentActionEmitter.emit(
         {
@@ -375,6 +376,7 @@ export class CommentThreadComponent {
         this.selectedSeverity = null;
       }
       this.codePanelRowData!.showReplyTextBox = false;
+      this.codePanelRowData!.draftCommentText = ''; // Clear draft after saving
     } else {
       const panel = target.closest("p-panel") as Element;
       const commentId = panel.getAttribute("data-comment-id");

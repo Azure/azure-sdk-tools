@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, QueryList, ViewChildren } from '@angular/core';
 import { SimplemdeOptions } from 'ngx-simplemde';
 
 @Component({
@@ -8,6 +8,7 @@ import { SimplemdeOptions } from 'ngx-simplemde';
 })
 export class EditorComponent {
   @Input() content: string = '';
+  @Output() contentChange = new EventEmitter<string>();
   @Input() editorId: string = '';
   editorOptions : SimplemdeOptions = {
     autosave: { enabled: false },

@@ -374,9 +374,9 @@ export class CommentThreadComponent {
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;
+        this.codePanelRowData!.showReplyTextBox = false;
+        this.codePanelRowData!.draftCommentText = '';
       }
-      this.codePanelRowData!.showReplyTextBox = false;
-      this.codePanelRowData!.draftCommentText = ''; // Clear draft after saving
     } else {
       const panel = target.closest("p-panel") as Element;
       const commentId = panel.getAttribute("data-comment-id");

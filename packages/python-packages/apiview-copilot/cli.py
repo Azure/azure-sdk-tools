@@ -514,7 +514,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     print(f"Error: {e}")
         else:
             # Local mode: use async agent as before
-            async with get_main_agent() as agent:
+            with get_main_agent() as (client, agent_id):
                 while True:
                     try:
                         user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -536,7 +536,11 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                         break
                     try:
                         response, thread_id_out, messages = await invoke_agent(
-                            agent=agent, user_input=user_input, thread_id=current_thread_id, messages=messages
+                            client=client,
+                            agent_id=agent_id,
+                            user_input=user_input,
+                            thread_id=current_thread_id,
+                            messages=messages,
                         )
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out

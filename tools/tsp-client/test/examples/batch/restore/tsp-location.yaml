@@ -2,3 +2,4 @@ directory: tools/tsp-client/test/examples/batch/service/restore
 commit: abc123
 repo: Azure/azure-sdk-tools
 additionalDirectories:
+emitterPackageJsonPath: tools/tsp-client/test/examples/batch/service/package.json

@@ -1,5 +1,14 @@
 .dialog-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.dialog-header-section {
+  flex-shrink: 0;
 }
 
 .select-all-section {
@@ -8,11 +17,26 @@
   color: var(--base-text-color);
 }
 
+.related-comments-list-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
 .related-comments-list {
+  height: 100%;
+  overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 1rem;
   background-color: var(--base-fg-color);
+}
+
+.bulk-actions-section {
+  flex-shrink: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .comment-item {
@@ -86,9 +110,12 @@
   }
   
   .p-dialog .p-dialog-content {
-    padding: 1.5rem;
+    padding: 0 !important;
     background-color: var(--base-bg-color);
     color: var(--base-text-color);
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
   }
   
   .p-dialog .p-dialog-footer {

@@ -5,35 +5,39 @@
   [resizable]="true"
   [draggable]="false"
   [dismissableMask]="true"
-  header="Resolve Issues"
+  header="View related issues"
   [style]="{width: '70vw', height: '80vh'}"
+  [contentStyle]="{'display': 'flex', 'flex-direction': 'column', 'overflow': 'hidden', 'padding': '0', 'height': '100%'}"
   appendTo="body"
   (onHide)="onHide()">
   
   <div class="dialog-content">
-    <div class="mb-3">
-      <small class="text-muted">
-        The following issues are reporting a related feedback:
-      </small>
-    </div>
+    <div class="dialog-header-section">
+      <div class="mb-3">
+        <small class="text-muted">
+          The following issues are reporting a related feedback:
+        </small>
+      </div>
 
-    <!-- Select All Checkbox -->
-    <div class="d-flex align-items-center justify-content-between mb-3 p-2 bg-light rounded select-all-section">
-      <div class="d-flex align-items-center">
-        <p-checkbox 
-          [binary]="true"
-          [ngModel]="selectAll"
-          (onChange)="onSelectAllChange($event)"
-          styleClass="me-2">
-        </p-checkbox>
-        <label class="form-check-label fw-semibold mb-0">
-          Select All ({{ relatedComments.length }} issues)
-        </label>
+      <!-- Select All Checkbox -->
+      <div class="d-flex align-items-center justify-content-between mb-3 p-2 bg-light rounded select-all-section">
+        <div class="d-flex align-items-center">
+          <p-checkbox 
+            [binary]="true"
+            [ngModel]="selectAll"
+            (onChange)="onSelectAllChange($event)"
+            styleClass="me-2">
+          </p-checkbox>
+          <label class="form-check-label fw-semibold mb-0">
+            Select All ({{ relatedComments.length }} issues)
+          </label>
+        </div>
       </div>
     </div>
 
     <!-- Related Comments List -->
-    <div class="related-comments-list mb-4" style="max-height: 50vh; overflow-y: auto;">
+    <div class="related-comments-list-container">
+      <div class="related-comments-list">
       <div *ngFor="let comment of relatedComments" 
            class="comment-item border rounded p-3 mb-3" 
            [class.selected]="isCommentSelected(comment.id)">
@@ -90,10 +94,11 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- Bulk Actions Section -->
-    <div class="bulk-actions-section mt-4 pt-3 border-top">
+    <div class="bulk-actions-section">
       <div class="d-flex align-items-center justify-content-between mb-2">
         <label class="form-label fw-semibold mb-0">
           Message (Optional):

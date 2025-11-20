@@ -806,9 +806,9 @@ describe.sequential("Verify commands", () => {
       (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
     );
     await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
-  });
+  }, 360000);
 
-  it.only("process batch directories in updateCommand with local spec path", async () => {
+  it("process batch directories in updateCommand with local spec path", async () => {
     const argv = {
       "output-dir": "./test/examples/batch",
       "local-spec-repo": "./test/examples/batch/service",

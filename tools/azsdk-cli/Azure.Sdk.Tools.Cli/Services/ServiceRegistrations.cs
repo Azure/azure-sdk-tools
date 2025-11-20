@@ -14,6 +14,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
 
@@ -33,6 +34,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+
+            // APIView Services
+            services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
+            services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
+            services.AddSingleton<IAPIViewService, APIViewService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
@@ -85,6 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITelemetryService, TelemetryService>();
             services.ConfigureOpenTelemetry();
 
+            services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>
             {
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection

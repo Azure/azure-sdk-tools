@@ -3357,6 +3357,197 @@ class DoNotUseLoggingException(BaseChecker):
                 node=node,
                 confidence=None,
             )
+
+
+class StableSDKPreviewAPIChecker(BaseChecker):
+    """Rule to check that stable SDKs don't call preview API versions"""
+
+    name = "stable-sdk-preview-api"
+    priority = -1
+    msgs = {
+        "C4774": (
+            "Stable SDK (version %s) should not use preview API version. Found preview api-version: %s",
+            "stable-sdk-no-preview-api",
+            "Stable SDKs (without 'a' or 'b' suffix in version) should not call preview API versions (containing '-preview').",
+        ),
+    }
+
+    def __init__(self, linter=None):
+        super().__init__(linter)
+        self._sdk_version = None
+        self._is_stable_sdk = None
+        self._checked_version = False
+
+    def _is_stable_version(self, version_string):
+        """Check if a version string represents a stable release.
+        
+        Stable versions don't contain 'a' or 'b' suffixes (like 1.0.0a1 or 1.0.0b1).
+        
+        :param version_string: The version string to check
+        :return: True if stable, False if preview/alpha/beta
+        """
+        if not version_string:
+            return False
+        
+        # Check for alpha (a) or beta (b) indicators in the version
+        # Examples: "1.0.0a1", "1.0.0b1", "1.0.0-beta.1"
+        version_lower = version_string.lower()
+        
+        # Pattern: contains 'a' or 'b' followed by a digit, or contains 'alpha', 'beta', 'preview', 'rc'
+        import re
+        preview_patterns = [
+            r'\d+[ab]\d+',  # 1.0.0a1, 1.0.0b1
+            r'alpha',
+            r'beta',
+            r'preview',
+            r'rc',  # release candidate
+        ]
+        
+        for pattern in preview_patterns:
+            if re.search(pattern, version_lower):
+                return False
+        
+        return True
+
+    def _check_version_in_module(self, node):
+        """Check if this module defines VERSION or version.
+        
+        :param node: The module node
+        """
+        if self._checked_version:
+            return
+            
+        try:
+            # Look for VERSION = "..." assignments in the module
+            for item in node.body:
+                if isinstance(item, astroid.Assign):
+                    for target in item.targets:
+                        if hasattr(target, 'name') and target.name in ('VERSION', 'version'):
+                            if hasattr(item.value, 'value'):
+                                version_value = item.value.value
+                                self._sdk_version = version_value
+                                self._is_stable_sdk = self._is_stable_version(version_value)
+                                self._checked_version = True
+                                return
+        except Exception:
+            pass
+
+    def _is_preview_api_version(self, value):
+        """Check if a string value contains '-preview' indicating a preview API version.
+        
+        :param value: The string value to check
+        :return: True if it's a preview API version, False otherwise
+        """
+        if isinstance(value, str) and '-preview' in value.lower():
+            return True
+        return False
+
+    def visit_module(self, node):
+        """Visit the module to check for VERSION definition.
+        
+        :param node: The module node
+        """
+        self._check_version_in_module(node)
+
+    def visit_assign(self, node):
+        """Check assignments for preview api_version values.
+        
+        :param node: The assignment node
+        """
+        if not self._is_stable_sdk:
+            return
+            
+        try:
+            # Check if any target is named 'api_version' or has 'api_version' as attrname
+            for target in node.targets:
+                # Check for simple variable: api_version = "..."
+                if hasattr(target, 'name') and target.name == 'api_version':
+                    if hasattr(node.value, 'value'):
+                        api_version_value = node.value.value
+                        if self._is_preview_api_version(api_version_value):
+                            self.add_message(
+                                msgid="stable-sdk-no-preview-api",
+                                node=node,
+                                args=(self._sdk_version, api_version_value),
+                                confidence=None,
+                            )
+                # Check for attribute assignment: self.api_version = "..." or self._api_version = "..."
+                elif hasattr(target, 'attrname') and 'api_version' in target.attrname:
+                    if hasattr(node.value, 'value'):
+                        api_version_value = node.value.value
+                        if self._is_preview_api_version(api_version_value):
+                            self.add_message(
+                                msgid="stable-sdk-no-preview-api",
+                                node=node,
+                                args=(self._sdk_version, api_version_value),
+                                confidence=None,
+                            )
+        except Exception:
+            pass
+
+    def visit_call(self, node):
+        """Check function/method calls for api_version keyword arguments with preview values.
+        
+        :param node: The call node
+        """
+        if not self._is_stable_sdk:
+            return
+            
+        try:
+            # Check keyword arguments
+            if node.keywords:
+                for keyword in node.keywords:
+                    if keyword.arg == 'api_version':
+                        if hasattr(keyword.value, 'value'):
+                            api_version_value = keyword.value.value
+                            if self._is_preview_api_version(api_version_value):
+                                self.add_message(
+                                    msgid="stable-sdk-no-preview-api",
+                                    node=node,
+                                    args=(self._sdk_version, api_version_value),
+                                    confidence=None,
+                                )
+        except Exception:
+            pass
+
+    def visit_functiondef(self, node):
+        """Check function definitions for default parameter values with preview api_version.
+        
+        :param node: The function definition node
+        """
+        if not self._is_stable_sdk:
+            return
+            
+        try:
+            # Check default values of parameters
+            if node.args.defaults:
+                param_names = [arg.name for arg in node.args.args]
+                defaults = node.args.defaults
+                
+                # Match defaults to their parameters (defaults are right-aligned)
+                num_params = len(param_names)
+                num_defaults = len(defaults)
+                offset = num_params - num_defaults
+                
+                for i, default in enumerate(defaults):
+                    param_name = param_names[offset + i]
+                    if param_name == 'api_version':
+                        if hasattr(default, 'value'):
+                            api_version_value = default.value
+                            if self._is_preview_api_version(api_version_value):
+                                self.add_message(
+                                    msgid="stable-sdk-no-preview-api",
+                                    node=node,
+                                    args=(self._sdk_version, api_version_value),
+                                    confidence=None,
+                                )
+        except Exception:
+            pass
+
+    # Make it work for async functions too
+    visit_asyncfunctiondef = visit_functiondef
+
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3408,3 +3599,4 @@ def register(linter):
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
     linter.register_checker(DoNotUseLoggingException(linter))
+    linter.register_checker(StableSDKPreviewAPIChecker(linter))

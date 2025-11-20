@@ -4091,3 +4091,179 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         
         with self.assertNoMessages():
             self.checker.visit_call(future_exception_call)
+
+
+class TestStableSDKPreviewAPIChecker(pylint.testutils.CheckerTestCase):
+    """Test that stable SDKs don't use preview API versions"""
+
+    CHECKER_CLASS = checker.StableSDKPreviewAPIChecker
+
+    @pytest.fixture(scope="class")
+    def setup_stable(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    @pytest.fixture(scope="class")
+    def setup_beta(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_beta.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    @pytest.fixture(scope="class")
+    def setup_alpha(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_alpha.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_stable_sdk_with_preview_api_assignment(self, setup_stable):
+        """Test that stable SDK with preview API in assignment triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the assignment node for _api_version
+        class_node = setup_stable.body[1]  # MyClient class
+        init_method = class_node.body[0]  # __init__ method
+        assignment_node = init_method.body[1]  # self._api_version = "2023-01-01-preview"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=10,
+                node=assignment_node,
+                args=('1.0.0', '2023-01-01-preview'),
+                col_offset=8,
+                end_line=10,
+                end_col_offset=48,
+            )
+        ):
+            self.checker.visit_assign(assignment_node)
+
+    def test_stable_sdk_with_preview_api_default_param(self, setup_stable):
+        """Test that stable SDK with preview API as default parameter triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the function with preview API default
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[1]  # operation_with_preview_default
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=12,
+                node=function_node,
+                args=('1.0.0', '2023-05-01-preview'),
+                col_offset=4,
+                end_line=12,
+                end_col_offset=38,
+            )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_stable_sdk_with_preview_api_call(self, setup_stable):
+        """Test that stable SDK with preview API in method call triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the call node
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[3]  # operation_calling_preview
+        call_node = function_node.body[0].value  # self._some_method(api_version="2023-01-01-preview")
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=23,
+                node=call_node,
+                args=('1.0.0', '2023-01-01-preview'),
+                col_offset=8,
+                end_line=23,
+                end_col_offset=59,
+            )
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_stable_sdk_with_stable_api_default_param(self, setup_stable):
+        """Test that stable SDK with stable API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the function with stable API default
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[2]  # operation_with_stable_default
+        
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+    def test_stable_sdk_with_stable_api_call(self, setup_stable):
+        """Test that stable SDK with stable API in call doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the call node
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[4]  # operation_calling_stable
+        call_node = function_node.body[0].value  # self._some_method(api_version="2023-01-01")
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_beta_sdk_with_preview_api_assignment(self, setup_beta):
+        """Test that beta SDK with preview API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_beta)
+        
+        # Get the assignment node
+        class_node = setup_beta.body[1]  # MyClient class
+        init_method = class_node.body[0]  # __init__ method
+        assignment_node = init_method.body[1]  # self._api_version = "2023-01-01-preview"
+        
+        with self.assertNoMessages():
+            self.checker.visit_assign(assignment_node)
+
+    def test_beta_sdk_with_preview_api_default_param(self, setup_beta):
+        """Test that beta SDK with preview API as default doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_beta)
+        
+        # Get the function with preview API default
+        class_node = setup_beta.body[1]  # MyClient class
+        function_node = class_node.body[1]  # operation_with_preview_default
+        
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+    def test_beta_sdk_with_preview_api_call(self, setup_beta):
+        """Test that beta SDK with preview API in call doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_beta)
+        
+        # Get the call node
+        class_node = setup_beta.body[1]  # MyClient class
+        function_node = class_node.body[2]  # operation_calling_preview
+        call_node = function_node.body[0].value  # self._some_method(api_version="2023-01-01-preview")
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_alpha_sdk_with_preview_api_default_param(self, setup_alpha):
+        """Test that alpha SDK with preview API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_alpha)
+        
+        # Get the function with preview API default
+        class_node = setup_alpha.body[1]  # MyClient class
+        function_node = class_node.body[1]  # operation_with_preview_default
+        
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)

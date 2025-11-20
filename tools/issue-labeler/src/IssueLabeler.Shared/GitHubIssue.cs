@@ -110,5 +110,9 @@ namespace IssueLabeler.Shared
 
         [LoadColumn(8)]
         public float NumMentions;
+        [LoadColumn(9)]
+        public string ServiceLabel;
+        [LoadColumn(10)]
+        public string CategoryLabel;
     }
 }

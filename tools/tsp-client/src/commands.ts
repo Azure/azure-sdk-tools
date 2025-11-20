@@ -14,7 +14,7 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
-import { npmCommand, nodeCommand, tspClientCommand } from "./npm.js";
+import { npmCommand, nodeCommand } from "./npm.js";
 import {
   compileTsp,
   discoverEntrypointFile,

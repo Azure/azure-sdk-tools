@@ -88,11 +88,14 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             }
             else
             {
-                logger.LogInformation($"Updating Team for Pipeline PipelineId = {pipeline.Id} Name = '{teamName}'");
-                result.Description = teamDescription;
-                if (persistChanges)
+                if (result.Description != teamDescription)
                 {
-                    result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
+                    logger.LogInformation($"Updating Team for Pipeline PipelineId = {pipeline.Id} Name = '{teamName}'");
+                    result.Description = teamDescription;
+                    if (persistChanges)
+                    {
+                        result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
+                    }
                 }
             }
             if (result != default)
@@ -157,12 +160,17 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var teamSet = new HashSet<string>(teamDescriptors);
                 var contactsToRemove = teamSet.Except(contactsSet);
                 var contactsToAdd = contactsSet.Except(teamSet);
+                string teamDescriptor = "";
+
+                if (contactsToRemove.Any() || contactsToAdd.Any())
+                {
+                    teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                }
 
                 foreach (string descriptor in contactsToRemove)
                 {
                     if (persistChanges && descriptor != null)
                     {
-                        string teamDescriptor = await service.GetDescriptorAsync(team.Id);
                         logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                         await service.RemoveMember(teamDescriptor, descriptor);
                     }
@@ -172,7 +180,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     if (persistChanges && descriptor != null)
                     {
-                        string teamDescriptor = await service.GetDescriptorAsync(team.Id);
                         logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                         await service.AddToTeamAsync(teamDescriptor, descriptor);
                     }

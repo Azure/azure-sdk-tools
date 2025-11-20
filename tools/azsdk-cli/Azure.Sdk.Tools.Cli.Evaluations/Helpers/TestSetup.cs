@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         // Repository configuration for conditional testing
         public static string? RepositoryName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
         
-        public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH_MCP_EVALS");
+        public static string? CopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH_MCP_EVALS");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
         public static TokenCredential GetCredential(ILogger? logger = null)
@@ -116,15 +116,15 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                         "Invalid environment configuration: REPOSITORY_NAME must be provided.");
                 }
                 
-                if (string.IsNullOrEmpty(GetCopilotInstructionsPath))
+                if (string.IsNullOrEmpty(CopilotInstructionsPath))
                 {
                     throw new InvalidOperationException(
                         "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH_MCP_EVALS must be provided.");
                 }
                 
-                if(!Path.Exists(GetCopilotInstructionsPath))
+                if(!Path.Exists(CopilotInstructionsPath))
                 {
-                    throw new FileNotFoundException($"Could not find copilot instructions file at path: {GetCopilotInstructionsPath}");
+                    throw new FileNotFoundException($"Could not find copilot instructions file at path: {CopilotInstructionsPath}");
                 }
                 
                 return true;
@@ -134,8 +134,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             if (string.IsNullOrEmpty(AzureOpenAIEndpoint) || 
                 string.IsNullOrEmpty(AzureOpenAIModelDeploymentName) ||
                 string.IsNullOrEmpty(RepositoryName) ||
-                string.IsNullOrEmpty(GetCopilotInstructionsPath) || 
-                !Path.Exists(GetCopilotInstructionsPath))
+                string.IsNullOrEmpty(CopilotInstructionsPath) || 
+                !Path.Exists(CopilotInstructionsPath))
             {
                 return false; // Skip test - configuration not available locally
             }

@@ -48,7 +48,7 @@ Follow these rules:
      `0-scenario-2.spec.md`, keep behavior aligned with `0-scenario-1.spec.md`
      where they are intentionally shared.
    - When adding or editing stage descriptions (Environment Setup, Generating,
-     Pre-Generation Customizations, Post-Generation Customizations, Testing,
+     Determine Customization Approach, TypeSpec Customizations, Code Customizations, Testing,
      etc.), keep terminology consistent across scenarios.
 
 5. **Editing behavior**

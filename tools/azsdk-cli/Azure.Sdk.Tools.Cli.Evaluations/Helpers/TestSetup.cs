@@ -93,60 +93,54 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             }
         }
 
-        public static bool ValidateCopilotEnvironmentConfiguration()
+        public static void ValidateEnvironmentConfiguration()
         {
-            if(IsRunningInPipeline())
+            // Validate all required environment variables
+            if (string.IsNullOrEmpty(AzureOpenAIEndpoint))
             {
-                // Validate all required environment variables
-                if (string.IsNullOrEmpty(AzureOpenAIEndpoint))
-                {
-                    throw new InvalidOperationException(
-                        "Invalid environment configuration: AZURE_OPENAI_ENDPOINT must be provided.");
-                }
-                
-                if (string.IsNullOrEmpty(AzureOpenAIModelDeploymentName))
-                {
-                    throw new InvalidOperationException(
-                        "Invalid environment configuration: AZURE_OPENAI_MODEL_DEPLOYMENT_NAME must be provided.");
-                }
-                
-                if (string.IsNullOrEmpty(RepositoryName))
-                {
-                    throw new InvalidOperationException(
-                        "Invalid environment configuration: REPOSITORY_NAME must be provided.");
-                }
-                
-                if (string.IsNullOrEmpty(CopilotInstructionsPath))
-                {
-                    throw new InvalidOperationException(
-                        "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH_MCP_EVALS must be provided.");
-                }
-                
-                if(!Path.Exists(CopilotInstructionsPath))
-                {
-                    throw new FileNotFoundException($"Could not find copilot instructions file at path: {CopilotInstructionsPath}");
-                }
-                
-                return true;
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: AZURE_OPENAI_ENDPOINT must be provided.");
             }
-            
-            // Not running in pipeline - check if all configuration is available
-            if (string.IsNullOrEmpty(AzureOpenAIEndpoint) || 
-                string.IsNullOrEmpty(AzureOpenAIModelDeploymentName) ||
-                string.IsNullOrEmpty(RepositoryName) ||
-                string.IsNullOrEmpty(CopilotInstructionsPath) || 
-                !Path.Exists(CopilotInstructionsPath))
+                
+            if (string.IsNullOrEmpty(AzureOpenAIModelDeploymentName))
             {
-                return false; // Skip test - configuration not available locally
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: AZURE_OPENAI_MODEL_DEPLOYMENT_NAME must be provided.");
             }
-            
-            return true;
+                
+            if (string.IsNullOrEmpty(RepositoryName))
+            {
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: REPOSITORY_NAME must be provided.");
+            }
+                
+            if (string.IsNullOrEmpty(CopilotInstructionsPath))
+            {
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH_MCP_EVALS must be provided.");
+            }
+                
+            if(!Path.Exists(CopilotInstructionsPath))
+            {
+                throw new FileNotFoundException($"Could not find copilot instructions file at path: {CopilotInstructionsPath}");
+            }
         }
 
         private static bool IsRunningInPipeline()
         {
             return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
                    Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
+        }
+
+        public static bool ShouldRunEvals()
+        {
+            // If not in pipeline and no copilot instructions path then skip tests
+            if (string.IsNullOrEmpty(CopilotInstructionsPath) && !IsRunningInPipeline())
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

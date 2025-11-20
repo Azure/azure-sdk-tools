@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 chatConfig: s_chatConfig!,
                 executionName: s_executionName,
                 reportingPath: ReportingPath,
-                toolNames: s_toolNames,
+                toolNames: s_toolNames!,
                 evaluators: [new ExpectedToolInputEvaluator()],
                 enableResponseCaching: true,
                 additionalContexts: new EvaluationContext[]

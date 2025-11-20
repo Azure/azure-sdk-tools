@@ -10,13 +10,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
     public static class TestSetup
     {
         // Configuration from environment variables - required
-        private static readonly string AzureOpenAIEndpoint =
-            Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
-            ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT environment variable is required");
+        private static readonly string? AzureOpenAIEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
 
-        private static readonly string AzureOpenAIModelDeploymentName =
-            Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
-            ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
+        private static readonly string? AzureOpenAIModelDeploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME");
         
         private static readonly bool UseMCPRelease = bool.TryParse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE"), out var result) && result;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
@@ -25,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         // Repository configuration for conditional testing
         public static string? RepositoryName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
         
-        public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
+        public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH_MCP_EVALS");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
         public static TokenCredential GetCredential(ILogger? logger = null)
@@ -97,19 +93,60 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             }
         }
 
-        public static void ValidateCopilotEnvironmentConfiguration()
+        public static bool ValidateCopilotEnvironmentConfiguration()
         {
-            // Validate that we have at least one valid configuration
-            if (string.IsNullOrEmpty(GetCopilotInstructionsPath))
+            if(IsRunningInPipeline())
             {
-                throw new InvalidOperationException(
-                    "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH must be provided.");
+                // Validate all required environment variables
+                if (string.IsNullOrEmpty(AzureOpenAIEndpoint))
+                {
+                    throw new InvalidOperationException(
+                        "Invalid environment configuration: AZURE_OPENAI_ENDPOINT must be provided.");
+                }
+                
+                if (string.IsNullOrEmpty(AzureOpenAIModelDeploymentName))
+                {
+                    throw new InvalidOperationException(
+                        "Invalid environment configuration: AZURE_OPENAI_MODEL_DEPLOYMENT_NAME must be provided.");
+                }
+                
+                if (string.IsNullOrEmpty(RepositoryName))
+                {
+                    throw new InvalidOperationException(
+                        "Invalid environment configuration: REPOSITORY_NAME must be provided.");
+                }
+                
+                if (string.IsNullOrEmpty(GetCopilotInstructionsPath))
+                {
+                    throw new InvalidOperationException(
+                        "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH_MCP_EVALS must be provided.");
+                }
+                
+                if(!Path.Exists(GetCopilotInstructionsPath))
+                {
+                    throw new FileNotFoundException($"Could not find copilot instructions file at path: {GetCopilotInstructionsPath}");
+                }
+                
+                return true;
             }
+            
+            // Not running in pipeline - check if all configuration is available
+            if (string.IsNullOrEmpty(AzureOpenAIEndpoint) || 
+                string.IsNullOrEmpty(AzureOpenAIModelDeploymentName) ||
+                string.IsNullOrEmpty(RepositoryName) ||
+                string.IsNullOrEmpty(GetCopilotInstructionsPath) || 
+                !Path.Exists(GetCopilotInstructionsPath))
+            {
+                return false; // Skip test - configuration not available locally
+            }
+            
+            return true;
+        }
 
-            if(!Path.Exists(GetCopilotInstructionsPath))
-            {
-                throw new FileNotFoundException($"Could not find copilot instructions file at path: {GetCopilotInstructionsPath}");
-            }
+        private static bool IsRunningInPipeline()
+        {
+            return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
+                   Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
         }
     }
 }

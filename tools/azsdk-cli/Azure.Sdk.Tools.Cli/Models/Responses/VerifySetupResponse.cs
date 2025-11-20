@@ -17,7 +17,7 @@ public class VerifySetupResponse : CommandResponse
         var sb = new StringBuilder();
         sb.AppendLine("Results:");
 
-        if (Results != null && Results!.Count > 0)
+        if (Results != null && Results.Count > 0)
         {
             foreach (var result in Results)
             {

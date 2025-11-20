@@ -45,7 +45,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         {
             var repositoryName = TestSetup.RepositoryName;
             if (string.IsNullOrEmpty(repositoryName))
+            {
                 return;
+            }
 
             // Extract repo name from "Owner/Repo" format and normalize
             var repoName = repositoryName.Split('/').Last().ToLowerInvariant();
@@ -58,7 +60,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 
             // No categories means test runs everywhere
             if (!categories.Any())
+            {
                 return;
+            }
 
             // Skip if repository doesn't match any category
             if (!categories.Contains(repoName))
@@ -73,7 +77,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         {
             // Skip report generation if tests were skipped during setup
             if (s_chatClient == null)
+            {
                 return;
+            }
             
             // Generate a HTML report for all the evaluations run
             var resultStore = new DiskBasedResultStore(ReportingPath);

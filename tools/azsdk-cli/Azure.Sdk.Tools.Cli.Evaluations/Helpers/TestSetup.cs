@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         public static AzureOpenAIClient GetAzureOpenAIClient(ILogger? logger = null)
         {
             var credential = GetCredential(logger);
-            return new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint), credential);
+            return new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint!), credential);
         }
 
         public static IChatClient GetChatClient(ILogger? logger = null)

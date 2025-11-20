@@ -4267,3 +4267,83 @@ class TestStableSDKPreviewAPIChecker(pylint.testutils.CheckerTestCase):
         
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
+
+    @pytest.fixture(scope="class")
+    def setup_enum_stable(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_enum.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    @pytest.fixture(scope="class")
+    def setup_enum_beta(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_enum_beta.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_stable_sdk_with_preview_api_in_enum(self, setup_enum_stable):
+        """Test that stable SDK with preview API in ApiVersion enum triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_enum_stable)
+        
+        # Get the ApiVersion enum class
+        apiversion_class = setup_enum_stable.body[3]  # ApiVersion enum class
+        
+        # The checker will find both preview API enum members
+        preview_member_1 = apiversion_class.body[1]  # V2023_05_01_PREVIEW = "2023-05-01-preview"
+        preview_member_2 = apiversion_class.body[3]  # V2024_06_01_PREVIEW = "2024-06-01-preview"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=11,
+                node=preview_member_1,
+                args=('1.0.0', '2023-05-01-preview'),
+                col_offset=4,
+                end_line=11,
+                end_col_offset=46,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=13,
+                node=preview_member_2,
+                args=('1.0.0', '2024-06-01-preview'),
+                col_offset=4,
+                end_line=13,
+                end_col_offset=46,
+            )
+        ):
+            self.checker.visit_classdef(apiversion_class)
+
+    def test_stable_sdk_with_stable_api_in_enum(self, setup_enum_stable):
+        """Test that stable SDK with stable API in ApiVersion enum doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_enum_stable)
+        
+        # Get the ApiVersion enum class
+        apiversion_class = setup_enum_stable.body[3]  # ApiVersion enum class
+        
+        # The stable enum members should not trigger errors
+        # We test by visiting the class which checks all members
+        # and ensuring we only get messages for the preview ones
+        with self.assertNoMessages():
+            # Visit just the stable member
+            stable_member = apiversion_class.body[0]  # V2023_01_01 = "2023-01-01"
+            self.checker.visit_assign(stable_member)
+
+    def test_beta_sdk_with_preview_api_in_enum(self, setup_enum_beta):
+        """Test that beta SDK with preview API in ApiVersion enum doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_enum_beta)
+        
+        # Get the ApiVersion enum class
+        apiversion_class = setup_enum_beta.body[3]  # ApiVersion enum class
+        
+        # Beta SDK can use preview APIs in enums
+        with self.assertNoMessages():
+            self.checker.visit_classdef(apiversion_class)

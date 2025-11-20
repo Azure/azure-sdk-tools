@@ -3544,6 +3544,39 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         except Exception:
             pass
 
+    def visit_classdef(self, node):
+        """Check enum class definitions for preview API version values.
+        
+        Specifically checks ApiVersion enums for preview API versions.
+        
+        :param node: The class definition node
+        """
+        if not self._is_stable_sdk:
+            return
+            
+        try:
+            # Check if this is an ApiVersion enum class
+            if 'ApiVersion' in node.name:
+                # Check all assignments in the class body (enum members)
+                for item in node.body:
+                    if isinstance(item, astroid.Assign):
+                        # Get the enum member name and value
+                        for target in item.targets:
+                            if hasattr(target, 'name') and hasattr(item.value, 'value'):
+                                enum_member_name = target.name
+                                enum_value = item.value.value
+                                
+                                # Check if the enum value contains preview API
+                                if self._is_preview_api_version(enum_value):
+                                    self.add_message(
+                                        msgid="stable-sdk-no-preview-api",
+                                        node=item,
+                                        args=(self._sdk_version, enum_value),
+                                        confidence=None,
+                                    )
+        except Exception:
+            pass
+
     # Make it work for async functions too
     visit_asyncfunctiondef = visit_functiondef
 

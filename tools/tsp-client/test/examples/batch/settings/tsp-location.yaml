@@ -1,0 +1,4 @@
+directory: tools/tsp-client/test/examples/batch/service/settings
+commit: abc123
+repo: Azure/azure-sdk-tools
+additionalDirectories:

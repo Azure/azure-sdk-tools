@@ -70,9 +70,25 @@ public class PackageInfoContractTests
 
     private void SetupPythonPackage(string packagePath, string packageName, string version)
     {
-        CreateTestFile(packagePath, "sdk_packaging.toml", $"[packaging]\npackage_name = \"{packageName}\"\n");
-        var modulePath = packageName.Replace('-', Path.DirectorySeparatorChar);
-        CreateTestFile(packagePath, $"{modulePath}/_version.py", $"VERSION = \"{version}\"\n");
+        // Create the eng/scripts directory structure and the get_package_properties.py script
+        var gitHelper = new GitHelper(Mock.Of<IGitHubService>(), Mock.Of<ILogger<GitHelper>>());
+        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var scriptsDir = Path.Combine(repoRoot, "eng", "scripts");
+        Directory.CreateDirectory(scriptsDir);
+        
+        // Create a minimal Python script that outputs the package info
+        var scriptContent = $@"#!/usr/bin/env python
+import sys
+import os
+
+# Simple mock that returns the expected format
+package_path = sys.argv[sys.argv.index('-s') + 1] if '-s' in sys.argv else ''
+package_name = '{packageName}'
+version = '{version}'
+
+print(f'{{package_name}} {{version}} True {{package_path}} ')
+";
+        CreateTestFile(repoRoot, Path.Combine("eng", "scripts", "get_package_properties.py"), scriptContent);
     }
 
     private void SetupJavaScriptPackage(string packagePath, string packageName, string version, SdkType sdkType)
@@ -170,6 +186,11 @@ public class PackageInfoContractTests
         if (language == SdkLanguage.Go)
         {
             processHelper = new ProcessHelper(Mock.Of<ILogger<ProcessHelper>>(), Mock.Of<IRawOutputHelper>());
+        }
+
+        if (language == SdkLanguage.Python)
+        {
+            pythonHelper = new PythonHelper(new TestLogger<PythonHelper>(), Mock.Of<IRawOutputHelper>());
         }
 
         var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper);

@@ -33,6 +33,7 @@ export class CodePanelRowData {
   isResolvedCommentThread: boolean;
   commentThreadIsResolvedBy: string;
   isHiddenAPI: boolean;
+  draftCommentText: string = '';
   
   constructor(
     type: string = '',

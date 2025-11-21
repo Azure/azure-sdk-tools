@@ -59,25 +59,3 @@ export async function nodeCommand(workingDir: string, args: string[]): Promise<v
     });
   });
 }
-
-export async function tspClientCommand(workingDir: string, args: string[]): Promise<void> {
-  Logger.debug("tsp-client " + args.join(" "));
-
-  return new Promise((resolve, reject) => {
-    const tspClient = spawn("tsp-client", args, {
-      cwd: workingDir,
-      stdio: "inherit",
-      shell: true,
-    });
-    tspClient.once("exit", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`tsp-client ${args[0]} failed with exit code ${code}`));
-      }
-    });
-    tspClient.once("error", (err) => {
-      reject(new Error(`tsp-client ${args[0]} failed with error: ${err}`));
-    });
-  });
-}

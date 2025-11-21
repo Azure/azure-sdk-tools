@@ -104,22 +104,22 @@
             {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with `azpysdk --help`"]
+                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"]
             },
             {
                 "requirement": "sdk_generator",
                 "check": ["sdk_generator", "--help"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with `sdk_generator --help`"]
+                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with sdk_generator --help"]
             },
             {
                 "requirement": "ghtools",
                 "check": ["python", "-m", "pip", "show", "GitPython"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with `pip show GitPython`"]
+                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with pip show GitPython"]
             },
             {
                 "requirement": "pytest >= 8.3.5",
                 "check": ["pytest", "--version"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with `pytest --version`"]
+                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with pytest --version"]
             }
         ]
     }

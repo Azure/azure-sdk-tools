@@ -39,6 +39,9 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
         if (!Array.isArray(tspLocation.batch)) {
           throw new Error("Invalid tsp-location.yaml: batch must be an array of directory paths");
         }
+        if (tspLocation.directory || tspLocation.commit || tspLocation.repo) {
+          throw new Error("Invalid tsp-location.yaml: batch configuration cannot have directory, commit, or repo fields");
+        }
       }
       if (!tspLocation.additionalDirectories) {
         tspLocation.additionalDirectories = [];

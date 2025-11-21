@@ -509,6 +509,20 @@ export async function generateCommand(argv: any) {
   }
 }
 
+/**
+ * Processes batch updates for multiple directories specified in the tsp-location.yaml file.
+ *
+ * Iterates over each directory listed in the `batch` property of the provided TspLocation object,
+ * updating each by invoking the updateCommand with the appropriate output directory.
+ * If any batch directory fails to process, the function logs the error and immediately throws,
+ * halting further batch processing.
+ *
+ * @param tspLocation - The TspLocation object containing batch directory information.
+ * @param outputDir - The base output directory where batch directories are located.
+ * @param argv - Command line arguments object, which will be updated for each batch directory.
+ * @returns Promise that resolves when all batch directories have been processed successfully.
+ * @throws Error if processing any batch directory fails.
+ */
 async function processBatchUpdate(tspLocation: TspLocation, outputDir: string, argv: any) {
   // Process each directory in the batch
   for (const batchDir of tspLocation.batch ?? []) {
@@ -526,7 +540,6 @@ async function processBatchUpdate(tspLocation: TspLocation, outputDir: string, a
   }
 
   Logger.info("All batch directories processed successfully");
-  return;
 }
 
 export async function updateCommand(argv: any) {

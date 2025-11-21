@@ -785,19 +785,22 @@ describe.sequential("Verify commands", () => {
       "output-dir": "./test/examples/batch",
     };
 
-    await updateCommand(argv);
+    try {
+      await updateCommand(argv);
 
-    // Verify that output directories were created for each batch item
-    assert.isTrue(
-      (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/rbac"))).isDirectory(),
-    );
-    assert.isTrue(
-      (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/settings"))).isDirectory(),
-    );
-    assert.isTrue(
-      (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
-    );
-    await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+      // Verify that output directories were created for each batch item
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/rbac"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/settings"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
+      );
+    } finally {
+      await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+    }
   }, 360000);
 
   it("process batch directories in updateCommand with local spec path", async () => {

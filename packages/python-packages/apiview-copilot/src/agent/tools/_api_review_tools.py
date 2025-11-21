@@ -8,6 +8,7 @@
 Tools for performing API reviews using the ApiViewReview class.
 """
 
+import asyncio
 import json
 
 from semantic_kernel.functions import kernel_function
@@ -49,7 +50,7 @@ class ApiReviewTools(Tool):
             revision_id (str): The ID of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return client.get_revision_text(revision_id=revision_id)
+        return asyncio.run(client.get_revision_text(revision_id=revision_id))
 
     def get_apiview_revision_by_review(self, *, review_id: str, label: str = "Latest") -> str:
         """
@@ -59,7 +60,7 @@ class ApiReviewTools(Tool):
             label (str): The label of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return client.get_revision_text(review_id=review_id, label=label)
+        return asyncio.run(client.get_revision_text(review_id=review_id, label=label))
 
     def get_apiview_revision_outline(self, *, revision_id: str) -> str:
         """
@@ -68,7 +69,7 @@ class ApiReviewTools(Tool):
             revision_id (str): The ID of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return client.get_revision_outline(revision_id=revision_id)
+        return asyncio.run(client.get_revision_outline(revision_id=revision_id))
 
     def get_apiview_revision_comments(self, *, revision_id: str) -> str:
         """
@@ -77,4 +78,4 @@ class ApiReviewTools(Tool):
             revision_id (str): The ID of the API revision to retrieve comments for.
         """
         client = ApiViewClient()
-        return client.get_review_comments(revision_id=revision_id)
+        return asyncio.run(client.get_review_comments(revision_id=revision_id))

@@ -32,7 +32,7 @@ describe.sequential("Verify commands", () => {
   });
 
   afterEach(async () => {
-    await rm(resolve(joinPaths(repoRoot, "/sdk/contosowidgetmanager")), { recursive: true });
+    await rm(resolve(joinPaths(repoRoot, "/sdk/contosowidgetmanager")), { recursive: true, force: true });
   });
 
   afterAll(async () => {

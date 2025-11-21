@@ -314,8 +314,6 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: bool
    for (const generator of generators) {
     if (generator.isValid(item)) {
       line.Tokens.push(...generator.generate(item, deprecated));
-      console.log(`Generated tokens for ${item.canonicalReference.toString()} using custom generator: ${generator.constructor.name}`);
-      console.log(generator.generate(item, deprecated));
       return;
     }
   }

@@ -4,7 +4,7 @@ import { ReviewToken } from '../models';
 /**
  * Interface for token generators that create ReviewTokens from ApiItems.
  */
-export interface ITokenGenerator {
+export interface TokenGenerator<T = ApiItem> {
     /**
      * Validates if the given ApiItem can be processed by this token generator.
      * @param item - The ApiItem to validate.

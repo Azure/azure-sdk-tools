@@ -1,6 +1,6 @@
 import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
-import { ITokenGenerator } from "./interfaces";
+import { ITokenGenerator as TokenGenerator } from "./interfaces";
 
 function isValid(item: ApiItem): boolean {
     return item.kind === ApiItemKind.Enum;
@@ -17,7 +17,7 @@ function generate(item: ApiItem, deprecated: boolean): ReviewToken[] {
 
     tokens.push({ Kind: TokenKind.MemberName, Value: item.displayName });
     tokens.push({Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true, HasSuffixSpace: true, IsDeprecated: deprecated});
-    
+
     // Enum members
     const enumMembers = item.members;
     for (const member of enumMembers) {
@@ -33,7 +33,7 @@ function generate(item: ApiItem, deprecated: boolean): ReviewToken[] {
     return tokens;
 }
 
-export const enumTokenGenerator: ITokenGenerator = {
+export const enumTokenGenerator: TokenGenerator = {
   isValid,
   generate,
 };

@@ -25,8 +25,7 @@
       <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
         <ul *ngIf="item.renderTokensAsTableCells; else regularCells" class="list-group list-group-horizontal">
           <li *ngFor="let token of item.rowOfTokens" class="list-group-item" [ngClass]="getTokenClassObject(token)"
-            [title]="token.value"
-            [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}
+            [title]="token.value" [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}
           </li>
         </ul>
         <ng-template #regularCells>

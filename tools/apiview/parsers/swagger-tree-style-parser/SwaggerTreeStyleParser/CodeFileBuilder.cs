@@ -10,7 +10,6 @@ using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
 using Namotion.Reflection;
 using NJsonSchema;
-using NJsonSchema.Infrastructure;
 using NSwag;
 
 
@@ -23,6 +22,7 @@ namespace SwaggerTreeStyleParser
 
         public List<ReviewLine> Build(OpenApiDocument openApiDocument)
         {
+            if (openApiDocument == null) throw new ArgumentNullException(nameof(openApiDocument));
             this.openApiDocument = openApiDocument;
             List<ReviewLine> result = new List<ReviewLine>();
             var line = new ReviewLine();
@@ -80,7 +80,7 @@ namespace SwaggerTreeStyleParser
             result.Add(new ReviewLine());
             return result;
         }
-        private void BuildOpenApiInfoObject(OpenApiInfo infoObject, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiInfoObject(OpenApiInfo infoObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (infoObject == null) return;
             var rootLine = CreateKeyValueLine(key: objectName, keyTokenClass: "header1");
@@ -89,21 +89,21 @@ namespace SwaggerTreeStyleParser
             BuildOpenApiLicenseObject(infoObject.License, nameof(infoObject.License), rootLine.Children);
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiContactObject(OpenApiContact contactObject, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiContactObject(OpenApiContact contactObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (contactObject == null) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header");
             BuildValueTypeProperties(contactObject, rootLine.Children, keyTokenClass: "keyword");
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiLicenseObject(OpenApiLicense licenseObject, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiLicenseObject(OpenApiLicense licenseObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (licenseObject == null) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header");
             BuildValueTypeProperties(licenseObject, rootLine.Children, keyTokenClass: "keyword");
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiSecuritySchemeObject(IDictionary<string, OpenApiSecurityScheme> securityScheme, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiSecuritySchemeObject(IDictionary<string, OpenApiSecurityScheme> securityScheme, string objectName, List<ReviewLine> reviewLines)
         {
             if (securityScheme == null || securityScheme.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1");
@@ -121,7 +121,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiSecurityRequirementObject(ICollection<OpenApiSecurityRequirement> securityRequirement, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiSecurityRequirementObject(ICollection<OpenApiSecurityRequirement> securityRequirement, string objectName, List<ReviewLine> reviewLines)
         {
             if (securityRequirement == null || securityRequirement.Count() == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1");
@@ -136,7 +136,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiPathItemObject(IDictionary<string, OpenApiPathItem> openApiPaths, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiPathItemObject(IDictionary<string, OpenApiPathItem> openApiPaths, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiPaths == null || openApiPaths.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true);
@@ -191,11 +191,11 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        private void BuildJsonSchemaDefinitions(IDictionary<string, JsonSchema> definitions, string objectName, List<ReviewLine> reviewLines)
+        public void BuildJsonSchemaDefinitions(IDictionary<string, JsonSchema> definitions, string objectName, List<ReviewLine> reviewLines)
         {
             if (definitions == null || definitions.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true);
-            foreach (var kvp in definitions)
+            foreach (var kvp in definitions.OrderBy(d => d.Key))
             {
                 var schemaProps = kvp.Value.ActualProperties;
                 if (schemaProps.Count == 0) continue;
@@ -209,13 +209,18 @@ namespace SwaggerTreeStyleParser
                 {
                     var propRow = new ReviewLine();
                     propRow.AddToken(ReviewToken.CreateTextToken(value: prop.Key, hasSuffixSpace: false));
-                    if (prop.Value.ActualSchema != null)
+                    propRow.LineId = prop.Key;
+                    if (prop.Value.Type != JsonObjectType.None && prop.Value.Type != JsonObjectType.Array)
+                    {
+                        propRow.AddToken(ReviewToken.CreateTextToken(value: prop.Value.Type.ToString(), hasSuffixSpace: false, tokenClass: "keyword"));
+                    }
+                    else if (prop.Value.ActualSchema != null)
                     {
                         BuildReferenceSchemaToken(schema: prop.Value.ActualSchema, propRow);
                     }
-                    else if (prop.Value.Type != JsonObjectType.None)
+                    else 
                     {
-                        propRow.AddToken(ReviewToken.CreateTextToken(value: prop.Value.Type.ToString(), hasSuffixSpace: false, tokenClass: "keyword"));
+                        propRow.AddToken(ReviewToken.CreateTextToken(value: prop.Value.Format, hasSuffixSpace: false, tokenClass: "keyword"));
                     }
                     var keywords = CollectKeywords(prop.Value);
                     propRow.AddToken(ReviewToken.CreateTextToken(value: String.Join(", ", keywords), hasSuffixSpace: false));
@@ -227,32 +232,34 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiExternalDocumentation(OpenApiExternalDocumentation openApiExternalDocumentation, List<ReviewLine> reviewLines)
+        public void BuildOpenApiExternalDocumentation(OpenApiExternalDocumentation openApiExternalDocumentation, List<ReviewLine> reviewLines)
         {
             if (openApiExternalDocumentation == null) return;
             var rootLine = CreateKeyValueLine(nameof(openApiExternalDocumentation));
             BuildValueTypeProperties(openApiExternalDocumentation, rootLine.Children, keyTokenClass: "keyword");
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiParameterObject(IDictionary<string, OpenApiParameter> openApiParameters, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiParameterObject(IDictionary<string, OpenApiParameter> openApiParameters, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiParameters == null || openApiParameters.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true);
-            CreatePropertiesTableHeader(rootLine.Children, firstColumnName: "Name");
-            foreach (var kvp in openApiParameters)
+            CreatePropertiesTableHeader(rootLine.Children, firstColumnName: "Name", addInColumn: true);
+            foreach (var kvp in openApiParameters.OrderBy(k => k.Key))
             {
                 var paramRow = new ReviewLine();
-                var nameToken = ReviewToken.CreateTextToken(value: kvp.Key, hasSuffixSpace: false);
-                nameToken.NavigationDisplayName = kvp.Key;
+                var nameToken = ReviewToken.CreateTextToken(value: kvp.Value.Name, hasSuffixSpace: false);
+                nameToken.NavigationDisplayName = kvp.Value.Name;
                 paramRow.AddToken(nameToken);
-                if (kvp.Value.Schema != null)
-                {
-                    BuildReferenceSchemaToken(schema: kvp.Value.Schema, paramRow);
-                }
-                else if (kvp.Value.Type != JsonObjectType.None)
+                paramRow.LineId = kvp.Value.Name;
+                if (kvp.Value.Type != JsonObjectType.None && kvp.Value.Type != JsonObjectType.Array)
                 {
                     paramRow.AddToken(ReviewToken.CreateTextToken(value: kvp.Value.Type.ToString(), hasSuffixSpace: false, tokenClass: "keyword"));
                 }
+                else if (kvp.Value.Schema != null)
+                {
+                    BuildReferenceSchemaToken(schema: kvp.Value.Schema, paramRow);
+                }
+                paramRow.AddToken(ReviewToken.CreateTextToken(value: kvp.Value.Kind.ToString(), hasSuffixSpace: false));
                 var keywords = CollectKeywords(kvp.Value);
                 paramRow.AddToken(ReviewToken.CreateTextToken(value: String.Join(", ", keywords), hasSuffixSpace: false));
                 paramRow.AddToken(ReviewToken.CreateTextToken(value: kvp.Value.Description, hasSuffixSpace: false));
@@ -261,7 +268,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        private void BuildOpenApiParameterObject(IList<OpenApiParameter> openApiParameters, List<ReviewLine> reviewLines)
+        public void BuildOpenApiParameterObject(IList<OpenApiParameter> openApiParameters, List<ReviewLine> reviewLines)
         {
             if (openApiParameters == null || openApiParameters.Count == 0) return;
             foreach (var group in openApiParameters.GroupBy(x => x.ActualParameter.Kind))
@@ -274,14 +281,15 @@ namespace SwaggerTreeStyleParser
                     var paramRow = new ReviewLine();
                     var parameter = item.ActualParameter;
                     paramRow.AddToken(ReviewToken.CreateTextToken(value: parameter.Name, hasSuffixSpace: false));
+                    paramRow.LineId = parameter.Name;
 
-                    if (parameter.Schema != null)
-                    {
-                        BuildReferenceSchemaToken(schema: parameter.Schema, paramRow);
-                    }
-                    else if (parameter.Type != JsonObjectType.None)
+                    if (parameter.Type != JsonObjectType.None && parameter.Type != JsonObjectType.Array)
                     {
                         paramRow.AddToken(ReviewToken.CreateTextToken(value: parameter.Type.ToString(), hasSuffixSpace: false, tokenClass: "keyword"));
+                    }
+                    else if (parameter.Schema != null)
+                    {
+                        BuildReferenceSchemaToken(schema: parameter.Schema, paramRow);
                     }
                     var keywords = CollectKeywords(parameter);
                     paramRow.AddToken(ReviewToken.CreateTextToken(value: String.Join(", ", keywords), hasSuffixSpace: false));
@@ -292,7 +300,7 @@ namespace SwaggerTreeStyleParser
                 reviewLines.Add(paramHeaderLine);
             }
         }
-        private void BuildOpenApiResponseObject(IDictionary<string, OpenApiResponse> openApiResponses, List<ReviewLine> reviewLines)
+        public void BuildOpenApiResponseObject(IDictionary<string, OpenApiResponse> openApiResponses, List<ReviewLine> reviewLines)
         {
             if (openApiResponses == null || openApiResponses.Count() == 0) return;
             var respTitle = CreateKeyValueLine(key: $"Responses", keyTokenClass: "header");
@@ -301,14 +309,17 @@ namespace SwaggerTreeStyleParser
             {
                 var respHeader = CreateKeyValueLine(key: kvp.Key, keyTokenClass: "header");
                 BuildValueTypeProperties(kvp.Value, respHeader.Children, keyTokenClass: "keyword");
-                var respModel = CreateKeyValueLine(key: "Model", keyTokenClass: "keyword");
-                BuildReferenceSchemaToken(kvp.Value.Schema, respModel);
-                respHeader.Children.Add(respModel);
+                if (kvp.Value.Schema != null)
+                {
+                    var respModel = CreateKeyValueLine(key: "Model", addPunctuation: true,  keyTokenClass: "keyword");
+                    BuildReferenceSchemaToken(kvp.Value.Schema, respModel);
+                    respHeader.Children.Add(respModel);
+                }
                 respTitle.Children.Add(respHeader);
             }
             reviewLines.Add(respTitle);
         }
-        private void BuildReferenceSchemaToken(JsonSchema schema, ReviewLine reviewLine)
+        public void BuildReferenceSchemaToken(JsonSchema schema, ReviewLine reviewLine)
         {
             if (schema == null) return;
             string foundIn = string.Empty;
@@ -319,22 +330,12 @@ namespace SwaggerTreeStyleParser
                 reviewLine.AddToken(ReviewToken.CreateTextToken(value: schemaInfo?.schemaName, navigateToId: schemaInfo?.id, hasSuffixSpace: false, tokenClass: "tname"));
             }
         }
-        private (string? schemaName, string? id)? TryGetSchemaName(JsonSchema schema)
+        public (string? schemaName, string? id)? TryGetSchemaName(JsonSchema schema)
         {
             if (schema == null) return null;
 
             string? schemaName = null;
             string? id = null;
-
-            var defsProp = this.openApiDocument.GetType().GetProperty("Definitions", BindingFlags.Public | BindingFlags.Instance);
-            if (defsProp?.GetValue(this.openApiDocument) is IDictionary<string, JsonSchema> defs)
-            {
-                foreach (var kvp in defs)
-                {
-                    if (ReferenceEquals(kvp.Value.ActualSchema, schema.ActualSchema))
-                        schemaName = id = kvp.Key;
-                }
-            }
 
             if (schema.Type == JsonObjectType.Array && schema.Item != null)
             {
@@ -344,11 +345,22 @@ namespace SwaggerTreeStyleParser
                     id = result?.schemaName;
                     schemaName = $"array<{result?.schemaName}>";
 
-                }                
+                }
             }
+
+            var defsProp = this.openApiDocument.GetType().GetProperty("Definitions", BindingFlags.Public | BindingFlags.Instance);
+            if (defsProp?.GetValue(this.openApiDocument) is IDictionary<string, JsonSchema> defs)
+            {
+                foreach (var kvp in defs)
+                {
+                    if (ReferenceEquals(kvp.Value.ActualSchema, schema.ActualSchema))
+                        schemaName = id = kvp.Key.Trim();
+                }
+            }
+
             return (schemaName, id);
         }
-        private ReviewLine CreateKeyValueLine(string key, string? value = null, bool addPunctuation = false, string? keyTokenClass = null, bool addKeyToNavigation = false)
+        public ReviewLine CreateKeyValueLine(string key, string? value = null, bool addPunctuation = false, string? keyTokenClass = null, bool addKeyToNavigation = false)
         {
             var rootLine = new ReviewLine(id: key);
             if (value == null)
@@ -361,17 +373,21 @@ namespace SwaggerTreeStyleParser
             }
             return rootLine;
         }
-        private void CreatePropertiesTableHeader(List<ReviewLine> reviewLines, string firstColumnName)
+        public void CreatePropertiesTableHeader(List<ReviewLine> reviewLines, string firstColumnName, bool addInColumn = false)
         {
             var headerLine = new ReviewLine();
             headerLine.AddToken(ReviewToken.CreateTextToken(firstColumnName, hasSuffixSpace: false, tokenClass: "table-header"));
             headerLine.AddToken(ReviewToken.CreateTextToken("Type/Format", hasSuffixSpace: false, tokenClass: "table-header"));
+            if (addInColumn)
+            {
+                headerLine.AddToken(ReviewToken.CreateTextToken("In", hasSuffixSpace: false, tokenClass: "table-header"));
+            }
             headerLine.AddToken(ReviewToken.CreateTextToken("Keywords", hasSuffixSpace: false, tokenClass: "table-header"));
             headerLine.AddToken(ReviewToken.CreateTextToken("Description", hasSuffixSpace: false, tokenClass: "table-header"));
             headerLine.RenderTokensAsCells = true;
             reviewLines.Add(headerLine);
         }
-        private HashSet<string> CollectKeywords<T>(T obj) where T : JsonSchema
+        public HashSet<string> CollectKeywords<T>(T obj) where T : JsonSchema
         {
             var keywords = new HashSet<string>();
             var type = obj.GetType();
@@ -402,9 +418,13 @@ namespace SwaggerTreeStyleParser
             if (obj.Pattern != null) keywords.Add($"{nameof(obj.Pattern)}: {obj.Pattern!}");
             if (obj.MaxItems > 0) keywords.Add($"{nameof(obj.MaxItems)}: {obj.MaxItems!}");
             if (obj.UniqueItems) keywords.Add("unique");
+            if (obj.Enumeration != null && obj.Enumeration.Count > 0)
+            {
+                keywords.Add($"Enum: [{string.Join(", ", obj.Enumeration)}]");
+            }
             return keywords;
         }
-        private void BuildValueTypeProperties(object obj, List<ReviewLine> reviewLines, string? keyTokenClass = null) 
+        public void BuildValueTypeProperties(object obj, List<ReviewLine> reviewLines, string? keyTokenClass = null) 
         {
             if (obj == null) return;
             var objType = obj.GetType();
@@ -437,7 +457,7 @@ namespace SwaggerTreeStyleParser
             }
 
         }
-        private void BuildEnumerableTypeProperty(IEnumerable obj, List<ReviewLine> reviewLines)
+        public void BuildEnumerableTypeProperty(IEnumerable obj, List<ReviewLine> reviewLines)
         {
             if (obj == null) return;
             var line = new ReviewLine();
@@ -474,7 +494,7 @@ namespace SwaggerTreeStyleParser
                 }
             }
         }
-        private bool IsSimpleType(object? obj = null, Type? propType = null)
+        public bool IsSimpleType(object? obj = null, Type? propType = null)
         {
             if (obj == null && propType == null) return false;
             propType ??= obj?.GetType();

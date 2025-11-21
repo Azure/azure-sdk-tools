@@ -162,19 +162,9 @@
                 white-space: nowrap;
                 text-overflow: ellipsis;
 
-                &:nth-child(1) {
-                    width: 300px;
-                }
-                
-                &:nth-child(2) {
-                    width: 300px;
-                }
-                
-                &:nth-child(3) {
-                    width: 200px;
-                }
-                
-                &:nth-child(4) {
+                width: 200px;
+
+                &:last-child {
                     width: 2000px;
                 }
             }

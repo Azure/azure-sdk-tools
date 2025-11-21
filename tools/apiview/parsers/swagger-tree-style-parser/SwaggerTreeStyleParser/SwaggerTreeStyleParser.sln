@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerTreeStyleParser", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIView", "..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj", "{FBC63A5C-BB71-C611-49C1-781EEB2D5E45}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerTreeStyleParserTests", "..\SwaggerTreeStyleParserTests\SwaggerTreeStyleParserTests.csproj", "{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{FBC63A5C-BB71-C611-49C1-781EEB2D5E45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FBC63A5C-BB71-C611-49C1-781EEB2D5E45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FBC63A5C-BB71-C611-49C1-781EEB2D5E45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

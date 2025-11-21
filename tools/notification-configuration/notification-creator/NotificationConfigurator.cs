@@ -26,8 +26,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private readonly Dictionary<string, string> contactsCache = new Dictionary<string, string>();
         // A cache on the team member to member descriptor.
         private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
-        // A cache on team subscriptions to avoid redundant API calls
-        private readonly Dictionary<Guid, IEnumerable<NotificationSubscription>> subscriptionsCache = new Dictionary<Guid, IEnumerable<NotificationSubscription>>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {
@@ -292,13 +290,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private async Task EnsureScheduledBuildFailSubscriptionExists(BuildDefinition pipeline, WebApiTeam team, bool persistChanges)
         {
             const string BuildFailureNotificationTag = "#AutomaticBuildFailureNotification";
-            
-            // D. Subscription Retrieval Optimization: Use cache to avoid redundant calls
-            if (!subscriptionsCache.ContainsKey(team.Id))
-            {
-                subscriptionsCache[team.Id] = await service.GetSubscriptionsAsync(team.Id);
-            }
-            var subscriptions = subscriptionsCache[team.Id];
+            var subscriptions = await service.GetSubscriptionsAsync(team.Id);
 
             var subscription = subscriptions.FirstOrDefault(sub => sub.Description.Contains(BuildFailureNotificationTag));
 
@@ -339,8 +331,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 if (persistChanges)
                 {
                     subscription = await service.CreateSubscriptionAsync(newSubscription);
-                    // Invalidate cache after creating new subscription
-                    subscriptionsCache.Remove(team.Id);
                 }
             }
             else
@@ -376,8 +366,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         };
                         logger.LogInformation("Updating Subscription expression for team {0} with correct definition name {1}", team.Name, definitionName);
                         subscription = await service.UpdatedSubscriptionAsync(updateParameters, subscription.Id.ToString());
-                        // Invalidate cache after updating subscription
-                        subscriptionsCache.Remove(team.Id);
                     }
                 }
             }

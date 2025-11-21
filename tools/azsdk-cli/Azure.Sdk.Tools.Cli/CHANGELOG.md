@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added a new command to list all MCP tools and its CLI command.
+
 ### Breaking Changes
 
 ### Bugs Fixed

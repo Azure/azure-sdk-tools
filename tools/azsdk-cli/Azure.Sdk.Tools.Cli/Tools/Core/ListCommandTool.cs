@@ -25,52 +25,50 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
             return new McpCommand("list", "List all available tools");
         }
 
-        private static void ProcessCommandTree(Command command, string parent, List<ToolInfo> commandInfoList)
+        private static void ProcessCommandTree(Command command, string parent, List<ToolInfo> commandInfoList, IEnumerable<McpServerTool> registeredToolInstances)
         {
             // Process all subcommands
             foreach (var subcommand in command.Subcommands)
             {
                 var newParent = string.IsNullOrEmpty(parent) ? command.Name : $"{parent} {command.Name}";
-                ProcessCommandTree(subcommand, newParent, commandInfoList);
+                ProcessCommandTree(subcommand, newParent, commandInfoList, registeredToolInstances);
             }
 
             // If current command is leaf command, add to list
             if (!command.Subcommands.Any())
             {
-                string mcpToolName = "";
+                string mcpToolName = "", description = command.Description ?? "";
                 if (command is McpCommand mcpCommand)
                 {
                     mcpToolName = mcpCommand.McpToolName;
+                    // Validate that the MCP tool exists in registered tools
+                    var registeredMcpTool = registeredToolInstances.FirstOrDefault(t => t.ProtocolTool.Name == mcpToolName);
+                    if (!string.IsNullOrEmpty(mcpToolName) && registeredMcpTool == null)
+                    {
+                        throw new InvalidOperationException($"MCP Tool '{mcpToolName}' is not found in registered tools for command '{command.Name}'");
+                    }
+                    description = registeredMcpTool?.ProtocolTool?.Description ?? "";
                 }
-                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", command.Description ?? ""));
+                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", description));
             }
         }
 
         private List<ToolInfo> GetToolNameAndDescription(ParseResult parseResult)
         {
             var tools = new List<ToolInfo>();
+            var toolInstances = serviceProvider.GetServices<McpServerTool>();
             // Get all CLI commands from command root and its MCP tool name
-            ProcessCommandTree(parseResult.RootCommandResult.Command, "", tools);
+            ProcessCommandTree(parseResult.RootCommandResult.Command, "", tools, toolInstances);
 
             // Find any MCP tool that is not represented in the command tree
-            // Also get MCP tool description and update in the list
-            var toolInstances = serviceProvider.GetServices<McpServerTool>();
-            foreach (var toolInstance in toolInstances)
+            foreach (var mcpTool in toolInstances.Select(t=> t.ProtocolTool))
             {
-                var mcpTool = toolInstance.ProtocolTool;
-
-                // Update the description if tool already exists in the list
-                var mcpToolInfo = tools.FirstOrDefault(t => t.McpToolName == mcpTool.Name);
-                if (mcpToolInfo != null)
+                if (!tools.Any(t=> t.McpToolName == mcpTool.Name))
                 {
-                    mcpToolInfo.Description = mcpTool.Description ?? "";
-                    continue;
-                }
-
-                // Add new tool that does not have CLI command representation
-                tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? ""));
+                    // Add new tool that does not have CLI command representation
+                    tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? ""));
+                }                
             }
-
             return tools.OrderBy(t => string.IsNullOrEmpty(t.McpToolName)).ThenBy(t => t.McpToolName).ToList();
         }
     }

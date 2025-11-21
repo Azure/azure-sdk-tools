@@ -707,7 +707,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving overdue release plan");
+                logger.LogError(ex, "Error retrieving overdue release plans");
                 return new ReleasePlanListResponse { ResponseError = $"An error occurred while retrieving overdue release plans: {ex.Message}" };
             }
         }

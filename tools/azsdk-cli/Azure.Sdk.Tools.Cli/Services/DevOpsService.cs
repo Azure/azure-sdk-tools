@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to list overdue release plans");
-                throw new Exception($"Failed to list overdue release plans. Error: {ex}");
+                throw new Exception("Failed to list overdue release plans. Error: {ex}", ex);
             }
         }
         
@@ -211,7 +211,6 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<ReleasePlanDetails> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
-            // Console.WriteLine(string.Join(Environment.NewLine, workItem.Fields.Keys));
             var releasePlan = new ReleasePlanDetails()
             {
                 WorkItemId = workItem.Id ?? 0,

@@ -37,16 +37,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
             // If current command is leaf command, add to list
             if (!command.Subcommands.Any())
             {
-                var toolInfo = new ToolInfo
-                {
-                    CommandLine = $"{parent} {command.Name}",
-                    Description = command.Description ?? ""
-                };
+                string mcpToolName = "";
                 if (command is McpCommand mcpCommand)
                 {
-                    toolInfo.McpToolName = mcpCommand.McpToolName;
+                    mcpToolName = mcpCommand.McpToolName;
                 }
-                commandInfoList.Add(toolInfo);
+                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", command.Description ?? ""));
             }
         }
 
@@ -72,12 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
                 }
 
                 // Add new tool that does not have CLI command representation
-                var toolInfo = new ToolInfo
-                {
-                    McpToolName = mcpTool.Name,
-                    Description = mcpTool.Description ?? ""
-                };
-                tools.Add(toolInfo);
+                tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? ""));
             }
 
             return tools.OrderBy(t => string.IsNullOrEmpty(t.McpToolName)).ThenBy(t => t.McpToolName).ToList();

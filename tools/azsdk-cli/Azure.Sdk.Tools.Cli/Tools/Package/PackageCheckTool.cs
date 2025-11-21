@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             SharedCommandGroups.Package,
         ];
 
+        private const string PackageRunCheckToolName = "azsdk_package_run_check";
+
         private readonly Argument<PackageCheckType> checkTypeArg = new("check-type")
         {
             Description = "Type of validation check to run",
@@ -41,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         };
 
         protected override Command GetCommand() =>
-            new McpCommand("validate", "Run validation checks for SDK packages", "azsdk_package_run_check") { checkTypeArg, SharedOptions.PackagePath, fixOption };
+            new McpCommand("validate", "Run validation checks for SDK packages", PackageRunCheckToolName) { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -54,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
+        [McpServerTool(Name = PackageRunCheckToolName), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
         public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try

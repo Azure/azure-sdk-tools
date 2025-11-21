@@ -37,6 +37,16 @@ public class ExampleTool(
     private const string PowershellSubCommand = "powershell";
     private const string MicroagentSubCommand = "microagent";
 
+    // MCP Tool Names
+    private const string AzureServiceToolName = "azsdk_example_azure_service";
+    private const string DevOpsServiceToolName = "azsdk_example_devops_service";
+    private const string GitHubServiceToolName = "azsdk_example_github_service";
+    private const string AIServiceToolName = "azsdk_example_ai_service";
+    private const string ErrorHandlingToolName = "azsdk_example_error_handling";
+    private const string ProcessExecutionToolName = "azsdk_example_process_execution";
+    private const string PowershellExecutionToolName = "azsdk_example_powershell_execution";
+    private const string MicroagentFibonacciToolName = "azsdk_example_microagent_fibonacci";
+
     // azsdk example demo <sub-command>
     public override CommandGroup[] CommandHierarchy { get; set; } = [
         SharedCommandGroups.Example,
@@ -101,14 +111,14 @@ public class ExampleTool(
 
     protected override List<Command> GetCommands() =>
     [
-        new McpCommand(AzureSubCommand, "Demonstrate Azure service integration", "azsdk_example_azure_service") { tenantOption },
-        new McpCommand(DevOpsSubCommand, "Demonstrate DevOps service integration", "azsdk_example_devops_service") { packageArgument, languageOption },
-        new McpCommand(GitHubSubCommand, "Demonstrate GitHub service integration", "azsdk_example_github_service"),
-        new McpCommand(AISubCommand, "Demonstrate AI service integration", "azsdk_example_ai_service") { aiInputArg },
-        new McpCommand(ErrorSubCommand, "Demonstrate error handling patterns", "azsdk_example_error_handling") { errorInputArg, forceFailureOption },
-        new McpCommand(ProcessSubCommand, "Demonstrate spawning an external process (echo)", "azsdk_example_process_execution") { processSleepArg },
-        new McpCommand(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter", "azsdk_example_powershell_execution") { powershellMessageArg },
-        new McpCommand(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci", "azsdk_example_microagent_fibonacci") { fibonacciIndexOption }
+        new McpCommand(AzureSubCommand, "Demonstrate Azure service integration", AzureServiceToolName) { tenantOption },
+        new McpCommand(DevOpsSubCommand, "Demonstrate DevOps service integration", DevOpsServiceToolName) { packageArgument, languageOption },
+        new McpCommand(GitHubSubCommand, "Demonstrate GitHub service integration", GitHubServiceToolName),
+        new McpCommand(AISubCommand, "Demonstrate AI service integration", AIServiceToolName) { aiInputArg },
+        new McpCommand(ErrorSubCommand, "Demonstrate error handling patterns", ErrorHandlingToolName) { errorInputArg, forceFailureOption },
+        new McpCommand(ProcessSubCommand, "Demonstrate spawning an external process (echo)", ProcessExecutionToolName) { processSleepArg },
+        new McpCommand(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter", PowershellExecutionToolName) { powershellMessageArg },
+        new McpCommand(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci", MicroagentFibonacciToolName) { fibonacciIndexOption }
     ];
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -131,7 +141,7 @@ public class ExampleTool(
         return result;
     }
 
-    [McpServerTool(Name = "azsdk_example_azure_service"), Description("Demonstrates Azure service integration")]
+    [McpServerTool(Name = AzureServiceToolName), Description("Demonstrates Azure service integration")]
     public async Task<ExampleServiceResponse> DemonstrateAzureService(string? tenantId = null, CancellationToken ct = default)
     {
         try
@@ -166,7 +176,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_devops_service"), Description("Demonstrates DevOps service integration")]
+    [McpServerTool(Name = DevOpsServiceToolName), Description("Demonstrates DevOps service integration")]
     public async Task<ExampleServiceResponse> DemonstrateDevOpsService(string packageName, string language, CancellationToken ct = default)
     {
         try
@@ -197,7 +207,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_github_service"), Description("Demonstrates GitHub service integration")]
+    [McpServerTool(Name = GitHubServiceToolName), Description("Demonstrates GitHub service integration")]
     public async Task<ExampleServiceResponse> DemonstrateGitHubService(CancellationToken ct = default)
     {
         try
@@ -230,7 +240,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_ai_service"), Description("Demonstrates AI service integration using Azure OpenAI")]
+    [McpServerTool(Name = AIServiceToolName), Description("Demonstrates AI service integration using Azure OpenAI")]
     public async Task<ExampleServiceResponse> DemonstrateAIService(string userPrompt, CancellationToken ct = default)
     {
         var model = "gpt-4o";
@@ -273,7 +283,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_error_handling"), Description("Demonstrates error handling patterns in tools")]
+    [McpServerTool(Name = ErrorHandlingToolName), Description("Demonstrates error handling patterns in tools")]
     public async Task<DefaultCommandResponse> DemonstrateErrorHandling(string scenario, bool forceFailure = false, CancellationToken ct = default)
     {
         try
@@ -315,7 +325,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_process_execution"), Description("Demonstrates running an external process (sleep) and capturing output")]
+    [McpServerTool(Name = ProcessExecutionToolName), Description("Demonstrates running an external process (sleep) and capturing output")]
     public async Task<ExampleServiceResponse> DemonstrateProcessExecution(string time, CancellationToken ct = default)
     {
         try
@@ -363,7 +373,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_powershell_execution"), Description("Demonstrates running a powershell script with a parameter")]
+    [McpServerTool(Name = PowershellExecutionToolName), Description("Demonstrates running a powershell script with a parameter")]
     public async Task<ExampleServiceResponse> DemonstratePowershellExecution(string message, CancellationToken ct = default)
     {
         string? tempFile = null;
@@ -445,7 +455,7 @@ public class ExampleTool(
         public int Current { get; set; }
     }
 
-    [McpServerTool(Name = "azsdk_example_microagent_fibonacci"), Description("Demonstrates micro-agent computing Nth Fibonacci number via iterative tool calls")]
+    [McpServerTool(Name = MicroagentFibonacciToolName), Description("Demonstrates micro-agent computing Nth Fibonacci number via iterative tool calls")]
     public async Task<DefaultCommandResponse> DemonstrateMicroagentFibonacci(int n, CancellationToken ct = default)
     {
         try

@@ -32,6 +32,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
         private const string linkSdkPrCommandName = "link-sdk-pr";
 
+        // MCP Tool Names
+        private const string CheckApiSpecReadyToolName = "azsdk_check_api_spec_ready_for_sdk";
+        private const string RunGenerateSdkToolName = "azsdk_run_generate_sdk";
+        private const string GetSdkPullRequestLinkToolName = "azsdk_get_sdk_pull_request_link";
+        private const string LinkSdkPullRequestToolName = "azsdk_link_sdk_pull_request_to_release_plan";
+
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
         {
@@ -110,19 +116,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", "azsdk_check_api_spec_ready_for_sdk")
+            new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName)
             {
                 typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt,
             },
-            new McpCommand(generateSdkCommandName, "Generate SDK for a TypeSpec project", "azsdk_run_generate_sdk")
+            new McpCommand(generateSdkCommandName, "Generate SDK for a TypeSpec project", RunGenerateSdkToolName)
             {
                 typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt,
             },
-            new McpCommand(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline", "azsdk_get_sdk_pull_request_link")
+            new McpCommand(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline", GetSdkPullRequestLinkToolName)
             {
                 languageOpt, pipelineRunIdOpt, workItemIdOpt,
             },
-            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", "azsdk_link_sdk_pull_request_to_release_plan")
+            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName)
             {
                 languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt,
             }
@@ -206,8 +212,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_check_api_spec_ready_for_sdk"), Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
-        public async Task<ReleaseWorkflowResponse> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber, int workItemId = 0)
+        [McpServerTool(Name = CheckApiSpecReadyToolName), Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
+        public async Task<ReleaseWorkflowResponse> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber = 0, int workItemId = 0)
         {
             try
             {
@@ -333,8 +339,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = "azsdk_run_generate_sdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
-        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber, int workItemId = 0)
         {
             try
             {
@@ -452,8 +458,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <param name="workItemId">Work item ID for the release plan</param>
         /// <returns></returns>
-        [McpServerTool(Name = "azsdk_get_sdk_pull_request_link"), Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
-        public async Task<ReleaseWorkflowResponse> GetSDKPullRequestDetails(string language, int workItemId, int buildId = 0)
+        [McpServerTool(Name = GetSdkPullRequestLinkToolName), Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
+        public async Task<ReleaseWorkflowResponse> GetSDKPullRequestDetails(string language, int workItemId = 0, int buildId = 0)
         {
             try
             {
@@ -537,7 +543,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             };
         }
 
-        [McpServerTool(Name = "azsdk_link_sdk_pull_request_to_release_plan"), Description("Link SDK pull request to release plan work item")]
+        [McpServerTool(Name = LinkSdkPullRequestToolName), Description("Link SDK pull request to release plan work item")]
         public async Task<ReleaseWorkflowResponse> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0)
         {
             try

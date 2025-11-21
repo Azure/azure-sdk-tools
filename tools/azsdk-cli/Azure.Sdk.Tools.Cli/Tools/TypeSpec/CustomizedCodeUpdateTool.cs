@@ -37,6 +37,10 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         this.tspClientHelper = tspClientHelper;
         this.specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
+
+    // MCP Tool Names
+    private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
+
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
     private readonly Argument<string> updateCommitSha = new("update-commit-sha")
@@ -65,7 +69,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         "3. Regenerate with updated customization code to ensure it meets your code requirements\n" +
         "4. Open a pull request with your changes";
     protected override Command GetCommand() =>
-       new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", "azsdk_customized_code_update")
+       new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", CustomizedCodeUpdateToolName)
        {
             updateCommitSha, SharedOptions.PackagePath,
        };
@@ -86,7 +90,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    [McpServerTool(Name = "azsdk_customized_code_update"), Description("Update customized TypeSpec-generated client code")]
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
         => RunUpdateAsync(commitSha, packagePath, ct);
 

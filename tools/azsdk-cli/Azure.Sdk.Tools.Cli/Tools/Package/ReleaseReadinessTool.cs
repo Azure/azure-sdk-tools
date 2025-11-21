@@ -21,6 +21,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILogger<ReleaseReadinessTool> logger
     ) : MCPTool
     {
+        private const string CheckPackageReleaseReadinessToolName = "azsdk_check_package_release_readiness";
+        
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
         private readonly Option<string> packageNameOpt = new("--package-name")
         {
@@ -36,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
         protected override Command GetCommand() =>
-            new McpCommand("release-readiness", "Checks release readiness of a SDK package", "azsdk_check_package_release_readiness") { packageNameOpt, languageOpt };
+            new McpCommand("release-readiness", "Checks release readiness of a SDK package", CheckPackageReleaseReadinessToolName) { packageNameOpt, languageOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -46,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await CheckPackageReleaseReadinessAsync(packageName, language);
         }
 
-        [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
+        [McpServerTool(Name = CheckPackageReleaseReadinessToolName), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
         public async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try

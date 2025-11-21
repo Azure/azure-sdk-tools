@@ -4,8 +4,15 @@ namespace Azure.Sdk.Tools.Cli.Models
 {
     public class ToolInfo
     {
-        public string McpToolName { get; set; } = string.Empty;
+        public ToolInfo(string mcpToolName, string commandLine, string description)
+        {
+            McpToolName = mcpToolName;
+            Description = description;
+            CommandLine = commandLine;
+        }
+
+        public string McpToolName { get; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string CommandLine { get; set; } = string.Empty;
+        public string CommandLine { get; } = string.Empty;
     }
 }

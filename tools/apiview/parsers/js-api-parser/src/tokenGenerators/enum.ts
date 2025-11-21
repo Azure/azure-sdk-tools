@@ -20,7 +20,7 @@ function generate(item: ApiEnum, deprecated: boolean): ReviewToken[] {
     return tokens;
 }
 
-export const enumTokenGenerator: TokenGenerator = {
+export const enumTokenGenerator: TokenGenerator<ApiEnum> = {
   isValid,
   generate,
 };

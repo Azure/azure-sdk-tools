@@ -16,11 +16,13 @@ import prompty
 from src._utils import get_prompt_path
 from src.mention._open_parser_issue_workflow import OpenParserIssueWorkflow
 from src.mention._update_kb_workflow import UpdateKnowledgeBaseWorkflow
+from src.mention._open_guidelines_issue_workflow import OpenGuidelinesIssueWorkflow
 
 # Add any new workflows here
 WORKFLOW_REGISTRY = {
     "update_kb": UpdateKnowledgeBaseWorkflow,
     "open_parser_issue": OpenParserIssueWorkflow,
+    "open_guidelines_issue": OpenGuidelinesIssueWorkflow,
 }
 
 

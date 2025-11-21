@@ -12,13 +12,13 @@ import tempfile
 from urllib.parse import urlparse
 
 import requests
-from semantic_kernel.functions import kernel_function
 from src._diff import create_diff_with_line_numbers
 from src._utils import run_prompty
+from src.agent.tools._base import Tool
 
 
-class UtilityPlugin:
-    """Utility plugin for APIView Copilot."""
+class UtilityTools(Tool):
+    """Utility tools for APIView Copilot."""
 
     def _download_if_url(self, file_path: str) -> str:
         """
@@ -35,7 +35,6 @@ class UtilityPlugin:
                 return tmp.name
         return file_path
 
-    @kernel_function(description="Summarize the provided API.")
     async def summarize_api(self, api: str, language: str):
         """
         Summarize the provided API.
@@ -48,7 +47,6 @@ class UtilityPlugin:
         )
         return response
 
-    @kernel_function(description="Summarize the differences between the provided APIs.")
     async def summarize_api_diff(self, target: str, base: str, language: str):
         """
         Summarize the differences between the provided APIs.
@@ -63,7 +61,6 @@ class UtilityPlugin:
         )
         return response
 
-    @kernel_function(description="Load a JSON file from the specified path or URL.")
     async def load_json_file(self, file_path: str):
         """
         Load a JSON file from the specified path or URL.
@@ -82,7 +79,6 @@ class UtilityPlugin:
         except Exception as e:
             raise ValueError(f"Error reading JSON file {file_path}.") from e
 
-    @kernel_function(description="Load a text file from the specified path or URL.")
     async def load_text_file(self, file_path: str):
         """
         Load a text file from the specified path or URL.

@@ -17,6 +17,7 @@ import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
+import { afterEach } from "node:test";
 
 describe.sequential("Verify commands", () => {
   let repoRoot: string;
@@ -30,6 +31,10 @@ describe.sequential("Verify commands", () => {
     await mkdir(joinPaths(cwd(), "test/examples/initGlobalConfigNoMatch/"), { recursive: true });
   });
 
+  afterEach(async () => {
+    await rm(joinPaths(repoRoot, "sdk/contosowidgetmanager"), { recursive: true });
+  });
+
   afterAll(async () => {
     await rm(joinPaths(repoRoot, "eng", "emitter-package.json"));
 
@@ -39,14 +44,13 @@ describe.sequential("Verify commands", () => {
       await rm(emitterPackageLock);
     }
 
+    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+    await rm("./test/examples/initGlobalConfig/", { recursive: true });
+    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
     await rm(
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
     );
-    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
-    await rm("./test/examples/initGlobalConfig/", { recursive: true });
-    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
-    await rm(joinPaths(repoRoot, "sdk/contosowidgetmanager"), { recursive: true });
   });
 
   it("Generate lock file", async () => {

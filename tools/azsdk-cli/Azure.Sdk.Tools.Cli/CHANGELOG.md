@@ -3,6 +3,7 @@
 ## 0.5.9 (Unreleased)
 
 ### Features Added
+- Add CLI command to identify in progress release plans with past due date
 
 ### Breaking Changes
 

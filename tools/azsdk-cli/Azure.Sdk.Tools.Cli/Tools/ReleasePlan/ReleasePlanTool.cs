@@ -10,7 +10,9 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.Graph.Models;
 using ModelContextProtocol.Server;
 using Octokit;
 
@@ -33,6 +35,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string getReleasePlanDetailsCommandName = "get";
         private const string createReleasePlanCommandName = "create";
         private const string linkNamespaceApprovalIssueCommandName = "link-namespace-approval";
+        private const string listOverdueReleasePlansCommandName = "list-overdue";
+
         private const string sdkBotEmail = "azuresdk@microsoft.com";
 
         // Options
@@ -153,7 +157,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 isTestReleasePlanOpt,
                 forceCreateReleasePlanOpt,
             },
-            new(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan") { workItemIdOpt, namespaceApprovalIssueOpt }
+            new(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan") { workItemIdOpt, namespaceApprovalIssueOpt },
+            new(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline"),
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -193,6 +198,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 case linkNamespaceApprovalIssueCommandName:
                     return await LinkNamespaceApprovalIssue(commandParser.GetValue(workItemIdOpt), commandParser.GetValue(namespaceApprovalIssueOpt));
+
+                case listOverdueReleasePlansCommandName:
+                    return await ListOverdueReleasePlans();
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -684,6 +692,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to update release plan with language exclusion justification in release plan work item {ReleasePlanWorkItem}", releasePlanWorkItem);
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
+            }
+        }
+
+        public async Task<ReleasePlanListResponse> ListOverdueReleasePlans()
+        {
+            try
+            {
+                var releasePlans = await devOpsService.ListOverdueReleasePlansAsync();
+                return new ReleasePlanListResponse
+                {
+                    Message = "List of overdue Release plans:",
+                    ReleasePlanDetailsList = releasePlans
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving overdue release plan");
+                return new ReleasePlanListResponse { ResponseError = $"An error occurred while retrieving overdue release plans: {ex.Message}" };
             }
         }
     }

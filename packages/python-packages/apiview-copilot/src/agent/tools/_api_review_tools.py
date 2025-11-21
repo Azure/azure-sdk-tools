@@ -19,7 +19,7 @@ from src.agent.tools._base import Tool
 class ApiReviewTools(Tool):
     """Tools for API review operations."""
 
-    async def review_api(self, *, language: str, target: str):
+    def review_api(self, *, language: str, target: str):
         """
         Perform an API review on a single API.
         Args:
@@ -30,7 +30,7 @@ class ApiReviewTools(Tool):
         results = reviewer.run()
         return json.dumps(results.model_dump(), indent=2)
 
-    async def review_api_diff(self, *, language: str, target: str, base: str):
+    def review_api_diff(self, *, language: str, target: str, base: str):
         """
         Perform an API review on a diff between two APIs.
         Args:
@@ -42,16 +42,16 @@ class ApiReviewTools(Tool):
         results = reviewer.run()
         return json.dumps(results.model_dump(), indent=2)
 
-    async def get_apiview_revision(self, *, revision_id: str) -> str:
+    def get_apiview_revision(self, *, revision_id: str) -> str:
         """
         Get the text of an API revision.
         Args:
             revision_id (str): The ID of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return await client.get_revision_text(revision_id=revision_id)
+        return client.get_revision_text(revision_id=revision_id)
 
-    async def get_apiview_revision_by_review(self, *, review_id: str, label: str = "Latest") -> str:
+    def get_apiview_revision_by_review(self, *, review_id: str, label: str = "Latest") -> str:
         """
         Get the text of an API revision by review ID and label.
         Args:
@@ -59,22 +59,22 @@ class ApiReviewTools(Tool):
             label (str): The label of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return await client.get_revision_text(review_id=review_id, label=label)
+        return client.get_revision_text(review_id=review_id, label=label)
 
-    async def get_apiview_revision_outline(self, *, revision_id: str) -> str:
+    def get_apiview_revision_outline(self, *, revision_id: str) -> str:
         """
         Get the outline for a given API revision.
         Args:
             revision_id (str): The ID of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return await client.get_revision_outline(revision_id=revision_id)
+        return client.get_revision_outline(revision_id=revision_id)
 
-    async def get_apiview_revision_comments(self, *, revision_id: str) -> str:
+    def get_apiview_revision_comments(self, *, revision_id: str) -> str:
         """
         Retrieves any existing comments for a given API revision
         Args:
             revision_id (str): The ID of the API revision to retrieve comments for.
         """
         client = ApiViewClient()
-        return await client.get_review_comments(revision_id=revision_id)
+        return client.get_review_comments(revision_id=revision_id)

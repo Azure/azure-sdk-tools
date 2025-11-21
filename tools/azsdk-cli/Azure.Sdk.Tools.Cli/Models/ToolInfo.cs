@@ -11,8 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Models
             CommandLine = commandLine;
         }
 
-        public string McpToolName { get; } = string.Empty;
+        public string McpToolName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string CommandLine { get; } = string.Empty;
+        public string CommandLine { get; set; } = string.Empty;
     }
 }

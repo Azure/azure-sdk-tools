@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         public IList<ToolInfo> Tools { get; set; } = new List<ToolInfo>();
         protected override string Format()
         {
-            var sb = new StringBuilder();            
+            var sb = new StringBuilder();
             if (Tools.Count == 0)
             {
                 sb.AppendLine("No tools available.");
@@ -37,6 +37,3 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         }
     }
 }
-            
-
-

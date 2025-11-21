@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
 {
     public class McpCommand: Command
     {
-        public string McpToolName { get; set; }
+        public string McpToolName { get; }
         public McpCommand(string command, string description, string mcpToolName = "") : base(command, description)
         {
             McpToolName = mcpToolName;

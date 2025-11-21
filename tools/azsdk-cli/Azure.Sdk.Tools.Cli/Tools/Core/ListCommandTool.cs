@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
         private List<ToolInfo> GetToolNameAndDescription(ParseResult parseResult)
         {
             var tools = new List<ToolInfo>();
-            // Get all CLI commands from command root and it's MCP tool name
+            // Get all CLI commands from command root and its MCP tool name
             ProcessCommandTree(parseResult.RootCommandResult.Command, "", tools);
 
             // Find any MCP tool that is not represented in the command tree
@@ -75,5 +75,3 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
         }
     }
 }
-
-

@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessLogger> releaseReadinessLogger) : MCPTool
+    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
         

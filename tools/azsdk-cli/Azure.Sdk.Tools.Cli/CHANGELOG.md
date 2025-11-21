@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Moved `azsdk_check_api_spec_ready_for_sdk` and `azsdk_link_sdk_pull_request_to_release_plan` under release plan command hierarchy.
+
 ### Breaking Changes
 
 ### Bugs Fixed

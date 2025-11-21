@@ -15,6 +15,7 @@ public class VerifySetupResponse : CommandResponse
     protected override string Format()
     {
         var sb = new StringBuilder();
+        
         sb.AppendLine("Results:");
 
         if (Results != null)

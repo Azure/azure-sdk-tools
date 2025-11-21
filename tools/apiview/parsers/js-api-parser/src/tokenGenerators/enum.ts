@@ -1,12 +1,12 @@
 import { ApiEnum, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
-import { TokenGenerator } from "./interfaces";
+import { TokenGenerator } from "./index";
 
 function isValid(item: ApiItem): item is ApiEnum {
     return item.kind === ApiItemKind.Enum;
 }
 
-function generate(item: ApiEnum, deprecated: boolean): ReviewToken[] {
+function generate(item: ApiEnum, deprecated?: boolean): ReviewToken[] {
     const tokens: ReviewToken[] = [];
     if (item.kind !== ApiItemKind.Enum) {
         throw new Error(`Invalid item ${item.displayName} of kind ${item.kind} for Enum token generator.`);

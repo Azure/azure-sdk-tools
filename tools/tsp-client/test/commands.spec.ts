@@ -104,38 +104,35 @@ describe.sequential("Verify commands", () => {
     assert.isTrue(dir.isDirectory());
   });
 
-  it("Sync example sdk with local spec", async () => {
+  it("Sync and generate example sdk with local spec", async () => {
+    const args = {
+      "output-dir": joinPaths(cwd(), "./test/examples/sdk/local-spec-sdk"),
+      "local-spec-repo": "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
+      "save-inputs": true,
+    };
     try {
-      const args = {
-        "output-dir": joinPaths(cwd(), "./test/examples/sdk/local-spec-sdk"),
-        "local-spec-repo":
-          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
-      };
       await syncCommand(args);
     } catch (error) {
       assert.fail(`Failed to sync files. Error: ${error}`);
     }
-    const dir = await stat("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/");
-    assert.isTrue(dir.isDirectory());
-  });
-
-  it("Generate example sdk", async () => {
+    assert.isTrue(
+      (await stat("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/")).isDirectory(),
+    );
     try {
-      const args = {
-        "output-dir": joinPaths(
-          cwd(),
-          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
-        ),
-        "save-inputs": true,
-      };
       await generateCommand(args);
     } catch (error) {
       assert.fail(`Failed to generate. Error: ${error}`);
     }
-    const dir = await stat(
-      "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
+    assert.isTrue(
+      (
+        await stat(
+          joinPaths(
+            repoRoot,
+            "sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
+          ),
+        )
+      ).isFile(),
     );
-    assert.isTrue(dir.isFile());
   });
 
   it("Generate with alternate entrypoint", async () => {
@@ -650,8 +647,8 @@ describe.sequential("Verify commands", () => {
       repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
       //Check that the manual dependency version remains unchanged
       assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.0");
       assert.isUndefined(emitterJson["overrides"]);
@@ -680,8 +677,8 @@ describe.sequential("Verify commands", () => {
       repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
       //Check that the manual regular dependency version remains unchanged
       assert.equal(emitterJson["dependencies"]["lodash"], "4.17.21");
       //Check that the manual dev dependency version remains unchanged
@@ -711,7 +708,7 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
       assert.exists(emitterJson["overrides"]);
       assert.equal(emitterJson["overrides"]["prettier"], "3.5.3");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
@@ -731,9 +728,9 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
       assert.equal(Object.keys(emitterJson["devDependencies"]).length, 2);
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
@@ -759,8 +756,8 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
 
       // Check that dependencies and devDependencies are updated
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
 
       // Check that all other fields are preserved
       assert.equal(emitterJson["name"], "test-emitter");

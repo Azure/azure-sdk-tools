@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
+using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using Microsoft.Extensions.AI.Evaluation.Reporting;
@@ -26,19 +27,64 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [OneTimeSetUp]
         public async Task GlobalSetup()
         {
+            if (!TestSetup.ShouldRunEvals())
+            {
+                Assert.Ignore("Skipping all tests: Required environment variables are not configured. " +
+                    "Set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_MODEL_DEPLOYMENT_NAME, REPOSITORY_NAME, and COPILOT_INSTRUCTIONS_PATH_MCP_EVALS.");
+            }
+            else
+            {
+                TestSetup.ValidateEnvironmentConfiguration();
+            }
+
             s_chatClient = TestSetup.GetChatClient();
             s_mcpClient = await TestSetup.GetMcpClientAsync();
             s_chatConfig = new ChatConfiguration(s_chatClient);
             s_chatCompletion = TestSetup.GetChatCompletion(s_chatClient, s_mcpClient);
             s_toolNames = (await s_mcpClient.ListToolsAsync()).Select(tool => tool.Name)!;
-            TestSetup.ValidateCopilotEnvironmentConfiguration();
+        }
 
+        [SetUp]
+        public void CheckRepositoryCategory()
+        {
+            var repositoryName = TestSetup.RepositoryName;
+            if (string.IsNullOrEmpty(repositoryName))
+            {
+                return;
+            }
+
+            // Extract repo name from "Owner/Repo" format and normalize
+            var repoName = repositoryName.Split('/').Last().ToLowerInvariant();
+
+            // Get test categories
+            var categories = TestContext.CurrentContext.Test.Properties["Category"]
+                .Cast<string>()
+                .Select(c => c.ToLowerInvariant())
+                .ToList();
+
+            // No categories means test runs everywhere
+            if (!categories.Any())
+            {
+                return;
+            }
+
+            // Skip if repository doesn't match any category
+            if (!categories.Contains(repoName))
+            {
+                Assert.Ignore($"Skipping test: Test is categorized for [{string.Join(", ", categories)}] but current repository is '{repositoryName}'.");
+            }
         }
 
 
         [OneTimeTearDown]
         public async Task GlobalTearDown()
         {
+            // Skip report generation if tests were skipped during setup
+            if (s_chatClient == null)
+            {
+                return;
+            }
+            
             // Generate a HTML report for all the evaluations run
             var resultStore = new DiskBasedResultStore(ReportingPath);
             var allResults = new List<ScenarioRunResult>();

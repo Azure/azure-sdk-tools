@@ -6,6 +6,7 @@ Welcome to the Azure SDK Tools CLI Evaluations project! This framework tests and
 
 - [Understanding Evaluation Scenarios](#understanding-evaluation-scenarios)
 - [Creating New Scenarios](#creating-new-scenarios)
+- [Repository-Specific Tests](#repository-specific-tests)
 - [Custom Evaluators](#custom-evaluators)
 
 ## Understanding Evaluation Scenarios
@@ -79,9 +80,9 @@ public async Task Evaluate_MyNewScenario()
 
 ```csharp
 [Test]
+[Category("azure-rest-api-specs")]  // Optional: Add category for repository-specific tests
 public async Task Evaluate_YourScenarioName()
 {
-    // Option A: From Simple Prompt
     const string prompt = "Generate SDK for my TypeSpec project";
     
     string[] expectedTools = 
@@ -91,27 +92,26 @@ public async Task Evaluate_YourScenarioName()
     ];
 
     // Build scenario data from prompt
-    var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
+    var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
 
     // Configure input validation (set to false to skip parameter checking)
     bool checkInputs = true;
-    var additionalContexts = new EvaluationContext[]
-    {
-        new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-    };
 
     // Run the evaluation
     var result = await EvaluationHelper.RunScenarioAsync(
         scenarioName: this.ScenarioName,
         scenarioData: scenarioData,
-        expectedToolResults: expectedToolResults,
         chatCompletion: s_chatCompletion!,
         chatConfig: s_chatConfig!,
         executionName: s_executionName,
         reportingPath: ReportingPath,
+        toolNames: s_toolNames!,
         evaluators: [new ExpectedToolInputEvaluator()],
         enableResponseCaching: true,
-        additionalContexts: additionalContexts);
+        additionalContexts: new EvaluationContext[]
+        {
+            new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
+        });
 
     // Assert the results
     EvaluationHelper.ValidateToolInputsEvaluator(result);
@@ -185,6 +185,37 @@ dotnet test --filter "TestName~YourScenarioName"
 
 # Run all tests
 dotnet test
+```
+
+## Repository-Specific Tests
+
+You can create tests that only run for specific repositories using NUnit categories. This is useful when testing features that are only relevant to certain Azure SDK repositories.
+
+### Adding Repository Categories
+
+Use the `[Category]` attribute to specify which repositories a test should run for:
+
+```csharp
+[Test]
+[Category("azure-rest-api-specs")]
+public async Task Evaluate_SpecificToRestApiSpecs()
+{
+    // This test only runs when REPOSITORY_NAME contains "azure-rest-api-specs"
+}
+
+[Test]
+[Category("azure-sdk-for-net")]
+[Category("azure-sdk-for-python")]
+public async Task Evaluate_MultipleRepos()
+{
+    // This test runs for both .NET and Python SDK repositories
+}
+
+[Test]
+public async Task Evaluate_RunsEverywhere()
+{
+    // Tests without categories run for all repositories
+}
 ```
 
 ## Custom Evaluators

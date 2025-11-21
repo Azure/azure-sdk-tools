@@ -26,6 +26,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private readonly Dictionary<string, string> contactsCache = new Dictionary<string, string>();
         // A cache on the team member to member descriptor.
         private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
+        // A cache on team subscriptions to avoid redundant API calls
+        private readonly Dictionary<Guid, IEnumerable<NotificationSubscription>> subscriptionsCache = new Dictionary<Guid, IEnumerable<NotificationSubscription>>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {
@@ -121,33 +123,139 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     return;
                 }
 
-                // Get set of team members in the CODEOWNERS file
-                var contactsDescriptors = new List<string>();
-                foreach (string contact in contacts)
-                {
-                    if (!contactsCache.ContainsKey(contact))
-                    {
-                        // TODO: Better to have retry if no success on this call.
-                        var userPrincipal = await gitHubToAADConverter.GetUserPrincipalNameFromGithubAsync(contact);
-                        if (!string.IsNullOrEmpty(userPrincipal))
-                        {
-                            contactsCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
-                        }
-                        else
-                        {
-                            logger.LogInformation(
-                                "Cannot find the user principal for GitHub contact '{contact}'",
-                                contact);
-                            contactsCache[contact] = null;
-                        }
-                    }
-                    contactsDescriptors.Add(contactsCache[contact]);
-                }
+                // A. Contacts Processing: Apply Distinct() and filter null/empty contacts early
+                var distinctContacts = contacts
+                    .Where(contact => !string.IsNullOrEmpty(contact))
+                    .Distinct()
+                    .ToList();
 
-                var contactsSet = new HashSet<string>(contactsDescriptors);
+                // Resolve contact descriptors with caching
+                var contactsDescriptors = await ResolveContactDescriptorsAsync(distinctContacts, gitHubToAADConverter);
+
+                // C. Set Delta Optimization: Filter out null descriptors before forming HashSet
+                var contactsSet = new HashSet<string>(contactsDescriptors.Where(d => d != null));
+                
                 // Get set of team members in the DevOps teams
                 var teamMembers = await service.GetMembersAsync(team);
-                var teamDescriptors = new List<String>();
+                
+                // B. Team Member Descriptor Retrieval: Try new batch method first
+                var teamDescriptors = await GetTeamMemberDescriptorsAsync(team, teamMembers);
+                
+                // C. Set Delta Optimization: Filter out null descriptors
+                var teamSet = new HashSet<string>(teamDescriptors.Where(d => d != null));
+                
+                // C. Set Delta Optimization: Early equality check - skip if sets are equal
+                if (contactsSet.SetEquals(teamSet))
+                {
+                    logger.LogInformation("Team membership is already synchronized. No changes needed.");
+                    return;
+                }
+                
+                var contactsToRemove = teamSet.Except(contactsSet).ToList();
+                var contactsToAdd = contactsSet.Except(teamSet).ToList();
+                
+                // Only get team descriptor if there are changes to make
+                string teamDescriptor = "";
+                if (contactsToRemove.Any() || contactsToAdd.Any())
+                {
+                    teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                }
+
+                // E. Logging Adjustments: Aggregate information
+                if (contactsToRemove.Any())
+                {
+                    logger.LogInformation("Removing {count} contact(s) from team", contactsToRemove.Count);
+                }
+                
+                foreach (string descriptor in contactsToRemove)
+                {
+                    // F. Dry-Run Behavior: Skip external operations when not persisting
+                    if (persistChanges)
+                    {
+                        logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        await service.RemoveMember(teamDescriptor, descriptor);
+                    }
+                    else
+                    {
+                        logger.LogInformation("Would delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                    }
+                }
+
+                // E. Logging Adjustments: Aggregate information
+                if (contactsToAdd.Any())
+                {
+                    logger.LogInformation("Adding {count} contact(s) to team", contactsToAdd.Count);
+                }
+                
+                foreach (string descriptor in contactsToAdd)
+                {
+                    // F. Dry-Run Behavior: Skip external operations when not persisting
+                    if (persistChanges)
+                    {
+                        logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        await service.AddToTeamAsync(teamDescriptor, descriptor);
+                    }
+                    else
+                    {
+                        logger.LogInformation("Would add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resolves contact GitHub handles to descriptors with caching
+        /// </summary>
+        private async Task<List<string>> ResolveContactDescriptorsAsync(
+            List<string> contacts,
+            GitHubToAADConverter gitHubToAADConverter)
+        {
+            var contactsDescriptors = new List<string>();
+            
+            foreach (string contact in contacts)
+            {
+                if (!contactsCache.ContainsKey(contact))
+                {
+                    // TODO: Batch method for future optimization: GetUserPrincipalNamesFromGithubAsync(IEnumerable<string> githubUsernames)
+                    var userPrincipal = await gitHubToAADConverter.GetUserPrincipalNameFromGithubAsync(contact);
+                    if (!string.IsNullOrEmpty(userPrincipal))
+                    {
+                        // TODO: Batch method for future optimization: GetDescriptorsForPrincipalsAsync(IEnumerable<string> principals)
+                        contactsCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
+                    }
+                    else
+                    {
+                        logger.LogInformation(
+                            "Cannot find the user principal for GitHub contact '{contact}'",
+                            contact);
+                        // Cache null results to avoid re-requesting
+                        contactsCache[contact] = null;
+                    }
+                }
+                contactsDescriptors.Add(contactsCache[contact]);
+            }
+            
+            return contactsDescriptors;
+        }
+
+        /// <summary>
+        /// Gets team member descriptors, trying batch method first, falling back to individual calls
+        /// </summary>
+        private async Task<List<string>> GetTeamMemberDescriptorsAsync(WebApiTeam team, List<TeamMember> teamMembers)
+        {
+            var teamDescriptors = new List<string>();
+            
+            // B. Team Member Descriptor Retrieval: Try new batch method first
+            var batchDescriptors = await service.GetMemberDescriptorsAsync(team);
+            
+            if (batchDescriptors != null && batchDescriptors.Any())
+            {
+                // Use batch results
+                teamDescriptors.AddRange(batchDescriptors);
+            }
+            else
+            {
+                // Fallback to individual calls with caching
                 foreach (var member in teamMembers)
                 {
                     if (!teamMemberCache.ContainsKey(member.Identity.Id))
@@ -157,34 +265,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     }
                     teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
                 }
-                var teamSet = new HashSet<string>(teamDescriptors);
-                var contactsToRemove = teamSet.Except(contactsSet);
-                var contactsToAdd = contactsSet.Except(teamSet);
-                string teamDescriptor = "";
-
-                if (contactsToRemove.Any() || contactsToAdd.Any())
-                {
-                    teamDescriptor = await service.GetDescriptorAsync(team.Id);
-                }
-
-                foreach (string descriptor in contactsToRemove)
-                {
-                    if (persistChanges && descriptor != null)
-                    {
-                        logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        await service.RemoveMember(teamDescriptor, descriptor);
-                    }
-                }
-
-                foreach (string descriptor in contactsToAdd)
-                {
-                    if (persistChanges && descriptor != null)
-                    {
-                        logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        await service.AddToTeamAsync(teamDescriptor, descriptor);
-                    }
-                }
             }
+            
+            return teamDescriptors;
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)
@@ -206,7 +289,13 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private async Task EnsureScheduledBuildFailSubscriptionExists(BuildDefinition pipeline, WebApiTeam team, bool persistChanges)
         {
             const string BuildFailureNotificationTag = "#AutomaticBuildFailureNotification";
-            var subscriptions = await service.GetSubscriptionsAsync(team.Id);
+            
+            // D. Subscription Retrieval Optimization: Use cache to avoid redundant calls
+            if (!subscriptionsCache.ContainsKey(team.Id))
+            {
+                subscriptionsCache[team.Id] = await service.GetSubscriptionsAsync(team.Id);
+            }
+            var subscriptions = subscriptionsCache[team.Id];
 
             var subscription = subscriptions.FirstOrDefault(sub => sub.Description.Contains(BuildFailureNotificationTag));
 
@@ -242,9 +331,13 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 };
 
                 logger.LogInformation("Creating Subscription PipelineId = {0}, TeamId = {1}", pipeline.Id, team.Id);
+                
+                // F. Dry-Run Behavior: Skip external operations when not persisting
                 if (persistChanges)
                 {
                     subscription = await service.CreateSubscriptionAsync(newSubscription);
+                    // Invalidate cache after creating new subscription
+                    subscriptionsCache.Remove(team.Id);
                 }
             }
             else
@@ -268,6 +361,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     definitionClause.Value = definitionName;
 
+                    // F. Dry-Run Behavior: Skip external operations when not persisting
                     if (persistChanges)
                     {
                         var updateParameters = new NotificationSubscriptionUpdateParameters()
@@ -279,6 +373,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         };
                         logger.LogInformation("Updating Subscription expression for team {0} with correct definition name {1}", team.Name, definitionName);
                         subscription = await service.UpdatedSubscriptionAsync(updateParameters, subscription.Id.ToString());
+                        // Invalidate cache after updating subscription
+                        subscriptionsCache.Remove(team.Id);
                     }
                 }
             }

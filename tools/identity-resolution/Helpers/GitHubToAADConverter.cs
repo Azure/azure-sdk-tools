@@ -50,6 +50,23 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
             return null;
         }
 
+        // TODO: Future batch optimization method
+        // public async Task<Dictionary<string, string>> GetUserPrincipalNamesFromGithubAsync(IEnumerable<string> gitHubUserNames)
+        // {
+        //     await EnsureCacheExistsAsync();
+        //     
+        //     var results = new Dictionary<string, string>();
+        //     foreach (var userName in gitHubUserNames)
+        //     {
+        //         if (this.lookupCache.TryGetValue(userName, out string aadUserPrincipalName))
+        //         {
+        //             results[userName] = aadUserPrincipalName;
+        //         }
+        //     }
+        //     
+        //     return results;
+        // }
+
         public async Task EnsureCacheExistsAsync()
         {
             await this.cacheLock.WaitAsync();

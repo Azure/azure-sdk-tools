@@ -9,11 +9,9 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Azure.Sdk.Tools.Cli.Tools.Samples;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 {
@@ -37,18 +35,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Translates sample files from one language to another")]
     public class SampleTranslatorTool : LanguageMcpTool
     {
-        private readonly ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
         private readonly IMicroagentHostService microagentHostService;
         public SampleTranslatorTool(
             IMicroagentHostService microagentHostService,
             ILogger<SampleTranslatorTool> logger,
             IGitHelper gitHelper,
             IEnumerable<LanguageService> languageServices,
-            ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver,
             IFileHelper fileHelper
         ) : base(languageServices, gitHelper, logger)
-        {
-            this.sampleContextResolver = sampleContextResolver;
+        { 
             this.microagentHostService = microagentHostService;
         }
 
@@ -133,8 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             var outputDirectory = packageInfo.SamplesDirectory;
 
             logger.LogDebug("Loading source and target language contexts");
-            SampleLanguageContext sourceContext = await sampleContextResolver.Resolve(fromPackagePath, ct) ?? throw new ArgumentException("Unable to determine source language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
-            SampleLanguageContext targetContext = await sampleContextResolver.Resolve(toPackagePath, ct) ?? throw new ArgumentException("Unable to determine target language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            SampleLanguageContext sourceContext = sourceLanguageService.SampleLanguageContext;
+            SampleLanguageContext targetContext = targetLanguageService.SampleLanguageContext;
 
             var sourceLanguage = sourceContext.Language;
             var targetLanguage = targetContext.Language;

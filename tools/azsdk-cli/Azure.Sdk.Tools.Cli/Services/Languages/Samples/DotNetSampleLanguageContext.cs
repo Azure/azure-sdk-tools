@@ -3,7 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Samples;
+namespace Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 public sealed class DotNetSampleLanguageContext : SampleLanguageContext
 {

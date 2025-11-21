@@ -3,7 +3,6 @@
 using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -24,13 +23,15 @@ public sealed partial class DotnetLanguageService: LanguageService
         IPowershellHelper powershellHelper,
         IGitHelper gitHelper,        
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         this.powershellHelper = powershellHelper;
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;

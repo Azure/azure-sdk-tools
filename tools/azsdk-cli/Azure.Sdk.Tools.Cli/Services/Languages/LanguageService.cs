@@ -3,6 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
@@ -12,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected IGitHelper gitHelper;
         protected ILogger<LanguageService> logger;
         protected ICommonValidationHelpers commonValidationHelpers;
+        protected IFileHelper fileHelper;
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
@@ -273,6 +275,25 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     "Run validation checks"
                     ],
                 result: "noop"));
+        }
+
+        /// <summary>
+        /// Get sample language context for sample generation.
+        /// </summary>
+        public virtual SampleLanguageContext SampleLanguageContext
+        {
+            get
+            {
+                return Language switch
+                {
+                    SdkLanguage.DotNet => new DotNetSampleLanguageContext(fileHelper),
+                    SdkLanguage.Java => new JavaSampleLanguageContext(fileHelper),
+                    SdkLanguage.JavaScript => new TypeScriptSampleLanguageContext(fileHelper),
+                    SdkLanguage.Python => new PythonSampleLanguageContext(fileHelper),
+                    SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
+                    _ => throw new NotImplementedException($"Sample language context is not implemented for language: {Language}"),
+                };
+            }
         }
     }
 }

@@ -16,12 +16,14 @@ public partial class GoLanguageService : LanguageService
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
 
     private readonly string goUnix = "go";

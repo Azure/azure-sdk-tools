@@ -6,7 +6,7 @@
       "RequestHeaders": {
         "Accept": "application/json, text/event-stream",
         "Authorization": "Sanitized",
-        "Content-Length": "470",
+        "Content-Length": "471",
         "Content-Type": "multipart/form-data; boundary=\"GvVFZ9=ZCyp5jSEed6vjkD_Ww3vpc8Inh_FBB=L=pcNyhgd76_2TakLUlfvXTfcITYb2_f\"",
         "User-Agent": "OpenAI/2.4.0 (.NET 9.0.9; Microsoft Windows 10.0.26100)"
       },

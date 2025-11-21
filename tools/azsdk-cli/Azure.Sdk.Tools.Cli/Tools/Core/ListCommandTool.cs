@@ -10,6 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
 {
     public class ListCommandTool(IServiceProvider serviceProvider) : MCPTool
     {
+#pragma warning disable CS1998
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             return new ToolListResponse
@@ -17,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
                 Tools = GetToolNameAndDescription(parseResult)
             };
         }
+#pragma warning restore CS1998
 
         protected override Command GetCommand()
         {
@@ -37,7 +39,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
             {
                 var toolInfo = new ToolInfo
                 {
-                    CommandLine = $"{parent} {command.Name}"
+                    CommandLine = $"{parent} {command.Name}",
+                    Description = command.Description ?? ""
                 };
                 if (command is McpCommand mcpCommand)
                 {

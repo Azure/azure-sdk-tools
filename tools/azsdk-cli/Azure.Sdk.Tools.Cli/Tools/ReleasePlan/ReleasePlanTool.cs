@@ -38,13 +38,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string linkSdkPrCommandName = "link-sdk-pr";
 
         // Options
-        private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id")
+        private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
         {
             Description = "Release Plan ID",
             Required = false,
         };
 
-        private readonly Option<int> workItemIdOpt = new("--work-item-id", "-w")
+        private readonly Option<int> workItemIdOpt = new("--work-item-id", "--workitem-id", "-w")
         {
             Description = "Work Item ID",
             Required = false,
@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<string> pullRequestOpt = new("--pull-request")
+        private readonly Option<string> pullRequestOpt = new("--pull-request", "--url")
         {
             Description = "Api spec pull request URL",
             Required = true,

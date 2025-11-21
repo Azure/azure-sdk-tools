@@ -35,7 +35,7 @@ class UtilityTools(Tool):
                 return tmp.name
         return file_path
 
-    async def summarize_api(self, api: str, language: str):
+    def summarize_api(self, api: str, language: str):
         """
         Summarize the provided API.
         :param api: The API content to summarize.
@@ -47,7 +47,7 @@ class UtilityTools(Tool):
         )
         return response
 
-    async def summarize_api_diff(self, target: str, base: str, language: str):
+    def summarize_api_diff(self, target: str, base: str, language: str):
         """
         Summarize the differences between the provided APIs.
         :param target: The target (new) API to compare.
@@ -61,7 +61,7 @@ class UtilityTools(Tool):
         )
         return response
 
-    async def load_json_file(self, file_path: str):
+    def load_json_file(self, file_path: str):
         """
         Load a JSON file from the specified path or URL.
         :param file_path: The path or URL to the JSON file.
@@ -79,7 +79,7 @@ class UtilityTools(Tool):
         except Exception as e:
             raise ValueError(f"Error reading JSON file {file_path}.") from e
 
-    async def load_text_file(self, file_path: str):
+    def load_text_file(self, file_path: str):
         """
         Load a text file from the specified path or URL.
         :param file_path: The path or URL to the text file.

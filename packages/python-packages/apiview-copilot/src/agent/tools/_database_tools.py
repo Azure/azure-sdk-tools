@@ -60,7 +60,7 @@ You must ensure you adhere to the following guidelines.
 
 
 @contextmanager
-async def get_create_agent():
+def get_create_agent():
     """Agent for handling database create requests."""
     from src._apiview_reviewer import SUPPORTED_LANGUAGES
     from src.agent._agent import _get_agent_settings
@@ -157,7 +157,7 @@ For specific fields:
 
 
 @contextmanager
-async def get_retrieve_agent():
+def get_retrieve_agent():
     """Agent for handling database retrieval requests."""
     from src.agent._agent import _get_agent_settings
 
@@ -184,7 +184,7 @@ You are an agent that processes database get or retrieval requests for guideline
 
 
 @contextmanager
-async def get_link_agent():
+def get_link_agent():
     """Agent for handling database linking and unlinking requests."""
     from src.agent._agent import _get_agent_settings
 
@@ -232,7 +232,7 @@ You must ensure you adhere to the following guidelines.
 class DatabaseCreateTool(Tool):
     """Tool for creating database items."""
 
-    async def create_guideline(
+    def create_guideline(
         self,
         id: str,
         content: str,
@@ -256,7 +256,7 @@ class DatabaseCreateTool(Tool):
         db = DatabaseManager.get_instance()
         return db.guidelines.create(id, data=data)
 
-    async def create_memory(
+    def create_memory(
         self,
         id: str,
         title: str,
@@ -292,7 +292,7 @@ class DatabaseCreateTool(Tool):
         db = DatabaseManager.get_instance()
         return db.memories.create(id, data=data)
 
-    async def create_example(
+    def create_example(
         self,
         title: str,
         content: str,
@@ -332,7 +332,7 @@ class DatabaseCreateTool(Tool):
 class DatabaseRetrieveTool(Tool):
     """Tool for retrieving database items."""
 
-    async def get_memory(self, memory_id: str):
+    def get_memory(self, memory_id: str):
         """
         Retrieve a memory from the database by its ID.
         Args:
@@ -341,13 +341,13 @@ class DatabaseRetrieveTool(Tool):
         db = DatabaseManager.get_instance()
         return db.memories.get(memory_id)
 
-    async def get_memory_schema(self):
+    def get_memory_schema(self):
         """
         Retrieve the Memory schema.
         """
         return Memory.model_json_schema()
 
-    async def get_example(self, example_id: str):
+    def get_example(self, example_id: str):
         """
         Retrieve an example from the database by its ID.
         Args:
@@ -356,13 +356,13 @@ class DatabaseRetrieveTool(Tool):
         db = DatabaseManager.get_instance()
         return db.examples.get(example_id)
 
-    async def get_example_schema(self):
+    def get_example_schema(self):
         """
         Retrieve the Example schema.
         """
         return Example.model_json_schema()
 
-    async def get_guideline(self, guideline_id: str):
+    def get_guideline(self, guideline_id: str):
         """
         Retrieve a guideline from the database by its ID.
         Args:
@@ -371,7 +371,7 @@ class DatabaseRetrieveTool(Tool):
         db = DatabaseManager.get_instance()
         return db.guidelines.get(guideline_id)
 
-    async def get_guideline_schema(self):
+    def get_guideline_schema(self):
         """
         Retrieve the Guideline schema.
         """
@@ -381,7 +381,7 @@ class DatabaseRetrieveTool(Tool):
 class DatabaseLinkUnlinkTool(Tool):
     """Tool for linking and unlinking database items."""
 
-    async def link_items(
+    def link_items(
         self,
         source_id: str,
         source_container: str,
@@ -448,7 +448,7 @@ class DatabaseLinkUnlinkTool(Tool):
                 target_c.upsert(target_id, data=target_item)
         return {"status": "done", "source_id": source_id, "source_field": source_field, **results}
 
-    async def unlink_items(
+    def unlink_items(
         self,
         source_id: str,
         source_container: str,
@@ -521,7 +521,7 @@ class DatabaseLinkUnlinkTool(Tool):
 class DatabaseDeleteTool(Tool):
     """Tool for deleting database items."""
 
-    async def delete_guideline(self, id: str):
+    def delete_guideline(self, id: str):
         """Delete a guideline from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:
@@ -530,7 +530,7 @@ class DatabaseDeleteTool(Tool):
         except CosmosResourceNotFoundError:
             return f"Guideline with id '{id}' not found."
 
-    async def delete_memory(self, id: str):
+    def delete_memory(self, id: str):
         """Delete a memory from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:
@@ -539,7 +539,7 @@ class DatabaseDeleteTool(Tool):
         except CosmosResourceNotFoundError:
             return f"Memory with id '{id}' not found."
 
-    async def delete_example(self, id: str):
+    def delete_example(self, id: str):
         """Delete an example from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:
@@ -548,7 +548,7 @@ class DatabaseDeleteTool(Tool):
         except CosmosResourceNotFoundError:
             return f"Example with id '{id}' not found."
 
-    async def delete_review_job(self, id: str):
+    def delete_review_job(self, id: str):
         """Delete a review job from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:

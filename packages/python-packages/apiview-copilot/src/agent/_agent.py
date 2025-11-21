@@ -13,10 +13,17 @@ from contextlib import contextmanager
 from typing import Optional
 
 from azure.ai.agents import AgentsClient
-from azure.ai.agents.models import MessageRole, MessageTextContent, ToolSet
+from azure.ai.agents.models import (
+    FunctionTool,
+    MessageRole,
+    MessageTextContent,
+    ToolSet,
+)
 from src._credential import get_credential
 from src._settings import SettingsManager
+from src.agent.tools._api_review_tools import ApiReviewTools
 from src.agent.tools._search_tools import SearchTools
+from src.agent.tools._utility_tools import UtilityTools
 
 
 async def invoke_agent(
@@ -88,13 +95,15 @@ an appropriate error message to the user.
     credential = get_credential()
     client = AgentsClient(endpoint=endpoint, credential=credential)
 
+    # TODO: These were treated as subagents before and may not be applicable in the new format.
     # delete_agent = await stack.enter_async_context(get_delete_agent())
     # create_agent = await stack.enter_async_context(get_create_agent())
     # retrieve_agent = await stack.enter_async_context(get_retrieve_agent())
     # link_agent = await stack.enter_async_context(get_link_agent())
 
     toolset = ToolSet()
-    toolset.add(SearchTools().all_tools())
+    tools = SearchTools().all_tools() + ApiReviewTools().all_tools() + UtilityTools().all_tools()
+    toolset.add(FunctionTool(tools))
 
     agent = client.create_agent(
         name="APIView Copilot Main Agent",
@@ -106,21 +115,6 @@ an appropriate error message to the user.
     # enable all tools by default
     client.enable_auto_function_calls(tools=toolset)
 
-    # agent = AzureAIAgent(
-    #     client=client,
-    #     definition=agent_definition,
-    #     plugins=[
-    #         SearchPlugin(),
-    #         UtilityPlugin(),
-    #         ApiReviewPlugin(),
-    #         delete_agent,
-    #         create_agent,
-    #         retrieve_agent,
-    #         link_agent,
-    #     ],
-    #     polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
-    #     kernel=kernel,
-    # )
     try:
         yield client, agent.id
     finally:

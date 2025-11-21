@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ApplicationIcon />
-    <OutputType>Exe</OutputType>
     <StartupObject />
     <SignAssembly>True</SignAssembly>
   </PropertyGroup>

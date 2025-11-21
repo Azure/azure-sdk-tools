@@ -17,7 +17,7 @@ import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
-import { afterEach } from "node:test";
+import { afterEach } from "vitest";
 
 describe.sequential("Verify commands", () => {
   let repoRoot: string;

@@ -72,6 +72,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
 
             var result = teams.FirstOrDefault(team => team.Name == teamName);
+            bool teamCreatedOrUpdated = false;
 
             if (result == default)
             {
@@ -85,6 +86,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     result = await service.CreateTeamForProjectAsync(pipeline.Project.Id.ToString(), newTeam);
                 }
+                teamCreatedOrUpdated = true;
             }
             else
             {
@@ -96,11 +98,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     {
                         result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
                     }
+                    teamCreatedOrUpdated = true;
                 }
             }
             if (result != default)
             {
-                await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, persistChanges);
+                if (teamCreatedOrUpdated)
+                {
+                    await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, persistChanges);
+                }
                 await SyncTeamWithCodeownersFile(pipeline, result, gitHubToAADConverter, persistChanges);
             }
         }

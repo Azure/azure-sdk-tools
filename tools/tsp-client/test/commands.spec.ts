@@ -807,18 +807,21 @@ describe.sequential("Verify commands", () => {
       "emitter-package-json-path": "tools/tsp-client/test/examples/batch/service/package.json",
     };
 
-    await updateCommand(argv);
+    try {
+      await updateCommand(argv);
 
-    // Verify that output directories were created for each batch item
-    assert.isTrue(
-      (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/rbac"))).isDirectory(),
-    );
-    assert.isTrue(
-      (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/settings"))).isDirectory(),
-    );
-    assert.isTrue(
-      (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
-    );
-    await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+      // Verify that output directories were created for each batch item
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/rbac"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/settings"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
+      );
+    } finally {
+      await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+    }
   });
 });

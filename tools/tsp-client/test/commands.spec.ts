@@ -150,14 +150,14 @@ describe.sequential("Verify commands", () => {
       const args = {
         "output-dir": joinPaths(
           cwd(),
-          "./test/examples/sdk/contosowidgetmanager/contoso-widgetmanager",
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         "save-inputs": true,
       };
       await updateCommand(args);
       assert.isTrue(
         (
-          await stat(joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest/"))
+          await stat(joinPaths(repoRoot, "sdk/contosowidgetmanager/contoso-widgetmanager/"))
         ).isDirectory(),
       );
 

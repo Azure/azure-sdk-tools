@@ -16,7 +16,7 @@ from src._apiview_reviewer import ApiViewReview
 from src.agent.tools._base import Tool
 
 
-class ApiReviewTool(Tool):
+class ApiReviewTools(Tool):
     """Tools for API review operations."""
 
     async def review_api(self, *, language: str, target: str):

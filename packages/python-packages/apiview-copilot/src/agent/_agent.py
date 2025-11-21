@@ -69,7 +69,7 @@ async def invoke_agent(
             return str(obj)
 
     response_text = ""
-    for m in reversed(list(all_messages)):
+    for m in list(all_messages):
         role = getattr(m, "role", None)
         if role == MessageRole.AGENT.value or role == "assistant":
             parts = getattr(m, "content", None)

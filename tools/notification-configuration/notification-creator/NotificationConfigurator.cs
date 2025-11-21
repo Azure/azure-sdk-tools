@@ -24,6 +24,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
         // A cache on the code owners github identity to owner descriptor.
         private readonly Dictionary<string, string> contactsCache = new Dictionary<string, string>();
+        // A cache on the team member to member descriptor.
+        private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {
@@ -128,8 +130,17 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 var contactsSet = new HashSet<string>(contactsDescriptors.Where(d => d != null));
                 
-                var teamDescriptors = await GetTeamMemberDescriptorsAsync(team);
-                
+                var teamMembers = await service.GetMembersAsync(team);
+                var teamDescriptors = new List<string>();
+                foreach (var member in teamMembers)
+                {
+                    if (!teamMemberCache.ContainsKey(member.Identity.Id))
+                    {
+                        var teamMemberDescriptor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
+                        teamMemberCache[member.Identity.Id] = teamMemberDescriptor;
+                    }
+                    teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
+                }
                 var teamSet = new HashSet<string>(teamDescriptors.Where(d => d != null));
                 
                 if (contactsSet.SetEquals(teamSet))
@@ -216,15 +227,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             }
             
             return contactsDescriptors;
-        }
-
-        /// <summary>
-        /// Gets team member descriptors
-        /// </summary>
-        private async Task<List<string>> GetTeamMemberDescriptorsAsync(WebApiTeam team)
-        {
-            var batchDescriptors = await service.GetMemberDescriptorsAsync(team);
-            return batchDescriptors?.ToList() ?? new List<string>();
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)

@@ -252,50 +252,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         }
 
         /// <summary>
-        /// Gets descriptors for all team members (batch operation)
-        /// </summary>
-        /// <param name="team">Team</param>
-        /// <returns>List of member descriptors, or null if an error occurs</returns>
-        public async Task<IEnumerable<string>> GetMemberDescriptorsAsync(WebApiTeam team)
-        {
-            var client = await GetClientAsync<TeamHttpClient>();
-            
-            logger.LogInformation("GetMemberDescriptorsAsync TeamId = {0}, TeamName = {1}", team.Id, team.Name);
-            
-            try
-            {
-                var members = await client.GetTeamMembersWithExtendedPropertiesAsync(
-                    team.ProjectId.ToString(),
-                    team.Id.ToString()
-                );
-                
-                var descriptors = new List<string>();
-                var identityClient = await GetClientAsync<IdentityHttpClient>();
-                
-                foreach (var member in members)
-                {
-                    try
-                    {
-                        var identity = await identityClient.ReadIdentityAsync(new Guid(member.Identity.Id));
-                        descriptors.Add(identity.SubjectDescriptor.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Failed to get descriptor for team member {memberId}", member.Identity.Id);
-                        // Continue with other members
-                    }
-                }
-                
-                return descriptors;
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to get member descriptors for team {teamId}, falling back to individual calls", team.Id);
-                return null;  // Return null to indicate error and trigger fallback
-            }
-        }
-
-        /// <summary>
         ///
         /// </summary>
         /// <param name="id"></param>

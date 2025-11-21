@@ -73,7 +73,41 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Get the package work item from DevOps
-                var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
+                PackageWorkitemResponse? package = null;
+                try
+                {
+                    package = await devopsService.GetPackageWorkItemAsync(packageName, language);
+                } 
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("Failed to find package work item with package name", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogInformation(ex, "Exact package not found; falling back to partial matches");
+                        var packages = await devopsService.ListPartialPackageWorkItemAsync(packageName, language);
+                        if (packages == null || packages.Count == 0)
+                        {
+                            return new SdkReleaseResponse
+                            {
+                                ReleasePipelineStatus = "Failed",
+                                ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch in the specific language repo.",
+                            };
+
+                        }
+                        
+                        var packageNames = packages.Where(p => p != null && !string.IsNullOrEmpty(p.PackageName))
+                        .Select(p => p.PackageName)
+                        .Distinct()
+                        .ToList();
+                        return new SdkReleaseResponse
+                        {
+                            ReleasePipelineStatus = "Failed",
+                            ResponseError = $"The package {packageName} could not be found. Did you mean one of the following available packages? [{string.Join(", ", packageNames)}]",
+                            NextSteps = ["Select the package and run SDK release tool"]
+                        };
+                    }
+                    throw;
+                }
+                
                 if (package == null)
                 {
                     response.ReleaseStatusDetails = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch in the specific language repo.";

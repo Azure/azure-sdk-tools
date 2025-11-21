@@ -99,6 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
+        public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language);
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
@@ -982,6 +983,25 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to find package work item with package name {packageName}. Please check package name, package version and language values.");
             }
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
+        }
+
+        // /// <summary>
+        // /// List package work items for a language that at least partially matches the given package name.
+        // /// </summary>
+        public async Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language)
+        {
+            language = MapLanguageIdToName(language);
+            if (packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"'))
+            {
+                throw new ArgumentException("Invalid data in one of the parameters.");
+            }
+
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] CONTAINS '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
+            query += "  ORDER BY [System.Id] DESC"; // Order by package work item to find the most recently created
+
+            logger.LogInformation("Fetching package work item with package name {packageName} and language {language}.", packageName, language);
+            var packageWorkItems = await FetchWorkItemsAsync(query);
+            return packageWorkItems.Select(workItem => MapPackageWorkItemToModel(workItem)).ToList();
         }
 
         public static PackageWorkitemResponse MapPackageWorkItemToModel(WorkItem workItem)

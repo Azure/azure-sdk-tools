@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Allow non-exact matches for package name in `azsdk_release_sdk` tool
+
 ### Breaking Changes
 
 ### Bugs Fixed

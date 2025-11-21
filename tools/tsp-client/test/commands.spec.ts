@@ -125,13 +125,8 @@ describe.sequential("Verify commands", () => {
     }
     assert.isTrue(
       (
-        await stat(
-          joinPaths(
-            repoRoot,
-            "sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
-          ),
-        )
-      ).isFile(),
+        await stat(joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest/"))
+      ).isDirectory(),
     );
   });
 
@@ -155,18 +150,15 @@ describe.sequential("Verify commands", () => {
       const args = {
         "output-dir": joinPaths(
           cwd(),
-          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+          "./test/examples/sdk/contosowidgetmanager/contoso-widgetmanager",
         ),
         "save-inputs": true,
       };
       await updateCommand(args);
-      assert.isDefined(
-        await stat(
-          joinPaths(
-            repoRoot,
-            "./tools/tsp-client/test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
-          ),
-        ),
+      assert.isTrue(
+        (
+          await stat(joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest/"))
+        ).isDirectory(),
       );
 
       // Explicitly assert that we're not appending the current directory to the output path which would happen

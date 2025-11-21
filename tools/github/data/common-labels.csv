@@ -178,6 +178,7 @@ Network - CDN,,e99695
 Network - DDoS Protection,,e99695
 Network - DNS,,e99695
 Network - DNS Private Resolver,,e99695
+Network - Edge Actions,,e99695
 Network - ExpressRoute,,e99695
 Network - Firewall,,e99695
 Network - Front Door,Service: Azure Front Door,e99695
@@ -235,6 +236,7 @@ Service Bus,,e99695
 Service Fabric,,e99695
 Service Map,,e99695
 SignalR,,e99695
+Speech Transcription,,e99695
 Storage,"Storage Service (Queues, Blobs, Files)",e99695
 Storsimple,,e99695
 Stream Analytics,,e99695

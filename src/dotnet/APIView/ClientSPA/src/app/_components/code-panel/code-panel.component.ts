@@ -388,14 +388,21 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
-    let filterdData = this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&
-      row.type === updateData.type);
+    // Find the actual index in codePanelRowData
+    let targetIndex = this.codePanelRowData.findIndex(row => {
+      if (row.nodeIdHashed === updateData.nodeIdHashed && row.type === updateData.type) {
+        if (updateData.type === CodePanelRowDatatype.CommentThread) {
+          return row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup;
+        }
+        return true;
+      }
+      return false;
+    });
 
-    if (updateData.type === CodePanelRowDatatype.CommentThread) {
-      filterdData = filterdData.filter(row => row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup);
+    // Update the actual array reference
+    if (targetIndex !== -1) {
+      this.codePanelRowData[targetIndex] = updateData;
     }
-
-    filterdData[0] = updateData;
       
     await this.codePanelRowSource?.adapter?.relax();
     await this.codePanelRowSource?.adapter?.update({
@@ -528,21 +535,19 @@ export class CodePanelComponent implements OnChanges{
         .pipe(take(1)).subscribe({
           next: () => {
             this.updateCommentTextInCommentThread(commentUpdates);
-            this.signalRService.pushCommentUpdates(commentUpdates);
           }
-        });
-    }
+        });    
+      }
     else {
       this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               this.addCommentToCommentThread(commentUpdates, response);
               commentUpdates.comment = response;
-              this.signalRService.pushCommentUpdates(commentUpdates);
             }
           }
-        );
-    }
+        );    
+      }
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
@@ -550,7 +555,6 @@ export class CodePanelComponent implements OnChanges{
     this.commentsService.deleteComment(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
-        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
   }
@@ -561,70 +565,44 @@ export class CodePanelComponent implements OnChanges{
       this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
         }
-      });
+      });    
     }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
         }
-      });
+      });    
     }
   }
 
   handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.reviewId!;
+    
     switch (commentUpdates.commentThreadUpdateAction) {
       case CommentThreadUpdateAction.CommentCreated:
         if (commentUpdates.comment) {
           this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
         }
         break;
+      case CommentThreadUpdateAction.CommentTextUpdate:
+        this.updateCommentTextInCommentThread(commentUpdates);
+        break;
       case CommentThreadUpdateAction.CommentResolved:
-        this.applyCommentResolutionUpdate(commentUpdates);
-        break;
-      case CommentThreadUpdateAction.CommentUpVoteToggled:
-        const upComment = this.allComments?.find(c => c.id === commentUpdates.commentId);
-        if (upComment) {
-          const hasUpvote = upComment.upvotes.includes(this.userProfile?.userName!);
-          if (!hasUpvote) {
-            this.toggleVoteUp(upComment);
-          }
-        }
-        break;
-      case CommentThreadUpdateAction.CommentDownVoteToggled:
-        const downComment = this.allComments?.find(c => c.id === commentUpdates.commentId);
-        if (downComment) {
-          const hasDownvote = downComment.downvotes.includes(this.userProfile?.userName!);
-          if (!hasDownvote) {
-            this.toggleVoteDown(downComment);
-          }
-        }
+        this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe();
         break;
     }
-    
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.reviewId!;
-    this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
-      next: () => {
-        this.signalRService.pushCommentUpdates(commentUpdates);
-      }
-    });
+    this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe();
   }
 
   handleCommentDownvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.reviewId!;
-    this.commentsService.toggleCommentDownVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
-      next: () => {
-        this.signalRService.pushCommentUpdates(commentUpdates);
-      }
-    });
+    this.commentsService.toggleCommentDownVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe();
   }
 
   handleRealTimeCommentUpdates() {
@@ -1067,8 +1045,20 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private updateCommentTextInCommentThread(data: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText!;
-    this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    const commentThread = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const comment = commentThread.comments.find(c => c.id === data.commentId);
+    
+    if (!comment) {
+      return;
+    }
+    
+    if (data.commentText) {
+      comment.commentText = data.commentText;
+    }
+    if (data.severity !== undefined && data.severity !== null) {
+      comment.severity = data.severity;
+    }
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 
@@ -1111,10 +1101,13 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = 
-      (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
-    this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]});
+    const commentThread = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!];
+    const isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
+    
+    commentThread.isResolvedCommentThread = isResolved;
+    commentThread.commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
+  
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 

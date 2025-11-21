@@ -23,7 +23,7 @@ public class MetadataUpdateTool : LanguageMcpTool
 
     public MetadataUpdateTool(
         IGitHelper gitHelper,
-        ILogger<LanguageMcpTool> logger,
+        ILogger<MetadataUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper): base(languageServices, gitHelper, logger)
     {
@@ -56,16 +56,24 @@ public class MetadataUpdateTool : LanguageMcpTool
     {
         try
         {
+            logger.LogInformation("Updating package metadata content for package at: {packagePath}", packagePath);
+
             // Validate package path
             if (string.IsNullOrWhiteSpace(packagePath))
             {
                 return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }
 
-            if (!Directory.Exists(packagePath))
+            // Resolves relative paths to absolute
+            string fullPath = Path.GetFullPath(packagePath);
+            
+            if (!Directory.Exists(fullPath))
             {
-                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+                return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
             }
+
+            packagePath = fullPath;
+            logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
             // Discover the repository root
             var sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
@@ -78,8 +86,9 @@ public class MetadataUpdateTool : LanguageMcpTool
             var languageService = GetLanguageService(packagePath);
             if (languageService == null)
             {
-                return PackageOperationResponse.CreateFailure("Unable to determine language service for the specified package path.");
+                return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.", nextSteps: ["Create an issue at the https://github.com/Azure/azure-sdk-tools/issues/new", "contact the Azure SDK team for assistance."]);
             }
+
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateMetadata);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
             {
@@ -97,7 +106,7 @@ public class MetadataUpdateTool : LanguageMcpTool
                 if (processOptions != null)
                 {
                     var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-                    return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version if it's a release."]);
+                    return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version when preparing for a release."]);
                 }
             }
 

@@ -276,10 +276,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (result.ExitCode != 0)
                 {
-                    return PackageOperationResponse.CreateFailure($"Process failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}", packageInfo);
+                    return PackageOperationResponse.CreateFailure(
+                        $"Process failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}",
+                        packageInfo);
                 }
 
-                return PackageOperationResponse.CreateSuccess($"{successMessage} Output:\n{trimmedOutput}", packageInfo, nextSteps);
+                return PackageOperationResponse.CreateSuccess($"{successMessage}", packageInfo, nextSteps);
             }
             catch (Exception ex)
             {

@@ -126,7 +126,7 @@ The three tools are intentionally small, composable units. Each emits a machine-
 
 Name (CLI): `azsdk package update-changelog-content`
 
-Name (MCP): `azsdk_package_update_changelog-content`
+Name (MCP): `azsdk_package_update_changelog_content`
 
 Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected. This tool only modifies changelog content and does not change release date or version numbers.
 
@@ -192,11 +192,11 @@ Execution Steps:
 Outputs:
 
 ```json
-{"result":"succeeded", "version": "1.2.0", "release-date": "2025-10-17", "message":"Version updated 1.2.0-beta.2 -> 1.2.0", "next_steps": "update metadata"}
+{"result":"succeeded", "version": "1.2.0", "message":"Version updated and release date set to 2025-10-17", "next_steps": "run validation checks"}
 ```
 
 ```json
-{"result":"noop", "version": "", "release-date": "", "message":"no version bump performed", "next_steps": "update metadata"}
+{"result":"noop", "version": "", "message":"no version update performed.", "next_steps": "Manually update the version and release date in the changelog and metadata as needed when preparing a release. Run validation checks."}
 ```
 
 Failure Modes:
@@ -359,8 +359,8 @@ Update the package at /home/dev/sdk/healthdataaiservices/Azure.ResourceManager.H
 **Expected Agent Activity:**
 
 1. Run changelog update.
-2. Run version update with inferred `--release-type stable`.
-3. Run metadata update (README, API export, formatting if needed) and summarize JSON results.
+2. Run metadata update (pom.xml, _metadata.json, API export, etc.) and summarize JSON results.
+3. Run version update with inferred `--release-type stable`.
 
 ### Scenario 2: Update Version for Stable Release (Data-Plane)
 
@@ -415,12 +415,14 @@ azsdk package update-version --package-path <absolute_folder_path_to_package> --
 **Options:**
 
 - `--package-path <path>`: Package root (required).
-- `--release-type <stable|beta>`: Determines increment strategy (required for mgmt; optional for data-plane release context).
+- `--release-type <stable|beta>`: Determines increment strategy (optional).
+- `--version`: Version to set for the package (optional)
+- `--release-date`: The date (YYYY-MM-DD) to write into the changelog (optional)
 
 **Expected Output:**
 
 ```text
-"succeeded, version: 1.2.0, release-date: 2025-10-17, Version updated 1.2.0-beta.2 -> 1.2.0, next_steps: update metadata."
+"succeeded, version: 1.2.0, message: Version updated and release date set to 2025-10-17, next_steps: run validation checks."
 ```
 
 **Failed Output:**

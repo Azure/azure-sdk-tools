@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected ICommonValidationHelpers commonValidationHelpers;
 
         public abstract SdkLanguage Language { get; }
-        public virtual bool IsTspClientupdatedSupported => false;
+        public virtual bool IsCustomizedCodeUpdateSupported => false;
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
         {
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the dependency analysis</returns>
         public virtual Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
         /// <summary>
         /// Validates the README for the specific package.
@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the README validation</returns>
         public virtual Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the spelling check</returns>
         public virtual Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the snippet update operation</returns>
         public virtual Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the code linting operation</returns>
         public virtual Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the code formatting operation</returns>  
         public virtual Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// Validate samples for the specific package.
@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the sample validation</returns>
         public virtual Task<PackageCheckResponse> ValidateSamples(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the AOT compatibility check</returns>
         public virtual Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the generated code check</returns>
         public virtual Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
         /// <summary>
         /// Validates the changelog for the specific package.
@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the changelog validation</returns>
         public virtual Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -231,7 +231,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>A response indicating the result of the metadata update operation.</returns>
         public virtual Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
         {
-            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+            this.logger.LogInformation("No language-specific package metadata update implementation found for package path: {packagePath}.", packagePath);
+            return Task.FromResult(PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed.", nextSteps: ["Update the version when preparing for a release"]));
         }
 
         /// <summary>
@@ -242,18 +243,36 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>A response indicating the result of the changelog update operation.</returns>
         public virtual Task<PackageOperationResponse> UpdateChangelogContentAsync(string packagePath, CancellationToken ct)
         {
-            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+            return Task.FromResult(
+                PackageOperationResponse.CreateSuccess(
+                    "Changelog untouched; manual edits required.",
+                    nextSteps: [
+                        "Summarize version updates under 'Features Added', 'Breaking Changes', 'Bug Fixes', and 'Other Changes'",
+                        "Refer to this documentation: https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites",
+                        "Update package metadata after the changelog content has been updated"
+                        ],
+                    result: "noop"));
         }
 
         /// <summary>
         /// Updates the version for a specified package.
         /// </summary>
         /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="releaseType">Specifies whether the next version is 'beta' or 'stable'.</param>
+        /// <param name="version">Specifies the next version number.</param>
+        /// <param name="releaseDate">The date (YYYY-MM-DD) to write into the changelog.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns>A response indicating the result of the version update operation.</returns>
-        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, CancellationToken ct)
+        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
         {
-            return Task.FromResult(PackageOperationResponse.CreateSuccess("This is not an applicable operation for this language."));
+            this.logger.LogInformation("No language-specific package version update implementation found for package path: {packagePath}.", packagePath);
+            return Task.FromResult(PackageOperationResponse.CreateSuccess(
+                "No version update performed.",
+                nextSteps: [
+                    "Manually update the version and release date in the changelog and metadata as needed when preparing a release",
+                    "Run validation checks"
+                    ],
+                result: "noop"));
         }
     }
 }

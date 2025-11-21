@@ -130,15 +130,15 @@ func (p *DefaultPromptParser) ParseResponse(response, template string) (*model.C
 	return &model.CompletionResp{
 		Answer:            resp.Answer,
 		HasResult:         resp.HasResult,
-		References:        resp.References,
+		References:        append([]model.Reference{}, resp.References...),
 		ReasoningProgress: &resp.ReasoningProgress,
 	}, nil
 }
 
-type IntensionPromptParser struct {
+type IntentionPromptParser struct {
 }
 
-func (p *IntensionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
+func (p *IntentionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
 	// Validate template name to prevent path injection
 	if err := validateTemplateName(template); err != nil {
 		return "", fmt.Errorf("invalid template name: %w", err)
@@ -180,10 +180,10 @@ func (p *IntensionPromptParser) ParsePrompt(params map[string]string, template s
 	return prompt, nil
 }
 
-func (p *IntensionPromptParser) ParseResponse(response, template string) (*model.IntensionResult, error) {
+func (p *IntentionPromptParser) ParseResponse(response, template string) (*model.IntentionResult, error) {
 	// Implement your response parsing logic here
 	// For example, you can unmarshal the response into a struct
-	var resp model.IntensionResult
+	var resp model.IntentionResult
 	err := json.Unmarshal([]byte(response), &resp)
 	if err != nil {
 		return nil, err

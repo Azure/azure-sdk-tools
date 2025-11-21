@@ -149,46 +149,6 @@ describe('CommentThreadComponent', () => {
       component.relatedComments = [comment1, comment2];
     });
 
-    it('should apply upvotes to comments correctly', () => {
-      spyOn(component.batchResolutionActionEmitter, 'emit');
-      component.allCodePanelRowData = [
-        { 
-          nodeIdHashed: 'hash1', 
-          associatedRowPositionInGroup: 0,
-          comments: [{ id: 'comment1' } as CommentItemModel]
-        } as CodePanelRowData
-      ];
-      
-      component['applyBatchVotes'](['comment1'], 'up', 'test-user');
-      
-      expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
-        jasmine.objectContaining({
-          commentThreadUpdateAction: jasmine.any(Number), // CommentUpVoteToggled
-          commentId: 'comment1'
-        })
-      );
-    });
-
-    it('should apply downvotes to comments correctly', () => {
-      spyOn(component.batchResolutionActionEmitter, 'emit');
-      component.allCodePanelRowData = [
-        { 
-          nodeIdHashed: 'hash1', 
-          associatedRowPositionInGroup: 0,
-          comments: [{ id: 'comment1' } as CommentItemModel]
-        } as CodePanelRowData
-      ];
-      
-      component['applyBatchVotes'](['comment1'], 'down', 'test-user');
-      
-      expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
-        jasmine.objectContaining({
-          commentThreadUpdateAction: jasmine.any(Number), // CommentDownVoteToggled
-          commentId: 'comment1'
-        })
-      );
-    });
-
     it('should emit resolution events for batch resolution', () => {
       spyOn(component.batchResolutionActionEmitter, 'emit');
       component.allCodePanelRowData = [

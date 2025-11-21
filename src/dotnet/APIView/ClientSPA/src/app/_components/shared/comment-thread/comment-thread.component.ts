@@ -9,6 +9,7 @@ import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
@@ -80,12 +81,7 @@ export class CommentThreadComponent {
 
   selectedSeverity: CommentSeverity | null = CommentSeverity.ShouldFix; // Default to "Should fix"
   isEditingSeverity: string | null = null; // Track which comment severity is being edited
-  severityOptions = [
-    { label: 'Question', value: CommentSeverity.Question },
-    { label: 'Suggestion', value: CommentSeverity.Suggestion },
-    { label: 'Should fix', value: CommentSeverity.ShouldFix },
-    { label: 'Must fix', value: CommentSeverity.MustFix }
-  ];
+  severityOptions = CommentSeverityHelper.severityOptions;
 
   showRelatedCommentsDialog: boolean = false;
   relatedComments: CommentItemModel[] = [];
@@ -575,46 +571,18 @@ export class CommentThreadComponent {
     if (!this.codePanelRowData?.comments) return false;
     return this.codePanelRowData.comments[0].id === comment.id;
   }
-  
-  private normalizeSeverity(severity: CommentSeverity | string | null | undefined): string | null {
-    if (severity === null || severity === undefined) return null;
-    return typeof severity === 'string' ? severity.toLowerCase() : CommentSeverity[severity]?.toLowerCase() || null;
-  }
+
 
   getSeverityLabel(severity: CommentSeverity | string | null | undefined): string {
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return 'Question';
-      case 'suggestion': return 'Suggestion';
-      case 'shouldfix': return 'Should fix';
-      case 'mustfix': return 'Must fix';
-      default: return '';
-    }
+    return CommentSeverityHelper.getSeverityLabel(severity);
   }
 
   getSeverityBadgeClass(severity: CommentSeverity | string | null | undefined): string {
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return 'severity-question';
-      case 'suggestion': return 'severity-suggestion';
-      case 'shouldfix': return 'severity-should-fix';
-      case 'mustfix': return 'severity-must-fix';
-      default: return '';
-    }
+    return CommentSeverityHelper.getSeverityBadgeClass(severity);
   }
 
   getSeverityEnumValue(severity: CommentSeverity | string | null | undefined): CommentSeverity | null {
-    if (severity === null || severity === undefined) return null;
-    if (typeof severity === 'number') return severity; 
-    
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return CommentSeverity.Question;
-      case 'suggestion': return CommentSeverity.Suggestion;
-      case 'shouldfix': return CommentSeverity.ShouldFix;
-      case 'mustfix': return CommentSeverity.MustFix;
-      default: return null;
-    }
+    return CommentSeverityHelper.getSeverityEnumValue(severity);
   }
 
   onSeverityDropdownHide(): void {
@@ -718,25 +686,32 @@ export class CommentThreadComponent {
   }
 
   onResolveSelectedComments(resolutionData: CommentResolutionData) {
-    const { commentIds, batchVote, resolutionComment } = resolutionData;
+    const { commentIds, batchVote, resolutionComment, disposition, severity } = resolutionData;
     
     if (commentIds.length === 0) {
       this.showRelatedCommentsDialog = false;
       return;
     }
 
-    this.commentsService.resolveBatchComments(this.reviewId, {
+    this.commentsService.commentsBatchOperation(this.reviewId, {
       commentIds: commentIds,
       vote: batchVote || 'none',
-      commentReply: resolutionComment || undefined
+      commentReply: resolutionComment || undefined,
+      disposition: disposition,
+      severity: severity
     }).subscribe({
       next: (response) => {
         const createdComments = response.body || [];
         
-        if (batchVote && batchVote !== 'none' && this.userProfile?.userName) {
-          this.applyBatchVotes(commentIds, batchVote, this.userProfile.userName);
+        if (severity !== null && severity !== undefined) {
+          this.applyBatchSeverity(commentIds, severity);
         }
-        this.emitResolutionEvents(commentIds);
+        
+        // Only emit resolution events if disposition is 'resolve'
+        if (disposition === 'resolve') {
+          this.emitResolutionEvents(commentIds);
+        }
+        
         this.emitCreationEvents(createdComments);
         
         this.showRelatedCommentsDialog = false;
@@ -754,24 +729,33 @@ export class CommentThreadComponent {
     });
   }
 
-  private applyBatchVotes(commentIds: string[], voteType: 'up' | 'down', userName: string): void {
+  private applyBatchSeverity(commentIds: string[], severity: CommentSeverity): void {
     commentIds.forEach(commentId => {
       const commentCodeRow = this.allCodePanelRowData?.find(row => 
         row.comments?.some(c => c.id === commentId)
       );
       
-      if (commentCodeRow) {
-        const voteAction = voteType === 'up' 
-          ? CommentThreadUpdateAction.CommentUpVoteToggled 
-          : CommentThreadUpdateAction.CommentDownVoteToggled;
-          
-        this.batchResolutionActionEmitter.emit({
-          commentThreadUpdateAction: voteAction,
-          commentId: commentId,
-          nodeIdHashed: commentCodeRow.nodeIdHashed,
-          associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
-        } as CommentUpdatesDto);
+      if (!commentCodeRow) {
+        return;
       }
+
+      const comment = commentCodeRow.comments?.find(c => c.id === commentId);
+      if (comment) {
+        comment.severity = severity;
+      }
+
+      const relatedComment = this.relatedComments?.find(c => c.id === commentId);
+      if (relatedComment) {
+        relatedComment.severity = severity;
+      }
+
+      this.batchResolutionActionEmitter.emit({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
+        commentId: commentId,
+        nodeIdHashed: commentCodeRow.nodeIdHashed,
+        severity: severity,
+        associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
+      } as CommentUpdatesDto);
     });
   }
 

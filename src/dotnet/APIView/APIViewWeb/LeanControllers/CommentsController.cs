@@ -205,10 +205,10 @@ namespace APIViewWeb.LeanControllers
         /// <param name="reviewId"></param>
         /// <param name="request"></param>
         /// <returns></returns>
-        [HttpPatch("{reviewId}/resolveBatchComments", Name = "ResolveBatchComments")]
-        public async Task<ActionResult> ResolveBatchCommentsAsync(string reviewId, [FromBody] ResolveBatchConversationRequest request)
+        [HttpPatch("{reviewId}/commentsBatchOperation", Name = "CommentsBatchOperation")]
+        public async Task<ActionResult> CommentsBatchOperation(string reviewId, [FromBody] ResolveBatchConversationRequest request)
         {
-            List<CommentItemModel> createdComments = await _commentsManager.ResolveBatchConversationAsync(User, reviewId, request);
+            List<CommentItemModel> createdComments = await _commentsManager.CommentsBatchOperationAsync(User, reviewId, request);
             return new LeanJsonResult(createdComments, StatusCodes.Status201Created);
         }
 

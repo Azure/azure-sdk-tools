@@ -139,7 +139,7 @@ class ModuleNode(NodeEntityBase):
 
             self.children.set_blank_lines(1, related_to_line=self.namespace_id)
             # Add name space level functions first
-            for c in filter(filter_function, self.child_nodes):
+            for c in [x for x in filter(filter_function, self.child_nodes) if not x.hidden]:
                 c.generate_tokens(self.children)
                 self.children.set_blank_lines(2, related_to_line=c.namespace_id)
 

@@ -89,16 +89,18 @@ export class CommentsService {
       withCredentials: true });
   }
 
-  resolveBatchComments(reviewId: string, data: {
+  commentsBatchOperation(reviewId: string, data: {
     commentIds: string[],
     vote?: 'none' | 'up' | 'down',
-    commentReply?: string
+    commentReply?: string,
+    disposition?: 'keepOpen' | 'resolve' | 'delete',
+    severity?: CommentSeverity
   }) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
-    return this.http.patch<CommentItemModel[]>(this.baseUrl + `/${reviewId}/resolveBatchComments`, data, { 
+    return this.http.patch<CommentItemModel[]>(this.baseUrl + `/${reviewId}/commentsBatchOperation`, data, { 
       headers: headers,
       observe: 'response',
       withCredentials: true 

@@ -32,7 +32,9 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
         (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo)
       ) {
         // For non-batch configurations, require the standard fields
-        throw new Error("Invalid tsp-location.yaml");
+        throw new Error(
+          "Invalid tsp-location.yaml, missing required fields: directory, commit, repo",
+        );
       } else if (tspLocation.batch) {
         if (!Array.isArray(tspLocation.batch)) {
           throw new Error("Invalid tsp-location.yaml: batch must be an array of directory paths");

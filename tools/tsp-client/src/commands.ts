@@ -313,8 +313,13 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
+  if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
+    throw new Error(
+      "tsp-location.yaml is missing required field(s) for sync operation: directory, commit, repo",
+    );
+  }
   const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
-  const dirSplit = tspLocation.directory!.split("/");
+  const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`);
   if (!projectName) {
@@ -325,7 +330,7 @@ export async function syncCommand(argv: any) {
 
   if (localSpecRepo) {
     if (batch) {
-      localSpecRepo = resolve(localSpecRepo, tspLocation.directory!);
+      localSpecRepo = resolve(localSpecRepo, tspLocation.directory);
       Logger.info(
         `Resolved local spec repo path using tsp-location.yaml directory: ${localSpecRepo}`,
       );
@@ -367,12 +372,12 @@ export async function syncCommand(argv: any) {
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
     await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, tspLocation.directory!);
+    await addSpecFiles(cloneDir, tspLocation.directory);
     for (const dir of tspLocation.additionalDirectories ?? []) {
       Logger.info(`Processing additional directory: ${dir}`);
       await addSpecFiles(cloneDir, dir);
     }
-    await checkoutCommit(cloneDir, tspLocation.commit!);
+    await checkoutCommit(cloneDir, tspLocation.commit);
     await cp(joinPaths(cloneDir, tspLocation.directory), srcDir, { recursive: true });
     for (const dir of tspLocation.additionalDirectories!) {
       Logger.info(`Syncing additional directory: ${dir}`);

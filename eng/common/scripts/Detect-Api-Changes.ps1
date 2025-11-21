@@ -133,6 +133,11 @@ foreach ($packageInfoFile in $packageInfoFiles)
 {
     $packageInfo = Get-Content $packageInfoFile | ConvertFrom-Json
     $pkgArtifactName = $packageInfo.ArtifactName ?? $packageInfo.Name
+
+    # Construct full package name with groupId if available
+    if ($packageInfo.Group) {
+        $pkgArtifactName = "$($packageInfo.Group):${pkgArtifactName}"
+    }
     $packageType = $packageInfo.SdkType
 
     LogInfo "Processing $($pkgArtifactName)"

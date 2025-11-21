@@ -151,7 +151,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 
                 if (contactsSet.SetEquals(teamSet))
                 {
-                    logger.LogInformation("Team membership is already synchronized. No changes needed.");
                     return;
                 }
                 
@@ -162,11 +161,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 if (contactsToRemove.Any() || contactsToAdd.Any())
                 {
                     teamDescriptor = await service.GetDescriptorAsync(team.Id);
-                    
-                    if (contactsToRemove.Any())
-                    {
-                        logger.LogInformation("Removing {count} contact(s) from team", contactsToRemove.Count);
-                    }
                     
                     foreach (string descriptor in contactsToRemove)
                     {
@@ -181,11 +175,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         }
                     }
 
-                    if (contactsToAdd.Any())
-                    {
-                        logger.LogInformation("Adding {count} contact(s) to team", contactsToAdd.Count);
-                    }
-                    
                     foreach (string descriptor in contactsToAdd)
                     {
                         if (persistChanges)
@@ -290,7 +279,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 };
 
                 logger.LogInformation("Creating Subscription PipelineId = {0}, TeamId = {1}", pipeline.Id, team.Id);
-                
                 if (persistChanges)
                 {
                     subscription = await service.CreateSubscriptionAsync(newSubscription);

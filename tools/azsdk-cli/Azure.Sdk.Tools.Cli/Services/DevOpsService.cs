@@ -17,9 +17,6 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Globalization;
-using Microsoft.Graph.Models;
-using OpenTelemetry;
-using Microsoft.Graph.Models.Security;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {

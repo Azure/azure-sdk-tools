@@ -13,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private TestLogger<ReleasePlanTool> logger;
         private IDevOpsService devOpsService;
+        private IGitHelper gitHelper;
         private IGitHubService gitHubService;
         private ITypeSpecHelper typeSpecHelper;
         private IUserHelper userHelper;
@@ -39,8 +40,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             environmentHelperMock.Setup(x => x.GetBooleanVariable(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
             environmentHelper = environmentHelperMock.Object;
 
+            var gitHelperMock = new Mock<IGitHelper>();
+            gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
+            gitHelper = gitHelperMock.Object;
+
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
+                gitHelper,
                 typeSpecHelper,
                 logger,
                 userHelper,
@@ -134,6 +140,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var testReleasePlanTool = new ReleasePlanTool(
                 devOpsService,
+                gitHelper,
                 typeSpecHelper,
                 logger,
                 userHelper,
@@ -173,6 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var testReleasePlanTool = new ReleasePlanTool(
                 devOpsService,
+                gitHelper,
                 typeSpecHelper,
                 logger,
                 userHelper,

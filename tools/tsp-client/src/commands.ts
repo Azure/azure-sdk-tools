@@ -540,7 +540,6 @@ async function processBatchUpdate(tspLocation: TspLocation, outputDir: string, a
   }
 
   Logger.info("All batch directories processed successfully");
-  return;
 }
 
 export async function updateCommand(argv: any) {

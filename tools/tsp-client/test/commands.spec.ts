@@ -53,7 +53,7 @@ describe.sequential("Verify commands", () => {
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
     );
-    await rm(joinPaths(repoRoot, "sdk/keyvault"), { recursive: true });
+    await rm(joinPaths(repoRoot, "sdk/keyvault"), { recursive: true, force: true });
   });
 
   it("Generate lock file", async () => {

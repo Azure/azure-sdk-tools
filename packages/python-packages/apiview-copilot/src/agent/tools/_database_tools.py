@@ -6,8 +6,7 @@
 
 """Tool for database operations."""
 
-from contextlib import asynccontextmanager, contextmanager
-from datetime import timedelta
+from contextlib import contextmanager
 from typing import Optional
 
 from azure.ai.agents import AgentsClient
@@ -18,7 +17,7 @@ from src._credential import get_credential
 from src._database_manager import ContainerNames, DatabaseManager
 from src._models import Example, Guideline, Memory
 from src._settings import SettingsManager
-from src.agent._agent import kernel_function
+from src.agent.tools._base import Tool
 
 
 @contextmanager
@@ -230,10 +229,9 @@ You must ensure you adhere to the following guidelines.
         client.delete_agent(agent.id)
 
 
-class DatabaseCreateTool:
+class DatabaseCreateTool(Tool):
     """Tool for creating database items."""
 
-    @kernel_function(description="Create a new Guideline in the database.")
     async def create_guideline(
         self,
         id: str,
@@ -258,7 +256,6 @@ class DatabaseCreateTool:
         db = DatabaseManager.get_instance()
         return db.guidelines.create(id, data=data)
 
-    @kernel_function(description="Create a new Memory in the database.")
     async def create_memory(
         self,
         id: str,
@@ -295,7 +292,6 @@ class DatabaseCreateTool:
         db = DatabaseManager.get_instance()
         return db.memories.create(id, data=data)
 
-    @kernel_function(description="Create a new Example in the database.")
     async def create_example(
         self,
         title: str,
@@ -333,10 +329,9 @@ class DatabaseCreateTool:
         return db.examples.create(id, data=data)
 
 
-class DatabaseRetrieveTool:
+class DatabaseRetrieveTool(Tool):
     """Tool for retrieving database items."""
 
-    @kernel_function(description="Retrieve a memory from the database by its ID.")
     async def get_memory(self, memory_id: str):
         """
         Retrieve a memory from the database by its ID.
@@ -346,14 +341,12 @@ class DatabaseRetrieveTool:
         db = DatabaseManager.get_instance()
         return db.memories.get(memory_id)
 
-    @kernel_function(description="Retrieve the Memory schema.")
     async def get_memory_schema(self):
         """
         Retrieve the Memory schema.
         """
         return Memory.model_json_schema()
 
-    @kernel_function(description="Retrieve an example from the database by its ID.")
     async def get_example(self, example_id: str):
         """
         Retrieve an example from the database by its ID.
@@ -363,14 +356,12 @@ class DatabaseRetrieveTool:
         db = DatabaseManager.get_instance()
         return db.examples.get(example_id)
 
-    @kernel_function(description="Retrieve the Example schema.")
     async def get_example_schema(self):
         """
         Retrieve the Example schema.
         """
         return Example.model_json_schema()
 
-    @kernel_function(description="Retrieve a guideline from the database by its ID.")
     async def get_guideline(self, guideline_id: str):
         """
         Retrieve a guideline from the database by its ID.
@@ -380,7 +371,6 @@ class DatabaseRetrieveTool:
         db = DatabaseManager.get_instance()
         return db.guidelines.get(guideline_id)
 
-    @kernel_function(description="Retrieve the Guideline schema.")
     async def get_guideline_schema(self):
         """
         Retrieve the Guideline schema.
@@ -388,14 +378,9 @@ class DatabaseRetrieveTool:
         return Guideline.model_json_schema()
 
 
-class DatabaseLinkUnlinkTool:
+class DatabaseLinkUnlinkTool(Tool):
     """Tool for linking and unlinking database items."""
 
-    @kernel_function(
-        description="""
-        Link one or more target items to a source item by adding their IDs to a related field in the source item.
-        """
-    )
     async def link_items(
         self,
         source_id: str,
@@ -463,11 +448,6 @@ class DatabaseLinkUnlinkTool:
                 target_c.upsert(target_id, data=target_item)
         return {"status": "done", "source_id": source_id, "source_field": source_field, **results}
 
-    @kernel_function(
-        description="""
-        Unlink one or more target items from a source item by removing their IDs from a related field in the source item.
-        """
-    )
     async def unlink_items(
         self,
         source_id: str,
@@ -538,10 +518,9 @@ class DatabaseLinkUnlinkTool:
         }
 
 
-class DatabaseDeleteTool:
+class DatabaseDeleteTool(Tool):
     """Tool for deleting database items."""
 
-    @kernel_function(description="Delete a Guideline from the database by its ID.")
     async def delete_guideline(self, id: str):
         """Delete a guideline from the database by its ID."""
         db = DatabaseManager.get_instance()
@@ -551,7 +530,6 @@ class DatabaseDeleteTool:
         except CosmosResourceNotFoundError:
             return f"Guideline with id '{id}' not found."
 
-    @kernel_function(description="Delete a Memory from the database by its ID.")
     async def delete_memory(self, id: str):
         """Delete a memory from the database by its ID."""
         db = DatabaseManager.get_instance()
@@ -561,7 +539,6 @@ class DatabaseDeleteTool:
         except CosmosResourceNotFoundError:
             return f"Memory with id '{id}' not found."
 
-    @kernel_function(description="Delete an Example from the database by its ID.")
     async def delete_example(self, id: str):
         """Delete an example from the database by its ID."""
         db = DatabaseManager.get_instance()
@@ -571,7 +548,6 @@ class DatabaseDeleteTool:
         except CosmosResourceNotFoundError:
             return f"Example with id '{id}' not found."
 
-    @kernel_function(description="Delete a Review Job from the database by its ID.")
     async def delete_review_job(self, id: str):
         """Delete a review job from the database by its ID."""
         db = DatabaseManager.get_instance()

@@ -1,5 +1,14 @@
 .dialog-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.dialog-header-section {
+  flex-shrink: 0;
 }
 
 .select-all-section {
@@ -8,11 +17,26 @@
   color: var(--base-text-color);
 }
 
+.related-comments-list-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
 .related-comments-list {
+  height: 100%;
+  overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.75rem;
   background-color: var(--base-fg-color);
+}
+
+.bulk-actions-section {
+  flex-shrink: 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .comment-item {
@@ -37,10 +61,10 @@
 
 .rendered-comment-content {
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.4;
   
   p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     
     &:last-child {
       margin-bottom: 0;
@@ -83,18 +107,25 @@
     background-color: var(--base-fg-color);
     border-bottom: 1px solid var(--border-color);
     color: var(--base-text-color);
+    padding: 0.75rem 1rem;
+    
+    .p-dialog-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
   }
   
   .p-dialog .p-dialog-content {
-    padding: 1.5rem;
+    padding: 0 !important;
     background-color: var(--base-bg-color);
     color: var(--base-text-color);
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
   }
   
   .p-dialog .p-dialog-footer {
-    background-color: var(--base-fg-color);
-    border-top: 1px solid var(--border-color);
-    padding: 1rem 1.5rem;
+    display: none !important;
   }
   
   .p-checkbox .p-checkbox-box {
@@ -165,6 +196,136 @@
     
     &::placeholder {
       color: var(--text-muted-color);
+    }
+  }
+}
+
+// Bulk actions section styling
+.bulk-actions-section {
+  background-color: var(--base-fg-color);
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  
+  h6 {
+    color: var(--base-text-color);
+    margin-bottom: 1rem;
+    
+    i {
+      color: var(--primary-color);
+    }
+  }
+}
+
+.vote-section {
+  gap: 0.25rem;
+  
+  .vote-btn {
+    padding: 0.25rem 0.5rem !important;
+    margin: 0;
+    border: none;
+    background: transparent;
+    
+    &:hover {
+      background-color: transparent !important;
+      opacity: 0.8;
+    }
+    
+    &:focus {
+      box-shadow: none !important;
+    }
+  }
+}
+
+// Severity dropdown styling
+:host ::ng-deep {
+  .severity-dropdown {
+    .p-dropdown {
+      background-color: var(--base-bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--base-text-color);
+      
+      &:not(.p-disabled):hover {
+        border-color: var(--primary-color);
+      }
+      
+      &:not(.p-disabled).p-focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem var(--shadow-color-primary);
+      }
+    }
+    
+    .p-dropdown-label {
+      color: var(--base-text-color);
+    }
+    
+    .p-dropdown-trigger {
+      color: var(--base-text-color);
+    }
+  }
+  
+  // Dropdown panel
+  .p-dropdown-panel {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    
+    .p-dropdown-items {
+      .p-dropdown-item {
+        color: var(--base-text-color);
+        
+        &:not(.p-highlight):not(.p-disabled):hover {
+          background-color: var(--base-bg-color);
+        }
+        
+        &.p-highlight {
+          background-color: var(--primary-color);
+          color: white;
+        }
+      }
+    }
+  }
+  
+  // Menu panel for action dropdown
+  .p-menu {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    
+    .p-menuitem-link {
+      color: var(--base-text-color);
+      padding: 0.75rem 1rem;
+      
+      &:hover {
+        background-color: var(--base-bg-color);
+      }
+      
+      .p-menuitem-icon {
+        color: var(--base-text-color);
+        margin-right: 0.5rem;
+      }
+      
+      .p-menuitem-text {
+        color: var(--base-text-color);
+      }
+    }
+  }
+}
+
+// Bootstrap button group styling for bulk action button
+.btn-group {
+  .btn-primary {
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  .dropdown-toggle-split {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    
+    &::after {
+      margin-left: 0;
     }
   }
 }

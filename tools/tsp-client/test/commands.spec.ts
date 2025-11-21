@@ -165,7 +165,10 @@ describe.sequential("Verify commands", () => {
       await updateCommand(args);
       assert.isDefined(
         await stat(
-          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
+          joinPaths(
+            repoRoot,
+            "./tools/tsp-client/test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
+          ),
         ),
       );
 
@@ -593,8 +596,8 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
@@ -621,8 +624,8 @@ describe.sequential("Verify commands", () => {
       await generateConfigFilesCommand(args);
       assert.isTrue(await doesFileExist(packageJsonPath));
       const emitterJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(
         await doesFileExist(

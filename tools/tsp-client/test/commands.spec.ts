@@ -579,7 +579,6 @@ describe.sequential("Verify commands", () => {
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
       const emitterJson = JSON.parse(
@@ -609,7 +608,6 @@ describe.sequential("Verify commands", () => {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         "emitter-package-json-path": packageJsonPath,
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       assert.isTrue(await doesFileExist(packageJsonPath));
       const emitterJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
@@ -636,7 +634,6 @@ describe.sequential("Verify commands", () => {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         "emitter-package-json-path": emitterPackageJsonPath,
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
@@ -666,7 +663,6 @@ describe.sequential("Verify commands", () => {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         "emitter-package-json-path": emitterPackageJsonPath,
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
@@ -694,7 +690,6 @@ describe.sequential("Verify commands", () => {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         overrides: joinPaths(cwd(), "test", "examples", "overrides.json"),
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
       const emitterJson = JSON.parse(
@@ -714,7 +709,6 @@ describe.sequential("Verify commands", () => {
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package-sdk-pinning.json"),
       };
-      repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
       const emitterJson = JSON.parse(

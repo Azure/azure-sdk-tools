@@ -121,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     // Add warning about pipeline status if not successful
                     if (hasPipelineWarning)
                     {
-                        package.PackageReadinessDetails += $"\n\nWARNING: The last known CI pipeline status for this package is failed. This might cause issues when running the release pipeline if the error was not a transient failure. Please review the last pipeline run at {package.LatestPipelineRun} to verify the failure was transient before proceeding with the release.";
+                        package.PackageReadinessDetails += $"\n\nWARNING: The last known CI pipeline status for this package has failed. This might cause issues when running the release pipeline if the error was not a transient failure. Please review the last pipeline run at {package.LatestPipelineRun} to verify the failure was transient before proceeding with the release.";
                     }
                 }
                 else

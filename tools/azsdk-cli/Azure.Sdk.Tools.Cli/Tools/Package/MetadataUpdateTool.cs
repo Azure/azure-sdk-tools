@@ -64,10 +64,16 @@ public class MetadataUpdateTool : LanguageMcpTool
                 return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }
 
-            if (!Directory.Exists(packagePath))
+            // Resolves relative paths to absolute
+            string fullPath = Path.GetFullPath(packagePath);
+            
+            if (!Directory.Exists(fullPath))
             {
-                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+                return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
             }
+
+            packagePath = fullPath;
+            logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
             // Discover the repository root
             var sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);

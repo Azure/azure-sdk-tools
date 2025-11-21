@@ -31,7 +31,7 @@ parameters:
     default: []
   - name: SkipReleaseStage
     type: boolean
-    default: true
+    default: false
   - name: ReleaseBinaries
     type: boolean
     default: false

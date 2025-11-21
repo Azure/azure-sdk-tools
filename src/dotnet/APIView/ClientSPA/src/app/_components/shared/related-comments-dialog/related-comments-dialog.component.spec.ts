@@ -132,13 +132,16 @@ describe('RelatedCommentsDialogComponent', () => {
       spyOn(component.resolveSelectedComments, 'emit');
       component.batchVote = 'up';
       component.resolutionComment = 'Test resolution comment';
+      component.selectedDisposition = 'keepOpen';
       
       component.resolveSelected();
       
       expect(component.resolveSelectedComments.emit).toHaveBeenCalledWith({
         commentIds: ['comment1', 'comment2'],
         batchVote: 'up',
-        resolutionComment: 'Test resolution comment'
+        resolutionComment: 'Test resolution comment',
+        disposition: 'keepOpen',
+        severity: undefined
       } as CommentResolutionData);
     });
 

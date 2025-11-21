@@ -37,7 +37,7 @@ namespace APIViewWeb
                         .ConfigureRefresh(refresh =>
                         {
                             refresh.Register("Sentinel", refreshAll: true)
-                                .SetCacheExpiration(TimeSpan.FromMinutes(5));
+                                .SetRefreshInterval(TimeSpan.FromMinutes(5));
                         });
                     });
                     config.AddUserSecrets(typeof(Program).Assembly);

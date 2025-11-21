@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from typing import Optional
 
 from azure.ai.agents import AgentsClient
-from azure.ai.agents.models import MessageRole, MessageTextContent
+from azure.ai.agents.models import MessageRole, MessageTextContent, ToolSet
 from src._credential import get_credential
 from src._settings import SettingsManager
 from src.agent.tools._search_tools import SearchTools
@@ -93,16 +93,18 @@ an appropriate error message to the user.
     # retrieve_agent = await stack.enter_async_context(get_retrieve_agent())
     # link_agent = await stack.enter_async_context(get_link_agent())
 
-    tools = SearchTools().all_tools()
+    toolset = ToolSet()
+    toolset.add(SearchTools().all_tools())
+
     agent = client.create_agent(
         name="APIView Copilot Main Agent",
         description="An agent that processes requests and passes work to other agents.",
         model=model_deployment_name,
         instructions=ai_instructions,
-        tools=tools,
+        toolset=toolset,
     )
     # enable all tools by default
-    client.enable_auto_function_calls(tools=tools)
+    client.enable_auto_function_calls(tools=toolset)
 
     # agent = AzureAIAgent(
     #     client=client,

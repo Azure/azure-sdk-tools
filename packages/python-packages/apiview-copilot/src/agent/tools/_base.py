@@ -4,6 +4,8 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from azure.ai.agents.models import FunctionTool
+
 
 class Tool:
     """Base class for agent tools. Provides automatic tool discovery."""
@@ -15,4 +17,4 @@ class Tool:
             for name in dir(self)
             if not name.startswith("_") and callable(getattr(self, name)) and name != "all_tools"
         ]
-        return tools
+        return FunctionTool(tools)

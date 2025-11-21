@@ -24,8 +24,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
         // A cache on the code owners github identity to owner descriptor.
         private readonly Dictionary<string, string> contactsCache = new Dictionary<string, string>();
-        // A cache on the team member to member descriptor.
-        private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {
@@ -121,28 +119,19 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     return;
                 }
 
-                // A. Contacts Processing: Apply Distinct() and filter null/empty contacts early
                 var distinctContacts = contacts
                     .Where(contact => !string.IsNullOrEmpty(contact))
                     .Distinct()
                     .ToList();
 
-                // Resolve contact descriptors with caching
                 var contactsDescriptors = await ResolveContactDescriptorsAsync(distinctContacts, gitHubToAADConverter);
 
-                // C. Set Delta Optimization: Filter out null descriptors before forming HashSet
                 var contactsSet = new HashSet<string>(contactsDescriptors.Where(d => d != null));
                 
-                // Get set of team members in the DevOps teams
-                var teamMembers = await service.GetMembersAsync(team);
+                var teamDescriptors = await GetTeamMemberDescriptorsAsync(team);
                 
-                // B. Team Member Descriptor Retrieval: Try new batch method first
-                var teamDescriptors = await GetTeamMemberDescriptorsAsync(team, teamMembers);
-                
-                // C. Set Delta Optimization: Filter out null descriptors
                 var teamSet = new HashSet<string>(teamDescriptors.Where(d => d != null));
                 
-                // C. Set Delta Optimization: Early equality check - skip if sets are equal
                 if (contactsSet.SetEquals(teamSet))
                 {
                     logger.LogInformation("Team membership is already synchronized. No changes needed.");
@@ -152,13 +141,11 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var contactsToRemove = teamSet.Except(contactsSet).ToList();
                 var contactsToAdd = contactsSet.Except(teamSet).ToList();
                 
-                // Only get team descriptor if there are changes to make
                 string teamDescriptor = "";
                 if (contactsToRemove.Any() || contactsToAdd.Any())
                 {
                     teamDescriptor = await service.GetDescriptorAsync(team.Id);
                     
-                    // E. Logging Adjustments: Aggregate information
                     if (contactsToRemove.Any())
                     {
                         logger.LogInformation("Removing {count} contact(s) from team", contactsToRemove.Count);
@@ -166,7 +153,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     
                     foreach (string descriptor in contactsToRemove)
                     {
-                        // F. Dry-Run Behavior: Skip external operations when not persisting
                         if (persistChanges)
                         {
                             logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
@@ -178,7 +164,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         }
                     }
 
-                    // E. Logging Adjustments: Aggregate information
                     if (contactsToAdd.Any())
                     {
                         logger.LogInformation("Adding {count} contact(s) to team", contactsToAdd.Count);
@@ -186,7 +171,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     
                     foreach (string descriptor in contactsToAdd)
                     {
-                        // F. Dry-Run Behavior: Skip external operations when not persisting
                         if (persistChanges)
                         {
                             logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
@@ -235,34 +219,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         }
 
         /// <summary>
-        /// Gets team member descriptors, trying batch method first, falling back to individual calls
+        /// Gets team member descriptors
         /// </summary>
-        private async Task<List<string>> GetTeamMemberDescriptorsAsync(WebApiTeam team, List<TeamMember> teamMembers)
+        private async Task<List<string>> GetTeamMemberDescriptorsAsync(WebApiTeam team)
         {
-            var teamDescriptors = new List<string>();
-            
             var batchDescriptors = await service.GetMemberDescriptorsAsync(team);
-            
-            if (batchDescriptors != null)
-            {
-                // Use batch results (may be empty for teams with no members)
-                teamDescriptors.AddRange(batchDescriptors);
-            }
-            else
-            {
-                // Fallback to individual calls with caching only on error
-                foreach (var member in teamMembers)
-                {
-                    if (!teamMemberCache.ContainsKey(member.Identity.Id))
-                    {
-                        var teamMemberDescriptor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
-                        teamMemberCache[member.Identity.Id] = teamMemberDescriptor;
-                    }
-                    teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
-                }
-            }
-            
-            return teamDescriptors;
+            return batchDescriptors?.ToList() ?? new List<string>();
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)
@@ -321,7 +283,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 logger.LogInformation("Creating Subscription PipelineId = {0}, TeamId = {1}", pipeline.Id, team.Id);
                 
-                // F. Dry-Run Behavior: Skip external operations when not persisting
                 if (persistChanges)
                 {
                     subscription = await service.CreateSubscriptionAsync(newSubscription);
@@ -348,7 +309,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     definitionClause.Value = definitionName;
 
-                    // F. Dry-Run Behavior: Skip external operations when not persisting
                     if (persistChanges)
                     {
                         var updateParameters = new NotificationSubscriptionUpdateParameters()

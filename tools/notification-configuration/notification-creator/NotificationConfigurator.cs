@@ -159,45 +159,45 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 if (contactsToRemove.Any() || contactsToAdd.Any())
                 {
                     teamDescriptor = await service.GetDescriptorAsync(team.Id);
-                }
+                    
+                    // E. Logging Adjustments: Aggregate information
+                    if (contactsToRemove.Any())
+                    {
+                        logger.LogInformation("Removing {count} contact(s) from team", contactsToRemove.Count);
+                    }
+                    
+                    foreach (string descriptor in contactsToRemove)
+                    {
+                        // F. Dry-Run Behavior: Skip external operations when not persisting
+                        if (persistChanges)
+                        {
+                            logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                            await service.RemoveMember(teamDescriptor, descriptor);
+                        }
+                        else
+                        {
+                            logger.LogInformation("Would delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        }
+                    }
 
-                // E. Logging Adjustments: Aggregate information
-                if (contactsToRemove.Any())
-                {
-                    logger.LogInformation("Removing {count} contact(s) from team", contactsToRemove.Count);
-                }
-                
-                foreach (string descriptor in contactsToRemove)
-                {
-                    // F. Dry-Run Behavior: Skip external operations when not persisting
-                    if (persistChanges)
+                    // E. Logging Adjustments: Aggregate information
+                    if (contactsToAdd.Any())
                     {
-                        logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        await service.RemoveMember(teamDescriptor, descriptor);
+                        logger.LogInformation("Adding {count} contact(s) to team", contactsToAdd.Count);
                     }
-                    else
+                    
+                    foreach (string descriptor in contactsToAdd)
                     {
-                        logger.LogInformation("Would delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                    }
-                }
-
-                // E. Logging Adjustments: Aggregate information
-                if (contactsToAdd.Any())
-                {
-                    logger.LogInformation("Adding {count} contact(s) to team", contactsToAdd.Count);
-                }
-                
-                foreach (string descriptor in contactsToAdd)
-                {
-                    // F. Dry-Run Behavior: Skip external operations when not persisting
-                    if (persistChanges)
-                    {
-                        logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        await service.AddToTeamAsync(teamDescriptor, descriptor);
-                    }
-                    else
-                    {
-                        logger.LogInformation("Would add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        // F. Dry-Run Behavior: Skip external operations when not persisting
+                        if (persistChanges)
+                        {
+                            logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                            await service.AddToTeamAsync(teamDescriptor, descriptor);
+                        }
+                        else
+                        {
+                            logger.LogInformation("Would add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        }
                     }
                 }
             }
@@ -246,16 +246,19 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             var teamDescriptors = new List<string>();
             
             // B. Team Member Descriptor Retrieval: Try new batch method first
+            // Note: This method currently doesn't provide significant optimization but serves as a hook
+            // for future batch implementations. The fallback is only used when the method returns null
+            // (indicating an error), not when it returns an empty collection (valid for teams with no members).
             var batchDescriptors = await service.GetMemberDescriptorsAsync(team);
             
-            if (batchDescriptors != null && batchDescriptors.Any())
+            if (batchDescriptors != null)
             {
-                // Use batch results
+                // Use batch results (may be empty for teams with no members)
                 teamDescriptors.AddRange(batchDescriptors);
             }
             else
             {
-                // Fallback to individual calls with caching
+                // Fallback to individual calls with caching only on error
                 foreach (var member in teamMembers)
                 {
                     if (!teamMemberCache.ContainsKey(member.Identity.Id))

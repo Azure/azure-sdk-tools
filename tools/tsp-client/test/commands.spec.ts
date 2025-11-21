@@ -51,7 +51,6 @@ describe.sequential("Verify commands", () => {
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
     );
-    await rm(resolve(joinPaths(repoRoot, "/sdk/contosowidgetmanager")), { recursive: true });
   });
 
   it("Generate lock file", async () => {

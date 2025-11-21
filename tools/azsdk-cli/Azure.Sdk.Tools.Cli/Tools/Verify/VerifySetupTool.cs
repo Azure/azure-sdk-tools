@@ -31,6 +31,7 @@ public class VerifySetupTool : LanguageMcpTool
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
     private const string REQ_VERSION_PATTERN = @"(>=|<=|>|<|=)\s*([\d\.]+)";
     private const string OUTPUT_VERSION_PATTERN = @"[\d\.]+";
+    private const string VerifySetupToolName = "azsdk_verify_setup";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [
         SharedCommandGroups.Verify,
@@ -51,7 +52,7 @@ public class VerifySetupTool : LanguageMcpTool
     };
 
     protected override Command GetCommand() =>
-        new("setup", "Verify environment setup for MCP release tools")
+        new McpCommand("setup", "Verify environment setup for MCP release tools", VerifySetupToolName)
         {
             languagesParam,
             allLangOption,
@@ -67,7 +68,7 @@ public class VerifySetupTool : LanguageMcpTool
         return await VerifySetup(parsed, packagePath, ct);
     }
 
-    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check.")]
+    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check.")]
     public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, CancellationToken ct = default)
     {
         try

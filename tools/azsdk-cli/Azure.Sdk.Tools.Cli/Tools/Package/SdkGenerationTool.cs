@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         // Command names
         private const string GenerateSdkCommandName = "generate";
+        private const string GenerateSdkToolName = "azsdk_package_generate_code";
 
         // Generate command options
         private readonly Option<string> localSdkRepoPathOpt = new("--local-sdk-repo-path", "-r")
@@ -47,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         };
 
         protected override Command GetCommand() =>
-            new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'")
+            new McpCommand(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'", GenerateSdkToolName)
             {
                 localSdkRepoPathOpt, tspConfigPathOpt, tspLocationPathOpt, emitterOpt,
             };
@@ -61,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await GenerateSdkAsync(localSdkRepoPath, tspConfigPath, tspLocationPath, emitterOptions, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_generate_code"), Description("Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally.")]
+        [McpServerTool(Name = GenerateSdkToolName), Description("Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally.")]
         public async Task<PackageOperationResponse> GenerateSdkAsync(
             [Description("Absolute path to the local Azure SDK repository. REQUIRED. Example: 'path/to/azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,

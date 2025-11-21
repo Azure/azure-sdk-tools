@@ -13,6 +13,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
     [McpServerToolType, Description("Simple echo tool for testing and demonstration purposes")]
     public class HelloWorldTool(ILogger<HelloWorldTool> logger) : MCPTool()
     {
+        // MCP Tool Names
+        private const string HelloWorldFailToolName = "azsdk_hello_world_fail";
+        private const string HelloWorldToolName = "azsdk_hello_world";
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Example];
 
         private Argument<string> _inputArg = new Argument<string>("input")
@@ -38,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
             return await Task.FromResult<CommandResponse>(result);
         }
 
-        [McpServerTool(Name = "azsdk_hello_world_fail"), Description("Echoes the message back to the client with a failure")]
+        [McpServerTool(Name = HelloWorldFailToolName), Description("Echoes the message back to the client with a failure")]
         public DefaultCommandResponse EchoFail(string message)
         {
             try
@@ -61,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
             }
         }
 
-        [McpServerTool(Name = "azsdk_hello_world"), Description("Echoes the message back to the client")]
+        [McpServerTool(Name = HelloWorldToolName), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
             try

@@ -14,7 +14,7 @@ from src.agent.tools._base import Tool
 class SearchTools(Tool):
     """Tools for searching guidelines, examples, and APIView comments in the ArchAgent Knowledge Base."""
 
-    async def search_guidelines(self, query: str, language: str):
+    def search_guidelines(self, query: str, language: str):
         """
         Search for Guidelines in the ArchAgent Knowledge Base.
         Args:
@@ -26,7 +26,7 @@ class SearchTools(Tool):
         context = search.build_context(results.results)
         return context.to_markdown()
 
-    async def search_examples(self, query: str, language: str):
+    def search_examples(self, query: str, language: str):
         """
         Search for Examples in the ArchAgent Knowledge Base.
         Args:
@@ -38,7 +38,7 @@ class SearchTools(Tool):
         context = search.build_context(results.results)
         return context.to_markdown()
 
-    async def search_memories(self, query: str, language: str):
+    def search_memories(self, query: str, language: str):
         """
         Search for memories in the ArchAgent Knowledge Base.
         Args:
@@ -50,7 +50,7 @@ class SearchTools(Tool):
         context = search.build_context(results.results)
         return context.to_markdown()
 
-    async def search_any(self, query: str, language: str):
+    def search_any(self, query: str, language: str):
         """
         Search the ArchAgent Knowledge Base for any content.
         Args:
@@ -62,7 +62,7 @@ class SearchTools(Tool):
         context = search.build_context(results.results)
         return context.to_markdown()
 
-    async def run_indexer(self, container_name: str):
+    def run_indexer(self, container_name: str):
         """
         Trigger a reindex of the Azure Search index for the ArchAgent Knowledge Base.
         Args:
@@ -72,7 +72,7 @@ class SearchTools(Tool):
             return
         return SearchManager.run_indexers(container_names=[container_name])
 
-    async def run_all_indexers(self):
+    def run_all_indexers(self):
         """
         Trigger a reindex of all Azure Search indexers for the ArchAgent Knowledge Base.
         """

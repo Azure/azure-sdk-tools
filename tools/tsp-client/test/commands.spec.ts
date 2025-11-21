@@ -7,7 +7,7 @@ import {
   generateLockFileCommand,
   generateConfigFilesCommand,
 } from "../src/commands.js";
-import { afterAll, beforeAll, describe, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it } from "vitest";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
@@ -17,7 +17,6 @@ import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
-import { afterEach } from "vitest";
 
 describe.sequential("Verify commands", () => {
   let repoRoot: string;
@@ -32,7 +31,10 @@ describe.sequential("Verify commands", () => {
   });
 
   afterEach(async () => {
-    await rm(resolve(joinPaths(repoRoot, "/sdk/contosowidgetmanager")), { recursive: true, force: true });
+    await rm(resolve(joinPaths(repoRoot, "/sdk/contosowidgetmanager")), {
+      recursive: true,
+      force: true,
+    });
   });
 
   afterAll(async () => {

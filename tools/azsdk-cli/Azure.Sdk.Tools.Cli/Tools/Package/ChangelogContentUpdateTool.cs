@@ -35,7 +35,7 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
     private const string UpdateChangelogContentCommandName = "update-changelog-content";
 
     protected override Command GetCommand() =>
-        new(UpdateChangelogContentCommandName, "Updates changelog content for Azure SDK packages.") { SharedOptions.PackagePath };
+        new McpCommand(UpdateChangelogContentCommandName, "Updates changelog content for Azure SDK packages.", "azsdk_package_update_changelog_content") { SharedOptions.PackagePath };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {

@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 });
             }
 
-            return new(InitCommandName, "Initialize a new TypeSpec project")
+            return new McpCommand(InitCommandName, "Initialize a new TypeSpec project", "azsdk_init_typespec_project")
             {
                 outputDirectoryArg, templateArg, serviceNamespaceArg,
             };

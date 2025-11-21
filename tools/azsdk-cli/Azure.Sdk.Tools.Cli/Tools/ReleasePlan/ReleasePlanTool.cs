@@ -139,8 +139,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new(getReleasePlanDetailsCommandName, "Get release plan details") { workItemIdOpt, releasePlanNumberOpt },
-            new(createReleasePlanCommandName, "Create a release plan")
+            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", "azsdk_get_release_plan") { workItemIdOpt, releasePlanNumberOpt },
+            new McpCommand(createReleasePlanCommandName, "Create a release plan", "azsdk_create_release_plan")
             {
                 typeSpecProjectPathOpt,
                 targetReleaseOpt,
@@ -153,7 +153,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 isTestReleasePlanOpt,
                 forceCreateReleasePlanOpt,
             },
-            new(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan") { workItemIdOpt, namespaceApprovalIssueOpt }
+            new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", "azsdk_link_namespace_approval_issue") { workItemIdOpt, namespaceApprovalIssueOpt }
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)

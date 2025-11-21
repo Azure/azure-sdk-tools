@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(ConvertCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project")
+            new McpCommand(ConvertCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project", "azsdk_convert_swagger_to_typespec")
             {
                 swaggerReadmeArg, outputDirectoryArg, isArmOption, fullyCompatibleOption,
             };

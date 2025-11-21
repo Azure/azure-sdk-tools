@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const int CommandTimeoutInMinutes = 30;
 
         protected override Command GetCommand() =>
-            new(BuildSdkCommandName, "Builds SDK source code for a specified language and project") { SharedOptions.PackagePath };
+            new McpCommand(BuildSdkCommandName, "Builds SDK source code for a specified language and project", "azsdk_package_build_code") { SharedOptions.PackagePath };
 
         public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

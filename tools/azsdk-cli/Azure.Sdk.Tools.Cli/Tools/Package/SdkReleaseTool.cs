@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
-            new(commandName, "Run the release pipeline for the package")
+            new McpCommand(commandName, "Run the release pipeline for the package", "azsdk_release_sdk")
             {
                 packageNameOpt, languageOpt, branchOpt,
             };

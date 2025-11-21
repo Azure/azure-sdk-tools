@@ -27,7 +27,7 @@ public class PipelineTestsTool(
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
 
     protected override Command GetCommand() =>
-        new("test-results", "Get test results for a pipeline run") { buildIdArg };
+        new McpCommand("test-results", "Get test results for a pipeline run", "azsdk_get_pipeline_llm_artifacts") { buildIdArg };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {

@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private const string getModifiedProjectsCommandName = "modified-projects";
 
         protected override Command GetCommand() =>
-            new(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects") { repoRootOpt, targetBranchOpt };
+            new McpCommand(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects", "azsdk_get_modified_typespec_projects") { repoRootOpt, targetBranchOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

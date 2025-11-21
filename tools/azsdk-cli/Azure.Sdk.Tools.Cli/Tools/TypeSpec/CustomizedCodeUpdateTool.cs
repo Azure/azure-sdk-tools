@@ -65,7 +65,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         "3. Regenerate with updated customization code to ensure it meets your code requirements\n" +
         "4. Open a pull request with your changes";
     protected override Command GetCommand() =>
-       new("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.")
+       new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", "azsdk_customized_code_update")
        {
             updateCommitSha, SharedOptions.PackagePath,
        };

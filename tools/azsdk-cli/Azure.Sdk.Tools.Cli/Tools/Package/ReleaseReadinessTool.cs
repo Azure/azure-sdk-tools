@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
         protected override Command GetCommand() =>
-            new("release-readiness", "Checks release readiness of a SDK package") { packageNameOpt, languageOpt };
+            new McpCommand("release-readiness", "Checks release readiness of a SDK package", "azsdk_check_package_release_readiness") { packageNameOpt, languageOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

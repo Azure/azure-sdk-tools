@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         };
 
         protected override Command GetCommand() =>
-            new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'")
+            new McpCommand(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'", "azsdk_package_generate_code")
             {
                 localSdkRepoPathOpt, tspConfigPathOpt, tspLocationPathOpt, emitterOpt,
             };

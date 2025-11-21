@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(TypespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+            new McpCommand(TypespecValidationCommandName, "Run typespec validation", "azsdk_run_typespec_validation") { typeSpecProjectPathOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

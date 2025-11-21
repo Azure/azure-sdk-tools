@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
         };
 
         protected override Command GetCommand() =>
-            new(getPipelineStatusCommandName, "Get pipeline run status") { pipelineRunIdOpt };
+            new McpCommand(getPipelineStatusCommandName, "Get pipeline run status", "azsdk_get_pipeline_status") { pipelineRunIdOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

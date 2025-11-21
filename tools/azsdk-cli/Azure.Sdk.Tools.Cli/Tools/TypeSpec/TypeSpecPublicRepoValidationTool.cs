@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(checkPublicRepoCommandName, "Check if TypeSpec project is in public spec repo") { typeSpecProjectPathOpt };
+            new McpCommand(checkPublicRepoCommandName, "Check if TypeSpec project is in public spec repo", "azsdk_typespec_check_project_in_public_repo") { typeSpecProjectPathOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

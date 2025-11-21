@@ -52,7 +52,7 @@ public class LogAnalysisTool(
 
     private const int DEFAULT_CONTEXT_LINES = 20;
 
-    protected override Command GetCommand() => new(AnalyzeCommandName, "Analyze a log file for errors and issues")
+    protected override Command GetCommand() => new McpCommand(AnalyzeCommandName, "Analyze a log file for errors and issues", "azsdk_analyze_log_file")
     {
         filePathOpt, keywordsOpt, fullSearchOpt, contextLinesOpt,
     };

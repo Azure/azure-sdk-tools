@@ -101,14 +101,14 @@ public class ExampleTool(
 
     protected override List<Command> GetCommands() =>
     [
-        new(AzureSubCommand, "Demonstrate Azure service integration") { tenantOption },
-        new(DevOpsSubCommand, "Demonstrate DevOps service integration") { packageArgument, languageOption },
-        new(GitHubSubCommand, "Demonstrate GitHub service integration"),
-        new(AISubCommand, "Demonstrate AI service integration") { aiInputArg },
-        new(ErrorSubCommand, "Demonstrate error handling patterns") { errorInputArg, forceFailureOption },
-        new(ProcessSubCommand, "Demonstrate spawning an external process (echo)") { processSleepArg },
-        new(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter") { powershellMessageArg },
-        new(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci") { fibonacciIndexOption }
+        new McpCommand(AzureSubCommand, "Demonstrate Azure service integration", "azsdk_example_azure_service") { tenantOption },
+        new McpCommand(DevOpsSubCommand, "Demonstrate DevOps service integration", "azsdk_example_devops_service") { packageArgument, languageOption },
+        new McpCommand(GitHubSubCommand, "Demonstrate GitHub service integration", "azsdk_example_github_service"),
+        new McpCommand(AISubCommand, "Demonstrate AI service integration", "azsdk_example_ai_service") { aiInputArg },
+        new McpCommand(ErrorSubCommand, "Demonstrate error handling patterns", "azsdk_example_error_handling") { errorInputArg, forceFailureOption },
+        new McpCommand(ProcessSubCommand, "Demonstrate spawning an external process (echo)", "azsdk_example_process_execution") { processSleepArg },
+        new McpCommand(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter", "azsdk_example_powershell_execution") { powershellMessageArg },
+        new McpCommand(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci", "azsdk_example_microagent_fibonacci") { fibonacciIndexOption }
     ];
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)

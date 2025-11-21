@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string RunCommandName = "run";
 
-        protected override Command GetCommand() => new Command(RunCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new McpCommand(RunCommandName, "Run tests for SDK packages", "azsdk_package_run_tests")
         {
             SharedOptions.PackagePath,
         };

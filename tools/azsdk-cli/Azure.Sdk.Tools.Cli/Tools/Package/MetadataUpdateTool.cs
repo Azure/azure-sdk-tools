@@ -35,7 +35,7 @@ public class MetadataUpdateTool : LanguageMcpTool
     private const string UpdateMetadataCommandName = "update-metadata";
 
     protected override Command GetCommand() =>
-        new(UpdateMetadataCommandName, "Updates package metadata files for Azure SDK packages.") { SharedOptions.PackagePath };
+        new McpCommand(UpdateMetadataCommandName, "Updates package metadata files for Azure SDK packages.", "azsdk_package_update_metadata") { SharedOptions.PackagePath };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {

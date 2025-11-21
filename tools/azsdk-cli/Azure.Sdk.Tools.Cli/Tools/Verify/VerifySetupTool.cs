@@ -51,7 +51,7 @@ public class VerifySetupTool : LanguageMcpTool
     };
 
     protected override Command GetCommand() =>
-        new("setup", "Verify environment setup for MCP release tools")
+        new McpCommand("setup", "Verify environment setup for MCP release tools", "azsdk_verify_setup")
         {
             languagesParam,
             allLangOption,

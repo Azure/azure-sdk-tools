@@ -36,7 +36,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     };
 
     protected override Command GetCommand() =>
-        new("results", "Analyze test results")
+        new McpCommand("results", "Analyze test results", "azsdk_get_failed_test_cases")
         {
             trxPathOpt,
             filterOpt,

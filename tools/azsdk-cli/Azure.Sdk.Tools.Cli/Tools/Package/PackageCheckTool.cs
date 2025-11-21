@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         };
 
         protected override Command GetCommand() =>
-            new("validate", "Run validation checks for SDK packages") { checkTypeArg, SharedOptions.PackagePath, fixOption };
+            new McpCommand("validate", "Run validation checks for SDK packages", "azsdk_package_run_check") { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

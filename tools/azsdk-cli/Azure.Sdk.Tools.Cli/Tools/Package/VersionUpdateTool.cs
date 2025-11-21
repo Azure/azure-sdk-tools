@@ -53,7 +53,7 @@ public class VersionUpdateTool : LanguageMcpTool
     };
 
     protected override Command GetCommand() =>
-        new(UpdateVersionCommandName, "Updates version and release date for Azure SDK packages") 
+        new McpCommand(UpdateVersionCommandName, "Updates version and release date for Azure SDK packages", "azsdk_package_update_version") 
         { 
             SharedOptions.PackagePath,
             ReleaseTypeOption,

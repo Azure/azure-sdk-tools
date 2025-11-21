@@ -74,7 +74,7 @@ public class PipelineAnalysisTool(
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     protected override Command GetCommand() =>
-        new("analyze", "Analyze a pipeline run")
+        new McpCommand("analyze", "Analyze a pipeline run", "azsdk_analyze_pipeline")
         {
             pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt, queryOpt,
         };

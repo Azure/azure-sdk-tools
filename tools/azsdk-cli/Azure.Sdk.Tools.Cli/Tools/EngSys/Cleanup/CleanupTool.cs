@@ -38,7 +38,7 @@ public class CleanupTool : MCPTool
         ];
     }
 
-    protected override Command GetCommand() => new(CleanupAgentsCommandName, "Cleanup ai agents") { projectEndpointOpt };
+    protected override Command GetCommand() => new McpCommand(CleanupAgentsCommandName, "Cleanup ai agents", "azsdk_cleanup_ai_agents") { projectEndpointOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {

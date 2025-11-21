@@ -110,19 +110,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK")
+            new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", "azsdk_check_api_spec_ready_for_sdk")
             {
                 typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt,
             },
-            new(generateSdkCommandName, "Generate SDK for a TypeSpec project")
+            new McpCommand(generateSdkCommandName, "Generate SDK for a TypeSpec project", "azsdk_run_generate_sdk")
             {
                 typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt,
             },
-            new(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline")
+            new McpCommand(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline", "azsdk_get_sdk_pull_request_link")
             {
                 languageOpt, pipelineRunIdOpt, workItemIdOpt,
             },
-            new(linkSdkPrCommandName, "Link SDK pull request to release plan")
+            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", "azsdk_link_sdk_pull_request_to_release_plan")
             {
                 languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt,
             }

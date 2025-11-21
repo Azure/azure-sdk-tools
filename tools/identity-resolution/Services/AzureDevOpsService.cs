@@ -234,39 +234,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             return user.Descriptor;
         }
 
-        // TODO: Future batch optimization method
-        // /// <summary>
-        // /// Gets descriptors for multiple user principals in a single operation
-        // /// </summary>
-        // /// <param name="userPrincipals">Collection of user principals</param>
-        // /// <returns>Dictionary mapping user principals to descriptors</returns>
-        // public async Task<Dictionary<string, string>> GetDescriptorsForPrincipalsAsync(IEnumerable<string> userPrincipals)
-        // {
-        //     var client = await GetClientAsync<GraphHttpClient>();
-        //     var results = new Dictionary<string, string>();
-        //     
-        //     // TODO: Check if GraphHttpClient supports batch operations
-        //     // If not, this would still reduce code duplication and provide a hook for future optimization
-        //     foreach (var principal in userPrincipals)
-        //     {
-        //         try
-        //         {
-        //             var context = new GraphUserPrincipalNameCreationContext()
-        //             {
-        //                 PrincipalName = principal,
-        //             };
-        //             var user = await client.CreateUserAsync(context);
-        //             results[principal] = user.Descriptor;
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             logger.LogWarning(ex, "Failed to get descriptor for principal {principal}", principal);
-        //         }
-        //     }
-        //     
-        //     return results;
-        // }
-
         /// <summary>
         /// Gets a list of TeamMembers
         /// </summary>
@@ -289,10 +256,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         /// </summary>
         /// <param name="team">Team</param>
         /// <returns>List of member descriptors, or null if an error occurs</returns>
-        /// <remarks>
-        /// This method provides an optimized way to retrieve member descriptors.
-        /// TODO: Future enhancement - implement true batching by calling GetUsersFromIds with multiple IDs
-        /// </remarks>
         public async Task<IEnumerable<string>> GetMemberDescriptorsAsync(WebApiTeam team)
         {
             var client = await GetClientAsync<TeamHttpClient>();
@@ -309,8 +272,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
                 var descriptors = new List<string>();
                 var identityClient = await GetClientAsync<IdentityHttpClient>();
                 
-                // Currently fetching one by one, but this method provides a hook for future batch optimization
-                // TODO: Implement true batch retrieval using ReadIdentitiesAsync with multiple IDs
                 foreach (var member in members)
                 {
                     try

@@ -214,11 +214,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             {
                 if (!contactsCache.ContainsKey(contact))
                 {
-                    // TODO: Batch method for future optimization: GetUserPrincipalNamesFromGithubAsync(IEnumerable<string> githubUsernames)
                     var userPrincipal = await gitHubToAADConverter.GetUserPrincipalNameFromGithubAsync(contact);
                     if (!string.IsNullOrEmpty(userPrincipal))
                     {
-                        // TODO: Batch method for future optimization: GetDescriptorsForPrincipalsAsync(IEnumerable<string> principals)
                         contactsCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
                     }
                     else
@@ -243,10 +241,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         {
             var teamDescriptors = new List<string>();
             
-            // B. Team Member Descriptor Retrieval: Try new batch method first
-            // Note: This method currently doesn't provide significant optimization but serves as a hook
-            // for future batch implementations. The fallback is only used when the method returns null
-            // (indicating an error), not when it returns an empty collection (valid for teams with no members).
             var batchDescriptors = await service.GetMemberDescriptorsAsync(team);
             
             if (batchDescriptors != null)

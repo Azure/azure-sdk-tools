@@ -6,21 +6,15 @@
   [draggable]="false"
   [dismissableMask]="true"
   header="View related issues"
-  [style]="{width: '70vw', height: '80vh'}"
+  [style]="{width: '80vw', height: '85vh'}"
   [contentStyle]="{'display': 'flex', 'flex-direction': 'column', 'overflow': 'hidden', 'padding': '0', 'height': '100%'}"
   appendTo="body"
   (onHide)="onHide()">
   
   <div class="dialog-content">
     <div class="dialog-header-section">
-      <div class="mb-3">
-        <small class="text-muted">
-          The following issues are reporting a related feedback:
-        </small>
-      </div>
-
       <!-- Select All Checkbox -->
-      <div class="d-flex align-items-center justify-content-between mb-3 p-2 bg-light rounded select-all-section">
+      <div class="d-flex align-items-center justify-content-between mb-2 p-2 bg-light rounded select-all-section">
         <div class="d-flex align-items-center">
           <p-checkbox 
             [binary]="true"
@@ -39,12 +33,11 @@
     <div class="related-comments-list-container">
       <div class="related-comments-list">
       <div *ngFor="let comment of relatedComments" 
-           class="comment-item border rounded p-3 mb-3" 
-           [class.selected]="isCommentSelected(comment.id)">
-        
+           class="comment-item border rounded p-2 mb-2" 
+           [class.selected]="isCommentSelected(comment.id)">  
         <!-- Code Context - First and most prominent -->
-        <div *ngIf="getCodeContextForComment(comment)" class="mb-3">
-          <div class="code-github p-3 bg-light border rounded position-relative">
+        <div *ngIf="getCodeContextForComment(comment)" class="mb-2">
+          <div class="code-github p-2 bg-light border rounded position-relative">
             <code class="d-block text-dark">{{ getCodeContextForComment(comment) }}</code>
           </div>
         </div>
@@ -186,6 +179,4 @@
       </div>
     </div>
   </div>
-  <ng-template pTemplate="footer">
-  </ng-template>
 </p-dialog>

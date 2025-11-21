@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 1.5rem;
+  padding: 1rem;
   overflow: hidden;
 }
 
@@ -29,13 +29,13 @@
   overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.75rem;
   background-color: var(--base-fg-color);
 }
 
 .bulk-actions-section {
   flex-shrink: 0;
-  padding-top: 1rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
 }
 
@@ -61,10 +61,10 @@
 
 .rendered-comment-content {
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.4;
   
   p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     
     &:last-child {
       margin-bottom: 0;
@@ -107,6 +107,12 @@
     background-color: var(--base-fg-color);
     border-bottom: 1px solid var(--border-color);
     color: var(--base-text-color);
+    padding: 0.75rem 1rem;
+    
+    .p-dialog-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
   }
   
   .p-dialog .p-dialog-content {
@@ -119,9 +125,7 @@
   }
   
   .p-dialog .p-dialog-footer {
-    background-color: var(--base-fg-color);
-    border-top: 1px solid var(--border-color);
-    padding: 1rem 1.5rem;
+    display: none !important;
   }
   
   .p-checkbox .p-checkbox-box {

@@ -288,7 +288,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         /// Gets descriptors for all team members (batch operation)
         /// </summary>
         /// <param name="team">Team</param>
-        /// <returns>List of member descriptors</returns>
+        /// <returns>List of member descriptors, or null if an error occurs</returns>
         /// <remarks>
         /// This method provides an optimized way to retrieve member descriptors.
         /// TODO: Future enhancement - implement true batching by calling GetUsersFromIds with multiple IDs
@@ -330,7 +330,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to get member descriptors for team {teamId}, falling back to individual calls", team.Id);
-                return Enumerable.Empty<string>();
+                return null;  // Return null to indicate error and trigger fallback
             }
         }
 

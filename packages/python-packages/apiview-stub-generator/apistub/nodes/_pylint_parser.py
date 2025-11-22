@@ -93,6 +93,20 @@ class PylintParser:
     @classmethod
     def get_items(cls, obj) -> List[PylintError]:
         items = [x for x in cls.items if x.owner == str(obj)]
+
+        # Fallback for methods created from astroid nodes:
+        # When FunctionNode is created with an astroid node instead of the actual function object,
+        # str(obj) doesn't match the owner string that was set during class parsing.
+        # So we fall back to matching by method name in the error's obj field (e.g., "ClassName.method_name")
+        if not items and hasattr(obj, '__name__'):
+            obj_name = obj.__name__
+            items = [x for x in cls.items if x.obj and x.obj.endswith(f".{obj_name}")]
+
+        # For classes, filter OUT method-level items to avoid duplicates (those with dots in obj field)
+        # Methods will find and report their own diagnostics using the fallback above
+        if hasattr(obj, '__mro__'):  # Check if this is a class
+            items = [x for x in items if not x.obj or '.' not in x.obj]
+
         return items
 
     @classmethod

@@ -1,6 +1,8 @@
 using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Help;
+
 using ApiView;
-using APIView;
 using NSwag;
 
 namespace SwaggerTreeStyleParser;
@@ -8,43 +10,40 @@ namespace SwaggerTreeStyleParser;
 public class Program
 {
     public const string CurrentVersion = "0.1";
-    public static async Task<int> Main(string[] args)
+    public static int Main(string[] args)
     {
-        var swaggers = new Option<IEnumerable<string>>(name: "--swaggers", aliases: "-s")
+        var swaggers = new Option<IEnumerable<string>>(aliases: new string[] { "--swaggers", "-s" })
         {
             Description = "Input swagger file(s). Provide one or more paths separated by space.",
             Arity = ArgumentArity.OneOrMore,
             AllowMultipleArgumentsPerToken = true
         };
 
-        var output = new Option<string>(name: "--output", aliases: "-o")
+        var output = new Option<string>(aliases: new string[] { "--output", "-o" }, getDefaultValue: () => "swagger.json")
         {
             Description = "The output file path.",
             Arity = ArgumentArity.ZeroOrOne,
-            DefaultValueFactory = _ => "swagger.json"
         };
 
-        var readme = new Option<string>(name: "--readme", aliases: "-r")
+        var readme = new Option<string>(aliases: new string[] { "--readme", "-r" })
         {
             Description = "The readme file path.",
             Arity = ArgumentArity.ExactlyOne
         };
 
-        var tag = new Option<string>(name: "--tag", aliases: "-t")
+        var tag = new Option<string>(aliases: new string[] { "--tag", "-t" }, getDefaultValue: () => "default")
         {
             Description = "Readme tag used to generate swagger apiView",
-            Arity = ArgumentArity.ExactlyOne,
-            DefaultValueFactory = _ => "default"
+            Arity = ArgumentArity.ExactlyOne
         };
 
-        var package = new Option<string>(name: "--package-name", aliases: "-p")
+        var package = new Option<string>(aliases: new string[] { "--package-name", "-p" }, getDefaultValue: () => "swagger")
         {
             Description = "The package name for the generated code file.",
-            Arity = ArgumentArity.ExactlyOne,
-            DefaultValueFactory = _ => "swagger"
+            Arity = ArgumentArity.ExactlyOne
         };
 
-        var Links = new Option<IEnumerable<string>>(name: "--swagger-links", aliases: "-l")
+        var Links = new Option<IEnumerable<string>>(aliases: new string[] { "--swagger-links", "-l" })
         {
             Description = "Input swagger file links. Provide one or more URLs separated by space.",
             Arity = ArgumentArity.OneOrMore,
@@ -61,26 +60,12 @@ public class Program
             Links
         };
 
-        ParseResult parseResult = rootCommand.Parse(args);
-        if (parseResult.Errors.Count > 0)
+        rootCommand.SetHandler(async (IEnumerable<string>? swaggerFiles, string? outputFile, string? readmeFile, string? readmeTag, string? packageName, IEnumerable<string>? swaggerLinks) =>
         {
-            foreach (var error in parseResult.Errors)
-            {
-                Console.WriteLine(error.Message);
-            }
-            return 1;
-        }
+            await HandleGenerateCodeFile(swaggerFiles, outputFile, readmeFile, readmeTag, packageName, swaggerLinks);
+        }, swaggers, output, readme, tag, package, Links);
 
-        var swaggerFiles = parseResult.GetValue(swaggers);
-        var outputFile = parseResult.GetValue(output);
-        var readmeFile = parseResult.GetValue(readme);
-        var readmeTag = parseResult.GetValue(tag);
-        var packageName = parseResult.GetValue(package);
-        var swaggerLinks = parseResult.GetValue(Links);
-
-        await HandleGenerateCodeFile(swaggerFiles, outputFile, readmeFile, readmeTag, packageName, swaggerLinks);
-
-        return 0;
+        return rootCommand.InvokeAsync(args).Result;
     }
 
     static async Task HandleGenerateCodeFile(IEnumerable<string>? swaggerFiles, string? outputFile, string? readmeFile, string? readmeTag, string? packageName, IEnumerable<string>? swaggerLinks)

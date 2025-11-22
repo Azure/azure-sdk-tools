@@ -29,6 +29,11 @@ namespace APIView.Model.V2
         public string NavigationDisplayName { get; set; }
 
         /// <summary>
+        /// If this token is used for navigation decide whether to collapse it in the navigation pane.
+        /// </summary>
+        public bool CollapseNavigation { get; set; }
+
+        /// <summary>
         /// navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
         /// </summary>
         public string NavigateToId { get; set; }
@@ -144,7 +149,7 @@ namespace APIView.Model.V2
         }
 
         public static List<ReviewToken> CreateKeyValueToken(string key, string value = null,
-            bool addPuctuation = true, string keyTokenClass = null, string valueTokenClass = null, bool addKeyToNavigation = false)
+            bool addPuctuation = true, string keyTokenClass = null, string valueTokenClass = null, bool addKeyToNavigation = false, bool collapseNavigation = false)
         {
             var results = new List<ReviewToken>();
             var keyToken = new ReviewToken(key, TokenKind.Text);
@@ -156,6 +161,10 @@ namespace APIView.Model.V2
             if (addKeyToNavigation)
             {
                 keyToken.NavigationDisplayName = key;
+                if (collapseNavigation)
+                {
+                    keyToken.CollapseNavigation = true;
+                }
             }
             results.Add(keyToken);
 

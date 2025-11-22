@@ -139,13 +139,13 @@ namespace SwaggerTreeStyleParser
         public void BuildOpenApiPathItemObject(IDictionary<string, OpenApiPathItem> openApiPaths, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiPaths == null || openApiPaths.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true);
+            var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true, collapseNavigation: true);
             foreach (var kvp in openApiPaths)
             {
-                var line = CreateKeyValueLine(key: kvp.Key, keyTokenClass: "header2", addKeyToNavigation: true);
+                var line = CreateKeyValueLine(key: kvp.Key, keyTokenClass: "header2", addKeyToNavigation: true, collapseNavigation: true);
                 foreach (var opKvp in kvp.Value)
                 {
-                    var opLine = CreateKeyValueLine(key: opKvp.Key.ToUpper(), keyTokenClass: "header");
+                    var opLine = CreateKeyValueLine(key: opKvp.Key.ToUpper(), keyTokenClass: "header", addKeyToNavigation: true, collapseNavigation: true);
 
                     if (opKvp.Value.Tags.Any())
                     {
@@ -194,12 +194,12 @@ namespace SwaggerTreeStyleParser
         public void BuildJsonSchemaDefinitions(IDictionary<string, JsonSchema> definitions, string objectName, List<ReviewLine> reviewLines)
         {
             if (definitions == null || definitions.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true);
+            var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true, collapseNavigation: true);
             foreach (var kvp in definitions.OrderBy(d => d.Key))
             {
                 var schemaProps = kvp.Value.ActualProperties;
                 if (schemaProps.Count == 0) continue;
-                var definitionRoot = CreateKeyValueLine(kvp.Key, keyTokenClass: "header2", addKeyToNavigation: true);
+                var definitionRoot = CreateKeyValueLine(kvp.Key, keyTokenClass: "header2", addKeyToNavigation: true, collapseNavigation: true);
                 definitionRoot.Children.Add(
                     CreateKeyValueLine(key: nameof(kvp.Value.Description), kvp.Value.Description, keyTokenClass: "keyword")
                 );
@@ -242,7 +242,7 @@ namespace SwaggerTreeStyleParser
         public void BuildOpenApiParameterObject(IDictionary<string, OpenApiParameter> openApiParameters, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiParameters == null || openApiParameters.Count == 0) return;
-            var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true);
+            var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true, collapseNavigation: true);
             CreatePropertiesTableHeader(rootLine.Children, firstColumnName: "Name", addInColumn: true);
             foreach (var kvp in openApiParameters.OrderBy(k => k.Key))
             {
@@ -360,16 +360,16 @@ namespace SwaggerTreeStyleParser
 
             return (schemaName, id);
         }
-        public ReviewLine CreateKeyValueLine(string key, string? value = null, bool addPunctuation = false, string? keyTokenClass = null, bool addKeyToNavigation = false)
+        public ReviewLine CreateKeyValueLine(string key, string? value = null, bool addPunctuation = false, string? keyTokenClass = null, bool addKeyToNavigation = false, bool collapseNavigation = false)
         {
             var rootLine = new ReviewLine(id: key);
             if (value == null)
             {
-                rootLine.AddTokenRange(ReviewToken.CreateKeyValueToken(key: key, addPuctuation: addPunctuation, keyTokenClass: keyTokenClass, addKeyToNavigation: addKeyToNavigation));
+                rootLine.AddTokenRange(ReviewToken.CreateKeyValueToken(key: key, addPuctuation: addPunctuation, keyTokenClass: keyTokenClass, addKeyToNavigation: addKeyToNavigation, collapseNavigation: collapseNavigation));
             }
             else
             {
-                rootLine.AddTokenRange(ReviewToken.CreateKeyValueToken(key: key, value: value, keyTokenClass: keyTokenClass, addKeyToNavigation: addKeyToNavigation));
+                rootLine.AddTokenRange(ReviewToken.CreateKeyValueToken(key: key, value: value, keyTokenClass: keyTokenClass, addKeyToNavigation: addKeyToNavigation, collapseNavigation: collapseNavigation));
             }
             return rootLine;
         }

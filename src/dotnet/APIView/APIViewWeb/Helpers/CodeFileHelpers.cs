@@ -219,10 +219,6 @@ namespace APIViewWeb.Helpers
             {
                 string navIcon = "";
                 
-                // Collapse some of the swagger navigations
-                bool expanded = (language == "Swagger" && (navToken.Value == "Paths" || navToken.Value == "Definitions" || navToken.Value == "Parameters"))
-                    ? false : true;
-
                 if (navToken.RenderClasses.Count > 0)
                 {
                     navIcon = navToken.RenderClasses.First();
@@ -236,7 +232,7 @@ namespace APIViewWeb.Helpers
                         Kind = navIcon,
                         Icon = navIcon
                     },
-                    Expanded = expanded,
+                    Expanded = !navToken.CollapseNavigation,
                 };
             }
             return navTreeNode;

@@ -7,7 +7,7 @@ import {
   generateLockFileCommand,
   generateConfigFilesCommand,
 } from "../src/commands.js";
-import { afterAll, afterEach, beforeAll, describe, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
@@ -53,6 +53,7 @@ describe.sequential("Verify commands", () => {
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
     );
+    await rm(joinPaths(repoRoot, "sdk/keyvault"), { recursive: true, force: true });
   });
 
   it("Generate lock file", async () => {
@@ -767,4 +768,63 @@ describe.sequential("Verify commands", () => {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
   }, 360000);
+
+  it("should read batch configuration from tsp-location.yaml", async () => {
+    const tspLocation = await readTspLocation("test/examples/batch");
+
+    expect(tspLocation.batch).toBeDefined();
+    expect(Array.isArray(tspLocation.batch)).toBe(true);
+    expect(tspLocation.batch).toHaveLength(3);
+    expect(tspLocation.batch).toContain("./rbac");
+    expect(tspLocation.batch).toContain("./settings");
+    expect(tspLocation.batch).toContain("./restore");
+  });
+
+  it("process batch directories in updateCommand", async () => {
+    const argv = {
+      "output-dir": "./test/examples/batch",
+    };
+
+    try {
+      await updateCommand(argv);
+
+      // Verify that output directories were created for each batch item
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/rbac"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/settings"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
+      );
+    } finally {
+      await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+    }
+  }, 360000);
+
+  it("process batch directories in updateCommand with local spec path", async () => {
+    const argv = {
+      "output-dir": "./test/examples/batch",
+      "local-spec-repo": "./test/examples/batch/service",
+      "emitter-package-json-path": "tools/tsp-client/test/examples/batch/service/package.json",
+    };
+
+    try {
+      await updateCommand(argv);
+
+      // Verify that output directories were created for each batch item
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/rbac"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/settings"))).isDirectory(),
+      );
+      assert.isTrue(
+        (await stat(joinPaths(repoRoot, "sdk/keyvault/keyvault-admin/restore"))).isDirectory(),
+      );
+    } finally {
+      await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+    }
+  });
 });

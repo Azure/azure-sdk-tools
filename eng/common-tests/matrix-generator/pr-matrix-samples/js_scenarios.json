@@ -19,357 +19,6 @@
     },
     "expected_package_output": [
       {
-        "Name": "@azure/abort-controller",
-        "Version": "2.1.3",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/abort-controller",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/abort-controller/README.md",
-        "ChangeLogPath": "sdk/core/abort-controller/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-abort-controller",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-abort-controller",
-          "safeName": "azureabortcontroller",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-amqp",
-        "Version": "4.3.7",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-amqp",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-amqp/README.md",
-        "ChangeLogPath": "sdk/core/core-amqp/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-amqp",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-amqp",
-          "safeName": "azurecoreamqp",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-auth",
-        "Version": "1.9.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-auth",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-auth/README.md",
-        "ChangeLogPath": "sdk/core/core-auth/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-auth",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-auth",
-          "safeName": "azurecoreauth",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-client",
-        "Version": "1.9.4",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-client",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-client/README.md",
-        "ChangeLogPath": "sdk/core/core-client/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-client",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-client",
-          "safeName": "azurecoreclient",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-http-compat",
-        "Version": "2.2.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-http-compat",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-http-compat/README.md",
-        "ChangeLogPath": "sdk/core/core-http-compat/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-http-compat",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-http-compat",
-          "safeName": "azurecorehttpcompat",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-lro",
-        "Version": "3.2.0",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-lro",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-lro/README.md",
-        "ChangeLogPath": "sdk/core/core-lro/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-lro",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-lro",
-          "safeName": "azurecorelro",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-paging",
-        "Version": "1.6.3",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-paging",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-paging/README.md",
-        "ChangeLogPath": "sdk/core/core-paging/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-paging",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-paging",
-          "safeName": "azurecorepaging",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-rest-pipeline",
-        "Version": "1.19.2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-rest-pipeline",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-rest-pipeline/README.md",
-        "ChangeLogPath": "sdk/core/core-rest-pipeline/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-rest-pipeline",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-rest-pipeline",
-          "safeName": "azurecorerestpipeline",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-sse",
-        "Version": "2.1.4",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-sse",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-sse/README.md",
-        "ChangeLogPath": "sdk/core/core-sse/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-sse",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-sse",
-          "safeName": "azurecoresse",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-tracing",
-        "Version": "1.2.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-tracing",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-tracing/README.md",
-        "ChangeLogPath": "sdk/core/core-tracing/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-tracing",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-tracing",
-          "safeName": "azurecoretracing",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-util",
-        "Version": "1.11.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-util",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-util/README.md",
-        "ChangeLogPath": "sdk/core/core-util/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-util",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-util",
-          "safeName": "azurecoreutil",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/core-xml",
-        "Version": "1.4.6",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/core-xml",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/core-xml/README.md",
-        "ChangeLogPath": "sdk/core/core-xml/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-xml",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-core-xml",
-          "safeName": "azurecorexml",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/logger",
-        "Version": "1.1.5",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/logger",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/logger/README.md",
-        "ChangeLogPath": "sdk/core/logger/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-logger",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-logger",
-          "safeName": "azurelogger",
-          "triggeringPaths": [
-            "/common/config",
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
         "Name": "@azure-rest/ai-translation-document",
         "Version": "1.0.0",
         "DevVersion": null,
@@ -393,7 +42,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": "specification/translation/Azure.AI.DocumentTranslation"
       },
       {
         "Name": "@azure-rest/core-client",
@@ -420,7 +70,475 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/abort-controller",
+        "Version": "2.1.3",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/abort-controller",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/abort-controller/README.md",
+        "ChangeLogPath": "sdk/core/abort-controller/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-abort-controller",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-abort-controller",
+          "safeName": "azureabortcontroller",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/arm-resources",
+        "Version": "6.0.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/resources/arm-resources",
+        "ServiceDirectory": "resources",
+        "ReadMePath": "sdk/resources/arm-resources/README.md",
+        "ChangeLogPath": "sdk/resources/arm-resources/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "mgmt",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-arm-resources",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-arm-resources",
+          "safeName": "azurearmresources",
+          "triggeringPaths": [
+            "/sdk/identity",
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/resources/ci.mgmt.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-amqp",
+        "Version": "4.3.7",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-amqp",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-amqp/README.md",
+        "ChangeLogPath": "sdk/core/core-amqp/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-amqp",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-amqp",
+          "safeName": "azurecoreamqp",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-auth",
+        "Version": "1.9.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-auth",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-auth/README.md",
+        "ChangeLogPath": "sdk/core/core-auth/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-auth",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-auth",
+          "safeName": "azurecoreauth",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-client",
+        "Version": "1.9.4",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-client",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-client/README.md",
+        "ChangeLogPath": "sdk/core/core-client/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-client",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-client",
+          "safeName": "azurecoreclient",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-http-compat",
+        "Version": "2.2.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-http-compat",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-http-compat/README.md",
+        "ChangeLogPath": "sdk/core/core-http-compat/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-http-compat",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-http-compat",
+          "safeName": "azurecorehttpcompat",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-lro",
+        "Version": "3.2.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-lro",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-lro/README.md",
+        "ChangeLogPath": "sdk/core/core-lro/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-lro",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-lro",
+          "safeName": "azurecorelro",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-paging",
+        "Version": "1.6.3",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-paging",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-paging/README.md",
+        "ChangeLogPath": "sdk/core/core-paging/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-paging",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-paging",
+          "safeName": "azurecorepaging",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-rest-pipeline",
+        "Version": "1.19.2",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-rest-pipeline",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-rest-pipeline/README.md",
+        "ChangeLogPath": "sdk/core/core-rest-pipeline/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-rest-pipeline",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-rest-pipeline",
+          "safeName": "azurecorerestpipeline",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-sse",
+        "Version": "2.1.4",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-sse",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-sse/README.md",
+        "ChangeLogPath": "sdk/core/core-sse/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-sse",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-sse",
+          "safeName": "azurecoresse",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-tracing",
+        "Version": "1.2.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-tracing",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-tracing/README.md",
+        "ChangeLogPath": "sdk/core/core-tracing/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-tracing",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-tracing",
+          "safeName": "azurecoretracing",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-util",
+        "Version": "1.11.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-util",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-util/README.md",
+        "ChangeLogPath": "sdk/core/core-util/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-util",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-util",
+          "safeName": "azurecoreutil",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/core-xml",
+        "Version": "1.4.6",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/core-xml",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/core-xml/README.md",
+        "ChangeLogPath": "sdk/core/core-xml/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-xml",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-core-xml",
+          "safeName": "azurecorexml",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/identity",
+        "Version": "4.8.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/identity/identity",
+        "ServiceDirectory": "identity",
+        "ReadMePath": "sdk/identity/identity/README.md",
+        "ChangeLogPath": "sdk/identity/identity/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-identity",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": [
+          "@azure-tests/perf-storage-blob"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-identity",
+          "safeName": "azureidentity",
+          "triggeringPaths": [
+            "/sdk/test-utils",
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/identity/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/logger",
+        "Version": "1.1.5",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/logger",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/logger/README.md",
+        "ChangeLogPath": "sdk/core/logger/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-logger",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-logger",
+          "safeName": "azurelogger",
+          "triggeringPaths": [
+            "/common/config",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/service-bus",
+        "Version": "7.10.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/servicebus/service-bus",
+        "ServiceDirectory": "servicebus",
+        "ReadMePath": "sdk/servicebus/service-bus/README.md",
+        "ChangeLogPath": "sdk/servicebus/service-bus/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-service-bus",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-service-bus",
+          "safeName": "azureservicebus",
+          "triggeringPaths": [
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/servicebus/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/storage-blob",
@@ -447,7 +565,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/storage-file-datalake",
@@ -473,7 +592,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/storage-file-share",
@@ -499,7 +619,43 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "@azure/template",
+        "Version": "1.0.13-beta.2",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/template",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/template/README.md",
+        "ChangeLogPath": "sdk/template/template/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-template",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-template",
+          "safeName": "azuretemplate",
+          "triggeringPaths": [
+            "/sdk/test-utils",
+            "/sdk/identity",
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/template/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@typespec/ts-http-runtime",
@@ -526,141 +682,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/arm-resources",
-        "Version": "6.0.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/resources/arm-resources",
-        "ServiceDirectory": "resources",
-        "ReadMePath": "sdk/resources/arm-resources/README.md",
-        "ChangeLogPath": "sdk/resources/arm-resources/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "mgmt",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-arm-resources",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-arm-resources",
-          "triggeringPaths": [
-            "/sdk/identity",
-            "config",
-            "devcontainer",
-            "github",
-            "scripts",
-            "/common",
-            "/eng",
-            "/sdk/resources/ci.mgmt.yml"
-          ],
-          "safeName": "azurearmresources"
         },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/identity",
-        "Version": "4.8.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/identity/identity",
-        "ServiceDirectory": "identity",
-        "ReadMePath": "sdk/identity/identity/README.md",
-        "ChangeLogPath": "sdk/identity/identity/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-identity",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": [
-          "@azure-tests/perf-storage-blob"
-        ],
-        "ArtifactDetails": {
-          "name": "azure-identity",
-          "triggeringPaths": [
-            "/sdk/test-utils",
-            "config",
-            "devcontainer",
-            "github",
-            "scripts",
-            "/common",
-            "/eng",
-            "/sdk/identity/ci.yml"
-          ],
-          "safeName": "azureidentity"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/service-bus",
-        "Version": "7.10.0",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/servicebus/service-bus",
-        "ServiceDirectory": "servicebus",
-        "ReadMePath": "sdk/servicebus/service-bus/README.md",
-        "ChangeLogPath": "sdk/servicebus/service-bus/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-service-bus",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-service-bus",
-          "triggeringPaths": [
-            "config",
-            "devcontainer",
-            "github",
-            "scripts",
-            "/common",
-            "/eng",
-            "/sdk/servicebus/ci.yml"
-          ],
-          "safeName": "azureservicebus"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "@azure/template",
-        "Version": "1.0.13-beta.2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/template/template",
-        "ServiceDirectory": "template",
-        "ReadMePath": "sdk/template/template/README.md",
-        "ChangeLogPath": "sdk/template/template/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-template",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-template",
-          "triggeringPaths": [
-            "/sdk/test-utils",
-            "/sdk/identity",
-            "config",
-            "devcontainer",
-            "github",
-            "scripts",
-            "/common",
-            "/eng",
-            "/sdk/template/ci.yml"
-          ],
-          "safeName": "azuretemplate"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
+        "SpecProjectPath": null
       }
     ]
   },
@@ -677,30 +700,25 @@
     },
     "expected_package_output": [
       {
-        "Name": "@azure/template-dpg",
-        "Version": "1.0.0-beta.2",
+        "Name": "@azure-tests/perf-template",
+        "Version": "1.0.0",
         "DevVersion": null,
-        "DirectoryPath": "sdk/template/template-dpg",
+        "DirectoryPath": "sdk/template/template-perf-tests",
         "ServiceDirectory": "template",
-        "ReadMePath": "sdk/template/template-dpg/README.md",
-        "ChangeLogPath": "sdk/template/template-dpg/CHANGELOG.md",
+        "ReadMePath": "sdk/template/template-perf-tests/README.md",
+        "ChangeLogPath": "",
         "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-template-dpg",
-        "ReleaseStatus": "unreleased",
+        "SdkType": "perf-test",
+        "IsNewSdk": false,
+        "ArtifactName": "azure-tests-perf-template",
+        "ReleaseStatus": null,
         "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-template-dpg",
-          "safeName": "azuretemplatedpg",
-          "triggeringPaths": [
-            "/sdk/template/ci.yml"
-          ]
-        },
+        "ArtifactDetails": null,
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/template",
@@ -734,27 +752,35 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
-        "Name": "@azure-tests/perf-template",
-        "Version": "1.0.0",
+        "Name": "@azure/template-dpg",
+        "Version": "1.0.0-beta.2",
         "DevVersion": null,
-        "DirectoryPath": "sdk/template/template-perf-tests",
+        "DirectoryPath": "sdk/template/template-dpg",
         "ServiceDirectory": "template",
-        "ReadMePath": "sdk/template/template-perf-tests/README.md",
-        "ChangeLogPath": "",
+        "ReadMePath": "sdk/template/template-dpg/README.md",
+        "ChangeLogPath": "sdk/template/template-dpg/CHANGELOG.md",
         "Group": null,
-        "SdkType": "perf-test",
-        "IsNewSdk": false,
-        "ArtifactName": "azure-tests-perf-template",
-        "ReleaseStatus": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-template-dpg",
+        "ReleaseStatus": "unreleased",
         "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
-        "ArtifactDetails": null,
+        "ArtifactDetails": {
+          "name": "azure-template-dpg",
+          "safeName": "azuretemplatedpg",
+          "triggeringPaths": [
+            "/sdk/template/ci.yml"
+          ]
+        },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -769,34 +795,33 @@
       "DeletedFiles": [],
       "PRNumber": "33362"
     },
-    "expected_package_output": [
-      {
-        "Name": "@azure/storage-blob",
-        "Version": "12.27.0",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/storage/storage-blob",
-        "ServiceDirectory": "storage",
-        "ReadMePath": "sdk/storage/storage-blob/README.md",
-        "ChangeLogPath": "sdk/storage/storage-blob/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-storage-blob",
-        "ReleaseStatus": "2025-03-18",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "azure-storage-blob",
-          "safeName": "azurestorageblob",
-          "triggeringPaths": [
-            "/sdk/identity",
-            "/sdk/storage/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      }
-    ]
+    "expected_package_output": {
+      "Name": "@azure/storage-blob",
+      "Version": "12.27.0",
+      "DevVersion": null,
+      "DirectoryPath": "sdk/storage/storage-blob",
+      "ServiceDirectory": "storage",
+      "ReadMePath": "sdk/storage/storage-blob/README.md",
+      "ChangeLogPath": "sdk/storage/storage-blob/CHANGELOG.md",
+      "Group": null,
+      "SdkType": "client",
+      "IsNewSdk": true,
+      "ArtifactName": "azure-storage-blob",
+      "ReleaseStatus": "2025-03-18",
+      "IncludedForValidation": false,
+      "AdditionalValidationPackages": null,
+      "ArtifactDetails": {
+        "name": "azure-storage-blob",
+        "safeName": "azurestorageblob",
+        "triggeringPaths": [
+          "/sdk/identity",
+          "/sdk/storage/ci.yml"
+        ]
+      },
+      "CIParameters": {
+        "CIMatrixConfigs": []
+      },
+      "SpecProjectPath": null
+    }
   }
 ]

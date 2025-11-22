@@ -1,14 +1,13 @@
 using System.Collections.Generic;
 using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 using System.Linq;
 
 namespace APIViewWeb.LeanModels
 {
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum APIRevisionType
     {
         Manual = 0,
@@ -17,21 +16,21 @@ namespace APIViewWeb.LeanModels
         All
     }
 
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ReviewState
     {
         Open = 0,
         Closed
     }
 
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ApprovalStatus
     {
         Pending = 0,
         Approved
     }
 
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NamespaceReviewStatus
     {
         NotStarted = 0,
@@ -60,7 +59,7 @@ namespace APIViewWeb.LeanModels
 
     public class LegacyReviewModel
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string ReviewId { get; set; }
         public string Name { get; set; }
         public string Author { get; set; }
@@ -85,7 +84,7 @@ namespace APIViewWeb.LeanModels
 
     public class LegacyRevisionModel
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string RevisionId { get; set; }
         public List<APICodeFileModel> Files { get; set; } = new List<APICodeFileModel>();
         public Dictionary<string, HashSet<int>> HeadingsOfSectionsWithDiff { get; set; } = new Dictionary<string, HashSet<int>>();
@@ -100,7 +99,7 @@ namespace APIViewWeb.LeanModels
 
     public class BaseListitemModel 
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string PackageName { get; set; }
         public string Language { get; set; }
@@ -129,12 +128,14 @@ namespace APIViewWeb.LeanModels
         public string ReviewId { get; set; }
         public List<APICodeFileModel> Files { get; set; } = new List<APICodeFileModel>();
         public string Label { get; set; }
-        [JsonProperty("resolvedLabel", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("resolvedLabel")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string ResolvedLabel
         {
             get => PageModelHelpers.ResolveRevisionLabel(this, addAPIRevisionType: false, addCreatedBy: false, addCreatedOn: false);
         }
-        [JsonProperty("packageVersion", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("packageVersion")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string PackageVersion
         {
             get => this.Files.First().PackageVersion;

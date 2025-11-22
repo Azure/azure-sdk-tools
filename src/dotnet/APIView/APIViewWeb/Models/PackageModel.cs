@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+using System.Text.Json.Serialization;
 using CsvHelper.Configuration.Attributes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.Models
 {
@@ -27,7 +26,7 @@ namespace APIViewWeb.Models
     /// <summary>
     /// Represents the plane classification of a package
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum PackageType
     {
         /// <summary>

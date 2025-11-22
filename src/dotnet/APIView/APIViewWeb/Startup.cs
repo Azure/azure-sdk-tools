@@ -36,7 +36,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json.Linq;
 using APIViewWeb.Services;
 
 namespace APIViewWeb
@@ -247,11 +246,12 @@ namespace APIViewWeb
                                 response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
                                 response.EnsureSuccessStatusCode();
 
-                                var orgs = JArray.Parse(await response.Content.ReadAsStringAsync());
+                                var orgsJson = await response.Content.ReadAsStringAsync();
+                                using var orgsDoc = JsonDocument.Parse(orgsJson);
                                 var orgNames = new StringBuilder();
 
                                 bool isFirst = true;
-                                foreach (var org in orgs)
+                                foreach (var org in orgsDoc.RootElement.EnumerateArray())
                                 {
                                     if (isFirst)
                                     {
@@ -261,7 +261,10 @@ namespace APIViewWeb
                                     {
                                         orgNames.Append(",");
                                     }
-                                    orgNames.Append(org["login"]);
+                                    if (org.TryGetProperty("login", out var loginProperty))
+                                    {
+                                        orgNames.Append(loginProperty.GetString());
+                                    }
                                 }
 
                                 string msEmail = await GetMicrosoftEmailAsync(context);
@@ -357,13 +360,16 @@ namespace APIViewWeb
             var respString = await response.Content.ReadAsStringAsync();
             try
             {
-                var emails = JArray.Parse(respString);
-                foreach (var email in emails)
+                using var emailsDoc = JsonDocument.Parse(respString);
+                foreach (var email in emailsDoc.RootElement.EnumerateArray())
                 {
-                    var address = email["email"]?.Value<string>();
-                    if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                    if (email.TryGetProperty("email", out var emailProperty))
                     {
-                        return address;
+                        var address = emailProperty.GetString();
+                        if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return address;
+                        }
                     }
                 }
                 return null;

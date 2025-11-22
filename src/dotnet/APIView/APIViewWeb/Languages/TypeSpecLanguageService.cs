@@ -3,12 +3,12 @@
 
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 
 namespace APIViewWeb
 {
@@ -67,7 +67,7 @@ namespace APIViewWeb
             sourceUrlparts = sourceUrlparts[1].Split(_typeSpecSpecificPathPrefix, 2);
             param.SourceBranchName = sourceUrlparts[0];
             param.FileName = $"{_typeSpecSpecificPathPrefix}{sourceUrlparts[1]}";
-            _telemetryClient.TrackTrace($"Pipeline parameters to run TypeSpec API rview gen pipeline: '{JsonConvert.SerializeObject(param)}'");
+            _telemetryClient.TrackTrace($"Pipeline parameters to run TypeSpec API rview gen pipeline: '{JsonSerializer.Serialize(param)}'");
 
             return true;
         }

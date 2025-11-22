@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using APIViewWeb.Controllers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace APIViewUnitTests;
@@ -35,16 +35,16 @@ public class AuthTestControllerTests
         return new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>(claims), authType));
     }
 
-    private JObject InvokeJson(Func<IActionResult> action, out IActionResult raw)
+    private JsonObject InvokeJson(Func<IActionResult> action, out IActionResult raw)
     {
         raw = action();
         raw.Should().BeOfType<OkObjectResult>();
         var ok = (OkObjectResult)raw;
-        string json = JsonConvert.SerializeObject(ok.Value);
-        return JObject.Parse(json);
+        string json = JsonSerializer.Serialize(ok.Value);
+        return JsonNode.Parse(json).AsObject();
     }
 
-    private JObject InvokeJson(Func<IActionResult> action) => InvokeJson(action, out _);
+    private JsonObject InvokeJson(Func<IActionResult> action) => InvokeJson(action, out _);
 
     private void SetEnv(string name) => _mockEnvironment.SetupGet(e => e.EnvironmentName).Returns(name);
 
@@ -53,10 +53,10 @@ public class AuthTestControllerTests
     {
         SetUser(CreatePrincipal(null));
         var json = InvokeJson(() => _controller.GetAuthStatus());
-        Assert.False(json["IsAuthenticated"]?.Value<bool>() ?? true);
-        Assert.Null(json["UserName"]?.Value<string>());
-        Assert.False(json["IsManagedIdentity"]?.Value<bool>() ?? true);
-        Assert.False(json["HasGitHubOrganization"]?.Value<bool>() ?? true);
+        Assert.False(json["IsAuthenticated"]?.GetValue<bool>() ?? true);
+        Assert.Null(json["UserName"]?.GetValue<string>());
+        Assert.False(json["IsManagedIdentity"]?.GetValue<bool>() ?? true);
+        Assert.False(json["HasGitHubOrganization"]?.GetValue<bool>() ?? true);
     }
 
     [Fact]
@@ -64,8 +64,8 @@ public class AuthTestControllerTests
     {
         SetUser(CreatePrincipal("Bearer", new Claim(ClaimTypes.Name, "testuser")));
         var json = InvokeJson(() => _controller.GetAuthStatus());
-        Assert.True(json["IsAuthenticated"]?.Value<bool>() ?? false);
-        Assert.Equal("testuser", json["UserName"]?.Value<string>());
+        Assert.True(json["IsAuthenticated"]?.GetValue<bool>() ?? false);
+        Assert.Equal("testuser", json["UserName"]?.GetValue<string>());
     }
 
     [Fact]
@@ -73,10 +73,10 @@ public class AuthTestControllerTests
     {
         SetUser(CreatePrincipal("Bearer", new Claim(ClaimTypes.Name, "testuser")));
         var json = InvokeJson(() => _controller.TestAuth());
-        Assert.Equal("Combined authentication successful!", json["Message"]?.Value<string>());
-        Assert.Equal("testuser", json["UserName"]?.Value<string>());
-        Assert.True(json["IsAuthenticated"]?.Value<bool>() ?? false);
-        Assert.Equal("Bearer", json["AuthenticationType"]?.Value<string>());
+        Assert.Equal("Combined authentication successful!", json["Message"]?.GetValue<string>());
+        Assert.Equal("testuser", json["UserName"]?.GetValue<string>());
+        Assert.True(json["IsAuthenticated"]?.GetValue<bool>() ?? false);
+        Assert.Equal("Bearer", json["AuthenticationType"]?.GetValue<string>());
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class AuthTestControllerTests
             new Claim("urn:github:name", "github-user"),
             new Claim("urn:github:orgs", "org1")));
         var json = InvokeJson(() => _controller.TestGitHubOnly());
-        Assert.Equal("GitHub organization authentication successful!", json["Message"]?.Value<string>());
+        Assert.Equal("GitHub organization authentication successful!", json["Message"]?.GetValue<string>());
         Assert.NotNull(json["UserName"]);
         Assert.NotNull(json["Organizations"]);
         Assert.NotNull(json["IsGitHubAuthenticated"]);
@@ -125,8 +125,8 @@ public class AuthTestControllerTests
         _controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         var result = _controller.DevTest();
         result.Should().BeOfType<UnauthorizedObjectResult>();
-        var json = JObject.Parse(JsonConvert.SerializeObject(((UnauthorizedObjectResult)result).Value));
-        Assert.Equal("Bearer token required for development testing", json["Message"]?.Value<string>());
+        var json = JsonNode.Parse(JsonSerializer.Serialize(((UnauthorizedObjectResult)result).Value));
+        Assert.Equal("Bearer token required for development testing", json["Message"]?.GetValue<string>());
     }
 
     [Fact]
@@ -137,8 +137,8 @@ public class AuthTestControllerTests
         ctx.Request.Headers["Authorization"] = "Bearer test-token-12345";
         _controller.ControllerContext = new ControllerContext { HttpContext = ctx };
         var json = InvokeJson(() => _controller.DevTest());
-        Assert.Contains("Development managed identity authentication successful!", json["Message"]?.Value<string>());
-        Assert.Equal("Bearer", json["AuthenticationType"]?.Value<string>());
+        Assert.Contains("Development managed identity authentication successful!", json["Message"]?.GetValue<string>());
+        Assert.Equal("Bearer", json["AuthenticationType"]?.GetValue<string>());
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class AuthTestControllerTests
         ctx.Request.Headers["Authorization"] = longToken;
         _controller.ControllerContext = new ControllerContext { HttpContext = ctx };
         var json = InvokeJson(() => _controller.DevTest());
-        string tokenPreview = json["TokenPreview"]?.Value<string>();
+        string tokenPreview = json["TokenPreview"]?.GetValue<string>();
         tokenPreview.Should().EndWith("...");
     }
 
@@ -168,8 +168,8 @@ public class AuthTestControllerTests
         SetEnv("Development");
         SetUser(CreatePrincipal(null));
         var json = InvokeJson(() => _controller.JwtDebug());
-        Assert.Equal("JWT Debug Information", json["Message"]?.Value<string>());
-        Assert.False(json["UserAuthenticated"]?.Value<bool>() ?? true);
+        Assert.Equal("JWT Debug Information", json["Message"]?.GetValue<string>());
+        Assert.False(json["UserAuthenticated"]?.GetValue<bool>() ?? true);
     }
 
     [Fact]
@@ -180,8 +180,8 @@ public class AuthTestControllerTests
         var ctx = _controller.ControllerContext.HttpContext;
         ctx.Request.Headers["Authorization"] = "Bearer jwt-token-here";
         var json = InvokeJson(() => _controller.JwtDebug());
-        Assert.True(json["HasAuthorizationHeader"]?.Value<bool>() ?? false);
-        Assert.True(json["UserAuthenticated"]?.Value<bool>() ?? false);
+        Assert.True(json["HasAuthorizationHeader"]?.GetValue<bool>() ?? false);
+        Assert.True(json["UserAuthenticated"]?.GetValue<bool>() ?? false);
     }
 
     [Fact]
@@ -192,8 +192,8 @@ public class AuthTestControllerTests
         for (int i = 0; i < 30; i++) claims.Add(new Claim($"claim{i}", $"value{i}"));
         SetUser(CreatePrincipal("Bearer", claims.ToArray()));
         var json = InvokeJson(() => _controller.JwtDebug());
-        Assert.True((json["ClaimsCount"]?.Value<int>() ?? 0) >= 30);
-        Assert.Equal(20, (json["Claims"] as JArray)?.Count ?? -1);
+        Assert.True((json["ClaimsCount"]?.GetValue<int>() ?? 0) >= 30);
+        Assert.Equal(20, json["Claims"]?.AsArray()?.Count ?? -1);
     }
 #endif
 
@@ -207,8 +207,8 @@ public class AuthTestControllerTests
         if (authType == "GitHubToken") claims.Add(new Claim("urn:github:login", "gh-user"));
         SetUser(CreatePrincipal(authType, claims.ToArray()));
         var json = InvokeJson(() => _controller.TestTokenOnly());
-        Assert.Equal(expectMi, json["IsManagedIdentity"]?.Value<bool>() ?? !expectMi);
-        Assert.Equal(tokenType, json["TokenType"]?.Value<string>());
+        Assert.Equal(expectMi, json["IsManagedIdentity"]?.GetValue<bool>() ?? !expectMi);
+        Assert.Equal(tokenType, json["TokenType"]?.GetValue<string>());
     }
 
     [Theory]
@@ -221,8 +221,8 @@ public class AuthTestControllerTests
             : CreatePrincipal("GitHubToken", new Claim(ClaimTypes.Name, "gh-user"), new Claim("urn:github:login", "gh-user"), new Claim("urn:github:orgs", "orgX"));
         SetUser(principal);
         var json = InvokeJson(() => _controller.GetAuthStatus());
-        Assert.Equal(managedIdentity, json["IsManagedIdentity"]?.Value<bool>() ?? !managedIdentity);
-        Assert.Equal(!managedIdentity, json["HasGitHubOrganization"]?.Value<bool>() ?? managedIdentity);
+        Assert.Equal(managedIdentity, json["IsManagedIdentity"]?.GetValue<bool>() ?? !managedIdentity);
+        Assert.Equal(!managedIdentity, json["HasGitHubOrganization"]?.GetValue<bool>() ?? managedIdentity);
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class AuthTestControllerTests
     {
         SetUser(CreatePrincipal("Cookies", new Claim("urn:github:login", "cookie-user"), new Claim("urn:github:orgs", "orgA")));
         var json = InvokeJson(() => _controller.TestCookieOnly());
-        Assert.Equal("Cookie-based authentication successful!", json["Message"]?.Value<string>());
-        Assert.True(json["IsGitHubAuthenticated"]?.Value<bool>() ?? false);
+        Assert.Equal("Cookie-based authentication successful!", json["Message"]?.GetValue<string>());
+        Assert.True(json["IsGitHubAuthenticated"]?.GetValue<bool>() ?? false);
     }
 }

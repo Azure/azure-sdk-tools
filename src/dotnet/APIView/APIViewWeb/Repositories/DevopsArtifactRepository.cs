@@ -6,7 +6,6 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.WebApi;
-using Newtonsoft.Json;
 using Polly;
 using System;
 using System.Collections.Generic;
@@ -14,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -139,7 +139,7 @@ namespace APIViewWeb.Repositories
             {
                 Definition = definition,
                 Project = project,
-                Parameters = JsonConvert.SerializeObject(reviewDetailsDict)
+                Parameters = JsonSerializer.Serialize(reviewDetailsDict)
             });
         }
 

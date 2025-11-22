@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36603.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerTreeStyleParser", "SwaggerTreeStyleParser.csproj", "{850B2AA9-25E6-4510-BBCA-2AD1C280EFF0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerTreeStyleParser", "SwaggerTreeStyleParser\SwaggerTreeStyleParser.csproj", "{850B2AA9-25E6-4510-BBCA-2AD1C280EFF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIView", "..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj", "{FBC63A5C-BB71-C611-49C1-781EEB2D5E45}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIView", "..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj", "{FBC63A5C-BB71-C611-49C1-781EEB2D5E45}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerTreeStyleParserTests", "..\SwaggerTreeStyleParserTests\SwaggerTreeStyleParserTests.csproj", "{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwaggerTreeStyleParserTests", "SwaggerTreeStyleParserTests\SwaggerTreeStyleParserTests.csproj", "{A6D9D501-1BA4-489F-A66F-069FEE5E86C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

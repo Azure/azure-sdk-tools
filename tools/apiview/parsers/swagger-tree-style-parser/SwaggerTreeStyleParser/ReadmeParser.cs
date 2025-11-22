@@ -14,7 +14,7 @@ public class ReadmeBasicConfiguration
 public class InputSwaggerFiles
 {
     [YamlMember(Alias = "input-file", ApplyNamingConventions = false)]
-    public List<string> input { get; set; }
+    public List<string>? input { get; set; }
 }
 
 public class ReadmeParser
@@ -22,7 +22,7 @@ public class ReadmeParser
     private string readmeFilePath;
 
     public Dictionary<string, InputSwaggerFiles> inputSwaggerFilesMap;
-    public ReadmeBasicConfiguration basicConfig;
+    public ReadmeBasicConfiguration? basicConfig;
 
     public ReadmeParser(string readmeFilePath)
     {
@@ -42,13 +42,13 @@ public class ReadmeParser
     {
         ReadmeParser parser = new ReadmeParser(readme);
         parser.ParseReadmeConfig();
-        string readmeTag = tag;
+        string? readmeTag = tag;
         if (tag == "default" && parser.basicConfig != null)
         {
             readmeTag = parser.basicConfig.tag;
         }
 
-        parser.inputSwaggerFilesMap.TryGetValue(readmeTag, out InputSwaggerFiles inputFiles);
+        parser.inputSwaggerFilesMap.TryGetValue(readmeTag!, out InputSwaggerFiles? inputFiles);
         return inputFiles?.input ?? Enumerable.Empty<string>();
     }
     private void ParseReadmeConfig()
@@ -80,7 +80,7 @@ public class ReadmeParser
             else if (yamlBlock.Lines.ToString().Contains("input-file"))
             {
                 var argument = yamlBlock.Arguments;
-                InputSwaggerFiles inputSwaggerFiles = null;
+                InputSwaggerFiles? inputSwaggerFiles = null;
                 try 
                 {
                     inputSwaggerFiles = yamlDeserializer.Deserialize<InputSwaggerFiles>(yamlBlock.Lines.ToString());

@@ -1,14 +1,7 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.Data.Common;
 using System.Reflection;
-using System.Reflection.Metadata;
-using System.Xml.Linq;
-using ApiView;
-using APIView;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
-using Namotion.Reflection;
 using NJsonSchema;
 using NSwag;
 
@@ -18,9 +11,9 @@ namespace SwaggerTreeStyleParser
     public class CodeFileBuilder
     {
         protected string? rootId { get; set; }
-        protected OpenApiDocument openApiDocument { get; set; }
+        protected OpenApiDocument? openApiDocument { get; set; }
 
-        public List<ReviewLine> Build(OpenApiDocument openApiDocument)
+        public List<ReviewLine> Build(OpenApiDocument? openApiDocument)
         {
             if (openApiDocument == null) throw new ArgumentNullException(nameof(openApiDocument));
             this.openApiDocument = openApiDocument;
@@ -80,7 +73,7 @@ namespace SwaggerTreeStyleParser
             result.Add(new ReviewLine());
             return result;
         }
-        public void BuildOpenApiInfoObject(OpenApiInfo infoObject, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiInfoObject(OpenApiInfo? infoObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (infoObject == null) return;
             var rootLine = CreateKeyValueLine(key: objectName, keyTokenClass: "header1");
@@ -89,21 +82,21 @@ namespace SwaggerTreeStyleParser
             BuildOpenApiLicenseObject(infoObject.License, nameof(infoObject.License), rootLine.Children);
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiContactObject(OpenApiContact contactObject, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiContactObject(OpenApiContact? contactObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (contactObject == null) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header");
             BuildValueTypeProperties(contactObject, rootLine.Children, keyTokenClass: "keyword");
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiLicenseObject(OpenApiLicense licenseObject, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiLicenseObject(OpenApiLicense? licenseObject, string objectName, List<ReviewLine> reviewLines)
         {
             if (licenseObject == null) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header");
             BuildValueTypeProperties(licenseObject, rootLine.Children, keyTokenClass: "keyword");
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiSecuritySchemeObject(IDictionary<string, OpenApiSecurityScheme> securityScheme, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiSecuritySchemeObject(IDictionary<string, OpenApiSecurityScheme>? securityScheme, string objectName, List<ReviewLine> reviewLines)
         {
             if (securityScheme == null || securityScheme.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1");
@@ -121,7 +114,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiSecurityRequirementObject(ICollection<OpenApiSecurityRequirement> securityRequirement, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiSecurityRequirementObject(ICollection<OpenApiSecurityRequirement>? securityRequirement, string objectName, List<ReviewLine> reviewLines)
         {
             if (securityRequirement == null || securityRequirement.Count() == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1");
@@ -136,7 +129,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiPathItemObject(IDictionary<string, OpenApiPathItem> openApiPaths, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiPathItemObject(IDictionary<string, OpenApiPathItem>? openApiPaths, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiPaths == null || openApiPaths.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true, collapseNavigation: true);
@@ -191,7 +184,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        public void BuildJsonSchemaDefinitions(IDictionary<string, JsonSchema> definitions, string objectName, List<ReviewLine> reviewLines)
+        public void BuildJsonSchemaDefinitions(IDictionary<string, JsonSchema>? definitions, string objectName, List<ReviewLine> reviewLines)
         {
             if (definitions == null || definitions.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true, collapseNavigation: true);
@@ -232,14 +225,14 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiExternalDocumentation(OpenApiExternalDocumentation openApiExternalDocumentation, List<ReviewLine> reviewLines)
+        public void BuildOpenApiExternalDocumentation(OpenApiExternalDocumentation? openApiExternalDocumentation, List<ReviewLine> reviewLines)
         {
             if (openApiExternalDocumentation == null) return;
             var rootLine = CreateKeyValueLine(nameof(openApiExternalDocumentation));
             BuildValueTypeProperties(openApiExternalDocumentation, rootLine.Children, keyTokenClass: "keyword");
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiParameterObject(IDictionary<string, OpenApiParameter> openApiParameters, string objectName, List<ReviewLine> reviewLines)
+        public void BuildOpenApiParameterObject(IDictionary<string, OpenApiParameter>? openApiParameters, string objectName, List<ReviewLine> reviewLines)
         {
             if (openApiParameters == null || openApiParameters.Count == 0) return;
             var rootLine = CreateKeyValueLine(objectName, keyTokenClass: "header1", addKeyToNavigation: true, collapseNavigation: true);
@@ -268,7 +261,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(rootLine);
         }
-        public void BuildOpenApiParameterObject(IList<OpenApiParameter> openApiParameters, List<ReviewLine> reviewLines)
+        public void BuildOpenApiParameterObject(IList<OpenApiParameter>? openApiParameters, List<ReviewLine> reviewLines)
         {
             if (openApiParameters == null || openApiParameters.Count == 0) return;
             foreach (var group in openApiParameters.GroupBy(x => x.ActualParameter.Kind))
@@ -300,7 +293,7 @@ namespace SwaggerTreeStyleParser
                 reviewLines.Add(paramHeaderLine);
             }
         }
-        public void BuildOpenApiResponseObject(IDictionary<string, OpenApiResponse> openApiResponses, List<ReviewLine> reviewLines)
+        public void BuildOpenApiResponseObject(IDictionary<string, OpenApiResponse>? openApiResponses, List<ReviewLine> reviewLines)
         {
             if (openApiResponses == null || openApiResponses.Count() == 0) return;
             var respTitle = CreateKeyValueLine(key: $"Responses", keyTokenClass: "header");
@@ -319,7 +312,7 @@ namespace SwaggerTreeStyleParser
             }
             reviewLines.Add(respTitle);
         }
-        public void BuildReferenceSchemaToken(JsonSchema schema, ReviewLine reviewLine)
+        public void BuildReferenceSchemaToken(JsonSchema? schema, ReviewLine reviewLine)
         {
             if (schema == null) return;
             string foundIn = string.Empty;
@@ -330,7 +323,7 @@ namespace SwaggerTreeStyleParser
                 reviewLine.AddToken(ReviewToken.CreateTextToken(value: schemaInfo?.schemaName, navigateToId: schemaInfo?.id, hasSuffixSpace: false, tokenClass: "tname"));
             }
         }
-        public (string? schemaName, string? id)? TryGetSchemaName(JsonSchema schema)
+        public (string? schemaName, string? id)? TryGetSchemaName(JsonSchema? schema)
         {
             if (schema == null) return null;
 
@@ -348,7 +341,7 @@ namespace SwaggerTreeStyleParser
                 }
             }
 
-            var defsProp = this.openApiDocument.GetType().GetProperty("Definitions", BindingFlags.Public | BindingFlags.Instance);
+            var defsProp = this.openApiDocument?.GetType().GetProperty("Definitions", BindingFlags.Public | BindingFlags.Instance);
             if (defsProp?.GetValue(this.openApiDocument) is IDictionary<string, JsonSchema> defs)
             {
                 foreach (var kvp in defs)

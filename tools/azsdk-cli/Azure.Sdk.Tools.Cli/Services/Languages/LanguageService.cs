@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the dependency analysis</returns>
         public virtual Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
         /// <summary>
         /// Validates the README for the specific package.
@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the README validation</returns>
         public virtual Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the spelling check</returns>
         public virtual Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the snippet update operation</returns>
         public virtual Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the code linting operation</returns>
         public virtual Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the code formatting operation</returns>  
         public virtual Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// Validate samples for the specific package.
@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the sample validation</returns>
         public virtual Task<PackageCheckResponse> ValidateSamples(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the AOT compatibility check</returns>
         public virtual Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the generated code check</returns>
         public virtual Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
         /// <summary>
         /// Validates the changelog for the specific package.
@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the changelog validation</returns>
         public virtual Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>

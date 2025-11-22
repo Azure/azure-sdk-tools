@@ -1,0 +1,40 @@
+testcase: completely_different_guidelines
+language: python
+package_name: azure.search
+code: "async def fetch_results():"
+issue_context: |
+  Async method naming guideline is unclear
+  
+  The guideline at https://azure.github.io/azure-sdk/python_design.html#async-support
+  doesn't clarify whether async methods should have special naming conventions.
+  
+  **Code:**
+  ```python
+  async def fetch_results():
+  ```
+existing_issues: |
+  [
+    {
+      "number": 555,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/555",
+      "title": "Update Python naming conventions guideline for class suffixes",
+      "body": "Guideline at python_design.html#naming-conventions allows unnecessary suffixes like 'Object'",
+      "created_at": "2025-10-15T12:00:00Z"
+    },
+    {
+      "number": 666,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/666",
+      "title": "Error handling guideline conflicts with Azure standards", 
+      "body": "The exception handling guideline contradicts overall Azure SDK error patterns",
+      "created_at": "2025-10-14T09:30:00Z"
+    },
+    {
+      "number": 777,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/777",
+      "title": "Documentation guideline missing examples",
+      "body": "The docstring guideline lacks concrete examples for complex scenarios",
+      "created_at": "2025-10-13T15:45:00Z"
+    }
+  ]
+response:
+  action: create

@@ -70,6 +70,8 @@ Example:
 tsp-client update
 ```
 
+For batch library generation see the docs.
+
 ### sync
 
 Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
@@ -250,3 +252,56 @@ repo: Azure/azure-rest-api-specs
 additionalDirectories:
   - specification/contosowidgetmanager/Contoso.WidgetManager.Shared/
 ```
+
+## Advanced scenarios
+
+### Batch library generation
+
+Batch client library generation is only supported with the `tsp-client update` command. To enable batch generation follow these steps:
+
+1. Add a tsp-location.yaml file in the parent directory where all of the batch libraries will be generated. Example:
+
+```
+- sdk/
+  - foo/
+    tsp-location.yaml
+    - bar/
+    - zas/
+```
+
+2. tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that contain the regular tsp-location.yaml files with appropriate properties for client library generation. Other tsp-location.yaml properties such as directory, commit, repo, additionalDirectories are not currently supported with the batch configuration. Example:
+
+```yml title=tsp-location.yaml
+batch:
+  - ./bar
+  - ./zas
+```
+
+3. Ensure that the subdirectories specified in the `batch` list have tsp-location.yaml files configured for them. You can either create the tsp-location.yaml file manually or use `tsp-client init` with an appropriate `emitter-output-dir` configuration to create it.
+
+Example file structure:
+
+```
+- sdk/
+  - foo/
+    - tsp-location.yaml
+    - bar/
+        - tsp-location.yaml
+    - zas/
+        - tsp-location.yaml
+```
+
+Example regular tsp-location.yaml in sub-directories:
+
+```yml title=tsp-location.yaml
+directory: specification/contosowidgetmanager/Contoso.WidgetManager
+commit: abc123
+repo: Azure/azure-rest-api-specs
+additionalDirectories:
+  - specification/contosowidgetmanager/Contoso.WidgetManager.Shared/
+```
+
+4. Run `tsp-client update` from the parent directory, in this example it would be the `foo/` directory.
+5. All done! tsp-client will call the update command on each subdirectory, forwarding commandline args to the command.
+
+> NOTE: The `local-spec-repo` flag will have special behavior during batch library generation. tsp-client will get the repo root path for the local spec repo path that is passed into the flag, then it will append the directory value from the tsp-location.yaml file in the corresponding sub-directory.

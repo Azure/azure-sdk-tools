@@ -13,22 +13,23 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
     /// <summary>
-    /// This tool provides AI-powered completion functionality for querying Azure SDK and TypeSpec documentation.
+    /// This tool is designed to guide the user to define and update TypeSpec based API spec for an azure service
     /// It connects to an AI agent that can answer questions about TypeSpec, Azure SDK guidelines, and API best practices.
     /// </summary>
-    [McpServerToolType, Description("AI-powered tool for querying Azure SDK and TypeSpec documentation, guidelines, and best practices.")]
-    public class AiCompletionTool : MCPTool
+    [McpServerToolType, Description("Guide the user to perform typespec related tasks, e.g. define and update TypeSpec based API spec for an azure service.")]
+    public class TypeSpecAuthoringTool : MCPTool
     {
         private readonly IAiCompletionService _aiCompletionService;
-        private readonly ILogger<AiCompletionTool> _logger;
+        private readonly ILogger<TypeSpecAuthoringTool> _logger;
+        private const string TypeSpecAuthoringToolCommandName = "typespec_authoring";
 
         // Command line options and arguments
         private readonly Argument<string> _questionArgument = new("question") {
-            Description = "The question to ask the AI agent"
+            Description = "The question to authoring"
         };
-        public AiCompletionTool(
+        public TypeSpecAuthoringTool(
             IAiCompletionService aiCompletionService,
-            ILogger<AiCompletionTool> logger)
+            ILogger<TypeSpecAuthoringTool> logger)
         {
             _aiCompletionService = aiCompletionService ?? throw new ArgumentNullException(nameof(aiCompletionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -36,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         protected override Command GetCommand()
         {
-            var command = new Command("ai-completion", "Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines")
+            var command = new Command(TypeSpecAuthoringToolCommandName, "Guide the user to define and update TypeSpec based API spec for an azure service.")
             {
                 _questionArgument
             };
@@ -56,9 +57,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
             try
             {
-                _logger.LogInformation("Querying AI agent via CLI with question: {Question}", question);
+                _logger.LogInformation("Authoring with question: {Question}", question);
 
-                var response = await QueryAzureSDKDocumentation(
+                var response = await AuthoringWithAzureSDKDocumentation(
                   question,
                   ct: ct
                 );
@@ -78,11 +79,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        [McpServerTool(Name = "azsdk_ai_qa_completion")]
-        [Description(@"Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines.
-            Pass in a `question` to get an AI-generated response with references.
-            Returns an answer with supporting references and documentation links.")]
-        public async Task<AiCompletionToolResponse> QueryAzureSDKDocumentation(
+
+        [McpServerTool(Name = "azsdk_typespec_authoring")]
+        [Description(@"
+Authoring, edit, and version **TypeSpec** projects for Azure services (management plane & data plane). 
+Use this tool to create or update service namespaces, API versions, resources, models, and operations, 
+and to validate alignment with Azure API guidelines and typespec-azure templates.
+This tool applies to all tasks involving **TypeSpec**:
+- Writing new TypeSpec definitions: service, api version, resource, models, operations
+- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, or operations
+- Versioning evolution:
+  - Make a **preview** API **stable (GA)**.
+  - Replace an existing **preview** with a **new preview**.
+  - Replace a **preview** with a **stable**
+  - Replacing a preview API with a stable API and a new preview API.
+  - **Add** a preview or **add** a stable API version.
+- Resolving TypeSpec-related issues
+
+Pass in a `question` to get an AI-generated response with references.
+Returns an answer with supporting references and documentation links
+")]
+        public async Task<AiCompletionToolResponse> AuthoringWithAzureSDKDocumentation(
             [Description("The question to ask the AI agent")]
             string question,
             CancellationToken ct = default)
@@ -98,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     };
                 }
 
-                _logger.LogInformation("Querying AI agent with question: {Question}", question);
+                _logger.LogInformation("Authoring with question: {Question}", question);
 
                 // Build request
                 var request = new CompletionRequest

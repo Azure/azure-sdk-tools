@@ -18,18 +18,17 @@ public class VerifySetupResponse : CommandResponse
         
         sb.AppendLine("Results:");
 
-        if (Results != null)
+        if (Results != null && Results.Count > 0)
         {
             foreach (var result in Results)
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
                 sb.AppendLine($"    Instructions: {string.Join(", ", result.Instructions)}");
-                sb.AppendLine($"    Output: {result.Output}");
             }
         }
         else
         {
-            sb.AppendLine("  None");
+            sb.AppendLine("  Verify setup succeeded, no issues found.");
         }
         return sb.ToString();
     }
@@ -48,8 +47,4 @@ public class RequirementCheckResult
     /// Instructions for resolving issues found during the requirement check.
     /// </summary>
     public List<string> Instructions { get; set; }
-    /// <summary>
-    /// Output from running the requirement check.
-    /// </summary>
-    public string? Output { get; set; }
 }

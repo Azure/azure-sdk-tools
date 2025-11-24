@@ -3491,8 +3491,7 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         
         # kwargs.pop("api_version", "2024-01-01-preview") pattern
         try:
-            if (value_node.func.attrname == 'pop' and
-                value_node.func.expr.name == 'kwargs' and
+            if (value_node.func.expr.name == 'kwargs' and
                 len(value_node.args) >= 2 and
                 value_node.args[0].value == 'api_version'):
                 

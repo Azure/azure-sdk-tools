@@ -1,0 +1,297 @@
+# APIView Product-Centric Model Proposal
+
+## Overview
+
+This proposal introduces a new top-level **Product** entity to APIView. A Product represents a service across all languages and is always anchored to a TypeSpec specification. It aggregates:
+
+* The TypeSpec Review
+* All language-specific Reviews
+* Namespace approval history (approved + rejected)
+* Links to EngSys artifacts (tspconfig.yaml, metadata) and cross-language identifiers
+
+---
+
+## Problem Summary
+
+APIView’s current unit of organization is the **Review**, which corresponds to a single package in a single language. This structure does not provide:
+
+### 1. Cross-Language Grouping
+
+We cannot reliably visualize all languages for a service or know which SDKs exist or are missing.
+
+### 2. Early Namespace Approval
+
+Namespace approval depends on uploading SDK packages for each language, even though the only authoritative namespace source is **tspconfig.yaml**. We cannot approve namespaces until after SDK generation, which is often too late in the process.
+
+### 3. Namespace History
+
+APIView only tracks namespace approval at a *review* level. There is no historical record of:
+
+* Rejected namespaces
+* Withdrawn or replaced proposals
+* Namespace decisions tied to TypeSpec revisions
+
+### 4. Visibility for Stakeholders
+
+Stakeholders need one place to answer:
+
+* "What is the status of this service across languages?"
+* "Which namespaces were proposed and why were some rejected?"
+
+---
+
+## Goals
+
+The new **Product** model will:
+
+### ✓ Group all language reviews under a single entity
+
+Bound by the same cross-language identifier for a TypeSpec-defined service (nominally, that TypeSpec namespace).
+
+### ✓ Allow early namespace approval before any SDK is generated
+
+Using `tspconfig.yaml` as the single source of truth.
+
+### ✓ Track full namespace history
+
+Including rejected, withdrawn, and superseded proposals.
+
+### ✓ Improve stakeholder experience
+
+Navigation, dashboards, and discussions become cross-language by default.
+
+### ✓ Provide a stable home for TypeSpec reviews
+
+Every Product has exactly one TypeSpec Review.
+
+### ✓ Provide a means to group related Products under a higher-level umbrella (future work).
+
+Products can manually be aggregated into service portfolios in the future. For example, KeyVault Keys, Secrets, and Certificates
+could be grouped under a single KeyVault service portfolio.
+
+---
+
+## High-Level Design
+
+### 1. Introduce a `Product` Entity
+
+A Product:
+
+* Has a stable ID (nominally the TypeSpec namespace, which is used as the `CrossLanguagePackageId`)
+* Owns one TypeSpec Review
+* Owns zero or more language-specific Reviews
+* Stores namespace history across languages
+
+```
+Product → Review (TypeSpec) [required]
+        → Review (Python)
+        → Review (C#)
+        → Review (Java)
+        …
+```
+
+---
+
+### 2. Integration Points
+
+#### **When just a TypeSpec `tspconfig.yaml` is available**
+
+User can manually create a Product in APIView by providing the `tspconfig.yaml` file or its URI. APIView will:
+
+* Parse the file to extract Product metadata (name, description, namespaces)
+* Create the Product
+* Register the namespaces as proposals (in proposed status)
+
+#### **When a TypeSpec Review is uploaded**
+
+If it has metadata:
+
+* Create a Product from `tspconfig.yaml`
+* Attach the TypeSpec review as the canonical spec for that Product
+
+#### **When a language Review is uploaded**
+
+APIView will automatically:
+
+* Look at `CrossLanguagePackageId`
+* Find the matching Product
+* Attach the Review to the Product
+* Register its namespaces as proposals (if not already approved)
+
+---
+
+## Updated Data Model
+
+### Product Model
+
+```tsp
+/** New top-level Product entity */
+model Product {
+  Id: string;
+  DisplayName: string;
+  Description?: string;
+  Owner?: string;
+  TypeSpecMetadata: TypeSpecProductMetadata;
+  NamespaceInfo: ProductNamespaceInfo;
+  ReviewIds: string[];
+  ChangeHistory?: ProductChangeHistory[];
+  CreatedOn: utcDateTime;
+  LastUpdatedOn: utcDateTime;
+  IsDeleted: boolean;
+}
+
+/** Link to TypeSpec metadata and EngSys config. */
+model TypeSpecProductMetadata {
+  TypeSpecReviewId: string;
+  TypeSpecApiRevisionId?: string;
+  EntryPointPath?: string;
+  TspConfigSourceUri?: string;
+  CrossLanguagePackageId?: string;
+}
+
+/** Product-level change history */
+model ProductChangeHistory extends ChangeHistoryModel {
+  ChangeAction: ProductChangeAction;
+}
+
+enum ProductChangeAction {
+  Created,
+  NamespaceProposalAdded,
+  NamespaceApproved,
+  NamespaceRejected,
+  NamespaceWithdrawn,
+  LinkedReviewAdded,
+  LinkedReviewRemoved,
+  TypeSpecReviewChanged,
+  MetadataUpdated,
+  Deleted,
+  UnDeleted
+}
+```
+
+### Namespace Proposal Updates
+
+```tsp
+/** Aggregated namespace information for a Product. */
+model ProductNamespaceInfo {
+  /** Currently approved namespaces. */
+  ApprovedNamespaces: NamespaceDecisionEntry[];
+  /** Full history of namespace proposals and decisions. */
+  NamespaceHistory: NamespaceDecisionEntry[];
+}
+
+/** Status of a specific namespace proposal under a Product. */
+enum NamespaceDecisionStatus {
+  Proposed,
+  Approved,
+  Rejected,
+  Withdrawn
+}
+
+/** A single namespace proposal (per language & package). */
+model NamespaceDecisionEntry {
+  Language: string;
+  PackageName: string;
+  Namespace: string;
+  Status: NamespaceDecisionStatus;
+  Notes?: string;
+  DecidedBy?: string;
+  DecidedOn?: utcDateTime;
+}
+```
+
+---
+
+## Review Model Changes
+
+Minimal updates to link Reviews to Products and remove namespace approval fields
+from Reviews.
+
+```diff
+ model Review {
+  ... existing fields ...
+-    NamespaceReviewStatus: NamespaceReviewStatus;
+-    NamespaceApprovalRequestedBy: string;
+-    NamespaceApprovalRequestedOn?: utcDateTime;
++    ProductId?: string;
++    IsTypeSpecReview?: boolean;
+ }
+```
+
+We will also remove the `NamespaceReviewStatus` enum.
+
+---
+
+## Key Workflows
+
+### Workflow 1 — Product Creation via TypeSpec Review
+
+1. EngSys parses `tspconfig.yaml` from a TypeSpec Review
+2. It emits Product metadata JSON
+3. APIView ingests the JSON and creates/updates the Product
+4. TypeSpec Review is created/linked
+5. Namespace proposals are initialized
+
+### Workflow 2 — Attaching Language Reviews
+
+1. EngSys runs APIView parser for a given language.
+2. APIView reads `CrossLanguagePackageId`
+3. APIView finds the Product
+4. The Review is attached
+5. Namespace proposals are registered/updated as needed
+
+### Workflow 3 — Namespace Approval Process
+
+1. Architect reviews namespace proposals
+2. Decisions change `Status` to Approved/Rejected
+3. Decision is recorded in Product change history
+4. ApprovedNamespaces is updated automatically
+
+## Alternative Workflows
+
+### Alternative Workflow 1 — Manual Product Creation
+
+1. User uploads `tspconfig.yaml` or provides its URI
+2. APIView parses it and creates a Product
+3. User uploads TypeSpec Review and language Reviews later, which will attach automatically
+
+### Alternative Workflow 2 — Existing Reviews Migration
+
+1. Script creates Products for existing TypeSpec Reviews
+2. Script attaches existing language Reviews
+3. Script infers namespace state from existing data.
+  a. If any revision is approved, namespace is approved
+  b. Otherwise, namespace is proposed
+
+### Alternative Workflow 3 — Manual Upload with No Metadata
+
+1. User uploads a manual CodeFile with no cross-langauge metadata
+2. If a Product exists with matching namespace, attach Review
+3. Otherwise, warn user and allow them to cancel or create an "orphan" review or cancel
+
+### Alternative Workflow 4 - Uploading a new Revision that Changes Namespace
+
+1. New APIRevision uploaded that changes the namespace
+2. If there is an approved namespace for that language, flag this as an error but allow the upload. This is considered a fatal error
+3. If there is no approved namespace for that language, create a new namespace proposal in proposed status, updating the previous proposal:
+  a. Proposed → Withdrawn
+  b. Rejected → Rejected (keep the same)
+
+---
+
+## Open Questions
+
+1. What if the TypeSpec namespace itself changes? Should `ProductId` always equal namespace?
+2. Do we care about just namespace or also package name?
+3. Can different TypeSpec Products share non-approved namespaces? (E.g., if two services both want to use `Contoso.Common` before either is approved)
+
+---
+
+## Next Steps
+
+* Validate with EngSys that tspconfig-derived metadata can be reliably emitted
+* Create migration script for existing Reviews
+* Create new endpoint in APIView for registering new Products manually with `tspconfig.yaml`
+* Implement CrossLanguagePackageId handling in language parsers
+
+---

@@ -84,5 +84,5 @@ class PropertyNode(NodeEntityBase):
             review_line.add_text(" " * 4, has_suffix_space=False)
             review_line.add_literal("# Read-only", has_suffix_space=False)
         for err in self.pylint_errors:
-            err.generate_tokens(self.apiview, err=err, target_id=self.namespace_id)
+            err.generate_tokens(self.apiview, target_id=self.namespace_id)
         review_lines.append(review_line)

@@ -102,6 +102,11 @@ class PylintParser:
             obj_name = obj.__name__
             items = [x for x in cls.items if x.obj and x.obj.endswith(f".{obj_name}")]
 
+        # Fallback for properties: property objects don't have __name__, but their fget does
+        if not items and isinstance(obj, property) and hasattr(obj, 'fget') and obj.fget:
+            prop_name = obj.fget.__name__
+            items = [x for x in cls.items if x.obj and x.obj.endswith(f".{prop_name}")]
+
         # For classes, filter OUT method-level items to avoid duplicates (those with dots in obj field)
         # Methods will find and report their own diagnostics using the fallback above
         if hasattr(obj, '__mro__'):  # Check if this is a class

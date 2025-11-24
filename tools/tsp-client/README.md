@@ -269,7 +269,7 @@ Batch client library generation is only supported with the `tsp-client update` c
     - zas/
 ```
 
-2. The top level tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that directly contain the regular tsp-location.yaml files with appropriate configuraitons for client library generation. Other tsp-location.yaml properties such as `directory`, `commit`, `repo`, `additionalDirectories` are not currently supported with the `batch` configuration. Example:
+2. The top level tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that directly contain the regular tsp-location.yaml files with appropriate configurations for client library generation. Other tsp-location.yaml properties such as `directory`, `commit`, `repo`, `additionalDirectories` are not currently supported with the `batch` configuration. Example:
 
 ```yml title=tsp-location.yaml
 batch:

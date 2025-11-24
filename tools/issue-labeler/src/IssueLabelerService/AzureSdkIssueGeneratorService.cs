@@ -52,18 +52,6 @@ namespace IssueLabelerService
             {
                 var generatorService = _issueGeneratorServices.GetIssueGeneratorService(config);
                 var answer = await generatorService.GenerateIssue(repositoryName);
-                var issues = JsonConvert.DeserializeObject<IEnumerable<IssueTriageContent>>(answer);
-
-                // Write answer to JSON file - answerData is an array of objects
-                //var jsonString = JsonConvert.SerializeObject(answer, Formatting.Indented);
-                var fileName = $"issue_answer_{repositoryName}.tsv";
-                using StreamWriter writer = new StreamWriter(fileName);
-                writer.WriteLine(FormatIssueRecord("CategoryLabel", "ServiceLabel", "Title", "Body"));
-                foreach (var issue in issues)
-                {
-                    writer.WriteLine(FormatIssueRecord(issue.Category ?? "", issue.Service ?? "", issue.Title ?? "", issue.Body ?? ""));
-                }
-                _logger.LogInformation($"Answer written to file: {fileName}");
             }
             catch (Exception ex)
             {
@@ -83,42 +71,5 @@ namespace IssueLabelerService
             var requestBody = await bodyReader.ReadToEndAsync();
             return JsonConvert.DeserializeObject<string>(requestBody);
         }
-
-        public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)
-        {
-            if (string.IsNullOrEmpty(template))
-                return string.Empty;
-
-            string result = template;
-
-            foreach (var replacement in replacements)
-            {
-                if (!result.Contains($"{{{replacement.Key}}}"))
-                {
-                    logger.LogWarning($"Replacement value for {replacement.Key} does not exist in {template}.");
-                }
-                result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
-            }
-
-            // Replace escaped newlines with actual newlines
-            return result.Replace("\\n", "\n");
-        }
-
-        public static string FormatIssueRecord(string categoryLabel, string serviceLabel, string title, string body)
-        => string.Join('\t',
-        [
-            SanitizeText(categoryLabel),
-            SanitizeText(serviceLabel),
-            SanitizeText(title),
-            SanitizeText(body)
-        ]);
-        
-        public static string SanitizeText(string text)
-        => text
-        .Replace('\r', ' ')
-        .Replace('\n', ' ')
-        .Replace('\t', ' ')
-        .Replace('"', '`')
-        .Trim();
     }
 }

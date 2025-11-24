@@ -39,6 +39,9 @@ namespace IssueLabelerService
         public string IssueModelAzureSdkForNetBlobConfigNames => GetItem("IssueModel.azure_sdk_for_net.BlobConfigNames");
         public string IssueModelAzureSdkForNetCategoryLabels => GetItem("IssueModel.azure_sdk_for_net.CategoryLabels");
         public string IssueModelAzureSdkForNetServiceLabels => GetItem("IssueModel.azure_sdk_for_net.ServiceLabels");
+        public string IssueModelAzureSdkForPythonBlobConfigNames => GetItem("IssueModel.azure_sdk_for_python.BlobConfigNames");
+        public string IssueModelAzureSdkForPythonCategoryLabels => GetItem("IssueModel.azure_sdk_for_python.CategoryLabels");
+        public string IssueModelAzureSdkForPythonServiceLabels => GetItem("IssueModel.azure_sdk_for_python.ServiceLabels");
         public string IssueModelAzureSdkBlobConfigNames => GetItem("IssueModel.azure_sdk.BlobConfigNames");
         public string IssueModelAzureSdkCategoryLabels => GetItem("IssueModel.azure_sdk.CategoryLabels");
         public string IssueModelAzureSdkServiceLabels => GetItem("IssueModel.azure_sdk.ServiceLabels");

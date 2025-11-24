@@ -122,6 +122,7 @@ namespace IssueLabelerService
             {
                 "azure-sdk-for-java" => _config.IssueModelAzureSdkForJavaBlobConfigNames,
                 "azure-sdk-for-net" => _config.IssueModelAzureSdkForNetBlobConfigNames,
+                "azure-sdk-for-python" => _config.IssueModelAzureSdkForPythonBlobConfigNames,
                 _ => _config.IssueModelAzureSdkBlobConfigNames,
             };
 

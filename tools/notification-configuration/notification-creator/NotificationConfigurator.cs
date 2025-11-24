@@ -169,10 +169,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                             logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                             await service.RemoveMember(teamDescriptor, descriptor);
                         }
-                        else
-                        {
-                            logger.LogInformation("Would delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        }
                     }
 
                     foreach (string descriptor in contactsToAdd)

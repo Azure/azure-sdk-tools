@@ -16,7 +16,7 @@ namespace APIViewWeb.Services
         {
             _configuration = configuration;
             _credential = new ChainedTokenCredential(
-                new ManagedIdentityCredential(),
+                new ManagedIdentityCredential(_configuration["CopilotUserAssignedIdentity"]),
                 new AzureCliCredential()
             );
         }
@@ -29,9 +29,15 @@ namespace APIViewWeb.Services
                 throw new InvalidOperationException("CopilotAppId configuration is missing");
             }
 
-            var scope = $"api://{copilotAppId}/.default";
-            var tokenRequestContext = new TokenRequestContext([scope]);
-            var token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
+            var tokenRequestContext = new TokenRequestContext(
+                scopes: new[] { $"api://{copilotAppId}/.default" },
+                parentRequestId: null,
+                claims: null,
+                tenantId: _configuration["AzureAd:TenantId"],
+                isCaeEnabled: false
+            );
+
+            AccessToken token = await _credential.GetTokenAsync(tokenRequestContext, cancellationToken);
             return token.Token;
         }
     }

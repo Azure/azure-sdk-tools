@@ -584,6 +584,9 @@ export class CodePanelComponent implements OnChanges{
           this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
         }
         break;
+      case CommentThreadUpdateAction.CommentTextUpdate:
+        this.updateCommentTextInCommentThread(commentUpdates);
+        break;
       case CommentThreadUpdateAction.CommentResolved:
         this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe();
         break;
@@ -1040,8 +1043,20 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private updateCommentTextInCommentThread(data: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText!;
-    this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    const commentThread = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const comment = commentThread.comments.find(c => c.id === data.commentId);
+    
+    if (!comment) {
+      return;
+    }
+    
+    if (data.commentText) {
+      comment.commentText = data.commentText;
+    }
+    if (data.severity !== undefined && data.severity !== null) {
+      comment.severity = data.severity;
+    }
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 

@@ -62,27 +62,12 @@
             {
                 "requirement": "go",
                 "check": ["go", "version"],
-                "instructions": ["Download and install the Go version specified in globals.yml", "Ensure your GOPATH and GOROOT environment variables are set correctly", "Add GOROOT/bin to your PATH environment variable"]
+                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/"]
             },
             {
-                "requirement": "go-junit-report",
-                "check": ["go-junit-report", "--version"],
-                "instructions": ["go install github.com/jstemmer/go-junit-report/v2@v2.1.0"]
-            },
-            {
-                "requirement": "gocov",
-                "check": ["gocov", "--version"],
-                "instructions": ["go install github.com/axw/gocov/gocov@v1.2.1"]
-            },
-            {
-                "requirement": "gocov-xml",
-                "check": ["gocov-xml", "--version"],
-                "instructions": ["go install github.com/AlekSi/gocov-xml@v1.1.0"]
-            },
-            {
-                "requirement": "gocov-html",
-                "check": ["gocov-html", "--version"],
-                "instructions": ["go install github.com/matm/gocov-html/cmd/gocov-html@v1.4.0"]
+                "requirement": "goimports",
+                "check": ["pwsh", "-Command", "Get-Command", "goimports"],
+                "instructions": ["go install golang.org/x/tools/cmd/goimports@latest"]
             },
             {
                 "requirement": "golangci-lint",

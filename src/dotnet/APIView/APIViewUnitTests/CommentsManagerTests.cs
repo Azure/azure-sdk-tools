@@ -101,6 +101,9 @@ public class CommentsManagerTests
             .Setup(f => f.CreateClient(It.IsAny<string>()))
             .Returns(httpClient);
 
+        authServiceMock.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+
         return new CommentsManager(
             apiRevisionsManagerMock.Object,
             authServiceMock.Object,
@@ -267,7 +270,7 @@ public class CommentsManagerTests
 
     #endregion
 
-    #region ResolveBatchConversationAsync Tests
+    #region CommentsBatchOperationAsync Tests
 
     [Fact]
     public async Task ResolveBatchConversationAsync_WithUpvote_AppliesUpvoteAndResolves()
@@ -279,6 +282,7 @@ public class CommentsManagerTests
             ReviewId = "review1",
             Id = "comment1",
             ElementId = "element1",
+            Severity = CommentSeverity.ShouldFix,
             Upvotes = new List<string>(),
             Downvotes = new List<string>()
         };
@@ -287,8 +291,9 @@ public class CommentsManagerTests
             ReviewId = "review1",
             Id = "comment2",
             ElementId = "element2",
+            Severity = CommentSeverity.ShouldFix,
             Upvotes = new List<string>(),
-            Downvotes = new List<string>()
+            Downvotes = new List<string>(),
         };
 
         commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
@@ -301,10 +306,12 @@ public class CommentsManagerTests
         ResolveBatchConversationRequest request = new()
         {
             CommentIds = new List<string> { "comment1", "comment2" },
-            Vote = FeedbackVote.Up
+            Vote = FeedbackVote.Up,
+            Severity = CommentSeverity.ShouldFix, 
+            Disposition = ConversationDisposition.Resolve
         };
 
-        await manager.ResolveBatchConversationAsync(user, "review1", request);
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         Assert.Single(comment1.Upvotes);
         Assert.Contains("test-user", comment1.Upvotes);
@@ -325,6 +332,7 @@ public class CommentsManagerTests
             ReviewId = "review1",
             Id = "comment1",
             ElementId = "element1",
+            Severity = CommentSeverity.ShouldFix,
             Upvotes = new List<string>(),
             Downvotes = new List<string>()
         };
@@ -335,11 +343,13 @@ public class CommentsManagerTests
 
         ResolveBatchConversationRequest request = new()
         {
+            Severity = CommentSeverity.ShouldFix,
             CommentIds = new List<string> { "comment1" },
-            Vote = FeedbackVote.Down
+            Vote = FeedbackVote.Down,
+            Disposition = ConversationDisposition.Resolve
         };
 
-        await manager.ResolveBatchConversationAsync(user, "review1", request);
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         Assert.Single(comment.Downvotes);
         Assert.Contains("test-user", comment.Downvotes);
@@ -357,6 +367,7 @@ public class CommentsManagerTests
             ReviewId = "review1",
             Id = "comment1",
             ElementId = "element1",
+            Severity = CommentSeverity.ShouldFix,
             Upvotes = new List<string>(),
             Downvotes = new List<string>()
         };
@@ -368,10 +379,12 @@ public class CommentsManagerTests
         ResolveBatchConversationRequest request = new()
         {
             CommentIds = new List<string> { "comment1" },
-            Vote = FeedbackVote.None
+            Vote = FeedbackVote.None,
+            Severity = CommentSeverity.ShouldFix,
+            Disposition = ConversationDisposition.Resolve
         };
 
-        await manager.ResolveBatchConversationAsync(user, "review1", request);
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         Assert.Empty(comment.Upvotes);
         Assert.Empty(comment.Downvotes);
@@ -392,7 +405,8 @@ public class CommentsManagerTests
             APIRevisionId = "rev1",
             CommentType = CommentType.APIRevision,
             Upvotes = new List<string>(),
-            Downvotes = new List<string>()
+            Downvotes = new List<string>(),
+            Severity = CommentSeverity.ShouldFix
         };
 
         commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
@@ -403,7 +417,9 @@ public class CommentsManagerTests
         {
             CommentIds = new List<string> { "comment1" },
             Vote = FeedbackVote.None,
-            CommentReply = "This is resolved now"
+            Severity = CommentSeverity.ShouldFix,
+            CommentReply = "This is resolved now",
+            Disposition = ConversationDisposition.Resolve
         };
 
         CommentItemModel capturedReply = null;
@@ -418,7 +434,7 @@ public class CommentsManagerTests
             })
             .Returns(Task.CompletedTask);
 
-        var response = await manager.ResolveBatchConversationAsync(user, "review1", request);
+        var response = await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         Assert.NotNull(capturedReply);
         Assert.Equal("This is resolved now", capturedReply.CommentText);
@@ -442,6 +458,7 @@ public class CommentsManagerTests
             ElementId = "element1",
             APIRevisionId = "rev1",
             CommentType = CommentType.APIRevision,
+            Severity = CommentSeverity.ShouldFix,
             Upvotes = new List<string>(),
             Downvotes = new List<string>()
         };
@@ -454,10 +471,12 @@ public class CommentsManagerTests
         {
             CommentIds = new List<string> { "comment1" },
             Vote = FeedbackVote.Up,
-            CommentReply = "Fixed this issue"
+            CommentReply = "Fixed this issue",
+            Severity = CommentSeverity.ShouldFix,
+            Disposition = ConversationDisposition.Resolve
         };
 
-        await manager.ResolveBatchConversationAsync(user, "review1", request);
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         Assert.Single(comment.Upvotes);
         Assert.Contains("test-user", comment.Upvotes);
@@ -473,9 +492,9 @@ public class CommentsManagerTests
         
         List<CommentItemModel> comments = new()
         {
-            new() { ReviewId = "review1", Id = "comment1", ElementId = "element1", Upvotes = new List<string>(), Downvotes = new List<string>() },
-            new() { ReviewId = "review1", Id = "comment2", ElementId = "element2", Upvotes = new List<string>(), Downvotes = new List<string>() },
-            new() { ReviewId = "review1", Id = "comment3", ElementId = "element3", Upvotes = new List<string>(), Downvotes = new List<string>() }
+            new() { ReviewId = "review1", Id = "comment1", ElementId = "element1", Upvotes = new List<string>(), Downvotes = new List<string>(), Severity = CommentSeverity.ShouldFix},
+            new() { ReviewId = "review1", Id = "comment2", ElementId = "element2", Upvotes = new List<string>(), Downvotes = new List<string>(), Severity = CommentSeverity.ShouldFix },
+            new() { ReviewId = "review1", Id = "comment3", ElementId = "element3", Upvotes = new List<string>(), Downvotes = new List<string>(), Severity = CommentSeverity.ShouldFix }
         };
 
         foreach (var comment in comments)
@@ -488,10 +507,12 @@ public class CommentsManagerTests
         ResolveBatchConversationRequest request = new()
         {
             CommentIds = new List<string> { "comment1", "comment2", "comment3" },
-            Vote = FeedbackVote.Up
+            Vote = FeedbackVote.Up,
+            Severity = CommentSeverity.ShouldFix,
+            Disposition = ConversationDisposition.Resolve
         };
 
-        await manager.ResolveBatchConversationAsync(user, "review1", request);
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         foreach (var comment in comments)
         {
@@ -514,10 +535,198 @@ public class CommentsManagerTests
             Vote = FeedbackVote.Up
         };
 
-        await manager.ResolveBatchConversationAsync(user, "review1", request);
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
 
         commentsRepoMock.Verify(r => r.GetCommentAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_KeepOpen_AppliesVoteAndReplyWithoutResolving()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            APIRevisionId = "rev1",
+            CommentType = CommentType.APIRevision,
+            Severity = CommentSeverity.ShouldFix,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            IsResolved = false
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Vote = FeedbackVote.Up,
+            CommentReply = "Thanks for the feedback",
+            Severity = CommentSeverity.ShouldFix,
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Single(comment.Upvotes);
+        Assert.Contains("test-user", comment.Upvotes);
+        Assert.False(comment.IsResolved); // Should NOT be resolved
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Exactly(2)); // 1 vote + 1 reply
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_KeepOpen_WithoutReply_OnlyAppliesVote()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            Severity = CommentSeverity.Question,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            IsResolved = false
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Vote = FeedbackVote.Down,
+            Severity = CommentSeverity.Question,
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Single(comment.Downvotes);
+        Assert.Contains("test-user", comment.Downvotes);
+        Assert.False(comment.IsResolved);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once); // Only vote, no reply
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_Delete_DeletesCommentsAndReplies()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment1 = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            APIRevisionId = "rev1",
+            CommentType = CommentType.APIRevision,
+            Severity = CommentSeverity.Suggestion,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+        CommentItemModel comment2 = new()
+        {
+            ReviewId = "review1",
+            Id = "comment2",
+            ElementId = "element2",
+            APIRevisionId = "rev1",
+            CommentType = CommentType.APIRevision,
+            Severity = CommentSeverity.Suggestion,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(comment2);
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            CommentReply = "Removing invalid comments",
+            Severity = CommentSeverity.Suggestion,
+            Disposition = ConversationDisposition.Delete
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.True(comment1.IsDeleted);
+        Assert.True(comment2.IsDeleted);
+    }
+
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_UpdateSeverity_UpdatesCommentSeverity()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            Severity = CommentSeverity.Question,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Severity = CommentSeverity.MustFix,
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Equal(CommentSeverity.MustFix, comment.Severity);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once);
+    }
+
+   
+    [Fact]
+    public async Task CommentsBatchOperationAsync_ComplexScenario_UpdatesSeverityVoteReplyAndResolves()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            APIRevisionId = "rev1",
+            CommentType = CommentType.APIRevision,
+            Severity = CommentSeverity.Question,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            IsResolved = false
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel> { comment });
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Vote = FeedbackVote.Up,
+            CommentReply = "Changed severity and resolved",
+            Severity = CommentSeverity.MustFix,
+            Disposition = ConversationDisposition.Resolve
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Equal(CommentSeverity.MustFix, comment.Severity);
+        Assert.Single(comment.Upvotes);
+        Assert.Contains("test-user", comment.Upvotes);
+        Assert.True(comment.IsResolved);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Exactly(4)); // 1 severity + 1 vote + 1 reply + 1 resolve
     }
 
     #endregion

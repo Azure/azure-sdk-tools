@@ -8,7 +8,8 @@
       "properties": {
         "action": {
           "type": "string",
-          "description": "Workflow decision."
+          "description": "Workflow decision.",
+          "enum": ["no-op", "create"]
         },
         "issue": {
           "type": "number",

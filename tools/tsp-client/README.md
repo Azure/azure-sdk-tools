@@ -70,7 +70,7 @@ Example:
 tsp-client update
 ```
 
-For batch library generation see the docs.
+For batch library generation see the [Batch library generation](#batch-library-generation) instructions.
 
 ### sync
 
@@ -264,12 +264,12 @@ Batch client library generation is only supported with the `tsp-client update` c
 ```
 - sdk/
   - foo/
-    tsp-location.yaml
+    - tsp-location.yaml
     - bar/
     - zas/
 ```
 
-2. tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that contain the regular tsp-location.yaml files with appropriate properties for client library generation. Other tsp-location.yaml properties such as directory, commit, repo, additionalDirectories are not currently supported with the batch configuration. Example:
+2. tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that contain the regular tsp-location.yaml files with appropriate properties for client library generation. Other tsp-location.yaml properties such as `directory`, `commit`, `repo`, `additionalDirectories` are not currently supported with the `batch` configuration. Example:
 
 ```yml title=tsp-location.yaml
 batch:

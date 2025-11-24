@@ -36,7 +36,7 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
             if (text) {
                 tokens.push({
                     Kind: TokenKind.Text,
-                    Value: excerpt.text,
+                    Value: text,
                     IsDeprecated: deprecated
                 });
             }

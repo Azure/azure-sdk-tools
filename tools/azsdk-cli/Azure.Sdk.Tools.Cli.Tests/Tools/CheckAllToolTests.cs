@@ -37,16 +37,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockCommonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
             // Create language-specific check implementations with mocked dependencies
-            var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object);
+            var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object, Mock.Of<IFileHelper>());
 
             var languageChecks = new List<PythonLanguageService> { pythonCheck };
-            var mockPowershellHelper = new Mock<IPowershellHelper>();
-            
-            // Setup the mock resolver to return the PythonLanguageSpecificChecks instance
-            var mockResolver = new Mock<ILanguageSpecificResolver<PythonLanguageService>>();
-            mockResolver.Setup(x => x.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(pythonCheck);
-            
+ 
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockGitHelper.Object, languageChecks);
 
             // Setup default mock responses

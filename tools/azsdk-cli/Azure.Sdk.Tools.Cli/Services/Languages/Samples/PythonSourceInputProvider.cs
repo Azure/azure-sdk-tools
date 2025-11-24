@@ -1,29 +1,28 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Samples;
+namespace Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
-public class JavaSourceInputProvider : ILanguageSourceInputProvider
+public class PythonSourceInputProvider : ILanguageSourceInputProvider
 {
-   public IReadOnlyList<SourceInput> Create(string packagePath)
+    public IReadOnlyList<SourceInput> Create(string packagePath)
     {
         var inputs = new List<SourceInput>();
-        var azureDir = Path.Combine(packagePath, "src");
+        var azureDir = Path.Combine(packagePath, "azure");
         if (Directory.Exists(azureDir))
         {
-            inputs.Add(new SourceInput(azureDir, IncludeExtensions: [".java"]));
+            inputs.Add(new SourceInput(azureDir, IncludeExtensions: [".py"]));
         }
         else
         {
-            throw new ArgumentException($"The expected 'src' directory was not found under the provided package path: '{packagePath}'.", nameof(packagePath));
+            throw new ArgumentException($"The expected 'azure' directory was not found under the provided package path: '{packagePath}'.", nameof(packagePath));
         }
 
         var samplesDir = Path.Combine(packagePath, "samples");
         if (Directory.Exists(samplesDir))
         {
-            inputs.Add(new SourceInput(samplesDir, IncludeExtensions: [".java"]));
+            inputs.Add(new SourceInput(samplesDir, IncludeExtensions: [".py"]));
         }
 
         var parentDir = Directory.GetParent(packagePath)?.FullName;

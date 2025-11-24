@@ -1,5 +1,9 @@
 # Release
 
+## 2025-11-24 - 0.31.0
+
+- Add support for batch library generation. See [README](./README.md) for more information on how to configure.
+
 ## 2025-11-05 - 0.30.0
 
 - Make metadata generation for tsp-client an opt-in feature. If you want to generate `tsp-client-metadata.yaml`, set `generateMetadata: true` in `tsp-client-config.yaml`.

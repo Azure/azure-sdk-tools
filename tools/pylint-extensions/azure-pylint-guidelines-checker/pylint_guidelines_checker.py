@@ -3534,16 +3534,6 @@ class StableSDKPreviewAPIChecker(BaseChecker):
             return
             
         try:
-            # Check if the call is to a Client or Configuration constructor
-            func_name = getattr(node.func, 'name', '')
-            is_client_call = (func_name.endswith('Client') or 
-                            'Configuration' in func_name or 
-                            'Config' in func_name)
-            
-            # Must be either a client constructor call or inside a client context
-            if not is_client_call:
-                return
-            
             # Check keyword arguments
             for keyword in node.keywords or []:
                 if keyword.arg == 'api_version' and hasattr(keyword.value, 'value'):

@@ -211,4 +211,37 @@ describe('CommentThreadComponent', () => {
       expect(aiInfo.items[1].value).toBe('test-comment-id');
     });
   });
+
+  describe('draft comment text persistence', () => {
+    it('should persist draft comment text in codePanelRowData model', () => {
+      component.codePanelRowData!.draftCommentText = 'Test draft text';
+      
+      expect(component.codePanelRowData!.draftCommentText).toBe('Test draft text');
+    });
+
+    it('should initialize draftCommentText as empty string', () => {
+      const newRowData = new CodePanelRowData();
+      
+      expect(newRowData.draftCommentText).toBe('');
+    });
+
+    it('should clear draft text when comment is cancelled', () => {
+      component.codePanelRowData!.showReplyTextBox = true;
+      component.codePanelRowData!.draftCommentText = 'Draft to be cancelled';
+      
+      spyOn(component.cancelCommentActionEmitter, 'emit');
+      
+      const mockEvent = {
+        target: document.createElement('button')
+      } as any;
+      const replyContainer = document.createElement('div');
+      replyContainer.className = 'reply-editor-container';
+      replyContainer.appendChild(mockEvent.target);
+      
+      component.cancelCommentAction(mockEvent);
+      
+      expect(component.codePanelRowData!.draftCommentText).toBe('');
+      expect(component.codePanelRowData!.showReplyTextBox).toBe(false);
+    });
+  });
 });

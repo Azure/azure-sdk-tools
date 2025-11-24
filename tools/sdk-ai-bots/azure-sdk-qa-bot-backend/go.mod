@@ -37,6 +37,8 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
+	github.com/google/go-github/v66 v66.0.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect

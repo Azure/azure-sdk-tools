@@ -60,6 +60,7 @@
     <PackageReference Include="NuGet.Protocol" Version="6.10.0" />
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>

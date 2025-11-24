@@ -24,8 +24,8 @@
       </label>
       <div *ngFor="let reason of feedbackReasons" class="reason-item">
         <p-checkbox 
-          [value]="reason"
-          [label]="reason"
+          [value]="reason.key"
+          [label]="reason.label"
           [(ngModel)]="selectedReasons"
           [binary]="false"
           styleClass="reason-checkbox">

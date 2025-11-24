@@ -4,6 +4,7 @@ import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
+import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
 
 export type VoteType = 'none' | 'up' | 'down';
 export type ConversationDisposition = 'resolve' | 'keepOpen' | 'delete';
@@ -14,6 +15,8 @@ export interface CommentResolutionData {
   resolutionComment?: string;
   disposition: ConversationDisposition;
   severity?: CommentSeverity;
+  feedbackReasons?: string[];
+  feedbackAdditionalComments?: string;
 }
 
 @Component({
@@ -38,6 +41,22 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   resolutionComment: string = '';
   selectedDisposition: ConversationDisposition = 'keepOpen';
   selectedSeverity: CommentSeverity | null = null;
+  
+  // Inline feedback state for AI comment downvotes
+  showInlineFeedback: boolean = false;
+  feedbackExpanded: boolean = true; // Start expanded
+  feedbackReasons: string[] = [];
+  feedbackAdditionalComments: string = '';
+  
+  // Deletion reason state
+  deletionReason: string = '';
+  
+  readonly availableFeedbackReasons = AI_COMMENT_FEEDBACK_REASONS;
+  
+  // Feedback reasons for multi-select dropdown
+  get feedbackReasonOptions() {
+    return this.availableFeedbackReasons.map(r => ({ label: r.label, value: r.key }));
+  }
 
   severityOptions = CommentSeverityHelper.severityOptions;
 
@@ -87,7 +106,11 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     this.selectAll = false;
     this.batchVote = null;
     this.resolutionComment = '';
+    this.deletionReason = '';
     this.selectedDisposition = 'keepOpen'; // Default to safest option
+    this.showInlineFeedback = false;
+    this.feedbackReasons = [];
+    this.feedbackAdditionalComments = '';
     this.updateSeverityFromComments();
   }
 
@@ -119,10 +142,15 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       case 'keepOpen':
         return 'Add a reply to the selected issues...';
       case 'delete':
-        return 'Add a comment before deleting the selected issues...';
+        return 'Explain why this comment is egregiously wrong and must be deleted...';
       default:
         return 'Add a comment...';
     }
+  }
+  
+  // Check if deletion reason is required and provided
+  get isDeletionReasonValid(): boolean {
+    return this.selectedDisposition !== 'delete' || this.deletionReason.trim().length > 0;
   }
 
   onHide() {
@@ -165,10 +193,19 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       const resolutionData: CommentResolutionData = {
         commentIds: Array.from(this.selectedCommentIds),
         batchVote: this.batchVote || undefined,
-        resolutionComment: this.resolutionComment.trim() || undefined,
+        resolutionComment: this.selectedDisposition !== 'delete' 
+          ? this.resolutionComment.trim() || undefined
+          : undefined,
         disposition: this.selectedDisposition,
-        severity: this.selectedSeverity !== null ? this.selectedSeverity : undefined
+        severity: this.selectedSeverity !== null ? this.selectedSeverity : undefined,
+        feedbackReasons: this.feedbackReasons.length > 0 ? this.feedbackReasons : undefined,
+        feedbackAdditionalComments: this.selectedDisposition === 'delete'
+          ? this.deletionReason.trim() || undefined
+          : this.feedbackAdditionalComments.trim() || undefined
       };
+      
+      console.log('🔍 Resolution data being emitted:', resolutionData);
+      
       this.resolveSelectedComments.emit(resolutionData);
       this.onHide();
     }
@@ -185,8 +222,15 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   toggleBatchVote(voteType: 'up' | 'down') {
     if (this.batchVote === voteType) {
       this.batchVote = null;
+      this.showInlineFeedback = false;
     } else {
       this.batchVote = voteType;
+      // Show inline feedback when downvoting AI-generated comments
+      if (voteType === 'down' && this.hasAIGeneratedComments) {
+        this.showInlineFeedback = true;
+      } else {
+        this.showInlineFeedback = false;
+      }
     }
   }
 
@@ -196,6 +240,33 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
 
   hasBatchDownvote(): boolean {
     return this.batchVote === 'down';
+  }
+  
+  get canSubmitFeedback(): boolean {
+    return this.feedbackReasons.length > 0;
+  }
+  
+  get hasAIGeneratedComments(): boolean {
+    // If no comments are selected, check all comments
+    // If comments are selected, check only selected ones
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+    
+    return commentsToCheck.some(c => c.createdBy === 'azure-sdk');
+  }
+  
+  isFeedbackReasonSelected(reason: string): boolean {
+    return this.feedbackReasons.includes(reason);
+  }
+  
+  toggleFeedbackReason(reason: string): void {
+    const index = this.feedbackReasons.indexOf(reason);
+    if (index > -1) {
+      this.feedbackReasons.splice(index, 1);
+    } else {
+      this.feedbackReasons.push(reason);
+    }
   }
 
   getCodeContextForComment(comment: CommentItemModel): string {

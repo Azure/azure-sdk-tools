@@ -686,19 +686,29 @@ export class CommentThreadComponent {
   }
 
   onResolveSelectedComments(resolutionData: CommentResolutionData) {
-    const { commentIds, batchVote, resolutionComment, disposition, severity } = resolutionData;
+    const { commentIds, batchVote, resolutionComment, disposition, severity, feedbackReasons, feedbackAdditionalComments } = resolutionData;
     
     if (commentIds.length === 0) {
       this.showRelatedCommentsDialog = false;
       return;
     }
 
+    const hasFeedbackReasons = feedbackReasons && feedbackReasons.length > 0;
+    const hasFeedbackComment = feedbackAdditionalComments && feedbackAdditionalComments.trim().length > 0;
+    
+    const feedback = (hasFeedbackReasons || hasFeedbackComment) ? {
+      reasons: feedbackReasons || [],
+      comment: feedbackAdditionalComments || '',
+      isDelete: disposition === 'delete'
+    } : undefined;
+
     this.commentsService.commentsBatchOperation(this.reviewId, {
       commentIds: commentIds,
       vote: batchVote || 'none',
       commentReply: resolutionComment || undefined,
       disposition: disposition,
-      severity: severity
+      severity: severity,
+      feedback: feedback
     }).subscribe({
       next: (response) => {
         const createdComments = response.body || [];

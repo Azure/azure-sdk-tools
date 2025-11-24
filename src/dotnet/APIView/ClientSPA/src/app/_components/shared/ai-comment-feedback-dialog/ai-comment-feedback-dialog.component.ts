@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
 
 export interface AICommentFeedback {
   commentId: string;
@@ -24,13 +25,7 @@ export class AICommentFeedbackDialogComponent {
   selectedReasons: string[] = [];
   additionalComments: string = '';
 
-  readonly feedbackReasons = [
-    'This comment is factually incorrect',
-    'This is an APIView rendering bug',
-    'This is an accepted APIView rendering choice',
-    'This is an accepted SDK design pattern',
-    'The guideline cited here is out-of-date'
-  ];
+  readonly feedbackReasons = AI_COMMENT_FEEDBACK_REASONS;
 
   get canSubmit(): boolean {
     return this.selectedReasons.length > 0;

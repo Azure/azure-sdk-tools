@@ -94,7 +94,12 @@ export class CommentsService {
     vote?: 'none' | 'up' | 'down',
     commentReply?: string,
     disposition?: 'keepOpen' | 'resolve' | 'delete',
-    severity?: CommentSeverity
+    severity?: CommentSeverity,
+    feedback?: {
+      reasons: string[],
+      comment: string,
+      isDelete: boolean
+    }
   }) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

@@ -178,10 +178,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                             logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                             await service.AddToTeamAsync(teamDescriptor, descriptor);
                         }
-                        else
-                        {
-                            logger.LogInformation("Would add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                        }
                     }
                 }
             }

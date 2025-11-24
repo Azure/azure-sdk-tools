@@ -41,46 +41,54 @@ The question must be classified into one of these categories:
   - How to generate dotnet SDK?
 
 ## Intent Scopes
-The question must be classified into one of these scopes:
+Detect the question's scope ONLY if explicitly mentioned by the user.
 
-- **data-plane**: Questions about Azure data-plane services, such as:
-    - Data-plane API design patterns
-    - Data-plane resource modeling
-    - Data-plane specific decorators and templates
+- **data-plane**: ONLY when the user explicitly mentions "data-plane" or "data plane"
+- **management-plane**: ONLY when the user explicitly mentions "management-plane", "management plane", "ARM", or "Azure Resource Manager"
+- **unbranded**: ONLY when the user explicitly mentions they are an external user, non-Azure context, or general TypeSpec usage outside of Azure
+- **unknown**: Use this as the DEFAULT when the scope is not explicitly stated by the user
 
-- **management-plane**: Questions about Azure management-plane services, such as:
-    - ARM-specific TypeSpec usage
-    - Management-plane API design principles
-    - ARM resource templates and patterns
+**Important**: Do NOT infer scope from context alone. The user must explicitly mention the scope keywords above.
 
-- **unbranded**: Questions from external users about general TypeSpec usage, such as:
-    - Basic TypeSpec syntax and features
-    - General code generation queries
-    - Questions about core TypeSpec concepts
+## Spec Language
+Detect the user's service specification language ONLY if explicitly mentioned.
+
+- **typespec**: The user's service specification language is TypeSpec
+- **openapi**: The user's service specification language is OpenAPI/Swagger
+- **unknown**: The user's service specification language is not specified or unclear
+
+**Important**: Do NOT infer spec language from context alone. The user must explicitly mention the specification language keywords above.
 
 ## Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "scope": string        // Must be one of the intent scopes or unknown
-  "category": string     // Must be one of the intent categories or unknown
-  "spec_language": string,   // user's service specification language: typespec or openapi or unknown
+  "scope": string        // Must be one of the intent scopes
+  "category": string     // Must be one of the intent categories
+  "spec_language": string,   // Must be one of the spec languages
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow (true for technical questions, false for greetings/announcements)
 }
 
 ## Examples
 
+Example 1 - Explicit scope and spec language mentioned:
 Original: "How do I migrate ARM swagger spec to TypeSpec?"
 Response:
 {
   "question": "How do I migrate Azure Resource Manager (ARM) swagger specifications to TypeSpec?",
   "category": "TypeSpec Migration",
-  "scope": "management-plane"
-  "spec_language": "unknown"
+  "scope": "management-plane",
+  "spec_language": "typespec",
+  "needs_rag_processing": true
+}
 
+Example 2 - Greeting/Non-technical question:
+Original: "Good Job"
+Response:
 {
   "question": "Good Job",
   "category": "unknown",
   "scope": "unknown",
+  "spec_language": "unknown",
   "needs_rag_processing": false
 }

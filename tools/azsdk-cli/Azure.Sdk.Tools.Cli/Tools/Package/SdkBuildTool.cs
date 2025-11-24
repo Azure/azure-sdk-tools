@@ -34,11 +34,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         // Command names
         private const string BuildSdkCommandName = "build";
+        private const string BuildSdkToolName = "azsdk_package_build_code";
         private const string AzureSdkForPythonRepoName = "azure-sdk-for-python";
         private const int CommandTimeoutInMinutes = 30;
 
         protected override Command GetCommand() =>
-            new(BuildSdkCommandName, "Builds SDK source code for a specified language and project") { SharedOptions.PackagePath };
+            new McpCommand(BuildSdkCommandName, "Builds SDK source code for a specified language and project", BuildSdkToolName) { SharedOptions.PackagePath };
 
         public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -46,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await BuildSdkAsync(packagePath, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_build_code"), Description("Build/compile SDK code for a specified project locally.")]
+        [McpServerTool(Name = BuildSdkToolName), Description("Build/compile SDK code for a specified project locally.")]
         public async Task<PackageOperationResponse> BuildSdkAsync(
             [Description("Absolute path to the SDK project.")]
             string packagePath,

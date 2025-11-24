@@ -301,7 +301,10 @@ additionalDirectories:
   - specification/contosowidgetmanager/Contoso.WidgetManager.Shared/
 ```
 
-4. Run `tsp-client update` from the parent directory, in this example it would be the `foo/` directory.
+4. Run `tsp-client update` from the parent directory. In the example above it would be the `foo/` directory.
+
+> NOTE: The command will fail immediately if the `update` call fails on a sub-directory.
+
 5. All done! tsp-client will call the update command on each subdirectory, forwarding commandline args to the command.
 
 > NOTE: The `local-spec-repo` flag will have special behavior during batch library generation. tsp-client will get the repo root path for the local spec repo path that is passed into the flag, then it will append the directory value from the tsp-location.yaml file in the corresponding sub-directory.

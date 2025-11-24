@@ -141,7 +141,9 @@ describe('RelatedCommentsDialogComponent', () => {
         batchVote: 'up',
         resolutionComment: 'Test resolution comment',
         disposition: 'keepOpen',
-        severity: undefined
+        severity: undefined,
+        feedbackReasons: undefined,
+        feedbackAdditionalComments: undefined
       } as CommentResolutionData);
     });
 

@@ -1,0 +1,80 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "src\Common\Common.csproj", "{3F3044DC-A9F8-DE16-79DD-4A0C1649CD06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Downloader", "src\Downloader\Downloader.csproj", "{AB75FE13-DB1A-4B6F-8B27-1486F98EA75C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trainer", "src\Trainer\Trainer.csproj", "{F1FE4054-C44E-487F-90F9-2F111AB7BD9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictor", "src\Predictor\Predictor.csproj", "{2E39B0A5-2F4A-4D6E-8A0D-0366238CB21E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester", "src\Tester\Tester.csproj", "{BEA133F4-5686-49DF-83E4-641C26B3CC25}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitHubClient", "src\GitHubClient\GitHubClient.csproj", "{57F2D1DC-DA30-40CA-AE1A-2EFD8139AF25}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{A2C54AC3-3D94-4CD3-885E-D1892063CC58}"
+	ProjectSection(SolutionItems) = preProject
+		.github\copilot-instructions.md = .github\copilot-instructions.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{43E392F7-70F3-471D-A96A-E413E4387CA6}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\build.yml = ..\.github\workflows\build.yml
+		..\.github\workflows\labeler-cache-retention.yml = ..\.github\workflows\labeler-cache-retention.yml
+		..\.github\workflows\labeler-predict-issues.yml = ..\.github\workflows\labeler-predict-issues.yml
+		..\.github\workflows\labeler-predict-pulls.yml = ..\.github\workflows\labeler-predict-pulls.yml
+		..\.github\workflows\labeler-promote.yml = ..\.github\workflows\labeler-promote.yml
+		..\.github\workflows\labeler-train.yml = ..\.github\workflows\labeler-train.yml
+		..\.github\workflows\release.yml = ..\.github\workflows\release.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Tests", "tests\Common.Tests\Common.Tests.csproj", "{D3F816D3-5CAE-4CF1-8977-F92AE96B481B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F3044DC-A9F8-DE16-79DD-4A0C1649CD06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F3044DC-A9F8-DE16-79DD-4A0C1649CD06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F3044DC-A9F8-DE16-79DD-4A0C1649CD06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F3044DC-A9F8-DE16-79DD-4A0C1649CD06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB75FE13-DB1A-4B6F-8B27-1486F98EA75C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB75FE13-DB1A-4B6F-8B27-1486F98EA75C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB75FE13-DB1A-4B6F-8B27-1486F98EA75C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB75FE13-DB1A-4B6F-8B27-1486F98EA75C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1FE4054-C44E-487F-90F9-2F111AB7BD9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1FE4054-C44E-487F-90F9-2F111AB7BD9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1FE4054-C44E-487F-90F9-2F111AB7BD9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1FE4054-C44E-487F-90F9-2F111AB7BD9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E39B0A5-2F4A-4D6E-8A0D-0366238CB21E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E39B0A5-2F4A-4D6E-8A0D-0366238CB21E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E39B0A5-2F4A-4D6E-8A0D-0366238CB21E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E39B0A5-2F4A-4D6E-8A0D-0366238CB21E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEA133F4-5686-49DF-83E4-641C26B3CC25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEA133F4-5686-49DF-83E4-641C26B3CC25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEA133F4-5686-49DF-83E4-641C26B3CC25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEA133F4-5686-49DF-83E4-641C26B3CC25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57F2D1DC-DA30-40CA-AE1A-2EFD8139AF25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57F2D1DC-DA30-40CA-AE1A-2EFD8139AF25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57F2D1DC-DA30-40CA-AE1A-2EFD8139AF25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57F2D1DC-DA30-40CA-AE1A-2EFD8139AF25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F816D3-5CAE-4CF1-8977-F92AE96B481B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F816D3-5CAE-4CF1-8977-F92AE96B481B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F816D3-5CAE-4CF1-8977-F92AE96B481B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F816D3-5CAE-4CF1-8977-F92AE96B481B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{43E392F7-70F3-471D-A96A-E413E4387CA6} = {A2C54AC3-3D94-4CD3-885E-D1892063CC58}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7B6C4568-423B-42F4-B527-042BBBF60D77}
+	EndGlobalSection
+EndGlobal

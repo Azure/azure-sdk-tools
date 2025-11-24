@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Azure.Storage.Blobs;
 using System.Text.Json;
 using Azure.Identity;
+using IssueLabeler.Shared;
 
 namespace SearchIndexCreator
 {
@@ -35,7 +36,7 @@ namespace SearchIndexCreator
             var repoNames = repoNamesConfig.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
             // Initialize BlobServiceClient (replace with your connection string)
-            var blobServiceClient = GetBlobServiceClient(_config["IssueStorageName"]);
+            var blobServiceClient = BlobStorageHelper.GetBlobServiceClient(_config["IssueStorageName"]);
             var containerClient = blobServiceClient.GetBlobContainerClient("labels");
 
             // Ensure the container exists
@@ -87,13 +88,5 @@ namespace SearchIndexCreator
             }
         }
 
-        private BlobServiceClient GetBlobServiceClient(string accountName)
-        {
-            BlobServiceClient client = new(
-                new Uri($"https://{accountName}.blob.core.windows.net/"),
-                new DefaultAzureCredential());
-
-            return client;
-        }
     }
 }

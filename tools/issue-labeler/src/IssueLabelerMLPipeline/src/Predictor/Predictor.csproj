@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Build Properties -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Container Properties -->
+  <PropertyGroup>
+    <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <ContainerDescription>Predict labels for GitHub issues and pull requests using a machine learning model.</ContainerDescription>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\..\predict\action.yml" Link="action.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitHub.Actions.Core" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.ML" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\GitHubClient\GitHubClient.csproj" />
+  </ItemGroup>
+
+</Project>

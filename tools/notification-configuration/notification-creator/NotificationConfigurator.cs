@@ -157,7 +157,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var contactsToRemove = teamSet.Except(contactsSet).ToList();
                 var contactsToAdd = contactsSet.Except(teamSet).ToList();
                 
-                string teamDescriptor = = await service.GetDescriptorAsync(team.Id);
+                string teamDescriptor = await service.GetDescriptorAsync(team.Id);
                 foreach (string descriptor in contactsToRemove)
                 {
                     if (persistChanges)

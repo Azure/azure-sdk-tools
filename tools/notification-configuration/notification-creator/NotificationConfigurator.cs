@@ -157,27 +157,22 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var contactsToRemove = teamSet.Except(contactsSet).ToList();
                 var contactsToAdd = contactsSet.Except(teamSet).ToList();
                 
-                string teamDescriptor = "";
-                if (contactsToRemove.Any() || contactsToAdd.Any())
+                string teamDescriptor = = await service.GetDescriptorAsync(team.Id);
+                foreach (string descriptor in contactsToRemove)
                 {
-                    teamDescriptor = await service.GetDescriptorAsync(team.Id);
-                    
-                    foreach (string descriptor in contactsToRemove)
+                    if (persistChanges)
                     {
-                        if (persistChanges)
-                        {
-                            logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                            await service.RemoveMember(teamDescriptor, descriptor);
-                        }
+                        logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        await service.RemoveMember(teamDescriptor, descriptor);
                     }
+                }
 
-                    foreach (string descriptor in contactsToAdd)
+                foreach (string descriptor in contactsToAdd)
+                {
+                    if (persistChanges)
                     {
-                        if (persistChanges)
-                        {
-                            logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                            await service.AddToTeamAsync(teamDescriptor, descriptor);
-                        }
+                        logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
+                        await service.AddToTeamAsync(teamDescriptor, descriptor);
                     }
                 }
             }

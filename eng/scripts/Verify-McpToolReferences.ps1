@@ -167,6 +167,10 @@ foreach ($file in Get-ChildItem -Path $ToolSourcePath -Recurse -Include *.cs -Fi
         $mcpToolNameConstantPattern = 'const string ' + $mcpConstantName + ' = "(' + $ReferencePattern + ')"'
         $constantRegex = [regex]::new($mcpToolNameConstantPattern)
         $constValueMatches = $constantRegex.Matches($content)
+        if ($constValueMatches.Count -eq 0) {
+            Write-Error "Could not find value for MCP tool name constant '$mcpConstantName' in file '$($file.FullName)'."
+            exit 1
+        }
         foreach ($valueMatch in $constValueMatches) {
             $toolName = $valueMatch.Groups[1].Value
             $declaredTools.Add($toolName) | Out-Null

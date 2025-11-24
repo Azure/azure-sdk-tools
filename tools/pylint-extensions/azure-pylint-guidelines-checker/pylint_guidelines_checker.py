@@ -3438,9 +3438,36 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         :param value: The string value to check
         :return: True if it's a preview API version, False otherwise
         """
-        if isinstance(value, str) and '-preview' in value.lower():
-            return True
+        return isinstance(value, str) and '-preview' in value.lower()
+
+    def _is_in_client_context(self, node):
+        """Check if a node is within a client or configuration class.
+        
+        :param node: The AST node to check
+        :return: True if in a client/config context, False otherwise
+        """
+        parent = node.parent
+        while parent:
+            if isinstance(parent, astroid.ClassDef):
+                class_name = parent.name
+                return (class_name.endswith('Client') or 
+                        'Configuration' in class_name or 
+                        'Config' in class_name)
+            parent = parent.parent
         return False
+
+    def _report_preview_api(self, node, api_version_value):
+        """Report a preview API version violation.
+        
+        :param node: The node to report the error on
+        :param api_version_value: The preview API version string
+        """
+        self.add_message(
+            msgid="stable-sdk-no-preview-api",
+            node=node,
+            args=(self._sdk_version, api_version_value),
+            confidence=None,
+        )
 
     def visit_module(self, node):
         """Visit the module to check for VERSION definition.
@@ -3449,44 +3476,74 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         """
         self._check_version_in_module(node)
 
+    def _check_api_version_in_value(self, node, value_node):
+        """Check if a value node contains a preview API version.
+        
+        Handles both direct string assignments and kwargs.pop() patterns.
+        
+        :param node: The node to report the error on
+        :param value_node: The value node to check
+        """
+        # Direct string literal: api_version = "2024-01-01-preview"
+        if hasattr(value_node, 'value') and self._is_preview_api_version(value_node.value):
+            self._report_preview_api(node, value_node.value)
+            return
+        
+        # kwargs.pop("api_version", "2024-01-01-preview") pattern
+        try:
+            if (value_node.func.attrname == 'pop' and
+                value_node.func.expr.name == 'kwargs' and
+                len(value_node.args) >= 2 and
+                value_node.args[0].value == 'api_version'):
+                
+                default_value = value_node.args[1]
+                if hasattr(default_value, 'value') and self._is_preview_api_version(default_value.value):
+                    self._report_preview_api(node, default_value.value)
+        except (AttributeError, IndexError):
+            pass
+
     def visit_assign(self, node):
         """Check assignments for preview api_version values.
         
+        Only checks within client classes or configuration classes.
+        
         :param node: The assignment node
         """
-        if not self._is_stable_sdk:
+        if not self._is_stable_sdk or not self._is_in_client_context(node):
             return
-            
+        
         try:
-            # Check if any target is named 'api_version' or has 'api_version' as attrname
             for target in node.targets:
-                # Check for simple variable: api_version = "..."
-                if hasattr(target, 'name') and target.name == 'api_version':
-                    if hasattr(node.value, 'value'):
-                        api_version_value = node.value.value
-                        if self._is_preview_api_version(api_version_value):
-                            self.add_message(
-                                msgid="stable-sdk-no-preview-api",
-                                node=node,
-                                args=(self._sdk_version, api_version_value),
-                                confidence=None,
-                            )
-                # Check for attribute assignment: self.api_version = "..." or self._api_version = "..."
-                elif hasattr(target, 'attrname') and 'api_version' in target.attrname:
-                    if hasattr(node.value, 'value'):
-                        api_version_value = node.value.value
-                        if self._is_preview_api_version(api_version_value):
-                            self.add_message(
-                                msgid="stable-sdk-no-preview-api",
-                                node=node,
-                                args=(self._sdk_version, api_version_value),
-                                confidence=None,
-                            )
+                target_name = getattr(target, 'name', None) or getattr(target, 'attrname', None)
+                if target_name and 'api_version' in target_name.lower():
+                    self._check_api_version_in_value(node, node.value)
+        except Exception:
+            pass
+
+    def visit_annassign(self, node):
+        """Check annotated assignments for preview api_version values.
+        
+        Only checks within client classes or configuration classes.
+        
+        Handles patterns like: api_version: str = "2024-01-01-preview"
+        or: api_version: str = kwargs.pop("api_version", "2024-01-01-preview")
+        
+        :param node: The annotated assignment node
+        """
+        if not self._is_stable_sdk or not node.value or not self._is_in_client_context(node):
+            return
+        
+        try:
+            target_name = getattr(node.target, 'name', None) or getattr(node.target, 'attrname', None)
+            if target_name and 'api_version' in target_name.lower():
+                self._check_api_version_in_value(node, node.value)
         except Exception:
             pass
 
     def visit_call(self, node):
         """Check function/method calls for api_version keyword arguments with preview values.
+        
+        Only checks calls within client classes or calls to client/config constructors.
         
         :param node: The call node
         """
@@ -3494,53 +3551,45 @@ class StableSDKPreviewAPIChecker(BaseChecker):
             return
             
         try:
+            # Check if the call is to a Client or Configuration constructor
+            func_name = getattr(node.func, 'name', '')
+            is_client_call = (func_name.endswith('Client') or 
+                            'Configuration' in func_name or 
+                            'Config' in func_name)
+            
+            # Must be either a client constructor call or inside a client context
+            if not is_client_call and not self._is_in_client_context(node):
+                return
+            
             # Check keyword arguments
-            if node.keywords:
-                for keyword in node.keywords:
-                    if keyword.arg == 'api_version':
-                        if hasattr(keyword.value, 'value'):
-                            api_version_value = keyword.value.value
-                            if self._is_preview_api_version(api_version_value):
-                                self.add_message(
-                                    msgid="stable-sdk-no-preview-api",
-                                    node=node,
-                                    args=(self._sdk_version, api_version_value),
-                                    confidence=None,
-                                )
+            for keyword in node.keywords or []:
+                if keyword.arg == 'api_version' and hasattr(keyword.value, 'value'):
+                    if self._is_preview_api_version(keyword.value.value):
+                        self._report_preview_api(node, keyword.value.value)
         except Exception:
             pass
 
     def visit_functiondef(self, node):
         """Check function definitions for default parameter values with preview api_version.
         
+        Only checks methods within client or configuration classes.
+        
         :param node: The function definition node
         """
-        if not self._is_stable_sdk:
+        if not self._is_stable_sdk or not self._is_in_client_context(node):
             return
-            
+        
         try:
-            # Check default values of parameters
-            if node.args.defaults:
-                param_names = [arg.name for arg in node.args.args]
-                defaults = node.args.defaults
-                
-                # Match defaults to their parameters (defaults are right-aligned)
-                num_params = len(param_names)
-                num_defaults = len(defaults)
-                offset = num_params - num_defaults
-                
-                for i, default in enumerate(defaults):
-                    param_name = param_names[offset + i]
-                    if param_name == 'api_version':
-                        if hasattr(default, 'value'):
-                            api_version_value = default.value
-                            if self._is_preview_api_version(api_version_value):
-                                self.add_message(
-                                    msgid="stable-sdk-no-preview-api",
-                                    node=node,
-                                    args=(self._sdk_version, api_version_value),
-                                    confidence=None,
-                                )
+            if not node.args.defaults:
+                return
+            
+            param_names = [arg.name for arg in node.args.args]
+            offset = len(param_names) - len(node.args.defaults)
+            
+            for i, default in enumerate(node.args.defaults):
+                if param_names[offset + i] == 'api_version' and hasattr(default, 'value'):
+                    if self._is_preview_api_version(default.value):
+                        self._report_preview_api(node, default.value)
         except Exception:
             pass
 
@@ -3551,29 +3600,14 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         
         :param node: The class definition node
         """
-        if not self._is_stable_sdk:
+        if not self._is_stable_sdk or 'ApiVersion' not in node.name:
             return
             
         try:
-            # Check if this is an ApiVersion enum class
-            if 'ApiVersion' in node.name:
-                # Check all assignments in the class body (enum members)
-                for item in node.body:
-                    if isinstance(item, astroid.Assign):
-                        # Get the enum member name and value
-                        for target in item.targets:
-                            if hasattr(target, 'name') and hasattr(item.value, 'value'):
-                                enum_member_name = target.name
-                                enum_value = item.value.value
-                                
-                                # Check if the enum value contains preview API
-                                if self._is_preview_api_version(enum_value):
-                                    self.add_message(
-                                        msgid="stable-sdk-no-preview-api",
-                                        node=item,
-                                        args=(self._sdk_version, enum_value),
-                                        confidence=None,
-                                    )
+            for item in node.body:
+                if isinstance(item, astroid.Assign) and hasattr(item.value, 'value'):
+                    if self._is_preview_api_version(item.value.value):
+                        self._report_preview_api(item, item.value.value)
         except Exception:
             pass
 

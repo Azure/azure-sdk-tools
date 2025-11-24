@@ -269,7 +269,7 @@ Batch client library generation is only supported with the `tsp-client update` c
     - zas/
 ```
 
-2. tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that contain the regular tsp-location.yaml files with appropriate properties for client library generation. Other tsp-location.yaml properties such as `directory`, `commit`, `repo`, `additionalDirectories` are not currently supported with the `batch` configuration. Example:
+2. The top level tsp-location.yaml should only have the `batch` property configured. The batch property is expected to be a list of sub-directories that directly contain the regular tsp-location.yaml files with appropriate configuraitons for client library generation. Other tsp-location.yaml properties such as `directory`, `commit`, `repo`, `additionalDirectories` are not currently supported with the `batch` configuration. Example:
 
 ```yml title=tsp-location.yaml
 batch:
@@ -277,9 +277,9 @@ batch:
   - ./zas
 ```
 
-3. Ensure that the subdirectories specified in the `batch` list have tsp-location.yaml files configured for them. You can either create the tsp-location.yaml file manually or use `tsp-client init` with an appropriate `emitter-output-dir` configuration to create it.
+3. Ensure that the subdirectories specified in the `batch` list have tsp-location.yaml files configured for them. If a sub-directory doesn't have a tsp-location.yaml file directly under it, tsp-client will return an error. To set up the tsp-location.yaml files in the sub-directories, you can either create the tsp-location.yaml file manually or use `tsp-client init` with an appropriate `emitter-output-dir` configuration to create it.
 
-Example file structure:
+Example of required file structure:
 
 ```
 - sdk/
@@ -291,7 +291,7 @@ Example file structure:
         - tsp-location.yaml
 ```
 
-Example regular tsp-location.yaml in sub-directories:
+Example of regular tsp-location.yaml in sub-directories:
 
 ```yml title=tsp-location.yaml
 directory: specification/contosowidgetmanager/Contoso.WidgetManager

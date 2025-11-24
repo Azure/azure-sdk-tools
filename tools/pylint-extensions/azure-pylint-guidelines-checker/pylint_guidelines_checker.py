@@ -3440,22 +3440,6 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         """
         return isinstance(value, str) and '-preview' in value.lower()
 
-    def _is_in_client_context(self, node):
-        """Check if a node is within a client or configuration class.
-        
-        :param node: The AST node to check
-        :return: True if in a client/config context, False otherwise
-        """
-        parent = node.parent
-        while parent:
-            if isinstance(parent, astroid.ClassDef):
-                class_name = parent.name
-                return (class_name.endswith('Client') or 
-                        'Configuration' in class_name or 
-                        'Config' in class_name)
-            parent = parent.parent
-        return False
-
     def _report_preview_api(self, node, api_version_value):
         """Report a preview API version violation.
         
@@ -3508,7 +3492,7 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         
         :param node: The assignment node
         """
-        if not self._is_stable_sdk or not self._is_in_client_context(node):
+        if not self._is_stable_sdk:
             return
         
         try:
@@ -3529,7 +3513,7 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         
         :param node: The annotated assignment node
         """
-        if not self._is_stable_sdk or not node.value or not self._is_in_client_context(node):
+        if not self._is_stable_sdk or not node.value:
             return
         
         try:
@@ -3557,7 +3541,7 @@ class StableSDKPreviewAPIChecker(BaseChecker):
                             'Config' in func_name)
             
             # Must be either a client constructor call or inside a client context
-            if not is_client_call and not self._is_in_client_context(node):
+            if not is_client_call:
                 return
             
             # Check keyword arguments
@@ -3575,7 +3559,7 @@ class StableSDKPreviewAPIChecker(BaseChecker):
         
         :param node: The function definition node
         """
-        if not self._is_stable_sdk or not self._is_in_client_context(node):
+        if not self._is_stable_sdk:
             return
         
         try:

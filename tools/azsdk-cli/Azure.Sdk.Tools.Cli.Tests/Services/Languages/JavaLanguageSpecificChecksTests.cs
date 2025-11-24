@@ -971,7 +971,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMavenHelper>().Object,
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
-                    new Mock<ICommonValidationHelpers>().Object);
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1024,7 +1025,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMavenHelper>().Object,
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
-                    new Mock<ICommonValidationHelpers>().Object);
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1077,7 +1079,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMavenHelper>().Object,
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
-                    new Mock<ICommonValidationHelpers>().Object);
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1130,7 +1133,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMavenHelper>().Object,
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
-                    new Mock<ICommonValidationHelpers>().Object);
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);

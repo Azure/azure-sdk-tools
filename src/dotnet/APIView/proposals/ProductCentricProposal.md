@@ -146,12 +146,17 @@ APIView will automatically:
 ```tsp
 /** New top-level Product entity */
 model Product {
+  /** GUID identifier for the Product. */
   Id: string;
-  DisplayName: string;
+  /** Human-friendly name of the Product. Otherwise, defaults to the namespace. */
+  DisplayName?: string;
   Description?: string;
-  Owner?: string;
-  TypeSpecMetadata: TypeSpecProductMetadata;
+  /** Service-level contacts. */
+  Owners?: string[];
+  /** Convenience field for the latest approved (or proposed) namespace. */
+  Namespace: string;
   NamespaceInfo: ProductNamespaceInfo;
+  /** Associated Review IDs. */
   ReviewIds: string[];
   ChangeHistory?: ProductChangeHistory[];
   CreatedOn: utcDateTime;
@@ -159,30 +164,15 @@ model Product {
   IsDeleted: boolean;
 }
 
-/** Link to TypeSpec metadata and EngSys config. */
-model TypeSpecProductMetadata {
-  TypeSpecReviewId: string;
-  TypeSpecApiRevisionId?: string;
-  EntryPointPath?: string;
-  TspConfigSourceUri?: string;
-  CrossLanguagePackageId?: string;
-}
-
 /** Product-level change history */
 model ProductChangeHistory extends ChangeHistoryModel {
   ChangeAction: ProductChangeAction;
 }
 
+/** Types of changes that can occur to a Product. */
 enum ProductChangeAction {
   Created,
-  NamespaceProposalAdded,
-  NamespaceApproved,
-  NamespaceRejected,
-  NamespaceWithdrawn,
-  LinkedReviewAdded,
-  LinkedReviewRemoved,
-  TypeSpecReviewChanged,
-  MetadataUpdated,
+  ...
   Deleted,
   UnDeleted
 }
@@ -301,7 +291,7 @@ We will also remove the `NamespaceReviewStatus` enum.
 
 ## Open Questions
 
-1. Do we care about just namespace or also package name?
+1. Do we care about just namespace or also package name? The current proposal has both fields, so approval, rejection, etc. is implicitly for both. Is that acceptable?
 2. The namespace behavior proposed would mean that a Product could have multiple rejected namespaces, and other Products would not be able to use those namespaces. Is that acceptable?
 
 ---

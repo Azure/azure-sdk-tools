@@ -60,6 +60,6 @@ Response:
 {
   "question": "What are the requirements and prerequisites to get my Azure service ready for SDK onboarding?",
   "category": "service-onboarding",
-  "spec_language": "unknown"
+  "spec_language": "unknown",
   "needs_rag_processing": true
 }

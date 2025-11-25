@@ -1,4 +1,3 @@
-#nullable enable
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
@@ -73,7 +72,7 @@ namespace APIViewWeb.LeanModels
         public List<string> MemoryIds { get; set; } = [];
         public float ConfidenceScore { get; set; }
 
-        public List<CommentFeedback>? Feedback { get; set; } = [];
+        public List<CommentFeedback> Feedback { get; set; } = [];
         public static CommentSeverity ParseSeverity(string value)
         {
             return value?.ToUpperInvariant() switch

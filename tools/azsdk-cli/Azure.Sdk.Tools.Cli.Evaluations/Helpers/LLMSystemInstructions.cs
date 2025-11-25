@@ -32,13 +32,13 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
         private static string GetCopilotInstructions()
         {
-            return File.ReadAllText(TestSetup.GetCopilotInstructionsPath!);
+            return File.ReadAllText(TestSetup.CopilotInstructionsPath!);
         }
 
         private static string GetMentionedInstructions(string instructionRelativePath)
         {
 
-            var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.GetCopilotInstructionsPath!)!;
+            var copilotBaseDirectory = Path.GetDirectoryName(TestSetup.CopilotInstructionsPath!)!;
                 
             // Normalize the path
             instructionRelativePath = instructionRelativePath.Replace('\\', '/');

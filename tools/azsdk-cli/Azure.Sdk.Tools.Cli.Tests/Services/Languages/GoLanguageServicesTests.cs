@@ -27,7 +27,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             LangService = new GoLanguageService(
                 new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()),
                 gitHelper,
-                NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>());
+                NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
+                Mock.Of<IFileHelper>());
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

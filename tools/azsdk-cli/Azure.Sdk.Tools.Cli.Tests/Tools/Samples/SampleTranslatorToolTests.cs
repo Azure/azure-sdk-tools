@@ -4,7 +4,6 @@
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -18,7 +17,6 @@ public class SampleTranslatorToolTests
 {
     private TestLogger<SampleTranslatorTool> _logger;
     private Mock<IGitHelper> _mockGitHelper;
-    private Mock<ILanguageSpecificResolver<SampleLanguageContext>> _mockSampleContextResolver;
     private Mock<IMicroagentHostService> _mockMicroagentHostService;
     private Mock<IFileHelper> _mockFileHelper;
     private SampleTranslatorTool _sampleTranslatorTool;
@@ -28,7 +26,6 @@ public class SampleTranslatorToolTests
     {
         _logger = new TestLogger<SampleTranslatorTool>();
         _mockGitHelper = new Mock<IGitHelper>();
-        _mockSampleContextResolver = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
         _mockMicroagentHostService = new Mock<IMicroagentHostService>();
         _mockFileHelper = new Mock<IFileHelper>();
 
@@ -41,7 +38,6 @@ public class SampleTranslatorToolTests
             _logger,
             _mockGitHelper.Object,
             languageServices,
-            _mockSampleContextResolver.Object,
             _mockFileHelper.Object);
     }
 

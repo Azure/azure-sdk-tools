@@ -317,6 +317,7 @@ export class CommentThreadComponent {
     const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
+      this.codePanelRowData!.draftCommentText = '';
       this.selectedSeverity = null;
       this.cancelCommentActionEmitter.emit(
         {
@@ -369,8 +370,9 @@ export class CommentThreadComponent {
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;
+        this.codePanelRowData!.showReplyTextBox = false;
+        this.codePanelRowData!.draftCommentText = '';
       }
-      this.codePanelRowData!.showReplyTextBox = false;
     } else {
       const panel = target.closest("p-panel") as Element;
       const commentId = panel.getAttribute("data-comment-id");
@@ -706,12 +708,7 @@ export class CommentThreadComponent {
 
   getAICommentInfoStructured(comment: CommentItemModel): AICommentInfo {
     const items: AICommentInfoItem[] = [];
-    items.push({
-        icon: 'pi-id-card',
-        label: 'Id',
-        value: comment.id,
-      });
-
+    
     if (comment.confidenceScore && comment.confidenceScore > 0) {
       const score = Math.round(comment.confidenceScore * 100);
       const scoreClass = score >= 80 ? 'high-confidence' : score >= 60 ? 'medium-confidence' : 'low-confidence';
@@ -740,6 +737,12 @@ export class CommentThreadComponent {
         valueList: comment.memoryIds
       });
     }
+    
+    items.push({
+        icon: 'pi-id-card',
+        label: 'Id',
+        value: comment.id,
+      });
     
     return { items };
   }

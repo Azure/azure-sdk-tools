@@ -9,9 +9,10 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
     public partial class Scenario
     {
         [Test]
-        public async Task AzsdkTypeSpecGeneration_Step02_TypespecValidation()
+        [Category(RepositoryCategories.AzureRestApiSpecs)]
+        public async Task Evaluate_CheckSDKGenerationStatus()
         {
-            var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");
+            var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example2.json");
 
             // Load scenario data from JSON
             var scenarioData = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);

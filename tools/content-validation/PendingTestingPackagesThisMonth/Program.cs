@@ -144,6 +144,7 @@ namespace PendingTestingPackagesThisMonth
                 var packages = configJson?.FirstOrDefault()?["packages"] ?? new List<string>();
 
                 result.RemoveWhere(packageName => packageName.StartsWith("azure-resourcemanager-"));
+                result.RemoveWhere(packageName => packageName.StartsWith("spring-cloud-"));
                 foreach (var pkg in packages)
                 {
                     result.Remove(pkg);

@@ -108,7 +108,7 @@ stages:
     displayName: RunTest_All
     condition: eq('${{ parameters.packages }}', 'all')
     dependsOn: FetchLastMonthReleasedPackages
-    timeoutInMinutes: 240
+    timeoutInMinutes: 180
     strategy:
       matrix: $[ dependencies.FetchLastMonthReleasedPackages.outputs['generateMatrix.matrix'] ]
       maxParallel: ${{ parameters.maxParallel }}
@@ -119,22 +119,33 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules EmptyTagsValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
+        runTestCase=""
+        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules EmptyTagsValidation"
+            runTestCase="TestEmptyTags"
+        fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingContentValidation"
+            runTestCase="TestTableMissingContent"
+        fi
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
       name: setRules
 
     - template: ../common/content-validation-for-dotnet.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
 
   - job: content_validation_matrix_not_all
     displayName: RunTest_Not_All
     condition: ne('${{ parameters.packages }}', 'all')
-    timeoutInMinutes: 240
+    timeoutInMinutes: 180
     strategy:
       matrix:
         ${{ each pkg in split(parameters.packages, ',') }}:
@@ -148,17 +159,28 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules EmptyTagsValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
+        runTestCase=""
+        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules EmptyTagsValidation"
+            runTestCase="TestEmptyTags"
+        fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingContentValidation"
+            runTestCase="TestTableMissingContent"
+        fi
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
       name: setRules
 
     - template: ../common/content-validation-for-dotnet.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
 
 ## Need to confirm, disabled for now
 # - stage: TotalIssuesSummary

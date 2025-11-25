@@ -80,7 +80,7 @@ steps:
     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
     arguments: '-e BROWSER=chromium --filter FullyQualifiedName~${{ parameters.runTestCase }}'
     testRunTitle: 'Content Validation Testing Start'
-  continueOnError: false
+  continueOnError: true
 
 # - task: DotNetCoreCLI@2
 #   displayName: Run test case

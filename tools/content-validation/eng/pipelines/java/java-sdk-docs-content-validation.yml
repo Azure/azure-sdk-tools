@@ -140,21 +140,44 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules InconsistentTextFormatValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
-        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules GarbledTextValidation"; fi
-        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules ExtraLabelValidation"; fi
-        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules UnnecessarySymbolsValidation"; fi
-        if [ "$(echo ${{ parameters.rule_MissingGenerics }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingGenericsValidation"; fi
+        runTestCase=""
+        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules InconsistentTextFormatValidation"
+            runTestCase="TestInconsistentTextFormat"
+        fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingContentValidation"
+            runTestCase="TestTableMissingContent"
+        fi
+        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules GarbledTextValidation"
+            runTestCase="TestGarbledText"
+        fi
+        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules ExtraLabelValidation"
+            runTestCase="TestExtraLabel"
+        fi
+        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules UnnecessarySymbolsValidation"
+            runTestCase="TestUnnecessarySymbols"
+        fi
+        if [ "$(echo ${{ parameters.rule_MissingGenerics }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingGenericsValidation"
+            runTestCase="TestMissingGenerics"
+        fi
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
       name: setRules
 
     - template: ../common/content-validation-for-java.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
 
   - job: content_validation_matrix_not_all
     displayName: RunTest_Not_All
@@ -173,21 +196,44 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules InconsistentTextFormatValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
-        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules GarbledTextValidation"; fi
-        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules ExtraLabelValidation"; fi
-        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules UnnecessarySymbolsValidation"; fi
-        if [ "$(echo ${{ parameters.rule_MissingGenerics }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingGenericsValidation"; fi
+        runTestCase=""
+        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules InconsistentTextFormatValidation"
+            runTestCase="TestInconsistentTextFormat"
+        fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingContentValidation"
+            runTestCase="TestTableMissingContent"
+        fi
+        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules GarbledTextValidation"
+            runTestCase="TestGarbledText"
+        fi
+        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules ExtraLabelValidation"
+            runTestCase="TestExtraLabel"
+        fi
+        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules UnnecessarySymbolsValidation"
+            runTestCase="TestUnnecessarySymbols"
+        fi
+        if [ "$(echo ${{ parameters.rule_MissingGenerics }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingGenericsValidation"
+            runTestCase="TestMissingGenerics"
+        fi
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
       name: setRules
 
     - template: ../common/content-validation-for-java.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
 
 ## Need to confirm, disabled for now
 # - stage: TotalIssuesSummary

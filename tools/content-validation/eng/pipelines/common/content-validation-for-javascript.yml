@@ -13,6 +13,9 @@ parameters:
 - name: rules
   type: string
   default: ""
+- name: runTestCase
+  type: string
+  default: ""
 
 steps:
 - task: UseDotNet@2
@@ -69,13 +72,23 @@ steps:
   continueOnError: false
 
 - task: DotNetCoreCLI@2
-  displayName: Run test case
+  displayName: Run specific test method
+  condition: ne('${{ parameters.runTestCase }}', '')
   inputs:
     command: 'test'
     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
-    arguments: '-e BROWSER=chromium --filter Category=JsTest'
+    arguments: '-e BROWSER=chromium --filter FullyQualifiedName~${{ parameters.runTestCase }}'
     testRunTitle: 'Content Validation Testing Start'
   continueOnError: true
+  
+# - task: DotNetCoreCLI@2
+#   displayName: Run test case
+#   inputs:
+#     command: 'test'
+#     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
+#     arguments: '-e BROWSER=chromium --filter Category=JsTest'
+#     testRunTitle: 'Content Validation Testing Start'
+#   continueOnError: true
 
 - task: DownloadPipelineArtifact@2
   displayName: Download The Last Artifact issues-summary

@@ -206,7 +206,7 @@ model FeedbackRequest {
   @doc("Optional comment from the user about the conversation")
   comment?: string;
   
-  @doc("Optional The channel ID")
+  @doc("Optional channel ID")
   channel_id?: string;
 
   @doc("Optional user name")

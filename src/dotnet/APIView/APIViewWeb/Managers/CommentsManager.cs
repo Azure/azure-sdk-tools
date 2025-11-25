@@ -95,7 +95,7 @@ namespace APIViewWeb.Managers
 
                 var res = await c.SendAsync(req);
                 var body = await res.Content.ReadAsStringAsync();
-                var users = JsonSerializer.Deserialize<GithubUser[]>(body);
+                var users = JsonSerializer.Deserialize<GithubUser[]>(body) ?? [];
                 foreach (var user in users)
                 {
                     TaggableUsers.Add(user);
@@ -259,8 +259,10 @@ namespace APIViewWeb.Managers
                 clientResponse.EnsureSuccessStatusCode();
                 string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
                 AgentChatResponse agentChatResponse = JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
-
-                await AddAgentComment(comment, agentChatResponse?.Response);
+                if (agentChatResponse != null)
+                {
+                    await AddAgentComment(comment, agentChatResponse.Response);
+                }
                 
                 _logger.LogInformation("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
             }

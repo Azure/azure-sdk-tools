@@ -8,7 +8,7 @@ const (
 )
 
 type FeedbackReq struct {
-	ChannelID string   `json:"channel_id,omitempty" jsonschema:"omitempty,description=Optional The channel ID"`
+	ChannelID string   `json:"channel_id,omitempty" jsonschema:"omitempty,description=Optional channel ID"`
 	TenantID string    `json:"tenant_id" jsonschema:"required,description=The tenant ID"`
 	Messages []Message `json:"messages" jsonschema:"required,description=The conversation messages"`
 	Reaction Reaction  `json:"reaction" jsonschema:"required,description=User's reaction to the conversation"`

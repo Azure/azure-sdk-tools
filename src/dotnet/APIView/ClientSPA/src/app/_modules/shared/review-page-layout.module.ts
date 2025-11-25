@@ -4,6 +4,8 @@ import { ConversationsComponent } from 'src/app/_components/conversations/conver
 import { CommentThreadComponent } from 'src/app/_components/shared/comment-thread/comment-thread.component';
 import { RelatedCommentsDialogComponent } from 'src/app/_components/shared/related-comments-dialog/related-comments-dialog.component';
 import { CommentSeverityComponent } from 'src/app/_components/shared/comment-severity/comment-severity.component';
+import { AICommentFeedbackDialogComponent } from 'src/app/_components/shared/ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteDialogComponent } from 'src/app/_components/shared/ai-comment-delete-dialog/ai-comment-delete-dialog.component';
 import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-page-layout/review-page-layout.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
@@ -26,6 +28,8 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     ReviewInfoComponent,
     CommentThreadComponent,
     RelatedCommentsDialogComponent,
+    AICommentFeedbackDialogComponent,
+    AICommentDeleteDialogComponent,
     CommentSeverityComponent,
     CrossLangViewComponent,
     ConversationsComponent,
@@ -39,6 +43,8 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
   exports: [
     ReviewInfoComponent,
     CommentThreadComponent,
+    AICommentFeedbackDialogComponent,
+    AICommentDeleteDialogComponent,
     CommentSeverityComponent,
     CrossLangViewComponent,
     ConversationsComponent,

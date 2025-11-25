@@ -214,3 +214,19 @@
         </div>
     </ng-template>
 </p-overlayPanel>
+
+<!-- AI Comment Feedback Dialog (for downvotes) -->
+<app-ai-comment-feedback-dialog
+    [(visible)]="showAIFeedbackDialog"
+    [commentId]="pendingDownvoteCommentId"
+    (feedbackSubmit)="onAIFeedbackSubmit($event)"
+    (cancel)="onAIFeedbackCancel()">
+</app-ai-comment-feedback-dialog>
+
+<!-- AI Comment Delete Dialog (for deletions) -->
+<app-ai-comment-delete-dialog
+    [(visible)]="showAIDeleteDialog"
+    [commentId]="pendingDeleteCommentId"
+    (deleteConfirm)="onAIDeleteConfirm($event)"
+    (cancel)="onAIDeleteCancel()">
+</app-ai-comment-delete-dialog>

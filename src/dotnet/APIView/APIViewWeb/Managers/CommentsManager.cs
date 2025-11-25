@@ -204,13 +204,8 @@ namespace APIViewWeb.Managers
 
         public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-            return await UpdateCommentSeverityAsync(user, comment, severity);
-        }
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
 
-
-        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, CommentItemModel comment, CommentSeverity? severity)
-        {
             await AssertOwnerAsync(user, comment);
             
             comment.ChangeHistory.Add(
@@ -491,9 +486,15 @@ namespace APIViewWeb.Managers
             foreach (string commentId in request.CommentIds)
             {
                 CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+                
+                if (request.Feedback != null)
+                {
+                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                }
+                
                 if (request.Vote != FeedbackVote.None)
                 {
-                    await SetVoteAsync(user, comment, request.Vote);
+                    await SetVoteAsync(user, reviewId, commentId, request.Vote);
                 }
 
                 if (!string.IsNullOrEmpty(request.CommentReply))
@@ -516,13 +517,14 @@ namespace APIViewWeb.Managers
 
                 if (request.Severity.HasValue && request.Severity != comment.Severity)
                 {
-                    await UpdateCommentSeverityAsync(user, comment, request.Severity);
+                    await UpdateCommentSeverityAsync(user, reviewId, commentId, request.Severity);
+                    comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
                 }
 
                 switch (request.Disposition)
                 {
                     case ConversationDisposition.Delete:
-                        await SoftDeleteCommentAsync(user, comment);
+                        await SoftDeleteCommentAsync(user, reviewId, commentId);
                         break;
                     case ConversationDisposition.Resolve:
                         await ResolveConversation(user, reviewId, comment.ElementId);
@@ -546,6 +548,29 @@ namespace APIViewWeb.Managers
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
+        }
+
+        public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment == null)
+            {
+                _logger.LogWarning($"Comment {commentId} not found for feedback submission");
+                return;
+            }
+
+            string userName = user.GetGitHubLogin();
+            comment.Feedback.Add(new CommentFeedback
+            {
+                Reasons = feedback.Reasons?.Select(r => r.ToString()).ToList() ?? [],
+                Comment = feedback.Comment ?? string.Empty,
+                IsDelete = feedback.IsDelete,
+                SubmittedBy = userName,
+                SubmittedOn = DateTime.UtcNow
+            });
+
+            await _commentsRepository.UpsertCommentAsync(comment);
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
@@ -597,8 +622,10 @@ namespace APIViewWeb.Managers
                 });
         }
 
-        private async Task SetVoteAsync(ClaimsPrincipal user, CommentItemModel comment, FeedbackVote voteType)
+        private async Task SetVoteAsync(ClaimsPrincipal user, string reviewId, string commentId, FeedbackVote voteType)
         {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
             string userName = user.GetGitHubLogin();
             bool voteChanged = false;
 

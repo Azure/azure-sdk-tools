@@ -4,8 +4,9 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Models.AiCompletion;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AiCompletion;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
@@ -99,7 +100,7 @@ This tool applies to all tasks involving **TypeSpec**:
 Pass in a `question` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links
 ")]
-        public async Task<AiCompletionToolResponse> AuthoringWithAzureSDKDocumentation(
+        public async Task<TypeSpecAuthoringResponse> AuthoringWithAzureSDKDocumentation(
             [Description("The question to ask the AI agent")]
             string question,
             CancellationToken ct = default)
@@ -109,7 +110,7 @@ Returns an answer with supporting references and documentation links
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(question))
                 {
-                    return new AiCompletionToolResponse
+                    return new TypeSpecAuthoringResponse
                     {
                         ResponseError = "Question cannot be empty"
                     };
@@ -135,7 +136,7 @@ Returns an answer with supporting references and documentation links
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",
                     response.Id, response.HasResult);
 
-                return new AiCompletionToolResponse
+                return new TypeSpecAuthoringResponse
                 {
                     IsSuccessful = response.HasResult,
                     Answer = response.Answer,
@@ -154,7 +155,7 @@ Returns an answer with supporting references and documentation links
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 _logger.LogWarning("AI query was cancelled");
-                return new AiCompletionToolResponse
+                return new TypeSpecAuthoringResponse
                 {
                     ResponseError = "Query was cancelled"
                 };
@@ -162,7 +163,7 @@ Returns an answer with supporting references and documentation links
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error querying AI agent");
-                return new AiCompletionToolResponse
+                return new TypeSpecAuthoringResponse
                 {
                     ResponseError = $"Failed to query AI agent: {ex.Message}"
                 };
@@ -186,114 +187,5 @@ Returns an answer with supporting references and documentation links
                     : r.Content
             }).ToList();
         }
-    }
-
-    // Input models for the MCP tool
-    public class MessageInput
-    {
-        [Description("The role of the message (user, assistant, or system)")]
-        public string Role { get; set; } = "user";
-
-        [Description("The content of the message")]
-        [Required]
-        public string Content { get; set; } = string.Empty;
-    }
-
-    // Response models for the MCP tool
-    public class AiCompletionToolResponse : CommandResponse
-    {
-        [JsonPropertyName("is_successful")]
-        public bool IsSuccessful { get; set; }
-
-        [JsonPropertyName("answer")]
-        public string Answer { get; set; } = string.Empty;
-
-        [JsonPropertyName("references")]
-        public List<DocumentReference> References { get; set; } = new();
-
-        [JsonPropertyName("full_context")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? FullContext { get; set; }
-
-        [JsonPropertyName("reasoning_progress")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? ReasoningProgress { get; set; }
-
-        [JsonPropertyName("query_intension")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public QueryIntension? QueryIntension { get; set; }
-
-        protected override string Format()
-        {
-            if (!IsSuccessful || !string.IsNullOrEmpty(ResponseError))
-            {
-                return string.Empty;
-            }
-            var result = new StringBuilder();
-            result.AppendLine($"**Answer:** {Answer}");
-
-            if (References.Any())
-            {
-                result.AppendLine("\n**References:**");
-                foreach (var reference in References)
-                {
-                    result.AppendLine($"- **{reference.Title}** ({reference.Source})");
-                    result.AppendLine($"  {reference.Link}");
-                    if (!string.IsNullOrEmpty(reference.Snippet))
-                    {
-                        result.AppendLine($"  Snippet: {reference.Snippet}");
-                    }
-                    result.AppendLine();
-                }
-            }
-
-            if (QueryIntension != null)
-            {
-                result.AppendLine($"\n**Query Analysis:**");
-                result.AppendLine($"- Category: {QueryIntension.Category}");
-                if (!string.IsNullOrEmpty(QueryIntension.SpecType))
-                {
-                    result.AppendLine($"- Spec Type: {QueryIntension.SpecType}");
-                }
-                if (!string.IsNullOrEmpty(QueryIntension.Scope))
-                {
-                    result.AppendLine($"- Scope: {QueryIntension.Scope}");
-                }
-            }
-
-            return result.ToString();
-        }
-    }
-
-    public class DocumentReference
-    {
-        [JsonPropertyName("title")]
-        public string Title { get; set; } = string.Empty;
-
-        [JsonPropertyName("source")]
-        public string Source { get; set; } = string.Empty;
-
-        [JsonPropertyName("link")]
-        public string Link { get; set; } = string.Empty;
-
-        [JsonPropertyName("snippet")]
-        public string Snippet { get; set; } = string.Empty;
-    }
-
-    public class QueryIntension
-    {
-        [JsonPropertyName("question")]
-        public string Question { get; set; } = string.Empty;
-
-        [JsonPropertyName("category")]
-        public string Category { get; set; } = string.Empty;
-
-        [JsonPropertyName("spec_type")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? SpecType { get; set; }
-
-        [JsonPropertyName("scope")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? Scope { get; set; }
     }
 }

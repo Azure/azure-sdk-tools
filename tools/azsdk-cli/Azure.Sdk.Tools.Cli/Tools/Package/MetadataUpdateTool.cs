@@ -33,9 +33,10 @@ public class MetadataUpdateTool : LanguageMcpTool
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
     private const string UpdateMetadataCommandName = "update-metadata";
+    private const string UpdateMetadataToolName = "azsdk_package_update_metadata";
 
     protected override Command GetCommand() =>
-        new(UpdateMetadataCommandName, "Updates package metadata files for Azure SDK packages.") { SharedOptions.PackagePath };
+        new McpCommand(UpdateMetadataCommandName, "Updates package metadata files for Azure SDK packages.", UpdateMetadataToolName) { SharedOptions.PackagePath };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
@@ -49,7 +50,7 @@ public class MetadataUpdateTool : LanguageMcpTool
     /// <param name="packagePath">The absolute path to the package directory.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
     /// <returns>A response indicating the result of the metadata update operation.</returns>
-    [McpServerTool(Name = "azsdk_package_update_metadata"), Description("Updates the package metadata content for a specified package.")]
+    [McpServerTool(Name = UpdateMetadataToolName), Description("Updates the package metadata content for a specified package.")]
     public async Task<PackageOperationResponse> UpdateMetadataAsync(
         [Description("The absolute path to the package directory.")] string packagePath,
         CancellationToken ct)
@@ -64,10 +65,16 @@ public class MetadataUpdateTool : LanguageMcpTool
                 return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }
 
-            if (!Directory.Exists(packagePath))
+            // Resolves relative paths to absolute
+            string fullPath = Path.GetFullPath(packagePath);
+            
+            if (!Directory.Exists(fullPath))
             {
-                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+                return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
             }
+
+            packagePath = fullPath;
+            logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
             // Discover the repository root
             var sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
@@ -111,7 +118,7 @@ public class MetadataUpdateTool : LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating package metadata for package: {PackagePath}", packagePath);
-            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the running logs for details about the error", "resolve the issue", "re-run the tool"]);
+            return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}");
         }
     }
 }

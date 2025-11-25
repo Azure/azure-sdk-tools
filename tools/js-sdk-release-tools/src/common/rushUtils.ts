@@ -5,7 +5,7 @@ import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import pkg from 'fs-extra';
 const { ensureDir, readFile, writeFile } = pkg;
 import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
-import { runCommand, runCommandOptions } from './utils.js';
+import { runCommand, runCommandOptions, cleanupSamplesFolder } from './utils.js';
 
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
@@ -114,7 +114,6 @@ export async function buildPackage(
 ) {
     const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
-
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     let buildStatus = `succeeded`;
     if (isRushRepo(options.sdkRepoRoot)) {
@@ -176,9 +175,14 @@ export async function buildPackage(
 // in release mode, exceptions will be thrown to ensure sample build succeeds
 export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string, runMode: RunMode) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
+    await cleanupSamplesFolder(packageDirectory);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    const errorAsWarning = runMode !== RunMode.Release;
+    const modularSDKType = getModularSDKType(packageDirectory);
+    let errorAsWarning = runMode !== RunMode.Release;
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        errorAsWarning = true;
+    }
     try {
         if (isRushRepo(sdkRepoRoot)) {
             await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, errorAsWarning);

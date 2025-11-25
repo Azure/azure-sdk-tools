@@ -12,19 +12,24 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public sealed partial class PythonLanguageService : LanguageService
 {
     private readonly INpxHelper npxHelper;
+    private readonly IPythonHelper pythonHelper;
 
     public PythonLanguageService(
         IProcessHelper processHelper,
+        IPythonHelper pythonHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
+        this.pythonHelper = pythonHelper;
         this.npxHelper = npxHelper;
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
 
@@ -42,6 +47,14 @@ public sealed partial class PythonLanguageService : LanguageService
         {
             logger.LogWarning("Could not determine package version for Python package at {fullPath}", fullPath);
         }
+
+        var sdkType = SdkType.Unknown;
+        if (!string.IsNullOrWhiteSpace(packageName))
+        {
+            sdkType = packageName.StartsWith("azure-mgmt-", StringComparison.OrdinalIgnoreCase)
+                ? SdkType.Management
+                : SdkType.Dataplane;
+        }
         
         var model = new PackageInfo
         {
@@ -52,94 +65,67 @@ public sealed partial class PythonLanguageService : LanguageService
             PackageVersion = packageVersion,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.Python,
-            SamplesDirectory = Path.Combine(fullPath, "samples")
+            SamplesDirectory = Path.Combine(fullPath, "samples"),
+            SdkType = sdkType
         };
         
-        logger.LogDebug("Resolved Python package: {packageName} v{packageVersion} at {relativePath}", 
-            packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
+        logger.LogDebug("Resolved Python package: {sdkType} {packageName} v{packageVersion} at {relativePath}", 
+            sdkType, packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
         
         return model;
     }
 
-    private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
-    {
-        string? packageName = null;
-        string? packageVersion = null;
-
-        var sdkPackagingPath = Path.Combine(packagePath, "sdk_packaging.toml");
-        if (File.Exists(sdkPackagingPath))
-        {
-            try
-            {
-                logger.LogTrace("Reading sdk_packaging.toml from {sdkPackagingPath}", sdkPackagingPath);
-                var content = await File.ReadAllTextAsync(sdkPackagingPath, ct);
-                var match = PackageNameRegex().Match(content);
-                if (match.Success)
-                {
-                    packageName = match.Groups[1].Value.Trim();
-                    logger.LogTrace("Found package name from sdk_packaging.toml: {packageName}", packageName);
-                }
-                else
-                {
-                    logger.LogTrace("No package_name found in sdk_packaging.toml");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error reading sdk_packaging.toml from {sdkPackagingPath}", sdkPackagingPath);
-            }
-        }
-        else
-        {
-            logger.LogWarning("No sdk_packaging.toml file found at {sdkPackagingPath}", sdkPackagingPath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(packageName))
-        {
-            var modulePath = packageName.Replace('-', Path.DirectorySeparatorChar);
-            var versionPyPath = Path.Combine(packagePath, modulePath, "_version.py");
-            if (File.Exists(versionPyPath))
-            {
-                try
-                {
-                    logger.LogTrace("Reading _version.py from {versionPyPath}", versionPyPath);
-                    var content = await File.ReadAllTextAsync(versionPyPath, ct);
-                    var match = VersionFieldRegex().Match(content);
-                    if (match.Success)
-                    {
-                        packageVersion = match.Groups[1].Value.Trim();
-                        logger.LogTrace("Found version from _version.py: {packageVersion}", packageVersion);
-                    }
-                    else
-                    {
-                        logger.LogTrace("No VERSION found in _version.py");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Error reading _version.py from {versionPyPath}", versionPyPath);
-                }
-            }
-            else
-            {
-                logger.LogTrace("No _version.py file found at {versionPyPath}", versionPyPath);
-            }
-        }
-
-        return (packageName, packageVersion);
-    }
-
-    [GeneratedRegex(@"^\s*package_name\s*=\s*['""]([^'""]+)['""]", RegexOptions.Compiled | RegexOptions.Multiline, "")]
-    private static partial Regex PackageNameRegex();
+private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
+{
+    string? packageName = null;
+    string? packageVersion = null;
     
-    [GeneratedRegex(@"^\s*VERSION\s*=\s*['""]([^'""]+)['""]", RegexOptions.Compiled | RegexOptions.Multiline, "")]
-    private static partial Regex VersionFieldRegex();
+    try
+    {
+        logger.LogTrace("Calling get_package_properties.py for {packagePath}", packagePath);
+        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "get_package_properties.py");
+        
+        var result = await pythonHelper.Run(new PythonOptions(
+                "python",
+                [scriptPath, "-s", packagePath],
+                workingDirectory: repoRoot,
+                logOutputStream: false
+            ),
+            ct
+        );
+        
+        if (result.ExitCode == 0 && !string.IsNullOrWhiteSpace(result.Output))
+        {
+            // Parse the output from get_package_properties.py
+            // Format: <name> <version> <is_new_sdk> <directory> <dependent_packages>
+            var lines = result.Output.Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length > 0)
+            {
+                var parts = lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                packageName = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]) ? parts[0] : null;
+                packageVersion = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? parts[1] : null;
+                
+                logger.LogTrace("Python script returned: name={packageName}, version={packageVersion}", packageName, packageVersion);
+                return (packageName, packageVersion);
+            }
+        }
+        
+        logger.LogWarning("Python script failed with exit code {exitCode}. Output: {output}", result.ExitCode, result.Output);
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Error running Python script for {packagePath}", packagePath);
+        
+    }
+    return (packageName, packageVersion);
+}
 
     public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {
-        var result = await processHelper.Run(new ProcessOptions(
-                command: "pytest",
-                args: ["tests"],
+        var result = await pythonHelper.Run(new PythonOptions(
+                "pytest",
+                ["tests"],
                 workingDirectory: packagePath
             ),
             ct
@@ -149,59 +135,17 @@ public sealed partial class PythonLanguageService : LanguageService
     }
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
-        return GetRequirements(packagePath, categories, null, ct);
-    }
-
-    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, string venvPath, CancellationToken ct = default)
-    {
         var reqs = categories.TryGetValue("python", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
 
-        if (string.IsNullOrWhiteSpace(venvPath))
-        {
-            venvPath = FindVenv(packagePath);
-        }
-
-        if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
-        {
-            logger.LogWarning("Provided venv path is invalid or does not exist: {VenvPath}", venvPath);
-            return reqs;
-        }
-
-        logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
-        return UpdateChecksWithVenv(reqs, venvPath);
-    }
-
-    private List<SetupRequirements.Requirement> UpdateChecksWithVenv(List<SetupRequirements.Requirement> reqs, string venvPath)
-    {
         foreach (var req in reqs)
         {
-            // Update checks to use venv path
-            var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
-        }
-
-        return reqs;
-    }
-
-    private string FindVenv(string packagePath)
-    {
-        // try to find existing venv in package path if none was provided
-        if (string.IsNullOrWhiteSpace(packagePath))
-        {
-            packagePath = Environment.CurrentDirectory;
-        }
-
-        var candidates = new[] { ".venv", "venv", ".env", "env" };
-
-        foreach (var c in candidates)
-        {
-            var path = Path.Combine(packagePath, c);
-            if (Directory.Exists(path))
+            if (req.check != null && req.check.Length > 0)
             {
-                return Path.GetFullPath(path);
+                var executableName = req.check[0];
+                req.check[0] = PythonOptions.ResolvePythonExecutable(executableName);
             }
         }
 
-        return null;
+        return reqs;
     }
 }

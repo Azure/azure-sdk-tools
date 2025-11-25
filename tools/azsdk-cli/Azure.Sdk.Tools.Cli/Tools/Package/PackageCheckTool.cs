@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -20,14 +19,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run validation checks for SDK packages")]
     [McpServerToolType]
     public class PackageCheckTool(
-        ILogger<LanguageMultiCommandTool> logger,
+        ILogger<LanguageMcpTool> logger,
         IGitHelper gitHelper,
         IEnumerable<LanguageService> languageServices
-    ) : LanguageMultiCommandTool(languageServices, logger: logger, gitHelper: gitHelper)
+    ) : LanguageMcpTool(languageServices, logger: logger, gitHelper: gitHelper)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.Package,
+        ];
 
-        private const string RunChecksCommandName = "run-checks";
+        private const string PackageRunCheckToolName = "azsdk_package_run_check";
+
+        private readonly Argument<PackageCheckType> checkTypeArg = new("check-type")
+        {
+            Description = "Type of validation check to run",
+            DefaultValueFactory = _ => PackageCheckType.All
+        };
 
         private readonly Option<bool> fixOption = new("--fix")
         {
@@ -35,52 +42,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
         };
 
-        protected override List<Command> GetCommands()
-        {
-            // Add the package path option to the parent command so it can be used without subcommands
-            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
-
-            // Create sub-commands for each check type
-            var checkTypeValues = Enum.GetValues<PackageCheckType>();
-            foreach (var checkType in checkTypeValues)
-            {
-                var checkName = checkType.ToString().ToLowerInvariant();
-                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
-                parentCommand.Subcommands.Add(subCommand);
-            }
-
-            // Return all commands - parent and subcommands so the handlers get registered
-            return [parentCommand, .. parentCommand.Subcommands];
-        }
+        protected override Command GetCommand() =>
+            new McpCommand("validate", "Run validation checks for SDK packages", PackageRunCheckToolName) { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
             var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
+            var checkType = parseResult.GetValue(checkTypeArg);
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
             var fixCheckErrors = parseResult.GetValue(fixOption);
-
-            // If this is the parent command (run-checks), default to All
-            if (commandName == RunChecksCommandName)
-            {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
-            }
-
-            // Check if this is a subcommand by checking if its parent is the run-checks command
-            if (command.Parents.Any(p => p.Name == RunChecksCommandName))
-            {
-                // Parse the subcommand name back to enum
-                if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
-                {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
-                }
-            }
-
-            throw new ArgumentException($"Unknown command: {commandName}");
+            return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
+        [McpServerTool(Name = PackageRunCheckToolName), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
         public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
@@ -127,7 +103,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var overallSuccess = true;
             var failedChecks = new List<string>();
             var successfulChecks = new List<string>();
-            var notImplementedChecks = new List<string>();
 
             // Run dependency check
             var languageChecks = GetLanguageService(packagePath);
@@ -140,17 +115,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
-                if (IsNotImplemented(dependencyCheckResult))
-                {
-                    notImplementedChecks.Add("Dependency");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Dependency");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Dependency");
             }
-            else
+            else if (dependencyCheckResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Dependency");
             }
@@ -160,17 +128,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
-                if (IsNotImplemented(changelogValidationResult))
-                {
-                    notImplementedChecks.Add("Changelog");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Changelog");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Changelog");
             }
-            else
+            else if (changelogValidationResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Changelog");
             }
@@ -180,17 +141,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
-                if (IsNotImplemented(readmeValidationResult))
-                {
-                    notImplementedChecks.Add("README");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("README");
-                }
+                overallSuccess = false;
+                failedChecks.Add("README");
             }
-            else
+            else if (readmeValidationResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("README");
             }
@@ -200,17 +154,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
-                if (IsNotImplemented(spellingCheckResult))
-                {
-                    notImplementedChecks.Add("Spelling");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Spelling");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Spelling");
             }
-            else
+            else if (spellingCheckResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Spelling");
             }
@@ -220,17 +167,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
-                if (IsNotImplemented(snippetUpdateResult))
-                {
-                    notImplementedChecks.Add("Snippets");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Snippets");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Snippets");
             }
-            else
+            else if (snippetUpdateResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Snippets");
             }
@@ -240,17 +180,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
-                if (IsNotImplemented(lintCodeResult))
-                {
-                    notImplementedChecks.Add("Linting");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Linting");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Linting");
             }
-            else
+            else if (lintCodeResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Linting");
             }
@@ -260,17 +193,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
-                if (IsNotImplemented(formatCodeResult))
-                {
-                    notImplementedChecks.Add("Format");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Format");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Format");
             }
-            else
+            else if (formatCodeResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Format");
             }
@@ -280,17 +206,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(aotCompatResult);
             if (aotCompatResult.ExitCode != 0)
             {
-                if (IsNotImplemented(aotCompatResult))
-                {
-                    notImplementedChecks.Add("AOT Compatibility");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("AOT Compatibility");
-                }
+                overallSuccess = false;
+                failedChecks.Add("AOT Compatibility");
             }
-            else
+            else if (aotCompatResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("AOT Compatibility");
             }
@@ -300,17 +219,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(generatedCodeResult);
             if (generatedCodeResult.ExitCode != 0)
             {
-                if (IsNotImplemented(generatedCodeResult))
-                {
-                    notImplementedChecks.Add("Generated Code");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Generated Code");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Generated Code");
             }
-            else
+            else if (generatedCodeResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Generated Code");
             }
@@ -319,17 +231,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(sampleValidationResult);
             if (sampleValidationResult.ExitCode != 0)
             {
-                if (IsNotImplemented(sampleValidationResult))
-                {
-                    notImplementedChecks.Add("Sample Validation");
-                }
-                else
-                {
-                    overallSuccess = false;
-                    failedChecks.Add("Sample Validation");
-                }
+                overallSuccess = false;
+                failedChecks.Add("Sample Validation");
             }
-            else
+            else if (sampleValidationResult.CheckStatusDetails != "noop")
             {
                 successfulChecks.Add("Sample Validation");
             }
@@ -342,36 +247,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             if (overallSuccess)
             {
                 nextSteps.Add("All package validation checks passed! Your package is ready for the next steps in the development process.");
-                if (successfulChecks.Any())
-                {
-                    nextSteps.Add($"Successful checks: {string.Join(", ", successfulChecks)}");
-                }
-                if (notImplementedChecks.Any())
-                {
-                    nextSteps.Add($"Note: The following checks are not implemented for this language: {string.Join(", ", notImplementedChecks)}");
-                }
                 nextSteps.Add("Consider running package release readiness checks if preparing for release.");
             }
             else
             {
-                if (successfulChecks.Any())
-                {
-                    nextSteps.Add($"Successful checks: {string.Join(", ", successfulChecks)}");
-                }
                 if (failedChecks.Any())
                 {
                     nextSteps.Add($"Failed checks: {string.Join(", ", failedChecks)}");
                     nextSteps.Add("Address the issues identified above before proceeding with package release.");
                     nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
                 }
-                
-                if (notImplementedChecks.Any())
-                {
-                    logger.LogDebug("Note: The following checks are not implemented for this language: {NotImplementedChecks}", string.Join(", ", notImplementedChecks));
-                }
 
-                // Add specific guidance from individual check failures (exclude not implemented ones)
-                foreach (var result in results.Where(r => r.ExitCode != 0 && !IsNotImplemented(r) && r.NextSteps?.Any() == true))
+                // Add specific guidance from individual check failures
+                foreach (var result in results.Where(r => r.ExitCode != 0 && r.NextSteps?.Any() == true))
                 {
                     nextSteps.AddRange(result.NextSteps);
                 }
@@ -405,7 +293,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 };
                 return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
             }
-            else
+            else if (result.CheckStatusDetails != "noop")
             {
                 result.NextSteps = new List<string>
                 {
@@ -438,7 +326,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Run language-specific dependency update commands (e.g., pip upgrade, npm update)"
                 };
             }
-            else
+            else if (result.CheckStatusDetails != "noop")
             {
                 result.NextSteps = new List<string>
                 {
@@ -471,7 +359,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Verify that all code samples in the README are working and up-to-date"
                 };
             }
-            else
+            else if (result.CheckStatusDetails != "noop")
             {
                 result.NextSteps = new List<string>
                 {
@@ -604,11 +492,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
                 error: "Unsupported package type"
             );
-        }
-
-        private static bool IsNotImplemented(PackageCheckResponse response)
-        {
-            return response.ResponseError != null && response.ResponseError.Contains("not implemented", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -1,0 +1,5 @@
+directory: tools/tsp-client/test/examples/batch/service/rbac
+commit: 2496bc9d427ab109ebee2c1b8fd38f4dcf000cda
+repo: Azure/azure-sdk-tools
+additionalDirectories:
+emitterPackageJsonPath: tools/tsp-client/test/examples/batch/service/package.json

@@ -98,6 +98,7 @@ namespace APIViewWeb
             });
 
             services.AddHttpClient();
+            services.AddSingleton<ICopilotAuthenticationService, CopilotAuthenticationService>();
             services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
             services.AddSingleton<ICopilotJobProcessor, CopilotJobProcessor>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();

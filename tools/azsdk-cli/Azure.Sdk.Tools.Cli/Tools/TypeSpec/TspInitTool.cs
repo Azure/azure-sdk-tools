@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         // This is the template registry URL used by the TypeSpec compiler's init command.
         private const string AzureTemplatesUrl = "https://aka.ms/typespec/azure-init";
 
+        private const string InitTypeSpecProjectToolName = "azsdk_typespec_init_project";
+
         // command
         private const string InitCommandName = "init";
 
@@ -48,17 +50,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         {
             Description = "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.",
             Required = true,
-            Validators =
-            {
-                result =>
-                {
-                    var value = result.GetValueOrDefault<string>();
-                    if (string.IsNullOrWhiteSpace(value))
-                    {
-                        result.AddError("The service namespace cannot be empty or whitespace.");
-                    }
-                }
-            }
         };
 
         private enum ServiceType
@@ -73,10 +64,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             { "azure-core", ServiceType.DataPlane }
         };
 
-        protected override Command GetCommand() => new(InitCommandName, "Initialize a new TypeSpec project")
+        protected override Command GetCommand() => BuildCommand();
+
+        private Command BuildCommand()
         {
-            outputDirectoryArg, templateArg, serviceNamespaceArg,
-        };
+            if (serviceNamespaceArg.Validators.Count == 0)
+            {
+                serviceNamespaceArg.Validators.Add(result =>
+                {
+                    var value = result.GetValueOrDefault<string>();
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        result.AddError("The service namespace cannot be empty or whitespace.");
+                    }
+                });
+            }
+
+            return new McpCommand(InitCommandName, "Initialize a new TypeSpec project", InitTypeSpecProjectToolName)
+            {
+                outputDirectoryArg, templateArg, serviceNamespaceArg,
+            };
+        }
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -95,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        [McpServerTool(Name = "azsdk_init_typespec_project"), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
+        [McpServerTool(Name = InitTypeSpecProjectToolName), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
         public async Task<TspToolResponse> InitTypeSpecProjectAsync(
             [Description("Pass in the output directory where the project should be created. Must be an existing empty directory.")]
             string outputDirectory,

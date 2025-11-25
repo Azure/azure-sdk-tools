@@ -46,7 +46,9 @@ how something is being misrepresented in the APIView due to a parser bug.
 # INSTRUCTIONS
 
 - The title should begin with a tag in brackets: `[<LANGUAGE> APIView]`
+- If the issue is about a guideline problem, use `<LANGUAGE> Guidelines` instead. Note the lack of square brackets.
 - The title should clearly express what is being done wrong. Example: "[Python APIView] Literal values are not quoted"
+- An example for guidelines: "C# Guidelines: Private fields can use camelCase without underscore prefix"
 - The body should provide the following information in a concise manner:
   - The bad code snippet
   - Description of what it should do

@@ -56,7 +56,7 @@ You are an agent that processes architects' mention requests from APIView.
 - Your response must be in JSON format (DO NOT include the ```json at the start or ``` at the end of your response!):
 ```json
 {
-  "action": "<no_action|update_kb|open_parser_issue>",
+  "action": "<no_action|update_kb|open_parser_issue|open_guidelines_issue>",
   "reasoning": "<rationale>"
 }
 ```
@@ -83,6 +83,14 @@ is actually a bug with the underlying APIView language parser.
 ## open_parser_issue
 - "@azure-sdk actually, this looks like a bug in the Python parser. Please open an issue."
 - "@azure-sdk this is a problem with the APIView parser."
+
+`open_guidelines_issue` is similar to `update_kb` but specifically indicates that the architect requests to open an issue to update the official language guidelines.
+In this case, you must not choose `update_kb` but choose `open_guidelines_issue` instead.
+It is different from `open_parser_issue` because it relates to the guidelines documentation rather than a parser bug.
+
+## open_guidelines_issue
+- "@azure-sdk, the guideline you cited is outdated. Please open an issue to update it."
+- "@azure-sdk, that guideline is incorrect for this scenario. Please open an issue."
 
 user:
 This {{language}} code is being discussed for the {{package_name}} package.

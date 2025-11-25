@@ -13,7 +13,6 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
 
@@ -40,15 +39,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
 
-            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetSampleLanguageContext),
-                Java = typeof(JavaSampleLanguageContext),
-                Python = typeof(PythonSampleLanguageContext),
-                JavaScript = typeof(TypeScriptSampleLanguageContext),
-                Go = typeof(GoSampleLanguageContext),
-            });
-
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
@@ -69,6 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<IMavenHelper, MavenHelper>();
+            services.AddSingleton<IPythonHelper, PythonHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();

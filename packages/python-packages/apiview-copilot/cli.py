@@ -12,6 +12,7 @@ Command line interface for APIView Copilot.
 
 import asyncio
 import json
+import logging
 import os
 import pathlib
 import sys
@@ -23,6 +24,7 @@ import colorama
 import prompty
 import prompty.azure
 import requests
+from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -330,7 +332,7 @@ def review_job_start(
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/start"
 
-    resp = requests.post(api_endpoint, json=payload, timeout=60)
+    resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
     if resp.status_code == 202:
         return resp.json()
     else:
@@ -343,7 +345,9 @@ def review_job_get(job_id: str):
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
-    resp = requests.get(url, timeout=10)
+
+    headers = _build_auth_header()
+    resp = requests.get(url, headers=headers, timeout=10)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -445,7 +449,8 @@ def review_summarize(language: str, target: str, base: str = None):
     settings = SettingsManager()
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/summarize"
-    response = requests.post(api_endpoint, json=payload, timeout=60)
+
+    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
         print(summary)
@@ -471,6 +476,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
             base_url = settings.get("WEBAPP_ENDPOINT")
             api_endpoint = f"{base_url}/agent/chat"
             session = requests.Session()
+            # Inline _build_auth_header in requests below
             while True:
                 try:
                     user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -494,7 +500,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     payload = {"user_input": user_input}
                     if current_thread_id:
                         payload["thread_id"] = current_thread_id
-                    resp = session.post(api_endpoint, json=payload, timeout=60)
+                    resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
@@ -568,6 +574,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(),
                 timeout=60,
             )
             data = resp.json()
@@ -615,6 +622,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(),
                 timeout=60,
             )
             data = resp.json()
@@ -702,7 +710,7 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
-    reviews = _get_active_reviews(start_date, end_date, environment)
+    reviews = _get_active_reviews(start_date, end_date, environment=environment)
     pretty_language = get_language_pretty_name(language).lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
@@ -891,6 +899,28 @@ def revoke_permissions(assignee_id: str = None):
         print(f"✅ Re-created 'CanNotDelete' lock for resource group '{rg_name}'...")
 
 
+def check_health(include_auth: bool = False):
+    """
+    Checks that the APIView Copilot service is healthy and accessible.
+    """
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    headers = []
+    if include_auth:
+        headers = _build_auth_header()
+        api_endpoint = f"{base_url}/auth-test"
+    else:
+        api_endpoint = f"{base_url}/health-test"
+    try:
+        resp = requests.get(api_endpoint, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            print("✅ APIView Copilot service is healthy.")
+        else:
+            print(f"❌ Service health check failed: {resp.status_code} - {resp.text}")
+    except Exception as e:
+        print(f"❌ Service health check error: {e}")
+
+
 ANALYZE_COMMENT_LANGUAGES = [
     "C",
     "C#",
@@ -953,6 +983,25 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
 
 
+def _build_auth_header():
+    """
+    Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
+    """
+    from src._credential import get_credential
+
+    credential = get_credential()
+    settings = SettingsManager()
+    app_id = settings.get("APP_ID")
+    scope = f"api://{app_id}/.default"
+    try:
+        token = credential.get_token(scope)
+    except ClientAuthenticationError as e:
+        logging.error("Authentication failed: %s", e)
+        print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
+        sys.exit(1)
+    return {"Authorization": f"Bearer {token.token}"}
+
+
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -978,6 +1027,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
+            g.command("check", "check_health")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
@@ -1034,6 +1084,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Path to a JSON file containing comments.",
                 options_list=["--comments-path", "-c"],
+            )
+            ac.argument(
+                "include_auth",
+                action="store_true",
+                help="Include authentication in the health check.",
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")

@@ -6,15 +6,24 @@ import {
   ApiItemKind,
   ExcerptToken,
   ExcerptTokenKind,
+  Parameter,
+  TypeParameter,
 } from "@microsoft/api-extractor-model";
 import { TokenKind } from "../../src/models";
 
 // Helper function to create a mock ApiFunction with all required properties
-function createMockFunction(displayName: string, excerptTokens: ExcerptToken[]): ApiFunction {
+function createMockFunction(
+  displayName: string,
+  excerptTokens: ExcerptToken[],
+  parameters?: Parameter[],
+  typeParameters?: TypeParameter[],
+): ApiFunction {
   const mock: any = {
     kind: ApiItemKind.Function,
     displayName,
     excerptTokens,
+    parameters: parameters || undefined,
+    typeParameters: typeParameters || undefined,
     // Required properties from ApiItem
     canonicalReference: {
       toString: () => `@test!${displayName}:function`,
@@ -30,6 +39,11 @@ function createMockFunction(displayName: string, excerptTokens: ExcerptToken[]):
       text: excerptTokens.map((t) => t.text).join(""),
       tokenRange: { startIndex: 0, endIndex: excerptTokens.length },
       tokens: excerptTokens,
+    },
+    // Return type excerpt (defaults to void if not provided)
+    returnTypeExcerpt: {
+      text: "void",
+      spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "void" }],
     },
     // Additional required properties
     releaseTag: undefined,
@@ -484,6 +498,186 @@ describe("functionTokenGenerator", () => {
       const customTypeToken = tokens.find((t) => t.Value === "CustomType");
       expect(customTypeToken?.IsDeprecated).toBe(true);
       expect(customTypeToken?.Kind).toBe(TokenKind.TypeName);
+    });
+
+    // Tests for structured parameters/typeParameters
+    it("uses structured parameters when available", () => {
+      const mockFunction = createMockFunction(
+        "structuredFunc",
+        [], // excerptTokens not used when parameters are available
+        [
+          {
+            name: "input",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "count",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      const tokens = functionTokenGenerator.generate(mockFunction, false);
+
+      // Should have: export, function, name, (, input, :, string, ,, count, :, number, ), :, void
+      expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
+      expect(tokens[1]).toMatchObject({ Kind: TokenKind.Keyword, Value: "function" });
+      expect(tokens[2]).toMatchObject({ Kind: TokenKind.MemberName, Value: "structuredFunc" });
+      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
+      expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "input" });
+      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[6]).toMatchObject({ Kind: TokenKind.Text, Value: "string" });
+      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: ", " });
+      expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "count" });
+      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[10]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "): " });
+      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Text, Value: "void" });
+    });
+
+    it("handles optional parameters with structured approach", () => {
+      const mockFunction = createMockFunction(
+        "optionalStructured",
+        [],
+        [
+          {
+            name: "required",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "optional",
+            isOptional: true,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      const tokens = functionTokenGenerator.generate(mockFunction, false);
+
+      const tokenValues = tokens.map((t) => t.Value);
+      expect(tokenValues).toContain("required");
+      expect(tokenValues).toContain("optional");
+      expect(tokenValues).toContain("?");
+
+      // Verify the optional marker is after the parameter name
+      const optionalIndex = tokenValues.indexOf("optional");
+      const questionIndex = tokenValues.indexOf("?");
+      expect(questionIndex).toBe(optionalIndex + 1);
+    });
+
+    it("uses type parameters when available", () => {
+      const mockFunction = createMockFunction(
+        "genericStructured",
+        [],
+        [
+          {
+            name: "value",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "T",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "T" }],
+            },
+          } as unknown as Parameter,
+        ],
+        [
+          {
+            name: "T",
+            constraintExcerpt: {
+              text: "",
+              spannedTokens: [],
+            },
+          } as unknown as TypeParameter,
+        ],
+      );
+
+      const tokens = functionTokenGenerator.generate(mockFunction, false);
+
+      const tokenValues = tokens.map((t) => t.Value);
+      expect(tokenValues).toContain("<");
+      expect(tokenValues).toContain(">");
+
+      // Find the type parameter
+      const tToken = tokens.find((t) => t.Value === "T" && t.Kind === TokenKind.TypeName);
+      expect(tToken).toBeDefined();
+    });
+
+    it("handles type parameter with constraint", () => {
+      const mockFunction = createMockFunction(
+        "constrainedGeneric",
+        [],
+        [
+          {
+            name: "value",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "T",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "T" }],
+            },
+          } as unknown as Parameter,
+        ],
+        [
+          {
+            name: "T",
+            constraintExcerpt: {
+              text: "string | number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string | number" }],
+            },
+          } as unknown as TypeParameter,
+        ],
+      );
+
+      const tokens = functionTokenGenerator.generate(mockFunction, false);
+
+      const tokenValues = tokens.map((t) => t.Value);
+      expect(tokenValues).toContain("T");
+      expect(tokenValues).toContain(" extends ");
+      expect(tokenValues).toContain("string | number");
+    });
+
+    it("handles parameter type references with structured approach", () => {
+      const mockFunction = createMockFunction(
+        "withTypeRef",
+        [],
+        [
+          {
+            name: "user",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "User",
+              spannedTokens: [
+                {
+                  kind: ExcerptTokenKind.Reference,
+                  text: "User",
+                  canonicalReference: {
+                    toString: () => "@azure/test!User:interface",
+                  } as any,
+                } as ExcerptToken,
+              ],
+            } as any,
+          } as unknown as Parameter,
+        ],
+      );
+
+      const tokens = functionTokenGenerator.generate(mockFunction, false);
+
+      const userTypeToken = tokens.find((t) => t.Value === "User" && t.Kind === TokenKind.TypeName);
+      expect(userTypeToken).toBeDefined();
+      expect(userTypeToken?.NavigateToId).toBe("@azure/test!User:interface");
     });
   });
 });

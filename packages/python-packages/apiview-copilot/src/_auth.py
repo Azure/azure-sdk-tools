@@ -31,6 +31,8 @@ _JWK_CLIENT_LOCK = asyncio.Lock()
 _CANONICAL_AUD = f"api://{APP_ID}"
 _ISSUER = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
 
+logger = logging.getLogger(__name__)
+
 
 # Enum for app/user roles
 class AppRole(Enum):
@@ -143,7 +145,7 @@ async def _require_auth(
             signing_key = jwk_client.get_signing_key_from_jwt(token)
         except Exception as e2:
             # Log and return a clear error
-            logging.error("JWT signing key error: %s", e2)
+            logger.error("JWT signing key error: %s", e2)
             raise HTTPException(status_code=401, detail=f"Invalid or unsupported JWT: {str(e2)}") from e1
 
     # 2) Decode without audience check, so we can force canonical form
@@ -161,7 +163,7 @@ async def _require_auth(
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(exc)}") from exc
     except Exception as exc:
         # Catch all for decode errors
-        logging.error("JWT decode error: %s", exc)
+        logger.error("JWT decode error: %s", exc)
         raise HTTPException(status_code=401, detail="Malformed or unsupported JWT token.") from exc
 
     # 3) Audience enforcement (supports both APP_ID and api://APP_ID)

@@ -155,7 +155,52 @@ model Asset is TrackedResource<AssetProperties> {
 **Problem 3: Adding a New version following Azure versioning guidelines**
 - TypeSpec versioning is intricate, involving decorators such as @added, @removed, and @useDependency to manage preview vs stable versions. These rules are nuanced and tied to Azure’s breaking-change policies, making them hard for generic AI to infer without domain-specific context.
 - Generic AI currently cannot reliably provide effective guidance for scenarios requiring integrated knowledge of TypeSpec versioning decorators and Azure-specific conversion and breaking-change policies.
-- **Example**: When a user asks to "add a new preview version", generic AI may add a new version without replacing the older one.
+
+**Example**: When a user asks to "add a new preview version", generic AI may add a new version without replacing the older one.
+
+**Prompt:** add a new preview version 2025-10-01-preview for service widget
+
+Current AI only simply adds a new api version enum option in versions enum
+
+```typespec main.tsp
+/** The available API versions. */
+enum Versions {
+  /** 2021-10-01-preview version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  v2021_10_01_preview: "2021-10-01-preview",
+
+  /** 2021-11-01 version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  v2021_11_01: "2021-11-01",
+
+  /** 2025-10-01-preview version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  v2025_10_01_preview: "2025-10-01-preview",
+}
+```
+
+According to the ARM versioning guideline and best practices, the expected code should:
+1. add a new api version enum option and decorated with @previewVersion
+
+```typespec main.tsp
+/** The available API versions. */
+enum Versions {
+  /** 2021-10-01-preview version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  v2021_10_01_preview: "2021-10-01-preview",
+
+  /** 2021-11-01 version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  v2021_11_01: "2021-11-01",
+
+  /** 2025-10-01-preview version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  @previewVersion
+  v2025_10_01_preview: "2025-10-01-preview",
+}
+```
+2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
+  
 
 ### Why This Matters
 

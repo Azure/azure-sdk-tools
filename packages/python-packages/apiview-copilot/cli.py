@@ -983,6 +983,15 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
 
 
+def analyze_apiview_issues():
+    """
+    Analyze known APIView issues.
+    """
+    from scripts.analyze_apiview_issues import analyze_issues
+
+    analyze_issues()
+
+
 def _build_auth_header():
     """
     Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
@@ -1012,6 +1021,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
             g.command("analyze-comments", "analyze_comments")
+            g.command("analyze-issues", "analyze_apiview_issues")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")

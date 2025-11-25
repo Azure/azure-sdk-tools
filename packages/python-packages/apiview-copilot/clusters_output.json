@@ -1,0 +1,143 @@
+{
+  "0": {
+    "label": "APIView revision and release management",
+    "summary": "This cluster focuses on improving how APIView generates, retains, and surfaces revisions across PR, automatic, released, and major/minor versions, ensuring correct 'latest' selection and preventing unintended deletion. It adds better discoverability and transparency via permalinks, notifications, accurate metadata (e.g., Last Updated), changelogs/What's New, and static links, plus tooling/APIs for token retrieval and samples inclusion. It also covers policy changes (e.g., forcing revisions on version bumps/dependency-only changes), release info updates, and migration of legacy models to V2.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/8626",
+      "https://github.com/Azure/azure-sdk-tools/issues/3286",
+      "https://github.com/Azure/azure-sdk-tools/issues/3954",
+      "https://github.com/Azure/azure-sdk-tools/issues/4757",
+      "https://github.com/Azure/azure-sdk-tools/issues/5186",
+      "https://github.com/Azure/azure-sdk-tools/issues/6540",
+      "https://github.com/Azure/azure-sdk-tools/issues/7435",
+      "https://github.com/Azure/azure-sdk-tools/issues/7752",
+      "https://github.com/Azure/azure-sdk-tools/issues/8838",
+      "https://github.com/Azure/azure-sdk-tools/issues/9595",
+      "https://github.com/Azure/azure-sdk-tools/issues/10105",
+      "https://github.com/Azure/azure-sdk-tools/issues/11134",
+      "https://github.com/Azure/azure-sdk-tools/issues/12849",
+      "https://github.com/Azure/azure-sdk-tools/issues/12879",
+      "https://github.com/Azure/azure-sdk-tools/issues/11041",
+      "https://github.com/Azure/azure-sdk-tools/issues/11850",
+      "https://github.com/Azure/azure-sdk-tools/issues/10732",
+      "https://github.com/Azure/azure-sdk-tools/issues/11137",
+      "https://github.com/Azure/azure-sdk-tools/issues/8634"
+    ]
+  },
+  "1": {
+    "label": "APIView UX, Governance, Integrations",
+    "summary": "This cluster proposes broad enhancements to APIView to streamline reviews and strengthen governance: richer diagnostics (suppression and comment conversion), multi-line and color-coded comments, GA/beta and GA-readiness visual cues, tooltips, in-review search, private reviews, RBAC, PR merge blocking, and sandbox failure reporting. It also emphasizes integrations and automation, including MCP/CLI APIs, AI-assisted similar comments and summaries, cross-language conversations, notifications, metrics, and identity mapping between AAD and GitHub.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/2898",
+      "https://github.com/Azure/azure-sdk-tools/issues/6513",
+      "https://github.com/Azure/azure-sdk-tools/issues/12258",
+      "https://github.com/Azure/azure-sdk-tools/issues/1323",
+      "https://github.com/Azure/azure-sdk-tools/issues/3605",
+      "https://github.com/Azure/azure-sdk-tools/issues/4375",
+      "https://github.com/Azure/azure-sdk-tools/issues/4976",
+      "https://github.com/Azure/azure-sdk-tools/issues/5002",
+      "https://github.com/Azure/azure-sdk-tools/issues/5571",
+      "https://github.com/Azure/azure-sdk-tools/issues/6914",
+      "https://github.com/Azure/azure-sdk-tools/issues/7420",
+      "https://github.com/Azure/azure-sdk-tools/issues/13004",
+      "https://github.com/Azure/azure-sdk-tools/issues/10089",
+      "https://github.com/Azure/azure-sdk-tools/issues/12595",
+      "https://github.com/Azure/azure-sdk-tools/issues/11834",
+      "https://github.com/Azure/azure-sdk-tools/issues/10413",
+      "https://github.com/Azure/azure-sdk-tools/issues/4499",
+      "https://github.com/Azure/azure-sdk-tools/issues/11991",
+      "https://github.com/Azure/azure-sdk-tools/issues/12102",
+      "https://github.com/Azure/azure-sdk-tools/issues/10790",
+      "https://github.com/Azure/azure-sdk-tools/issues/11589",
+      "https://github.com/Azure/azure-sdk-tools/issues/8786"
+    ]
+  },
+  "2": {
+    "label": "APIView C++ parsing and infra",
+    "summary": "This cluster tracks bugs and enhancements in APIView with a focus on C/C++ parsing and review generation accuracy. Issues include incorrect or missing symbol rendering (template bleed-through, protocol-layer enums, typedef callbacks, optional parameters shown as required) and formatting/UX improvements like one-parameter-per-line and graceful empty reviews. It also covers infrastructure and pipeline reliability (parser restructure to tree tokens and enabling C/C++, CI failures, DevOps request caching), along with auth/domain migrations, private environments, richer metadata, and adding E2E tests.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/1197",
+      "https://github.com/Azure/azure-sdk-tools/issues/1183",
+      "https://github.com/Azure/azure-sdk-tools/issues/1752",
+      "https://github.com/Azure/azure-sdk-tools/issues/3647",
+      "https://github.com/Azure/azure-sdk-tools/issues/6641",
+      "https://github.com/Azure/azure-sdk-tools/issues/4738",
+      "https://github.com/Azure/azure-sdk-tools/issues/5856",
+      "https://github.com/Azure/azure-sdk-tools/issues/7744",
+      "https://github.com/Azure/azure-sdk-tools/issues/8210",
+      "https://github.com/Azure/azure-sdk-tools/issues/9375",
+      "https://github.com/Azure/azure-sdk-tools/issues/12484",
+      "https://github.com/Azure/azure-sdk-tools/issues/12823",
+      "https://github.com/Azure/azure-sdk-tools/issues/13039",
+      "https://github.com/Azure/azure-sdk-tools/issues/12404",
+      "https://github.com/Azure/azure-sdk-tools/issues/8738",
+      "https://github.com/Azure/azure-sdk-tools/issues/8767",
+      "https://github.com/Azure/azure-sdk-tools/issues/6907",
+      "https://github.com/Azure/azure-sdk-tools/issues/1387"
+    ]
+  },
+  "3": {
+    "label": "APIView comments and notifications",
+    "summary": "Issues center on upgrading APIView’s commenting UX: enabling multi-line and removed-line comments, multiple independent threads per line with hierarchical replies, and fixing problems like being unable to add new comments on resolved lines and redundant ‘Comments Cleared’ popups. Another focus is notification quality—adding reliable deep links and full context in emails, offering consolidated digests and opt-out preferences, and cleaning up or auto-resolving stale comments post-GA. Together these changes aim to make reviews clearer, reduce noise, and keep discussions relevant.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/5546",
+      "https://github.com/Azure/azure-sdk-tools/issues/9610",
+      "https://github.com/Azure/azure-sdk-tools/issues/13003",
+      "https://github.com/Azure/azure-sdk-tools/issues/8356",
+      "https://github.com/Azure/azure-sdk-tools/issues/10319",
+      "https://github.com/Azure/azure-sdk-tools/issues/938",
+      "https://github.com/Azure/azure-sdk-tools/issues/8420",
+      "https://github.com/Azure/azure-sdk-tools/issues/12121",
+      "https://github.com/Azure/azure-sdk-tools/issues/6113",
+      "https://github.com/Azure/azure-sdk-tools/issues/12122"
+    ]
+  },
+  "4": {
+    "label": "Migrate to System.Text.Json",
+    "summary": "Standardizes APIView's JSON serialization on System.Text.Json, removing the Newtonsoft.Json dependency. Updates attributes, converters, and parsing/serialization calls (JsonConvert/JObject/JArray -> JsonSerializer/JsonDocument/JsonNode), with all tests passing and no API contract changes.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/12844",
+      "https://github.com/Azure/azure-sdk-tools/issues/8867"
+    ]
+  },
+  "5": {
+    "label": "APIView UI and Diff Reliability",
+    "summary": "This cluster focuses on improving APIView’s web UI and the accuracy of its diff/navigation views, including navigation bar order, consistent headers, floating context, and rationalizing the split index feature. It fixes multiple rendering issues (missing/incorrect decorators, orphaned/missing nodes in trees, whitespace-only lines in Swift diffs, and noisy C++ line numbers) while tackling maintenance tasks such as upgrading the SPA to Angular 21, correcting search pagination, fixing sandboxed wheel revision association, preventing YAML tag auto-conversion, and migrating Application Insights resources.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/12735",
+      "https://github.com/Azure/azure-sdk-tools/issues/13057",
+      "https://github.com/Azure/azure-sdk-tools/issues/12656",
+      "https://github.com/Azure/azure-sdk-tools/issues/4076",
+      "https://github.com/Azure/azure-sdk-tools/issues/7267",
+      "https://github.com/Azure/azure-sdk-tools/issues/7671",
+      "https://github.com/Azure/azure-sdk-tools/issues/7865",
+      "https://github.com/Azure/azure-sdk-tools/issues/10552",
+      "https://github.com/Azure/azure-sdk-tools/issues/11153",
+      "https://github.com/Azure/azure-sdk-tools/issues/12272",
+      "https://github.com/Azure/azure-sdk-tools/issues/12763",
+      "https://github.com/Azure/azure-sdk-tools/issues/12772",
+      "https://github.com/Azure/azure-sdk-tools/issues/13000",
+      "https://github.com/Azure/azure-sdk-tools/issues/12705",
+      "https://github.com/Azure/azure-sdk-tools/issues/11683",
+      "https://github.com/Azure/azure-sdk-tools/issues/7561"
+    ]
+  },
+  "6": {
+    "label": "APIView approval workflow governance",
+    "summary": "This cluster standardizes and hardens APIView approver and namespace approval workflows by synchronizing approver lists across systems, adopting GitHub team-based approvers, and improving notifications and visibility. It fixes namespace request UX (single-use button with persistent state, support for approve-first scenarios) while preventing overrides of previously approved namespaces. Supporting improvements include soft-delete and deletion tests, alignment of language identifiers, early validation for duplicate line IDs, enabling smoke tests, and removal of ineffective features.",
+    "issues": [
+      "https://github.com/Azure/azure-sdk-tools/issues/8784",
+      "https://github.com/Azure/azure-sdk-tools/issues/1263",
+      "https://github.com/Azure/azure-sdk-tools/issues/1625",
+      "https://github.com/Azure/azure-sdk-tools/issues/5692",
+      "https://github.com/Azure/azure-sdk-tools/issues/6167",
+      "https://github.com/Azure/azure-sdk-tools/issues/7329",
+      "https://github.com/Azure/azure-sdk-tools/issues/10661",
+      "https://github.com/Azure/azure-sdk-tools/issues/12204",
+      "https://github.com/Azure/azure-sdk-tools/issues/12215",
+      "https://github.com/Azure/azure-sdk-tools/issues/12211",
+      "https://github.com/Azure/azure-sdk-tools/issues/12770",
+      "https://github.com/Azure/azure-sdk-tools/issues/11591"
+    ]
+  }
+}

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from enum import Enum
 from typing import Optional, Set, Union
 
@@ -127,17 +128,23 @@ async def _require_auth(
     """
     token = cred.credentials
 
+    # check for malformed JWT (should have 3 segments)
+    if not token or token.count(".") != 2:
+        raise HTTPException(status_code=401, detail="Malformed or missing JWT token.")
+
     # 1) Resolve signing key (handles rollover via kid)
     jwk_client = await _get_jwk_client()
     try:
         signing_key = jwk_client.get_signing_key_from_jwt(token)
     except Exception as e1:
         # One retry without cache in rare rollover race
-        jwk_client = PyJWKClient(_JWK_URI, cache_keys=False)
         try:
+            jwk_client = PyJWKClient(_JWK_URI, cache_keys=False)
             signing_key = jwk_client.get_signing_key_from_jwt(token)
         except Exception as e2:
-            raise e2 from e1
+            # Log and return a clear error
+            logging.error("JWT signing key error: %s", e2)
+            raise HTTPException(status_code=401, detail=f"Invalid or unsupported JWT: {str(e2)}") from e1
 
     # 2) Decode without audience check, so we can force canonical form
     try:
@@ -152,6 +159,10 @@ async def _require_auth(
         raise HTTPException(status_code=401, detail="Token expired") from exc
     except InvalidTokenError as exc:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(exc)}") from exc
+    except Exception as exc:
+        # Catch all for decode errors
+        logging.error("JWT decode error: %s", exc)
+        raise HTTPException(status_code=401, detail="Malformed or unsupported JWT token.") from exc
 
     # 3) Audience enforcement (supports both APP_ID and api://APP_ID)
     aud_values = _normalize_audience(claims.get("aud"))

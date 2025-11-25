@@ -6,6 +6,11 @@ namespace APIViewWeb.Models
 {
     public class UserProfileModel
     {
+        public UserProfileModel()
+        {
+            Preferences = new UserPreferenceModel();
+        }
+        
         public UserProfileModel(string username)
         {
             Preferences = new UserPreferenceModel();
@@ -14,6 +19,11 @@ namespace APIViewWeb.Models
 
         [JsonPropertyName("id")]
         public string UserName { get; set; }
+        
+        // Alias for UserName to support frontend expecting "userName"
+        [JsonPropertyName("userName")]
+        public string UserNameAlias => UserName;
+        
         public string Email { get; set; }
         public UserPreferenceModel Preferences { get; set; }
 

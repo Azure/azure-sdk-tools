@@ -305,7 +305,17 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
             services.AddSingleton(x =>
             {
-                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
+                var cosmosClientOptions = new CosmosClientOptions
+                {
+                    UseSystemTextJsonSerializerWithOptions = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                        Converters = { new JsonStringEnumConverter() }
+                    }
+                };
+                
+                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential(), cosmosClientOptions);
             });
             services.AddSingleton(x =>
             {

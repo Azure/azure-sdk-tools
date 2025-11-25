@@ -147,6 +147,29 @@
         grid-column: 2;
         position: relative; 
         white-space: pre;
+        .list-group {
+            white-space: normal;
+            border-top: 0px;
+            max-height: 22px;
+            width: 50%;
+
+            .list-group-item {
+                padding-top: 0px;
+                padding-bottom: 0px;
+                border-radius: 0px;
+                background: none;
+
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+
+                width: 200px;
+
+                &:last-child {
+                    width: 2000px;
+                }
+            }
+        }
     }
 
     .line-number {
@@ -242,7 +265,25 @@
         }
     }
 
+    .swagger {
+        .header1 {
+            color: var(--link-color);
+            font-weight: bold;
+        }
 
+        .header2 {
+            color: var(--link-color);
+            font-weight: bolder;
+        }
+
+        .header {
+            color: var(--link-color);
+        }
+
+        .table-header {
+            font-weight: bold;
+        }
+    }
 
     .java {
         .javadoc {

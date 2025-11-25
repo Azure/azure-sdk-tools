@@ -29,6 +29,11 @@ namespace APIView.Model.V2
         public string NavigationDisplayName { get; set; }
 
         /// <summary>
+        /// If this token is used for navigation decide whether to collapse it in the navigation pane.
+        /// </summary>
+        public bool CollapseNavigation { get; set; }
+
+        /// <summary>
         /// navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
         /// </summary>
         public string NavigateToId { get; set; }
@@ -63,7 +68,7 @@ namespace APIView.Model.V2
         /// </summary>
         public List<string> RenderClasses { get; set; } = [];
 
-        public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true)
+        public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true, string tokenClass = null)
         {
             var token = new ReviewToken(value, TokenKind.Text);
             if (!string.IsNullOrEmpty(navigateToId))
@@ -71,6 +76,10 @@ namespace APIView.Model.V2
                 token.NavigateToId = navigateToId;
             }
             token.HasSuffixSpace = hasSuffixSpace;
+            if (!string.IsNullOrEmpty(tokenClass))
+            {
+                token.RenderClasses.Add(tokenClass);
+            }
             return token;
         }
 
@@ -137,6 +146,46 @@ namespace APIView.Model.V2
             var token = new ReviewToken(value, TokenKind.Comment);
             token.HasSuffixSpace = hasSuffixSpace;
             return token;
+        }
+
+        public static List<ReviewToken> CreateKeyValueToken(string key, string value = null,
+            bool addPuctuation = true, string keyTokenClass = null, string valueTokenClass = null, bool addKeyToNavigation = false, bool collapseNavigation = false)
+        {
+            var results = new List<ReviewToken>();
+            var keyToken = new ReviewToken(key, TokenKind.Text);
+            keyToken.HasSuffixSpace = false;
+            if (keyTokenClass != null)
+            {
+                keyToken.RenderClasses.Add(keyTokenClass);
+            }
+            if (addKeyToNavigation)
+            {
+                keyToken.NavigationDisplayName = key;
+                if (collapseNavigation)
+                {
+                    keyToken.CollapseNavigation = true;
+                }
+            }
+            results.Add(keyToken);
+
+            if (addPuctuation)
+            {
+                var colonToken = new ReviewToken(":", TokenKind.Punctuation);
+                colonToken.HasSuffixSpace = false;
+                results.Add(colonToken);
+            }
+
+            if (value != null)
+            {
+                var valueToken = new ReviewToken(value, TokenKind.Text);
+                valueToken.HasSuffixSpace = false;
+                if (valueTokenClass != null)
+                {
+                    valueToken.RenderClasses.Add(valueTokenClass);
+                }
+                results.Add(valueToken);
+            }
+            return results;
         }
     }
 }

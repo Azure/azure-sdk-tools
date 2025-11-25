@@ -19,6 +19,7 @@ export class CodePanelRowData {
   nodeId: string;
   nodeIdHashed: string;
   crossLanguageId: string;
+  renderTokensAsTableCells: boolean;
   rowPositionInGroup: number; // a group of consecutive rows can have the same nodeIdHashed. With this you can index specific rows within the group
   associatedRowPositionInGroup: number;
   rowClasses: Set<string>;
@@ -56,6 +57,7 @@ export class CodePanelRowData {
     commentThreadIsResolvedBy: string = '',
     isHiddenAPI: boolean = false,
     crossLanguageId: string = '',
+    renderTokensAsTableCells: boolean = false
   ) {
     this.type = type;
     this.lineNumber = lineNumber;
@@ -77,6 +79,7 @@ export class CodePanelRowData {
     this.commentThreadIsResolvedBy = commentThreadIsResolvedBy;
     this.isHiddenAPI = isHiddenAPI;
     this.crossLanguageId = crossLanguageId;
+    this.renderTokensAsTableCells = renderTokensAsTableCells;
   }
 }
 

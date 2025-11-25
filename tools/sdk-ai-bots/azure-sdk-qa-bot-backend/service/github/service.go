@@ -68,7 +68,7 @@ This is the most important part of the issue. It's a place holder for the root c
 
 	comment := feedback.Comment
 	if comment == "" {
-		comment = "No comment provided"
+		comment = "N/A"
 	}
 
 	channelID := feedback.ChannelID

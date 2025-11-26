@@ -139,7 +139,50 @@ $(() => {
       $("#create-review-via-upload").removeClass("d-none");
       $("#create-review-via-path").addClass("d-none");
     }
+
+    if ($(this).val() === 'Python') {
+      $("#package-name-group").removeClass("d-none");
+      loadPackageNamesForLanguage('Python');
+    } else {
+      $("#package-name-group").addClass("d-none");
+      $('#review-package-input').val('');
+      $('#package-list').empty();
+    }
   });
+
+  function loadPackageNamesForLanguage(language: string) {
+    const packageList = $('#package-list');
+    const packageLoading = $('#package-loading');
+    
+    packageList.empty();
+    
+    if (!language || language === '') {
+      return;
+    }
+
+    packageLoading.show();
+
+    $.ajax({
+      url: `/api/reviews?languages=${encodeURIComponent(language)}&pageSize=1000`,
+      method: 'GET'
+    }).done(function(response) {
+      packageLoading.hide();
+      
+      if (response && Array.isArray(response)) {
+        const packageNames = [...new Set(response.map((review: any) => review.packageName))]
+          .filter(name => name)
+          .sort();
+        
+        packageNames.forEach(function(name) {
+          packageList.append($('<option>', {
+            value: name
+          }));
+        });
+      }
+    }).fail(function() {
+      packageLoading.hide();
+    });
+  }
 
   // Open / Close right Offcanvas Menu
   $("#index-right-offcanvas-toggle").on('click', function () {

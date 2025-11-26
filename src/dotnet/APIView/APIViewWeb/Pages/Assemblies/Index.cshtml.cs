@@ -102,7 +102,17 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var file = Upload.Files?.SingleOrDefault();
-            var review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+            ReviewListItemModel review = null;
+
+            if (!string.IsNullOrEmpty(Upload.PackageName))
+            {
+                review = await _reviewManager.GetReviewAsync(language: Upload.Language, packageName: Upload.PackageName);
+            }
+
+            if (review == null)
+            {
+                review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+            }
 
             if (review != null)
             {

@@ -93,6 +93,13 @@
                                         }
                                     </select>
                                 </div>
+                                <div class="form-group mb-3 d-none" id="package-name-group">
+                                    <p class="small mb-0">Link to an existing package (Optional)</p>
+                                    <input type="text" class="form-control" id="review-package-input" list="package-list" placeholder="Type to search packages..." asp-for="Upload.PackageName" autocomplete="off">
+                                    <datalist id="package-list">
+                                    </datalist>
+                                    <small class="text-muted" id="package-loading" style="display: none;">Loading packages...</small>
+                                </div>
                                 <div class="input-group mb-3 custom-file-label" id="create-review-via-upload">
                                     <label for="uploadReviewFile" class="input-group-text small mb-0">Select File to Include in API Review</label>
                                     <input asp-for="Upload.Files" type="file" class="form-control" id="uploadReviewFile">

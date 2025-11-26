@@ -224,7 +224,7 @@ async def summarize_api(
 
         pretty_language = get_language_pretty_name(request.language)
         inputs = {"language": pretty_language, "content": summary_content}
-        summary = run_prompty(folder="summarize", filename=summary_prompt_file, inputs=inputs)
+        summary = await asyncio.to_thread(run_prompty, folder="summarize", filename=summary_prompt_file, inputs=inputs)
         return SummarizeResponse(summary=summary)
     except Exception as e:
         logger.error("Error in /api-review/summarize: %s", e, exc_info=True)

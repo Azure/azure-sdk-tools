@@ -71,8 +71,6 @@ def run_prompty(*, folder: str, filename: str, inputs: dict = None, **kwargs) ->
     settings = SettingsManager()
     os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
     prompt_path = get_prompt_path(folder=folder, filename=filename)
-    if not os.path.exists(prompt_path):
-        raise FileNotFoundError(f"Prompt file {prompt_path} does not exist.")
     return prompty.execute(prompt_path, inputs=inputs, **kwargs)
 
 

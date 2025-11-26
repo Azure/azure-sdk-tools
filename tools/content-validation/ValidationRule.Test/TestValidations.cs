@@ -14,8 +14,14 @@ public class TestValidations
     public static List<HTMLRule> HTMLRulesForMissingContentValidation = new List<HTMLRule>();
     public static List<HTMLRule> HTMLRulesForDuplicateServiceValidation = new List<HTMLRule>();
 
+    public static IPlaywright playwright;
+    public static IBrowser browser;
+
     static TestValidations()
     {
+        playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+        // Create a shared browser instance for all tests
+        browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
         foreach (var item in LocalData.Items)
         {
             switch (item.Type)
@@ -42,16 +48,21 @@ public class TestValidations
         }
     }
 
+    [OneTimeTearDown]
+    public void Cleanup()
+    {
+        browser?.CloseAsync().GetAwaiter().GetResult();
+        playwright?.Dispose();
+    }
+
 
     [Test]
     [TestCaseSource(nameof(HTMLRulesForExtraLabelValidation))]   
     public async Task TestExtraLabelValidationRules(HTMLRule rule)
     {
-        var playwright = await Playwright.CreateAsync();
-
         string Type = "ExtraLabelValidation";
 
-        IValidation validation = ValidationFactory.CreateValidation(Type, playwright);
+        IValidation validation = ValidationFactory.CreateValidation(Type, browser);
 
         var res = await validation.Validate(rule.FileUri!);
 
@@ -68,19 +79,15 @@ public class TestValidations
 
 
         Assert.That(res.Result, Is.EqualTo(rule.Expected), errorMessage);
-
-        playwright.Dispose();
     }
 
     [Test]
     [TestCaseSource(nameof(HTMLRulesForGarbledTextValidation))]
     public async Task TestGarbledTextValidationRules(HTMLRule rule)
     {
-        var playwright = await Playwright.CreateAsync();
-
         string Type = "GarbledTextValidation";
 
-        IValidation validation = ValidationFactory.CreateValidation(Type, playwright);
+        IValidation validation = ValidationFactory.CreateValidation(Type, browser);
 
         var res = await validation.Validate(rule.FileUri!);
 
@@ -96,19 +103,15 @@ public class TestValidations
                 ";
 
         Assert.That(res.Result, Is.EqualTo(rule.Expected), errorMessage);
-
-        playwright.Dispose();
     }
 
     [Test]
     [TestCaseSource(nameof(HTMLRulesForUnnecessarySymbolsValidation))]
     public async Task TestUnnecessarySymbolsValidationRules(HTMLRule rule)
     {
-        var playwright = await Playwright.CreateAsync();
-
         string Type = "UnnecessarySymbolsValidation";
 
-        IValidation validation = ValidationFactory.CreateValidation(Type, playwright);
+        IValidation validation = ValidationFactory.CreateValidation(Type, browser);
 
         var res = await validation.Validate(rule.FileUri!);
 
@@ -124,19 +127,15 @@ public class TestValidations
                 ";
 
         Assert.That(res.Result, Is.EqualTo(rule.Expected), errorMessage);
-
-        playwright.Dispose();
     }
 
     [Test]
     [TestCaseSource(nameof(HTMLRulesForTypeAnnotationValidation))]
     public async Task TestTypeAnnotationValidationRules(HTMLRule rule)
     {
-        var playwright = await Playwright.CreateAsync();
-
         string Type = "TypeAnnotationValidation";
 
-        IValidation validation = ValidationFactory.CreateValidation(Type, playwright);
+        IValidation validation = ValidationFactory.CreateValidation(Type, browser);
 
         var res = await validation.Validate(rule.FileUri!);
 
@@ -152,8 +151,6 @@ public class TestValidations
                 ";
 
         Assert.That(res.Result, Is.EqualTo(rule.Expected), errorMessage);
-
-        playwright.Dispose();
     }
 
 
@@ -161,11 +158,9 @@ public class TestValidations
     [TestCaseSource(nameof(HTMLRulesForMissingContentValidation))]
     public async Task TestMissingContentValidationRules(HTMLRule rule)
     {
-        var playwright = await Playwright.CreateAsync();
-
         string Type = "MissingContentValidation";
 
-        IValidation validation = ValidationFactory.CreateValidation(Type, playwright);
+        IValidation validation = ValidationFactory.CreateValidation(Type, browser);
 
         var res = await validation.Validate(rule.FileUri!);
 
@@ -181,19 +176,15 @@ public class TestValidations
                 ";
 
         Assert.That(res.Result, Is.EqualTo(rule.Expected), errorMessage);
-
-        playwright.Dispose();
     }
 
     [Test]
     [TestCaseSource(nameof(HTMLRulesForDuplicateServiceValidation))]
     public async Task TestDuplicateServiceValidationRules(HTMLRule rule)
     {
-        var playwright = await Playwright.CreateAsync();
-
         string Type = "DuplicateServiceValidation";
 
-        IValidation validation = ValidationFactory.CreateValidation(Type, playwright);
+        IValidation validation = ValidationFactory.CreateValidation(Type, browser);
 
         var res = await validation.Validate(rule.FileUri!);
 
@@ -209,8 +200,6 @@ public class TestValidations
                 ";
 
         Assert.That(res.Result, Is.EqualTo(rule.Expected), errorMessage);
-
-        playwright.Dispose();
     }
 
 }
@@ -218,16 +207,16 @@ public class TestValidations
 
 public static class ValidationFactory
 {
-    public static IValidation CreateValidation(string validationType, IPlaywright playwright)
+    public static IValidation CreateValidation(string validationType, IBrowser browser)
     {
         return validationType switch
         {
-            "UnnecessarySymbolsValidation" => new UnnecessarySymbolsValidation(playwright),
-            "ExtraLabelValidation" => new ExtraLabelValidation(playwright),
-            "TypeAnnotationValidation" => new TypeAnnotationValidation(playwright),
-            "GarbledTextValidation" => new GarbledTextValidation(playwright),
-            "MissingContentValidation" => new MissingContentValidation(playwright),
-            "DuplicateServiceValidation" => new DuplicateServiceValidation(playwright),
+            "UnnecessarySymbolsValidation" => new UnnecessarySymbolsValidation(browser),
+            "ExtraLabelValidation" => new ExtraLabelValidation(browser),
+            "TypeAnnotationValidation" => new TypeAnnotationValidation(browser),
+            "GarbledTextValidation" => new GarbledTextValidation(browser),
+            "MissingContentValidation" => new MissingContentValidation(browser),
+            "DuplicateServiceValidation" => new DuplicateServiceValidation(browser),
             _ => throw new ArgumentException($"Unknown validation type: {validationType}")
         };
     }

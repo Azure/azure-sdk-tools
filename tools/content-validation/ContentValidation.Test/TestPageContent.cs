@@ -26,10 +26,13 @@ namespace ContentValidation.Test
         public static ConcurrentQueue<TResult> TestEmptyTagsResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
+        public static IBrowser browser;
 
         static TestPageContent()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+            // Create a shared browser instance for all tests
+            browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
             TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
 
             //This list is for testing duplicate services.
@@ -43,6 +46,7 @@ namespace ContentValidation.Test
         [OneTimeTearDown]
         public void SaveTestData()
         {
+            browser?.CloseAsync().GetAwaiter().GetResult();
             playwright?.Dispose();
             string excelFilePath = ConstData.TotalIssuesExcelFileName;
             string sheetName = "TotalIssues";
@@ -70,7 +74,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestTableMissingContent(string testLink)
         {
-            IValidation Validation = new MissingContentValidation(playwright);
+            IValidation Validation = new MissingContentValidation(browser);
 
             var res = new TResult();
             try
@@ -99,7 +103,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestGarbledText(string testLink)
         {
-            IValidation Validation = new GarbledTextValidation(playwright);
+            IValidation Validation = new GarbledTextValidation(browser);
 
             var res = new TResult();
             try
@@ -128,7 +132,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestInconsistentTextFormat(string testLink)
         {
-            IValidation Validation = new InconsistentTextFormatValidation(playwright);
+            IValidation Validation = new InconsistentTextFormatValidation(browser);
 
             var res = new TResult();
             try
@@ -156,7 +160,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestErrorDisplay(string testLink)
         {
-            IValidation Validation = new ErrorDisplayValidation(playwright);
+            IValidation Validation = new ErrorDisplayValidation(browser);
 
             var res = new TResult();
             try
@@ -184,7 +188,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestEmptyTags(string testLink)
         {
-            IValidation Validation = new EmptyTagsValidation(playwright);
+            IValidation Validation = new EmptyTagsValidation(browser);
 
             var res = new TResult();
             try
@@ -212,7 +216,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(DuplicateTestLink))]
         public async Task TestDuplicateService(string testLink)
         {
-            IValidation Validation = new DuplicateServiceValidation(playwright);
+            IValidation Validation = new DuplicateServiceValidation(browser);
 
             var res = new TResult();
             try

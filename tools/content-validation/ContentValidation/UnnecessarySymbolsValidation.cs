@@ -5,7 +5,7 @@ namespace UtilityLibraries;
 
 public class UnnecessarySymbolsValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
     public HashSet<string> valueSet = new HashSet<string>();
 
@@ -28,17 +28,16 @@ public class UnnecessarySymbolsValidation : IValidation
     // Content list for checking if the content between "[ ]" is in the list.
     public List<IgnoreItem> containList02 = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "[contains]");
 
-    public UnnecessarySymbolsValidation(IPlaywright playwright)
+    public UnnecessarySymbolsValidation(IBrowser browser)
     {
-        _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
 
     public async Task<TResult> Validate(string testLink)
     {
 
-        //Create a browser instance.
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        //Create a new page from the shared browser instance.
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
         // This method needs to be called before "GetHtmlContent()" because "GetHtmlContent()" will delete the code element.
@@ -65,7 +64,7 @@ public class UnnecessarySymbolsValidation : IValidation
             res.LocationsOfErrors = formattedList;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
 
         return res;
     }

@@ -15,16 +15,20 @@ namespace ContentValidation.Test
         public static ConcurrentQueue<TResult> TestMissingTypeAnnotationResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
+        public static IBrowser browser;
         static TestPageAnnotation()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+            // Create a shared browser instance for all tests
+            browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
             TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
         }
 
         [OneTimeTearDown]
         public void SaveTestData()
         {
-            playwright.Dispose();
+            browser?.CloseAsync().GetAwaiter().GetResult();
+            playwright?.Dispose();
             string excelFilePath = ConstData.TotalIssuesExcelFileName;
             string sheetName = "TotalIssues";
             string jsonFilePath = ConstData.TotalIssuesJsonFileName;
@@ -37,7 +41,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestMissingTypeAnnotation(string testLink)
         {
-            IValidation Validation = new TypeAnnotationValidation(playwright);
+            IValidation Validation = new TypeAnnotationValidation(browser);
 
             var res = new TResult();
             

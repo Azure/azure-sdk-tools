@@ -4,16 +4,15 @@ namespace UtilityLibraries;
 
 public class MissingGenericsValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
-    public MissingGenericsValidation(IPlaywright playwright)
+    public MissingGenericsValidation(IBrowser browser)
     {
-        _playwright = playwright;
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
     public async Task<TResult> Validate(string testLink)
     {
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
         var res = new TResult();
@@ -70,7 +69,7 @@ public class MissingGenericsValidation : IValidation
             res.LocationsOfErrors = formattedList;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
 
         return res;
     }

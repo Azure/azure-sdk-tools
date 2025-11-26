@@ -6,6 +6,10 @@ import * as path from 'path';
 import { getSDKType } from "../utils.js";
 import { SDKType } from "../types.js";
 
+function escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function getFirstReleaseContent(packageFolderPath: string, isStableRelease: boolean) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const sdkType = getSDKType(packageFolderPath);
@@ -150,14 +154,14 @@ export async function updateChangelog(packageFolderPath: string, newVersion: str
         const currentReleaseDate = match[2];
         
         // Replace the current version with newVersion
-        const versionPattern = currentVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const versionPattern = escapeRegex(currentVersion);
         modifiedChangelogContent = modifiedChangelogContent.replace(new RegExp(versionPattern, 'g'), newVersion);
         
         // Replace the current release date with sdkReleaseDate if provided
         if (sdkReleaseDate) {
-            const datePattern = currentReleaseDate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const datePattern = escapeRegex(currentReleaseDate);
             // Only replace the date in the first heading line
-            const firstHeadingPattern = new RegExp(`(##\\s*${newVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*)\\(${datePattern}\\)`);
+            const firstHeadingPattern = new RegExp(`(##\\s*${escapeRegex(newVersion)}\\s*)\\(${datePattern}\\)`);
             modifiedChangelogContent = modifiedChangelogContent.replace(firstHeadingPattern, `$1(${sdkReleaseDate})`);
         }
     }

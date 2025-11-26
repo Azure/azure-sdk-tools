@@ -281,6 +281,26 @@ class PylintCheckerViolationsClient(PipelineClient):
 
     ### Check that no duplicate pylint errors are added on methods and properties.
 
+    @overload
+    def list_secrets(
+        self,
+        name,  # type: str
+        **kwargs  # type: Any
+    ):
+        # type: (...) -> List[str]
+        ...
+
+    @overload
+    def list_secrets(
+        self,
+        name,  # type: str
+        *,
+        max_results,  # type: int
+        **kwargs  # type: Any
+    ):
+        # type: (...) -> List[str]
+        ...
+
     @distributed_trace
     def list_secrets(
         self,
@@ -302,6 +322,24 @@ class PylintCheckerViolationsClient(PipelineClient):
         """
         pass
 
+    @overload
+    def set_secret(
+        self,
+        id,  # type: str
+    ):
+        # type: (...) -> str
+        ...
+
+    @overload
+    def set_secret(
+        self,
+        id,  # type: str
+        *,
+        enabled,  # type: bool
+    ):
+        # type: (...) -> str
+        ...
+
     @distributed_trace
     def set_secret(
         self,
@@ -322,6 +360,14 @@ class PylintCheckerViolationsClient(PipelineClient):
 
         """
         pass
+
+    @overload
+    def get_secret(self, name: str, **kwargs) -> str:
+        ...
+
+    @overload
+    def get_secret(self, name: str, *, version: str, **kwargs) -> str:
+        ...
 
     @distributed_trace
     def get_secret(self, name: str, *, version: Optional[str] = None, **kwargs) -> str:

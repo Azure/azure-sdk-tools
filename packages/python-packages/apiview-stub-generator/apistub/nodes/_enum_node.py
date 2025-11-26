@@ -26,8 +26,9 @@ class EnumNode(NodeEntityBase):
         :param err: The pylint error to check
         :return: True if this enum value owns the error, False otherwise
         """
-        # Check if error obj matches the parent enum class name and column > 0 (indicating enum value)
-        return err.obj == self.parent_node.name and err.column > 0
+
+        # Check if error obj ends with the parent enum class name and column > 0 (indicating enum value)
+        return err.obj.endswith(self.parent_node.name) and err.column > 0
 
     def check_handwritten(self):
         """Check if the enum is handwritten by inheriting from parent class.

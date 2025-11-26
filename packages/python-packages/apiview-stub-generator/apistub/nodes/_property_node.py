@@ -27,7 +27,7 @@ class PropertyNode(NodeEntityBase):
         :return: True if this node owns the error, False otherwise
         :rtype: bool
         """
-        return err.obj and err.obj.endswith(f".{self.obj.fget.__name__}")
+        return err.obj and self.obj.fget and err.obj.endswith(f".{self.obj.fget.__name__}")
 
     def _inspect(self):
         """Identify property name, type and readonly property"""

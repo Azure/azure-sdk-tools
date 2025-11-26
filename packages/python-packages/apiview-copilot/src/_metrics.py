@@ -2,8 +2,6 @@ from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Dict, Optional
 
-import prompty
-import prompty.azure
 from src._apiview import (
     ActiveReviewMetadata,
     get_active_reviews,
@@ -11,7 +9,7 @@ from src._apiview import (
 )
 from src._database_manager import get_database_manager
 from src._models import APIViewComment
-from src._utils import get_prompt_path
+from src._utils import run_prompty
 
 
 @dataclass
@@ -107,9 +105,8 @@ def get_metrics_report(
                 print(f"Error upserting document {doc.id}: {e}")
     report = _build_metrics_report(data)
     if markdown:
-        prompt_path = get_prompt_path(folder="other", filename="summarize_metrics")
         inputs = {"data": report}
-        summary = prompty.execute(prompt_path, inputs=inputs)
+        summary = run_prompty(folder="other", filename="summarize_metrics", inputs=inputs)
         print(summary)
     else:
         return report

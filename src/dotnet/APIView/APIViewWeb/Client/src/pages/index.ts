@@ -163,17 +163,13 @@ $(() => {
     packageLoading.show();
 
     $.ajax({
-      url: `/api/reviews?languages=${encodeURIComponent(language)}&pageSize=1000`,
+      url: `/api/reviews/languages/${encodeURIComponent(language)}/packagenames`,
       method: 'GET'
     }).done(function(response) {
       packageLoading.hide();
       
       if (response && Array.isArray(response)) {
-        const packageNames = [...new Set(response.map((review: any) => review.packageName))]
-          .filter(name => name)
-          .sort();
-        
-        packageNames.forEach(function(name) {
+        response.forEach(function(name: string) {
           packageList.append($('<option>', {
             value: name
           }));

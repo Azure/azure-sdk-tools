@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import commandLineArgs from "command-line-args";
 import { generateChangelogAndBumpVersion, UpdateMode } from "./common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { logger } from "./utils/logger.js";
 
@@ -26,7 +27,6 @@ const optionDefinitions = [
     { name: "packagePath", type: String },
 ];
 
-import commandLineArgs from "command-line-args";
 const options = commandLineArgs(optionDefinitions);
 
 generateChangelogCli(options["sdkRepoPath"], options["packagePath"]);

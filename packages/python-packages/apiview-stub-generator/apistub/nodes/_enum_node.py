@@ -17,6 +17,18 @@ class EnumNode(NodeEntityBase):
         self.namespace_id = self.generate_id()
         self.apiview = parent_node.apiview
 
+    def is_pylint_error_owner(self, err):
+        """Check if a pylint error belongs to this enum value.
+
+        Enum value errors from pylint report the parent enum class as the obj,
+        but have a column > 0 to distinguish them from class-level errors.
+
+        :param err: The pylint error to check
+        :return: True if this enum value owns the error, False otherwise
+        """
+        # Check if error obj matches the parent enum class name and column > 0 (indicating enum value)
+        return err.obj == self.parent_node.name and err.column > 0
+
     def check_handwritten(self):
         """Check if the enum is handwritten by inheriting from parent class.
         Enum values inherit handwritten status from their parent enum class.
@@ -43,5 +55,5 @@ class EnumNode(NodeEntityBase):
         else:
             line.add_literal(str(self.value), has_suffix_space=False)
         for err in self.pylint_errors:
-            err.generate_tokens(self.apiview, err=err, target_id=self.namespace_id)
+            err.generate_tokens(self.apiview, target_id=self.namespace_id)
         review_lines.append(line)

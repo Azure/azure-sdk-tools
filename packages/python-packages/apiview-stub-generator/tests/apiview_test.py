@@ -211,7 +211,7 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 86
+        assert len(apiview.diagnostics) == 91
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1
@@ -235,22 +235,18 @@ class TestApiView:
         violations_diags = [d for d in apiview.diagnostics if 'PylintCheckerViolationsClient' in d['TargetId']]
         class_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient']
         constructor_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient.__init__']
-        method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId']]
-        list_secrets_level = [d for d in violations_diags if 'list_secrets' in d['TargetId']]
-        describe_secret_level = [d for d in violations_diags if 'describe_secret' in d['TargetId']]
+        method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId'] or 'list_secrets' in d['TargetId'] or 'set_secret' in d['TargetId'] or 'get_secret' in d['TargetId']]
 
-        assert len(violations_diags) == 11, f"Should have 11 total diagnostics, got {len(violations_diags)}"
+        assert len(violations_diags) == 14, f"Should have 14 total diagnostics, got {len(violations_diags)}"
         assert len(class_level) == 2, f"Should have 2 class-level diagnostics, got {len(class_level)}"
         assert len(constructor_level) == 2, f"Should have 2 constructor-level diagnostics, got {len(constructor_level)}"
-        assert len(method_level) == 2, f"Should have 2 with_too_many_args diagnostics, got {len(method_level)}"
-        assert len(list_secrets_level) == 2, f"Should have 2 list_secrets diagnostics, got {len(list_secrets_level)}"
-        assert len(describe_secret_level) == 3, f"Should have 3 describe_secret diagnostics, got {len(describe_secret_level)}"
+        assert len(method_level) == 10, f"Should have 10 method-level diagnostics, got {len(method_level)}"
 
-        # Verify enum, legacy typing, and property diagnostics exist (would have been duplicated before fix)
-        enum_diags = [d for d in apiview.diagnostics if 'Enum' in d['TargetId']]
+        # Verify enum value and property diagnostics exist
+        enum_value_diags = [d for d in apiview.diagnostics if d['TargetId'] == 'apistubgentest.PylintViolationEnum.password' or d['TargetId'] == 'apistubgentest.PylintViolationEnum.CERTIFICATE']
         property_diags = [d for d in apiview.diagnostics if 'handwritten_property' in d['TargetId']]
 
-        assert len(enum_diags) == 2, f"Should have 2 enum diagnostics (PylintViolationEnum and SomeEnum), got {len(enum_diags)}"
+        assert len(enum_value_diags) == 2, f"Should have 2 enum value diagnostics for PylintViolationEnum.password and PylintViolationEnum.CERTIFICATE, got {len(enum_value_diags)}"
         assert len(property_diags) == 1, f"Should have 1 property diagnostic, got {len(property_diags)}"
 
     def test_add_type(self):

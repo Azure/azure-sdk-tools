@@ -291,11 +291,19 @@ class PylintCheckerViolationsClient(PipelineClient):
         """List secrets with legacy type comments.
 
         This will trigger do-not-use-legacy-typing pylint error.
+
+        Example:
+            .. literalinclude:: ../tests/test_samples_secrets.py
+                :start-after: [START list_secrets]
+                :end-before: [END list_secrets]
+                :language: python
+                :caption: List all secrets
+                :dedent: 8
         """
         pass
 
     @distributed_trace
-    def describe_secret(
+    def set_secret(
         self,
         id,  # type: str
     ):
@@ -303,32 +311,17 @@ class PylintCheckerViolationsClient(PipelineClient):
         """Describe a secret with legacy type comments.
 
         This will trigger do-not-use-legacy-typing pylint error.
+
+        Example:
+            .. literalinclude:: ../tests/test_samples_secrets.py
+                :start-after: [START set_secret]
+                :end-before: [END set_secret]
+                :language: python
+                :caption: Set a secret's value
+                :dedent: 8
+
         """
         pass
-
-    @overload
-    def get_secret(self, name: str, *, version: str, **kwargs) -> str:
-        """Get a secret by name and version.
-
-        :param name: The secret name
-        :type name: str
-        :keyword version: The secret version
-        :paramtype version: str
-        :return: The secret value
-        :rtype: str
-        """
-        ...
-
-    @overload
-    def get_secret(self, name: str, **kwargs) -> str:
-        """Get a secret by name.
-
-        :param name: The secret name
-        :type name: str
-        :return: The secret value
-        :rtype: str
-        """
-        ...
 
     @distributed_trace
     def get_secret(self, name: str, *, version: Optional[str] = None, **kwargs) -> str:
@@ -340,6 +333,14 @@ class PylintCheckerViolationsClient(PipelineClient):
         :paramtype version: str
         :return: The secret value
         :rtype: str
+
+        Example:
+            .. literalinclude:: ../tests/test_samples_secrets.py
+                :start-after: [START get_secret]
+                :end-before: [END get_secret]
+                :language: python
+                :caption: Get a secret
+                :dedent: 8
         """
         pass
 
@@ -347,5 +348,5 @@ class PylintCheckerViolationsClient(PipelineClient):
 # Enum that doesn't inherit from CaseInsensitiveEnumMeta
 class PylintViolationEnum(str, Enum):
     """Enumeration that will trigger enum-must-inherit-case-insensitive-enum-meta."""
-    PASSWORD = "password"
+    password = "password"  # Should trigger enum-must-be-uppercase
     CERTIFICATE = "certificate"

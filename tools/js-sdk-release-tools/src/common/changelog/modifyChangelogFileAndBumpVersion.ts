@@ -1,4 +1,3 @@
-import { Changelog } from "../../changelog/changelogGenerator.js";
 import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 import { UpdateMode } from "./automaticGenerateChangeLogAndBumpVersion.js";
 

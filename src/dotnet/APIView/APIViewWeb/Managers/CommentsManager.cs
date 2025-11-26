@@ -618,7 +618,8 @@ namespace APIViewWeb.Managers
                     CommentId = comment.Id,
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
-                    NodeId = comment.ElementId
+                    NodeId = comment.ElementId,
+                    Comment = comment
                 });
         }
 
@@ -664,7 +665,8 @@ namespace APIViewWeb.Managers
                         CommentId = comment.Id,
                         ReviewId = comment.ReviewId,
                         ElementId = comment.ElementId,
-                        NodeId = comment.ElementId
+                        NodeId = comment.ElementId,
+                        Comment = comment
                     });
             }
         }

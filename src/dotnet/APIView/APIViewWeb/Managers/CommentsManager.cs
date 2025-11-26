@@ -40,6 +40,7 @@ namespace APIViewWeb.Managers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
+        private readonly ICopilotAuthenticationService _copilotAuthService;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -58,6 +59,7 @@ namespace APIViewWeb.Managers
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
+            ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -72,6 +74,7 @@ namespace APIViewWeb.Managers
             _configuration = configuration;
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
+            _copilotAuthService = copilotAuthService;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -277,8 +280,7 @@ namespace APIViewWeb.Managers
                         "application/json")
                 };
 
-                //TODO: See: https://github.com/Azure/azure-sdk-tools/issues/11128
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "dummy_token_value");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
 
                 var client = _httpClientFactory.CreateClient();
                 var clientResponse = await client.SendAsync(request);
@@ -620,7 +622,8 @@ namespace APIViewWeb.Managers
                     CommentId = comment.Id,
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
-                    NodeId = comment.ElementId
+                    NodeId = comment.ElementId,
+                    Comment = comment
                 });
         }
 
@@ -666,7 +669,8 @@ namespace APIViewWeb.Managers
                         CommentId = comment.Id,
                         ReviewId = comment.ReviewId,
                         ElementId = comment.ElementId,
-                        NodeId = comment.ElementId
+                        NodeId = comment.ElementId,
+                        Comment = comment
                     });
             }
         }

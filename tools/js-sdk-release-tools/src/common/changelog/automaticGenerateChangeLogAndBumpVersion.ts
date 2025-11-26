@@ -48,7 +48,9 @@ export async function generateChangelogAndBumpVersion(
 ) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = sdkRepoPath ?? String(shell.pwd());
-    packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
+    if (!sdkRepoPath) {
+        packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
+    }
     const apiVersionType = await getApiVersionType(packageFolderPath);
     const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);

@@ -6,6 +6,7 @@ from enum import Enum
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
 from azure.core import PipelineClient
+from azure.core.tracing.decorator import distributed_trace
 from typing import Optional, Union, overload
 
 
@@ -278,24 +279,9 @@ class PylintCheckerViolationsClient(PipelineClient):
     def without_return_annotation(self, val: str):
         pass
 
+    ### Check that no duplicate pylint errors are added on methods and properties.
 
-# Enum that doesn't inherit from CaseInsensitiveEnumMeta
-# Used to test duplicate diagnostic detection for enum classes
-class SecretTypeEnum(str, Enum):
-    """Secret type enumeration that will trigger enum-must-inherit-case-insensitive-enum-meta."""
-    PASSWORD = "password"
-    CERTIFICATE = "certificate"
-    KEY = "key"
-
-
-# Class with pylint errors on overloads, to test proper, unique diagnostic detection
-class PylintViolationClientWithOverloads(PipelineClient):
-    """Client that uses overloads, which creates methods from astroid nodes.
-
-    Note: Methods intentionally missing @distributed_trace decorator to trigger pylint errors.
-    Includes methods with legacy typing comments to test deduplication of do-not-use-legacy-typing errors.
-    """
-
+    @distributed_trace
     def list_secrets(
         self,
         name,  # type: str
@@ -308,6 +294,7 @@ class PylintViolationClientWithOverloads(PipelineClient):
         """
         pass
 
+    @distributed_trace
     def describe_secret(
         self,
         id,  # type: str
@@ -343,6 +330,7 @@ class PylintViolationClientWithOverloads(PipelineClient):
         """
         ...
 
+    @distributed_trace
     def get_secret(self, name: str, *, version: Optional[str] = None, **kwargs) -> str:
         """Get a secret.
 
@@ -355,74 +343,9 @@ class PylintViolationClientWithOverloads(PipelineClient):
         """
         pass
 
-    @overload
-    def set_secret(self, name: str, value: str, *, enabled: bool, **kwargs) -> str:
-        """Set a secret with enabled flag.
 
-        :param name: The secret name
-        :type name: str
-        :param value: The secret value
-        :type value: str
-        :keyword enabled: Whether the secret is enabled
-        :paramtype enabled: bool
-        :return: The secret ID
-        :rtype: str
-        """
-        ...
-
-    @overload
-    def set_secret(self, name: str, value: str, **kwargs) -> str:
-        """Set a secret.
-
-        :param name: The secret name
-        :type name: str
-        :param value: The secret value
-        :type value: str
-        :return: The secret ID
-        :rtype: str
-        """
-        ...
-
-    def set_secret(self, name: str, value: str, *, enabled: Optional[bool] = None, **kwargs) -> str:
-        """Set a secret.
-
-        :param name: The secret name
-        :type name: str
-        :param value: The secret value
-        :type value: str
-        :keyword enabled: Whether the secret is enabled
-        :paramtype enabled: bool
-        :return: The secret ID
-        :rtype: str
-        """
-        pass
-
-    @overload
-    def delete_secret(self, name: str, *, wait: bool, **kwargs) -> None:
-        """Delete a secret with wait flag.
-
-        :param name: The secret name
-        :type name: str
-        :keyword wait: Whether to wait for deletion
-        :paramtype wait: bool
-        """
-        ...
-
-    @overload
-    def delete_secret(self, name: str, **kwargs) -> None:
-        """Delete a secret.
-
-        :param name: The secret name
-        :type name: str
-        """
-        ...
-
-    def delete_secret(self, name: str, *, wait: Optional[bool] = None, **kwargs) -> None:
-        """Delete a secret.
-
-        :param name: The secret name
-        :type name: str
-        :keyword wait: Whether to wait for deletion
-        :paramtype wait: bool
-        """
-        pass
+# Enum that doesn't inherit from CaseInsensitiveEnumMeta
+class PylintViolationEnum(str, Enum):
+    """Enumeration that will trigger enum-must-inherit-case-insensitive-enum-meta."""
+    PASSWORD = "password"
+    CERTIFICATE = "certificate"

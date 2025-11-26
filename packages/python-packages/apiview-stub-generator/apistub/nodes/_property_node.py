@@ -20,6 +20,15 @@ class PropertyNode(NodeEntityBase):
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()
 
+    def is_pylint_error_owner(self, err) -> bool:
+        """Check if this property node is the owner of a pylint error.
+
+        :param PylintError err: The pylint error to check
+        :return: True if this node owns the error, False otherwise
+        :rtype: bool
+        """
+        return err.obj and err.obj.endswith(f".{self.obj.fget.__name__}")
+
     def _inspect(self):
         """Identify property name, type and readonly property"""
         if getattr(self.obj, "fset", None):

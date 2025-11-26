@@ -4,8 +4,11 @@ import logging
 import os
 from sys import stderr
 import re
-from typing import List
+from typing import List, Union, TYPE_CHECKING
 from pylint.lint import Run
+
+if TYPE_CHECKING:
+    from ._base_node import NodeEntityBase
 
 _HELP_LINK_REGEX = re.compile(r"(.+) See details: *([^\s]+)")
 
@@ -91,27 +94,11 @@ class PylintParser:
                     item.owner = str(obj)
 
     @classmethod
-    def get_items(cls, obj) -> List[PylintError]:
-        items = [x for x in cls.items if x.owner == str(obj)]
-
-        # Fallback for methods created from astroid nodes:
-        # When FunctionNode is created with an astroid node instead of the actual function object,
-        # str(obj) doesn't match the owner string that was set during class parsing.
-        # So we fall back to matching by method name in the error's obj field (e.g., "ClassName.method_name")
-        if not items and hasattr(obj, '__name__'):
-            obj_name = obj.__name__
-            items = [x for x in cls.items if x.obj and x.obj.endswith(f".{obj_name}")]
-
-        # Fallback for properties: property objects don't have __name__, but their fget does
-        if not items and isinstance(obj, property) and hasattr(obj, 'fget') and obj.fget:
-            prop_name = obj.fget.__name__
-            items = [x for x in cls.items if x.obj and x.obj.endswith(f".{prop_name}")]
-
-        # For classes, filter OUT method-level items to avoid duplicates (those with dots in obj field)
-        # Methods will find and report their own diagnostics using the fallback above
-        if hasattr(obj, '__mro__'):  # Check if this is a class
-            items = [x for x in items if not x.obj or '.' not in x.obj]
-
+    def get_items(cls, node: Union["NodeEntityBase", str]) -> List[PylintError]:
+        if isinstance(node, str): # "GLOBAL"
+            items = [x for x in cls.items if x.owner == str(node)]
+        else:
+            items = [x for x in cls.items if node.is_pylint_error_owner(x)]
         return items
 
     @classmethod

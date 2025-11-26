@@ -150,7 +150,6 @@ public class IndexPageModelTests
 
         IActionResult result = await _pageModel.OnPostUploadAsync();
 
-        // 
         result.Should().BeOfType<RedirectToPageResult>();
         RedirectToPageResult redirectResult = result as RedirectToPageResult;
         redirectResult!.PageName.Should().Be("Review");

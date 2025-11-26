@@ -29,6 +29,20 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
     IsDeprecated: deprecated,
   });
 
+  // Check if this is a default export
+  const excerptText = item.excerptTokens.map((t) => t.text).join("");
+  const isDefaultExport = excerptText.includes("export default");
+
+  // Add default keyword if present
+  if (isDefaultExport) {
+    tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "default",
+      HasSuffixSpace: true,
+      IsDeprecated: deprecated,
+    });
+  }
+
   // Add function keyword
   tokens.push({
     Kind: TokenKind.Keyword,
@@ -76,7 +90,12 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
     if (parameters && parameters.length > 0) {
       parameters.forEach((param, index) => {
         // Add parameter name
-        tokens.push({ Kind: TokenKind.Text, Value: param.name, IsDeprecated: deprecated });
+        tokens.push({
+          Kind: TokenKind.Text,
+          Value: param.name,
+          HasPrefixSpace: index > 0,
+          IsDeprecated: deprecated,
+        });
 
         // Add optional indicator if present
         if (param.isOptional) {
@@ -102,7 +121,12 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
 
         // Add comma if not last parameter
         if (index < parameters.length - 1) {
-          tokens.push({ Kind: TokenKind.Text, Value: ", ", IsDeprecated: deprecated });
+          tokens.push({
+            Kind: TokenKind.Text,
+            Value: ",",
+            HasSuffixSpace: true,
+            IsDeprecated: deprecated,
+          });
         }
       });
     }

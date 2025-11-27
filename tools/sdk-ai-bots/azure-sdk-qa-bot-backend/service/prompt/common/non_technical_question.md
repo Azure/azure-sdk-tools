@@ -9,13 +9,6 @@ Your mission is to provide friendly, helpful responses to greetings, casual conv
 - Keep the tone friendly and professional
 - For user's suggestion, reply thanks message and lead user to provide feedback
 
-# QUESTION INTENTION
-The intention of user's question based on whole conversation:
-
-```
-{{intention}}
-```
-
 # OUTPUT REQUIREMENTS
 Structure your response as a JSON object following this exact format:
 

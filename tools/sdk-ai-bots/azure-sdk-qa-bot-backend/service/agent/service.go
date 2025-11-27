@@ -92,7 +92,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		// Skip RAG workflow for non-technical messages
 		log.Printf("Skipping RAG workflow - non-technical message detected")
 		chunks = []string{}
-		promptTemplate = "non_technical_question_prompt.md"
+		promptTemplate = "common/non_technical_question.md"
 	} else {
 		// Run agentic search and knowledge search in parallel, then merge results
 		chunks, err = s.runParallelSearchAndMergeResults(ctx, req, query)
@@ -474,7 +474,11 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	log.Printf("Agentic search sub queries: %+v", resp.Activity)
+	for _, activity := range resp.Activity {
+		if activity.Type == "AzureSearchQuery" {
+			log.Printf("Agentic search sub query: %s", activity.Query.Search)
+		}
+	}
 	if resp.Response == nil {
 		return nil, nil
 	}

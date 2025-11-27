@@ -43,55 +43,16 @@ func replacePlaceholder(prompt, placeholder, value string) string {
 	return strings.ReplaceAll(prompt, placeholder, value)
 }
 
-// validateTemplateName validates that the template name is safe to use
-// It prevents path traversal attacks by ensuring:
-// 1. No path separators (/ or \)
-// 2. No parent directory references (..)
-// 3. Only allows filename-safe characters
-func validateTemplateName(template string) error {
-	if template == "" {
-		return fmt.Errorf("template name cannot be empty")
-	}
-
-	// Check for path separators
-	if strings.Contains(template, "/") || strings.Contains(template, "\\") {
-		return fmt.Errorf("template name cannot contain path separators")
-	}
-
-	// Check for parent directory references
-	if strings.Contains(template, "..") {
-		return fmt.Errorf("template name cannot contain parent directory references")
-	}
-
-	// Additional validation: only allow safe characters for filenames
-	// Allow alphanumeric, underscore, hyphen, and dot
-	for _, char := range template {
-		if (char < 'a' || char > 'z') &&
-			(char < 'A' || char > 'Z') &&
-			(char < '0' || char > '9') &&
-			char != '_' && char != '-' && char != '.' {
-			return fmt.Errorf("template name contains invalid characters")
-		}
-	}
-
-	return nil
-}
-
 func (p *DefaultPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
-	// Validate template name to prevent path injection
-	if err := validateTemplateName(template); err != nil {
-		return "", fmt.Errorf("invalid template name: %w", err)
-	}
-
 	moduleRoot, err := findModuleRoot()
 	if err != nil {
 		return "", fmt.Errorf("failed to find module root: %w", err)
 	}
 
-	templatePath := filepath.Join(moduleRoot, "service", "prompt", "prompt_template", template)
+	templatePath := filepath.Join(moduleRoot, "service", "prompt", template)
 
 	// Verify the resolved path is still within the template directory (defense in depth)
-	templateDir := filepath.Join(moduleRoot, "service", "prompt", "prompt_template")
+	templateDir := filepath.Join(moduleRoot, "service", "prompt")
 	absTemplatePath, err := filepath.Abs(templatePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve template path: %w", err)
@@ -139,20 +100,15 @@ type IntentionPromptParser struct {
 }
 
 func (p *IntentionPromptParser) ParsePrompt(params map[string]string, template string) (string, error) {
-	// Validate template name to prevent path injection
-	if err := validateTemplateName(template); err != nil {
-		return "", fmt.Errorf("invalid template name: %w", err)
-	}
-
 	moduleRoot, err := findModuleRoot()
 	if err != nil {
 		return "", fmt.Errorf("failed to find module root: %w", err)
 	}
 
-	templatePath := filepath.Join(moduleRoot, "service", "prompt", "prompt_template", template)
+	templatePath := filepath.Join(moduleRoot, "service", "prompt", template)
 
 	// Verify the resolved path is still within the template directory (defense in depth)
-	templateDir := filepath.Join(moduleRoot, "service", "prompt", "prompt_template")
+	templateDir := filepath.Join(moduleRoot, "service", "prompt")
 	absTemplatePath, err := filepath.Abs(templatePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve template path: %w", err)

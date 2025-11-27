@@ -144,17 +144,19 @@ This is the most important part of the issue. It's a place holder for the root c
 // CreateIssueFromFeedback creates a GitHub issue from negative feedback
 func (s *GitHubService) CreateIssueFromFeedback(title, body string, labels []string) (int, error) {
 	// Check if GitHub is configured
-	if config.AppConfig.GITHUB_TOKEN == "" ||
+	if config.GITHUB_TOKEN == "" ||
 		config.AppConfig.GITHUB_OWNER == "" ||
 		config.AppConfig.GITHUB_REPO == "" {
-		log.Printf("GitHub not configured, skipping issue creation")
+		log.Printf("GitHub integration not configured (optional), skipping issue creation")
 		return 0, nil
 	}
+
+	log.Printf("GitHub integration configured for %s/%s", config.AppConfig.GITHUB_OWNER, config.AppConfig.GITHUB_REPO)
 
 	// Create GitHub client with authentication
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: config.AppConfig.GITHUB_TOKEN},
+		&oauth2.Token{AccessToken: config.GITHUB_TOKEN},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
@@ -192,7 +194,7 @@ func (s *GitHubService) AddSubIssueToParent(subIssueNumber int) error {
 	}
 
 	// Check if GitHub is configured
-	if config.AppConfig.GITHUB_TOKEN == "" ||
+	if config.GITHUB_TOKEN == "" ||
 		config.AppConfig.GITHUB_OWNER == "" ||
 		config.AppConfig.GITHUB_REPO == "" {
 		return fmt.Errorf("GitHub not configured")
@@ -200,7 +202,7 @@ func (s *GitHubService) AddSubIssueToParent(subIssueNumber int) error {
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: config.AppConfig.GITHUB_TOKEN},
+		&oauth2.Token{AccessToken: config.GITHUB_TOKEN},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 

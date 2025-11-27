@@ -41,7 +41,6 @@ type Config struct {
 
 	KEYVAULT_ENDPOINT string
 
-	GITHUB_TOKEN        string
 	GITHUB_OWNER        string
 	GITHUB_REPO         string
 	GITHUB_PARENT_ISSUE int // Parent issue number for creating sub-issues
@@ -141,22 +140,10 @@ func InitConfiguration() {
 	}
 
 	var config Config
-	config.GITHUB_TOKEN = os.Getenv("GITHUB_TOKEN")
-	config.GITHUB_OWNER = os.Getenv("GITHUB_OWNER")
-	config.GITHUB_REPO = os.Getenv("GITHUB_REPO")
 
 	if err := appConfig.Unmarshal(&config, nil); err != nil {
 		log.Fatalf("Failed to unmarshal configuration: %v", err)
 	}
-
-	if config.GITHUB_TOKEN != "" && config.GITHUB_OWNER != "" && config.GITHUB_REPO != "" {
-		log.Printf("GitHub integration configured for %s/%s", config.GITHUB_OWNER, config.GITHUB_REPO)
-	} else {
-		log.Printf("GitHub integration not configured (optional)")
-	}
 	
-	if parentIssueStr := os.Getenv("GITHUB_PARENT_ISSUE"); parentIssueStr != "" {
-		fmt.Sscanf(parentIssueStr, "%d", &config.GITHUB_PARENT_ISSUE)
-	}
 	AppConfig = &config
 }

@@ -82,7 +82,12 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 2. Build query for search
 	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
-
+	if intention != nil && (intention.Scope == model.QuestionScope_DATA_PLANE || intention.Scope == model.QuestionScope_Unknown) {
+		req.Sources = append(req.Sources, model.Source_AzureAPIGuidelines)
+	}
+	if intention != nil && (intention.Scope == model.QuestionScope_MANAGEMENT_PLANE || intention.Scope == model.QuestionScope_Unknown) {
+		req.Sources = append(req.Sources, model.Source_AzureResourceManagerRPC)
+	}
 	// 3. Check if we need RAG processing
 	var chunks []string
 	var prompt string

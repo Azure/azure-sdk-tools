@@ -68,6 +68,13 @@ The following knowledge base content is retrieved based on user's question:
 {{context}}
 ```
 
+# QUESTION INTENTION
+The intention of user's question based on whole conversation:
+
+```
+{{intention}}
+```
+
 # OUTPUT REQUIREMENTS
 Structure your response as a JSON object following this exact format:
 

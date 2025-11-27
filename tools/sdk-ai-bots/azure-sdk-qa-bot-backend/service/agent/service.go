@@ -110,7 +110,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 5. Get answer from LLM
-	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
+	llmMessages = append([]azopenai.ChatRequestMessageClassification{
+		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
+	}, llmMessages...)
 	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
@@ -136,7 +138,9 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 		return nil, err
 	}
 
-	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
+	messages = append([]azopenai.ChatRequestMessageClassification{
+		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
+	}, messages...)
 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		Messages:       messages,

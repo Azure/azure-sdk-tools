@@ -93,6 +93,3 @@ Response:
   "scope": "unknown",
   "needs_rag_processing": false
 }
-
-user:
-{{question}}

@@ -40,6 +40,10 @@ type Config struct {
 	STORAGE_RECORDS_CONTAINER   string
 
 	KEYVAULT_ENDPOINT string
+
+	GITHUB_OWNER        string
+	GITHUB_REPO         string
+	GITHUB_PARENT_ISSUE int // Parent issue number for creating sub-issues
 }
 
 var BotEnv *BotENV
@@ -122,7 +126,7 @@ func InitConfiguration() {
 
 	// Get the endpoint from environment variable
 	endpoint := os.Getenv("AZURE_APPCONFIG_ENDPOINT")
-
+	
 	// Set up authentication options
 	authOptions := azureappconfiguration.AuthenticationOptions{
 		Endpoint:   endpoint,
@@ -136,8 +140,10 @@ func InitConfiguration() {
 	}
 
 	var config Config
+
 	if err := appConfig.Unmarshal(&config, nil); err != nil {
 		log.Fatalf("Failed to unmarshal configuration: %v", err)
 	}
+	
 	AppConfig = &config
 }

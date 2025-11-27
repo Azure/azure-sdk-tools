@@ -2,6 +2,7 @@ import {
   ApiFunction,
   ApiItem,
   ApiItemKind,
+  ExcerptToken,
   ExcerptTokenKind,
   Parameter,
   TypeParameter,
@@ -13,6 +14,50 @@ function isValid(item: ApiItem): item is ApiFunction {
   return item.kind === ApiItemKind.Function;
 }
 
+/** Helper to create a token with common properties */
+function createToken(
+  kind: TokenKind,
+  value: string,
+  options?: {
+    hasSuffixSpace?: boolean;
+    hasPrefixSpace?: boolean;
+    navigateToId?: string;
+    deprecated?: boolean;
+  },
+): ReviewToken {
+  return {
+    Kind: kind,
+    Value: value,
+    HasSuffixSpace: options?.hasSuffixSpace ?? false,
+    HasPrefixSpace: options?.hasPrefixSpace ?? false,
+    NavigateToId: options?.navigateToId,
+    IsDeprecated: options?.deprecated,
+  };
+}
+
+/** Process excerpt tokens and add them to the tokens array */
+function processExcerptTokens(
+  excerptTokens: readonly ExcerptToken[],
+  tokens: ReviewToken[],
+  deprecated?: boolean,
+): void {
+  for (const excerpt of excerptTokens) {
+    const trimmedText = excerpt.text.trim();
+    if (!trimmedText) continue;
+
+    if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
+      tokens.push(
+        createToken(TokenKind.TypeName, trimmedText, {
+          navigateToId: excerpt.canonicalReference.toString(),
+          deprecated,
+        }),
+      );
+    } else {
+      tokens.push(createToken(TokenKind.Text, trimmedText, { deprecated }));
+    }
+  }
+}
+
 function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
   const tokens: ReviewToken[] = [];
   if (item.kind !== ApiItemKind.Function) {
@@ -21,155 +66,76 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
     );
   }
 
-  // Add export keyword
-  tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "export",
-    HasSuffixSpace: true,
-    IsDeprecated: deprecated,
-  });
-
-  // Check if this is a default export
-  const excerptText = item.excerptTokens.map((t) => t.text).join("");
-  const isDefaultExport = excerptText.includes("export default");
-
-  // Add default keyword if present
-  if (isDefaultExport) {
-    tokens.push({
-      Kind: TokenKind.Keyword,
-      Value: "default",
-      HasSuffixSpace: true,
-      IsDeprecated: deprecated,
-    });
-  }
-
-  // Add function keyword
-  tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "function",
-    HasSuffixSpace: true,
-    IsDeprecated: deprecated,
-  });
-
-  // Add function name
-  tokens.push({ Kind: TokenKind.MemberName, Value: item.displayName, IsDeprecated: deprecated });
-
-  // Try to use structured properties first (parameters, typeParameters)
+  // Extract structured properties
   const parameters = (item as unknown as { readonly parameters: ReadonlyArray<Parameter> })
     .parameters;
   const typeParameters = (
     item as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> }
   ).typeParameters;
 
-  // If we have structured parameters/typeParameters, use them
-  if (parameters || typeParameters) {
-    // Add type parameters if present
-    if (typeParameters && typeParameters.length > 0) {
-      tokens.push({ Kind: TokenKind.Text, Value: "<", IsDeprecated: deprecated });
-      typeParameters.forEach((tp, index) => {
-        tokens.push({ Kind: TokenKind.TypeName, Value: tp.name, IsDeprecated: deprecated });
-        if (tp.constraintExcerpt && tp.constraintExcerpt.text.trim()) {
-          tokens.push({ Kind: TokenKind.Text, Value: " extends ", IsDeprecated: deprecated });
-          tokens.push({
-            Kind: TokenKind.Text,
-            Value: tp.constraintExcerpt.text.trim(),
-            IsDeprecated: deprecated,
-          });
-        }
-        if (index < typeParameters.length - 1) {
-          tokens.push({ Kind: TokenKind.Text, Value: ", ", IsDeprecated: deprecated });
-        }
-      });
-      tokens.push({ Kind: TokenKind.Text, Value: ">", IsDeprecated: deprecated });
-    }
+  // Add export and function keywords
+  tokens.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
 
-    // Add opening parenthesis
-    tokens.push({ Kind: TokenKind.Text, Value: "(", IsDeprecated: deprecated });
-
-    // Add parameters if present
-    if (parameters && parameters.length > 0) {
-      parameters.forEach((param, index) => {
-        // Add parameter name
-        tokens.push({
-          Kind: TokenKind.Text,
-          Value: param.name,
-          HasPrefixSpace: index > 0,
-          IsDeprecated: deprecated,
-        });
-
-        // Add optional indicator if present
-        if (param.isOptional) {
-          tokens.push({ Kind: TokenKind.Text, Value: "?", IsDeprecated: deprecated });
-        }
-
-        // Add type annotation
-        tokens.push({ Kind: TokenKind.Text, Value: ": ", IsDeprecated: deprecated });
-
-        // Process parameter type from excerpt tokens
-        for (const excerpt of param.parameterTypeExcerpt.spannedTokens) {
-          if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-            tokens.push({
-              Kind: TokenKind.TypeName,
-              Value: excerpt.text,
-              NavigateToId: excerpt.canonicalReference.toString(),
-              IsDeprecated: deprecated,
-            });
-          } else if (excerpt.text.trim()) {
-            tokens.push({ Kind: TokenKind.Text, Value: excerpt.text, IsDeprecated: deprecated });
-          }
-        }
-
-        // Add comma if not last parameter
-        if (index < parameters.length - 1) {
-          tokens.push({
-            Kind: TokenKind.Text,
-            Value: ",",
-            HasSuffixSpace: true,
-            IsDeprecated: deprecated,
-          });
-        }
-      });
-    }
-
-    // Add closing parenthesis and return type
-    tokens.push({ Kind: TokenKind.Text, Value: "): ", IsDeprecated: deprecated });
-
-    // Process return type
-    for (const excerpt of item.returnTypeExcerpt.spannedTokens) {
-      if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-        tokens.push({
-          Kind: TokenKind.TypeName,
-          Value: excerpt.text,
-          NavigateToId: excerpt.canonicalReference.toString(),
-          IsDeprecated: deprecated,
-        });
-      } else if (excerpt.text.trim()) {
-        tokens.push({ Kind: TokenKind.Text, Value: excerpt.text, IsDeprecated: deprecated });
-      }
-    }
-  } else {
-    // Fallback: Process parameters and return type from excerptTokens
-    for (const excerpt of item.excerptTokens) {
-      if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-        tokens.push({
-          Kind: TokenKind.TypeName,
-          Value: excerpt.text,
-          NavigateToId: excerpt.canonicalReference.toString(),
-          IsDeprecated: deprecated,
-        });
-      } else {
-        // For other tokens (punctuation, parameter names, etc.)
-        const text = excerpt.text.trim();
-        if (text) {
-          tokens.push({
-            Kind: TokenKind.Text,
-            Value: text,
-            IsDeprecated: deprecated,
-          });
-        }
-      }
-    }
+  // Check for default export
+  const isDefaultExport = item.excerptTokens.some((t) => t.text.includes("export default"));
+  if (isDefaultExport) {
+    tokens.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   }
+
+  tokens.push(createToken(TokenKind.Keyword, "function", { hasSuffixSpace: true, deprecated }));
+  tokens.push(createToken(TokenKind.MemberName, item.displayName, { deprecated }));
+
+  // Add type parameters
+  if (typeParameters?.length > 0) {
+    tokens.push(createToken(TokenKind.Text, "<", { deprecated }));
+    typeParameters.forEach((tp, index) => {
+      tokens.push(createToken(TokenKind.TypeName, tp.name, { deprecated }));
+
+      if (tp.constraintExcerpt?.text.trim()) {
+        tokens.push(
+          createToken(TokenKind.Keyword, "extends", {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        tokens.push(createToken(TokenKind.Text, tp.constraintExcerpt.text.trim(), { deprecated }));
+      }
+
+      if (index < typeParameters.length - 1) {
+        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+      }
+    });
+    tokens.push(createToken(TokenKind.Text, ">", { deprecated }));
+  }
+
+  // Add parameters
+  tokens.push(createToken(TokenKind.Text, "(", { deprecated }));
+  if (parameters?.length > 0) {
+    parameters.forEach((param, index) => {
+      tokens.push(
+        createToken(TokenKind.Text, param.name, {
+          hasPrefixSpace: index > 0,
+          deprecated,
+        }),
+      );
+
+      if (param.isOptional) {
+        tokens.push(createToken(TokenKind.Text, "?", { deprecated }));
+      }
+
+      tokens.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
+      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
+
+      if (index < parameters.length - 1) {
+        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+      }
+    });
+  }
+
+  // Add return type
+  tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
+  processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
   return tokens;
 }

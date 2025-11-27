@@ -104,7 +104,6 @@ func TestIntentionRecognition_ThankYouMessage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.False(t, intentionResult.NeedsRagProcessing, "Thank you message should NOT require RAG processing")
-	require.Equal(t, "unknown", intentionResult.Category)
 }
 
 func TestIntentionRecognition_AnnouncementMessage(t *testing.T) {

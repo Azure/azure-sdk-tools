@@ -64,6 +64,7 @@ The question must be classified into one of these categories:
   - Suggestions/Questions about Azure SDK Q&A bot, should be false
   - Announcements or system message, should be false
   - Technical questions, should be true
+  - For all other cases not covered above, should be true
 
 # Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
@@ -71,7 +72,7 @@ Respond with a JSON object using this structure (no markdown formatting needed):
   "question": string,    // The rewritten standalone question
   "scope": string        // Must be one of the intent scopes or unknown
   "category": string     // Must be one of the intent categories or unknown
-  "needs_rag_processing": boolean    // Whether to invoke RAG workflow
+  "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 
 # Examples

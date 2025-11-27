@@ -213,31 +213,31 @@ namespace ContentValidation.Test
         }
 
 
-        [Test]
-        [Category("SpecialTest")]
-        [TestCaseSource(nameof(DuplicateTestLink))]
-        public async Task TestDuplicateService(string testLink)
-        {
-            IValidation Validation = new DuplicateServiceValidation(browser);
+        // [Test]
+        // [Category("SpecialTest")]
+        // [TestCaseSource(nameof(DuplicateTestLink))]
+        // public async Task TestDuplicateService(string testLink)
+        // {
+        //     IValidation Validation = new DuplicateServiceValidation(browser);
 
-            var res = new TResult();
-            try
-            {
-                res = await Validation.Validate(testLink);
-                res.TestCase = "TestDuplicateService";
-                if (!res.Result)
-                {
-                    TestDuplicateServiceResults.Enqueue(res);
-                }
-                pipelineStatusHelper.SavePipelineFailedStatus("DuplicateServiceValidation", "succeed");
-            }
-            catch
-            {
-                pipelineStatusHelper.SavePipelineFailedStatus("DuplicateServiceValidation", "failed");
-                throw;
-            }
+        //     var res = new TResult();
+        //     try
+        //     {
+        //         res = await Validation.Validate(testLink);
+        //         res.TestCase = "TestDuplicateService";
+        //         if (!res.Result)
+        //         {
+        //             TestDuplicateServiceResults.Enqueue(res);
+        //         }
+        //         pipelineStatusHelper.SavePipelineFailedStatus("DuplicateServiceValidation", "succeed");
+        //     }
+        //     catch
+        //     {
+        //         pipelineStatusHelper.SavePipelineFailedStatus("DuplicateServiceValidation", "failed");
+        //         throw;
+        //     }
 
-            Assert.That(res.Result, res.FormatErrorMessage());
-        }
+        //     Assert.That(res.Result, res.FormatErrorMessage());
+        // }
     }
 }

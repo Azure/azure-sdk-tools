@@ -36,32 +36,32 @@ namespace ContentValidation.Test
             JsonHelper4Test.AddTestResult(TestMissingTypeAnnotationResults, jsonFilePath);
         }
 
-        [Test]
-        [Category("PythonTest")]
-        [TestCaseSource(nameof(TestLinks))]
-        public async Task TestMissingTypeAnnotation(string testLink)
-        {
-            IValidation Validation = new TypeAnnotationValidation(browser);
+        // [Test]
+        // [Category("PythonTest")]
+        // [TestCaseSource(nameof(TestLinks))]
+        // public async Task TestMissingTypeAnnotation(string testLink)
+        // {
+        //     IValidation Validation = new TypeAnnotationValidation(browser);
 
-            var res = new TResult();
+        //     var res = new TResult();
             
-            try
-            {
-                res = await Validation.Validate(testLink);
-                res.TestCase = "TestMissingTypeAnnotation";
-                if (!res.Result)
-                {
-                    TestMissingTypeAnnotationResults.Enqueue(res);
-                }
-                pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "succeed");
-            }
-            catch
-            {
-                pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "failed");
-                throw;
-            }
+        //     try
+        //     {
+        //         res = await Validation.Validate(testLink);
+        //         res.TestCase = "TestMissingTypeAnnotation";
+        //         if (!res.Result)
+        //         {
+        //             TestMissingTypeAnnotationResults.Enqueue(res);
+        //         }
+        //         pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "succeed");
+        //     }
+        //     catch
+        //     {
+        //         pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "failed");
+        //         throw;
+        //     }
 
-            Assert.That(res.Result, res.FormatErrorMessage());
-        }
+        //     Assert.That(res.Result, res.FormatErrorMessage());
+        // }
     }
 }

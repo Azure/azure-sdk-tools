@@ -148,7 +148,7 @@ Important Links:
 	require.Equal(t, model.QuestionScope_Unknown, intentionResult.Scope)
 }
 
-func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
+func TestIntentionRecognition_SuggestionsMessage(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()

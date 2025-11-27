@@ -43,8 +43,8 @@ The question must be classified into one of these categories:
 ## Intent Scopes
 Detect the question's scope ONLY if explicitly mentioned by the user.
 
-- **data-plane**: ONLY when the user explicitly mentions "data-plane" or "data plane"
-- **management-plane**: ONLY when the user explicitly mentions "management-plane", "management plane", "ARM", or "Azure Resource Manager"
+- **data-plane**: ONLY when the user explicitly mentions "data-plane" or "data plane" in the context of Azure
+- **management-plane**: ONLY when the user explicitly mentions "management-plane", "management plane", "ARM", or "Azure Resource Manager" in the context of Azure
 - **unbranded**: ONLY when the user explicitly mentions they are an external user, non-Azure context, or general TypeSpec usage outside of Azure
 - **unknown**: Use this as the DEFAULT when the scope is not explicitly stated by the user
 

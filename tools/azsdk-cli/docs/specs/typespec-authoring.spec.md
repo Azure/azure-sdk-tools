@@ -256,27 +256,37 @@ _Known cases where this approach doesn't work or has limitations._
 
 ## Design Proposal
 
-_Provide a detailed explanation of your proposed solution._
+Leverage the existing Azure SDK RAG service to deliver solutions aligned with Azure guidelines and best practices. Implement a TypeSpec authoring MCP tool that consults the Azure SDK RAG service to generate these solutions.
 
 ### Overview
 
-[High-level description of the approach]
+![architecture](typespec-authoring-architecture.png)
 
 ### Detailed Design
 
-[Detailed explanation with diagrams, code samples, or workflows as appropriate]
+When a user prompts GitHub Copilot with a TypeSpec task, Copilot interacts with the user to gather the required details, then invokes the TypeSpec authoring tool using the task and collected information as context. The authoring tool consults the backend RAG service to generate a solution, which Copilot finally applies to update the TypeSpec files.
 
-#### Component 1: [Name]
+#### 1. TypeSpec authoring tool
 
-[Description]
+Name (CLI): `azsdk typespec authoring`
 
-```text
-[Code sample, diagram, or example]
+Name (MCP): `azsdk_typespec_authoring`
+
+Purpose: Help the user to define or edit TypeSpec API specifications and resolve **TypeSpec** related tasks.
+
+Inputs:
+- `--request <typespec-related-request>` (required)
+- `--additional-information <additional-context>` (optional)
+
+Outputs:
+
+```json
+{"is_successful":true,"solution": "<solution-for-the-typespec-task>", "references":[{"title":"How to define a preview version","source":"typespec_azure_docs","link":"https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"}]}
 ```
 
-#### Component 2: [Name]
+#### 2. RAG service
 
-[Description]
+Backend service to provide the solution for the task. It exports completion api https://<rag-service-endpoint>/completion
 
 ---
 
@@ -298,7 +308,7 @@ _How does this design work across different SDK languages?_
 
 ```bash
 # Example usage
-azsdk some-command --option value
+azsdk typespec authoring --request typespec-related-request
 ```
 
 ### Architecture Diagram
@@ -376,96 +386,63 @@ This feature/tool is complete when:
 
 ## Agent Prompts
 
-_Natural language prompts that users can provide to the AI agent (GitHub Copilot) to execute this tool or workflow. Include both simple and complex scenarios._
-
 ### Scenario 1: Add a new preview API version
 
 **Prompt:**
 
 ```text
-[Example natural language prompt that a user would type]
+add a new preview API version 2025-10-01-preview for service widget
 ```
 
 **Expected Agent Activity:**
 
-1. Scaffolding the folder structure.
-2. [Second action the agent should take]
-3. [Third action the agent should take]
-4. [Final action or report to user]
+1. Add a enum option v2025_10_01_preview in version enum for this new api version and decorate with @previewVersion
+2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
+3. summarize all the actions taken and display the reference docs
 
 ### Scenario 2: Update TypeSpec to follow Azure guidelines
 
 **Prompt:**
 
 ```text
-[Another example prompt for a different use case]
+add an azure resource asset for the api version 2025-10-01-preview
 ```
 
 **Expected Agent Activity:**
 
-1. [Action 1]
-2. [Action 2]
-3. [Report results]
+1. generate azure trackedResource model Asset and resource interface Assets using azure mgmt templates. Decorated @added(Versions.v2025_10_01_preview) 
+2. summarize all the actions taken and display the reference docs
 
 ---
 
 ## CLI Commands
 
-_Direct command-line interface usage showing exact commands, options, and expected outputs._
-
-### [Command Name 1]
+### typespec authoring
 
 **Command:**
 
 ```bash
-azsdk [command-name] --option1 value1 --option2 value2
+azsdk typespec authoring --request <typespec-request> --additional-information <additional context>
 ```
 
 **Options:**
 
-- `--option1 <value>`: Description of what this option does (required/optional)
-- `--option2 <value>`: Description of what this option does (default: some-value)
-- `--flag`: Description of this boolean flag
+- `--request`: the TypeSpec request to authoring
+- `--additional-information <value>`: Set the additional information, such as the context (optional)
 
 **Expected Output:**
 
 ```text
-[Example of what the command outputs when successful]
-
-✓ Action completed successfully
-✓ Files generated: 5
-✓ All checks passed
-
-Summary: [Brief summary of what was accomplished]
+**Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.\n **Step-by-step guidance:**\n 1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix. and decorate @previewVersion on the enum. 2. add an example folder for this version and copy the relative examples
 ```
 
 **Error Cases:**
 
 ```text
-[Example of error output when something goes wrong]
 
-✗ Error: Missing required option --option1
+✗ Error: Required argument missing for command: 'authoring'
   
-Usage: azsdk [command-name] --option1 <value> [options]
-```
-
-### [Command Name 2]
-
-**Command:**
-
-```bash
-azsdk [another-command] --required-param value
-```
-
-**Options:**
-
-- `--required-param <value>`: [Description]
-- `--optional-param <value>`: [Description] (optional)
-
-**Expected Output:**
-
-```text
-[Expected output example]
+Usage: azsdk typespec authoring
 ```
 
 ---

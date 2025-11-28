@@ -211,6 +211,12 @@ model FeedbackRequest {
 
   @doc("Optional user name")
   user_name?: string;
+
+  @doc("Optional reasons for the feedback, used to improve the model")
+  reasons?: string[];
+
+  @doc("Optional link to the conversation for further reference")
+  link?: string;
 }
 
 @doc("Response for feedback submission")

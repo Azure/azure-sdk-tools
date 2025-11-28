@@ -1,14 +1,10 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AiCompletion;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
@@ -20,13 +16,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType, Description("Guide the user to perform typespec related tasks, e.g. define and update TypeSpec based API spec for an azure service.")]
     public class TypeSpecAuthoringTool : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+
         private readonly IAiCompletionService _aiCompletionService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
-        private const string TypeSpecAuthoringToolCommandName = "typespec_authoring";
+        private const string TypeSpecAuthoringToolCommandName = "authoring";
 
-        // Command line options and arguments
-        private readonly Argument<string> _questionArgument = new("question") {
-            Description = "The question to authoring"
+        private readonly Option<string> _requestOption = new("--request")
+        {
+            Description = "The request to authoring",
+            Required = true,
+        };
+
+        private readonly Option<string> _additionalInformationOption = new("--additional-information")
+        {
+            Description = "The additional information to consider for the TypeSpec project.",
+            Required = false,
         };
         public TypeSpecAuthoringTool(
             IAiCompletionService aiCompletionService,
@@ -40,7 +45,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         {
             var command = new Command(TypeSpecAuthoringToolCommandName, "Guide the user to define and update TypeSpec based API spec for an azure service.")
             {
-                _questionArgument
+                _requestOption,
+                _additionalInformationOption
             };
 
             return command;
@@ -48,20 +54,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var question = parseResult.GetValue(_questionArgument);
+            var request = parseResult.GetValue(_requestOption);
 
-            if (string.IsNullOrWhiteSpace(question))
+            if (string.IsNullOrWhiteSpace(request))
             {
-                _logger.LogError("Question cannot be empty");
-                return new DefaultCommandResponse() { ResponseError = "Question cannot be empty" };
+                _logger.LogError("Request cannot be empty");
+                return new DefaultCommandResponse() { ResponseError = "Request cannot be empty" };
             }
 
             try
             {
-                _logger.LogInformation("Authoring with question: {Question}", question);
+                _logger.LogInformation("Authoring with question: {Request}", request);
 
                 var response = await AuthoringWithAzureSDKDocumentation(
-                  question,
+                  request,
                   ct: ct
                 );
 
@@ -97,18 +103,20 @@ This tool applies to all tasks involving **TypeSpec**:
   - **Add** a preview or **add** a stable API version.
 - Resolving TypeSpec-related issues
 
-Pass in a `question` to get an AI-generated response with references.
+Pass in a `request` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links
 ")]
         public async Task<TypeSpecAuthoringResponse> AuthoringWithAzureSDKDocumentation(
-            [Description("The question to ask the AI agent")]
-            string question,
+            [Description("The request to ask the AI agent")]
+            string request,
+            [Description("Additional information to consider for the TypeSpec project")]
+            string additionalInformation = null,
             CancellationToken ct = default)
         {
             try
             {
                 // Validate inputs
-                if (string.IsNullOrWhiteSpace(question))
+                if (string.IsNullOrWhiteSpace(request))
                 {
                     return new TypeSpecAuthoringResponse
                     {
@@ -116,22 +124,22 @@ Returns an answer with supporting references and documentation links
                     };
                 }
 
-                _logger.LogInformation("Authoring with question: {Question}", question);
+                _logger.LogInformation("Authoring with request: {Request}", request);
 
                 // Build request
-                var request = new CompletionRequest
+                var completionRequest = new CompletionRequest
                 {
                     TenantId = TenantId.AzureTypespecAuthoring,
                     Message = new Message
                     {
                         Role = Role.User,
-                        Content = question
+                        Content = request,
                     }
                 };
 
                 // Call the service
                 var response = await _aiCompletionService.SendCompletionRequestAsync(
-                    request, ct);
+                    completionRequest, ct);
 
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",
                     response.Id, response.HasResult);
@@ -139,7 +147,7 @@ Returns an answer with supporting references and documentation links
                 return new TypeSpecAuthoringResponse
                 {
                     IsSuccessful = response.HasResult,
-                    Answer = response.Answer,
+                    Solution = response.Answer,
                     References = MapReferences(response.References),
                     FullContext = response.FullContext,
                     ReasoningProgress = response.ReasoningProgress,

@@ -4,7 +4,7 @@ import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOpti
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import config from '../config/config.js';
-import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGeneratorV2.js';
+import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';

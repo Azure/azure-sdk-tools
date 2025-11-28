@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using ApiView;
+using APIView.Languages;
 using APIView.Model.V2;
 using NuGet.Common;
 using NuGet.Packaging;
@@ -143,7 +144,7 @@ public static class Program
             }
 
             var parsedFileName = string.IsNullOrEmpty(outputFileName) ? assemblySymbol.Name : outputFileName;
-            var treeTokenCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
+            var treeTokenCodeFile = new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
             await CreateOutputFile(OutputDirectory.FullName, parsedFileName, treeTokenCodeFile);
         }
         catch (Exception ex)

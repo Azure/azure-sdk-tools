@@ -49,8 +49,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
         if (!npmViewResult) {
             await makeChangesForFirstRelease(packageFolderPath, false);
+        } else {
+            await makeChangesForFirstRelease(packageFolderPath, isStableRelease);
         }
-        await makeChangesForFirstRelease(packageFolderPath, isStableRelease);
         logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ' : ' stable'} release successfully`);
     } else {
         if (!stableVersion) {

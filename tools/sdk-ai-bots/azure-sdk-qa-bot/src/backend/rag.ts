@@ -128,7 +128,7 @@ export interface RagApiError {
 
 // Feedback request interface
 export interface FeedbackRequestPayload {
-  channel_id: string;
+  channel_id?: string;
   tenant_id: string;
   messages: Message[];
   reaction: Reaction;

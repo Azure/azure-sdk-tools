@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	neturl "net/url"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -293,7 +292,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	reasoningModelMessages := []azopenai.ChatRequestMessageClassification{}
 
 	// process history messages
-	slices.Reverse(req.History)
 	for _, message := range req.History {
 		// Preprocess HTML content in history messages
 		content := message.Content

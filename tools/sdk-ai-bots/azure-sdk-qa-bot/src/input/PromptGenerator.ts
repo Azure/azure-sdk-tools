@@ -85,7 +85,7 @@ export class PromptGenerator {
       links: uniqueLinks,
       images: inlineImageUrls,
       userName: context.activity.from.name,
-      timestamp: context.activity.timestamp || new Date(),
+      timestamp: context.activity.timestamp ?? new Date(),
     };
     logger.info(`Raw prompt generated: ${JSON.stringify(rawPrompt)}`, { meta });
     return rawPrompt;

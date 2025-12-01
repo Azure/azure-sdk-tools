@@ -123,7 +123,7 @@ namespace APIViewWeb.Pages.Assemblies
             status = status.Select(x => HttpUtility.UrlDecode(x));
 
             // Set search query for the view
-            SearchQuery = string.Join(" ", search);
+            SearchQuery = search != null ? string.Join(" ", search) : string.Empty;
 
             // Update selected properties
             if (languages.Any())

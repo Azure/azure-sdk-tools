@@ -2,14 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.ML.Data;
-using Octokit;
 
 public class Issue
 {
     public string? CategoryLabel { get; set; }
     public string? ServiceLabel { get; set; }
     public string? Title { get; set; }
-    public string? Body { get; set; }
+    public string? Description { get; set; }
 
     [NoColumn]
     public string[]? Labels { get; set; }
@@ -25,7 +24,7 @@ public class Issue
     public Issue(GitHubClient.Issue issue)
     {
         Title = issue.Title;
-        Body = issue.Body;
+        Description = issue.Body;
         Labels = issue.LabelNames;
         CategoryLabels = issue.CategoryLabelNames;
         ServiceLabels = issue.ServiceLabelNames;

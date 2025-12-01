@@ -18,7 +18,7 @@ namespace IssueLabeler.Shared
         {
             this.logger = logger;
             this.modelHolder = modelHolder;
-            threshold = config.ScoreThreshold is not null ? float.Parse(config.ScoreThreshold) : 0.3f;
+            threshold = config.ConfidenceThreshold is not null ? float.Parse(config.ConfidenceThreshold) : 0.3f;
         }
 
         public Task<List<ScoredLabel>> Predict(GitHubIssue issue)
@@ -70,10 +70,10 @@ namespace IssueLabeler.Shared
             var labelPredictions = GetBestThreePredictions(probabilities, slotNames);
 
             float maxProbability = probabilities.Max();
-            logger.LogInformation($"MaxProbability: {maxProbability} for #{issueOrPr.ID} - '{issueOrPr.Title}'");
-            logger.LogInformation($"Top 3 suggested labels: '{string.Join(", ", labelPredictions.Select(x => $"{x.LabelName}:[{x.Score}]"))}'");
-            return [.. labelPredictions.Where(x => x.Score >= threshold)];
-            
+            logger.LogInformation($"Top 3 suggested labels: '{string.Join(", ", labelPredictions.Select(x => $"{x.LabelName}:[{x.Score}]"))}', threshold: {threshold}");
+            var filteredPredictions = labelPredictions.Where(x => x.Score >= threshold).ToList();
+            logger.LogInformation($"Filtered predictions count: {filteredPredictions.Count}");
+            return filteredPredictions;
         }
 
         public static List<ScoredLabel> GetBestThreePredictions(float[] scores, VBuffer<ReadOnlyMemory<char>> slotNames)

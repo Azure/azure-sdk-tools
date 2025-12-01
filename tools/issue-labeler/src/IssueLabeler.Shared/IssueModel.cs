@@ -2,47 +2,8 @@
 // Licensed under the MIT License.
 
 using Microsoft.ML.Data;
-using Newtonsoft.Json;
-
 namespace IssueLabeler.Shared.Models
 {
-    public class IssueModel
-    {
-        [JsonIgnore]
-        [LoadColumn(0)]
-        public string CombinedID;
-
-        [LoadColumn(1)]
-        public float ID;
-
-        [LoadColumn(2)]
-        public string Area;
-
-        [LoadColumn(3)]
-        public string Title;
-
-        [LoadColumn(4)]
-        public string Description;
-
-        [LoadColumn(5)]
-        public string Author;
-
-        [LoadColumn(6)]
-        public float IsPR;
-
-        [LoadColumn(7)]
-        public string UserMentions;
-
-        [LoadColumn(8)]
-        public float NumMentions;
-
-        [NoColumn]
-        public List<Label> Labels { get; set; }
-
-        [NoColumn]
-        public int Number { get; set; }
-    }
-
     public class Label
     {
         [LoadColumn(0)]

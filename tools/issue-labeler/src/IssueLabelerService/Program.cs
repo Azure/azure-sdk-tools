@@ -4,6 +4,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using IssueLabeler.Shared;
 using Azure.Identity;
 using System;
@@ -39,6 +40,7 @@ var host = new HostBuilder()
         
         var configService = new Configuration(configRoot);
         services.AddSingleton<Configuration>(configService);
+        services.AddSingleton<IRepositoryConfigurationProvider>(configService);
         
         var config = configService.GetDefault();
 
@@ -72,7 +74,12 @@ var host = new HostBuilder()
         });
 
         services.AddSingleton<TriageRag>();
-        services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
+        services.AddSingleton<IModelHolderFactoryLite>(sp => 
+        {
+            var logger = sp.GetRequiredService<ILogger<ModelHolderFactoryLite>>();
+            var configProvider = sp.GetRequiredService<IRepositoryConfigurationProvider>();
+            return new ModelHolderFactoryLite(logger, configProvider);
+        });
         services.AddSingleton<LabelerFactory>();
         services.AddSingleton<AnswerFactory>();
         services.AddSingleton<IssueGeneratorFactory>();

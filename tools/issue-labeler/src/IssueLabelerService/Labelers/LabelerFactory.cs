@@ -9,12 +9,16 @@ namespace IssueLabelerService
     public class LabelerFactory
     {
         private ConcurrentDictionary<string, ILabeler> _labelers = new();
-        private IModelHolderFactoryLite _modelHolderFactory;
         private ILogger<LabelerFactory> _logger;
+        private IModelHolderFactoryLite _modelHolderFactory;
         private TriageRag _ragService;
         private BlobServiceClient _blobClient;
 
-        public LabelerFactory(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, TriageRag ragService, BlobServiceClient blobClient)
+        public LabelerFactory(
+            ILogger<LabelerFactory> logger,
+            IModelHolderFactoryLite modelHolderFactory,
+            TriageRag ragService,
+            BlobServiceClient blobClient)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using IssueLabeler.Shared;
+using IssueLabeler.Shared.Models;
 
 namespace IssueLabelerService
 {

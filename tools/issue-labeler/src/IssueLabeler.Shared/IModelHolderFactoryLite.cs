@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -16,14 +15,14 @@ namespace IssueLabeler.Shared
     {
         private readonly ConcurrentDictionary<(string, string), IModelHolder> _models = new ConcurrentDictionary<(string, string), IModelHolder>();
         private readonly ILogger<ModelHolderFactoryLite> _logger;
-        private RepositoryConfiguration _configuration;
+        private readonly IRepositoryConfigurationProvider _configurationProvider;
         private SemaphoreSlim _sem = new SemaphoreSlim(1,1);
 
         public ModelHolderFactoryLite(
             ILogger<ModelHolderFactoryLite> logger,
-            RepositoryConfiguration configuration)
+            IRepositoryConfigurationProvider configurationProvider)
         {
-            _configuration = configuration;
+            _configurationProvider = configurationProvider;
             _logger = logger;
         }
 
@@ -115,18 +114,21 @@ namespace IssueLabeler.Shared
             {
                 throw new InvalidOperationException("Issue engine must be loaded.");
             }
-            return new Predictor(_logger, _configuration, modelHolder);
+            var configuration = _configurationProvider.GetForRepository(repo);
+            return new Predictor(_logger, configuration, modelHolder);
         }
 
         private bool IsConfigured(string repo)
         {
-            return !string.IsNullOrEmpty(_configuration.IssueModelForCategoryLabels) 
-            && !string.IsNullOrEmpty(_configuration.IssueModelForServiceLabels);
+            var configuration = _configurationProvider.GetForRepository(repo);
+            return !string.IsNullOrEmpty(configuration.IssueModelForCategoryLabels) 
+            && !string.IsNullOrEmpty(configuration.IssueModelForServiceLabels);
         }
 
         private async Task<IModelHolder> InitFor(string repo, string modelType)
         {
-            var mh = new ModelHolder(_logger, _configuration, repo, modelType);
+            var configuration = _configurationProvider.GetForRepository(repo);
+            var mh = new ModelHolder(_logger, configuration, repo, modelType);
             if (!mh.LoadRequested)
             {
                 await mh.LoadEnginesAsync();

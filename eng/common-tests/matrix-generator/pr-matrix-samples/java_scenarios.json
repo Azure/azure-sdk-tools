@@ -44,36 +44,38 @@
       "DeletedFiles": [],
       "PRNumber": "44300"
     },
-    "expected_package_output": {
-      "Name": "azure-data-appconfiguration",
-      "Version": "1.9.0-beta.1",
-      "DevVersion": null,
-      "DirectoryPath": "sdk/appconfiguration/azure-data-appconfiguration",
-      "ServiceDirectory": "appconfiguration",
-      "ReadMePath": "sdk/appconfiguration/azure-data-appconfiguration/README.md",
-      "ChangeLogPath": "sdk/appconfiguration/azure-data-appconfiguration/CHANGELOG.md",
-      "Group": "com.azure",
-      "SdkType": "client",
-      "IsNewSdk": true,
-      "ArtifactName": "azure-data-appconfiguration",
-      "ReleaseStatus": "Unreleased",
-      "IncludedForValidation": false,
-      "AdditionalValidationPackages": [
-        "com.azure:perf-test-core"
-      ],
-      "ArtifactDetails": {
-        "releaseInBatch": "${{ parameters.release_azuredataappconfiguration }}",
-        "name": "azure-data-appconfiguration",
-        "groupId": "com.azure",
-        "triggeringPaths": [
-          "/sdk/appconfiguration/ci.yml"
+    "expected_package_output": [
+      {
+        "Name": "azure-data-appconfiguration",
+        "Version": "1.9.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/appconfiguration/azure-data-appconfiguration",
+        "ServiceDirectory": "appconfiguration",
+        "ReadMePath": "sdk/appconfiguration/azure-data-appconfiguration/README.md",
+        "ChangeLogPath": "sdk/appconfiguration/azure-data-appconfiguration/CHANGELOG.md",
+        "Group": "com.azure",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-data-appconfiguration",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": [
+          "com.azure:perf-test-core"
         ],
-        "safeName": "azuredataappconfiguration"
-      },
-      "CIParameters": {
-        "CIMatrixConfigs": []
+        "ArtifactDetails": {
+          "safeName": "azuredataappconfiguration",
+          "releaseInBatch": "${{ parameters.release_azuredataappconfiguration }}",
+          "groupId": "com.azure",
+          "triggeringPaths": [
+            "/sdk/appconfiguration/ci.yml"
+          ],
+          "name": "azure-data-appconfiguration"
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
       }
-    }
+    ]
   },
   {
     "name": "Core changes + excluded files changed",
@@ -144,8 +146,8 @@
           "com.azure:perf-test-core"
         ],
         "ArtifactDetails": {
+          "safeName": "azurecore",
           "releaseInBatch": "${{ parameters.release_azurecore }}",
-          "name": "azure-core",
           "groupId": "com.azure",
           "triggeringPaths": [
             "/eng",
@@ -153,23 +155,23 @@
             "/sdk/parents/azure-client-sdk-parent",
             "/sdk/core/ci.yml"
           ],
-          "safeName": "azurecore"
+          "name": "azure-core"
         },
         "CIParameters": {
           "CIMatrixConfigs": [
             {
-              "Path": "eng/pipelines/templates/stages/platform-matrix.json",
+              "NonSparseParameters": "Agent",
               "GenerateVMJobs": true,
+              "Path": "eng/pipelines/templates/stages/platform-matrix.json",
               "Name": "Java_ci_test_base",
-              "Selection": "sparse",
-              "NonSparseParameters": "Agent"
+              "Selection": "sparse"
             },
             {
+              "GenerateVMJobs": true,
               "PRBatching": false,
               "Path": "sdk/core/version-overrides-matrix.json",
               "Name": "version_overrides_tests",
-              "Selection": "all",
-              "GenerateVMJobs": true
+              "Selection": "all"
             }
           ]
         }
@@ -192,23 +194,23 @@
           "io.clientcore:optional-dependency-tests"
         ],
         "ArtifactDetails": {
+          "safeName": "core",
           "releaseInBatch": "${{ parameters.release_core }}",
-          "name": "core",
           "groupId": "io.clientcore",
           "triggeringPaths": [
             "/sdk/parents/clientcore-parent",
             "/sdk/clientcore/ci.yml"
           ],
-          "safeName": "core"
+          "name": "core"
         },
         "CIParameters": {
           "CIMatrixConfigs": [
             {
-              "Path": "sdk/clientcore/platform-matrix.json",
+              "NonSparseParameters": "Agent",
               "GenerateVMJobs": true,
+              "Path": "sdk/clientcore/platform-matrix.json",
               "Name": "clientcore_ci_test_base",
-              "Selection": "sparse",
-              "NonSparseParameters": "Agent"
+              "Selection": "sparse"
             }
           ]
         }
@@ -282,14 +284,14 @@
           "com.azure:perf-test-core"
         ],
         "ArtifactDetails": {
+          "safeName": "azuresdktemplate",
           "releaseInBatch": "${{ parameters.release_azuresdktemplate }}",
-          "name": "azure-sdk-template",
-          "skipPublishDocMs": true,
           "groupId": "com.azure",
+          "skipPublishDocMs": true,
           "triggeringPaths": [
             "/sdk/template/ci.yml"
           ],
-          "safeName": "azuresdktemplate"
+          "name": "azure-sdk-template"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -314,14 +316,14 @@
           "com.azure:perf-test-core"
         ],
         "ArtifactDetails": {
+          "safeName": "azuresdktemplatethree",
           "releaseInBatch": "${{ parameters.release_azuresdktemplatethree }}",
-          "name": "azure-sdk-template-three",
-          "skipPublishDocMs": true,
           "groupId": "com.azure",
+          "skipPublishDocMs": true,
           "triggeringPaths": [
             "/sdk/template/ci.yml"
           ],
-          "safeName": "azuresdktemplatethree"
+          "name": "azure-sdk-template-three"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -346,14 +348,14 @@
           "com.azure:perf-test-core"
         ],
         "ArtifactDetails": {
+          "safeName": "azuresdktemplatetwo",
           "releaseInBatch": "${{ parameters.release_azuresdktemplatetwo }}",
-          "name": "azure-sdk-template-two",
-          "skipPublishDocMs": true,
           "groupId": "com.azure",
+          "skipPublishDocMs": true,
           "triggeringPaths": [
             "/sdk/template/ci.yml"
           ],
-          "safeName": "azuresdktemplatetwo"
+          "name": "azure-sdk-template-two"
         },
         "CIParameters": {
           "CIMatrixConfigs": []

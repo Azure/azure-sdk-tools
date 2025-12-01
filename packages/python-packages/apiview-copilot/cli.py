@@ -1180,7 +1180,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "use_recording",
                 options_list=["--use-recording"],
                 action="store_true",
-                help="Use cached results for testcases when available.",
+                help="Use recorded results for testcases when available.",
             )
 
         with ArgumentsContext(self, "search") as ac:

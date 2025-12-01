@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--use-recording",
         action="store_true",
-        help="Enable caching of evaluation results to speed up runs.",
+        help="Enable recording of evaluation results to speed up runs.",
     )
     args = parser.parse_args()
     targets = discover_targets(args.test_paths)

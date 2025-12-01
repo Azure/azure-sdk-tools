@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
     /// </summary>
     public class ReleasePlanListResponse : ReleasePlanBaseResponse
     {
-        [JsonPropertyName("release_plan_details_list")]
+        [JsonPropertyName("release_plans")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<ReleasePlanDetails>? ReleasePlanDetailsList { get; set; }
 

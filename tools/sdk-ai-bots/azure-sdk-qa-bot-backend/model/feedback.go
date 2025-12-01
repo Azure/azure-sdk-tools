@@ -16,6 +16,7 @@ type FeedbackReq struct {
 	Reasons  []string  `json:"reasons,omitempty" jsonschema:"omitempty,description=Optional reasons for the feedback, used to improve the model"`
 	Link     string    `json:"link,omitempty" jsonschema:"omitempty,description=Optional link to the conversation for further reference"`
 	UserName string    `json:"user_name,omitempty" jsonschema:"omitempty,description=Optional user name"`
+	Subject  string    `json:"subject,omitempty" jsonschema:"omitempty,description=Optional subject of the conversation"`
 }
 
 type FeedbackResp struct {

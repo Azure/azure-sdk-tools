@@ -40,6 +40,10 @@ type Config struct {
 	STORAGE_RECORDS_CONTAINER   string
 
 	KEYVAULT_ENDPOINT string
+
+	GITHUB_OWNER        string
+	GITHUB_REPO         string
+	GITHUB_PARENT_ISSUE int // Parent issue number for creating sub-issues
 }
 
 var BotEnv *BotENV

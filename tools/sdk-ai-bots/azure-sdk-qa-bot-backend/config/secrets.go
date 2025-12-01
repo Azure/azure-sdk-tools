@@ -9,6 +9,7 @@ import (
 
 var AI_SEARCH_APIKEY string
 var AOAI_CHAT_COMPLETIONS_API_KEY string
+var GITHUB_TOKEN string
 
 func InitSecrets() {
 	// Use the global credential
@@ -37,4 +38,13 @@ func InitSecrets() {
 		log.Fatalf("failed to get the secret value: %v", err)
 	}
 	AOAI_CHAT_COMPLETIONS_API_KEY = *resp.Value
+
+	resp, err = client.GetSecret(context.Background(), "GITHUB-TOKEN", "", nil)
+	if err != nil {
+		log.Fatalf("failed to get the secret: %v", err)
+	}
+	if resp.Value == nil {
+		log.Fatalf("failed to get the secret value: %v", err)
+	}
+	GITHUB_TOKEN = *resp.Value
 }

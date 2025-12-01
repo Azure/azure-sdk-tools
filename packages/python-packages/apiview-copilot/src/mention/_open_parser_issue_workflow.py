@@ -1,6 +1,12 @@
+import os
+
+from dotenv import load_dotenv
 from src._github_manager import GithubManager
+
 from ._base import MentionWorkflow
 from ._github_issue_helpers import execute_workflow
+
+load_dotenv(override=True)
 
 
 class OpenParserIssueWorkflow(MentionWorkflow):
@@ -31,11 +37,13 @@ class OpenParserIssueWorkflow(MentionWorkflow):
     def execute_plan(self, plan: dict):
         """Execute the parser issue workflow"""
         client = GithubManager.get_instance()
-        
+        environment = os.getenv("ENVIRONMENT_NAME")
+        owner = "Azure" if environment == "production" else "tjprescott"
+
         return execute_workflow(
             client=client,
             plan=plan,
-            owner="Azure",
+            owner=owner,
             repo="azure-sdk-tools",
             workflow_tag="parser-issue",
             source_tag="APIView Copilot",
@@ -49,5 +57,3 @@ class OpenParserIssueWorkflow(MentionWorkflow):
             language=self.language,
             language_labels=self.LANGUAGE_LABELS,
         )
-
-

@@ -37,6 +37,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string checkApiReadinessCommandName = "check-api-readiness";
         private const string linkSdkPrCommandName = "link-sdk-pr";
 
+        // MCP Tool Names
+        private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
+        private const string GetReleasePlanToolName = "azsdk_get_release_plan";
+        private const string CreateReleasePlanToolName = "azsdk_create_release_plan";
+        private const string UpdateSdkDetailsToolName = "azsdk_update_sdk_details_in_release_plan";
+        private const string LinkNamespaceApprovalToolName = "azsdk_link_namespace_approval_issue";
+        private const string UpdateLanguageExclusionToolName = "azsdk_update_language_exclusion_justification";
+        private const string CheckApiSpecReadyToolName = "azsdk_check_api_spec_ready_for_sdk";
+        private const string LinkSdkPullRequestToolName = "azsdk_link_sdk_pull_request_to_release_plan";
+
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
         {
@@ -164,8 +174,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new(getReleasePlanDetailsCommandName, "Get release plan details") { workItemIdOpt, releasePlanNumberOpt },
-            new(createReleasePlanCommandName, "Create a release plan")
+            new McpCommand(getReleasePlanDetailsCommandName, "Get release plan details", GetReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt },
+            new McpCommand(createReleasePlanCommandName, "Create a release plan", CreateReleasePlanToolName)
             {
                 typeSpecProjectPathOpt,
                 targetReleaseOpt,
@@ -178,9 +188,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 isTestReleasePlanOpt,
                 forceCreateReleasePlanOpt,
             },
-            new(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan") { workItemIdOpt, namespaceApprovalIssueOpt },
-            new(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK") { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt },
-            new(linkSdkPrCommandName, "Link SDK pull request to release plan") { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt }
+            new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
+            new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
+            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, }
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -234,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
 
-        [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
+        [McpServerTool(Name = GetReleasePlanForSpecPrToolName), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<ReleaseWorkflowResponse> GetReleasePlanForPullRequest(string pullRequestLink)
         {
             var response = new ReleaseWorkflowResponse();
@@ -256,7 +266,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_get_release_plan"), Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
         public async Task<ReleaseWorkflowResponse> GetReleasePlan(int workItem = 0, int releasePlanId = 0)
         {
             try
@@ -343,7 +353,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan")]
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan")]
         public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false)
         {
             try
@@ -475,7 +485,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_update_sdk_details_in_release_plan"), Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
+        [McpServerTool(Name = UpdateSdkDetailsToolName), Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
             " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
         public async Task<DefaultCommandResponse> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
         {
@@ -584,7 +594,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_link_namespace_approval_issue"), Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
+        [McpServerTool(Name = LinkNamespaceApprovalToolName), Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
         public async Task<DefaultCommandResponse> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string namespaceApprovalIssue)
         {
             try
@@ -666,7 +676,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_update_language_exclusion_justification"), Description("Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. " +
+        [McpServerTool(Name = UpdateLanguageExclusionToolName), Description("Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. " +
             "Optionally pass a language name to explicitly request exclusion for a specific language.")]
         public async Task<DefaultCommandResponse> UpdateLanguageExclusionJustification(int releasePlanWorkItem, string justification, string language = "")
         {
@@ -720,7 +730,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_check_api_spec_ready_for_sdk"), Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
+        [McpServerTool(Name = CheckApiSpecReadyToolName), Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
         public async Task<ReleaseWorkflowResponse> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber, int workItemId = 0)
         {
             try
@@ -860,7 +870,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             };
         }
 
-        [McpServerTool(Name = "azsdk_link_sdk_pull_request_to_release_plan"), Description("Link SDK pull request to release plan work item")]
+        [McpServerTool(Name = LinkSdkPullRequestToolName), Description("Link SDK pull request to release plan work item")]
         public async Task<ReleaseWorkflowResponse> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0)
         {
             try

@@ -4,5 +4,6 @@ export default defineConfig({
   test: {
     testTimeout: 60_000,
     exclude: ["test/examples/**", "dist/**", "**/node_modules/**"],
+    maxConcurrency: 1,
   },
 });

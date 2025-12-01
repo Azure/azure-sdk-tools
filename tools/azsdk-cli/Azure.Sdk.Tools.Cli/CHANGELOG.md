@@ -1,16 +1,23 @@
 # Release History
 
-## 0.5.9 (Unreleased)
+## 0.5.10 (Unreleased)
 
 ### Features Added
 
 - Moved `azsdk_check_api_spec_ready_for_sdk` and `azsdk_link_sdk_pull_request_to_release_plan` under release plan command hierarchy.
+- Added APIView tools to expose APIView functionality to MCP agents (`get-comments`) and CLI (`get-content`)
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.5.9 (2025-11-24)
+
+### Features Added
+
+- Added a new command to list all MCP tools and its CLI command.
 
 ## 0.5.8 (2025-11-13)
 

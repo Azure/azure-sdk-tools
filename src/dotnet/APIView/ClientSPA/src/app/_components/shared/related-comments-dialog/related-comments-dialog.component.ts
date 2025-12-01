@@ -1,14 +1,22 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
+import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
 
 export type VoteType = 'none' | 'up' | 'down';
+export type ConversationDisposition = 'resolve' | 'keepOpen' | 'delete';
 
 export interface CommentResolutionData {
   commentIds: string[];
   batchVote?: VoteType;
   resolutionComment?: string;
+  disposition: ConversationDisposition;
+  severity?: CommentSeverity;
+  feedbackReasons?: string[];
+  feedbackAdditionalComments?: string;
 }
 
 @Component({
@@ -21,6 +29,8 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() visible: boolean = false;
   @Input() selectedCommentId: string = '';
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
+  @Input() userProfile: UserProfile | undefined;
+  @Input() preferredApprovers: string[] = [];
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() resolveSelectedComments = new EventEmitter<CommentResolutionData>();
 
@@ -29,6 +39,50 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   selectAll: boolean = false;
   batchVote: VoteType | null = null;
   resolutionComment: string = '';
+  selectedDisposition: ConversationDisposition = 'keepOpen';
+  selectedSeverity: CommentSeverity | null = null;
+  
+  // Inline feedback state for AI comment downvotes
+  showInlineFeedback: boolean = false;
+  feedbackExpanded: boolean = true; // Start expanded
+  feedbackReasons: string[] = [];
+  feedbackAdditionalComments: string = '';
+  
+  // Deletion reason state
+  deletionReason: string = '';
+  
+  readonly availableFeedbackReasons = AI_COMMENT_FEEDBACK_REASONS;
+  
+  // Feedback reasons for multi-select dropdown
+  get feedbackReasonOptions() {
+    return this.availableFeedbackReasons.map(r => ({ label: r.label, value: r.key }));
+  }
+
+  severityOptions = CommentSeverityHelper.severityOptions;
+
+  dispositionOptions = [
+    { label: 'Keep Open', value: 'keepOpen' as ConversationDisposition, icon: 'pi pi-comment' },
+    { label: 'Resolve', value: 'resolve' as ConversationDisposition, icon: 'pi pi-check-circle' },
+    { label: 'Delete', value: 'delete' as ConversationDisposition, icon: 'pi pi-trash' }
+  ];
+
+  // Permission check: User can edit severity if they can edit ALL selected comments
+  get canEditSeverity(): boolean {
+    if (!this.userProfile || this.relatedComments.length === 0) {
+      return false;
+    }
+
+    // Get the comments that are currently selected (or all if none selected)
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+
+    // User can edit if they are the owner of ALL comments, or if they are an architect and ALL comments are from azure-sdk bot
+    return commentsToCheck.every(comment => 
+      comment.createdBy === this.userProfile?.userName || 
+      (comment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!))
+    );
+  }
 
   // Performance optimization: Cache for code context
   private codeContextCache = new Map<string, string>();
@@ -42,6 +96,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       if (this.visible) {
         this.resetSelection();
         this.codeContextCache.clear();
+        this.updateSeverityFromComments();
       }
     }
   }
@@ -51,6 +106,51 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     this.selectAll = false;
     this.batchVote = null;
     this.resolutionComment = '';
+    this.deletionReason = '';
+    this.selectedDisposition = 'keepOpen'; // Default to safest option
+    this.showInlineFeedback = false;
+    this.feedbackReasons = [];
+    this.feedbackAdditionalComments = '';
+    this.updateSeverityFromComments();
+  }
+
+  private updateSeverityFromComments() {
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+
+    const severities = commentsToCheck
+      .map(c => CommentSeverityHelper.getSeverityEnumValue(c.severity))
+      .filter(s => s !== null) as CommentSeverity[];
+
+    if (severities.length > 0) {
+      const allSame = severities.every(s => s === severities[0]);
+      if (allSame) {
+        this.selectedSeverity = severities[0];
+      } else {
+        this.selectedSeverity = Math.max(...severities) as CommentSeverity;
+      }
+    } else {
+      this.selectedSeverity = null;
+    }
+  }
+
+  getPlaceholderText(): string {
+    switch (this.selectedDisposition) {
+      case 'resolve':
+        return 'Add a comment when resolving the selected issues...';
+      case 'keepOpen':
+        return 'Add a reply to the selected issues...';
+      case 'delete':
+        return 'Explain why this comment is egregiously wrong and must be deleted...';
+      default:
+        return 'Add a comment...';
+    }
+  }
+  
+  // Check if deletion reason is required and provided
+  get isDeletionReasonValid(): boolean {
+    return this.selectedDisposition !== 'delete' || this.deletionReason.trim().length > 0;
   }
 
   onHide() {
@@ -93,8 +193,19 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       const resolutionData: CommentResolutionData = {
         commentIds: Array.from(this.selectedCommentIds),
         batchVote: this.batchVote || undefined,
-        resolutionComment: this.resolutionComment.trim() || undefined
+        resolutionComment: this.selectedDisposition !== 'delete' 
+          ? this.resolutionComment.trim() || undefined
+          : undefined,
+        disposition: this.selectedDisposition,
+        severity: this.selectedSeverity !== null ? this.selectedSeverity : undefined,
+        feedbackReasons: this.feedbackReasons.length > 0 ? this.feedbackReasons : undefined,
+        feedbackAdditionalComments: this.selectedDisposition === 'delete'
+          ? this.deletionReason.trim() || undefined
+          : this.feedbackAdditionalComments.trim() || undefined
       };
+      
+      console.log('🔍 Resolution data being emitted:', resolutionData);
+      
       this.resolveSelectedComments.emit(resolutionData);
       this.onHide();
     }
@@ -111,8 +222,15 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   toggleBatchVote(voteType: 'up' | 'down') {
     if (this.batchVote === voteType) {
       this.batchVote = null;
+      this.showInlineFeedback = false;
     } else {
       this.batchVote = voteType;
+      // Show inline feedback when downvoting AI-generated comments
+      if (voteType === 'down' && this.hasAIGeneratedComments) {
+        this.showInlineFeedback = true;
+      } else {
+        this.showInlineFeedback = false;
+      }
     }
   }
 
@@ -122,6 +240,33 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
 
   hasBatchDownvote(): boolean {
     return this.batchVote === 'down';
+  }
+  
+  get canSubmitFeedback(): boolean {
+    return this.feedbackReasons.length > 0;
+  }
+  
+  get hasAIGeneratedComments(): boolean {
+    // If no comments are selected, check all comments
+    // If comments are selected, check only selected ones
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+    
+    return commentsToCheck.some(c => c.createdBy === 'azure-sdk');
+  }
+  
+  isFeedbackReasonSelected(reason: string): boolean {
+    return this.feedbackReasons.includes(reason);
+  }
+  
+  toggleFeedbackReason(reason: string): void {
+    const index = this.feedbackReasons.indexOf(reason);
+    if (index > -1) {
+      this.feedbackReasons.splice(index, 1);
+    } else {
+      this.feedbackReasons.push(reason);
+    }
   }
 
   getCodeContextForComment(comment: CommentItemModel): string {

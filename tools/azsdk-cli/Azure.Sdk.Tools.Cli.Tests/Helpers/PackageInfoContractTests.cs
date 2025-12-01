@@ -233,11 +233,11 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
     {
         ///var powershellHelper = new Mock<IPowershellHelper>();
 
-        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper),
-        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper),
-        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper),
-        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper),
-        SdkLanguage.Go => new GoLanguageService(processHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper),
+        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Go => new GoLanguageService(processHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

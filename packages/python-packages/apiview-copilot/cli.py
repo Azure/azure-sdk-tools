@@ -180,7 +180,7 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_cache: bool = False):
+def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_recording: bool = False):
     """
     Runs the specified test case(s).
     """
@@ -188,7 +188,7 @@ def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs, use_cache=use_cache)
+    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording)
     try:
         results = runner.run(targets)
         if save:
@@ -1177,10 +1177,10 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
             ac.argument(
-                "use_cache",
-                options_list=["--use-cache"],
+                "use_recording",
+                options_list=["--use-recording"],
                 action="store_true",
-                help="Use cached results for testcases when available.",
+                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
             )
 
         with ArgumentsContext(self, "search") as ac:

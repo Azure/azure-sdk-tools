@@ -30,6 +30,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string generateSdkCommandName = "generate-sdk";
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
 
+        // MCP Tool Names
+        private const string RunGenerateSdkToolName = "azsdk_run_generate_sdk";
+        private const string GetSdkPullRequestLinkToolName = "azsdk_get_sdk_pull_request_link";
+
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
         {
@@ -88,11 +92,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         protected override List<Command> GetCommands() =>
         [
-            new(generateSdkCommandName, "Generate SDK for a TypeSpec project")
+            new McpCommand(generateSdkCommandName, "Generate SDK for a TypeSpec project", RunGenerateSdkToolName)
             {
                 typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt,
             },
-            new(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline")
+            new McpCommand(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline", GetSdkPullRequestLinkToolName)
             {
                 languageOpt, pipelineRunIdOpt, workItemIdOpt,
             },
@@ -288,7 +292,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <param name="workItemId">Work item ID for the release plan</param>
         /// <returns></returns>
-        [McpServerTool(Name = "azsdk_get_sdk_pull_request_link"), Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
+        [McpServerTool(Name = GetSdkPullRequestLinkToolName), Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
         public async Task<ReleaseWorkflowResponse> GetSDKPullRequestDetails(string language, int workItemId, int buildId = 0)
         {
             try

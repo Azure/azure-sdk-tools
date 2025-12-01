@@ -38,33 +38,32 @@ python run.py --test-paths tests/filter_existing_comment/discard_azure_sdk_repea
 python run.py --num-runs 5 --test-paths tests/filter_comment_metadata
 ```
 
-5. **Use cached recordings** to speed up runs without making LLM calls:
+5. **Use recordings** to speed up runs without making LLM calls:
 ```bash
 python run.py --use-recording
 ```
 
 > Note: Due to variability in AI model responses, the number of runs can be increased to get a more stable result (the median of the results is chosen as the final result).
 
-## Evaluation Caching
+## Evaluation Recordings
 
-The `--use-recording` flag caches LLM responses to speed up repeated runs and reduce API costs.
+The `--use-recording` flag records LLM responses to speed up repeated runs and reduce API costs.
 
 ### How to Use
 
 ```bash
-# First run: makes LLM calls and saves responses to cache
+# First run: makes LLM calls and saves responses to record
 python run.py --use-recording --test-paths tests/mention_action
 
-# Subsequent runs: uses cached responses (no LLM calls)
+# Subsequent runs: uses recorded responses (no LLM calls)
 python run.py --use-recording --test-paths tests/mention_action
 ```
 
 ### How It Works
 
-- **Cache location**: `evals/cache/` (automatically created, gitignored)
-- **Cache key**: Based on the `testcase` field in test files
-- **Fresh vs cached**: If a test's cache exists, it's loaded; otherwise LLM is called
-- **Invalidation**: Delete cache files in `evals/cache/` to force fresh evaluation
+- **Recordings location**: `evals/cache/` (automatically created, gitignored)
+- **Fresh vs recorded**: If a test's recording exists, it's loaded; otherwise LLM is called
+- **Modifying tests**: If you change a test file, delete its recording in `evals/cache/` to force a fresh LLM call on next run, or don't use `--use-recording` to always get fresh results.
 
 ### Benefits
 
@@ -84,7 +83,7 @@ evals/
 │   ├── filter_comment_metadata/
 │   ├── deduplicate_parser_issue/
 │   └── ...
-├── cache/                      # Cached LLM responses (when using --use-recording)
+├── cache/                      # Recorded LLM responses (when using --use-recording)
 ├── run.py                      # Main entry point
 └── _custom.py                  # Target functions for workflows
 prompts/                        # Prompty files being tested (in parent dir)
@@ -147,7 +146,7 @@ response:
 ```
 
 **Required fields:**
-- `testcase`: Unique identifier for the test (used for caching and reporting)
+- `testcase`: Unique identifier for the test (used for recording and reporting)
 - `response`: Expected output (can be YAML object or JSON string)
 - Other fields: Must match parameters in your target function in `_custom.py`
 

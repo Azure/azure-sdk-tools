@@ -35,29 +35,24 @@ public class APIViewResponse : CommandResponse
 
         string resultString = Result.ToString()!;
 
-        if (IsValidJson(resultString))
+        // Check if the result is a JSON string (starts and ends with quotes)
+        if (resultString.StartsWith("\"") && resultString.EndsWith("\""))
         {
-            output.AppendLine(resultString);
+            try
+            {
+                string? parsed = JsonSerializer.Deserialize<string>(resultString);
+                if (parsed != null)
+                {
+                    output.AppendLine(parsed);
+                    return output.ToString();
+                }
+            }
+            catch (JsonException)
+            {
+            }
         }
-        else
-        {
-            string unescapedResult = Regex.Unescape(resultString);
-            output.AppendLine(unescapedResult);
-        }
-
+     
+        output.AppendLine(resultString);
         return output.ToString();
-    }
-
-    private static bool IsValidJson(string value)
-    {
-        try
-        {
-            JsonDocument.Parse(value);
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
     }
 }

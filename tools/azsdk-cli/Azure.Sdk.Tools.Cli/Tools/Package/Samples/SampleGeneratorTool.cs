@@ -8,11 +8,9 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Azure.Sdk.Tools.Cli.Tools.Samples;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 {
@@ -26,17 +24,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Generates sample files")]
     public class SampleGeneratorTool: LanguageMcpTool
     {
-        private ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver;
         private IMicroagentHostService microagentHostService;
         public SampleGeneratorTool(
             IMicroagentHostService microagentHostService,
             ILogger<SampleGeneratorTool> logger,
             IGitHelper gitHelper,
-            IEnumerable<LanguageService> languageServices,
-            ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
+            IEnumerable<LanguageService> languageServices
         ) : base(languageServices, gitHelper, logger)
         {
-            this.sampleContextResolver = sampleContextResolver;
             this.microagentHostService = microagentHostService;
         }
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageSample];
@@ -143,8 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
             var resolvedOutputDirectory = packageInfo.SamplesDirectory;
 
-            logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);
-            SampleLanguageContext sampleContext = await sampleContextResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            SampleLanguageContext sampleContext = languageService.SampleLanguageContext;
             var language = sampleContext.Language;
 
             logger.LogInformation("Starting sample generation with prompt: {prompt}", prompt);

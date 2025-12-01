@@ -1,0 +1,18 @@
+testcase: empty_existing_issues_should_create
+language: python
+package_name: azure.identity
+code: "class ClientBase:"
+issue_context: |
+  Inheritance guideline missing clarity
+  
+  The guideline at https://azure.github.io/azure-sdk/python_design.html#inheritance
+  doesn't clearly state when base classes should be used.
+  
+  **Code:**
+  ```python
+  class ClientBase:
+  ```
+existing_issues: |
+  []
+response:
+  action: create

@@ -13,7 +13,6 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Samples;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -45,15 +44,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
-
-            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetSampleLanguageContext),
-                Java = typeof(JavaSampleLanguageContext),
-                Python = typeof(PythonSampleLanguageContext),
-                JavaScript = typeof(TypeScriptSampleLanguageContext),
-                Go = typeof(GoSampleLanguageContext),
-            });
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();

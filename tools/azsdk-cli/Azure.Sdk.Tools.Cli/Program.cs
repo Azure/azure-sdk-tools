@@ -79,6 +79,8 @@ public class Program
 
         // register common services
         ServiceRegistrations.RegisterCommonServices(builder.Services, outputMode);
+        // register MCP tools
+        ServiceRegistrations.RegisterInstrumentedMcpTools(builder.Services, args);
 
         if (isCommandLine)
         {
@@ -86,9 +88,6 @@ public class Program
         }
 
         TelemetryService.RegisterServerTelemetry(builder.Services, debug);
-
-        // register MCP tools
-        ServiceRegistrations.RegisterInstrumentedMcpTools(builder.Services, args);
 
         builder.WebHost.ConfigureKestrel(options =>
         {

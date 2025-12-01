@@ -9,5 +9,7 @@ public enum SdkType
     [JsonPropertyName("mgmt")]
     Management,
     [JsonPropertyName("client")]
-    Dataplane
+    Dataplane,
+    [JsonPropertyName("spring")]
+    Spring
 }

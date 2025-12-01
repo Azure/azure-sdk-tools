@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Samples;

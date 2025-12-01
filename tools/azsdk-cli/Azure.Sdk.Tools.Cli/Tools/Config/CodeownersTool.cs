@@ -87,6 +87,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
 
+        // MCP Tool Names
+        private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
+        private const string ValidateCodeownersEntryToolName = "azsdk_engsys_validate_codeowners_entry_for_service";
+
         public CodeownersTool(
             IGitHubService githubService,
             ILogger<CodeownersTool> logger,
@@ -165,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
         }
 
-        [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed.")]
+        [McpServerTool(Name = CodeownerUpdateToolName), Description("Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed.")]
         public async Task<DefaultCommandResponse> UpdateCodeowners(
             string repo,
             bool isMgmtPlane,
@@ -313,7 +317,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             return resultMessages;
         }
 
-        [McpServerTool(Name = "azsdk_engsys_validate_codeowners_entry_for_service"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
+        [McpServerTool(Name = ValidateCodeownersEntryToolName), Description("Validates codeowners in a specific repository for a given service or repo path.")]
         public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
         {
             ServiceCodeownersResult response = new() { };

@@ -33,7 +33,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 MockMavenHelper.Object,
                 new Mock<IMicroagentHostService>().Object,
                 NullLogger<JavaLanguageService>.Instance,
-                new Mock<ICommonValidationHelpers>().Object);
+                new Mock<ICommonValidationHelpers>().Object,
+                Mock.Of<IFileHelper>());
         }
 
         #region Setup Helpers
@@ -932,6 +933,226 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 p.WorkingDirectory == JavaPackageDir &&
                 p.Timeout == TimeSpan.FromMinutes(5)), 
                 It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        #endregion
+
+        #region GetPackageInfo Tests
+
+        [Test]
+        public async Task TestGetPackageInfo_DeterminesSdkType_Management()
+        {
+            // Arrange
+            var tempDir = Path.GetTempPath();
+            var packageDir = Path.Combine(tempDir, "test-mgmt-package");
+            var pomPath = Path.Combine(packageDir, "pom.xml");
+            Directory.CreateDirectory(packageDir);
+
+            try
+            {
+                // Create a pom.xml with an artifact that should be classified as Management
+                var pomContent = """
+                    <project xmlns="http://maven.apache.org/POM/4.0.0">
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>com.azure</groupId>
+                        <artifactId>azure-resourcemanager-storage</artifactId>
+                        <version>1.0.0</version>
+                    </project>
+                    """;
+                await File.WriteAllTextAsync(pomPath, pomContent);
+
+                var gitHelperMock = new Mock<IGitHelper>();
+                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+
+                var langService = new JavaLanguageService(
+                    new Mock<IProcessHelper>().Object,
+                    gitHelperMock.Object,
+                    new Mock<IMavenHelper>().Object,
+                    new Mock<IMicroagentHostService>().Object,
+                    NullLogger<JavaLanguageService>.Instance,
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
+
+                // Act
+                var packageInfo = await langService.GetPackageInfo(packageDir);
+
+                // Assert
+                Assert.Multiple(() =>
+                {
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Management));
+                    Assert.That(packageInfo.PackageName, Is.EqualTo("azure-resourcemanager-storage"));
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(packageDir))
+                {
+                    Directory.Delete(packageDir, true);
+                }
+            }
+        }
+
+        [Test]
+        public async Task TestGetPackageInfo_DeterminesSdkType_DataPlane()
+        {
+            // Arrange
+            var tempDir = Path.GetTempPath();
+            var packageDir = Path.Combine(tempDir, "test-client-package");
+            var pomPath = Path.Combine(packageDir, "pom.xml");
+            Directory.CreateDirectory(packageDir);
+
+            try
+            {
+                // Create a pom.xml with an artifact that should be classified as DataPlane
+                var pomContent = """
+                    <project xmlns="http://maven.apache.org/POM/4.0.0">
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>com.azure</groupId>
+                        <artifactId>azure-storage-blob</artifactId>
+                        <version>12.0.0</version>
+                    </project>
+                    """;
+                await File.WriteAllTextAsync(pomPath, pomContent);
+
+                var gitHelperMock = new Mock<IGitHelper>();
+                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+
+                var langService = new JavaLanguageService(
+                    new Mock<IProcessHelper>().Object,
+                    gitHelperMock.Object,
+                    new Mock<IMavenHelper>().Object,
+                    new Mock<IMicroagentHostService>().Object,
+                    NullLogger<JavaLanguageService>.Instance,
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
+
+                // Act
+                var packageInfo = await langService.GetPackageInfo(packageDir);
+
+                // Assert
+                Assert.Multiple(() =>
+                {
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Dataplane));
+                    Assert.That(packageInfo.PackageName, Is.EqualTo("azure-storage-blob"));
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(packageDir))
+                {
+                    Directory.Delete(packageDir, true);
+                }
+            }
+        }
+
+        [Test]
+        public async Task TestGetPackageInfo_DeterminesSdkType_Spring()
+        {
+            // Arrange
+            var tempDir = Path.GetTempPath();
+            var packageDir = Path.Combine(tempDir, "test-spring-package");
+            var pomPath = Path.Combine(packageDir, "pom.xml");
+            Directory.CreateDirectory(packageDir);
+
+            try
+            {
+                // Create a pom.xml with an artifact that should be classified as DataPlane (Spring)
+                var pomContent = """
+                    <project xmlns="http://maven.apache.org/POM/4.0.0">
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>com.azure.spring</groupId>
+                        <artifactId>azure-spring-cloud-starter</artifactId>
+                        <version>3.0.0</version>
+                    </project>
+                    """;
+                await File.WriteAllTextAsync(pomPath, pomContent);
+
+                var gitHelperMock = new Mock<IGitHelper>();
+                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+
+                var langService = new JavaLanguageService(
+                    new Mock<IProcessHelper>().Object,
+                    gitHelperMock.Object,
+                    new Mock<IMavenHelper>().Object,
+                    new Mock<IMicroagentHostService>().Object,
+                    NullLogger<JavaLanguageService>.Instance,
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
+
+                // Act
+                var packageInfo = await langService.GetPackageInfo(packageDir);
+
+                // Assert
+                Assert.Multiple(() =>
+                {
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Spring));
+                    Assert.That(packageInfo.PackageName, Is.EqualTo("azure-spring-cloud-starter"));
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(packageDir))
+                {
+                    Directory.Delete(packageDir, true);
+                }
+            }
+        }
+
+        [Test]
+        public async Task TestGetPackageInfo_DeterminesSdkType_MgmtKeyword()
+        {
+            // Arrange
+            var tempDir = Path.GetTempPath();
+            var packageDir = Path.Combine(tempDir, "test-mgmt-keyword");
+            var pomPath = Path.Combine(packageDir, "pom.xml");
+            Directory.CreateDirectory(packageDir);
+
+            try
+            {
+                // Create a pom.xml with an artifact that contains "mgmt" keyword
+                var pomContent = """
+                    <project xmlns="http://maven.apache.org/POM/4.0.0">
+                        <modelVersion>4.0.0</modelVersion>
+                        <groupId>com.azure</groupId>
+                        <artifactId>azure-keyvault-mgmt</artifactId>
+                        <version>1.0.0</version>
+                    </project>
+                    """;
+                await File.WriteAllTextAsync(pomPath, pomContent);
+
+                var gitHelperMock = new Mock<IGitHelper>();
+                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+
+                var langService = new JavaLanguageService(
+                    new Mock<IProcessHelper>().Object,
+                    gitHelperMock.Object,
+                    new Mock<IMavenHelper>().Object,
+                    new Mock<IMicroagentHostService>().Object,
+                    NullLogger<JavaLanguageService>.Instance,
+                    new Mock<ICommonValidationHelpers>().Object,
+                    Mock.Of<IFileHelper>());
+
+                // Act
+                var packageInfo = await langService.GetPackageInfo(packageDir);
+
+                // Assert
+                Assert.Multiple(() =>
+                {
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Management));
+                    Assert.That(packageInfo.PackageName, Is.EqualTo("azure-keyvault-mgmt"));
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(packageDir))
+                {
+                    Directory.Delete(packageDir, true);
+                }
+            }
         }
 
         #endregion

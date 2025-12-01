@@ -18,7 +18,9 @@ describe('Auto SDK generation path test', () => {
     test('rest level client generation', async () => {
         const fakeTspConfig = {
             options: {
-                '@azure-tools/typespec-ts': {}
+                '@azure-tools/typespec-ts': {
+                    'is-modular-library': false
+                }
             }
         };
         const tempSpecFolder = path.join(__dirname, `tmp/spec-${getRandomInt(10000)}`);

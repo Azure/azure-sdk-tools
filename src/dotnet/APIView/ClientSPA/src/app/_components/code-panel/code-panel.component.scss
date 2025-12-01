@@ -13,6 +13,7 @@
         overflow: auto;
         height: calc(100vh - 102px);
         will-change: scroll-position, contents;
+        container-type: inline-size;
     }
 
     .code-line {
@@ -65,13 +66,13 @@
             border-bottom: 1px solid var(--border-color);
 
             .user-comment-content {
-                width: 1000px;
+                width: min(1000px, calc(100cqw - 100px));
                 position: sticky;
                 left: calc(var(--max-line-number-width) + 50px)
             }
 
             .cross-language-view-content {
-                width: 1030px;
+                width: min(1030px, calc(100cqw - 100px));
                 position: sticky;
                 left: calc(var(--max-line-number-width) + 20px)
             }

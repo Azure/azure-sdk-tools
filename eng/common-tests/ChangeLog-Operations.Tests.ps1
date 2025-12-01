@@ -4,11 +4,11 @@ BeforeAll {
     . $PSScriptRoot/../common/scripts/ChangeLog-Operations.ps1
 }
 
-Describe "New-ChangelogContent" {
+Describe "Parse-ChangelogContent" {
     It "Should parse changelog text with multiple sections" {
         $changelogText = "### Breaking Changes`n`n- Removed deprecated API ``oldMethod()```n- Changed return type of ``getData()```n`n### Features Added`n`n- Added new ``newMethod()`` API`n- Added support for async operations`n`n### Bugs Fixed`n`n- Fixed null pointer exception in ``processData()``"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
 
         $result | Should -Not -BeNullOrEmpty
         $result.ReleaseContent | Should -Not -BeNullOrEmpty
@@ -22,7 +22,7 @@ Describe "New-ChangelogContent" {
     It "Should handle single section changelog" {
         $changelogText = "### Features Added`n`n- Added new feature X`n- Added new feature Y"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
 
         $result | Should -Not -BeNullOrEmpty
         $result.Sections.Keys | Should -HaveCount 1
@@ -35,7 +35,7 @@ Describe "New-ChangelogContent" {
     It "Should handle empty changelog text sections with content before first section" {
         $changelogText = "Some introductory text`n`n### Breaking Changes`n`n- Change 1"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
 
         $result | Should -Not -BeNullOrEmpty
         $result.Sections.Keys | Should -HaveCount 1
@@ -47,7 +47,7 @@ Describe "New-ChangelogContent" {
         # With ## as initial header, section headers are ####
         $changelogText = "#### Breaking Changes`n`n- Some breaking change"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "##"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "##"
 
         $result | Should -Not -BeNullOrEmpty
         $result.Sections.Keys | Should -HaveCount 1
@@ -57,7 +57,7 @@ Describe "New-ChangelogContent" {
     It "Should return empty sections when no section headers found" {
         $changelogText = "Just some text without any section headers`nAnd another line"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
 
         $result | Should -Not -BeNullOrEmpty
         $result.Sections.Keys | Should -HaveCount 0
@@ -67,7 +67,7 @@ Describe "New-ChangelogContent" {
     It "Should handle Windows-style line endings" {
         $changelogText = "### Features Added`r`n`r`n- Feature 1`r`n- Feature 2"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
 
         $result | Should -Not -BeNullOrEmpty
         $result.Sections.ContainsKey("Features Added") | Should -BeTrue
@@ -76,7 +76,7 @@ Describe "New-ChangelogContent" {
     It "Should handle Unix-style line endings" {
         $changelogText = "### Features Added`n`n- Feature 1`n- Feature 2"
 
-        $result = New-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
+        $result = Parse-ChangelogContent -ChangelogText $changelogText -InitialAtxHeader "#"
 
         $result | Should -Not -BeNullOrEmpty
         $result.Sections.ContainsKey("Features Added") | Should -BeTrue

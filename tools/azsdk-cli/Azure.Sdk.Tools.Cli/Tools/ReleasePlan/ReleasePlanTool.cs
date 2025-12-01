@@ -119,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<string> languageOpt = new("--language")
         {
-            Description = "SDK language, Options[Python, .NET, JavaScript, Java, go]",
+            Description = "SDK language, Options[.NET, Java, JavaScript, Go, Python]",
             Required = true,
         };
 

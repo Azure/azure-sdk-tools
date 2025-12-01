@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private ITypeSpecHelper typeSpecHelper;
         private IUserHelper userHelper;
         private IEnvironmentHelper environmentHelper;
-        private IGitHelper gitHelper;
+        private readonly IGitHelper gitHelper;
 
         public ReleasePlanManualTests()
         {
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
             gitHelper = gitHelperMock.Object;
 
-            releasePlan = new ReleasePlanTool(devOpsService, gitHelper,typeSpecHelper, logger, userHelper, gitHubService, environmentHelper);
+            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper);
         }
 
         [Test] // disabled by default because it makes real API calls

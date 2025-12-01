@@ -453,7 +453,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 return value;
             }
 
-            var outputValue = new StringBuilder(value.Length + 5);
+            var outputValue = new StringBuilder(value.Length);
             var dispositionType = spanValue[..(semicolonIndex + 1)];
             outputValue.Append(dispositionType); // disposition type with ;
 

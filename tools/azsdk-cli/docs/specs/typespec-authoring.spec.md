@@ -6,15 +6,11 @@
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
 - [Design Proposal](#design-proposal)
-- [Alternatives Considered](#alternatives-considered-optional) _(optional)_
-- [Open Questions](#open-questions)
 - [Success Criteria](#success-criteria)
 - [Agent Prompts](#agent-prompts)
 - [CLI Commands](#cli-commands)
-- [Implementation Plan](#implementation-plan)
-- [Testing Strategy](#testing-strategy)
-- [Documentation Updates](#documentation-updates)
 - [Metrics/Telemetry](#metricstelemetry)
+- [Documentation Updates](#documentation-updates)
 
 ---
 
@@ -38,6 +34,8 @@ _Define any terms that might be ambiguous or interpreted differently across team
 
 - **RAG (Retrieval-Augmented Generation)**: An AI pattern that enhances language model responses by retrieving relevant context from a knowledge base before generating output, improving accuracy and grounding responses in authoritative sources
 
+- **Azure SDK Knowledge Base**: A backend service that provides RAG-powered solutions for Azure SDK and TypeSpec authoring tasks. It indexes and retrieves relevant information from Azure SDK documentation, guidelines, and best practices to generate context-aware recommendations
+
 - **AI Hallucination**: When an AI model generates plausible-sounding but incorrect or fabricated information, such as inventing non-existent decorators or APIs
 
 
@@ -48,6 +46,8 @@ _Define any terms that might be ambiguous or interpreted differently across team
 TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec contributes to producing high-quality SDKs. However, Azure API developers face significant challenges when authoring TypeSpec
 
 ### Current State
+
+> **Note**: The AI-generated outputs shown in the examples below represent the current state of generic AI assistance (as of the time of writing). AI models continuously evolve, and the specific outputs demonstrated here are for illustrative purposes to highlight the gap between generic AI and domain-specific, Azure-aware AI assistance.
 
 **Problem 1: Writing TypeSpec that follows Azure guidelines and fixing non-compliant code**
 - Azure API developers want to add new resources, operations, or other components to Azure services following ARM/DP/SDK/TypeSpec guidelines
@@ -222,11 +222,7 @@ enum Versions {
 
 ---
 
-## Goals and Exceptions/Limitations
-
-### Goals
-
-What are we trying to achieve with this design?
+## Goals
 
 - [ ] **AI Pair Programming for TypeSpec**: Enable GitHub Copilot to provide intelligent, context-aware assistance for TypeSpec authoring by integrating Azure SDK RAG (Retrieval-Augmented Generation) knowledge base
 - [ ] **Guide Users Through Intent-Driven Development**: Allow users to describe their intent in natural language (e.g., "I need to add a new API version to my Widget service" or "I want to add an ARM resource named 'Asset' with CRUD operations"), and have the AI guide them through the correct TypeSpec implementation
@@ -236,22 +232,6 @@ What are we trying to achieve with this design?
 - [ ] **Improve Developer Learning**: Help service teams learn TypeSpec syntax and Azure patterns through interactive guidance, increasing their confidence in making code changes
 - [ ] **Accelerate Inner Loop Development**: Speed up the iterative process of authoring TypeSpec, compiling, validating, and adjusting to achieve expected SDK outputs
 
-### Exceptions and Limitations
-
-_Known cases where this approach doesn't work or has limitations._
-
-#### Language-Specific Limitations
-
-| Language   | Limitation | Impact | Workaround |
-|------------|------------|--------|------------|
-| .NET       | None (TypeSpec is language-agnostic at authoring time) | N/A | N/A |
-| Java       | None (TypeSpec is language-agnostic at authoring time) | N/A | N/A |
-| JavaScript | None (TypeSpec is language-agnostic at authoring time) | N/A | N/A |
-| Python     | None (TypeSpec is language-agnostic at authoring time) | N/A | N/A |
-| Go         | None (TypeSpec is language-agnostic at authoring time) | N/A | N/A |
-
-**Note:** TypeSpec authoring is language-agnostic. The generated SDKs target specific languages, but the TypeSpec authoring experience with AI assistance applies uniformly across all target SDK languages. Language-specific considerations come into play during SDK generation validation, not during TypeSpec authoring.
-
 ---
 
 ## Design Proposal
@@ -260,88 +240,129 @@ Leverage the existing APIs for Azure SDK knowledge base to deliver solutions ali
 
 ### Overview
 
-![architecture](typespec-authoring-architecture.png)
+
+```
+         ┌──────┐
+         │ USER │
+         └───┬──┘
+             │
+             │ (1) Prompt: "add ARM resource Asset"
+             ▼
+    ┌────────────────┐
+    │ GitHub Copilot │
+    └───────┬────────┘
+            │
+            │ (2) Invoke azsdk_typespec_authoring
+            │     (--request, --additional-info)
+            ▼
+    ┌────────────────────────┐
+    │ TypeSpec Authoring     │──────(3) Analyze────▶ ┌──────────────┐
+    │ Tool (MCP)             │                        │  TypeSpec    │
+    │                        │◀─────Current state──── │    Files     │
+    │ • Parse Input          │                        └──────────────┘
+    │ • Query KB             │
+    │ • Process Response     │
+    └───────┬────────────────┘
+            │
+            │ (4) Query
+            ▼
+    ┌────────────────────────┐
+    │  Azure SDK KB (RAG)    │
+    │  • Azure docs          │
+    │  • Guidelines          │
+    │  • Best practices      │
+    └───────┬────────────────┘
+            │
+            │ (5) Solution + References
+            ▼
+    ┌────────────────┐
+    │ GitHub Copilot │
+    └───────┬────────┘
+            │
+            │ (6) Update files & present to user
+            ▼
+         ┌──────┐
+         │ USER │
+         └──────┘
+```
 
 ### Detailed Design
 
-When a user prompts GitHub Copilot with a TypeSpec task, Copilot interacts with the user to gather the required details, then invokes the TypeSpec authoring tool using the task and collected information as context. The authoring tool consults the backend Azure SDK knowledge base to generate a solution, which Copilot finally applies to update the TypeSpec files.
+The TypeSpec authoring workflow follows a streamlined process where the user interacts with GitHub Copilot using natural language, and Copilot leverages the TypeSpec Authoring Tool (MCP) to generate standards-compliant solutions. The architecture diagram above illustrates this end-to-end flow:
 
-#### 1. TypeSpec authoring tool
+1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "add ARM resource Asset with CRUD operations")
+2. **GitHub Copilot invokes the TypeSpec Authoring Tool** (MCP: `azsdk_typespec_authoring`) with the user's request and any additional context
+3. **The Tool analyzes existing TypeSpec files** to understand the current project structure and state
+4. **The Tool queries the Azure SDK Knowledge Base** with a structured request containing the user's intent and project context
+5. **The Knowledge Base returns a RAG-powered solution** with step-by-step guidance and documentation references
+6. **GitHub Copilot applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
 
-Name (CLI): `azsdk typespec authoring`
+This design ensures that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices by grounding every solution in authoritative Azure documentation.
 
-Name (MCP): `azsdk_typespec_authoring`
+#### Component 1: TypeSpec Authoring Tool
 
-Purpose: Help the user to define or edit TypeSpec API specifications and resolve **TypeSpec** related tasks.
+**Name (CLI)**: `azsdk typespec authoring`
 
-Inputs:
-- `--request <typespec-related-request>` (required)
-- `--additional-information <additional-context>` (optional)
-- `--category <request-categrory>` (optional)
-- `--mode <reqeust-model>` (optional, it should be one of agent-model or file-model, default is agent-model)
-- `--typespec-source-path <path-to-tsp-source-file-or-folder` (optional, the path to typespec source file or folder)
+**Name (MCP)**: `azsdk_typespec_authoring`
 
-Outputs:
+**Purpose**: Help the user to define or edit TypeSpec API specifications and resolve TypeSpec-related tasks.
+
+**Input Parameters**:
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `--request` | string | Yes | N/A | The TypeSpec-related request or task description |
+| `--additional-information` | string | No | "" | Additional context for the request |
+| `--category` | string | No | Auto-detected | Request category (e.g., "versioning", "resource-modeling", "routing") |
+| `--mode` | string | No | "agent-model" | Request mode: "agent-model" or "file-model" |
+| `--typespec-source-path` | string | No | Current directory | Path to TypeSpec source file or folder |
+
+**Output Format**:
 
 ```json
-{"is_successful":true,"solution": "<solution-for-the-typespec-task>", "references":[{"title":"How to define a preview version","source":"typespec_azure_docs","link":"https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"}]}
+{
+  "result": "succeeded",
+  "solution": "<solution-for-the-typespec-task>",
+  "references": [
+    {
+      "title": "How to define a preview version",
+      "source": "typespec_azure_docs",
+      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"
+    }
+  ]
+}
 ```
 
-#### 2. Azure SDK Knowledge base
+**Workflow**:
 
-Backend Azure SDK Knowledge base to provide the solution for the task. It exports completion api https://<knowledge-base-service-endpoint>/completion
+1. **Parse Input**: Extract request details and optional context from parameters
+2. **Analyze Context**: Detect TypeSpec project structure and current state (if `--typespec-source-path` provided)
+3. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
+4. **Process Response**: Format the solution and extract relevant documentation references
+5. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
+
+#### Component 2: Azure SDK Knowledge Base
+
+**Purpose**: Backend service that provides RAG-powered solutions for Azure SDK and TypeSpec authoring tasks.
+
+**API Endpoint**: `https://<knowledge-base-service-endpoint>/completion`
+
+**Capabilities**:
+- Indexes Azure SDK documentation, guidelines, and best practices
+- Retrieves relevant context based on user request
+- Generates solutions aligned with Azure standards
+- Provides authoritative documentation references
+
+**Integration**:
+- TypeSpec authoring tool sends structured queries to the knowledge base
+- Knowledge base returns contextual solutions with references
+- Tool formats and presents results to the user
 
 ---
 
 ### Cross-Language Considerations
 
-_How does this design work across different SDK languages?_
-
-| Language   | Approach | Notes |
-|------------|----------|-------|
-| .NET       | [How it works in .NET] | [Any specific considerations] |
-| Java       | [How it works in Java] | [Any specific considerations] |
-| JavaScript | [How it works in JS] | [Any specific considerations] |
-| Python     | [How it works in Python] | [Any specific considerations] |
-| Go         | [How it works in Go] | [Any specific considerations] |
-
-### User Experience
-
-[How will developers interact with this? Show examples of commands, outputs, or workflows]
-
-```bash
-# Example usage
-azsdk typespec authoring --request typespec-related-request
-```
-
-### Architecture Diagram
-
-```text
-[Add diagram here - can be ASCII art, mermaid, or link to image]
-
-┌─────────────┐
-│  Component  │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Component  │
-└─────────────┘
-```
-
----
-
-## Open Questions
-
-_Unresolved items that need discussion and input from reviewers._
-
-- [ ] **Question 1**: [Description of what needs to be decided]
-  - Context: [Why is this uncertain?]
-  - Options: [What are the choices?]
-  
-- [ ] **Question 2**: [Description]
-  - Context: [Why is this uncertain?]
-  - Options: [What are the choices?]
+TypeSpec authoring is language-agnostic. The generated SDKs target specific languages, but the TypeSpec authoring experience with AI assistance applies uniformly across all target SDK languages. Language-specific considerations come into play during SDK generation validation, not during TypeSpec authoring.
 
 ---
 
@@ -362,7 +383,7 @@ This feature/tool is complete when:
   - Generated TypeSpec code passes compilation without errors
   - Generated code follows Azure ARM/DP/SDK guidelines (validated by automated linter/validator)
   - Generated code matches expected patterns for resource hierarchy and routing
-  - Generated code includes proper decorators (no hallucinated decorators like `@armResource` or `@armResourceOperation`)
+  - Generated code includes proper syntax, e.g. decorators, templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`)
 
 - [ ] **Documentation Reference Quality**: For each agent response:
   - Responses include relevant documentation links (e.g., TypeSpec Azure guidelines)
@@ -450,70 +471,3 @@ Usage: azsdk typespec authoring
 
 ---
 
-## Implementation Plan
-
-_If this is a large effort, break down the implementation into phases._
-
-### Phase 1: [Name]
-
-- Milestone: [What will be delivered?]
-- Timeline: [Estimated timeframe]
-- Dependencies: [What must be done first?]
-
-### Phase 2: [Name]
-
-[Same structure]
-
-### Phase 3: [Name]
-
-[Same structure]
-
----
-
-## Testing Strategy
-
-_How will this design be validated?_
-
-### Unit Tests
-
-[What unit tests are needed?]
-
-### Integration Tests
-
-[What integration tests are needed?]
-
-### Manual Testing
-
-[What manual testing is needed?]
-
-### Cross-Language Validation
-
-[How will we ensure this works across all SDK languages?]
-
----
-
-## Metrics/Telemetry
-
-_What data should we collect to measure success or diagnose issues?_
-
-### Metrics to Track
-
-| Metric Name | Description | Purpose |
-|-------------|-------------|---------|
-| [Metric 1]  | [What it measures] | [Why we need it] |
-| [Metric 2]  | [What it measures] | [Why we need it] |
-
-### Privacy Considerations
-
-[How will we ensure no sensitive data is collected?]
-
----
-
-## Documentation Updates
-
-_What documentation needs to be created or updated?_
-
-- [ ] README updates
-- [ ] Developer guides
-- [ ] API documentation
-- [ ] Examples/samples |

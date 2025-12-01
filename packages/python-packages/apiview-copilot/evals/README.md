@@ -194,7 +194,7 @@ response:
   rationale: The comment asserts that an async client named 'WidgetClient' is missing in the azure.widget.aio namespace, but the outline clearly shows that WidgetClient exists in that namespace.
 ```
 
-All fields (except `testcase` and `response`) must match the parameters expected by the target function in `_custom.py`.
+All fields must match the parameters expected by the target function in `_custom.py`.
 
 ### Creating Tests
 

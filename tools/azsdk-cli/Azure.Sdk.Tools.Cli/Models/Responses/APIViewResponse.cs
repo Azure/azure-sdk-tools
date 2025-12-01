@@ -1,5 +1,7 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
@@ -7,10 +9,6 @@ public class APIViewResponse : CommandResponse
 {
     [JsonPropertyName("message")]
     public string? Message { get; set; }
-
-    [JsonPropertyName("content")]
-    public string? Content { get; set; }
-
 
     [JsonPropertyName("result")]
     public object? Result { get; set; }
@@ -29,18 +27,37 @@ public class APIViewResponse : CommandResponse
         {
             output.AppendLine(Message);
         }
-      
-        if (!string.IsNullOrWhiteSpace(Content))
+
+        if (Result == null)
         {
-            string unescapedContent = System.Text.RegularExpressions.Regex.Unescape(Content);
-            output.AppendLine(unescapedContent);
+            return output.ToString();
         }
 
-        if (Result != null)
+        string resultString = Result.ToString()!;
+
+        if (IsValidJson(resultString))
         {
-            output.AppendLine(Result.ToString());
+            output.AppendLine(resultString);
+        }
+        else
+        {
+            string unescapedResult = Regex.Unescape(resultString);
+            output.AppendLine(unescapedResult);
         }
 
         return output.ToString();
+    }
+
+    private static bool IsValidJson(string value)
+    {
+        try
+        {
+            JsonDocument.Parse(value);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

@@ -23,6 +23,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private const string GetCommentsCmd = "get-comments";
     private const string GetContentCmd = "get-content";
 
+    private const string ApiViewGetCommentsToolName = "azsdk_apiview_get_comments";
+
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.APIView];
 
     private readonly IAPIViewService _apiViewService;
@@ -49,7 +51,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     protected override List<Command> GetCommands() =>
     [
-        new(GetCommentsCmd, "Get comments for a specific APIView URL") { apiViewUrlOption },
+        new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlOption },
         new(GetContentCmd, "Get content by APIView URL") 
         {
             apiViewUrlOption, outputFileOption, contentReturnTypeOption
@@ -69,8 +71,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         return result;
     }
 
-    [McpServerTool(Name = "azsdk_apiview_get_comments")]
-    [Description("Get all the comments of an APIView API using the APIView URL")]
+    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get all the comments of an APIView API using the APIView URL")]
     public async Task<APIViewResponse> GetComments(string apiViewUrl)
     {
         try
@@ -134,7 +135,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             return new APIViewResponse
             {
                 Message = $"Content retrieved successfully ({result.Length:N0} characters)",
-                Content = result
+                Result = result
             };
         }
         catch (ArgumentException ex)

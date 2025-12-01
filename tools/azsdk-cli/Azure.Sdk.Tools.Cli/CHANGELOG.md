@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added APIView tools to expose APIView functionality to MCP agents (`get-comments`) and CLI (`get-content`)
+
 ### Breaking Changes
 
 ### Bugs Fixed

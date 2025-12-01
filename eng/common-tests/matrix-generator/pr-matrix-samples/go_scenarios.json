@@ -12,35 +12,37 @@
       "DeletedFiles": [],
       "PRNumber": "33362"
     },
-    "expected_package_output": {
-      "Name": "sdk/azcore",
-      "Version": "1.18.0-beta.1",
-      "DevVersion": null,
-      "DirectoryPath": "sdk/azcore",
-      "ServiceDirectory": "azcore",
-      "ReadMePath": "sdk/azcore/README.md",
-      "ChangeLogPath": "sdk/azcore/CHANGELOG.md",
-      "Group": null,
-      "SdkType": "client",
-      "IsNewSdk": true,
-      "ArtifactName": "sdk/azcore",
-      "ReleaseStatus": "Unreleased",
-      "IncludedForValidation": false,
-      "AdditionalValidationPackages": null,
-      "ArtifactDetails": {
-        "triggeringPaths": [
-          "/eng",
-          "/sdk/azcore/ci.yml"
-        ]
-      },
-      "CIParameters": {
-        "IsSdkLibrary": true,
-        "LicenseCheck": true,
-        "CIMatrixConfigs": [],
-        "UsePipelineProxy": true,
-        "NonShipping": false
+    "expected_package_output": [
+      {
+        "Name": "sdk/azcore",
+        "Version": "1.18.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/azcore",
+        "ServiceDirectory": "azcore",
+        "ReadMePath": "sdk/azcore/README.md",
+        "ChangeLogPath": "sdk/azcore/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "sdk/azcore",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/eng",
+            "/sdk/azcore/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "IsSdkLibrary": true,
+          "CIMatrixConfigs": [],
+          "NonShipping": false,
+          "LicenseCheck": true,
+          "UsePipelineProxy": true
+        }
       }
-    }
+    ]
   },
   {
     "name": "Change multiple resourcemanager packages",
@@ -80,10 +82,10 @@
         },
         "CIParameters": {
           "IsSdkLibrary": true,
-          "LicenseCheck": true,
           "CIMatrixConfigs": [],
-          "UsePipelineProxy": true,
-          "NonShipping": false
+          "NonShipping": false,
+          "LicenseCheck": true,
+          "UsePipelineProxy": true
         }
       },
       {
@@ -108,10 +110,10 @@
         },
         "CIParameters": {
           "IsSdkLibrary": true,
-          "LicenseCheck": true,
           "CIMatrixConfigs": [],
-          "UsePipelineProxy": true,
-          "NonShipping": false
+          "NonShipping": false,
+          "LicenseCheck": true,
+          "UsePipelineProxy": true
         }
       },
       {
@@ -135,10 +137,10 @@
           ]
         },
         "CIParameters": {
-          "IsSdkLibrary": true,
-          "LicenseCheck": true,
           "CIMatrixConfigs": [],
-          "NonShipping": false
+          "NonShipping": false,
+          "LicenseCheck": true,
+          "IsSdkLibrary": true
         }
       }
     ]
@@ -178,10 +180,10 @@
         },
         "CIParameters": {
           "IsSdkLibrary": true,
-          "LicenseCheck": true,
           "CIMatrixConfigs": [],
-          "UsePipelineProxy": true,
-          "NonShipping": false
+          "NonShipping": false,
+          "LicenseCheck": true,
+          "UsePipelineProxy": true
         }
       },
       {
@@ -207,10 +209,10 @@
         },
         "CIParameters": {
           "IsSdkLibrary": true,
-          "LicenseCheck": true,
           "CIMatrixConfigs": [],
-          "UsePipelineProxy": true,
-          "NonShipping": false
+          "NonShipping": false,
+          "LicenseCheck": true,
+          "UsePipelineProxy": true
         }
       }
     ]

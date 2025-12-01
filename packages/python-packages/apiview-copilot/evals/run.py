@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--use-recording",
         action="store_true",
-        help="Enable recording of evaluation results to speed up runs.",
+        help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
     )
     args = parser.parse_args()
     targets = discover_targets(args.test_paths)

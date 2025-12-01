@@ -1180,7 +1180,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "use_recording",
                 options_list=["--use-recording"],
                 action="store_true",
-                help="Use recorded results for testcases when available.",
+                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
             )
 
         with ArgumentsContext(self, "search") as ac:

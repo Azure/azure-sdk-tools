@@ -1,16 +1,14 @@
-# Spec: [Stage Number and Name] - [Tool Name]
+# Spec: TypeSpec Authoring - AI-Powered TypeSpec Authoring Assistance Tool
 
 ## Table of Contents
 
 - [Definitions](#definitions)
 - [Background / Problem Statement](#background--problem-statement)
-- [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
+- [Goals](#goals)
 - [Design Proposal](#design-proposal)
 - [Success Criteria](#success-criteria)
 - [Agent Prompts](#agent-prompts)
 - [CLI Commands](#cli-commands)
-- [Metrics/Telemetry](#metricstelemetry)
-- [Documentation Updates](#documentation-updates)
 
 ---
 
@@ -352,6 +350,10 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 - Retrieves relevant context based on user request
 - Generates solutions aligned with Azure standards
 - Provides authoritative documentation references
+
+**Authentication**:
+- The TypeSpec authoring tool authenticates with the Knowledge Base using Azure Active Directory (AAD) managed identity or service principal credentials
+- Authentication tokens are automatically refreshed to ensure uninterrupted service
 
 **Integration**:
 - TypeSpec authoring tool sends structured queries to the knowledge base

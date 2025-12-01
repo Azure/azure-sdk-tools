@@ -293,20 +293,8 @@ class TestClassParsing:
         ]
         _check(actual2, expected2, SomethingWithOverloads)
 
-        actual3 = lines[20:27]
-        expected3 = [
-            "def double(",
-            "    self, ",
-            "    input: int | Sequence[int], ",
-            "    *, ",
-            "    test: bool = False, ",
-            "    **kwargs",
-            ") -> int | list[int]"
-        ]
-        _check(actual3, expected3, SomethingWithOverloads)
-
-        assert lines[28] == "@overload"
-        actual4 = lines[29:35]
+        assert lines[20] == "@overload"
+        actual4 = lines[21:27]
         expected4 = [
             "def something(",
             "    self, ",
@@ -317,8 +305,8 @@ class TestClassParsing:
         ]
         _check(actual4, expected4, SomethingWithOverloads)
 
-        assert lines[36] == "@overload"
-        actual5 = lines[37:43]
+        assert lines[28] == "@overload"
+        actual5 = lines[29:35]
         expected5 = [
             "def something(",
             "    self, ",
@@ -329,25 +317,12 @@ class TestClassParsing:
         ]
         _check(actual5, expected5, SomethingWithOverloads)
 
-        actual6 = lines[44:]
-        expected6 = [
-            "def something(",
-            "    self, ",
-            "    id: int | str, ",
-            "    *args, ",
-            "    **kwargs",
-            ") -> str",
-            "", # Blank line at the end of the function
-            "", # Blank line at the end of the class
-        ]
-        _check(actual6, expected6, SomethingWithOverloads)
-
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        # 8 empty lines, 4 overloads
-        assert metadata["RelatedToLine"] == 12
-        assert metadata["IsContextEndLine"] == 7
+        # 6 empty lines, 4 overloads
+        assert metadata["RelatedToLine"] == 10
+        assert metadata["IsContextEndLine"] == 5
 
     def test_inherited_overloads(self):
         obj = SomethingWithInheritedOverloads
@@ -376,17 +351,12 @@ class TestClassParsing:
         expected3 = "def do_thing(val: bool) -> bool"
         _check(actual3, expected3, SomethingWithInheritedOverloads)
 
-        actual4 = lines[11]
-        expected4 = "def do_thing(val: str | int | bool) -> str | int | bool"
-        _check(actual4, expected4, SomethingWithInheritedOverloads)
-
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        # 6 empty lines, 3 overloads
-        assert metadata["RelatedToLine"] == 9
-        # TODO: For overloads, IsContextEndLine is only set for the implementation method. Should it be per overload?
-        assert metadata["IsContextEndLine"] == 1
+        # 5 empty lines, 3 overloads
+        assert metadata["RelatedToLine"] == 8
+        assert metadata["IsContextEndLine"] == 1, tokens
 
     def test_overload_line_ids(self):
         obj = SomethingWithOverloads
@@ -428,8 +398,8 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 12
-        assert metadata["IsContextEndLine"] == 7
+        assert metadata["RelatedToLine"] == 10
+        assert metadata["IsContextEndLine"] == 5
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, review_lines):

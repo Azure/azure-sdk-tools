@@ -32,6 +32,15 @@ namespace APIViewWeb.LeanModels
         Diagnostic
     }
 
+    public class CommentFeedback
+    {
+        public List<string> Reasons { get; set; } = new List<string>();
+        public string Comment { get; set; } = string.Empty;
+        public bool IsDelete { get; set; }
+        public string SubmittedBy { get; set; }
+        public DateTime SubmittedOn { get; set; }
+    }
+
     public class CommentItemModel
     {
         [System.Text.Json.Serialization.JsonPropertyName("id")]
@@ -63,6 +72,7 @@ namespace APIViewWeb.LeanModels
         public List<string> MemoryIds { get; set; } = [];
         public float ConfidenceScore { get; set; }
 
+        public List<CommentFeedback> Feedback { get; set; } = [];
         public static CommentSeverity ParseSeverity(string value)
         {
             return value?.ToUpperInvariant() switch

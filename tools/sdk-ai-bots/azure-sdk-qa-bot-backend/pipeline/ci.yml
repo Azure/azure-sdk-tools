@@ -2,7 +2,6 @@ trigger:
   branches:
     include:
       - main
-      - release/qa-bot
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
@@ -11,7 +10,6 @@ pr:
   branches:
     include:
       - main
-      - release/qa-bot
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/

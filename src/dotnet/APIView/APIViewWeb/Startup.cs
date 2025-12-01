@@ -99,6 +99,7 @@ namespace APIViewWeb
             });
 
             services.AddHttpClient();
+            services.AddSingleton<ICopilotAuthenticationService, CopilotAuthenticationService>();
             services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
             services.AddSingleton<ICopilotJobProcessor, CopilotJobProcessor>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
@@ -323,6 +324,8 @@ namespace APIViewWeb
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
                 options.MaximumReceiveMessageSize =  1024 * 1024;
+            }).AddJsonProtocol(options => {
+                options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
             services.AddSwaggerGen(options =>
             {

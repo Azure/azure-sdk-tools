@@ -3,7 +3,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 import { IndexPageComponent } from './index-page.component';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
-import { FooterComponent } from '../shared/footer/footer.component';
 import { ReviewsListComponent } from '../reviews-list/reviews-list.component';
 import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
 import { AppModule } from 'src/app/app.module';
@@ -18,7 +17,6 @@ describe('IndexPageComponent', () => {
       declarations: [
         IndexPageComponent,
         NavBarComponent,
-        FooterComponent,
         ReviewsListComponent,
         RevisionsListComponent
       ],

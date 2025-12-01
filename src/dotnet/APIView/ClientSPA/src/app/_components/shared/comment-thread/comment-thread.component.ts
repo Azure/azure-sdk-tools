@@ -2,17 +2,21 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, S
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { OverlayPanel } from 'primeng/overlaypanel';
+import { take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
+import { AICommentFeedback } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteReason } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
 
 interface AICommentInfoItem {
   icon: string;
@@ -25,7 +29,6 @@ interface AICommentInfoItem {
 interface AICommentInfo {
   items: AICommentInfoItem[];
 }
-
 @Component({
   selector: 'app-comment-thread',
   templateUrl: './comment-thread.component.html',
@@ -78,16 +81,24 @@ export class CommentThreadComponent {
 
   selectedSeverity: CommentSeverity | null = CommentSeverity.ShouldFix; // Default to "Should fix"
   isEditingSeverity: string | null = null; // Track which comment severity is being edited
-  severityOptions = [
-    { label: 'Question', value: CommentSeverity.Question },
-    { label: 'Suggestion', value: CommentSeverity.Suggestion },
-    { label: 'Should fix', value: CommentSeverity.ShouldFix },
-    { label: 'Must fix', value: CommentSeverity.MustFix }
-  ];
+  severityOptions = CommentSeverityHelper.severityOptions;
 
   showRelatedCommentsDialog: boolean = false;
   relatedComments: CommentItemModel[] = [];
   selectedCommentId: string = ''; 
+
+  showAIFeedbackDialog: boolean = false;
+  showAIDeleteDialog: boolean = false;
+  pendingDownvoteAction: CommentUpdatesDto | null = null;
+  pendingDeleteAction: CommentUpdatesDto | null = null;
+
+  get pendingDownvoteCommentId(): string {
+    return this.pendingDownvoteAction?.commentId || '';
+  }
+
+  get pendingDeleteCommentId(): string {
+    return this.pendingDeleteAction?.commentId || '';
+  }
 
   private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
 
@@ -291,6 +302,9 @@ export class CommentThreadComponent {
   }
 
   showReplyEditor(event: Event) {
+    if (this.codePanelRowData!.draftCommentText === undefined) {
+      this.codePanelRowData!.draftCommentText = '';
+    }
     this.codePanelRowData!.showReplyTextBox = true;
   }
 
@@ -298,15 +312,26 @@ export class CommentThreadComponent {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
     const title = target.getAttribute("data-element-id");
-    this.deleteCommentActionEmitter.emit(
-      {
-        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-        title: title // Used for Sample Instance of CommentThread
-      } as CommentUpdatesDto
-    );
+
+    const deleteAction = {
+      commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      commentId: commentId,
+      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+      title: title // Used for Sample Instance of CommentThread
+    } as CommentUpdatesDto;
+    
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    
+    if (comment?.commentSource === CommentSource.AIGenerated) {
+      this.pendingDeleteAction = deleteAction;
+      setTimeout(() => {
+        this.showAIDeleteDialog = true;
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+    } else {
+      this.deleteCommentActionEmitter.emit(deleteAction);
+    }
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
@@ -321,6 +346,7 @@ export class CommentThreadComponent {
     const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
+      this.codePanelRowData!.draftCommentText = '';
       this.selectedSeverity = null;
       this.cancelCommentActionEmitter.emit(
         {
@@ -373,8 +399,9 @@ export class CommentThreadComponent {
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;
+        this.codePanelRowData!.showReplyTextBox = false;
+        this.codePanelRowData!.draftCommentText = '';
       }
-      this.codePanelRowData!.showReplyTextBox = false;
     } else {
       const panel = target.closest("p-panel") as Element;
       const commentId = panel.getAttribute("data-comment-id");
@@ -424,14 +451,88 @@ export class CommentThreadComponent {
   toggleDownVoteAction(event: Event) {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
-    this.commentDownvoteActionEmitter.emit(
-      { 
-        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      } as CommentUpdatesDto
-    );
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
+    const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
+    
+    const downvoteAction = { 
+      commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
+      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      commentId: commentId,
+      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+    } as CommentUpdatesDto;
+    
+    if (isAIComment && !hasDownvote) {
+      this.pendingDownvoteAction = downvoteAction;
+      setTimeout(() => {
+        this.showAIFeedbackDialog = true;
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+    } else {
+      this.commentDownvoteActionEmitter.emit(downvoteAction);
+    }
+  }
+
+  onAIFeedbackSubmit(feedback: AICommentFeedback): void {
+    this.showAIFeedbackDialog = false;
+    
+    if (this.pendingDownvoteAction) {
+      this.commentDownvoteActionEmitter.emit(this.pendingDownvoteAction);
+    }
+    
+    if (feedback.reasons.length > 0) {
+      this.commentsService.submitAICommentFeedback(
+        this.reviewId,
+        feedback.commentId,
+        feedback.reasons,
+        feedback.additionalComments,
+        false
+      ).pipe(take(1)).subscribe({
+        next: () => {
+        },
+        error: (error: any) => {
+          console.error('Failed to submit feedback:', error);
+        }
+      });
+    }
+    
+    this.pendingDownvoteAction = null;
+  }
+
+  onAIFeedbackCancel(): void {
+    this.showAIFeedbackDialog = false;
+    this.pendingDownvoteAction = null;
+  }
+
+  onAIDeleteConfirm(deleteReason: AICommentDeleteReason): void {
+    this.showAIDeleteDialog = false;
+    
+    if (this.pendingDeleteAction) {
+      this.deleteCommentActionEmitter.emit(this.pendingDeleteAction);
+    }
+    
+    if (deleteReason.reason.trim().length > 0) {
+      this.commentsService.submitAICommentFeedback(
+        this.reviewId,
+        deleteReason.commentId,
+        [],
+        deleteReason.reason,
+        true
+      ).pipe(take(1)).subscribe({
+        next: () => {
+        },
+        error: (error: any) => {
+          console.error('Failed to submit deletion reason:', error);
+        }
+      });
+    }
+    
+    this.pendingDeleteAction = null;
+  }
+
+  onAIDeleteCancel(): void {
+    this.showAIDeleteDialog = false;
+    this.pendingDeleteAction = null;
   }
 
   toggleResolvedCommentExpandState() {
@@ -475,46 +576,18 @@ export class CommentThreadComponent {
     if (!this.codePanelRowData?.comments) return false;
     return this.codePanelRowData.comments[0].id === comment.id;
   }
-  
-  private normalizeSeverity(severity: CommentSeverity | string | null | undefined): string | null {
-    if (severity === null || severity === undefined) return null;
-    return typeof severity === 'string' ? severity.toLowerCase() : CommentSeverity[severity]?.toLowerCase() || null;
-  }
+
 
   getSeverityLabel(severity: CommentSeverity | string | null | undefined): string {
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return 'Question';
-      case 'suggestion': return 'Suggestion';
-      case 'shouldfix': return 'Should fix';
-      case 'mustfix': return 'Must fix';
-      default: return '';
-    }
+    return CommentSeverityHelper.getSeverityLabel(severity);
   }
 
   getSeverityBadgeClass(severity: CommentSeverity | string | null | undefined): string {
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return 'severity-question';
-      case 'suggestion': return 'severity-suggestion';
-      case 'shouldfix': return 'severity-should-fix';
-      case 'mustfix': return 'severity-must-fix';
-      default: return '';
-    }
+    return CommentSeverityHelper.getSeverityBadgeClass(severity);
   }
 
   getSeverityEnumValue(severity: CommentSeverity | string | null | undefined): CommentSeverity | null {
-    if (severity === null || severity === undefined) return null;
-    if (typeof severity === 'number') return severity; 
-    
-    const normalized = this.normalizeSeverity(severity);
-    switch (normalized) {
-      case 'question': return CommentSeverity.Question;
-      case 'suggestion': return CommentSeverity.Suggestion;
-      case 'shouldfix': return CommentSeverity.ShouldFix;
-      case 'mustfix': return CommentSeverity.MustFix;
-      default: return null;
-    }
+    return CommentSeverityHelper.getSeverityEnumValue(severity);
   }
 
   onSeverityDropdownHide(): void {
@@ -618,25 +691,42 @@ export class CommentThreadComponent {
   }
 
   onResolveSelectedComments(resolutionData: CommentResolutionData) {
-    const { commentIds, batchVote, resolutionComment } = resolutionData;
+    const { commentIds, batchVote, resolutionComment, disposition, severity, feedbackReasons, feedbackAdditionalComments } = resolutionData;
     
     if (commentIds.length === 0) {
       this.showRelatedCommentsDialog = false;
       return;
     }
 
-    this.commentsService.resolveBatchComments(this.reviewId, {
+    const hasFeedbackReasons = feedbackReasons && feedbackReasons.length > 0;
+    const hasFeedbackComment = feedbackAdditionalComments && feedbackAdditionalComments.trim().length > 0;
+    
+    const feedback = (hasFeedbackReasons || hasFeedbackComment) ? {
+      reasons: feedbackReasons || [],
+      comment: feedbackAdditionalComments || '',
+      isDelete: disposition === 'delete'
+    } : undefined;
+
+    this.commentsService.commentsBatchOperation(this.reviewId, {
       commentIds: commentIds,
       vote: batchVote || 'none',
-      commentReply: resolutionComment || undefined
+      commentReply: resolutionComment || undefined,
+      disposition: disposition,
+      severity: severity,
+      feedback: feedback
     }).subscribe({
       next: (response) => {
         const createdComments = response.body || [];
         
-        if (batchVote && batchVote !== 'none' && this.userProfile?.userName) {
-          this.applyBatchVotes(commentIds, batchVote, this.userProfile.userName);
+        if (severity !== null && severity !== undefined) {
+          this.applyBatchSeverity(commentIds, severity);
         }
-        this.emitResolutionEvents(commentIds);
+        
+        // Only emit resolution events if disposition is 'resolve'
+        if (disposition === 'resolve') {
+          this.emitResolutionEvents(commentIds);
+        }
+        
         this.emitCreationEvents(createdComments);
         
         this.showRelatedCommentsDialog = false;
@@ -654,24 +744,33 @@ export class CommentThreadComponent {
     });
   }
 
-  private applyBatchVotes(commentIds: string[], voteType: 'up' | 'down', userName: string): void {
+  private applyBatchSeverity(commentIds: string[], severity: CommentSeverity): void {
     commentIds.forEach(commentId => {
       const commentCodeRow = this.allCodePanelRowData?.find(row => 
         row.comments?.some(c => c.id === commentId)
       );
       
-      if (commentCodeRow) {
-        const voteAction = voteType === 'up' 
-          ? CommentThreadUpdateAction.CommentUpVoteToggled 
-          : CommentThreadUpdateAction.CommentDownVoteToggled;
-          
-        this.batchResolutionActionEmitter.emit({
-          commentThreadUpdateAction: voteAction,
-          commentId: commentId,
-          nodeIdHashed: commentCodeRow.nodeIdHashed,
-          associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
-        } as CommentUpdatesDto);
+      if (!commentCodeRow) {
+        return;
       }
+
+      const comment = commentCodeRow.comments?.find(c => c.id === commentId);
+      if (comment) {
+        comment.severity = severity;
+      }
+
+      const relatedComment = this.relatedComments?.find(c => c.id === commentId);
+      if (relatedComment) {
+        relatedComment.severity = severity;
+      }
+
+      this.batchResolutionActionEmitter.emit({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
+        commentId: commentId,
+        nodeIdHashed: commentCodeRow.nodeIdHashed,
+        severity: severity,
+        associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
+      } as CommentUpdatesDto);
     });
   }
 
@@ -722,12 +821,7 @@ export class CommentThreadComponent {
 
   getAICommentInfoStructured(comment: CommentItemModel): AICommentInfo {
     const items: AICommentInfoItem[] = [];
-    items.push({
-        icon: 'pi-id-card',
-        label: 'Id',
-        value: comment.id,
-      });
-
+    
     if (comment.confidenceScore && comment.confidenceScore > 0) {
       const score = Math.round(comment.confidenceScore * 100);
       const scoreClass = score >= 80 ? 'high-confidence' : score >= 60 ? 'medium-confidence' : 'low-confidence';
@@ -756,6 +850,12 @@ export class CommentThreadComponent {
         valueList: comment.memoryIds
       });
     }
+    
+    items.push({
+        icon: 'pi-id-card',
+        label: 'Id',
+        value: comment.id,
+      });
     
     return { items };
   }

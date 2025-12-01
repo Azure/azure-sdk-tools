@@ -24,11 +24,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IEnumerable<LanguageService> _languageServices
     ) : LanguageMcpTool(_languageServices, gitHelper, _logger)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
 
-        private const string TestCommandName = "test";
+        private const string RunCommandName = "run";
+        private const string RunPackageTestsToolName = "azsdk_package_run_tests";
 
-        protected override Command GetCommand() => new(TestCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new McpCommand(RunCommandName, "Run tests for SDK packages", RunPackageTestsToolName)
         {
             SharedOptions.PackagePath,
         };
@@ -40,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await RunPackageTests(packagePath, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_tests"), Description("Run tests for the specified SDK package. Provide package path.")]
+        [McpServerTool(Name = RunPackageTestsToolName), Description("Run tests for the specified SDK package. Provide package path.")]
         public async Task<DefaultCommandResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
         {
             try

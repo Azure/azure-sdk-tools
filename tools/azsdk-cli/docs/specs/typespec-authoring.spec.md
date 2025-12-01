@@ -256,7 +256,7 @@ _Known cases where this approach doesn't work or has limitations._
 
 ## Design Proposal
 
-Leverage the existing Azure SDK RAG service to deliver solutions aligned with Azure guidelines and best practices. Implement a TypeSpec authoring MCP tool that consults the Azure SDK RAG service to generate these solutions.
+Leverage the existing APIs for Azure SDK knowledge base to deliver solutions aligned with Azure guidelines and best practices. Implement a TypeSpec authoring MCP tool that consults the Azure SDK RAG service to generate these solutions.
 
 ### Overview
 
@@ -264,7 +264,7 @@ Leverage the existing Azure SDK RAG service to deliver solutions aligned with Az
 
 ### Detailed Design
 
-When a user prompts GitHub Copilot with a TypeSpec task, Copilot interacts with the user to gather the required details, then invokes the TypeSpec authoring tool using the task and collected information as context. The authoring tool consults the backend RAG service to generate a solution, which Copilot finally applies to update the TypeSpec files.
+When a user prompts GitHub Copilot with a TypeSpec task, Copilot interacts with the user to gather the required details, then invokes the TypeSpec authoring tool using the task and collected information as context. The authoring tool consults the backend Azure SDK knowledge base to generate a solution, which Copilot finally applies to update the TypeSpec files.
 
 #### 1. TypeSpec authoring tool
 
@@ -277,6 +277,9 @@ Purpose: Help the user to define or edit TypeSpec API specifications and resolve
 Inputs:
 - `--request <typespec-related-request>` (required)
 - `--additional-information <additional-context>` (optional)
+- `--category <request-categrory>` (optional)
+- `--mode <reqeust-model>` (optional, it should be one of agent-model or file-model, default is agent-model)
+- `--typespec-source-path <path-to-tsp-source-file-or-folder` (optional, the path to typespec source file or folder)
 
 Outputs:
 
@@ -284,9 +287,9 @@ Outputs:
 {"is_successful":true,"solution": "<solution-for-the-typespec-task>", "references":[{"title":"How to define a preview version","source":"typespec_azure_docs","link":"https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"}]}
 ```
 
-#### 2. RAG service
+#### 2. Azure SDK Knowledge base
 
-Backend service to provide the solution for the task. It exports completion api https://<rag-service-endpoint>/completion
+Backend Azure SDK Knowledge base to provide the solution for the task. It exports completion api https://<knowledge-base-service-endpoint>/completion
 
 ---
 

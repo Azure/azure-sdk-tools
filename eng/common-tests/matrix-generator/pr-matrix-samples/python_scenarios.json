@@ -34,10 +34,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureaiml",
-          "name": "azure-ai-ml",
           "triggeringPaths": [
             "/sdk/ml/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-ml"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -97,10 +97,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurecore",
-          "name": "azure-core",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ]
+          ],
+          "name": "azure-core"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -125,10 +125,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azuretemplate",
-          "name": "azure-template",
           "triggeringPaths": [
             "/sdk/template/ci.yml"
-          ]
+          ],
+          "name": "azure-template"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -171,10 +171,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureaidocumentintelligence",
-          "name": "azure-ai-documentintelligence",
           "triggeringPaths": [
             "/sdk/documentintelligence/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-documentintelligence"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -199,10 +199,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureaiinference",
-          "name": "azure-ai-inference",
           "triggeringPaths": [
             "/sdk/ai/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-inference"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -227,10 +227,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureaiml",
-          "name": "azure-ai-ml",
           "triggeringPaths": [
             "/sdk/ml/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-ml"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -255,10 +255,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureaitextanalytics",
-          "name": "azure-ai-textanalytics",
           "triggeringPaths": [
             "/sdk/textanalytics/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-textanalytics"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -283,10 +283,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureaitranslationdocument",
-          "name": "azure-ai-translation-document",
           "triggeringPaths": [
             "/sdk/translation/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-translation-document"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -311,10 +311,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureappconfiguration",
-          "name": "azure-appconfiguration",
           "triggeringPaths": [
             "/sdk/appconfiguration/ci.yml"
-          ]
+          ],
+          "name": "azure-appconfiguration"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -339,10 +339,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurecommunicationchat",
-          "name": "azure-communication-chat",
           "triggeringPaths": [
             "/sdk/communication/ci.yml"
-          ]
+          ],
+          "name": "azure-communication-chat"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -367,10 +367,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurecommunicationidentity",
-          "name": "azure-communication-identity",
           "triggeringPaths": [
             "/sdk/communication/ci.yml"
-          ]
+          ],
+          "name": "azure-communication-identity"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -413,10 +413,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurecore",
-          "name": "azure-core",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ]
+          ],
+          "name": "azure-core"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -441,10 +441,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurecoreexperimental",
-          "name": "azure-core-experimental",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ]
+          ],
+          "name": "azure-core-experimental"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -491,10 +491,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurecorecoretracingtelemetry",
-          "name": "azure-core-tracing-opentelemetry",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ]
+          ],
+          "name": "azure-core-tracing-opentelemetry"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -519,10 +519,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azuredatatables",
-          "name": "azure-data-tables",
           "triggeringPaths": [
             "/sdk/tables/ci.yml"
-          ]
+          ],
+          "name": "azure-data-tables"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -547,10 +547,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureeventhub",
-          "name": "azure-eventhub",
           "triggeringPaths": [
             "/sdk/eventhub/ci.yml"
-          ]
+          ],
+          "name": "azure-eventhub"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -575,17 +575,17 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureidentity",
-          "name": "azure-identity",
           "triggeringPaths": [
             "/sdk/identity/ci.yml"
-          ]
+          ],
+          "name": "azure-identity"
         },
         "CIParameters": {
           "CIMatrixConfigs": [
             {
               "Selection": "sparse",
-              "Name": "identity_ci_matrix",
               "Path": "sdk/identity/platform-matrix.json",
+              "Name": "identity_ci_matrix",
               "GenerateVMJobs": true
             }
           ]
@@ -610,10 +610,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurekeyvaultkeys",
-          "name": "azure-keyvault-keys",
           "triggeringPaths": [
             "/sdk/keyvault/ci.yml"
-          ]
+          ],
+          "name": "azure-keyvault-keys"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -638,10 +638,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azuremgmtcompute",
-          "name": "azure-mgmt-compute",
           "triggeringPaths": [
             "/sdk/compute/ci.yml"
-          ]
+          ],
+          "name": "azure-mgmt-compute"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -669,10 +669,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azuremgmtcore",
-          "name": "azure-mgmt-core",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ]
+          ],
+          "name": "azure-mgmt-core"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -697,10 +697,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureservicebus",
-          "name": "azure-servicebus",
           "triggeringPaths": [
             "/sdk/servicebus/ci.yml"
-          ]
+          ],
+          "name": "azure-servicebus"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -725,10 +725,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azurestorageblob",
-          "name": "azure-storage-blob",
           "triggeringPaths": [
             "/sdk/storage/ci.yml"
-          ]
+          ],
+          "name": "azure-storage-blob"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -753,10 +753,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azuretemplate",
-          "name": "azure-template",
           "triggeringPaths": [
             "/sdk/template/ci.yml"
-          ]
+          ],
+          "name": "azure-template"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -797,10 +797,10 @@
         ],
         "ArtifactDetails": {
           "safeName": "azuretemplate",
-          "name": "azure-template",
           "triggeringPaths": [
             "/sdk/template/ci.yml"
-          ]
+          ],
+          "name": "azure-template"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
@@ -843,17 +843,17 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureidentity",
-          "name": "azure-identity",
           "triggeringPaths": [
             "/sdk/identity/ci.yml"
-          ]
+          ],
+          "name": "azure-identity"
         },
         "CIParameters": {
           "CIMatrixConfigs": [
             {
               "Selection": "sparse",
-              "Name": "identity_ci_matrix",
               "Path": "sdk/identity/platform-matrix.json",
+              "Name": "identity_ci_matrix",
               "GenerateVMJobs": true
             }
           ]
@@ -878,17 +878,17 @@
         ],
         "ArtifactDetails": {
           "safeName": "azureidentitybroker",
-          "name": "azure-identity-broker",
           "triggeringPaths": [
             "/sdk/identity/ci.yml"
-          ]
+          ],
+          "name": "azure-identity-broker"
         },
         "CIParameters": {
           "CIMatrixConfigs": [
             {
               "Selection": "sparse",
-              "Name": "identity_ci_matrix",
               "Path": "sdk/identity/platform-matrix.json",
+              "Name": "identity_ci_matrix",
               "GenerateVMJobs": true
             }
           ]

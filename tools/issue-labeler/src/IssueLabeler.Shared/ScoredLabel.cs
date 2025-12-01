@@ -7,5 +7,6 @@ namespace IssueLabeler.Shared
     {
         public string LabelName { get; set; }
         public float Score { get; set; }
+        public string? LabelType { get; set; }
     }
 }

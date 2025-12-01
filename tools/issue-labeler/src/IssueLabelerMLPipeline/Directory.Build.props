@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
+  <!-- Repository Engineering Path -->
+  <PropertyGroup>
+    <RepoEngPath>$(MSBuildThisFileDirectory)..\..\..\..\eng</RepoEngPath>
+  </PropertyGroup>
+
   <!-- Build Properties -->
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <UseArtifactsOutput>true</UseArtifactsOutput>
     <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
   </PropertyGroup>

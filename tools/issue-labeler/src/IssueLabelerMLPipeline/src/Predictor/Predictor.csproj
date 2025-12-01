@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\GitHubClient\GitHubClient.csproj" />
+    <ProjectReference Include="..\..\..\IssueLabeler.Shared\IssueLabeler.Shared.csproj" />
   </ItemGroup>
 
 </Project>

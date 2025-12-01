@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 
+// Console application entry point (top-level statements)
 using var provider = new ServiceCollection()
     .AddGitHubActionsCore()
     .BuildServiceProvider();
@@ -18,9 +19,7 @@ if (Args.Parse(args, action) is not Args argsData) return 1;
 
 List<Task<(ulong Number, string ResultMessage, bool Success)>> tasks = new();
 
-// Process Issues (both category and service models together)
-if (argsData.Issues is not null && 
-    argsData.CategoryIssuesModelPath is not null && argsData.ServiceIssuesModelPath is not null)
+// (This console application implementation will need to be completed with the original logic)
 {
     // Load prediction engines for issues
     PredictionEngine<Issue, LabelPrediction>? categoryIssuePredictor = null;

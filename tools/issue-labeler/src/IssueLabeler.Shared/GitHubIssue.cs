@@ -85,34 +85,34 @@ namespace IssueLabeler.Shared
     public class GitHubIssue
     {
         [LoadColumn(0)]
-        public string CombinedID;
+        public string? CombinedID;
 
         [LoadColumn(1)]
-        public float ID;
+        public float? ID;
 
         [LoadColumn(2)]
-        public string Label;
+        public string? Label;
 
         [LoadColumn(3)]
-        public string Title;
+        public string? Title;
 
         [LoadColumn(4)]
-        public string Description;
+        public string? Description;
 
         [LoadColumn(5)]
-        public string Author;
+        public string? Author;
 
         [LoadColumn(6)]
-        public float IsPR;
+        public float? IsPR;
 
         [LoadColumn(7)]
-        public string UserMentions;
+        public string? UserMentions;
 
         [LoadColumn(8)]
-        public float NumMentions;
+        public float? NumMentions;
         [LoadColumn(9)]
-        public string ServiceLabel;
+        public string? ServiceLabel;
         [LoadColumn(10)]
-        public string CategoryLabel;
+        public string? CategoryLabel;
     }
 }

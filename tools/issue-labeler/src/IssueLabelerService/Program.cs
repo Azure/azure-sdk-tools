@@ -4,7 +4,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Hubbup.MikLabelModel;
+using IssueLabeler.Shared;
 using Azure.Identity;
 using System;
 using Azure.AI.OpenAI;
@@ -73,7 +73,6 @@ var host = new HostBuilder()
 
         services.AddSingleton<TriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
-        services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();
         services.AddSingleton<AnswerFactory>();
         services.AddSingleton<IssueGeneratorFactory>();

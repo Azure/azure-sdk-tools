@@ -35,16 +35,27 @@ public static class GitHubActionSummary
     {
         action.WriteInfo(message);
 
-        await action.Summary.WritePersistentAsync(summary =>
+        // Only use Summary API if running in GitHub Actions
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY")))
         {
-            summary.AddMarkdownHeading("Status", 3);
-            summary.AddRaw(message);
-
-            if (persistentSummaryWrites.Any())
+            try
             {
-                summary.AddMarkdownHeading("Results", 3);
+                await action.Summary.WritePersistentAsync(summary =>
+                {
+                    summary.AddMarkdownHeading("Status", 3);
+                    summary.AddRaw(message);
+
+                    if (persistentSummaryWrites.Any())
+                    {
+                        summary.AddMarkdownHeading("Results", 3);
+                    }
+                });
             }
-        });
+            catch (Exception ex)
+            {
+                action.WriteWarning($"Could not write to GitHub Actions summary: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
@@ -55,18 +66,29 @@ public static class GitHubActionSummary
     /// <returns>The async task.</returns>
     public static async Task WritePersistentAsync(this Summary summary, Action<Summary>? writeStatus = null)
     {
-        await summary.ClearAsync();
-
-        if (writeStatus is not null)
+        // Only use Summary API if running in GitHub Actions
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY")))
         {
-            writeStatus(summary);
-        }
+            try
+            {
+                await summary.ClearAsync();
 
-        foreach (var write in persistentSummaryWrites)
-        {
-            write(summary);
-        }
+                if (writeStatus is not null)
+                {
+                    writeStatus(summary);
+                }
 
-        await summary.WriteAsync();
+                foreach (var write in persistentSummaryWrites)
+                {
+                    write(summary);
+                }
+
+                await summary.WriteAsync();
+            }
+            catch (Exception)
+            {
+                // Silently fail if not in GitHub Actions environment
+            }
+        }
     }
 }

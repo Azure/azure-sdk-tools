@@ -31,7 +31,7 @@ if (!string.IsNullOrEmpty(argsData.PullsDataPath))
 var success = await App.RunTasks(tasks, action);
 return success ? 0 : 1;
 
-async Task DownloadIssues(string outputPath, bool writeToBlobStorage = false)
+async Task DownloadIssues(string outputPath)
 {
     action.WriteInfo($"Issues Data Path: {outputPath}");
 

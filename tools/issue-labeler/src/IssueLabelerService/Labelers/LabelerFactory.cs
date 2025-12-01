@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using Azure.Storage.Blobs;
-using Hubbup.MikLabelModel;
 using Microsoft.Extensions.Logging;
+using IssueLabeler.Shared;
 
 namespace IssueLabelerService
 {
@@ -11,15 +11,13 @@ namespace IssueLabelerService
         private ConcurrentDictionary<string, ILabeler> _labelers = new();
         private IModelHolderFactoryLite _modelHolderFactory;
         private ILogger<LabelerFactory> _logger;
-        private ILabelerLite _labeler;
         private TriageRag _ragService;
         private BlobServiceClient _blobClient;
 
-        public LabelerFactory(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler, TriageRag ragService, BlobServiceClient blobClient)
+        public LabelerFactory(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, TriageRag ragService, BlobServiceClient blobClient)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;
-            _labeler = labeler;
             _ragService = ragService;
             _blobClient = blobClient;
         }
@@ -34,10 +32,10 @@ namespace IssueLabelerService
                         case "OpenAI":
                             return new OpenAiLabeler(_logger, config, _ragService, _blobClient);
                         case "Legacy":
-                            return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
+                            return new MLLabeler(_logger, _modelHolderFactory, config);
                         default:
-                            _logger.LogWarning($"Unknown labeler type: {key} Running Legacy.");
-                            return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
+                            _logger.LogWarning($"Unknown labeler type: {key} Running ML Labeler.");
+                            return new MLLabeler(_logger, _modelHolderFactory, config);
                     }
                 }
             );

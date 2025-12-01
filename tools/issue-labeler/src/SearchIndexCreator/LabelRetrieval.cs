@@ -36,7 +36,7 @@ namespace SearchIndexCreator
             var repoNames = repoNamesConfig.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
             // Initialize BlobServiceClient (replace with your connection string)
-            var blobServiceClient = BlobStorageHelper.GetBlobServiceClient(_config["IssueStorageName"]);
+            var blobServiceClient = GetBlobServiceClient(_config["IssueStorageName"]);
             var containerClient = blobServiceClient.GetBlobContainerClient("labels");
 
             // Ensure the container exists
@@ -86,6 +86,14 @@ namespace SearchIndexCreator
                     throw new Exception($"Error uploading labels for: {repo}", ex);
                 }
             }
+        }
+        private BlobServiceClient GetBlobServiceClient(string accountName)
+        {
+            BlobServiceClient client = new(
+                new Uri($"https://{accountName}.blob.core.windows.net/"),
+                new DefaultAzureCredential());
+
+            return client;
         }
 
     }

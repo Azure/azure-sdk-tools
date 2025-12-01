@@ -226,7 +226,7 @@ def _your_workflow_name(testcase: str, param1: str, param2: str, response: str):
     prompty_kwargs = {
         "param1": param1,
         "param2": param2,
-        # Map parameters from test data (exclude testcase and response)
+        # Map parameters to prompty (exclude testcase and response as they're for evaluation framework)
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
@@ -248,7 +248,7 @@ def target_function(self) -> callable:
     }
 ```
 
-**Important:** All test file fields (except `testcase` and `response`) must be target function parameters.
+**Important:** All test file fields must match the target function parameters exactly.
 
 5. **Run your workflow**:
 ```bash

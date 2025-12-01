@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "body-parser": "^2.2.1",
-    "express": "^5.1.0",
+    "express": "^5.2.0",
     "jsonwebtoken": "^9.0.0",
     "node-jose": "^2.2.0"
   },

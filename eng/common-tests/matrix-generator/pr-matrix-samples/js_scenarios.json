@@ -34,16 +34,15 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-rest-ai-translation-document",
           "safeName": "azurerestaitranslationdocument",
+          "name": "azure-rest-ai-translation-document",
           "triggeringPaths": [
             "/sdk/translation/ci.yml"
           ]
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": "specification/translation/Azure.AI.DocumentTranslation"
+        }
       },
       {
         "Name": "@azure-rest/core-client",
@@ -61,8 +60,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-rest-core-client",
           "safeName": "azurerestcoreclient",
+          "name": "azure-rest-core-client",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -70,8 +69,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/abort-controller",
@@ -89,8 +87,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-abort-controller",
           "safeName": "azureabortcontroller",
+          "name": "azure-abort-controller",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -98,8 +96,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/arm-resources",
@@ -117,8 +114,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-arm-resources",
           "safeName": "azurearmresources",
+          "name": "azure-arm-resources",
           "triggeringPaths": [
             "/sdk/identity",
             "config",
@@ -132,8 +129,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-amqp",
@@ -151,8 +147,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-amqp",
           "safeName": "azurecoreamqp",
+          "name": "azure-core-amqp",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -160,8 +156,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-auth",
@@ -179,8 +174,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-auth",
           "safeName": "azurecoreauth",
+          "name": "azure-core-auth",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -188,8 +183,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-client",
@@ -207,8 +201,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-client",
           "safeName": "azurecoreclient",
+          "name": "azure-core-client",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -216,8 +210,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-http-compat",
@@ -235,8 +228,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-http-compat",
           "safeName": "azurecorehttpcompat",
+          "name": "azure-core-http-compat",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -244,8 +237,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-lro",
@@ -263,8 +255,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-lro",
           "safeName": "azurecorelro",
+          "name": "azure-core-lro",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -272,8 +264,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-paging",
@@ -291,8 +282,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-paging",
           "safeName": "azurecorepaging",
+          "name": "azure-core-paging",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -300,8 +291,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-rest-pipeline",
@@ -319,8 +309,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-rest-pipeline",
           "safeName": "azurecorerestpipeline",
+          "name": "azure-core-rest-pipeline",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -328,8 +318,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-sse",
@@ -347,8 +336,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-sse",
           "safeName": "azurecoresse",
+          "name": "azure-core-sse",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -356,8 +345,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-tracing",
@@ -375,8 +363,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-tracing",
           "safeName": "azurecoretracing",
+          "name": "azure-core-tracing",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -384,8 +372,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-util",
@@ -403,8 +390,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-util",
           "safeName": "azurecoreutil",
+          "name": "azure-core-util",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -412,8 +399,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/core-xml",
@@ -431,8 +417,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-core-xml",
           "safeName": "azurecorexml",
+          "name": "azure-core-xml",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -440,8 +426,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/identity",
@@ -461,8 +446,8 @@
           "@azure-tests/perf-storage-blob"
         ],
         "ArtifactDetails": {
-          "name": "azure-identity",
           "safeName": "azureidentity",
+          "name": "azure-identity",
           "triggeringPaths": [
             "/sdk/test-utils",
             "config",
@@ -476,8 +461,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/logger",
@@ -495,8 +479,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-logger",
           "safeName": "azurelogger",
+          "name": "azure-logger",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -504,8 +488,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/service-bus",
@@ -523,8 +506,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-service-bus",
           "safeName": "azureservicebus",
+          "name": "azure-service-bus",
           "triggeringPaths": [
             "config",
             "devcontainer",
@@ -537,8 +520,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/storage-blob",
@@ -556,8 +538,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-storage-blob",
           "safeName": "azurestorageblob",
+          "name": "azure-storage-blob",
           "triggeringPaths": [
             "/sdk/identity",
             "/sdk/storage/ci.yml"
@@ -565,8 +547,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/storage-file-datalake",
@@ -584,16 +565,15 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-storage-file-datalake",
           "safeName": "azurestoragefiledatalake",
+          "name": "azure-storage-file-datalake",
           "triggeringPaths": [
             "/sdk/storage/ci.yml"
           ]
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/storage-file-share",
@@ -611,16 +591,15 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-storage-file-share",
           "safeName": "azurestoragefileshare",
+          "name": "azure-storage-file-share",
           "triggeringPaths": [
             "/sdk/storage/ci.yml"
           ]
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/template",
@@ -638,8 +617,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-template",
           "safeName": "azuretemplate",
+          "name": "azure-template",
           "triggeringPaths": [
             "/sdk/test-utils",
             "/sdk/identity",
@@ -654,8 +633,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@typespec/ts-http-runtime",
@@ -673,8 +651,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "typespec-ts-http-runtime",
           "safeName": "typespectshttpruntime",
+          "name": "typespec-ts-http-runtime",
           "triggeringPaths": [
             "/common/config",
             "/sdk/core/ci.yml"
@@ -682,8 +660,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       }
     ]
   },
@@ -717,8 +694,7 @@
         "ArtifactDetails": null,
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/template",
@@ -736,8 +712,8 @@
         "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-template",
           "safeName": "azuretemplate",
+          "name": "azure-template",
           "triggeringPaths": [
             "/sdk/test-utils",
             "/sdk/identity",
@@ -752,8 +728,7 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "@azure/template-dpg",
@@ -771,16 +746,15 @@
         "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "azure-template-dpg",
           "safeName": "azuretemplatedpg",
+          "name": "azure-template-dpg",
           "triggeringPaths": [
             "/sdk/template/ci.yml"
           ]
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       }
     ]
   },
@@ -795,33 +769,34 @@
       "DeletedFiles": [],
       "PRNumber": "33362"
     },
-    "expected_package_output": {
-      "Name": "@azure/storage-blob",
-      "Version": "12.27.0",
-      "DevVersion": null,
-      "DirectoryPath": "sdk/storage/storage-blob",
-      "ServiceDirectory": "storage",
-      "ReadMePath": "sdk/storage/storage-blob/README.md",
-      "ChangeLogPath": "sdk/storage/storage-blob/CHANGELOG.md",
-      "Group": null,
-      "SdkType": "client",
-      "IsNewSdk": true,
-      "ArtifactName": "azure-storage-blob",
-      "ReleaseStatus": "2025-03-18",
-      "IncludedForValidation": false,
-      "AdditionalValidationPackages": null,
-      "ArtifactDetails": {
-        "name": "azure-storage-blob",
-        "safeName": "azurestorageblob",
-        "triggeringPaths": [
-          "/sdk/identity",
-          "/sdk/storage/ci.yml"
-        ]
-      },
-      "CIParameters": {
-        "CIMatrixConfigs": []
-      },
-      "SpecProjectPath": null
-    }
+    "expected_package_output": [
+      {
+        "Name": "@azure/storage-blob",
+        "Version": "12.27.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/storage/storage-blob",
+        "ServiceDirectory": "storage",
+        "ReadMePath": "sdk/storage/storage-blob/README.md",
+        "ChangeLogPath": "sdk/storage/storage-blob/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-storage-blob",
+        "ReleaseStatus": "2025-03-18",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "safeName": "azurestorageblob",
+          "name": "azure-storage-blob",
+          "triggeringPaths": [
+            "/sdk/identity",
+            "/sdk/storage/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      }
+    ]
   }
 ]

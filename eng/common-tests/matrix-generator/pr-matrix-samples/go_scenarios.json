@@ -34,13 +34,12 @@
         ]
       },
       "CIParameters": {
-        "UsePipelineProxy": true,
-        "CIMatrixConfigs": [],
-        "LicenseCheck": true,
         "IsSdkLibrary": true,
+        "LicenseCheck": true,
+        "CIMatrixConfigs": [],
+        "UsePipelineProxy": true,
         "NonShipping": false
-      },
-      "SpecProjectPath": null
+      }
     }
   },
   {
@@ -80,13 +79,12 @@
           ]
         },
         "CIParameters": {
-          "UsePipelineProxy": true,
-          "CIMatrixConfigs": [],
-          "LicenseCheck": true,
           "IsSdkLibrary": true,
+          "LicenseCheck": true,
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
           "NonShipping": false
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "sdk/resourcemanager/dashboard/armdashboard",
@@ -109,13 +107,12 @@
           ]
         },
         "CIParameters": {
-          "UsePipelineProxy": true,
-          "CIMatrixConfigs": [],
-          "LicenseCheck": true,
           "IsSdkLibrary": true,
+          "LicenseCheck": true,
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
           "NonShipping": false
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "sdk/resourcemanager/storage/armstorage",
@@ -138,12 +135,11 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
-          "LicenseCheck": true,
           "IsSdkLibrary": true,
+          "LicenseCheck": true,
+          "CIMatrixConfigs": [],
           "NonShipping": false
-        },
-        "SpecProjectPath": null
+        }
       }
     ]
   },
@@ -181,13 +177,12 @@
           ]
         },
         "CIParameters": {
-          "UsePipelineProxy": true,
-          "CIMatrixConfigs": [],
-          "LicenseCheck": true,
           "IsSdkLibrary": true,
+          "LicenseCheck": true,
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
           "NonShipping": false
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "sdk/template/aztemplate",
@@ -211,13 +206,12 @@
           ]
         },
         "CIParameters": {
-          "UsePipelineProxy": true,
-          "CIMatrixConfigs": [],
-          "LicenseCheck": true,
           "IsSdkLibrary": true,
+          "LicenseCheck": true,
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
           "NonShipping": false
-        },
-        "SpecProjectPath": null
+        }
       }
     ]
   }

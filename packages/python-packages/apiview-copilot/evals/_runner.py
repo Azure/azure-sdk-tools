@@ -130,11 +130,11 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_cache: bool = False):
+    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._results_lock = threading.Lock()
-        self._use_cache = use_cache
+        self._use_recording = use_recording
 
     def _ensure_context(self):
         if self._context is None:
@@ -226,7 +226,7 @@ class EvaluationRunner:
                     test_file_paths.append(test_file)
 
             # Resolve cache strategy
-            if self._use_cache:
+            if self._use_recording:
                 cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
             else:
                 cache_lookup = {}
@@ -251,7 +251,7 @@ class EvaluationRunner:
             if fresh_testcases:
                 fresh_results = self._run_azure_evaluation(fresh_testcases, target)
 
-                if self._use_cache:
+                if self._use_recording:
                     append_results_to_cache(fresh_test_file_paths, fresh_results)
 
             # Combine all results

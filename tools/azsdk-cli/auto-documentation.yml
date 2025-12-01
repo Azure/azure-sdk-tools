@@ -1,0 +1,40 @@
+jobs:
+  - job: UpdateMCPDocumentation
+    displayName: 'Update MCP Tools Documentation'
+    pool:
+      name: $(LINUXPOOL)
+      image: $(LINUXVMIMAGE)
+      os: linux
+    
+    steps:
+    - checkout: self
+      displayName: 'Checkout current branch'
+    
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Repositories:
+          - Name: Azure/azure-sdk-tools
+            Commitish: main
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools-main
+        Paths:
+          - 'tools/azsdk-cli/**'
+    
+    - template: /eng/pipelines/templates/steps/install-dotnet.yml
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Azure SDK CLI (Release)'
+      inputs:
+        command: 'build'
+        projects: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
+        arguments: '--configuration Release'
+    
+    - task: PowerShell@2
+      displayName: 'Generate MCP tools documentation'
+      inputs:
+        targetType: 'filePath'
+        filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
+        arguments: >-
+          -AzsdkCliPath $(System.DefaultWorkingDirectory)/artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk
+          -CsprojPath $(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+        pwsh: true
+        workingDirectory: '$(System.DefaultWorkingDirectory)/azure-sdk-tools-main'

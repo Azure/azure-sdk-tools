@@ -429,7 +429,7 @@ add a new preview API version 2025-10-01-preview for service widget
 **Prompt:**
 
 ```text
-add an azure resource asset for the api version 2025-10-01-preview
+add an azure resource named asset for the api version 2025-10-01-preview
 ```
 
 **Expected Agent Activity:**

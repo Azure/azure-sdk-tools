@@ -116,6 +116,7 @@ namespace APIViewWeb
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
+            services.AddSingleton<IAutoReviewService, AutoReviewService>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
             services.AddSingleton<IEmailTemplateService, EmailTemplateService>();

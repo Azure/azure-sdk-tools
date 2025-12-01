@@ -46,3 +46,5 @@ extends:
       - template: /tools/azsdk-cli/run-ai-eval.yml
         parameters:
           EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations
+      CustomReleaseJobs:
+      - template: /tools/azsdk-cli/auto-documentation.yml

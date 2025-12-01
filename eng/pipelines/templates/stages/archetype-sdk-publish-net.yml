@@ -8,6 +8,7 @@ parameters:
   ExeMatrix: []
   VerifyChangelog: false
   ToolDirectory: ''
+  CustomReleaseJobs: []
 # Needs Github Release variable group linked.
 # Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
 
@@ -119,6 +120,9 @@ stages:
             # run this locally and figure out what the inputs should be
             arguments: '-Version $(NewVersion) -ChangelogPath "${{ parameters.ToolDirectory }}/CHANGELOG.md"'
             pwsh: true
+        
+        - ${{ each job in parameters.CustomReleaseJobs }}:
+            - ${{ job }}
 
         - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
           parameters:

@@ -68,6 +68,9 @@ parameters:
   - name: CustomJobs
     type: jobList
     default: []
+  - name: CustomReleaseJobs
+    type: jobList
+    default: []
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

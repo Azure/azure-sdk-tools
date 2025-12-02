@@ -43,7 +43,11 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         Link,
 
         [EnumMember(Value = "image")]
-        Image
+        Image,
+
+        [EnumMember(Value = "text")]
+        Text,
+
     }
 
     [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<QuestionScope>))]

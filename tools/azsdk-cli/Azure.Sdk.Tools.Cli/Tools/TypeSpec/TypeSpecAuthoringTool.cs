@@ -143,6 +143,7 @@ Returns an answer with supporting references and documentation links
                 {
                     completionRequest.AdditionalInfos.Add(new AdditionalInfo
                     {
+                        Type = AdditionalInfoType.Text,
                         Content = additionalInformation
                     });
                 }

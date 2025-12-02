@@ -58,6 +58,7 @@ type AdditionalInfoType string
 const (
 	AdditionalInfoType_Link  AdditionalInfoType = "link"
 	AdditionalInfoType_Image AdditionalInfoType = "image"
+	AdditionalInfoType_Text  AdditionalInfoType = "text"
 )
 
 type AdditionalInfo struct {

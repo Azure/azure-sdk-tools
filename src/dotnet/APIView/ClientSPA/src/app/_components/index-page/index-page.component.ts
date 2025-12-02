@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { take } from 'rxjs';
 import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -10,10 +11,9 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
   styleUrls: ['./index-page.component.scss']
 })
 export class IndexPageComponent {
-  review : Review | undefined = undefined;
   userProfile: UserProfile | undefined;
 
-  constructor(private userProfileService: UserProfileService) { }
+  constructor(private userProfileService: UserProfileService, private router: Router) { }
 
   ngOnInit(): void {
     this.userProfileService.getUserProfile().pipe(
@@ -25,10 +25,10 @@ export class IndexPageComponent {
   }
 
   /**
-   * Pass ReviewId to revision component to load revisions
-   *  * @param reviewId
+   * Navigate to the review page when a review is selected
+   * @param review
    */
-  getRevisions(review: Review) {
-    this.review = review;
+  onReviewSelected(review: Review) {
+    this.router.navigate(['/review', review.id]);
   }
 }

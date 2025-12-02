@@ -1,17 +1,8 @@
 <app-nav-bar></app-nav-bar>
 <div class="container-fluid py-2 px-4 main-container">
-    <p-splitter 
-        [panelSizes]="[30, 70]" 
-        [style]="{ height: 'calc(100vh - 80px)', border: '0px' }">
-        <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center border rounded-start overflow-hidden">
-                <app-reviews-list [userProfile]="userProfile" (reviewEmitter)="getRevisions($event)"></app-reviews-list>
-            </div>
-        </ng-template>
-        <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center border rounded-end overflow-hidden">
-                <app-revisions-list [review]="review" [userProfile]="userProfile"></app-revisions-list>
-            </div>
-        </ng-template>
-    </p-splitter>
+    <div class="row" [style]="{ height: 'calc(100vh - 80px)' }">
+        <div class="col border rounded overflow-hidden">
+            <app-reviews-list [userProfile]="userProfile" (reviewEmitter)="onReviewSelected($event)"></app-reviews-list>
+        </div>
+    </div>
 </div>

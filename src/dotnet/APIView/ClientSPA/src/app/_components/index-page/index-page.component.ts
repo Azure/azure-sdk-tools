@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { take } from 'rxjs';
 import { Review } from 'src/app/_models/review';
@@ -10,7 +10,7 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
   templateUrl: './index-page.component.html',
   styleUrls: ['./index-page.component.scss']
 })
-export class IndexPageComponent {
+export class IndexPageComponent implements OnInit {
   userProfile: UserProfile | undefined;
 
   constructor(private userProfileService: UserProfileService, private router: Router) { }
@@ -26,7 +26,7 @@ export class IndexPageComponent {
 
   /**
    * Navigate to the review page when a review is selected
-   * @param review
+   * @param review - The selected review to navigate to
    */
   onReviewSelected(review: Review) {
     this.router.navigate(['/review', review.id]);

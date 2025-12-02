@@ -172,6 +172,7 @@ Monitor,"Monitor, Monitor Ingestion, Monitor Query",e99695
 Monitor - ApplicationInsights,,e99695
 Monitor - Exporter,Monitor OpenTelemetry Exporter,e99695
 MySQL,,e99695
+NetApp Files,,e99695
 Network,,e99695
 Network - Application Gateway,,e99695
 Network - Bastion,,e99695

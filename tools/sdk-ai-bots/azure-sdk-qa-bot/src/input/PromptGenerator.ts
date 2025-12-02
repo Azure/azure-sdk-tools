@@ -36,7 +36,7 @@ export class PromptGenerator {
       .filter((m) => m.prompt || m.reply)
       .map((m) => {
         const question = m.prompt ? m.prompt.textWithoutMention : undefined;
-        const answer = m.reply && m.reply.has_result ? m.reply.answer : undefined;
+        const answer = m.reply ? m.reply.answer : undefined;
         return { question, answer };
       });
     const links = getUniqueLinks([
@@ -85,7 +85,7 @@ export class PromptGenerator {
       links: uniqueLinks,
       images: inlineImageUrls,
       userName: context.activity.from.name,
-      timestamp: context.activity.timestamp || new Date(),
+      timestamp: context.activity.timestamp ?? new Date(),
     };
     logger.info(`Raw prompt generated: ${JSON.stringify(rawPrompt)}`, { meta });
     return rawPrompt;

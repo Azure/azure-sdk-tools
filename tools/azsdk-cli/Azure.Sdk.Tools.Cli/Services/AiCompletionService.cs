@@ -204,7 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (authResult == null)
                 {
                     _logger.LogError("Failed to authenticate.");
-                    throw new Exception("Authentication Failure.");
+                    throw new Exception("Failed to acquire authentication token after interactive authentication attempt.");
                 }
                 return authResult;
             } else

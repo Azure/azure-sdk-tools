@@ -884,5 +884,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var breakingSanitizer = new GeneralRegexSanitizer(value: "00000000-0000-0000-0000-000000000000", regex: "batch[a-z]*_([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b)", groupForReplace: "1");
             await session.Session.Sanitize(breakingSanitizer);
         }
+
+        [Fact]
+        public async Task ContentDispositionFilePathSanitizerNormalizesWindowsEndings()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_form_data_windows.json");
+            var sanitizer = new ContentDispositionFilePathSanitizer();
+            await session.Session.Sanitize(sanitizer);
+            var requestBody = session.Session.Entries[0].Request.Body;
+            var requestBodyString = Encoding.UTF8.GetString(requestBody);
+
+            Assert.DoesNotContain("\\", requestBodyString);
+        }
     }
 }

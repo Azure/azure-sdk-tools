@@ -163,14 +163,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     foreach (var h in section.Headers)
                     {
                         var newValue = h.Value;
-                        if (h.Key == "Content-Length")
-                        {
-                            var parsed = int.TryParse(h.Value[0], out var contentLength);
-                            if (parsed && contentLength != newBody.Length)
-                            {
-                                newValue = new StringValues(newBody.Length.ToString());
-                            }
-                        }
                         if (h.Key == "Content-Disposition")
                         {
                             newValue = MultipartUtilities.NormalizeFilenameFromContentDispositionValue(h.Value);

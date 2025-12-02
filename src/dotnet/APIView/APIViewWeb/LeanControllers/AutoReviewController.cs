@@ -80,7 +80,7 @@ public class AutoReviewController : ControllerBase
 
         return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
         {
-            error = "Failed to create API review"
+            error = "Failed to create API review. No file provided."
 
         });
     }
@@ -88,7 +88,7 @@ public class AutoReviewController : ControllerBase
 
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
     // regular CI pipeline will not send this flag in request
-    [HttpGet("create")]
+    [HttpPost("create")]
     public async Task<ActionResult> CreateApiReview(
         string buildId,
         string artifactName,

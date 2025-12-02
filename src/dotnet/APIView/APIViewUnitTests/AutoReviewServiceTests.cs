@@ -54,7 +54,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithValidPackageType_CreatesReviewWithCorrectPackageType(string packageTypeValue, PackageType expectedPackageType)
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
@@ -96,7 +96,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithInvalidPackageType_CreatesReviewWithNullPackageType(string packageTypeValue)
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
@@ -137,7 +137,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithExistingReviewWithoutPackageType_UpdatesPackageType()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -176,7 +176,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithExistingReviewWithPackageType_DoesNotOverridePackageType()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -214,7 +214,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithSameVersionAndContent_ReusesExistingRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -249,7 +249,7 @@ namespace APIViewUnitTests
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
-            var (review, apiRevision) = await _service.CreateAutomaticRevisionAsync(
+            var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
@@ -265,7 +265,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithDifferentContent_CreatesNewRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.1.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -312,7 +312,7 @@ namespace APIViewUnitTests
                     It.IsAny<string>(), It.IsAny<int?>()))
                 .ReturnsAsync(newRevision);
 
-            var (review, apiRevision) = await _service.CreateAutomaticRevisionAsync(
+            var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
@@ -331,7 +331,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithCompareAllRevisionsTrue_ReturnsMatchingApprovedRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -383,7 +383,7 @@ namespace APIViewUnitTests
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
-            var (review, apiRevision) = await _service.CreateAutomaticRevisionAsync(
+            var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null, compareAllRevisions: true);
 
             // Assert - should return the approved revision without creating new one
@@ -404,7 +404,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_CopiesApprovalFromMatchingApprovedRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.1", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -484,7 +484,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_DoesNotCopyApprovalWhenNoMatchingApprovedRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "2.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -556,7 +556,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithNoExistingReview_CreatesNewReview()
         {
             var codeFile = CreateCodeFile("NewPackage", "1.0.0", "Python");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
@@ -579,7 +579,7 @@ namespace APIViewUnitTests
                     It.IsAny<string>(), It.IsAny<int?>()))
                 .ReturnsAsync(new APIRevisionListItemModel { Id = "revision-id", ReviewId = "new-review-id" });
 
-            var (review, apiRevision) = await _service.CreateAutomaticRevisionAsync(
+            var (review, _) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
             _mockReviewManager.Verify(m => m.CreateReviewAsync("NewPackage", "Python", false, null), Times.Once);
@@ -591,7 +591,7 @@ namespace APIViewUnitTests
         public async Task CreateAutomaticRevisionAsync_WithExistingReviewAndNoRevisions_CreatesNewRevision()
         {
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
-            var memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             var existingReview = new ReviewListItemModel
             {
@@ -620,7 +620,7 @@ namespace APIViewUnitTests
                     It.IsAny<string>(), It.IsAny<int?>()))
                 .ReturnsAsync(newRevision);
 
-            var (review, apiRevision) = await _service.CreateAutomaticRevisionAsync(
+            var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(

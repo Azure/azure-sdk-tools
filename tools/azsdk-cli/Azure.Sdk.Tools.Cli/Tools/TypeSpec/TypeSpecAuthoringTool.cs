@@ -20,6 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         private readonly IAiCompletionService _aiCompletionService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
+        /* the maximum number of characters allowed in a reference snippet */
+        private const int MaxReferenceContentLength = 500;
         private const string TypeSpecAuthoringToolCommandName = "authoring";
 
         private readonly Option<string> _requestOption = new("--request")
@@ -198,8 +200,9 @@ Returns an answer with supporting references and documentation links
                 Title = r.Title,
                 Source = r.Source,
                 Link = r.Link,
-                Snippet = r.Content.Length > 500
-                    ? r.Content.Substring(0, 497) + "..."
+                /* truncate snippet if too long */
+                Snippet = r.Content.Length > MaxReferenceContentLength
+                    ? r.Content.Substring(0, MaxReferenceContentLength - 3) + "..."
                     : r.Content
             }).ToList();
         }

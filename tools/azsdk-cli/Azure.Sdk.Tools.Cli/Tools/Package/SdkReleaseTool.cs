@@ -35,12 +35,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
             DefaultValueFactory = _ => "main",
         };
+
+        private readonly Option<bool> dryRunOpt = new("--dry-run")
+        {
+            Description = "Verify package release readiness",
+            Required = false,
+        };
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
             new McpCommand(commandName, "Run the release pipeline for the package", ReleaseSdkToolName)
             {
-                packageNameOpt, languageOpt, branchOpt,
+                packageNameOpt, languageOpt, branchOpt, dryRunOpt,
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -48,11 +54,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var packageName = parseResult.GetValue(packageNameOpt);
             var language = parseResult.GetValue(languageOpt);
             var branch = parseResult.GetValue(branchOpt);
-            return await ReleasePackageAsync(packageName, language, branch);
+            var dryRun = parseResult.GetValue(dryRunOpt);
+            return await ReleasePackageAsync(packageName, language, branch, dryRun);
         }
 
         [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
-        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main")
+        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool dryRun = false)
         {
             try
             {
@@ -105,6 +112,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleaseStatusDetails = $"Package is not ready for release. {releaseReadiness.PackageReadinessDetails}";
                     response.ReleasePipelineStatus = "Failed";
                     logger.LogError("{details}", response.ReleaseStatusDetails);
+                    return response;
+                }
+
+                // If dry-run mode, return readiness check results without triggering release
+                if (dryRun)
+                {
+                    response.ReleaseStatusDetails = releaseReadiness.PackageReadinessDetails;
+                    logger.LogInformation("[DRY RUN] Package readiness check completed for {packageName} in {language}.", packageName, language);
                     return response;
                 }
 

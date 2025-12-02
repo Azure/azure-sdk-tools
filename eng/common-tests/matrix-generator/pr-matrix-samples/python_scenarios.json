@@ -33,16 +33,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureaiml",
           "name": "azure-ai-ml",
+          "safeName": "azureaiml",
           "triggeringPaths": [
             "/sdk/ml/ci.yml"
           ]
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       }
     ]
   },
@@ -58,6 +57,98 @@
         "sdk/cosmos/"
       ],
       "DeletedFiles": [],
+      "PRNumber": "40035"
+    },
+    "expected_package_output": [
+      {
+        "Name": "azure-core",
+        "Version": "1.33.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/azure-core",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/azure-core/README.md",
+        "ChangeLogPath": "sdk/core/azure-core/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "/sdk/servicebus/azure-servicebus",
+          "/sdk/eventhub/azure-eventhub",
+          "/sdk/tables/azure-data-tables",
+          "/sdk/appconfiguration/azure-appconfiguration",
+          "/sdk/keyvault/azure-keyvault-keys",
+          "/sdk/identity/azure-identity",
+          "/sdk/core/azure-mgmt-core",
+          "/sdk/core/azure-core-experimental",
+          "/sdk/core/azure-core-tracing-opentelemetry",
+          "/sdk/core/azure-core-tracing-opencensus",
+          "/sdk/ml/azure-ai-ml",
+          "/sdk/documentintelligence/azure-ai-documentintelligence",
+          "/sdk/ai/azure-ai-inference",
+          "/sdk/textanalytics/azure-ai-textanalytics",
+          "/sdk/translation/azure-ai-translation-document",
+          "/sdk/compute/azure-mgmt-compute",
+          "/sdk/communication/azure-communication-chat",
+          "/sdk/communication/azure-communication-identity",
+          "/sdk/storage/azure-storage-blob"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-core",
+          "safeName": "azurecore",
+          "triggeringPaths": [
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-template",
+        "Version": "0.0.18b3",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/azure-template",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/azure-template/README.md",
+        "ChangeLogPath": "sdk/template/azure-template/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-template",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          ""
+        ],
+        "ArtifactDetails": {
+          "name": "azure-template",
+          "safeName": "azuretemplate",
+          "triggeringPaths": [
+            "/sdk/template/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "Only deleted files",
+    "diff": {
+      "ChangedFiles": [],
+      "ChangedServices": [],
+      "ExcludePaths": [
+        "sdk/cosmos/"
+      ],
+      "DeletedFiles": [
+        "eng/tox/run_coverage.py",
+        "eng/file/that/does/not/exist.py",
+        "sdk/core/azure-core/file-that-doesnt-exist.txt"
+      ],
       "PRNumber": "40035"
     },
     "expected_package_output": [
@@ -79,16 +170,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureaidocumentintelligence",
-          "name": "azure-ai-documentintelligence",
           "triggeringPaths": [
             "/sdk/documentintelligence/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-documentintelligence",
+          "safeName": "azureaidocumentintelligence"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": "specification/ai/DocumentIntelligence"
+        }
       },
       {
         "Name": "azure-ai-inference",
@@ -108,16 +198,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureaiinference",
-          "name": "azure-ai-inference",
           "triggeringPaths": [
             "/sdk/ai/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-inference",
+          "safeName": "azureaiinference"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": "specification/ai/ModelClient"
+        }
       },
       {
         "Name": "azure-ai-ml",
@@ -137,16 +226,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureaiml",
-          "name": "azure-ai-ml",
           "triggeringPaths": [
             "/sdk/ml/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-ml",
+          "safeName": "azureaiml"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-ai-textanalytics",
@@ -166,16 +254,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureaitextanalytics",
-          "name": "azure-ai-textanalytics",
           "triggeringPaths": [
             "/sdk/textanalytics/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-textanalytics",
+          "safeName": "azureaitextanalytics"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-ai-translation-document",
@@ -195,16 +282,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureaitranslationdocument",
-          "name": "azure-ai-translation-document",
           "triggeringPaths": [
             "/sdk/translation/ci.yml"
-          ]
+          ],
+          "name": "azure-ai-translation-document",
+          "safeName": "azureaitranslationdocument"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": "specification/translation/Azure.AI.DocumentTranslation"
+        }
       },
       {
         "Name": "azure-appconfiguration",
@@ -224,16 +310,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureappconfiguration",
-          "name": "azure-appconfiguration",
           "triggeringPaths": [
             "/sdk/appconfiguration/ci.yml"
-          ]
+          ],
+          "name": "azure-appconfiguration",
+          "safeName": "azureappconfiguration"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": "specification/appconfiguration/AppConfiguration"
+        }
       },
       {
         "Name": "azure-communication-chat",
@@ -253,16 +338,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azurecommunicationchat",
-          "name": "azure-communication-chat",
           "triggeringPaths": [
             "/sdk/communication/ci.yml"
-          ]
+          ],
+          "name": "azure-communication-chat",
+          "safeName": "azurecommunicationchat"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-communication-identity",
@@ -282,16 +366,93 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azurecommunicationidentity",
-          "name": "azure-communication-identity",
           "triggeringPaths": [
             "/sdk/communication/ci.yml"
-          ]
+          ],
+          "name": "azure-communication-identity",
+          "safeName": "azurecommunicationidentity"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-core-experimental",
+        "Version": "1.0.0b5",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/azure-core-experimental",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/azure-core-experimental/README.md",
+        "ChangeLogPath": "sdk/core/azure-core-experimental/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-experimental",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          ""
+        ],
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/sdk/core/ci.yml"
+          ],
+          "name": "azure-core-experimental",
+          "safeName": "azurecoreexperimental"
         },
-        "SpecProjectPath": null
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-core-tracing-opencensus",
+        "Version": "1.0.0b10",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/azure-core-tracing-opencensus",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/azure-core-tracing-opencensus/README.md",
+        "ChangeLogPath": "sdk/core/azure-core-tracing-opencensus/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-tracing-opencensus",
+        "ReleaseStatus": "2024-11-05",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          ""
+        ],
+        "ArtifactDetails": null,
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-core-tracing-opentelemetry",
+        "Version": "1.0.0b13",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/azure-core-tracing-opentelemetry",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/azure-core-tracing-opentelemetry/README.md",
+        "ChangeLogPath": "sdk/core/azure-core-tracing-opentelemetry/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core-tracing-opentelemetry",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          ""
+        ],
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/sdk/core/ci.yml"
+          ],
+          "name": "azure-core-tracing-opentelemetry",
+          "safeName": "azurecorecoretracingtelemetry"
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
       },
       {
         "Name": "azure-core",
@@ -329,97 +490,15 @@
           "/sdk/storage/azure-storage-blob"
         ],
         "ArtifactDetails": {
-          "safeName": "azurecore",
+          "triggeringPaths": [
+            "/sdk/core/ci.yml"
+          ],
           "name": "azure-core",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
+          "safeName": "azurecore"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
-      },
-      {
-        "Name": "azure-core-experimental",
-        "Version": "1.0.0b5",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/azure-core-experimental",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/azure-core-experimental/README.md",
-        "ChangeLogPath": "sdk/core/azure-core-experimental/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-experimental",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "safeName": "azurecoreexperimental",
-          "name": "azure-core-experimental",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
-      },
-      {
-        "Name": "azure-core-tracing-opencensus",
-        "Version": "1.0.0b10",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/azure-core-tracing-opencensus",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/azure-core-tracing-opencensus/README.md",
-        "ChangeLogPath": "sdk/core/azure-core-tracing-opencensus/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-tracing-opencensus",
-        "ReleaseStatus": "2024-11-05",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": null,
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
-      },
-      {
-        "Name": "azure-core-tracing-opentelemetry",
-        "Version": "1.0.0b13",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/azure-core-tracing-opentelemetry",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/azure-core-tracing-opentelemetry/README.md",
-        "ChangeLogPath": "sdk/core/azure-core-tracing-opentelemetry/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-core-tracing-opentelemetry",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "safeName": "azurecorecoretracingtelemetry",
-          "name": "azure-core-tracing-opentelemetry",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-data-tables",
@@ -439,16 +518,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azuredatatables",
-          "name": "azure-data-tables",
           "triggeringPaths": [
             "/sdk/tables/ci.yml"
-          ]
+          ],
+          "name": "azure-data-tables",
+          "safeName": "azuredatatables"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-eventhub",
@@ -468,16 +546,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureeventhub",
-          "name": "azure-eventhub",
           "triggeringPaths": [
             "/sdk/eventhub/ci.yml"
-          ]
+          ],
+          "name": "azure-eventhub",
+          "safeName": "azureeventhub"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-identity",
@@ -497,23 +574,22 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureidentity",
-          "name": "azure-identity",
           "triggeringPaths": [
             "/sdk/identity/ci.yml"
-          ]
+          ],
+          "name": "azure-identity",
+          "safeName": "azureidentity"
         },
         "CIParameters": {
           "CIMatrixConfigs": [
             {
+              "GenerateVMJobs": true,
               "Name": "identity_ci_matrix",
               "Path": "sdk/identity/platform-matrix.json",
-              "Selection": "sparse",
-              "GenerateVMJobs": true
+              "Selection": "sparse"
             }
           ]
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-keyvault-keys",
@@ -533,16 +609,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azurekeyvaultkeys",
-          "name": "azure-keyvault-keys",
           "triggeringPaths": [
             "/sdk/keyvault/ci.yml"
-          ]
+          ],
+          "name": "azure-keyvault-keys",
+          "safeName": "azurekeyvaultkeys"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-mgmt-compute",
@@ -562,16 +637,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azuremgmtcompute",
-          "name": "azure-mgmt-compute",
           "triggeringPaths": [
             "/sdk/compute/ci.yml"
-          ]
+          ],
+          "name": "azure-mgmt-compute",
+          "safeName": "azuremgmtcompute"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-mgmt-core",
@@ -594,16 +668,15 @@
           "/sdk/keyvault/azure-mgmt-keyvault"
         ],
         "ArtifactDetails": {
-          "safeName": "azuremgmtcore",
-          "name": "azure-mgmt-core",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ]
+          ],
+          "name": "azure-mgmt-core",
+          "safeName": "azuremgmtcore"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-servicebus",
@@ -623,16 +696,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureservicebus",
-          "name": "azure-servicebus",
           "triggeringPaths": [
             "/sdk/servicebus/ci.yml"
-          ]
+          ],
+          "name": "azure-servicebus",
+          "safeName": "azureservicebus"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-storage-blob",
@@ -652,16 +724,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azurestorageblob",
-          "name": "azure-storage-blob",
           "triggeringPaths": [
             "/sdk/storage/ci.yml"
-          ]
+          ],
+          "name": "azure-storage-blob",
+          "safeName": "azurestorageblob"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       },
       {
         "Name": "azure-template",
@@ -681,63 +752,15 @@
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azuretemplate",
-          "name": "azure-template",
           "triggeringPaths": [
             "/sdk/template/ci.yml"
-          ]
+          ],
+          "name": "azure-template",
+          "safeName": "azuretemplate"
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
-      }
-    ]
-  },
-  {
-    "name": "Only deleted files",
-    "diff": {
-      "ChangedFiles": [],
-      "ChangedServices": [],
-      "ExcludePaths": [
-        "sdk/cosmos/"
-      ],
-      "DeletedFiles": [
-        "eng/tox/run_coverage.py",
-        "eng/file/that/does/not/exist.py",
-        "sdk/core/azure-core/file-that-doesnt-exist.txt"
-      ],
-      "PRNumber": "40035"
-    },
-    "expected_package_output": [
-      {
-        "Name": "azure-template",
-        "Version": "0.0.18b3",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/template/azure-template",
-        "ServiceDirectory": "template",
-        "ReadMePath": "sdk/template/azure-template/README.md",
-        "ChangeLogPath": "sdk/template/azure-template/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-template",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "safeName": "azuretemplate",
-          "name": "azure-template",
-          "triggeringPaths": [
-            "/sdk/template/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        },
-        "SpecProjectPath": null
+        }
       }
     ]
   },
@@ -756,76 +779,32 @@
     },
     "expected_package_output": [
       {
-        "Name": "azure-identity",
-        "Version": "1.21.1",
+        "Name": "azure-template",
+        "Version": "0.0.18b3",
         "DevVersion": null,
-        "DirectoryPath": "sdk/identity/azure-identity",
-        "ServiceDirectory": "identity",
-        "ReadMePath": "sdk/identity/azure-identity/README.md",
-        "ChangeLogPath": "sdk/identity/azure-identity/CHANGELOG.md",
+        "DirectoryPath": "sdk/template/azure-template",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/azure-template/README.md",
+        "ChangeLogPath": "sdk/template/azure-template/CHANGELOG.md",
         "Group": null,
         "SdkType": "client",
         "IsNewSdk": true,
-        "ArtifactName": "azure-identity",
+        "ArtifactName": "azure-template",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": [
           ""
         ],
         "ArtifactDetails": {
-          "safeName": "azureidentity",
-          "name": "azure-identity",
+          "name": "azure-template",
+          "safeName": "azuretemplate",
           "triggeringPaths": [
-            "/sdk/identity/ci.yml"
+            "/sdk/template/ci.yml"
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [
-            {
-              "Name": "identity_ci_matrix",
-              "Path": "sdk/identity/platform-matrix.json",
-              "Selection": "sparse",
-              "GenerateVMJobs": true
-            }
-          ]
-        },
-        "SpecProjectPath": null
-      },
-      {
-        "Name": "azure-identity-broker",
-        "Version": "1.3.0b2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/identity/azure-identity-broker",
-        "ServiceDirectory": "identity",
-        "ReadMePath": "sdk/identity/azure-identity-broker/README.md",
-        "ChangeLogPath": "sdk/identity/azure-identity-broker/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": false,
-        "ArtifactName": "azure-identity-broker",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "safeName": "azureidentitybroker",
-          "name": "azure-identity-broker",
-          "triggeringPaths": [
-            "/sdk/identity/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [
-            {
-              "Name": "identity_ci_matrix",
-              "Path": "sdk/identity/platform-matrix.json",
-              "Selection": "sparse",
-              "GenerateVMJobs": true
-            }
-          ]
-        },
-        "SpecProjectPath": null
+          "CIMatrixConfigs": []
+        }
       }
     ]
   },
@@ -845,78 +824,78 @@
       "PRNumber": "40035"
     },
     "expected_package_output": [
-      {
-        "Name": "azure-identity",
-        "Version": "1.21.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/identity/azure-identity",
-        "ServiceDirectory": "identity",
-        "ReadMePath": "sdk/identity/azure-identity/README.md",
-        "ChangeLogPath": "sdk/identity/azure-identity/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-identity",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "safeName": "azureidentity",
-          "name": "azure-identity",
-          "triggeringPaths": [
-            "/sdk/identity/ci.yml"
-          ]
+      [
+        {
+          "Name": "azure-identity-broker",
+          "Version": "1.3.0b2",
+          "DevVersion": null,
+          "DirectoryPath": "sdk/identity/azure-identity-broker",
+          "ServiceDirectory": "identity",
+          "ReadMePath": "sdk/identity/azure-identity-broker/README.md",
+          "ChangeLogPath": "sdk/identity/azure-identity-broker/CHANGELOG.md",
+          "Group": null,
+          "SdkType": "client",
+          "IsNewSdk": false,
+          "ArtifactName": "azure-identity-broker",
+          "ReleaseStatus": "Unreleased",
+          "IncludedForValidation": false,
+          "AdditionalValidationPackages": [
+            ""
+          ],
+          "ArtifactDetails": {
+            "name": "azure-identity-broker",
+            "safeName": "azureidentitybroker",
+            "triggeringPaths": [
+              "/sdk/identity/ci.yml"
+            ]
+          },
+          "CIParameters": {
+            "CIMatrixConfigs": [
+              {
+                "Name": "identity_ci_matrix",
+                "GenerateVMJobs": true,
+                "Path": "sdk/identity/platform-matrix.json",
+                "Selection": "sparse"
+              }
+            ]
+          }
         },
-        "CIParameters": {
-          "CIMatrixConfigs": [
-            {
-              "Name": "identity_ci_matrix",
-              "Path": "sdk/identity/platform-matrix.json",
-              "Selection": "sparse",
-              "GenerateVMJobs": true
-            }
-          ]
-        },
-        "SpecProjectPath": null
-      },
-      {
-        "Name": "azure-identity-broker",
-        "Version": "1.3.0b2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/identity/azure-identity-broker",
-        "ServiceDirectory": "identity",
-        "ReadMePath": "sdk/identity/azure-identity-broker/README.md",
-        "ChangeLogPath": "sdk/identity/azure-identity-broker/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": false,
-        "ArtifactName": "azure-identity-broker",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "safeName": "azureidentitybroker",
-          "name": "azure-identity-broker",
-          "triggeringPaths": [
-            "/sdk/identity/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [
-            {
-              "Name": "identity_ci_matrix",
-              "Path": "sdk/identity/platform-matrix.json",
-              "Selection": "sparse",
-              "GenerateVMJobs": true
-            }
-          ]
-        },
-        "SpecProjectPath": null
-      }
+        {
+          "Name": "azure-identity",
+          "Version": "1.21.1",
+          "DevVersion": null,
+          "DirectoryPath": "sdk/identity/azure-identity",
+          "ServiceDirectory": "identity",
+          "ReadMePath": "sdk/identity/azure-identity/README.md",
+          "ChangeLogPath": "sdk/identity/azure-identity/CHANGELOG.md",
+          "Group": null,
+          "SdkType": "client",
+          "IsNewSdk": true,
+          "ArtifactName": "azure-identity",
+          "ReleaseStatus": "Unreleased",
+          "IncludedForValidation": false,
+          "AdditionalValidationPackages": [
+            ""
+          ],
+          "ArtifactDetails": {
+            "name": "azure-identity",
+            "safeName": "azureidentity",
+            "triggeringPaths": [
+              "/sdk/identity/ci.yml"
+            ]
+          },
+          "CIParameters": {
+            "CIMatrixConfigs": [
+              {
+                "Name": "identity_ci_matrix",
+                "GenerateVMJobs": true,
+                "Path": "sdk/identity/platform-matrix.json",
+                "Selection": "sparse"
+              }
+            ]
+          }
+        }
+      ]
     ]
   }
 ]

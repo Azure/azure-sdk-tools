@@ -87,6 +87,7 @@ namespace SearchIndexCreator
                 }
             }
         }
+        
         private BlobServiceClient GetBlobServiceClient(string accountName)
         {
             BlobServiceClient client = new(
@@ -95,6 +96,5 @@ namespace SearchIndexCreator
 
             return client;
         }
-
     }
 }

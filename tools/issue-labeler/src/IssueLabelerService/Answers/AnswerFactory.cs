@@ -1,35 +1,36 @@
-namespace IssueLabelerService;
-
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using IssueLabeler.Shared;
 
-public class AnswerFactory
+namespace IssueLabelerService
 {
-    private ILogger<AnswerFactory> _logger;
-    private TriageRag _ragService;
-    private ConcurrentDictionary<string, IAnswerService> _qnaServices = new();
-
-    public AnswerFactory(ILogger<AnswerFactory> logger, TriageRag ragService)
+    public class AnswerFactory
     {
-        _logger = logger;
-        _ragService = ragService;
-    }
+        private ILogger<AnswerFactory> _logger;
+        private TriageRag _ragService;
+        private ConcurrentDictionary<string, IAnswerService> _qnaServices = new();
 
-    public IAnswerService GetAnswerService(RepositoryConfiguration config) =>
-        _qnaServices.GetOrAdd(
-            config.AnswerService,
-            key =>
-            {
-                switch (key)
+        public AnswerFactory(ILogger<AnswerFactory> logger, TriageRag ragService)
+        {
+            _logger = logger;
+            _ragService = ragService;
+        }
+
+        public IAnswerService GetAnswerService(RepositoryConfiguration config) =>
+            _qnaServices.GetOrAdd(
+                config.AnswerService,
+                key =>
                 {
-                    case "OpenAI":
-                        return new OpenAiAnswerService(_logger, config, _ragService);
-                    default:
-                        _logger.LogWarning($"Unknown answer service type: {key} Running OpenAI.");
-                        return new OpenAiAnswerService(_logger, config, _ragService);
+                    switch (key)
+                    {
+                        case "OpenAI":
+                            return new OpenAiAnswerService(_logger, config, _ragService);
+                        default:
+                            _logger.LogWarning($"Unknown answer service type: {key} Running OpenAI.");
+                            return new OpenAiAnswerService(_logger, config, _ragService);
+                    }
                 }
-            }
-        );
+            );
+    }
 }
 

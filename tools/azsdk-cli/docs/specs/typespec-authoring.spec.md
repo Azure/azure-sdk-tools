@@ -14,8 +14,6 @@
 
 ## Definitions
 
-_Define any terms that might be ambiguous or interpreted differently across teams. Establish shared understanding before diving into the design._
-
 - **TypeSpec**: A language for describing cloud service APIs and generating other API description languages, client and service code, documentation, and other assets. TypeSpec provides highly extensible core language primitives that can describe API shapes common among REST, OpenAPI, GraphQL, gRPC, and other protocols. See [TypeSpec official documentation](https://typespec.io)
 
 - **Azure SDK Design Principles**: The foundational design principles that guide the development of Azure SDKs across all languages, ensuring consistency, usability, and adherence to Azure standards. See [Azure SDK design principles](https://azure.github.io/azure-sdk/general_introduction.html)
@@ -369,8 +367,6 @@ TypeSpec authoring is language-agnostic. The generated SDKs target specific lang
 ---
 
 ## Success Criteria
-
-_Measurable criteria that define when this feature/tool is complete and working as intended._
 
 This feature/tool is complete when:
 

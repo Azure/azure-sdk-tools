@@ -1,6 +1,5 @@
 import "@typespec/rest";
 
-using TypeSpec.Rest;
 using TypeSpec.Http;
 
 @service(#{ title: "APIView Copilot Service" })
@@ -12,6 +11,7 @@ namespace ApiViewCopilot {
   op legacyApiReview(
     @path language: string,
     @body request: ApiReviewRequest,
+    @header("Authorization") authorization: string,
   ): ApiReviewResponse;
 
   /** Starts a new API review job */
@@ -19,22 +19,32 @@ namespace ApiViewCopilot {
   @post
   op startApiReviewJob(
     @body request: ApiReviewJobRequest,
+    @header("Authorization") authorization: string,
   ): ApiReviewJobStartResponse;
 
   /** Gets the status of an API review job */
   @route("/api-review/{jobId}")
   @get
-  op getApiReviewJobStatus(@path jobId: string): ApiReviewJobStatusResponse;
+  op getApiReviewJobStatus(
+    @path jobId: string,
+    @header("Authorization") authorization: string,
+  ): ApiReviewJobStatusResponse;
 
   /** Summarizes an API or the diff between two APIs */
   @route("/api-review/summarize")
   @post
-  op summarizeApi(@body request: SummarizeRequest): SummarizeResponse;
+  op summarizeApi(
+    @body request: SummarizeRequest,
+    @header("Authorization") authorization: string,
+  ): SummarizeResponse;
 
   /** Submit a chat message to the agent. */
   @route("/agent/chat")
   @post
-  op agentChat(@body request: AgentChatRequest): AgentChatResponse;
+  op agentChat(
+    @body request: AgentChatRequest,
+    @header("Authorization") authorization: string,
+  ): AgentChatResponse;
 
   /** Handles an @mention from APIView. */
   @route("/api-review/mention")
@@ -51,6 +61,18 @@ namespace ApiViewCopilot {
     @body request: MentionRequest,
     @header("Authorization") authorization: string,
   ): AgentChatResponse;
+
+  /** Test endpoint to verify authentication is working. */
+  @route("/auth-test")
+  @get
+  op authTest(
+    @header("Authorization") authorization: string,
+  ): { status: "ok" };
+
+  /** Health check endpoint to verify service is running. */
+  @route("/health-test")
+  @get
+  op healthCheck(): { status: "ok" };
 
   model MentionRequest {
     /** The programming language of the APIView. */
@@ -118,7 +140,7 @@ namespace ApiViewCopilot {
     memoryIds: string[];
 
     /** Whether the comment is entirely or in part formed from generic guidance */
-    is_generic: boolean;
+    isGeneric: boolean;
 
     /** The line number of the comment */
     lineNo: int32;
@@ -132,8 +154,14 @@ namespace ApiViewCopilot {
     /** The contents of the comment */
     comment: string;
 
-    /** Tag that identifies the source of the comment */
-    source: string;
+    /** An ID that correlates this comment with other related comments */
+    correlationId?: string;
+    
+    /** A score from 0 to 1 estimating the confidence in this comment's validity */
+    confidenceScore?: float32;
+
+    /** The severity level of the comment */
+    severity: "SUGGESTION" | "SHOULD" | "MUST" | "QUESTION";
   }
 
   model ApiReviewJobRequest {

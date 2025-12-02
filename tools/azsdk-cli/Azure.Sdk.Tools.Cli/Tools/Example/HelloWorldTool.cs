@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using ModelContextProtocol.Server;
@@ -13,38 +13,40 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
     [McpServerToolType, Description("Simple echo tool for testing and demonstration purposes")]
     public class HelloWorldTool(ILogger<HelloWorldTool> logger) : MCPTool()
     {
+        // MCP Tool Names
+        private const string HelloWorldFailToolName = "azsdk_hello_world_fail";
+        private const string HelloWorldToolName = "azsdk_hello_world";
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Example];
 
-        private Argument<string> _inputArg = new Argument<string>(
-            name: "input",
-            description: "The text to echo back"
-        )
+        private Argument<string> _inputArg = new Argument<string>("input")
         {
+            Description = "The text to echo back",
             Arity = ArgumentArity.ExactlyOne
         };
 
-        private readonly Option<bool> failOpt = new(["--fail"], () => false, "Force failure");
-
-        protected override Command GetCommand() =>
-            new("hello-world", "Simple echo tool for testing framework features")
-            {
-                _inputArg, failOpt
-            };
-
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        private readonly Option<bool> failOpt = new("--fail")
         {
-            string input = ctx.ParseResult.GetValueForArgument(_inputArg);
-            var fail = ctx.ParseResult.GetValueForOption(failOpt);
+            Description = "Force failure",
+            Required = false,
+            DefaultValueFactory = _ => false,
+        };
+
+        protected override Command GetCommand() => new("hello-world", "Simple echo tool for testing framework features") { _inputArg, failOpt };
+
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+        {
+            string input = parseResult.GetValue(_inputArg) ?? "";
+            var fail = parseResult.GetValue(failOpt);
             var result = fail ? EchoFail(input) : EchoSuccess(input);
             return await Task.FromResult<CommandResponse>(result);
         }
 
-        [McpServerTool(Name = "azsdk_hello_world_fail"), Description("Echoes the message back to the client with a failure")]
+        [McpServerTool(Name = HelloWorldFailToolName), Description("Echoes the message back to the client with a failure")]
         public DefaultCommandResponse EchoFail(string message)
         {
             try
             {
-
                 logger.LogError("Echoing message: {message}", message);
 
                 return new()
@@ -63,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
             }
         }
 
-        [McpServerTool(Name = "azsdk_hello_world"), Description("Echoes the message back to the client")]
+        [McpServerTool(Name = HelloWorldToolName), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
             try

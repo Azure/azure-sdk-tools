@@ -20,7 +20,7 @@ model:
 sample:
   language: python
   context: |
-    > **id:** memory-abc<br>**score:** 78<br>
+    > **memory_id:** memory-abc<br>**score:** 78<br>
     ## Don't use the term "Resource" in parameter names
 
     It was suggested to avoid using the term "Resource" in parameter names, as it may not accurately represent the underlying data or functionality. Instead, use Noodle.
@@ -37,7 +37,7 @@ sample:
     some_noodle: Optional[str]
     ```
 
-    > **id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 51<br>
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 51<br>
     ## Use keyword-only arguments for optional or less-used arguments in Python 3
 
     DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.
@@ -52,7 +52,7 @@ sample:
         ...
     ```
 
-    > **id:** python_implementation.html#python-codestyle-positional-params<br>**score:** 65<br>
+    > **guideline_id:** python_implementation.html#python-codestyle-positional-params<br>**score:** 65<br>
     ## Specify parameter names when calling methods with more than two required positional parameters
 
     DO specify the parameter name when calling methods with more than two required positional parameters.
@@ -82,7 +82,7 @@ sample:
     foo(1, 2, 3)
     ```
 
-    > **id:** python_implementation.html#python-codestyle-optional-param-calling<br>**score:** 64<br>
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-param-calling<br>**score:** 64<br>
     ## Specify parameter names for optional parameters when calling functions
 
     DO specify the parameter name for optional parameters when calling functions.
@@ -107,7 +107,7 @@ sample:
     foo(1, 2, 3)
     ```
 
-    > **id:** python_design.html#python-models-enum-name-uppercase<br>**score:** 66<br>
+    > **guideline_id:** python_design.html#python-models-enum-name-uppercase<br>**score:** 66<br>
     ## Use UPPERCASE names for enum members
 
     DO use UPPERCASE names for enum names.
@@ -178,11 +178,11 @@ system:
   You are an expert code reviewer of SDKs. You will analyze a diff between two versions of a client library APIView surface for {{language}} to determine whether it meets the SDK guidelines. 
 
   # RULES
+  - Each line of the APIView is prepended with a line number and colon, followed by a diff marker. + means a line was added, - means a line was removed. No marker means the line is unchanged.
+  - Only comment on added lines (+), and only on the parts of those lines that actually changed compared to the removed (-) version. Ignore removed (-) and unchanged lines.
+  - Use the full code context to understand the change, but do not comment on unchanged tokens (e.g., parameter names that stayed the same).
   - ONLY mention if the library is clearly and visibly violating something in the context.
-  - Each line of the APIView is prepended with a line number and a colon (ex: "1: # Package parsed").
   - Be conservative - DO NOT make assumptions that something is being violated because it is possible that all contexts are being followed.
-  - Evaluate each line that was changed (marked with a +) against the provided context. DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
-  - DO consider all of the code (marked with a + or not) when making comments. Do not consider the + lines in isolation.
   - Code may violate multiple items in the context.
   - Each class will contain its namespace, like `class azure.contoso.ClassName` where 'azure.contoso' is the namespace and `ClassName` is the name of the class.
   - APIView does not contain runnable code or implementations. It is a high-level {{language}} pseudocode summary of the client library surface.

@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "tsc && npm run copy-config",
-    "watch": "npm run copy-config && tsc -w",
-    "copy-config": "shx mkdir -p dist/config && shx cp -r config/* dist/config/",
+    "build": "tsc",
+    "watch": "tsc -w",
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
@@ -21,21 +20,23 @@
     "@azure/storage-blob": "^12.21.0",
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "botframework-schema": "^4.17.0-blobs1",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "openai": "^5.10.2",
     "uuid": "^11.1.0",
-    "xlsx": "^0.18.5"
+    "vite": "^7.1.12",
+    "vitest": "^4.0.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   },
   "devDependencies": {
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "@types/js-yaml": "^4.0.5",
     "@types/node": "^20.x",
     "@types/uuid": "^10.0.0",
-    "@types/xlsx": "^0.0.36",
+    "@types/xlsx": "^0.0.35",
     "botframework-schema": "^4.17.0-blobs1",
     "rimraf": "^5.0.0",
     "shx": "^0.4.0",
     "typescript": "^5.0.0"
   },
-  "main": "dist/src/{index.js,functions/*.js}"
+  "main": "dist/src/index.js"
 }

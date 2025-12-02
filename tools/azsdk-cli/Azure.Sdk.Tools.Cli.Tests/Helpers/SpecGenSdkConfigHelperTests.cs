@@ -23,30 +23,27 @@ public class SpecGenSdkConfigHelperTests
 
     private SpecGenSdkConfigHelper _helper;
     private TestLogger<SpecGenSdkConfigHelper> _logger;
-    private string _tempDirectory;
+    private TempDirectory _tempDirectory;
     private string _configFilePath;
 
     [SetUp]
     public void Setup()
     {
         _logger = new TestLogger<SpecGenSdkConfigHelper>();
-        _tempDirectory = Path.Combine(Path.GetTempPath(), "SpecGenSdkConfigHelperTests", Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_tempDirectory);
+        _tempDirectory = TempDirectory.Create("SpecGenSdkConfigHelperTests");
 
         // Create the swagger_to_sdk_config.json file at the expected location
-        var engDir = Path.Combine(_tempDirectory, "eng");
+        var engDir = Path.Combine(_tempDirectory.DirectoryPath, "eng");
         Directory.CreateDirectory(engDir);
         _configFilePath = Path.Combine(engDir, "swagger_to_sdk_config.json");
-        _helper = new SpecGenSdkConfigHelper(_logger);
+        var mockProcessHelper = new Mock<IProcessHelper>();
+        _helper = new SpecGenSdkConfigHelper(_logger, mockProcessHelper.Object);
     }
 
     [TearDown]
     public void TearDown()
     {
-        if (Directory.Exists(_tempDirectory))
-        {
-            Directory.Delete(_tempDirectory, true);
-        }
+        _tempDirectory.Dispose();
     }
 
     #region Build Configuration Tests
@@ -68,10 +65,10 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
 
         // Assert
-        Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
+        Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.Command));
         Assert.That(result.value, Is.EqualTo("dotnet build {packagePath}"));
     }
 
@@ -92,10 +89,10 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
 
         // Assert
-        Assert.That(result.type, Is.EqualTo(BuildConfigType.ScriptPath));
+        Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.ScriptPath));
         Assert.That(result.value, Is.EqualTo("eng/scripts/build.sh"));
     }
 
@@ -117,15 +114,15 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
 
         // Assert
-        Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
+        Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.Command));
         Assert.That(result.value, Is.EqualTo("dotnet build {packagePath}"));
     }
 
     [Test]
-    public void GetBuildConfigurationAsync_NeitherExists_ThrowsException()
+    public async Task GetBuildConfigurationAsync_NeitherExists_ReturnsUnknown()
     {
         // Arrange
         var configContent = new
@@ -137,16 +134,19 @@ public class SpecGenSdkConfigHelperTests
         };
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory));
-        Assert.That(ex.Message, Does.Contain("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found"));
+        // Act
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
+
+        // Assert
+        Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.Unknown));
+        Assert.That(result.value, Is.EqualTo(string.Empty));
     }
 
     [Test]
     public void GetBuildConfigurationAsync_ConfigFileNotFound_ThrowsException()
     {
         // Act & Assert
-        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory));
+        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build));
         Assert.That(ex.Message, Does.Contain("Configuration file not found"));
     }
 
@@ -171,7 +171,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory, BuildCommandJsonPath);
+        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath);
 
         // Assert
         Assert.That(result, Is.EqualTo("dotnet build {packagePath}"));
@@ -192,7 +192,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory, "packageOptions/buildOptions");
+        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory.DirectoryPath, "packageOptions/buildOptions");
 
         // Assert
         Assert.That(result["configuration"], Is.EqualTo("Release"));
@@ -207,7 +207,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory, "nonexistent/path"));
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, "nonexistent/path"));
         Assert.That(ex.Message, Does.Contain("Property not found at JSON path"));
     }
 

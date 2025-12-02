@@ -23,6 +23,7 @@ from ._models import (
     ReviewToken as TokenImpl,
     ReviewLine as ReviewLineImpl,
     CodeDiagnostic as Diagnostic,
+    CrossLanguageMetadata,
 )
 from ._enums import TokenKind
 
@@ -91,6 +92,12 @@ class ApiView(CodeFile):
         pkg_version="",
     ):
         self.metadata_map = metadata_map or MetadataMap("")
+        cross_language_metadata = None
+        if self.metadata_map.cross_language_map:
+            cross_language_metadata = CrossLanguageMetadata(
+                cross_language_package_id=self.metadata_map.cross_language_package_id,
+                cross_language_definition_id=self.metadata_map.cross_language_map,
+            )
         self.review_lines: ReviewLines
         super().__init__(
             package_name=pkg_name,
@@ -98,7 +105,7 @@ class ApiView(CodeFile):
             parser_version=VERSION,
             language="Python",
             review_lines=ReviewLines(),
-            cross_language_package_id=self.metadata_map.cross_language_package_id,
+            cross_language_metadata=cross_language_metadata,
             diagnostics=[],
         )
 
@@ -109,14 +116,15 @@ class ApiView(CodeFile):
 
     def add_diagnostic(self, *, err, target_id):
         text = f"{err.message} [{err.symbol}]"
-        self.diagnostics.append(
-            Diagnostic(
-                level=err.level,
-                text=text,
-                help_link_uri=err.help_link,
-                target_id=target_id,
-            )
+        diagnostic = Diagnostic(
+            level=err.level,
+            text=text,
+            help_link_uri=err.help_link,
+            target_id=target_id,
         )
+        # Avoid duplicate diagnostics with the same text and target
+        if not any(d.text == diagnostic.text and d.target_id == diagnostic.target_id for d in self.diagnostics):
+            self.diagnostics.append(diagnostic)
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
@@ -137,9 +145,7 @@ class ApiView(CodeFile):
 
 class ReviewToken(TokenImpl):
 
-    def __init__(
-        self, *args, **kwargs
-    ) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(self, *args, **kwargs) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
 
     def render(self):
@@ -172,13 +178,8 @@ class ReviewLines(list):
         )
 
     def set_blank_lines(
-        self,
-        count: int = 1,
-        *,
-        last_is_context_end_line: bool = False,
-        related_to_line: Union[str, List[str]] = None
+        self, count: int = 1, *, last_is_context_end_line: bool = False, related_to_line: Union[str, List[str]] = None
     ):
-
         """Ensures a specific number of blank lines.
         Will add or remove newline tokens as needed
         to ensure the exact number of blank lines.
@@ -328,13 +329,9 @@ class ReviewLine(ReviewLineImpl):
         )
 
     def add_link(self, url, *, skip_diff=False):
-        self.add_token(
-            ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url, skip_diff=skip_diff)
-        )
+        self.add_token(ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url, skip_diff=skip_diff))
 
-    def add_string_literal(
-        self, value, *, has_prefix_space=False, has_suffix_space=True
-    ):
+    def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
             ReviewToken(
                 kind=TokenKind.STRING_LITERAL,
@@ -344,9 +341,7 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    def add_literal(
-        self, value, *, has_prefix_space=False, has_suffix_space=True, skip_diff=False
-    ):
+    def add_literal(self, value, *, has_prefix_space=False, has_suffix_space=True, skip_diff=False):
         self.add_token(
             ReviewToken(
                 kind=TokenKind.LITERAL,
@@ -372,15 +367,19 @@ class ReviewLine(ReviewLineImpl):
             has_suffix_space=has_suffix_space,
         )
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
-        token.value = type_full_name.split(".")[-1]
+        # Use short name unless last segment is ALL-CAPS (enum member should keep full name)
+        parts = type_full_name.split(".")
+        last = parts[-1]
+        if len(parts) > 1 and not last.isupper():
+            token.value = last
+        else:
+            token.value = type_full_name
         navigate_to_id = apiview.node_index.get_id(type_full_name)
         if navigate_to_id:
             token.navigate_to_id = navigate_to_id
         self.add_token(token)
 
-    def _add_type_token(
-        self, type_name, apiview, has_prefix_space=False, has_suffix_space=True
-    ):
+    def _add_type_token(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
 
@@ -414,9 +413,7 @@ class ReviewLine(ReviewLineImpl):
             if type_name:  # if type name is empty, don't add punctuation
                 self.add_punctuation(type_name, has_suffix_space=False)
 
-    def add_type(
-        self, type_name, apiview, has_prefix_space=False, has_suffix_space=True
-    ):
+    def add_type(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
         # TODO: add_type should require an ArgType or similar object so we can link *all* types
 
         # This method replace full qualified internal types to short name and generate tokens
@@ -428,11 +425,7 @@ class ReviewLine(ReviewLineImpl):
         # Check if multiple types are listed with 'or' separator
         # Encode multiple types with or separator into Union
         if TYPE_OR_SEPARATOR in type_name:
-            types = [
-                t.strip()
-                for t in type_name.split(TYPE_OR_SEPARATOR)
-                if t != TYPE_OR_SEPARATOR
-            ]
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 

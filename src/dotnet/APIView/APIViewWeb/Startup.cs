@@ -99,6 +99,7 @@ namespace APIViewWeb
             });
 
             services.AddHttpClient();
+            services.AddSingleton<ICopilotAuthenticationService, CopilotAuthenticationService>();
             services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
             services.AddSingleton<ICopilotJobProcessor, CopilotJobProcessor>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
@@ -123,11 +124,8 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
-
-            // Background services
-            // TODO: Re-enable when auto-approval feature is needed
-            // services.AddHostedService<NamespaceAutoApprovalService>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -163,6 +161,17 @@ namespace APIViewWeb
                 {
                     options.LoginPath = "/Login";
                     options.AccessDeniedPath = "/Unauthorized";
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        if (context.Request.Path.StartsWithSegments("/api"))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            return Task.CompletedTask;
+                        }
+                        
+                        context.Response.Redirect(context.RedirectUri);
+                        return Task.CompletedTask;
+                    };
                 })
                 .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("TokenAuth", options => { })
                 .AddJwtBearer("Bearer", options =>
@@ -315,6 +324,8 @@ namespace APIViewWeb
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
                 options.MaximumReceiveMessageSize =  1024 * 1024;
+            }).AddJsonProtocol(options => {
+                options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
             services.AddSwaggerGen(options =>
             {

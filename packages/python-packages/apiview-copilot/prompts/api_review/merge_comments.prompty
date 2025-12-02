@@ -48,7 +48,7 @@ sample:
       "is_generic": false
     }]
   context: |
-    > **id:** memory-abc123<br>**score:** 78<br>
+    > **memory_id:** memory-abc123<br>**score:** 78<br>
     ## Dont use 'ObjectClass' suffix in class names
 
     It was suggested to avoid using the term "ObjectClass" in class names, as it is redundant. Instead, use a more concise name.
@@ -65,7 +65,7 @@ sample:
     def Key:
     ```
 
-    > **id:** python_implementation.html#python-models-no-class-suffix<br>**score:** 51<br>
+    > **guideline_id:** python_implementation.html#python-models-no-class-suffix<br>**score:** 51<br>
     ## Don't use 'Class' suffix in class names
 
     It is redundant and adds nothing.

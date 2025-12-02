@@ -1,14 +1,14 @@
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
-        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             throw new NotImplementedException();
         }
@@ -74,6 +74,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
+        Task<List<ReleasePlanDetails>> IDevOpsService.GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan)
+        {
+            var releasePlans = new List<ReleasePlanDetails>();
+            return Task.FromResult(releasePlans);
+        }
+        
         Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
         {
             var releasePlan = new ReleasePlanDetails
@@ -83,6 +89,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
             };
+            releasePlan.IsDataPlane = workItemId > 1000;
+            releasePlan.IsManagementPlane = !releasePlan.IsDataPlane;
             return Task.FromResult(releasePlan);
         }
 
@@ -120,6 +128,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         Task<Dictionary<string, List<string>>> IDevOpsService.GetPipelineLlmArtifacts(string project, int buildId)
         {
             return Task.FromResult(new Dictionary<string, List<string>>());
+        }
+
+        Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields)
+        {
+            var workItem = new WorkItem
+            {
+                Id = workItemId,
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.Title", "Updated work item" },
+                    { "System.State", "In Progress" }
+                }
+            };
+            return Task.FromResult(workItem);
         }
     }
 }

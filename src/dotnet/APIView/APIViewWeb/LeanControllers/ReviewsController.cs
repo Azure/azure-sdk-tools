@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -10,7 +11,6 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -32,15 +32,17 @@ namespace APIViewWeb.LeanControllers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
         private readonly IEnumerable<LanguageService> _languageServices;
-        private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
-            IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
-            ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
-            IConfiguration configuration, UserProfileCache userProfileCache,
+            IAPIRevisionsManager reviewRevisionsManager, 
+            IReviewManager reviewManager,
+            ICommentsManager commentManager,
+            IBlobCodeFileRepository codeFileRepository,
+            IConfiguration configuration, 
+            UserProfileCache userProfileCache,
             IEnumerable<LanguageService> languageServices,
-            IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
-            IWebHostEnvironment env)
+            IHubContext<SignalRHub> signalRHub, 
+            INotificationManager notificationManager)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
@@ -52,7 +54,6 @@ namespace APIViewWeb.LeanControllers
             _languageServices = languageServices;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
-            _env = env;
         }
 
         /// <summary>
@@ -101,7 +102,7 @@ namespace APIViewWeb.LeanControllers
         }
 
         [HttpGet("enableNamespaceReview", Name = "EnableNamespaceReview")]
-        public ActionResult<bool> GetEnableNamespaceReviewAsync()
+        public ActionResult<bool> IsNamespaceReviewEnabled()
         {
             var enableNamespaceReview = _configuration["EnableNamespaceReview"];
             return new LeanJsonResult(enableNamespaceReview, StatusCodes.Status200OK);
@@ -219,8 +220,8 @@ namespace APIViewWeb.LeanControllers
 
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
-                var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+                IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
+                CodeFile activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
                 if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
                 {
@@ -228,10 +229,11 @@ namespace APIViewWeb.LeanControllers
                     return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
                 }
 
+                List<CommentItemModel> filteredComments = comments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,
-                    Comments = comments
+                    Comments = filteredComments
                 };
 
                 if (diffAPIRevision != null)

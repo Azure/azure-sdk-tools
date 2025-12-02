@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public static string ResolveFirstBoundary(string boundary, byte[] raw)
         {
             // Boundary might have been sanitised to "REDACTED"
-            if (boundary == "REDACTED" || boundary.EndsWith("00000000-0000-0000-0000-000000000000"))
+            if (boundary == "REDACTED" || boundary == "BOUNDARY" || boundary.EndsWith("00000000-0000-0000-0000-000000000000"))
             {
                 ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
                 int idx = raw.AsSpan().IndexOf(crlf);

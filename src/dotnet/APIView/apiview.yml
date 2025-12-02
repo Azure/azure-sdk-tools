@@ -4,7 +4,7 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20250925.4'
+    default: '1.0.0-dev.20251117.2'
   - name: JavaScriptAPIParser
     type: string
     default: '@azure-tools/ts-genapi@2.0.5'
@@ -94,6 +94,11 @@ extends:
               image: $(WINDOWSVMIMAGE)
               os: windows
 
+            templateContext:
+              sdl: 
+                componentgovernance:
+                  enabled: true # Enable CG only on the build job
+
             steps:
               - task: NodeTool@0
                 inputs:
@@ -182,6 +187,11 @@ extends:
               name: $(WINDOWSPOOL)
               image: $(WINDOWSVMIMAGE)
               os: windows
+
+            templateContext:
+              sdl: 
+                componentgovernance:
+                  enabled: true # Enable CG temporarily in the Test job to clear CG history
 
             steps:
               - script: |

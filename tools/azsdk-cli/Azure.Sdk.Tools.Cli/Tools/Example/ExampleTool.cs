@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.AI.OpenAI;
+using OpenAI;
 using ModelContextProtocol.Server;
 using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -25,7 +24,7 @@ public class ExampleTool(
     IProcessHelper processHelper,
     IPowershellHelper powershellHelper,
     TokenUsageHelper tokenUsageHelper,
-    AzureOpenAIClient openAIClient
+    OpenAIClient openAIClient
 ) : MCPMultiCommandTool
 {
     // Sub-command constants
@@ -38,6 +37,16 @@ public class ExampleTool(
     private const string PowershellSubCommand = "powershell";
     private const string MicroagentSubCommand = "microagent";
 
+    // MCP Tool Names
+    private const string AzureServiceToolName = "azsdk_example_azure_service";
+    private const string DevOpsServiceToolName = "azsdk_example_devops_service";
+    private const string GitHubServiceToolName = "azsdk_example_github_service";
+    private const string AIServiceToolName = "azsdk_example_ai_service";
+    private const string ErrorHandlingToolName = "azsdk_example_error_handling";
+    private const string ProcessExecutionToolName = "azsdk_example_process_execution";
+    private const string PowershellExecutionToolName = "azsdk_example_powershell_execution";
+    private const string MicroagentFibonacciToolName = "azsdk_example_microagent_fibonacci";
+
     // azsdk example demo <sub-command>
     public override CommandGroup[] CommandHierarchy { get; set; } = [
         SharedCommandGroups.Example,
@@ -45,77 +54,94 @@ public class ExampleTool(
     ];
 
     // CLI Options and Arguments
-    private readonly Argument<string> aiInputArg = new(
-        name: "chat-prompt",
-        description: "Chat prompt surrounded with quotes"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> aiInputArg = new("chat-prompt")
+    {
+        Description = "Chat prompt surrounded with quotes",
+        Arity = ArgumentArity.ExactlyOne
+    };
 
-    private readonly Argument<string> packageArgument = new(
-        name: "package",
-        description: "Package name"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> packageArgument = new("package")
+    {
+        Description = "Package name",
+        Arity = ArgumentArity.ExactlyOne
+    };
 
-    private readonly Argument<string> errorInputArg = new(
-        name: "error-input",
-        description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> errorInputArg = new("error-input")
+    {
+        Description = "Error type to simulate, can be argument, timeout, notfound, or any user input",
+        Arity = ArgumentArity.ExactlyOne
+    };
 
-    private readonly Argument<string> processSleepArg = new(
-        name: "sleep",
-        description: "How many seconds to sleep"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> processSleepArg = new("sleep")
+    {
+        Description = "How many seconds to sleep",
+        Arity = ArgumentArity.ExactlyOne
+    };
 
-    private readonly Argument<string> powershellMessageArg = new(
-        name: "message",
-        description: "Message to pass to the PowerShell script via parameter")
-    { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> powershellMessageArg = new("message")
+    {
+        Description = "Message to pass to the PowerShell script via parameter",
+        Arity = ArgumentArity.ExactlyOne
+    };
 
-    private readonly Option<int> fibonacciIndexOption = new(
-        name: "--fibonacci",
-        description: "Index (0-based) of Fibonacci number to compute using micro-agent")
-    { IsRequired = true };
+    private readonly Option<int> fibonacciIndexOption = new("--fibonacci")
+    {
+        Description = "Index (0-based) of Fibonacci number to compute using micro-agent",
+        Required = true,
+    };
 
-    private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
-    private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
-    private readonly Option<bool> forceFailureOption = new(["--force-failure", "-f"], () => false, "Force an error for demonstration");
+    private readonly Option<string> tenantOption = new("--tenant", "-t")
+    {
+        Description = "Tenant ID",
+        Required = false,
+    };
+
+    private readonly Option<string> languageOption = new("--language", "-l")
+    {
+        Description = "Programming language of the repository",
+        Required = false,
+    };
+
+    private readonly Option<bool> forceFailureOption = new("--force-failure", "-f")
+    {
+        Description = "Force an error for demonstration",
+        Required = false,
+        DefaultValueFactory = _ => false,
+    };
 
     protected override List<Command> GetCommands() =>
     [
-        new(AzureSubCommand, "Demonstrate Azure service integration") { tenantOption },
-        new(DevOpsSubCommand, "Demonstrate DevOps service integration") { packageArgument, languageOption },
-        new(GitHubSubCommand, "Demonstrate GitHub service integration"),
-        new(AISubCommand, "Demonstrate AI service integration") { aiInputArg },
-        new(ErrorSubCommand, "Demonstrate error handling patterns") { errorInputArg, forceFailureOption },
-        new(ProcessSubCommand, "Demonstrate spawning an external process (echo)") { processSleepArg },
-        new(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter") { powershellMessageArg },
-        new(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci") { fibonacciIndexOption }
+        new McpCommand(AzureSubCommand, "Demonstrate Azure service integration", AzureServiceToolName) { tenantOption },
+        new McpCommand(DevOpsSubCommand, "Demonstrate DevOps service integration", DevOpsServiceToolName) { packageArgument, languageOption },
+        new McpCommand(GitHubSubCommand, "Demonstrate GitHub service integration", GitHubServiceToolName),
+        new McpCommand(AISubCommand, "Demonstrate AI service integration", AIServiceToolName) { aiInputArg },
+        new McpCommand(ErrorSubCommand, "Demonstrate error handling patterns", ErrorHandlingToolName) { errorInputArg, forceFailureOption },
+        new McpCommand(ProcessSubCommand, "Demonstrate spawning an external process (echo)", ProcessExecutionToolName) { processSleepArg },
+        new McpCommand(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter", PowershellExecutionToolName) { powershellMessageArg },
+        new McpCommand(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci", MicroagentFibonacciToolName) { fibonacciIndexOption }
     ];
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var commandName = ctx.ParseResult.CommandResult.Command.Name;
+        var commandName = parseResult.CommandResult.Command.Name;
 
         CommandResponse result = commandName switch
         {
-            AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
-            DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
+            AzureSubCommand => await DemonstrateAzureService(parseResult.GetValue(tenantOption), ct),
+            DevOpsSubCommand => await DemonstrateDevOpsService(parseResult.GetValue(packageArgument), parseResult.GetValue(languageOption), ct),
             GitHubSubCommand => await DemonstrateGitHubService(ct),
-            AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
-            ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
-            ProcessSubCommand => await DemonstrateProcessExecution(ctx.ParseResult.GetValueForArgument(processSleepArg), ct),
-            PowershellSubCommand => await DemonstratePowershellExecution(ctx.ParseResult.GetValueForArgument(powershellMessageArg), ct),
-            MicroagentSubCommand => await DemonstrateMicroagentFibonacci(ctx.ParseResult.GetValueForOption(fibonacciIndexOption), ct),
+            AISubCommand => await DemonstrateAIService(parseResult.GetValue(aiInputArg), ct),
+            ErrorSubCommand => await DemonstrateErrorHandling(parseResult.GetValue(errorInputArg), parseResult.GetValue(forceFailureOption), ct),
+            ProcessSubCommand => await DemonstrateProcessExecution(parseResult.GetValue(processSleepArg), ct),
+            PowershellSubCommand => await DemonstratePowershellExecution(parseResult.GetValue(powershellMessageArg), ct),
+            MicroagentSubCommand => await DemonstrateMicroagentFibonacci(parseResult.GetValue(fibonacciIndexOption), ct),
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
         return result;
     }
 
-    [McpServerTool(Name = "azsdk_example_azure_service"), Description("Demonstrates Azure service integration")]
+    [McpServerTool(Name = AzureServiceToolName), Description("Demonstrates Azure service integration")]
     public async Task<ExampleServiceResponse> DemonstrateAzureService(string? tenantId = null, CancellationToken ct = default)
     {
         try
@@ -150,7 +176,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_devops_service"), Description("Demonstrates DevOps service integration")]
+    [McpServerTool(Name = DevOpsServiceToolName), Description("Demonstrates DevOps service integration")]
     public async Task<ExampleServiceResponse> DemonstrateDevOpsService(string packageName, string language, CancellationToken ct = default)
     {
         try
@@ -181,7 +207,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_github_service"), Description("Demonstrates GitHub service integration")]
+    [McpServerTool(Name = GitHubServiceToolName), Description("Demonstrates GitHub service integration")]
     public async Task<ExampleServiceResponse> DemonstrateGitHubService(CancellationToken ct = default)
     {
         try
@@ -214,7 +240,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_ai_service"), Description("Demonstrates AI service integration using Azure OpenAI")]
+    [McpServerTool(Name = AIServiceToolName), Description("Demonstrates AI service integration using Azure OpenAI")]
     public async Task<ExampleServiceResponse> DemonstrateAIService(string userPrompt, CancellationToken ct = default)
     {
         var model = "gpt-4o";
@@ -226,7 +252,7 @@ public class ExampleTool(
                 ["model_used"] = model
             };
 
-            // Get ChatClient from AzureOpenAIClient
+            // Get ChatClient from OpenAIClient
             var chatClient = openAIClient.GetChatClient(model);
 
             var messages = new ChatMessage[]
@@ -257,7 +283,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_error_handling"), Description("Demonstrates error handling patterns in tools")]
+    [McpServerTool(Name = ErrorHandlingToolName), Description("Demonstrates error handling patterns in tools")]
     public async Task<DefaultCommandResponse> DemonstrateErrorHandling(string scenario, bool forceFailure = false, CancellationToken ct = default)
     {
         try
@@ -299,7 +325,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_process_execution"), Description("Demonstrates running an external process (sleep) and capturing output")]
+    [McpServerTool(Name = ProcessExecutionToolName), Description("Demonstrates running an external process (sleep) and capturing output")]
     public async Task<ExampleServiceResponse> DemonstrateProcessExecution(string time, CancellationToken ct = default)
     {
         try
@@ -347,7 +373,7 @@ public class ExampleTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_example_powershell_execution"), Description("Demonstrates running a powershell script with a parameter")]
+    [McpServerTool(Name = PowershellExecutionToolName), Description("Demonstrates running a powershell script with a parameter")]
     public async Task<ExampleServiceResponse> DemonstratePowershellExecution(string message, CancellationToken ct = default)
     {
         string? tempFile = null;
@@ -429,7 +455,7 @@ public class ExampleTool(
         public int Current { get; set; }
     }
 
-    [McpServerTool(Name = "azsdk_example_microagent_fibonacci"), Description("Demonstrates micro-agent computing Nth Fibonacci number via iterative tool calls")]
+    [McpServerTool(Name = MicroagentFibonacciToolName), Description("Demonstrates micro-agent computing Nth Fibonacci number via iterative tool calls")]
     public async Task<DefaultCommandResponse> DemonstrateMicroagentFibonacci(int n, CancellationToken ct = default)
     {
         try
@@ -464,6 +490,28 @@ public class ExampleTool(
                 Instructions = instructions,
                 MaxToolCalls = 7,
                 Tools = [advanceTool],
+                ValidateResult = async result =>
+                {
+                    await Task.CompletedTask;
+
+                    // Check the result for correctness using fibonacci formula.
+                    var phi = (1 + Math.Sqrt(5)) / 2;
+                    var psi = (1 - Math.Sqrt(5)) / 2;
+                    var expected = (int)Math.Round((Math.Pow(phi, n) - Math.Pow(psi, n)) / Math.Sqrt(5));
+
+                    // Example validation
+                    if (result != expected)
+                    {
+                        // Failure reason will be provided to the LLM to self-correct
+                        return new()
+                        {
+                            Success = false,
+                            Reason = "Incorrect result, please try again"
+                        };
+                    }
+
+                    return new() { Success = true };
+                }
             };
 
             var resultValue = await microagentHostService.RunAgentToCompletion(agent, ct);

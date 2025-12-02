@@ -10,6 +10,7 @@ namespace APIViewWeb.DTOs
         CommentResolved,
         CommentUnResolved,
         CommentUpVoteToggled,
+        CommentDownVoteToggled,
         CommentDeleted
     }
 
@@ -39,5 +40,7 @@ namespace APIViewWeb.DTOs
         public int? AssociatedRowPositionInGroup { get; set; }
         [JsonPropertyName("allowAnyOneToResolve")]
         public bool? AllowAnyOneToResolve { get; set; }
+        [JsonPropertyName("severity")]
+        public CommentSeverity? Severity { get; set; }
     }
 }

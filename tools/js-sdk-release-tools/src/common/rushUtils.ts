@@ -1,17 +1,18 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { ModularClientPackageOptions, PackageResult, RunMode } from './types.js';
+import { ModularClientPackageOptions, ModularSDKType, PackageResult, RunMode } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import pkg from 'fs-extra';
 const { ensureDir, readFile, writeFile } = pkg;
 import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
-import { runCommand, runCommandOptions } from './utils.js';
+import { runCommand, runCommandOptions, cleanupSamplesFolder } from './utils.js';
 
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
 import { existsSync } from 'fs';
-import { formatSdk, lintFix, updateSnippets } from './devToolUtils.js';
+import { customizeCodes, formatSdk, lintFix, updateSnippets } from './devToolUtils.js';
+import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 interface ProjectItem {
     packageName: string;
@@ -50,14 +51,14 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 }
 
 async function ensurePnpmInstalled() {
-  try {
-    await runCommand('pnpm', ['--version'], runCommandOptions, false);
-    logger.info('pnpm is already installed.');
-  } catch (error) {
-    logger.info('pnpm not found. Installing...');
-    await runCommand('npm', ['install', '-g', 'pnpm'], runCommandOptions);
-    logger.info('pnpm installed successfully.');
-  }
+    try {
+        await runCommand('pnpm', ['--version'], runCommandOptions, false);
+        logger.info('pnpm is already installed.');
+    } catch (error) {
+        logger.info('pnpm not found. Installing...');
+        await runCommand('npm', ['install', '-g', 'pnpm'], runCommandOptions);
+        logger.info('pnpm installed successfully.');
+    }
 }
 
 async function addApiViewInfo(
@@ -79,7 +80,7 @@ async function addApiViewInfo(
     const standardApiViewFileName = `${actualPackageName}.api.json`;
     const nodeApiViewPattern = posix.join(packageDirectory, 'temp', '**', nodeApiViewFileName);
     const standardApiViewPattern = posix.join(packageDirectory, 'temp', '**', standardApiViewFileName);
-    
+
     // Search for both possible API view file name formats simultaneously
     const [nodeApiViews, standardApiViews] = await Promise.all([
         glob(nodeApiViewPattern),
@@ -90,9 +91,9 @@ async function addApiViewInfo(
     if (!nodeApiViews.length && !standardApiViews.length) {
         throw new Error(`Failed to find any API view files matching '${nodeApiViewPattern}' or '${standardApiViewPattern}'. cwd: ${process.cwd()}`);
     }
-    
+
     const selectedApiView = nodeApiViews.length > 0 ? nodeApiViews[0] : standardApiViews[0];
-    
+
     packageResult.apiViewArtifact = relative(sdkRoot, selectedApiView);
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
     const name = basename(apiViews[0]);
@@ -113,8 +114,8 @@ export async function buildPackage(
 ) {
     const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
-
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
+    let buildStatus = `succeeded`;
     if (isRushRepo(options.sdkRepoRoot)) {
         await updateRushJson({
             packageName: name,
@@ -134,36 +135,54 @@ export async function buildPackage(
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
-        if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+        if (options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
             await lintFix(packageDirectory);
         }
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
+        const modularSDKType = getModularSDKType(packageDirectory);
+        let errorAsWarning = false;
+        if (modularSDKType === ModularSDKType.DataPlane) {
+            await customizeCodes(packageDirectory);
+            errorAsWarning = true;
+        }
+        try {
+            await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions, true, undefined, errorAsWarning);
+        } catch (error) {
+            logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
+            buildStatus = `failed`;
+        }
+    }
+    if (buildStatus === `succeeded`) {
+        const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);
+        logger.info(`Build package '${name}' successfully.`);
+
+        // restore in temp folder
+        const tempFolder = join(packageDirectory, 'temp');
+        await ensureDir(tempFolder);
+        const apiViewPath = join(tempFolder, apiViewContext.name);
+        await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8', flush: true });
     }
 
-    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);
-    logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
     await updateSnippets(packageDirectory);
-
-    // restore in temp folder
-    const tempFolder = join(packageDirectory, 'temp');
-    await ensureDir(tempFolder);
-    const apiViewPath = join(tempFolder, apiViewContext.name);
-    await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8', flush: true });
 }
 
 // no exception will be thrown in non-release mode, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 // in release mode, exceptions will be thrown to ensure sample build succeeds
 export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string, runMode: RunMode) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
+    await cleanupSamplesFolder(packageDirectory);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    const errorAsWarning = runMode !== RunMode.Release;
+    const modularSDKType = getModularSDKType(packageDirectory);
+    let errorAsWarning = runMode !== RunMode.Release;
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        errorAsWarning = true;
+    }
     try {
         if (isRushRepo(sdkRepoRoot)) {
             await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, errorAsWarning);

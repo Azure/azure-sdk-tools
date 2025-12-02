@@ -1,15 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Immutable;
+using System.ComponentModel;
+using ApiView;
 using APIView.Analysis;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
-using System.Collections.Immutable;
-using System.ComponentModel;
-using ApiView;
-using System.Diagnostics.CodeAnalysis;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -48,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29.5";
+        public const string CurrentVersion = "29.9";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -82,7 +81,7 @@ namespace CSharpAPIParser.TreeToken
                 Language = "C#",
                 ParserVersion = CurrentVersion,
                 PackageName = assemblySymbol.Name,
-                PackageVersion = assemblySymbol.Identity.Version.ToString()
+                PackageVersion = GetPackageVersion(assemblySymbol) ?? assemblySymbol.Identity.Version.ToString()
             };
 
             if (dependencies != null)
@@ -107,6 +106,7 @@ namespace CSharpAPIParser.TreeToken
             }
 
             codeFile.Diagnostics = analyzer.Results.ToArray();
+            VerifyCodeFile(codeFile);
             return codeFile;
         }
 
@@ -137,10 +137,10 @@ namespace CSharpAPIParser.TreeToken
                         if (!String.IsNullOrEmpty(param))
                         {
                             var firstComma = param?.IndexOf(',');
-                            param = firstComma > 0 ? param?[..(int)firstComma] : param;
+                            param = firstComma > 0 ? param?[..(int)firstComma] + "_" + param?[^5..] : param;
                             reviewLines.Add(new ReviewLine()
                             {
-                                LineId = attribute.AttributeClass?.Name,
+                                LineId = attribute.AttributeClass?.Name + "_" + param,
                                 Tokens = [
                                     ReviewToken.CreateStringLiteralToken(param)
                                 ]
@@ -174,7 +174,7 @@ namespace CSharpAPIParser.TreeToken
                     versionToken.SkipDiff = true;
                     var dependencyLine = new ReviewLine()
                     {
-                        LineId = dependency.Name,
+                        LineId = dependency.Name + versionToken.Value,
                         Tokens = [
                             ReviewToken.CreateStringLiteralToken(dependency.Name, false),
                             versionToken
@@ -311,9 +311,30 @@ namespace CSharpAPIParser.TreeToken
             reviewLine.Tokens.Last().HasSuffixSpace = true;
             BuildBaseType(reviewLine, namedType);
             reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
+
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
-                BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                try
+                {
+                    // Check if this is an extension member container
+                    if (IsExtensionMemberContainer(namedTypeSymbol))
+                    {
+                        BuildExtensionMember(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
+                    else
+                    {
+                        BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception before falling back to regular type building
+                    System.Console.Error.WriteLine($"Exception in extension member detection for type '{namedTypeSymbol?.Name}': {ex}");
+                    if (namedTypeSymbol != null)
+                    {
+                        BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
+                }
             }
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
@@ -451,6 +472,15 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
+        private string GetTypedConstantValue(TypedConstant typedConstant)
+        {
+            return typedConstant.Kind switch
+            {
+                TypedConstantKind.Array => string.Join(", ", typedConstant.Values.Select(v => v.ToString())),
+                _ => typedConstant.Value?.ToString() ?? string.Empty
+            };
+        }
+
         private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden, string relatedTo)
         {
             const string attributeSuffix = "Attribute";
@@ -466,11 +496,13 @@ namespace CSharpAPIParser.TreeToken
                         continue;
                     }
 
+                    string args = String.Join(", ", attribute.ConstructorArguments.Select(a => GetTypedConstantValue(a)));
+
                     var attributeLine = new ReviewLine()
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}({attribute.ConstructorArguments.FirstOrDefault().Value}).{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}",
                         IsHidden = isHidden
                     };
 
@@ -530,6 +562,143 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
+        private bool IsExtensionMemberContainer(INamedTypeSymbol namedType)
+        {
+            if (namedType == null)
+            {
+                return false;
+            }
+                
+            // Extension member containers are compiler-generated nested classes
+            // They have specific name patterns like <G>$ or <M>$ and contain extension marker methods
+
+            // Check if the name matches the compiler-generated pattern for extension containers
+            if (!(namedType.Name.StartsWith("<G>$") || namedType.Name.StartsWith("<M>$")))
+                return false;
+
+            // Check if this type contains extension marker methods or nested types with extension markers
+            return namedType.GetMembers().OfType<IMethodSymbol>()
+                .Any(m => IsExtensionMarkerMethod(m)) ||
+                namedType.GetTypeMembers().Any(t => t.GetMembers().OfType<IMethodSymbol>()
+                    .Any(m => IsExtensionMarkerMethod(m)));
+        }
+
+        private bool IsExtensionMarkerMethod(IMethodSymbol method)
+        {
+            if (method == null)
+                return false;
+
+            // Extension marker methods are compiler-generated methods with specific characteristics:
+            // - They are named exactly "<Extension>$" 
+            // - They have void return type and take the extension target as parameter
+            // Note: We don't check for CompilerGeneratedAttribute as it may not be accessible in the symbol model
+            return method.Name == "<Extension>$" &&
+                   method.ReturnType?.SpecialType == SpecialType.System_Void &&
+                   method.Parameters.Length >= 1;
+        }
+
+        private void BuildExtensionMember(List<ReviewLine> reviewLines, INamedTypeSymbol extensionContainer, bool inHiddenScope)
+        {
+            if (extensionContainer == null)
+            {
+                return;
+            }
+
+            bool isHidden = IsHiddenFromIntellisense(extensionContainer) || inHiddenScope;
+
+            // Find the extension marker method to get the extension target type
+            // Check both direct methods and methods in nested types
+            var extensionMarker = extensionContainer.GetMembers().OfType<IMethodSymbol>()
+                .FirstOrDefault(m => IsExtensionMarkerMethod(m));
+
+            if (extensionMarker == null)
+            {
+                // Check nested types for extension markers
+                foreach (var nestedType in extensionContainer.GetTypeMembers())
+                {
+                    extensionMarker = nestedType.GetMembers().OfType<IMethodSymbol>()
+                        .FirstOrDefault(m => IsExtensionMarkerMethod(m));
+                    if (extensionMarker != null)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (extensionMarker == null || extensionMarker.Parameters.Length == 0)
+            {
+                return;
+            }
+
+            var targetType = extensionMarker.Parameters[0].Type;
+            if (targetType == null)
+            {
+                return;
+            }
+
+            // Create the extension declaration line
+            var extensionLine = new ReviewLine()
+            {
+                LineId = extensionContainer.GetId(),
+                IsHidden = isHidden
+            };
+
+            extensionLine.Tokens.Add(ReviewToken.CreateKeywordToken("extension"));
+            extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenParenToken, false));
+            DisplayName(extensionLine, targetType);
+            extensionLine.Tokens.Last().HasSuffixSpace = true;
+
+            // Add parameter name (usually the target type name in lowercase)
+            var parameterName = extensionMarker.Parameters[0].Name;
+            extensionLine.Tokens.Add(ReviewToken.CreateTextToken(parameterName, hasSuffixSpace: false));
+            extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
+            extensionLine.Tokens.Last().HasSuffixSpace = true;
+            extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
+
+            // Add all non-extension-marker members to the extension block
+            // Include members from both the container and any nested types
+            var membersToProcess = new List<ISymbol>();
+            membersToProcess.AddRange(extensionContainer.GetMembers().Where(m =>
+                m.Kind != SymbolKind.NamedType && !m.IsImplicitlyDeclared && IsAccessible(m)));
+
+            foreach (var nestedType in extensionContainer.GetTypeMembers())
+            {
+                membersToProcess.AddRange(nestedType.GetMembers().Where(m =>
+                    m.Kind != SymbolKind.NamedType && !m.IsImplicitlyDeclared && IsAccessible(m)));
+            }
+
+            foreach (var member in SymbolOrderProvider.OrderMembers(membersToProcess))
+            {
+                // Skip extension marker methods
+                if (member is IMethodSymbol method && IsExtensionMarkerMethod(method)) continue;
+
+                // Skip property/event accessors
+                if (member is IMethodSymbol m)
+                {
+                    if (m.MethodKind == MethodKind.PropertyGet ||
+                        m.MethodKind == MethodKind.PropertySet ||
+                        m.MethodKind == MethodKind.EventAdd ||
+                        m.MethodKind == MethodKind.EventRemove ||
+                        m.MethodKind == MethodKind.EventRaise)
+                    {
+                        continue;
+                    }
+                }
+                BuildMember(extensionLine.Children, member, isHidden);
+            }
+
+            reviewLines.Add(extensionLine);
+            reviewLines.Add(new ReviewLine()
+            {
+                Tokens = [
+                    ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken)
+                ],
+                IsHidden = isHidden,
+                IsContextEndLine = true
+            });
+            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = extensionLine.LineId });
+        }
+
         private bool IsSkippedAttribute(INamedTypeSymbol attributeAttributeClass)
         {
             switch (attributeAttributeClass.Name)
@@ -544,6 +713,7 @@ namespace CSharpAPIParser.TreeToken
                 case "NullableContextAttribute":
                 case "RequiresUnreferencedCodeAttribute":
                 case "RequiresDynamicCodeAttribute":
+                case "CompilerGeneratedAttribute":
                     return true;
                 default:
                     return false;
@@ -870,6 +1040,61 @@ namespace CSharpAPIParser.TreeToken
                 (_, _) => lineId
             };
             return value;
+        }
+
+        /// <summary>
+        /// Verifies that all LineId values in the codeFile's ReviewLines collection are unique.
+        /// </summary>
+        /// <param name="codeFile">The CodeFile to verify.</param>
+        /// <exception cref="InvalidOperationException">Thrown when duplicate LineId values are found.</exception>
+        private static void VerifyCodeFile(CodeFile codeFile)
+        {
+            var lineIds = new HashSet<string>();
+            var duplicates = new List<string>();
+
+            void CheckLineIds(IEnumerable<ReviewLine> lines)
+            {
+                foreach (var line in lines)
+                {
+                    if (!string.IsNullOrEmpty(line.LineId))
+                    {
+                        if (!lineIds.Add(line.LineId))
+                        {
+                            duplicates.Add(line.LineId);
+                        }
+                    }
+
+                    if (line.Children != null && line.Children.Count > 0)
+                    {
+                        CheckLineIds(line.Children);
+                    }
+                }
+            }
+
+            CheckLineIds(codeFile.ReviewLines);
+
+            if (duplicates.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate LineId values found: {string.Join(", ", duplicates.Distinct())}");
+            }
+        }
+
+        public static string? GetPackageVersion(IAssemblySymbol assemblySymbol)
+        {
+            var attr = assemblySymbol
+                .GetAttributes()
+                .FirstOrDefault(a => a.AttributeClass?.Name == "AssemblyInformationalVersionAttribute");
+
+            if (attr == null || attr.ConstructorArguments.Length == 0)
+                return null;
+            
+            var infoVersion = attr.ConstructorArguments[0].Value as string;
+            if (string.IsNullOrWhiteSpace(infoVersion))
+                return null;
+
+            var version = infoVersion.Split('+')[0].Trim();
+            return version.Length == 0 ? null : version;
         }
     }
 }

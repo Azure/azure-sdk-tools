@@ -21,7 +21,7 @@ model:
 sample:
   language: python
   context: |
-    > **id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 51<br>
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 51<br>
     ## Use keyword-only arguments for optional or less-used arguments in Python 3
 
     DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.
@@ -36,7 +36,7 @@ sample:
         ...
     ```
 
-    > **id:** python_implementation.html#python-codestyle-positional-params<br>**score:** 65<br>
+    > **guideline_id:** python_implementation.html#python-codestyle-positional-params<br>**score:** 65<br>
     ## Specify parameter names when calling methods with more than two required positional parameters
 
     DO specify the parameter name when calling methods with more than two required positional parameters.
@@ -66,7 +66,7 @@ sample:
     foo(1, 2, 3)
     ```
 
-    > **id:** python_implementation.html#python-codestyle-optional-param-calling<br>**score:** 64<br>
+    > **guideline_id:** python_implementation.html#python-codestyle-optional-param-calling<br>**score:** 64<br>
     ## Specify parameter names for optional parameters when calling functions
 
     DO specify the parameter name for optional parameters when calling functions.
@@ -91,7 +91,7 @@ sample:
     foo(1, 2, 3)
     ```
 
-    > **id:** python_design.html#python-models-enum-name-uppercase<br>**score:** 66<br>
+    > **guideline_id:** python_design.html#python-models-enum-name-uppercase<br>**score:** 66<br>
     ## Use UPPERCASE names for enum members
 
     DO use UPPERCASE names for enum names.

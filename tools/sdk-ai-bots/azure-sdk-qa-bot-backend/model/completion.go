@@ -7,6 +7,7 @@ const (
 	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
 	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
 	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
+	TenantID_GolangChannelQaBot TenantID = "golang_channel_qa_bot"
 )
 
 type Source string
@@ -25,6 +26,8 @@ const (
 	Source_AzureSDKGuidelines      Source = "azure-sdk-guidelines"
 	Source_TypeSpecAzureHttpSpecs  Source = "typespec_azure_http_specs"
 	Source_TypeSpecHttpSpecs       Source = "typespec_http_specs"
+	Source_AzureSDKForGo           Source = "azure_sdk_for_go_docs"
+	Source_StaticAzureDocs         Source = "static_azure_docs"
 )
 
 type Role string
@@ -63,17 +66,14 @@ type AdditionalInfo struct {
 }
 
 type CompletionReq struct {
-	TenantID                TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
-	PromptTemplate          *string          `json:"prompt_template" jsonschema:"omitempty,description=The prompt template to use for the agent"`
-	IntensionPromptTemplate *string          `json:"intension_prompt_template,omitempty" jsonschema:"omitempty,description=The intention prompt template to use for the agent"`
-	PromptTemplateArguments *string          `json:"prompt_template_arguments" jsonschema:"omitempty,description=The arguments to use for the prompt template"`
-	TopK                    *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
-	Sources                 []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
-	Message                 Message          `json:"message" jsonschema:"required,description=The message to send to the agent"`
-	History                 []Message        `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
-	WithFullContext         *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
-	WithPreprocess          *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
-	AdditionalInfos         []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
+	TenantID        TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
+	TopK            *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
+	Sources         []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
+	Message         Message          `json:"message" jsonschema:"required,description=The message to send to the agent"`
+	History         []Message        `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
+	WithFullContext *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
+	WithPreprocess  *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
+	AdditionalInfos []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
 }
 
 type CompletionResp struct {
@@ -82,7 +82,7 @@ type CompletionResp struct {
 	HasResult         bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
 	References        []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
 	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
-	Intension         *IntensionResult `json:"intension" jsonschema:"omitempty,description=The intension of the question"`
+	Intention         *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
 }
 
@@ -94,9 +94,10 @@ const (
 	QuestionScope_Unbranded QuestionScope = "unbranded"
 )
 
-type IntensionResult struct {
-	Question string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category string        `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
-	Scope    QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+type IntentionResult struct {
+	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
 }

@@ -20,55 +20,88 @@ Running evaluations will run evals on test files for the language given and give
 
 The main evaluation script is `run.py`. Here are the common ways to use it:
 
-1. Run all tests for a specific language:
+1. Run a test workflow file:
 ```bash
-python run.py --language python
+# APIView workflow
+python run.py --language python --test-file workflows/apiview.yaml
+
+# Mention action workflow
+python run.py --language python --test-file workflows/mention-action.yaml
 ```
 
-2. Run a specific test file:
+2. Change the number of evaluation runs (default is 1):
 ```bash
-python run.py --language python --test-file specific_tests.jsonl
-```
-
-or 
-
-```bash
-python run.py --language python --test-file tests/python/specific.jsonl
-```
-
-3. Change the number of evaluation runs (default is 3):
-```bash
-python run.py --language python --n 5
+python run.py --language python --test-file workflows/filter-comment-metadata.yaml --n 5
 ```
 
 > Note: Due to variability in AI model responses, the number of runs can be increased to get a more stable result (the median of the results is chosen as the final result).
 
+## Workflow Types
+
+- **APIView Review**: Tests the main code review functionality
+- **Prompt Workflows**: Tests specific prompts in isolation
+
+The evaluation framework supports different types of workflows
+
+## Prompt Workflows
+For testing specific prompts with structured inputs and outputs. Examples:
+- `filter-comment-metadata.yaml` - Tests comment filtering based on exceptions and context
+- `mention-action.yaml` - Tests conversation action parsing  
+- `thread-resolution-action.yaml` - Tests thread resolution actions
+
+Workflow YAML structure:
+```yaml
+name: workflow-name
+kind: prompt
+```
+
+## Workflow vs Test File Relationship
+
+- **Workflow YAML files** (`workflows/`) define how to run evaluations and which prompts to test
+- **Test JSONL files** (`tests/python/`) contain the actual test case data  
+- **Prompty files** (`prompts/`) contain the prompts being evaluated
+
+The workflow YAML orchestrates the relationship between these components.
+
+evals/
+├── workflows/          # YAML files defining what to test
+├── tests/python/       # JSONL files with test cases
+├── results/            # Test outputs
+prompts/                # Prompty files being tested
+
 
 ## Create New Evals
 
-An eval test file should be written in JSONL, and a file can contain multiple test cases. Each line in the JSONL represents a distinct test case. A test case should be structured as follows:
+For each test, the structure varies based on the specific workflow. For example, filter-comment-metadata tests use:
 
 ```json
 {
-    "testcase": "unique_test_name",
-    "query": "APIView text code to review",
-    "response": {"status": "Error", "violations": [{...}, {...}]},
-    "language": "python",
-    "context": "guidelines context for violations present"
+    "testcase": "filter_missing_async_client",
+    "language": "Python", 
+    "exceptions": "1. DO NOT make comments...\n2. DO NOT comment...",
+    "outline": "## namespace azure.widget\n- WidgetClient\n...",
+    "content": "{\"line_no\": 4, \"bad_code\": \"...\", \"comment\": \"...\"}",
+    "response": "{\"action\": \"DISCARD\", \"rationale\": \"...\"}"
 }
 ```
 
+The fields should match the parameters expected by the target function in `_custom.py`.
+
 `testcase` is the name of the test case and ideally says something about what's being tested.
 
-`query` is the APIview txt code to be reviewed.
+`language` is the programming language being tested (e.g., "Python").
 
-`response` contains the expected JSON output from running the AI reviewer.
+`exceptions` contains the list of exception rules that should not be violated when making comments.
 
-`context` provides the context that is relevant to the violations present in the code. This is automatically pulled from the static guidelines based on the expected violations present if the `eval create` command is used (described below).
+`outline` provides the API structure outline that shows what elements exist in the codebase.
 
-`language` is the language of the APIview text code.
+`content` is the JSON string containing the proposed comment to be evaluated (with fields like line_no, bad_code, comment, etc.).
 
-To add a new test case, the following workflow is recommended:
+`response` contains the expected JSON output with the action (KEEP/DISCARD) and rationale.
+
+### Creating APIView Review Tests
+
+To add a new APIView review test case, the following workflow is recommended:
 
 1. Use the "Copy review text" button in the APIview UI to copy the text code.
 2. Apply the desired guideline violations that you want to test to the code.
@@ -78,6 +111,43 @@ To add a new test case, the following workflow is recommended:
 ```bash
 python cli.py eval create --language python --apiview-path path/to/apiview.txt --expected-path path/to/expected.json --test-file path/to/test.jsonl --name testcase_name
 ```
+
+### Creating Workflow Tests
+
+For workflow-based evaluations:
+
+1. First create your test case data in the appropriate JSONL format for your workflow
+2. Ensure your workflow YAML points to the correct test file and prompty
+3. Create a target function for your workflow in `_custom.py`:
+
+```python
+def _your_workflow_name(param1: str, param2: str, ...):
+    """Target function for your workflow."""
+    prompty_path = Path(__file__).parent.parent / "prompts" / "your_folder" / "your_prompt.prompty"
+    prompty_kwargs = {
+        "param1": param1,
+        "param2": param2,
+        # Map all parameters from JSONL test data
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+```
+
+4. Register your function in the `workflow_targets` dictionary in the `PromptWorkflowEvaluator.target_function` property:
+
+```python
+workflow_targets = {
+    "your-workflow-name": _your_workflow_name,
+    # existing workflows...
+}
+```
+
+5. Test the workflow using: `python run.py --test-file workflows/your-workflow.yaml`
+
+**Pattern Notes:**
+- Function name should start with `_`
+- Parameters must match the fields in your JSONL test data
+- Use `prompty.execute()` to run the prompt with mapped parameters
 
 ## Editing Test Cases
 

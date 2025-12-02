@@ -40,6 +40,7 @@ namespace APIViewWeb.Managers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
+        private readonly ICopilotAuthenticationService _copilotAuthService;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -58,6 +59,7 @@ namespace APIViewWeb.Managers
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
+            ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -72,6 +74,7 @@ namespace APIViewWeb.Managers
             _configuration = configuration;
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
+            _copilotAuthService = copilotAuthService;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -147,6 +150,18 @@ namespace APIViewWeb.Managers
                 await _notificationManager.NotifyUserOnCommentTag(comment);
                 await _notificationManager.NotifySubscribersOnComment(user, comment);
             }
+
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                new CommentUpdatesDto()
+                {
+                    CommentThreadUpdateAction = CommentThreadUpdateAction.CommentCreated,
+                    CommentId = comment.Id,
+                    ReviewId = comment.ReviewId,
+                    ElementId = comment.ElementId,
+                    NodeId = comment.ElementId,
+                    CommentText = comment.CommentText,
+                    Comment = comment
+                });
         }
 
         public async Task<CommentItemModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText, string[] taggedUsers)
@@ -174,6 +189,39 @@ namespace APIViewWeb.Managers
             await _commentsRepository.UpsertCommentAsync(comment);
             await _notificationManager.NotifyUserOnCommentTag(comment);
             await _notificationManager.NotifySubscribersOnComment(user, comment);
+
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                new CommentUpdatesDto()
+                {
+                    CommentThreadUpdateAction = CommentThreadUpdateAction.CommentTextUpdate,
+                    CommentId = comment.Id,
+                    ReviewId = comment.ReviewId,
+                    ElementId = comment.ElementId,
+                    NodeId = comment.ElementId,
+                    CommentText = comment.CommentText,
+                    Severity = comment.Severity,
+                });
+
+            return comment;
+        }
+
+        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            await AssertOwnerAsync(user, comment);
+            
+            comment.ChangeHistory.Add(
+                new CommentChangeHistoryModel()
+                {
+                    ChangeAction = CommentChangeAction.Edited,
+                    ChangedBy = user.GetGitHubLogin(),
+                    ChangedOn = DateTime.Now,
+                });
+            comment.LastEditedOn = DateTime.Now;
+            comment.Severity = severity;
+
+            await _commentsRepository.UpsertCommentAsync(comment);
             return comment;
         }
 
@@ -232,8 +280,7 @@ namespace APIViewWeb.Managers
                         "application/json")
                 };
 
-                //TODO: See: https://github.com/Azure/azure-sdk-tools/issues/11128
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "dummy_token_value");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
 
                 var client = _httpClientFactory.CreateClient();
                 var clientResponse = await client.SendAsync(request);
@@ -363,6 +410,16 @@ namespace APIViewWeb.Managers
             comment.ChangeHistory = changeUpdate.ChangeHistory;
             comment.IsDeleted = changeUpdate.ChangeStatus;
             await _commentsRepository.UpsertCommentAsync(comment);
+
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                new CommentUpdatesDto()
+                {
+                    CommentThreadUpdateAction = CommentThreadUpdateAction.CommentDeleted,
+                    CommentId = comment.Id,
+                    ReviewId = comment.ReviewId,
+                    ElementId = comment.ElementId,
+                    NodeId = comment.ElementId
+                });
         }
 
         public async Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
@@ -379,6 +436,19 @@ namespace APIViewWeb.Managers
                     });
                 comment.IsResolved = true;
                 await _commentsRepository.UpsertCommentAsync(comment);
+            }
+
+            if (comments.Any())
+            {
+                await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                    new CommentUpdatesDto()
+                    {
+                        CommentThreadUpdateAction = CommentThreadUpdateAction.CommentResolved,
+                        ReviewId = reviewId,
+                        ElementId = lineId,
+                        NodeId = lineId,
+                        ResolvedBy = user.GetGitHubLogin()
+                    });
             }
         }
 
@@ -397,30 +467,110 @@ namespace APIViewWeb.Managers
                 comment.IsResolved = false;
                 await _commentsRepository.UpsertCommentAsync(comment);
             }
+
+            if (comments.Any())
+            {
+                await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                    new CommentUpdatesDto()
+                    {
+                        CommentThreadUpdateAction = CommentThreadUpdateAction.CommentUnResolved,
+                        ReviewId = reviewId,
+                        ElementId = lineId,
+                        NodeId = lineId
+                    });
+            }
+        }
+
+        public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
+        {
+            var response = new List<CommentItemModel>();
+            
+            foreach (string commentId in request.CommentIds)
+            {
+                CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+                
+                if (request.Feedback != null)
+                {
+                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                }
+                
+                if (request.Vote != FeedbackVote.None)
+                {
+                    await SetVoteAsync(user, reviewId, commentId, request.Vote);
+                }
+
+                if (!string.IsNullOrEmpty(request.CommentReply))
+                {
+                    var commentUpdate = new CommentItemModel
+                    {
+                        ReviewId = reviewId,
+                        APIRevisionId = comment.APIRevisionId,
+                        SampleRevisionId = comment.SampleRevisionId,
+                        ElementId = comment.ElementId,
+                        CommentText = request.CommentReply,
+                        CreatedBy = user.GetGitHubLogin(),
+                        CreatedOn = DateTime.UtcNow,
+                        CommentType = comment.CommentType,
+                        IsResolved = request.Disposition == ConversationDisposition.Resolve
+                    };
+                    await AddCommentAsync(user, commentUpdate);
+                    response.Add(commentUpdate);
+                }
+
+                if (request.Severity.HasValue && request.Severity != comment.Severity)
+                {
+                    await UpdateCommentSeverityAsync(user, reviewId, commentId, request.Severity);
+                    comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+                }
+
+                switch (request.Disposition)
+                {
+                    case ConversationDisposition.Delete:
+                        await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        break;
+                    case ConversationDisposition.Resolve:
+                        await ResolveConversation(user, reviewId, comment.ElementId);
+                        break;
+                    case ConversationDisposition.KeepOpen:
+                    default:
+                        break;
+                }
+            }
+            
+            return response;
         }
 
         public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
-            {
-                comment.Upvotes.Add(user.GetGitHubLogin());
-                comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin());
-            }
-
-            await _commentsRepository.UpsertCommentAsync(comment);
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await ToggleVoteAsync(user, comment, FeedbackVote.Up);
         }
 
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await ToggleVoteAsync(user, comment, FeedbackVote.Down);
+        }
 
-            if (comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
+        public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment == null)
             {
-                comment.Downvotes.Add(user.GetGitHubLogin());
-                comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin());
+                _logger.LogWarning($"Comment {commentId} not found for feedback submission");
+                return;
             }
+
+            string userName = user.GetGitHubLogin();
+            comment.Feedback.Add(new CommentFeedback
+            {
+                Reasons = feedback.Reasons?.Select(r => r.ToString()).ToList() ?? [],
+                Comment = feedback.Comment ?? string.Empty,
+                IsDelete = feedback.IsDelete,
+                SubmittedBy = userName,
+                SubmittedOn = DateTime.UtcNow
+            });
 
             await _commentsRepository.UpsertCommentAsync(comment);
         }
@@ -432,6 +582,94 @@ namespace APIViewWeb.Managers
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();
+            }
+        }
+
+        private async Task ToggleVoteAsync(ClaimsPrincipal user, CommentItemModel comment, FeedbackVote voteType)
+        {
+            string userName = user.GetGitHubLogin();
+            switch (voteType)
+            {
+                case FeedbackVote.Up:
+                    if (comment.Upvotes.RemoveAll(u => u == userName) == 0)
+                    {
+                        comment.Upvotes.Add(userName);
+                        comment.Downvotes.RemoveAll(u => u == userName);
+                    }
+                    break;
+                case FeedbackVote.Down:
+                    if (comment.Downvotes.RemoveAll(u => u == userName) == 0)
+                    {
+                        comment.Downvotes.Add(userName);
+                        comment.Upvotes.RemoveAll(u => u == userName);
+                    }
+                    break;
+                case FeedbackVote.None:
+                default:
+                    return;
+            }
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                new CommentUpdatesDto()
+                {
+                    CommentThreadUpdateAction = voteType == FeedbackVote.Up 
+                        ? CommentThreadUpdateAction.CommentUpVoteToggled 
+                        : CommentThreadUpdateAction.CommentDownVoteToggled,
+                    CommentId = comment.Id,
+                    ReviewId = comment.ReviewId,
+                    ElementId = comment.ElementId,
+                    NodeId = comment.ElementId,
+                    Comment = comment
+                });
+        }
+
+        private async Task SetVoteAsync(ClaimsPrincipal user, string reviewId, string commentId, FeedbackVote voteType)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            string userName = user.GetGitHubLogin();
+            bool voteChanged = false;
+
+            switch (voteType)
+            {
+                case FeedbackVote.Up:
+                    if (!comment.Upvotes.Contains(userName))
+                    {
+                        comment.Upvotes.Add(userName);
+                        comment.Downvotes.RemoveAll(u => u == userName); 
+                        voteChanged = true;
+                    }
+                    break;
+                case FeedbackVote.Down:
+                    if (!comment.Downvotes.Contains(userName))
+                    {
+                        comment.Downvotes.Add(userName);
+                        comment.Upvotes.RemoveAll(u => u == userName); 
+                        voteChanged = true;
+                    }
+                    break;
+                case FeedbackVote.None:
+                default:
+                    return;
+            }
+
+            if (voteChanged)
+            {
+                await _commentsRepository.UpsertCommentAsync(comment);
+                await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                    new CommentUpdatesDto()
+                    {
+                        CommentThreadUpdateAction = voteType == FeedbackVote.Up 
+                            ? CommentThreadUpdateAction.CommentUpVoteToggled 
+                            : CommentThreadUpdateAction.CommentDownVoteToggled,
+                        CommentId = comment.Id,
+                        ReviewId = comment.ReviewId,
+                        ElementId = comment.ElementId,
+                        NodeId = comment.ElementId,
+                        Comment = comment
+                    });
             }
         }
     }

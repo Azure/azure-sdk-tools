@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -24,15 +24,16 @@ public class PipelineTestsTool(
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
+    private const string GetPipelineLlmArtifactsToolName = "azsdk_get_pipeline_llm_artifacts";
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
 
     protected override Command GetCommand() =>
-        new("test-results", "Get test results for a pipeline run") { buildIdArg };
+        new McpCommand("test-results", "Get test results for a pipeline run", GetPipelineLlmArtifactsToolName) { buildIdArg };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         Initialize();
-        var buildId = ctx.ParseResult.GetValueForArgument(buildIdArg);
+        var buildId = parseResult.GetValue(buildIdArg);
 
         logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
         return await GetPipelineLlmArtifacts(buildId);
@@ -54,7 +55,7 @@ public class PipelineTestsTool(
         buildClient = connection.GetClient<BuildHttpClient>();
     }
 
-    [McpServerTool(Name = "azsdk_get_pipeline_llm_artifacts"), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
+    [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
     public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId)
     {
         string project = "";

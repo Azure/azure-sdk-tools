@@ -1,43 +1,66 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
     public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
     {
-        private readonly string commandName = "sdk-release";
-        private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
-        private readonly Option<string> branchOpt = new(["--branch"], () => "main", "Branch to release the package from") { IsRequired = false };
+        private const string ReleaseSdkToolName = "azsdk_release_sdk";
+        
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+
+        private readonly string commandName = "release";
+        private readonly Option<string> packageNameOpt = new("--package-name")
+        {
+            Description = "Package name",
+            Required = true,
+        };
+
+        private readonly Option<string> languageOpt = new("--language")
+        {
+            Description = "Language of the package",
+            Required = true,
+        };
+
+        private readonly Option<string> branchOpt = new("--branch")
+        {
+            Description = "Branch to release the package from",
+            Required = false,
+            DefaultValueFactory = _ => "main",
+        };
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
-            new(commandName, "Run the release pipeline for the package") { packageNameOpt, languageOpt, branchOpt };
+            new McpCommand(commandName, "Run the release pipeline for the package", ReleaseSdkToolName)
+            {
+                packageNameOpt, languageOpt, branchOpt,
+            };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
-            var branch = ctx.ParseResult.GetValueForOption(branchOpt);
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
+            var branch = parseResult.GetValue(branchOpt);
             return await ReleasePackageAsync(packageName, language, branch);
         }
 
-        [McpServerTool(Name = "azsdk_release_sdk"), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
+        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
         public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main")
         {
             try
             {
                 SdkReleaseResponse response = new()
                 {
-                    PackageName = packageName,
-                    Language = language
+                    PackageName = packageName
                 };
+                response.SetLanguage(language);
 
                 bool isValidParams = true;
                 if (string.IsNullOrWhiteSpace(packageName))
@@ -45,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleaseStatusDetails = "Package name cannot be null or empty. ";
                     isValidParams = false;
                 }
-                if (string.IsNullOrWhiteSpace(language) || !ValidLanguages.Contains(language))
+                if (string.IsNullOrWhiteSpace(language) || !ValidLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
                 {
                     response.ReleaseStatusDetails += "Language must be one of the following: " + string.Join(", ", ValidLanguages);
                     isValidParams = false;
@@ -59,7 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     response.ReleasePipelineStatus = "Failed";
                     isValidParams = false;
                 }
-
+                response.PackageType = package?.PackageType ?? SdkType.Unknown;
                 if (string.IsNullOrEmpty(package?.PipelineDefinitionUrl))
                 {
                     response.ReleaseStatusDetails += $"No release pipeline found for package '{packageName}' in language '{language}'. Please check the package name and language.";
@@ -124,10 +147,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 SdkReleaseResponse response = new()
                 {
                     PackageName = packageName,
-                    Language = language,
                     ReleasePipelineStatus = "Failed",
-                    ReleaseStatusDetails = $"Error: {ex.Message}"
+                    ResponseError = $"Error: {ex.Message}"
                 };
+                response.SetLanguage(language);
                 return response;
             }
         }

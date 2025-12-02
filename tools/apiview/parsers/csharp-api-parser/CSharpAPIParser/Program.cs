@@ -20,6 +20,13 @@ public static class Program
     // or Azure.Storage.Blobs.12.0.0 to ["Azure.Storage.Blobs", "12.0.0"]
     private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
 
+    // Allowlist of dependency packages to process
+    private static readonly HashSet<string> _allowedDependencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Azure.Core",
+        "System.ClientModel"
+    };
+
     public static int Main(string[] args)
     {
         var inputOption = new Option<FileInfo>("--packageFilePath", "C# Package (.nupkg) file").ExistingOnly();
@@ -102,18 +109,17 @@ public static class Program
                 using var nuspecStream = nuspecEntry.Open();
                 var document = XDocument.Load(nuspecStream);
                 var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
-                dependencies.AddRange(
-                        dependencyElements.Select(dependency => new DependencyInfo(
-                                dependency.Attribute("id")?.Value,
-                                    SelectSpecificVersion(dependency.Attribute("version")?.Value))));
-                // filter duplicates and sort
-                if (dependencies.Any())
-                {
-                    dependencies = dependencies
-                    .GroupBy(d => d.Name)
-                    .Select(d => d.First())
-                    .OrderBy(d => d.Name).ToList();
-                }
+                var topLevelDependencies = dependencyElements
+                    .Select(dependency => new DependencyInfo(
+                        dependency.Attribute("id")?.Value,
+                        SelectSpecificVersion(dependency.Attribute("version")?.Value)))
+                    .Where(d => !string.IsNullOrEmpty(d.Name) && _allowedDependencies.Contains(d.Name));
+                
+                // Recursively enumerate dependencies
+                var allDependencies = new HashSet<DependencyInfo>(new DependencyInfoComparer());
+                await EnumerateDependenciesRecursivelyAsync(topLevelDependencies, allDependencies).ConfigureAwait(false);
+                
+                dependencies.AddRange(allDependencies.OrderBy(d => d.Name));
             }
 
             IEnumerable<string> dependencyFilePaths = new List<string>();
@@ -229,6 +235,7 @@ public static class Program
                     NullLogger.Instance,
                     CancellationToken.None))
                     {
+                        packageStream.Seek(0, SeekOrigin.Begin);
                         using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
                         NuspecReader nuspec = reader.NuspecReader;
                         var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
@@ -236,7 +243,14 @@ public static class Program
                         {
                             var fileInfo = new FileInfo(file);
                             var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
-                            var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
+                            var directory = Path.GetDirectoryName(path);
+                            if (!string.IsNullOrEmpty(directory))
+                            {
+                                Directory.CreateDirectory(directory);
+                            }
+                            using Stream entryStream = reader.GetStream(file);
+                            await using FileStream destinationStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+                            await entryStream.CopyToAsync(destinationStream).ConfigureAwait(false);
                         }
                     }
                 }
@@ -273,5 +287,85 @@ public static class Program
         }
         var specificVersion = range.MinVersion;
         return specificVersion?.ToString();
+    }
+
+    /// <summary>
+    /// Recursively enumerates dependencies from NuGet packages, filtering by the allowlist.
+    /// </summary>
+    /// <param name="dependenciesToProcess">The dependencies to process</param>
+    /// <param name="allDependencies">The set of all discovered dependencies</param>
+    private static async Task EnumerateDependenciesRecursivelyAsync(
+        IEnumerable<DependencyInfo> dependenciesToProcess,
+        HashSet<DependencyInfo> allDependencies)
+    {
+        SourceCacheContext cache = new SourceCacheContext();
+        SourceRepository repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+        try
+        {
+            FindPackageByIdResource resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
+            
+            foreach (var dep in dependenciesToProcess)
+            {
+                // Skip if already processed
+                if (allDependencies.Contains(dep))
+                {
+                    continue;
+                }
+                
+                // Add to the set
+                allDependencies.Add(dep);
+                
+                // Download and inspect the nuspec for transitive dependencies
+                using (MemoryStream packageStream = new MemoryStream())
+                {
+                    if (await resource.CopyNupkgToStreamAsync(
+                        dep.Name,
+                        new NuGetVersion(dep.Version),
+                        packageStream,
+                        cache,
+                        NullLogger.Instance,
+                        CancellationToken.None))
+                    {
+                        packageStream.Seek(0, SeekOrigin.Begin);
+                        using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
+                        NuspecReader nuspec = reader.NuspecReader;
+                        
+                        // Get dependencies from this package's nuspec
+                        var dependencyGroups = nuspec.GetDependencyGroups();
+                        var transitiveDependencies = dependencyGroups
+                            .SelectMany(group => group.Packages)
+                            .Select(pkg => new DependencyInfo(pkg.Id, SelectSpecificVersion(pkg.VersionRange?.ToString())))
+                            .Where(d => !string.IsNullOrEmpty(d.Name) && _allowedDependencies.Contains(d.Name))
+                            .ToList();
+                        
+                        // Recursively process transitive dependencies
+                        if (transitiveDependencies.Any())
+                        {
+                            await EnumerateDependenciesRecursivelyAsync(transitiveDependencies, allDependencies).ConfigureAwait(false);
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            cache.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Comparer for DependencyInfo that compares by Name only.
+    /// </summary>
+    private class DependencyInfoComparer : IEqualityComparer<DependencyInfo>
+    {
+        public bool Equals(DependencyInfo x, DependencyInfo y)
+        {
+            return string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode(DependencyInfo obj)
+        {
+            return obj.Name?.ToLowerInvariant().GetHashCode() ?? 0;
+        }
     }
 }

@@ -38,27 +38,25 @@ public class SdkGenerationToolTests
 
     private SdkGenerationTool _tool;
     private Mock<IGitHelper> _mockGitHelper;
-    private Mock<INpxHelper> _mockNpxHelper;
+    private Mock<ITspClientHelper> _mockTspClientHelper;
     private TestLogger<SdkGenerationTool> _logger;
-    private string _tempDirectory;
+    private TempDirectory _tempDirectory = null!;
 
     [SetUp]
     public void Setup()
     {
         // Create mocks
         _mockGitHelper = new Mock<IGitHelper>();
-        _mockNpxHelper = new Mock<INpxHelper>();
+        _mockTspClientHelper = new Mock<ITspClientHelper>();
         _logger = new TestLogger<SdkGenerationTool>();
 
-        // Create temp directory for tests
-        _tempDirectory = Path.Combine(Path.GetTempPath(), "SdkGenerationToolTests", Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_tempDirectory);
+        _tempDirectory = TempDirectory.Create("SdkGenerationToolTests");
 
         // Create the tool instance
         _tool = new SdkGenerationTool(
             _mockGitHelper.Object,
             _logger,
-            _mockNpxHelper.Object
+            _mockTspClientHelper.Object
         );
     }
 
@@ -66,10 +64,7 @@ public class SdkGenerationToolTests
     public void TearDown()
     {
         // Clean up temp directory
-        if (Directory.Exists(_tempDirectory))
-        {
-            Directory.Delete(_tempDirectory, true);
-        }
+        _tempDirectory.Dispose();
     }
 
     #region GenerateSdkAsync Tests
@@ -88,13 +83,16 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithTspLocationPath_CallsRunTspUpdate()
     {
         // Arrange
-        var tspLocationPath = Path.Combine(_tempDirectory, TspLocationFileName);
+    var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, TspLocationFileName);
         File.WriteAllText(tspLocationPath, TestTspLocationContent);
 
-        var expectedResult = new ProcessResult { ExitCode = 0 };
-        expectedResult.AppendStdout(ProcessSuccessOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = true, 
+            TypeSpecProject = Path.GetDirectoryName(tspLocationPath)!
+        };
+        _mockTspClientHelper
+            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
@@ -103,14 +101,17 @@ public class SdkGenerationToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkRegenerationSuccessMessage));
-        _mockNpxHelper.Verify(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
+        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task GenerateSdkAsync_WithTspLocationPath_FileNotExists_ReturnsFailure()
     {
         // Arrange
-        var tspLocationPath = Path.Combine(_tempDirectory, "nonexistent-" + TspLocationFileName);
+        var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, "nonexistent-" + TspLocationFileName);
 
         // Act
         var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
@@ -124,47 +125,61 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
-        var expectedResult = new ProcessResult { ExitCode = 0 };
-        expectedResult.AppendStdout(ProcessSuccessOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = true, 
+            TypeSpecProject = _tempDirectory.DirectoryPath
+        };
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkGenerationSuccessMessage));
-        _mockNpxHelper.Verify(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
+        _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task GenerateSdkAsync_WithLocalTspConfigPath_ValidInputs_CallsRunTspInit()
     {
         // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+    var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
 
-        var expectedResult = new ProcessResult { ExitCode = 0 };
-        expectedResult.AppendStdout(ProcessSuccessOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = true, 
+            TypeSpecProject = _tempDirectory.DirectoryPath
+        };
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkGenerationSuccessMessage));
-        _mockNpxHelper.Verify(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
+        _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -172,10 +187,11 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         // Act - Use a non-existent file path
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, "/nonexistent/" + TspConfigFileName, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, "/nonexistent/" + TspConfigFileName, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FileNotExistError));
@@ -186,19 +202,24 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
-        var failedResult = new ProcessResult { ExitCode = 1 };
-        failedResult.AppendStderr(ProcessErrorOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var failedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = false, 
+            ResponseError = "Failed to initialize TypeSpec generation, see details in the logs.",
+            TypeSpecProject = _tempDirectory.DirectoryPath
+        };
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(failedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain(TspClientInitFailedError));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to initialize TypeSpec generation"));
     }
 
     [Test]
@@ -206,10 +227,11 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
         // Act - Use invalid remote URL that doesn't match GitHub blob pattern
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, InvalidRemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, InvalidRemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Invalid remote GitHub URL with commit"));
@@ -220,14 +242,15 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Test exception"));
 
         // Act - Now remote URLs work properly
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Test exception"));
@@ -247,38 +270,38 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithLocalTspConfigAndEmitterOptions_PassesOptionsToNpx()
     {
         // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+        var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
         var emitterOptions = "package-version=1.0.0-beta.1";
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
-        var expectedResult = new ProcessResult { ExitCode = 0 };
-        expectedResult.AppendStdout(ProcessSuccessOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = true, 
+            TypeSpecProject = _tempDirectory.DirectoryPath
+        };
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, emitterOptions);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, emitterOptions);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
 
-        // Verify the NPX arguments match expected pattern
-        _mockNpxHelper.Verify(x => x.Run(
-            It.Is<NpxOptions>(opts =>
-                opts.Args.Contains("tsp-client") &&
-                opts.Args.Contains("init") &&
-                opts.Args.Contains("--update-if-exists") &&
-                opts.Args.Contains("--tsp-config") &&
-                opts.Args.Contains(tspConfigPath) &&
-                opts.Args.Contains("--repo") &&
-                opts.Args.Contains(DefaultSpecRepo) &&
-                opts.Args.Contains("--emitter-options") &&
-                opts.Args.Contains(emitterOptions)),
+        // Verify the arguments passed to InitializeGenerationAsync
+        _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(
+            It.IsAny<string>(),
+            It.Is<string>(path => path == tspConfigPath),
+            It.Is<string[]>(args => args != null && args.Contains("--repo") && args.Contains(DefaultSpecRepo) && args.Contains("--emitter-options") && args.Contains(emitterOptions)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -289,24 +312,30 @@ public class SdkGenerationToolTests
         var emitterOptions = "package-version=1.0.0-beta.1";
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
 
-        var expectedResult = new ProcessResult { ExitCode = 0 };
-        expectedResult.AppendStdout(ProcessSuccessOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = true, 
+            TypeSpecProject = _tempDirectory.DirectoryPath
+        };
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, emitterOptions);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, emitterOptions);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
-        _mockNpxHelper.Verify(x => x.Run(
-            It.Is<NpxOptions>(opts =>
-                opts.Args.Contains("--emitter-options") &&
-                opts.Args.Contains(emitterOptions) &&
-                !opts.Args.Contains("--repo")), // Remote URLs should not include --repo
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
+        _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(
+            It.IsAny<string>(),
+            It.Is<string>(path => path == RemoteTspConfigUrl),
+            It.Is<string[]>(args => args != null && args.Contains("--emitter-options") && args.Contains(emitterOptions) && !args.Contains("--repo")), // Remote URLs should not include --repo
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -314,36 +343,37 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithLocalTspConfigNoEmitterOptions_DoesNotPassEmitterOptionsToNpx()
     {
         // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+        var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
-        var expectedResult = new ProcessResult { ExitCode = 0 };
-        expectedResult.AppendStdout(ProcessSuccessOutput);
-        _mockNpxHelper
-            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
+        { 
+            IsSuccessful = true, 
+            TypeSpecProject = _tempDirectory.DirectoryPath
+        };
+        _mockTspClientHelper
+            .Setup(x => x.InitializeGenerationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.NextSteps, Is.Not.Null);
+        Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+        Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
 
-        // Verify the NPX arguments match expected pattern but don't include emitter options
-        _mockNpxHelper.Verify(x => x.Run(
-            It.Is<NpxOptions>(opts =>
-                opts.Args.Contains("tsp-client") &&
-                opts.Args.Contains("init") &&
-                opts.Args.Contains("--update-if-exists") &&
-                opts.Args.Contains("--tsp-config") &&
-                opts.Args.Contains(tspConfigPath) &&
-                opts.Args.Contains("--repo") &&
-                opts.Args.Contains(DefaultSpecRepo) &&
-                !opts.Args.Contains("--emitter-options")), // Should not include emitter options when null
+        // Verify the arguments passed to InitializeGenerationAsync
+        _mockTspClientHelper.Verify(x => x.InitializeGenerationAsync(
+            It.IsAny<string>(),
+            It.Is<string>(path => path == tspConfigPath),
+            It.Is<string[]>(args => args != null && args.Contains("--repo") && args.Contains(DefaultSpecRepo) && !args.Contains("--emitter-options")), // Should not include emitter options when null
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

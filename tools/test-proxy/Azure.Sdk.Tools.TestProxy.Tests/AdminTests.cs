@@ -329,8 +329,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.SetMatcher();
             var matcher = testRecordingHandler.Matcher;
             Assert.True(matcher is CustomDefaultMatcher);
-            
-            var compareBodies = (bool) typeof(RecordMatcher).GetField("_compareBodies", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
+
+            var compareBodies = matcher.ShouldCompareBodies;
             Assert.False(compareBodies);
 
             Assert.Contains("Content-Type", matcher.ExcludeHeaders);
@@ -362,7 +362,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var matcher = testRecordingHandler.Matcher;
             Assert.True(matcher is CustomDefaultMatcher);
 
-            var queryOrderingValue = (bool)typeof(RecordMatcher).GetField("_ignoreQueryOrdering", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
+            var queryOrderingValue = matcher.ShouldIgnoreQueryOrdering;
             Assert.True(queryOrderingValue);
         }
 

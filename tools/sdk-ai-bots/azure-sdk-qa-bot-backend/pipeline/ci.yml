@@ -1,0 +1,142 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: "AzureSDKQABot_Backend_CI"
+        jobs:
+          - job: "AzureSDKQABot_Backend_CI"
+            displayName: "Run AzureSDKQABot Backend CI Checks - "
+
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
+
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
+
+            steps:
+              - task: AzureCLI@2
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+                    
+
+              - task: GoTool@0
+                inputs:
+                  version: "1.24.1"
+                displayName: "Install Go"
+
+              - script: |
+                  go mod tidy
+                  go build -o azure-sdk-qa-bot-backend .
+                displayName: "Build Backend Service"
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+
+              - script: |
+                  set -e
+                  go version
+                  go install github.com/jstemmer/go-junit-report@v1.0.0
+                  go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
+                  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
+                  ~/go/bin/golangci-lint --version
+                displayName: "Install Dependencies"
+                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+
+              - script: |
+                  echo "##[command]Executing go build -v ./... in $(pwd)"
+                  go build -v ./...
+                  if [ $? -ne 0 ]; then
+                    echo "Build failed"
+                    exit 1
+                  fi
+                displayName: "Build - go"
+                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+
+              - script: |
+                  echo "##[command]Executing go mod tidy in $(pwd)"
+                  go mod tidy
+                  git diff --exit-code go.mod go.sum
+                  if [ $? -ne 0 ]; then
+                    echo "go.mod or go.sum is not up to date. Please run 'go mod tidy' and commit the changes."
+                    exit 1
+                  fi
+                displayName: "Mod Tidy Check"
+                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+
+              - script: |
+                  echo "##[command]Executing go vet ./... in $(pwd)"
+                  go vet ./...
+                  if [ $? -ne 0 ]; then
+                    echo "Go vet failed"
+                    exit 1
+                  fi
+                  ~/go/bin/shadow ./...
+                  if [ $? -ne 0 ]; then
+                    echo "Shadow check failed"
+                    exit 1
+                  fi
+                displayName: "Vet and Shadow Check"
+                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+
+              - script: |
+                  echo "##[command]Executing golangci-lint run in $(pwd)"
+                  ~/go/bin/golangci-lint run ./...
+                  if [ $? -ne 0 ]; then
+                    echo "Linting failed"
+                    exit 1
+                  fi
+                displayName: "Lint"
+                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+
+              - script: |
+                  echo "##[command]Running tests in $(pwd)"
+                  go test -timeout 120s -v -race -coverprofile=coverage.out -covermode=atomic ./...
+                  if [ $? -ne 0 ]; then
+                    echo "Tests failed"
+                    exit 1
+                  fi
+                displayName: "Run Tests"
+                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+                env:
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+              - task: PublishTestResults@2
+                condition: always()
+                inputs:
+                  testResultsFiles: '**/*-report.xml'
+                  testRunTitle: 'Go tests'
+                displayName: 'Publish test results'
+
+              - task: PublishCodeCoverageResults@1
+                condition: always()
+                inputs:
+                  codeCoverageTool: 'cobertura'
+                  summaryFileLocation: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/coverage.out'
+                displayName: 'Publish code coverage'

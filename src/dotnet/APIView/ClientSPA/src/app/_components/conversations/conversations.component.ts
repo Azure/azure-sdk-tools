@@ -178,7 +178,7 @@ export class ConversationsComponent implements OnChanges {
       });
     }
     else {
-      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve)
+      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               commentUpdates.comment = response;
@@ -235,6 +235,21 @@ export class ConversationsComponent implements OnChanges {
           this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
+    }
+  }
+
+  handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
+    
+    switch (commentUpdates.commentThreadUpdateAction) {
+      case CommentThreadUpdateAction.CommentCreated:
+        if (commentUpdates.comment) {
+          this.addCommentToCommentThread(commentUpdates);
+        }
+        break;
+      case CommentThreadUpdateAction.CommentResolved:
+        this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe();
+        break;
     }
   }
 

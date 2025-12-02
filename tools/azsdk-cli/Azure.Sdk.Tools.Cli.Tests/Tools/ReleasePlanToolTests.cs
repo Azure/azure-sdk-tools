@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Test_Create_releasePlan_with_invalid_SDK_type()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "Preview", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "invalid-sdk-type", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Invalid SDK release type"));
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Test_Create_releasePlan_with_invalid_product_tree_id()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "InvalidProductTreeId", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "InvalidProductTreeId", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Product tree ID 'InvalidProductTreeId' is not a valid GUID"));
@@ -102,23 +102,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Test_Create_releasePlan_with_valid_inputs()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
 
-            var releaseplanObj = releaseplan.Result as ReleasePlanDetails;
-            Assert.IsNotNull(releaseplanObj);
-            Assert.IsNotNull(releaseplanObj.WorkItemId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
+            var releasePlanTasks = new[]{
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA", isTestReleasePlan: true),
+            };
 
+            var releasePlanResults = await Task.WhenAll(releasePlanTasks);
 
-            releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
+            var releasePlans = releasePlanResults
+                .Select(r => r.ReleasePlanDetails as ReleasePlanDetails)
+                .ToList();
 
-            releaseplanObj = releaseplan.Result as ReleasePlanDetails;
-            Assert.IsNotNull(releaseplanObj);
-            Assert.IsNotNull(releaseplanObj.WorkItemId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
-
+            foreach (var plan in releasePlans)
+            {
+                Assert.IsNotNull(plan);
+                Assert.IsNotNull(plan.WorkItemId);
+                Assert.IsNotNull(plan.ReleasePlanId);
+                Assert.IsNotNull(plan.ReleasePlanLink);
+            }
         }
 
         [Test]
@@ -150,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 isTestReleasePlan: false); // This should be overridden to true by environment variable
 
             // Assert
-            var releaseplanObj = releaseplan.Result as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);
@@ -189,7 +193,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 isTestReleasePlan: false);
 
             // Assert
-            var releaseplanObj = releaseplan.Result as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);
@@ -205,10 +209,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs/pull/35446");
             Assert.That(releaseplan.ToString(), Does.Contain("Status: Success"));
             Assert.That(releaseplan.ToString(), Does.Contain("Release Plan"));
-
-            releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs-pr/pull/35446");
-            Assert.That(releaseplan.ToString(), Does.Contain("Status: Success"));
-            Assert.That(releaseplan.ToString(), Does.Contain("Release Plan"));
         }
 
         [Test]
@@ -219,15 +219,90 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_rejects_azure_rest_api_specs_pr_repo()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNotNull(releaseplan.ResponseError);
+            Assert.True(releaseplan.ResponseError.Contains("Invalid spec pull request URL"));
+            Assert.True(releaseplan.ResponseError.Contains("azure-rest-api-specs repo"));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_For_Pull_Request_rejects_azure_rest_api_specs_pr_repo()
+        {
+            var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs-pr/pull/35446");
+            Assert.That(releaseplan.ToString(), Does.Contain("Failed to get release plan details"));
+            Assert.That(releaseplan.ToString(), Does.Contain("Invalid spec pull request URL"));
+        }
+
+        [Test]
         public async Task Test_Update_SDK_Details_In_Release_Plan()
         {
             string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"com.azure.resourcemanager.contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
             var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
 
-            sdkDetails = "[{\"Language\":\".NET\",\"PackageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"com.azure.resourcemanager.contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
+            sdkDetails = "[{\"Language\":\".NET\",\"PackageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"azure-resourcemanager-contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
             updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_Mgmt_language_excl()
+        {
+            string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages were excluded in the release plan. SDK must be released for all languages."));
+            Assert.True(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_Data_language_excl()
+        {
+            string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.Contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/contoso\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(1001, sdkDetails);
+            Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages were excluded in the release plan. SDK must be released for all languages."));
+            Assert.That(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_single_invalid_package_name()
+        {
+            var languagePackageMap = new Dictionary<string, string>
+            {
+                { "Javascript", "@invalid/package/name" },
+                { "Go", "invalid/package/name" },
+            };
+
+            foreach (var (language, package) in languagePackageMap)
+            {
+                string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
+                var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+                Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+                Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
+            }
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_multiple_invalid_package_names()
+        {
+            string sdkDetails = "[{\"language\":\"JavaScript\",\"packageName\":\"@invalid/package\"}," +
+                        "{\"language\":\"Go\",\"packageName\":\"invalid/package\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("JavaScript -> @invalid/package"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("Go -> invalid/package"));
+        }
+        
+        [Test]
+        public async Task Test_update_language_exclusion_justification()
+        {
+            var updateStatus = await releasePlanTool.UpdateLanguageExclusionJustification(100, "This is a test justification for excluding certain languages.");
+            Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
         }
     }
 }

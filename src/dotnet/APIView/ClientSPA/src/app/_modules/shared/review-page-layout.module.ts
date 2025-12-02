@@ -2,6 +2,10 @@ import { NgModule } from '@angular/core';
 import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
 import { ConversationsComponent } from 'src/app/_components/conversations/conversations.component';
 import { CommentThreadComponent } from 'src/app/_components/shared/comment-thread/comment-thread.component';
+import { RelatedCommentsDialogComponent } from 'src/app/_components/shared/related-comments-dialog/related-comments-dialog.component';
+import { CommentSeverityComponent } from 'src/app/_components/shared/comment-severity/comment-severity.component';
+import { AICommentFeedbackDialogComponent } from 'src/app/_components/shared/ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteDialogComponent } from 'src/app/_components/shared/ai-comment-delete-dialog/ai-comment-delete-dialog.component';
 import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-page-layout/review-page-layout.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
@@ -9,6 +13,9 @@ import { PanelModule } from 'primeng/panel';
 import { MenuModule } from 'primeng/menu';
 import { TimelineModule } from 'primeng/timeline';
 import { DividerModule } from 'primeng/divider';
+import { DialogModule } from 'primeng/dialog';
+import { CheckboxModule } from 'primeng/checkbox';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
 import { SharedAppModule } from './shared-app.module';
 import { CommonModule } from '@angular/common'; 
@@ -20,6 +27,10 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
   declarations: [
     ReviewInfoComponent,
     CommentThreadComponent,
+    RelatedCommentsDialogComponent,
+    AICommentFeedbackDialogComponent,
+    AICommentDeleteDialogComponent,
+    CommentSeverityComponent,
     CrossLangViewComponent,
     ConversationsComponent,
     ReviewPageLayoutComponent,
@@ -32,6 +43,9 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
   exports: [
     ReviewInfoComponent,
     CommentThreadComponent,
+    AICommentFeedbackDialogComponent,
+    AICommentDeleteDialogComponent,
+    CommentSeverityComponent,
     CrossLangViewComponent,
     ConversationsComponent,
     PageOptionsSectionComponent,
@@ -44,7 +58,8 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     PanelModule,
     MenuModule,
     TimelineModule,
-    DividerModule
+    DividerModule,
+    OverlayPanelModule
   ],
   imports: [
     CommonModule,
@@ -52,7 +67,10 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     PanelModule,
     MenuModule,
     TimelineModule,
-    DividerModule
+    DividerModule,
+    DialogModule,
+    CheckboxModule,
+    OverlayPanelModule
   ]
 })
 export class ReviewPageLayoutModule { }

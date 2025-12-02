@@ -1,11 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class CommandResponse
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum Status
+{
+    Succeeded,
+    Failed
+}
+
+public abstract class CommandResponse
 {
     private int? exitCode = null;
     [JsonIgnore]
@@ -44,13 +50,24 @@ public class CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? NextSteps { get; set; }
 
-    protected string ToString(StringBuilder value)
+    /// <summary>
+    /// Status shows whether the command operation was successful.
+    /// </summary>
+    [JsonPropertyName("operation_status")]
+    public Status OperationStatus
     {
-        return ToString(value.ToString());
+        get
+        {
+            return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0)? Status.Succeeded : Status.Failed;
+        }
     }
 
-    protected string ToString(string value)
+    protected abstract string Format();
+
+    public override string ToString()
     {
+        var value = Format();
+
         List<string> messages = [];
         if (!string.IsNullOrEmpty(ResponseError))
         {

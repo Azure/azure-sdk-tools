@@ -546,7 +546,11 @@ tools/sdk-ai-bots/azure-sdk-qa-bot/appPackage/build
 tools/sdk-ai-bots/azure-sdk-qa-bot/.deployment
 tools/sdk-ai-bots/azure-sdk-qa-bot/devTools
 tools/sdk-ai-bots/azure-sdk-qa-bot/azsdk-cli
+tools/sdk-ai-bots/azure-sdk-qa-bot/codeowners-utils
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/*env
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/output
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/data
 tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generated.json
+
+# Azure SDK CLI Tool logs
+*.logs

@@ -40,6 +40,11 @@ public class CommentsTokenAuthController : ControllerBase
     public async Task<ActionResult<List<ApiViewAgentComment>>> GetRevisionComments([FromQuery, Required] string apiRevisionId)
     {
         APIRevisionListItemModel apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
+        if (apiRevision == null)
+        {
+            return new LeanJsonResult("API revision not found", StatusCodes.Status404NotFound);
+        }
+
         RenderedCodeFile codeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
         IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(apiRevision.ReviewId, isDeleted:false, CommentType.APIRevision);
 

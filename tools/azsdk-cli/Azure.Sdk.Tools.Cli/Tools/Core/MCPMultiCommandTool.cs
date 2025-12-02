@@ -13,8 +13,17 @@ public abstract class MCPMultiCommandTool : MCPToolBase
         var commands = GetCommands();
         foreach (var cmd in commands)
         {
-            cmd.SetHandler(async ctx => await InstrumentedCommandHandler(cmd, ctx));
+            SetHandlers(cmd);
         }
         return commands;
+    }
+
+    private void SetHandlers(Command command)
+    {
+        command.SetAction((parseResult, cancellationToken) => InstrumentedCommandHandler(command, parseResult, cancellationToken));
+        foreach (var child in command.Subcommands.OfType<Command>())
+        {
+            SetHandlers(child);
+        }
     }
 }

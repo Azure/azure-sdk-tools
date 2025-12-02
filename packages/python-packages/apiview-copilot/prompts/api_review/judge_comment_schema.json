@@ -1,0 +1,42 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "judge_comment_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["SUGGESTION", "SHOULD", "MUST", "QUESTION"],
+          "description": "The severity level of the comment. Must be one of: Suggestion, Should Fix, Must Fix, Question."
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question_id": {
+                "type": "integer",
+                "description": "The unique identifier for the question being answered."
+              },
+              "answer": {
+                "type": "string",
+                "enum": ["YES", "NO", "UNKNOWN"],
+                "description": "The answer to the question. Must be one of: YES, NO, UNKNOWN."
+              },
+              "rationale": {
+                "type": "string",
+                "description": "A concise explanation for the answer."
+              }
+            },
+            "required": ["question_id", "answer", "rationale"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["results", "severity"],
+      "additionalProperties": false
+    }
+  }
+}

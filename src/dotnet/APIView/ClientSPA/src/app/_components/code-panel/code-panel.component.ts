@@ -42,6 +42,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
   @Input() preferredApprovers : string[] = [];
+  @Input() allComments: CommentItemModel[] = [];
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
@@ -67,7 +68,7 @@ export class CodePanelComponent implements OnChanges{
 
   menuItemsLineActions: MenuItem[] = [];
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
+  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
     private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
 
@@ -387,22 +388,32 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
-    let filterdData = this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&
-      row.type === updateData.type);
-
-    if (updateData.type === CodePanelRowDatatype.CommentThread) {
-      filterdData = filterdData.filter(row => row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup);
-    }
-
-    filterdData[0] = updateData;
-      
-    await this.codePanelRowSource?.adapter?.relax();
-    await this.codePanelRowSource?.adapter?.update({
-      predicate: ({ $index, data, element}) => {
-        if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
-          return [updateData];
+    let targetIndex = this.codePanelRowData.findIndex(row => {
+      if (row.nodeIdHashed === updateData.nodeIdHashed && row.type === updateData.type) {
+        if (updateData.type === CodePanelRowDatatype.CommentThread) {
+          return row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup;
         }
         return true;
+      }
+      return false;
+    });
+
+    if (targetIndex !== -1) {
+      this.codePanelRowData[targetIndex] = updateData;
+    }
+      
+    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?.fix({
+      updater: ({ data, element }) => {
+        if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
+          if (updateData.type === CodePanelRowDatatype.CommentThread) {
+            if (data.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup) {
+              Object.assign(data, updateData);
+            }
+          } else {
+            Object.assign(data, updateData);
+          }
+        }
       }
     });
   }
@@ -527,21 +538,19 @@ export class CodePanelComponent implements OnChanges{
         .pipe(take(1)).subscribe({
           next: () => {
             this.updateCommentTextInCommentThread(commentUpdates);
-            this.signalRService.pushCommentUpdates(commentUpdates);
           }
-        });
-    }
+        });    
+      }
     else {
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve)
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               this.addCommentToCommentThread(commentUpdates, response);
               commentUpdates.comment = response;
-              this.signalRService.pushCommentUpdates(commentUpdates);
             }
           }
-        );
-    }
+        );    
+      }
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
@@ -549,7 +558,6 @@ export class CodePanelComponent implements OnChanges{
     this.commentsService.deleteComment(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
-        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
   }
@@ -560,36 +568,44 @@ export class CodePanelComponent implements OnChanges{
       this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
         }
-      });
+      });    
     }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
         }
-      });
+      });    
+    }
+  }
+
+  handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.reviewId!;
+    
+    switch (commentUpdates.commentThreadUpdateAction) {
+      case CommentThreadUpdateAction.CommentCreated:
+        if (commentUpdates.comment) {
+          this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
+        }
+        break;
+      case CommentThreadUpdateAction.CommentTextUpdate:
+        this.updateCommentTextInCommentThread(commentUpdates);
+        break;
+      case CommentThreadUpdateAction.CommentResolved:
+        this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe();
+        break;
     }
   }
 
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.reviewId!;
-    this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
-      next: () => {
-        this.signalRService.pushCommentUpdates(commentUpdates);
-      }
-    });
+    this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe();
   }
 
   handleCommentDownvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.reviewId!;
-    this.commentsService.toggleCommentDownVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
-      next: () => {
-        this.signalRService.pushCommentUpdates(commentUpdates);
-      }
-    });
+    this.commentsService.toggleCommentDownVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe();
   }
 
   handleRealTimeCommentUpdates() {
@@ -1032,8 +1048,20 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private updateCommentTextInCommentThread(data: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText!;
-    this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    const commentThread = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const comment = commentThread.comments.find(c => c.id === data.commentId);
+    
+    if (!comment) {
+      return;
+    }
+    
+    if (data.commentText) {
+      comment.commentText = data.commentText;
+    }
+    if (data.severity !== undefined && data.severity !== null) {
+      comment.severity = data.severity;
+    }
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 
@@ -1076,14 +1104,33 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
-    this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]});
+    const commentThread = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!];
+    const isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
+    
+    commentThread.isResolvedCommentThread = isResolved;
+    commentThread.commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
+  
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 
   private toggleCommentUpVote(data: CommentUpdatesDto) {
     const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+    if (comment) {
+      this.toggleVoteUp(comment);
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleCommentDownVote(data: CommentUpdatesDto) {
+    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+    if (comment) {
+      this.toggleVoteDown(comment);
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleVoteUp(comment: CommentItemModel) {
     if (comment) {
       if (comment.upvotes.includes(this.userProfile?.userName!)) {
         comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
@@ -1093,12 +1140,10 @@ export class CodePanelComponent implements OnChanges{
           comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
   }
 
-  private toggleCommentDownVote(data: CommentUpdatesDto) {
-    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+   private toggleVoteDown(comment: CommentItemModel) {
     if (comment) {
       if (comment.downvotes.includes(this.userProfile?.userName!)) {
         comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
@@ -1108,7 +1153,6 @@ export class CodePanelComponent implements OnChanges{
           comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
   }
 

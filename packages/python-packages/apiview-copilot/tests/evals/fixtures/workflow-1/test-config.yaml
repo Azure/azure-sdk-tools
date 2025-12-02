@@ -1,0 +1,3 @@
+kind: summarize_prompt
+evaluation_config:
+  comparison_field: action

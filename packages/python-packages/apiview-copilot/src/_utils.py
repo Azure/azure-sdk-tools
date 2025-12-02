@@ -10,6 +10,7 @@ Module of utility functions for APIView Copilot.
 
 import os
 from datetime import datetime, timezone
+from typing import Any
 
 
 def get_language_pretty_name(language: str) -> str:
@@ -36,9 +37,8 @@ def get_language_pretty_name(language: str) -> str:
 def get_prompt_path(*, folder: str, filename: str) -> str:
     """
     Returns the full path to a prompt file.
-    Args:
-        folder (str): The folder containing the prompt.
-        filename (str): The name of the prompt file.
+    :param folder: Folder containing the prompty file.
+    :param filename: Name of the prompty file.
     """
     # if filename doesn't end with .prompty, append it
     if not filename.endswith(".prompty"):
@@ -52,6 +52,26 @@ def get_prompt_path(*, folder: str, filename: str) -> str:
     if not os.path.exists(prompt_path):
         raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
     return prompt_path
+
+
+def run_prompty(*, folder: str, filename: str, inputs: dict = None, **kwargs) -> Any:
+    """
+    Run a prompty prompt with the given inputs. Sets OPENAI_ENDPOINT from settings.
+    Ensures that the prompt file exists before executing.
+
+    :param folder: Folder containing the prompty file.
+    :param filename: Name of the prompty file.
+    :param inputs: Dictionary of inputs for the prompt.
+    :param kwargs: Additional keyword arguments to pass to prompty.execute.
+    """
+    import prompty
+    import prompty.azure
+    from src._settings import SettingsManager
+
+    settings = SettingsManager()
+    os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
+    prompt_path = get_prompt_path(folder=folder, filename=filename)
+    return prompty.execute(prompt_path, inputs=inputs, **kwargs)
 
 
 def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
@@ -93,3 +113,35 @@ def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
         return int(dt.timestamp())
     except Exception as exc:
         raise ValueError(f"Unrecognized date format: {date_str}") from exc
+
+
+def to_iso8601(date_str: str, *, end_of_day: bool = False) -> str:
+    """
+    Convert a date string to ISO8601 format at midnight or end-of-day UTC.
+
+    Accepted inputs:
+      - "YYYY-MM-DD"                -> returns YYYY-MM-DDT00:00:00Z or YYYY-MM-DDT23:59:59.999Z
+      - full ISO-8601 datetime e.g. "2025-08-01T12:34:56Z" or "2025-08-01T12:34:56+00:00"
+
+    Returns ISO8601 string in UTC.
+    """
+    # datetime and timezone already imported at top
+    # Fast path for simple YYYY-MM-DD
+    if len(date_str) == 10 and date_str.count("-") == 2:
+        year, month, day = map(int, date_str.split("-"))
+        if end_of_day:
+            dt = datetime(year, month, day, 23, 59, 59, 999999, tzinfo=timezone.utc)
+        else:
+            dt = datetime(year, month, day, 0, 0, 0, 0, tzinfo=timezone.utc)
+        return dt.isoformat().replace("+00:00", "Z")
+    # Otherwise try ISO parsing
+    ds = date_str.replace("Z", "")
+    try:
+        dt = datetime.fromisoformat(ds)
+    except Exception:
+        dt = datetime.strptime(ds, "%Y-%m-%d")
+    if end_of_day:
+        dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc)
+    else:
+        dt = dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z")

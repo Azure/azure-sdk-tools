@@ -1,4 +1,7 @@
+import json
 from abc import ABC, abstractmethod
+
+from src._utils import run_prompty
 
 
 class MentionWorkflow(ABC):
@@ -37,16 +40,6 @@ class MentionWorkflow(ABC):
     def create_plan(self):
         if not self.prompty_filename:
             raise NotImplementedError("Subclasses must set prompty_filename or override create_plan.")
-        import json
-        import os
-
-        import prompty
-        from src._utils import get_prompt_path
-
-        prompt_path = get_prompt_path(folder="mention", filename=self.prompty_filename)
-        if not os.path.exists(prompt_path):
-            print(f"Prompt file {prompt_path} does not exist.")
-            return None
         inputs = {
             "language": self.language,
             "code": self.code,
@@ -55,7 +48,7 @@ class MentionWorkflow(ABC):
             "other_comments": self.other_comments,
             "reasoning": self.reasoning,
         }
-        raw_results = prompty.execute(prompt_path, inputs=inputs)
+        raw_results = run_prompty(folder="mention", filename=self.prompty_filename, inputs=inputs)
         try:
             results = json.loads(raw_results)
             return results
@@ -67,17 +60,8 @@ class MentionWorkflow(ABC):
         pass
 
     def summarize(self, results: dict):
-        import os
-
-        import prompty
-        from src._utils import get_prompt_path
-
         if not self.summarize_prompt_file:
             raise NotImplementedError("Subclasses must set summarize_prompt_file or override summarize().")
-        prompt_path = get_prompt_path(folder="mention", filename=self.summarize_prompt_file)
-        if not os.path.exists(prompt_path):
-            print(f"Prompt file {prompt_path} does not exist.")
-            return "No prompt file found."
         properties_to_keep = ["url", "repository_url", "title", "created_at", "body", "action"]
         filtered_results = (
             [{k: item.get(k) for k in properties_to_keep} for item in results]
@@ -86,7 +70,7 @@ class MentionWorkflow(ABC):
         )
         inputs = {"results": filtered_results}
         try:
-            summary = prompty.execute(prompt_path, inputs=inputs)
+            summary = run_prompty(folder="mention", filename=self.summarize_prompt_file, inputs=inputs)
             return summary
         except Exception as e:
             print(f"Error summarizing results: {e}")

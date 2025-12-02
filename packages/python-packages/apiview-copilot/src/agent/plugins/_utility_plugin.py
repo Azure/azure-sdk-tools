@@ -11,12 +11,10 @@ import os
 import tempfile
 from urllib.parse import urlparse
 
-import prompty
-import prompty.azure_beta
 import requests
 from semantic_kernel.functions import kernel_function
 from src._diff import create_diff_with_line_numbers
-from src._utils import get_prompt_path
+from src._utils import run_prompty
 
 
 class UtilityPlugin:
@@ -41,38 +39,36 @@ class UtilityPlugin:
     async def summarize_api(self, api: str, language: str):
         """
         Summarize the provided API.
-        Args:
-            api (str): The API to summarize.
-            language (str): The programming language of the API.
+        :param api: The API content to summarize.
+        :param language: The programming language of the API.
+        :return: Summary of the API.
         """
-        prompt_path = get_prompt_path(folder="summarize", filename="summarize_api.prompty")
-        if not os.path.exists(prompt_path):
-            raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-        response = prompty.execute(prompt_path, inputs={"content": api, "language": language}, configuration={})
+        response = run_prompty(
+            folder="summarize", filename="summarize_api", inputs={"content": api, "language": language}
+        )
         return response
 
     @kernel_function(description="Summarize the differences between the provided APIs.")
     async def summarize_api_diff(self, target: str, base: str, language: str):
         """
         Summarize the differences between the provided APIs.
-        Args:
-            target (str): The target (new) API to compare.
-            base (str): The base (old) API to compare against.
-            language (str): The programming language of the APIs.
+        :param target: The target (new) API to compare.
+        :param base: The base (old) API to compare against.
+        :param language: The programming language of the APIs.
+        :return: Summary of the differences.
         """
-        prompt_path = get_prompt_path(folder="summarize", filename="summarize_diff.prompty")
-        if not os.path.exists(prompt_path):
-            raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         api_diff = create_diff_with_line_numbers(old=base, new=target)
-        response = prompty.execute(prompt_path, inputs={"content": api_diff, "language": language}, configuration={})
+        response = run_prompty(
+            folder="summarize", filename="summarize_diff", inputs={"content": api_diff, "language": language}
+        )
         return response
 
     @kernel_function(description="Load a JSON file from the specified path or URL.")
     async def load_json_file(self, file_path: str):
         """
         Load a JSON file from the specified path or URL.
-        Args:
-            file_path (str): The path or URL to the JSON file.
+        :param file_path: The path or URL to the JSON file.
+        :return: The JSON content as a pretty-printed string.
         """
         file_path = self._download_if_url(file_path)
         if not os.path.exists(file_path):
@@ -90,8 +86,8 @@ class UtilityPlugin:
     async def load_text_file(self, file_path: str):
         """
         Load a text file from the specified path or URL.
-        Args:
-            file_path (str): The path or URL to the text file.
+        :param file_path: The path or URL to the text file.
+        :return: The content of the text file as a string.
         """
         file_path = self._download_if_url(file_path)
         if not os.path.exists(file_path):

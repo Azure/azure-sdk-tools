@@ -302,6 +302,9 @@ export class CommentThreadComponent {
   }
 
   showReplyEditor(event: Event) {
+    if (this.codePanelRowData!.draftCommentText === undefined) {
+      this.codePanelRowData!.draftCommentText = '';
+    }
     this.codePanelRowData!.showReplyTextBox = true;
   }
 

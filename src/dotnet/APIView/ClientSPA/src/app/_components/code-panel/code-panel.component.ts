@@ -68,7 +68,7 @@ export class CodePanelComponent implements OnChanges{
 
   menuItemsLineActions: MenuItem[] = [];
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
+  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
     private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
 
@@ -403,12 +403,17 @@ export class CodePanelComponent implements OnChanges{
     }
       
     await this.codePanelRowSource?.adapter?.relax();
-    await this.codePanelRowSource?.adapter?.update({
-      predicate: ({ $index, data, element}) => {
+    await this.codePanelRowSource?.adapter?.fix({
+      updater: ({ data, element }) => {
         if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
-          return updateData;
+          if (updateData.type === CodePanelRowDatatype.CommentThread) {
+            if (data.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup) {
+              Object.assign(data, updateData);
+            }
+          } else {
+            Object.assign(data, updateData);
+          }
         }
-        return true;
       }
     });
   }

@@ -90,6 +90,9 @@ public class CommentsManagerTests
             });
 
         Mock<IBackgroundTaskQueue> backgroundTaskQueueMock = new();
+        Mock<ICopilotAuthenticationService> copilotAuthService = new();
+        copilotAuthService.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
             {
@@ -117,6 +120,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            copilotAuthService.Object,
             logger.Object
         );
     }

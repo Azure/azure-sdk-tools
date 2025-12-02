@@ -120,7 +120,7 @@ Returns an answer with supporting references and documentation links
                 {
                     return new TypeSpecAuthoringResponse
                     {
-                        ResponseError = "Question cannot be empty"
+                        ResponseError = "Request cannot be empty"
                     };
                 }
 

@@ -151,12 +151,12 @@ Returns an answer with supporting references and documentation links
                     References = MapReferences(response.References),
                     FullContext = response.FullContext,
                     ReasoningProgress = response.ReasoningProgress,
-                    QueryIntension = response.Intension != null ? new QueryIntension
+                    QueryIntention = response.Intention != null ? new QueryIntention
                     {
-                        Question = response.Intension.Question,
-                        Category = response.Intension.Category,
-                        SpecType = response.Intension.SpecType,
-                        Scope = response.Intension.Scope?.ToString()
+                        Question = response.Intention.Question,
+                        Category = response.Intention.Category,
+                        SpecType = response.Intention.SpecType,
+                        Scope = response.Intention.Scope?.ToString()
                     } : null
                 };
             }

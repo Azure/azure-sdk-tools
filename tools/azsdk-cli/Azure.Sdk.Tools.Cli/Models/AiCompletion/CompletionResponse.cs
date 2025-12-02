@@ -21,9 +21,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? FullContext { get; set; }
 
-    [JsonPropertyName("intension")]
+    [JsonPropertyName("intention")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IntensionResult? Intension { get; set; }
+    public IntentionResult? Intention { get; set; }
 
     [JsonPropertyName("reasoning_progress")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
     public string Content { get; set; } = string.Empty;
   }
 
-  public class IntensionResult
+  public class IntentionResult
   {
     [JsonPropertyName("question")]
     public string Question { get; set; } = string.Empty;

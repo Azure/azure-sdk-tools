@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Models.seraialize
             if (field == null)
             {
                 writer.WriteStringValue(value.ToString());
-            } else
+            } else 
             {
                 var attr = field.GetCustomAttribute<EnumMemberAttribute>();
                 writer.WriteStringValue(attr?.Value ?? field.Name);

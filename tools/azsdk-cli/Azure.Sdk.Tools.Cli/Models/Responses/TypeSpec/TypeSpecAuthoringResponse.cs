@@ -24,9 +24,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ReasoningProgress { get; set; }
 
-        [JsonPropertyName("query_intension")]
+        [JsonPropertyName("query_intention")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public QueryIntension? QueryIntension { get; set; }
+        public QueryIntention? QueryIntention { get; set; }
 
         protected override string Format()
         {
@@ -52,17 +52,17 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
                 }
             }
 
-            if (QueryIntension != null)
+            if (QueryIntention != null)
             {
                 result.AppendLine($"\n**Query Analysis:**");
-                result.AppendLine($"- Category: {QueryIntension.Category}");
-                if (!string.IsNullOrEmpty(QueryIntension.SpecType))
+                result.AppendLine($"- Category: {QueryIntention.Category}");
+                if (!string.IsNullOrEmpty(QueryIntention.SpecType))
                 {
-                    result.AppendLine($"- Spec Type: {QueryIntension.SpecType}");
+                    result.AppendLine($"- Spec Type: {QueryIntention.SpecType}");
                 }
-                if (!string.IsNullOrEmpty(QueryIntension.Scope))
+                if (!string.IsNullOrEmpty(QueryIntention.Scope))
                 {
-                    result.AppendLine($"- Scope: {QueryIntension.Scope}");
+                    result.AppendLine($"- Scope: {QueryIntention.Scope}");
                 }
             }
 

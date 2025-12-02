@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
 {
-    public class QueryIntension
+    public class QueryIntention
     {
         [JsonPropertyName("question")]
         public string Question { get; set; } = string.Empty;

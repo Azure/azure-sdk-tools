@@ -316,7 +316,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 ```json
 {
-  "result": "succeeded",
+  "is_successful":true,
   "solution": "<solution-for-the-typespec-task>",
   "references": [
     {

@@ -220,13 +220,13 @@ enum Versions {
 
 ## Goals
 
-- [ ] **AI Pair Programming for TypeSpec**: Enable GitHub Copilot to provide intelligent, context-aware assistance for TypeSpec authoring by integrating Azure SDK RAG (Retrieval-Augmented Generation) knowledge base
-- [ ] **Guide Users Through Intent-Driven Development**: Allow users to describe their intent in natural language (e.g., "I need to add a new API version to my Widget service" or "I want to add an ARM resource named 'Asset' with CRUD operations"), and have the AI guide them through the correct TypeSpec implementation
-- [ ] **Generate TypeSpec Following ARM/DP/SDK/TypeSpec Guidelines**: Ensure that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices
-- [ ] **Provide Contextual References**: When generating or suggesting TypeSpec, include references to relevant documentation (e.g., links to TypeSpec Azure guidelines for versioning, ARM resource types, routing patterns)
-- [ ] **Save Review Efforts**: Reduce the time reviewers spend identifying standards violations by ensuring TypeSpec code follows standards from the start
-- [ ] **Improve Developer Learning**: Help service teams learn TypeSpec syntax and Azure patterns through interactive guidance, increasing their confidence in making code changes
-- [ ] **Accelerate Inner Loop Development**: Speed up the iterative process of authoring TypeSpec, compiling, validating, and adjusting to achieve expected SDK outputs
+- **AI Pair Programming for TypeSpec**: Enable GitHub Copilot to provide intelligent, context-aware assistance for TypeSpec authoring by integrating Azure SDK RAG (Retrieval-Augmented Generation) knowledge base
+- **Guide Users Through Intent-Driven Development**: Allow users to describe their intent in natural language (e.g., "I need to add a new API version to my Widget service" or "I want to add an ARM resource named 'Asset' with CRUD operations"), and have the AI guide them through the correct TypeSpec implementation
+- **Generate TypeSpec Following ARM/DP/SDK/TypeSpec Guidelines**: Ensure that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices
+- **Provide Contextual References**: When generating or suggesting TypeSpec, include references to relevant documentation (e.g., links to TypeSpec Azure guidelines for versioning, ARM resource types, routing patterns)
+- **Save Review Efforts**: Reduce the time reviewers spend identifying standards violations by ensuring TypeSpec code follows standards from the start
+- **Improve Developer Learning**: Help service teams learn TypeSpec syntax and Azure patterns through interactive guidance, increasing their confidence in making code changes
+- **Accelerate Inner Loop Development**: Speed up the iterative process of authoring TypeSpec, compiling, validating, and adjusting to achieve expected SDK outputs
 
 ---
 
@@ -369,36 +369,36 @@ TypeSpec authoring is language-agnostic. The generated SDKs target specific lang
 
 This feature/tool is complete when:
 
-- [ ] **Benchmark Test Suite**: A curated set of 50+ real-world TypeSpec authoring scenarios is established, covering the most commonly encountered cases:
+- **Benchmark Test Suite**: A curated set of 50+ real-world TypeSpec authoring scenarios is established, covering the most commonly encountered cases:
   - ARM resource creation with CRUD operations (15+ variants)
   - Parent-child resource hierarchy and routing (10+ variants)
   - API versioning scenarios (preview, stable, deprecated) (10+ variants)
   - Complex decorator usage (@armResourceOperations, @parentResource, @route, @added, @removed) (10+ variants)
   - Common anti-patterns and their corrections (5+ variants)
 
-- [ ] **Agent Output Accuracy**: When tested against the benchmark suite:
+- **Agent Output Accuracy**: When tested against the benchmark suite:
   - Generated TypeSpec code passes compilation without errors
   - Generated code follows Azure ARM/DP/SDK guidelines (validated by automated linter/validator)
   - Generated code matches expected patterns for resource hierarchy and routing
   - Generated code includes proper syntax, e.g. decorators, templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`)
 
-- [ ] **Documentation Reference Quality**: For each agent response:
+- **Documentation Reference Quality**: For each agent response:
   - Responses include relevant documentation links (e.g., TypeSpec Azure guidelines)
   - Documentation links are accurate and point to the correct section
   - References are contextually appropriate to the user's question
 
-- [ ] **User Intent Recognition**: Agent correctly interprets and responds to:
+- **User Intent Recognition**: Agent correctly interprets and responds to:
   - Natural language requests for adding ARM resources
   - Path correction requests based on compiled OpenAPI output
   - Versioning change requests (adding preview/stable versions)
   - Request to fix non-compliant code patterns
 
-- [ ] **Comparative Improvement**: Compared to generic GitHub Copilot baseline:
+- **Comparative Improvement**: Compared to generic GitHub Copilot baseline:
   - Reduction in decorator hallucinations
   - Improvement in correct usage of @parentResource and @route for hierarchical resources
   - Improvement in adherence to Azure versioning guidelines
 
-- [ ] **Review Effort Reduction**: Measurable impact on TypeSpec PR reviews:
+- **Review Effort Reduction**: Measurable impact on TypeSpec PR reviews:
   - Reduction in reviewer comments related to TypeSpec standards violations
   - Reduction in PR iterations required to achieve compliant TypeSpec
   - Track via telemetry over 3-month period post-deployment

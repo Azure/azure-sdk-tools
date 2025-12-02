@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueLabelerService", "src\IssueLabelerService\IssueLabelerService.csproj", "{4C9E75AF-468F-4DF7-BACD-EC0C2C66A96F}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchIndexCreator", "src\SearchIndexCreator\SearchIndexCreator.csproj", "{0AEAF8DD-C370-4090-B439-9CF364D29869}"
 	ProjectSection(ProjectDependencies) = postProject
 		{5B655051-531D-4968-8AF3-1DBA9A9F568C} = {5B655051-531D-4968-8AF3-1DBA9A9F568C}

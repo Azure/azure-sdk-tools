@@ -10,7 +10,7 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
     /// <summary>
-    /// This tool is designed to guide the user to define and update TypeSpec based API spec for an azure service
+    /// Guide the user to define and update TypeSpec-based API specifications for Azure services.
     /// It connects to an AI agent that can answer questions about TypeSpec, Azure SDK guidelines, and API best practices.
     /// </summary>
     [McpServerToolType, Description("Guide the user to perform typespec related tasks, e.g. define and update TypeSpec based API spec for an azure service.")]

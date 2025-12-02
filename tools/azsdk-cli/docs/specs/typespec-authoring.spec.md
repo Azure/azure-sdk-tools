@@ -417,7 +417,7 @@ add a new preview API version 2025-10-01-preview for service widget
 
 **Expected Agent Activity:**
 
-1. Add a enum option v2025_10_01_preview in version enum for this new api version and decorate with @previewVersion
+1. Add a enum option v2025_10_01_preview in version enum for this new API version and decorate with @previewVersion
 2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
 3. Summarize all the actions taken and display the reference docs
 

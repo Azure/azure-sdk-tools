@@ -431,7 +431,7 @@ add an azure resource named asset for the api version 2025-10-01-preview
 
 **Expected Agent Activity:**
 
-1. generate azure trackedResource model Asset and resource interface Assets using azure mgmt templates. Decorated @added(Versions.v2025_10_01_preview) 
+1. Generate azure trackedResource model Asset and resource interface Assets using azure mgmt templates. Decorated @added(Versions.v2025_10_01_preview) 
 2. summarize all the actions taken and display the reference docs
 
 ---

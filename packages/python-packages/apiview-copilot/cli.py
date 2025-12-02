@@ -180,10 +180,12 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str] = [], num_runs: int = 1, save: bool = False, use_recording: bool = False):
+def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False):
     """
     Runs the specified test case(s).
     """
+    if test_paths is None:
+        test_paths = []
     from evals._discovery import discover_targets
     from evals._runner import EvaluationRunner
 

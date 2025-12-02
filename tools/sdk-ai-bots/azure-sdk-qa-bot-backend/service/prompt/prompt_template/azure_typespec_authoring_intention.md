@@ -41,18 +41,19 @@ The question must be classified into one of these categories:
 - **SDK Generation**: Question about how to generate SDK based on TypeSpec, such as:
   - How to generate dotnet SDK?
 
+- **Customization**: Question about how to customize resource, operation, parameter, model, model property and so on for client sdks, such as:
+  - How to rename operation name for dotnet sdk?
+
 ## Intent Scopes
 The question must be classified into one of these categories:
 
-- **branded**: Questions from internal Azure users about TypeSpec, identified by:
-    - Mentions of Azure-specific concepts: Azure, ARM(Azure Resource Manager), data plane, management (mgmt) plane, TCGC(typespec-client-generator-core) and so on
-    - Discussion of Azure service specifications
-    - Questions about Azure-specific TypeSpec extensions
+- **resource-management**: Questions from management plan services about TypeSpec, identified by:
+    - Mentions of Azure-specific concepts: Azure, ARM(Azure Resource Manager)
 
-- **unbranded**: Questions from external users about general TypeSpec usage, such as:
-    - Basic TypeSpec syntax and features
-    - General code generation queries
-    - Questions about core TypeSpec concepts
+- **data-plane**: Questions from data-plane services about TypeSpec, such as:
+    - Mentions of Azure-specific concepts: Azure,  data plane
+
+- **common**: Questions about TypeSpec which can supply both management plane and data plane
 
 ## Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
@@ -70,7 +71,7 @@ Response:
 {
   "question": "How do I migrate Azure Resource Manager (ARM) swagger specifications to TypeSpec?",
   "category": "TypeSpec Migration",
-  "scope": "branded",
+  "scope": "resource-management",
   "needs_rag_processing": true
 }
 

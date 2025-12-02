@@ -47,14 +47,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Core",
-            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt"
-          },
-          "BuildSnippets": false
-        }
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Identity",
@@ -79,14 +80,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Identity",
-            "ExpectedWarningsFilepath": "None"
-          },
-          "BuildSnippets": true
-        }
+            "ExpectedWarningsFilepath": "None",
+            "ArtifactName": "Azure.Identity"
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Template",
@@ -119,11 +121,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": false,
-          "AOTTestInputs": [],
-          "BuildSnippets": true
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -165,14 +168,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Messaging.EventHubs",
-            "ExpectedWarningsFilepath": "None"
-          },
-          "BuildSnippets": true
-        }
+            "ExpectedWarningsFilepath": "None",
+            "ArtifactName": "Azure.Messaging.EventHubs"
+          }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -217,14 +221,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Core",
-            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt"
-          },
-          "BuildSnippets": false
-        }
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Template",
@@ -257,11 +262,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": false,
-          "AOTTestInputs": [],
-          "BuildSnippets": true
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -303,11 +309,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": false,
-          "AOTTestInputs": [],
-          "BuildSnippets": true
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -354,14 +361,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Core",
-            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt"
-          },
-          "BuildSnippets": false
-        }
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Core.Amqp",
@@ -386,11 +394,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
-          "AOTTestInputs": null,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Core.Experimental",
@@ -415,11 +424,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
-          "AOTTestInputs": null,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Core.Expressions.DataFactory",
@@ -444,11 +454,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
-          "AOTTestInputs": null,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Microsoft.Azure.Core.NewtonsoftJson",
@@ -473,11 +484,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
-          "AOTTestInputs": null,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Microsoft.Azure.Core.Spatial",
@@ -502,11 +514,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
-          "AOTTestInputs": null,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
@@ -531,11 +544,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
-          "AOTTestInputs": null,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "System.ClientModel",
@@ -560,14 +574,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
-            "ArtifactName": "System.ClientModel",
-            "ExpectedWarningsFilepath": "None"
-          },
-          "BuildSnippets": false
-        }
+            "ExpectedWarningsFilepath": "None",
+            "ArtifactName": "System.ClientModel"
+          }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -614,14 +629,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Core",
-            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt"
-          },
-          "BuildSnippets": false
-        }
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.ResourceManager",
@@ -646,11 +662,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": false,
-          "AOTTestInputs": [],
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -697,14 +714,15 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
           "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
-            "ArtifactName": "Azure.Core",
-            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt"
-          },
-          "BuildSnippets": false
-        }
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          }
+        },
+        "SpecProjectPath": null
       }
     ]
   }

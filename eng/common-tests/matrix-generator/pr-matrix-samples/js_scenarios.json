@@ -42,7 +42,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": "specification/translation/Azure.AI.DocumentTranslation"
       },
       {
         "Name": "@azure-rest/core-client",
@@ -69,7 +70,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/abort-controller",
@@ -96,7 +98,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/arm-resources",
@@ -129,7 +132,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-amqp",
@@ -156,7 +160,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-auth",
@@ -183,7 +188,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-client",
@@ -210,7 +216,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-http-compat",
@@ -237,7 +244,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-lro",
@@ -264,7 +272,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-paging",
@@ -291,7 +300,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-rest-pipeline",
@@ -318,7 +328,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-sse",
@@ -345,7 +356,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-tracing",
@@ -372,7 +384,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-util",
@@ -399,7 +412,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/core-xml",
@@ -426,7 +440,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/identity",
@@ -461,7 +476,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/logger",
@@ -488,7 +504,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/service-bus",
@@ -520,7 +537,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/storage-blob",
@@ -547,7 +565,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/storage-file-datalake",
@@ -573,7 +592,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/storage-file-share",
@@ -599,7 +619,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/template",
@@ -633,7 +654,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@typespec/ts-http-runtime",
@@ -660,7 +682,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -694,7 +717,8 @@
         "ArtifactDetails": null,
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/template",
@@ -728,7 +752,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "@azure/template-dpg",
@@ -754,7 +779,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -795,7 +821,8 @@
         },
         "CIParameters": {
           "CIMatrixConfigs": []
-        }
+        },
+        "SpecProjectPath": null
       }
     ]
   }

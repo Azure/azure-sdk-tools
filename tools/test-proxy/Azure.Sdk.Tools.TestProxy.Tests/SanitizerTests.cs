@@ -895,6 +895,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var requestBodyString = Encoding.UTF8.GetString(requestBody);
 
             Assert.DoesNotContain("\\", requestBodyString);
+            Assert.DoesNotContain("%5C", requestBodyString);
         }
     }
 }

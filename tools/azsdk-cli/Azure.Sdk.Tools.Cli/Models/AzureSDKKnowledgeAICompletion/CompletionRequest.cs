@@ -11,5 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         [JsonPropertyName("message")]
         [Required]
         public Message Message { get; set; } = new();
+
+        [JsonPropertyName("additional_infos")]
+        public List<string> AdditionalInfos { get; set; } = new();
     }
 }

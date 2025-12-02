@@ -1,11 +1,14 @@
 Import-Module Pester
 
-# Load scenarios before we enter the Describe block so they're available for -ForEach
-$netScenarios = Get-Content (Join-Path $PSScriptRoot net_scenarios.json) | ConvertFrom-Json -AsHashtable
-$pythonScenarios = Get-Content (Join-Path $PSScriptRoot python_scenarios.json) | ConvertFrom-Json -AsHashtable
-$jsScenarios = Get-Content (Join-Path $PSScriptRoot js_scenarios.json) | ConvertFrom-Json -AsHashtable
-$goScenarios = Get-Content (Join-Path $PSScriptRoot go_scenarios.json) | ConvertFrom-Json -AsHashtable
-$javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | ConvertFrom-Json -AsHashtable
+# Load scenarios so they're available for -ForEach
+$script:netScenarios = Get-Content (Join-Path $PSScriptRoot net_scenarios.json) | ConvertFrom-Json -AsHashtable
+$script:pythonScenarios = Get-Content (Join-Path $PSScriptRoot python_scenarios.json) | ConvertFrom-Json -AsHashtable
+$script:jsScenarios = Get-Content (Join-Path $PSScriptRoot js_scenarios.json) | ConvertFrom-Json -AsHashtable
+$script:goScenarios = Get-Content (Join-Path $PSScriptRoot go_scenarios.json) | ConvertFrom-Json -AsHashtable
+$script:javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | ConvertFrom-Json -AsHashtable
+
+# Set this to $true to update expected outputs in the scenario files
+$script:updateScenarios = $false
 
 # due to relative slowness of these tests, we're limiting them to linux only for now.
 Describe ".NET Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
@@ -21,11 +24,21 @@ Describe ".NET Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "
         $scenario = $_
         $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
         $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
-        $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+        $detectedOutputs = @(Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
             | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json -AsHashtable }
-            | Sort-Object -Property Name
+            | Sort-Object -Property Name)
 
+        if ($updateScenarios) {
+            $_.expected_package_output = $detectedOutputs
+        }
         Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
+    }
+
+    AfterAll { 
+        if ($updateScenarios) { 
+            $netScenarios | ConvertTo-Json -Depth 100 | Set-Content (Join-Path $PSScriptRoot net_scenarios.json)
+        }
+        
     }
 }
 
@@ -49,11 +62,20 @@ Describe "Python Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag
         else {
             $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
             $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
-            $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+            $detectedOutputs = @(Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
                 | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json -AsHashtable }
-                | Sort-Object -Property Name
+                | Sort-Object -Property Name)
 
+            if ($updateScenarios) {
+                $_.expected_package_output = $detectedOutputs
+            }
             Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
+        }
+    }
+
+    AfterAll {
+        if ($updateScenarios) {
+            $pythonScenarios | ConvertTo-Json -Depth 100 | Set-Content (Join-Path $PSScriptRoot python_scenarios.json)
         }
     }
 }
@@ -78,11 +100,20 @@ Describe "JS Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "In
         else {
             $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
             $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
-            $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+            $detectedOutputs = @(Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
                 | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json -AsHashtable }
-                | Sort-Object -Property Name
+                | Sort-Object -Property Name)
 
+            if ($updateScenarios) {
+                $scenario.expected_package_output = $detectedOutputs
+            }
             Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
+        }
+    }
+
+    AfterAll {
+        if ($updateScenarios) {
+            $jsScenarios | ConvertTo-Json -Depth 100 | Set-Content (Join-Path $PSScriptRoot js_scenarios.json)
         }
     }
 }
@@ -107,11 +138,20 @@ Describe "Go Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "In
         else {
             $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
             $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
-            $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+            $detectedOutputs = @(Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
                 | ForEach-Object { Get-Content -Raw $_ |  ConvertFrom-Json -AsHashtable  }
-                | Sort-Object -Property Name
+                | Sort-Object -Property Name)
 
+            if ($updateScenarios) {
+                $_.expected_package_output = $detectedOutputs
+            }
             Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
+        }
+    }
+
+    AfterAll {
+        if ($updateScenarios) {
+            $goScenarios | ConvertTo-Json -Depth 100 | Set-Content (Join-Path $PSScriptRoot go_scenarios.json)
         }
     }
 }
@@ -136,12 +176,21 @@ Describe "Java Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "
         else {
             $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
             $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
-            $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+            $detectedOutputs = @(Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
                 | ForEach-Object {
                     Get-Content -Raw $_ | ConvertFrom-Json -AsHashtable
-                } | Sort-Object -Property Name
+                } | Sort-Object -Property Name)
 
+            if ($updateScenarios) {
+                $_.expected_package_output = $detectedOutputs
+            }
             Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
+        }
+    }
+
+    AfterAll {
+        if ($updateScenarios) {
+            $javaScenarios | ConvertTo-Json -Depth 100 | Set-Content (Join-Path $PSScriptRoot java_scenarios.json)
         }
     }
 }

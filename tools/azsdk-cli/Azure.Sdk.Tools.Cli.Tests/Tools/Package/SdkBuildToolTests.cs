@@ -21,7 +21,7 @@ public class SdkBuildToolTests
     private const string InvalidJsonContent = "{ invalid json }";
 
     // Common error message patterns
-    private const string InvalidProjectPathError = "Path does not exist";
+    private const string InvalidProjectPathError = "does not exist";
     private const string FailedToDiscoverRepoError = "Failed to discover local sdk repo";
     private const string ConfigFileNotFoundError = "Configuration file not found";
     private const string JsonParsingError = "Error parsing JSON configuration";
@@ -58,11 +58,11 @@ public class SdkBuildToolTests
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
-            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
-            new GoLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object),
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object)
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new GoLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
         ];
 
         // Create the tool instance
@@ -91,6 +91,53 @@ public class SdkBuildToolTests
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
+    }
+
+    [Test]
+    public async Task BuildSdkAsync_EmptyPath_ReturnsFailure()
+    {
+        // Act
+        var result = await _tool.BuildSdkAsync(string.Empty);
+
+        // Assert
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("required and cannot be empty"));
+    }
+
+    [Test]
+    public async Task BuildSdkAsync_RelativePath_ResolvesToAbsolute()
+    {
+        // Arrange - create a test directory structure
+        var projectDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "project");
+        Directory.CreateDirectory(projectDir);
+        
+        // Save the current directory
+        var originalDir = Directory.GetCurrentDirectory();
+        
+        try
+        {
+            // Change to the temp directory
+            Directory.SetCurrentDirectory(_tempDirectory.DirectoryPath);
+            
+            // Mock GitHelper for the resolved path
+            _mockGitHelper
+                .Setup(x => x.DiscoverRepoRoot(projectDir))
+                .Returns(_tempDirectory.DirectoryPath);
+            _mockGitHelper
+                .Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath))
+                .Returns("azure-sdk-for-python");
+
+            // Act - use relative path
+            var result = await _tool.BuildSdkAsync("./sdk/project");
+
+            // Assert - should successfully resolve and process
+            Assert.That(result.Result, Is.EqualTo("noop")); // Python project skips build
+            Assert.That(result.Message, Does.Contain("Python SDK project detected"));
+        }
+        finally
+        {
+            // Restore the original directory
+            Directory.SetCurrentDirectory(originalDir);
+        }
     }
 
     [Test]

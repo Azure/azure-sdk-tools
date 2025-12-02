@@ -205,10 +205,10 @@ namespace APIViewWeb.LeanControllers
         /// <param name="reviewId"></param>
         /// <param name="request"></param>
         /// <returns></returns>
-        [HttpPatch("{reviewId}/resolveBatchComments", Name = "ResolveBatchComments")]
-        public async Task<ActionResult> ResolveBatchCommentsAsync(string reviewId, [FromBody] ResolveBatchConversationRequest request)
+        [HttpPatch("{reviewId}/commentsBatchOperation", Name = "CommentsBatchOperation")]
+        public async Task<ActionResult> CommentsBatchOperation(string reviewId, [FromBody] ResolveBatchConversationRequest request)
         {
-            List<CommentItemModel> createdComments = await _commentsManager.ResolveBatchConversationAsync(User, reviewId, request);
+            List<CommentItemModel> createdComments = await _commentsManager.CommentsBatchOperationAsync(User, reviewId, request);
             return new LeanJsonResult(createdComments, StatusCodes.Status201Created);
         }
 
@@ -248,6 +248,20 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> ToggleDownUpVoteAsync(string reviewId, string commentId)
         {
             await _commentsManager.ToggleDownvoteAsync(User, reviewId, commentId);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Submit feedback for comment
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <param name="feedback"></param>
+        /// <returns></returns>
+        [HttpPost("{reviewId}/{commentId}/feedback", Name = "SubmitCommentFeedback")]
+        public async Task<ActionResult> SubmitCommentFeedbackAsync(string reviewId, string commentId, [FromBody] CommentFeedbackRequest feedback)
+        {
+            await _commentsManager.AddCommentFeedbackAsync(User, reviewId, commentId, feedback);
             return Ok();
         }
 

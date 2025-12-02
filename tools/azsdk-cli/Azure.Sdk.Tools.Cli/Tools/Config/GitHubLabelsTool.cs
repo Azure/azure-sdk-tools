@@ -28,6 +28,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         private const string checkServiceLabelCommandName = "check";
         private const string createServiceLabelCommandName = "create";
 
+        // MCP Tool Names
+        private const string CheckServiceLabelToolName = "azsdk_check_service_label";
+        private const string CreateServiceLabelToolName = "azsdk_create_service_label";
+
         private readonly Argument<string> serviceLabelArg = new("service")
         {
             Description = "Proposed Service name used to create a PR for a new label."
@@ -63,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
         }
 
-        [McpServerTool(Name = "azsdk_check_service_label"), Description("Checks if a service label exists and returns its details")]
+        [McpServerTool(Name = CheckServiceLabelToolName), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -103,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             return result;
         }
 
-        [McpServerTool(Name = "azsdk_create_service_label"), Description("Creates a pull request to add a new service label")]
+        [McpServerTool(Name = CreateServiceLabelToolName), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try

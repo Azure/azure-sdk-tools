@@ -33,6 +33,7 @@ public class VersionUpdateTool : LanguageMcpTool
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
     private const string UpdateVersionCommandName = "update-version";
+    private const string UpdateVersionToolName = "azsdk_package_update_version";
 
     private static readonly Option<string?> ReleaseTypeOption = new("--release-type", "-t")
     {
@@ -53,7 +54,7 @@ public class VersionUpdateTool : LanguageMcpTool
     };
 
     protected override Command GetCommand() =>
-        new(UpdateVersionCommandName, "Updates version and release date for Azure SDK packages") 
+        new McpCommand(UpdateVersionCommandName, "Updates version and release date for Azure SDK packages", UpdateVersionToolName) 
         { 
             SharedOptions.PackagePath,
             ReleaseTypeOption,
@@ -81,7 +82,7 @@ public class VersionUpdateTool : LanguageMcpTool
     /// <param name="releaseDate">The date (YYYY-MM-DD) to write into the changelog.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
     /// <returns>A response indicating the result of the version update operation.</returns>
-    [McpServerTool(Name = "azsdk_package_update_version"), Description("Updates the version and release date for a specified package.")]
+    [McpServerTool(Name = UpdateVersionToolName), Description("Updates the version and release date for a specified package.")]
     public async Task<PackageOperationResponse> UpdateVersionAsync(
         [Description("The absolute path to the package directory.")] string packagePath,
         [Description("Specifies whether the next version is 'beta' or 'stable'.")] string? releaseType,
@@ -100,10 +101,16 @@ public class VersionUpdateTool : LanguageMcpTool
                 return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
             }
 
-            if (!Directory.Exists(packagePath))
+            // Resolves relative paths to absolute
+            string fullPath = Path.GetFullPath(packagePath);
+            
+            if (!Directory.Exists(fullPath))
             {
-                return PackageOperationResponse.CreateFailure($"Package path does not exist: {packagePath}");
+                return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
             }
+
+            packagePath = fullPath;
+            logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
             // Validate and set release date
             if (string.IsNullOrWhiteSpace(releaseDate))

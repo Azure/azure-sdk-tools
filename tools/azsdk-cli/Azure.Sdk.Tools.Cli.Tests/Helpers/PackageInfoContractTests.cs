@@ -70,14 +70,41 @@ public class PackageInfoContractTests
 
     private void SetupPythonPackage(string packagePath, string packageName, string version)
     {
-        CreateTestFile(packagePath, "sdk_packaging.toml", $"[packaging]\npackage_name = \"{packageName}\"\n");
-        var modulePath = packageName.Replace('-', Path.DirectorySeparatorChar);
-        CreateTestFile(packagePath, $"{modulePath}/_version.py", $"VERSION = \"{version}\"\n");
+        // Create the eng/scripts directory structure and the get_package_properties.py script
+        var gitHelper = new GitHelper(Mock.Of<IGitHubService>(), Mock.Of<ILogger<GitHelper>>());
+        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var scriptsDir = Path.Combine(repoRoot, "eng", "scripts");
+        Directory.CreateDirectory(scriptsDir);
+        
+        // Create a minimal Python script that outputs the package info
+        var scriptContent = $@"#!/usr/bin/env python
+import sys
+import os
+
+# Simple mock that returns the expected format
+package_path = sys.argv[sys.argv.index('-s') + 1] if '-s' in sys.argv else ''
+package_name = '{packageName}'
+version = '{version}'
+
+print(f'{{package_name}} {{version}} True {{package_path}} ')
+";
+        CreateTestFile(repoRoot, Path.Combine("eng", "scripts", "get_package_properties.py"), scriptContent);
     }
 
-    private void SetupJavaScriptPackage(string packagePath, string packageName, string version)
+    private void SetupJavaScriptPackage(string packagePath, string packageName, string version, SdkType sdkType)
     {
-        CreateTestFile(packagePath, "package.json", $"{{\n  \"name\": \"@azure/{packageName}\",\n  \"version\": \"{version}\"\n}}");
+        CreateTestFile(packagePath, "package.json", $$"""
+{
+  "name": "@azure/{{packageName}}",
+  "version": "{{version}}",
+  "sdk-type": "{{sdkType switch
+    {
+        SdkType.Dataplane => "client",
+        SdkType.Management => "mgmt",
+        _ => ""
+    }}}" 
+}
+""");
     }
 
     private void SetupGoPackage(string packagePath, string version)
@@ -92,7 +119,7 @@ public class PackageInfoContractTests
             }}");
     }
 
-    private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version)
+    private void SetupPackageForLanguage(SdkLanguage language, string packagePath, string packageName, string version, SdkType sdkType)
     {
         switch (language)
         {
@@ -106,7 +133,7 @@ public class PackageInfoContractTests
                 SetupPythonPackage(packagePath, packageName, version);
                 break;
             case SdkLanguage.JavaScript:
-                SetupJavaScriptPackage(packagePath, packageName, version);
+                SetupJavaScriptPackage(packagePath, packageName, version, sdkType);
                 break;
             case SdkLanguage.Go:
                 SetupGoPackage(packagePath, version);
@@ -154,16 +181,37 @@ public class PackageInfoContractTests
         var servicePath = language == SdkLanguage.Go ? "security/keyvault" : "ai";
         var (pkgPath, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper) = CreateSdkPackage(servicePath, package);
 
-        SetupPackageForLanguage(language, pkgPath, package, expectedVersion);
+        SetupPackageForLanguage(language, pkgPath, package, expectedVersion, SdkType.Unknown);
 
         if (language == SdkLanguage.Go)
         {
             processHelper = new ProcessHelper(Mock.Of<ILogger<ProcessHelper>>(), Mock.Of<IRawOutputHelper>());
         }
 
+        if (language == SdkLanguage.Python)
+        {
+            pythonHelper = new PythonHelper(new TestLogger<PythonHelper>(), Mock.Of<IRawOutputHelper>());
+        }
+
         var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper);
         var info = await helper.GetPackageInfo(pkgPath);
         Assert.That(info.PackageVersion, Is.EqualTo(expectedVersion));
+    }
+    
+    [Test]
+    [TestCase(SdkLanguage.JavaScript, SdkType.Dataplane)]
+    [TestCase(SdkLanguage.JavaScript, SdkType.Management)]
+    public async Task SdkType_IsDerivedCorrectly(SdkLanguage language, SdkType sdkType)
+    {
+        var servicePath = "storage";
+        var package = "azure-storage-blob";
+        var (pkgPath, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper) = CreateSdkPackage(servicePath, package);
+
+        SetupJavaScriptPackage(pkgPath, package, "1.2.3", sdkType);
+
+        var helper = CreateHelperForLanguage(language, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper);
+        var info = await helper.GetPackageInfo(pkgPath);
+        Assert.That(info.SdkType, Is.EqualTo(sdkType));
     }
 
     [Test]
@@ -185,11 +233,11 @@ public class PackageInfoContractTests
     {
         ///var powershellHelper = new Mock<IPowershellHelper>();
 
-        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper),
-        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper),
-        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper),
-        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper),
-        SdkLanguage.Go => new GoLanguageService(processHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper),
+        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Go => new GoLanguageService(processHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

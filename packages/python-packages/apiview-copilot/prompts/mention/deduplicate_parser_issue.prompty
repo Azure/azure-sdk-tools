@@ -16,7 +16,7 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 4096
-    response_format: ${file:deduplicate_parser_issue_result_schema.json}
+    response_format: ${file:deduplicate_issue_result_schema.json}
 sample:
   language: python
   package_name: azure.widget

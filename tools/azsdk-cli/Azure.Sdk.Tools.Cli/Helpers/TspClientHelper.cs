@@ -129,7 +129,7 @@ public class TspClientHelper : ITspClientHelper
         {
             return new TspToolResponse
             {
-                ResponseError = "Failed to initialize TypeSpec generation, see details in the logs.",
+                ResponseError = "Failed to generate TypeSpec client, see details in the logs." + Environment.NewLine + result.Output,
                 TypeSpecProject = workingDirectory
             };
         }

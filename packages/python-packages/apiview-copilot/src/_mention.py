@@ -12,8 +12,8 @@ Refactored to use modular workflow registry and base class pattern.
 
 import json
 
-import prompty
-from src._utils import get_prompt_path
+from src._utils import run_prompty
+from src.mention._open_guidelines_issue_workflow import OpenGuidelinesIssueWorkflow
 from src.mention._open_parser_issue_workflow import OpenParserIssueWorkflow
 from src.mention._update_kb_workflow import UpdateKnowledgeBaseWorkflow
 
@@ -21,14 +21,13 @@ from src.mention._update_kb_workflow import UpdateKnowledgeBaseWorkflow
 WORKFLOW_REGISTRY = {
     "update_kb": UpdateKnowledgeBaseWorkflow,
     "open_parser_issue": OpenParserIssueWorkflow,
+    "open_guidelines_issue": OpenGuidelinesIssueWorkflow,
 }
 
 
 def _parse_conversation_action(
     *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
 ):
-    prompty_file = "parse_conversation_action.prompty"
-    prompt_path = get_prompt_path(folder="mention", filename=prompty_file)
     inputs = {
         "language": language,
         "code": code,
@@ -36,7 +35,7 @@ def _parse_conversation_action(
         "trigger_comment": trigger_comment,
         "other_comments": other_comments,
     }
-    raw_results = prompty.execute(prompt_path, inputs=inputs)
+    raw_results = run_prompty(folder="mention", filename="parse_conversation_action", inputs=inputs)
     try:
         results = json.loads(raw_results)
         return results

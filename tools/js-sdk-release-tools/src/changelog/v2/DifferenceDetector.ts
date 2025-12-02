@@ -199,7 +199,7 @@ export class DifferenceDetector {
     if (baselineSdkType === currentSdkType) return;
     if (baselineSdkType !== SDKType.HighLevelClient || currentSdkType !== SDKType.ModularClient) {
       logger.error(
-        `Failed to preprocess baseline SDK type '${baselineSdkType}' and current SDK type '${currentSdkType}' for difference detection. Only ${SDKType.HighLevelClient} to ${SDKType.ModularClient} is supported.`
+        `Failed to preprocess baseline SDK type '${baselineSdkType}' and current SDK type '${currentSdkType}' for difference detection. Only ${SDKType.HighLevelClient} to ${SDKType.ModularClient} is supported, please refer to https://aka.ms/azsdk/sdk-automation-faq`
       );
       return;
     }

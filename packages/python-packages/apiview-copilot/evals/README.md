@@ -61,9 +61,9 @@ python run.py --use-recording --test-paths tests/mention_action
 
 ### How It Works
 
-- **Recordings location**: `evals/cache/` (automatically created, gitignored)
+- **Recordings location**: `evals/recordings/` (automatically created, gitignored)
 - **Fresh vs recorded**: If a test's recording exists, it's loaded; otherwise LLM is called
-- **Modifying tests**: If you change a test file, delete its recording in `evals/cache/` to force a fresh LLM call on next run, or don't use `--use-recording` to always get fresh results.
+- **Modifying tests**: If you change a test file, delete its recording in `evals/recordings/` to force a fresh LLM call on next run, or don't use `--use-recording` to always get fresh results.
 
 ### Benefits
 
@@ -78,12 +78,12 @@ evals/
 ├── tests/                      # All test workflows
 │   ├── <workflow_name>/        # Each workflow has its own directory
 │   │   ├── test-config.yaml    # Workflow configuration (name, kind)
-│   │   └── *.yaml               # Individual test case files
+│   │   └── *.yaml              # Individual test case files
 │   ├── mention_action/
 │   ├── filter_comment_metadata/
 │   ├── deduplicate_parser_issue/
 │   └── ...
-├── cache/                      # Recorded LLM responses (when using --use-recording)
+├── recordings/                 # Recorded LLM responses (when using --use-recording)
 ├── run.py                      # Main entry point
 └── _custom.py                  # Target functions for workflows
 prompts/                        # Prompty files being tested (in parent dir)

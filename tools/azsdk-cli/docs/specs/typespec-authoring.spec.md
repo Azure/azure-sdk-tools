@@ -454,7 +454,10 @@ azsdk typespec authoring --request <typespec-request> --additional-information <
 **Expected Output:**
 
 ```text
-**Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.\n **Step-by-step guidance:**\n 1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix. and decorate @previewVersion on the enum. 2. add an example folder for this version and copy the relative examples
+**Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
+**Step-by-step guidance:**
+1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix and decorate @previewVersion on the enum.
+2. Add an example folder for this version and copy the relative examples.
 ```
 
 **Error Cases:**

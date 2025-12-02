@@ -143,14 +143,14 @@ namespace APIViewWeb
         }
 
         /// <summary>
-        /// Get distinct package names for a language (efficient query returning only package names)
+        /// Get distinct package names for a language 
         /// </summary>
         /// <param name="language"></param>
         /// <returns></returns>
         public async Task<IEnumerable<string>> GetPackageNamesAsync(string language)
         {
             var queryDefinition = new QueryDefinition(
-                "SELECT DISTINCT VALUE r.PackageName FROM Reviews r WHERE r.Language = @language AND r.IsClosed = false AND IS_DEFINED(r.PackageName) AND r.PackageName != null")
+                "SELECT DISTINCT VALUE r.PackageName FROM Reviews r WHERE r.Language = @language AND r.IsClosed = false AND r.IsDeleted = false AND IS_DEFINED(r.PackageName) AND r.PackageName != null")
                 .WithParameter("@language", language);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<string>(queryDefinition);

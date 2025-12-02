@@ -95,9 +95,9 @@
                                 </div>
                                 <div class="form-group mb-3 d-none" id="package-name-group">
                                     <p class="small mb-0">Associate with an existing package (Optional)</p>
-                                    <input type="text" class="form-control" id="review-package-input" list="package-list" placeholder="Type to search packages..." asp-for="Upload.PackageName" autocomplete="off">
-                                    <datalist id="package-list">
-                                    </datalist>
+                                    <select asp-for="Upload.PackageName" id="review-package-select" class="form-control">
+                                        <option value="">-- Select a package (optional) --</option>
+                                    </select>
                                     <small class="text-muted" id="package-loading" style="display: none;">Loading packages...</small>
                                 </div>
                                 <div class="input-group mb-3 custom-file-label" id="create-review-via-upload">

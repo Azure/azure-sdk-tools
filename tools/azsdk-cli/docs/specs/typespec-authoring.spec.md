@@ -380,7 +380,7 @@ This feature/tool is complete when:
   - Generated TypeSpec code passes compilation without errors
   - Generated code follows Azure ARM/DP/SDK guidelines (validated by automated linter/validator)
   - Generated code matches expected patterns for resource hierarchy and routing
-  - Generated code includes proper syntax, e.g. decorators, templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`)
+  - Generated code includes proper syntax, e.g. decorators, templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`; the correct decorator is `@armResourceOperations`)
 
 - **Documentation Reference Quality**: For each agent response:
   - Responses include relevant documentation links (e.g., TypeSpec Azure guidelines)

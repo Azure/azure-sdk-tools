@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<bool> dryRunOpt = new("--dry-run")
         {
-            Description = "Verify package release readiness",
+            Description = "Verify package release readiness without triggering the release pipeline",
             Required = false,
         };
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];

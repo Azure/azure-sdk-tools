@@ -28,10 +28,22 @@ namespace APIViewWeb.LeanModels
 
     public class ResolveBatchConversationRequest
     {
+        [JsonPropertyName("commentIds")]
         public List<string> CommentIds { get; set; }
+        
+        [JsonPropertyName("vote")]
         public FeedbackVote Vote { get; set; } = FeedbackVote.None;
+        
+        [JsonPropertyName("commentReply")]
         public string CommentReply { get; set; }
+        
+        [JsonPropertyName("disposition")]
         public ConversationDisposition? Disposition { get; set; }
+        
+        [JsonPropertyName("severity")]
         public CommentSeverity? Severity { get; set; }
+        
+        [JsonPropertyName("feedback")]
+        public CommentFeedbackRequest Feedback { get; set; }
     }
 }

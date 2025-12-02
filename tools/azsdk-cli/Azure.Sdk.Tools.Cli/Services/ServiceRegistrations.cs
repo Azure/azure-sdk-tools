@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
 
@@ -33,6 +34,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAiCompletionService, AiCompletionService>();
+
+            // APIView Services
+            services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
+            services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
+            services.AddSingleton<IAPIViewService, APIViewService>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();

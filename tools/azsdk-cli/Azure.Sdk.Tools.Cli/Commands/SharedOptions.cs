@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Verify;
+using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -46,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(TypeSpecAuthoringTool),
 
+            typeof(APIViewReviewTool),
             typeof(VerifySetupTool),
             typeof(TestTool),
             typeof(ListCommandTool),

@@ -1,7 +1,8 @@
 # Release History
 
-## Version 0.3.25 (Unreleased)
+## Version 0.3.25 (2025-12-01)
 Fixed a bug where the overload implementations were being included in the APIView, causing issues with extra APIView Copilot comments being generated.
+Fixed a bug where duplicate diagnostics were being added.
 
 ## Version 0.3.24 (2025-10-24)
 Fixed a bug where the old cross language mapping path was not being used when the new one was not found.

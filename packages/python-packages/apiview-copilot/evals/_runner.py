@@ -17,8 +17,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
 from evals._util import (
-    append_results_to_cache,
-    load_cache_lookup,
+    save_recordings,
+    load_recordings,
 )
 from src._settings import SettingsManager
 
@@ -227,7 +227,7 @@ class EvaluationRunner:
 
             # Resolve cache strategy
             if self._use_recording:
-                cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
+                cache_lookup = load_recordings(testcase_ids, test_file_paths)
             else:
                 cache_lookup = {}
 
@@ -252,7 +252,7 @@ class EvaluationRunner:
                 fresh_results = self._run_azure_evaluation(fresh_testcases, target)
 
                 if self._use_recording:
-                    append_results_to_cache(fresh_test_file_paths, fresh_results)
+                    save_recordings(fresh_test_file_paths, fresh_results)
 
             # Combine all results
             cached_rows = [row for row in cached_azure_rows]

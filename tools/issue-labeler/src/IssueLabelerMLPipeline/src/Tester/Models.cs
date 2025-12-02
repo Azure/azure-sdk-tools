@@ -8,14 +8,14 @@ public class Issue
     public string? CategoryLabel { get; set; }
     public string? ServiceLabel { get; set; }
     public string? Title { get; set; }
-    public string? Body { get; set; }
+    public string? Description { get; set; }
 
     public Issue(string repo, GitHubClient.Issue issue)
     {
         Repo = repo;
         Number = issue.Number;
         Title = issue.Title;
-        Body = issue.Body;
+        Description = issue.Body;
     }
 
     public Issue(string repo, GitHubClient.Issue issue, string? categoryLabel, string? serviceLabel) : this(repo, issue)

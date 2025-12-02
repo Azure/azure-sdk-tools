@@ -1,8 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Actions.Core.Services;
-
 public struct Args
 {
     public readonly string GitHubToken => Environment.GetEnvironmentVariable("GITHUB_TOKEN")!;
@@ -21,9 +19,9 @@ public struct Args
     public int[] Retries { get; set; }
     public bool Verbose { get; set; }
 
-    static void ShowUsage(string? message, ICoreService action)
+    static void ShowUsage(string? message)
     {
-        action.WriteNotice($$"""
+        Console.WriteLine($$"""
             ERROR: Invalid or missing arguments.{{(message is null ? "" : " " + message)}}
 
             Required environment variables:
@@ -58,10 +56,10 @@ public struct Args
         Environment.Exit(1);
     }
 
-    public static Args? Parse(string[] args, ICoreService action)
+    public static Args? Parse(string[] args)
     {
         Queue<string> arguments = new(args);
-        ArgUtils argUtils = new(action, ShowUsage, arguments);
+        ArgUtils argUtils = new(ShowUsage, arguments);
 
         Args argsData = new()
         {
@@ -71,7 +69,7 @@ public struct Args
 
         if (string.IsNullOrEmpty(argsData.GitHubToken))
         {
-            ShowUsage("Environment variable GITHUB_TOKEN is empty.", action);
+            ShowUsage("Environment variable GITHUB_TOKEN is empty.");
             return null;
         }
 
@@ -185,7 +183,7 @@ public struct Args
                     break;
 
                 default:
-                    ShowUsage($"Unrecognized argument: {argument}", action);
+                    ShowUsage($"Unrecognized argument: {argument}");
                     return null;
             }
         }
@@ -194,7 +192,7 @@ public struct Args
             ((argsData.CategoryIssuesModelPath is null || argsData.ServiceIssuesModelPath is null) &&
              (argsData.CategoryPullsModelPath is null || argsData.ServicePullsModelPath is null)))
         {
-            ShowUsage(null, action);
+            ShowUsage(null);
             return null;
         }
 

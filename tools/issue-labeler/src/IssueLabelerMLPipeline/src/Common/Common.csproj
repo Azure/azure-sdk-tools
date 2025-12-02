@@ -5,8 +5,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="GitHub.Actions.Core" />
-  </ItemGroup>
-
 </Project>

@@ -74,11 +74,11 @@ var host = new HostBuilder()
         });
 
         services.AddSingleton<TriageRag>();
-        services.AddSingleton<IModelHolderFactoryLite>(sp => 
+        services.AddSingleton<IModelHolderFactory>(sp => 
         {
-            var logger = sp.GetRequiredService<ILogger<ModelHolderFactoryLite>>();
+            var logger = sp.GetRequiredService<ILogger<ModelHolderFactory>>();
             var configProvider = sp.GetRequiredService<IRepositoryConfigurationProvider>();
-            return new ModelHolderFactoryLite(logger, configProvider);
+            return new ModelHolderFactory(logger, configProvider);
         });
         services.AddSingleton<LabelerFactory>();
         services.AddSingleton<AnswerFactory>();

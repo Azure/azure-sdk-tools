@@ -2,45 +2,41 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
-using Actions.Core.Services;
 
 public class ArgUtils
 {
-    private ICoreService action;
     private Action<string?> showUsage;
     private Queue<string>? arguments { get; }
+    private bool useEnvironmentVariables { get; }
 
     /// <summary>
-    /// Create an arguments utility class instance for a GitHub action, with input values retrieved from the GitHub action.
+    /// Create an arguments utility class instance with input values retrieved from a queue of command-line arguments.
     /// </summary>
-    /// <param name="action">The GitHub action service.</param>
     /// <param name="showUsage">A method to show usage information for the application.</param>
-    public ArgUtils(ICoreService action, Action<string?, ICoreService> showUsage)
+    /// <param name="arguments">The queue of command-line arguments to extract argument values from.</param>
+    public ArgUtils(Action<string?> showUsage, Queue<string> arguments)
     {
-        this.action = action;
-        this.showUsage = message => showUsage(message, action);
+        this.showUsage = showUsage;
+        this.arguments = arguments;
+        this.useEnvironmentVariables = false;
     }
 
     /// <summary>
-    /// Create an arguments utility class instance for a GitHub action, with input values retrieved from a queue of command-line arguments.
+    /// Create an arguments utility class instance with input values retrieved from environment variables.
     /// </summary>
-    /// <param name="action">The GitHub action service.</param>
     /// <param name="showUsage">A method to show usage information for the application.</param>
-    /// <param name="arguments">The queue of command-line arguments to extract argument values from.</param>
-    public ArgUtils(ICoreService action, Action<string?, ICoreService> showUsage, Queue<string> arguments) : this(action, showUsage)
+    public ArgUtils(Action<string?> showUsage)
     {
-        this.arguments = arguments;
+        this.showUsage = showUsage;
+        this.arguments = null;
+        this.useEnvironmentVariables = true;
     }
 
     /// <summary>
     /// Gets the input string for the specified input.
     /// </summary>
     /// <remarks>
-    /// When running as a GitHub action, this method will retrieve the input value from the action's inputs.
-    /// </remarks>
-    /// <remarks>
-    /// When using the constructor with a queue of command-line arguments, this method will dequeue the next argument from the queue.
+    /// This method will dequeue the next argument from the queue, or retrieve from environment variable.
     /// </remarks>
     /// <param name="inputName">The name of the input to retrieve.</param>
     /// <returns>A nullable string containing the input value if retrieved, or <c>null</c> if there is no value specified.</returns>
@@ -48,16 +44,14 @@ public class ArgUtils
     {
         string? input = null;
         
-        if (arguments is not null)
-        { 
-            if (arguments.TryDequeue(out string? argValue))
-            {
-                input = argValue;
-            }
-        }
-        else
+        if (useEnvironmentVariables)
         {
-            input = action.GetInput(inputName);
+            // Try INPUT_<NAME> format (GitHub Actions style)
+            input = Environment.GetEnvironmentVariable($"INPUT_{inputName.ToUpperInvariant().Replace('-', '_')}");
+        }
+        else if (arguments is not null && arguments.TryDequeue(out string? argValue))
+        {
+            input = argValue;
         }
         
         return string.IsNullOrWhiteSpace(input) ? null : input;

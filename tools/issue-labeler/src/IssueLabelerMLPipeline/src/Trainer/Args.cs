@@ -1,8 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Actions.Core.Services;
-
 public struct Args
 {
     public string? IssuesDataPath { get; set; }
@@ -14,12 +12,12 @@ public struct Args
     public string? CategoryPullsModelPath { get; set; }
     public string? ServicePullsModelPath { get; set; }
 
-    static void ShowUsage(string? message, ICoreService action)
+    static void ShowUsage(string? message)
     {
         // If you provide a path for issue data, you must also provide paths for both category and service issue models, and vice versa.
         // If you provide a path for pull data, you must also provide paths for both category and service pull models, and vice versa.
         // At least one pair of paths (either issue or pull) must be provided.
-        action.WriteNotice($$"""
+        Console.WriteLine($$"""
             ERROR: Invalid or missing arguments.{{(message is null ? "" : " " + message)}}
 
             Required for training the issues models:
@@ -40,10 +38,10 @@ public struct Args
         Environment.Exit(1);
     }
 
-    public static Args? Parse(string[] args, ICoreService action)
+    public static Args? Parse(string[] args)
     {
         Queue<string> arguments = new(args);
-        ArgUtils argUtils = new(action, ShowUsage, arguments);
+        ArgUtils argUtils = new(ShowUsage, arguments);
         Args argsData = new();
 
         while (arguments.Count > 0)
@@ -117,7 +115,7 @@ public struct Args
                     break;
 
                 default:
-                    ShowUsage($"Unrecognized argument: {argument}", action);
+                    ShowUsage($"Unrecognized argument: {argument}");
                     return null;
             }
         }
@@ -140,7 +138,7 @@ public struct Args
             (hasAnyPullsRequirements && !hasAllPullsRequirements) ||
             (!hasAllIssuesRequirements && !hasAllPullsRequirements))
         {
-            ShowUsage(null, action);
+            ShowUsage(null);
             return null;
         }
 

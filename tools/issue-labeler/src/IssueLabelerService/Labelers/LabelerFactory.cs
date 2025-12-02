@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
@@ -10,13 +9,13 @@ namespace IssueLabelerService
     {
         private ConcurrentDictionary<string, ILabeler> _labelers = new();
         private ILogger<LabelerFactory> _logger;
-        private IModelHolderFactoryLite _modelHolderFactory;
+        private IModelHolderFactory _modelHolderFactory;
         private TriageRag _ragService;
         private BlobServiceClient _blobClient;
 
         public LabelerFactory(
             ILogger<LabelerFactory> logger,
-            IModelHolderFactoryLite modelHolderFactory,
+            IModelHolderFactory modelHolderFactory,
             TriageRag ragService,
             BlobServiceClient blobClient)
         {

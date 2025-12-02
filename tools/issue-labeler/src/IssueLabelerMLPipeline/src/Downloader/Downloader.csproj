@@ -7,15 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\download\action.yml" Link="action.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="GitHub.Actions.Core" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\GitHubClient\GitHubClient.csproj" />
   </ItemGroup>

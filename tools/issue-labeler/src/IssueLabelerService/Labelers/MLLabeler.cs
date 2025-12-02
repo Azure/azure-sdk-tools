@@ -14,9 +14,9 @@ namespace IssueLabelerService
         private readonly ILogger<LabelerFactory> _logger;
         private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
         private readonly RepositoryConfiguration _config;
-        private IModelHolderFactoryLite _modelHolderFactory { get; }
+        private IModelHolderFactory _modelHolderFactory { get; }
 
-        public MLLabeler(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, RepositoryConfiguration config)
+        public MLLabeler(ILogger<LabelerFactory> logger, IModelHolderFactory modelHolderFactory, RepositoryConfiguration config)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;
@@ -33,7 +33,7 @@ namespace IssueLabelerService
             try
                 {
                     // The model factory is thread-safe and will manage its own concurrency.
-                    await _modelHolderFactory.CreateModelHolders(issue.RepositoryName).ConfigureAwait(false);
+                    await _modelHolderFactory.CreateModelHolders(issue.RepositoryOwnerName, issue.RepositoryName).ConfigureAwait(false);
                     InitializedRepositories.TryAdd(issue.RepositoryName, 1);
                 }
                 catch (Exception ex)
@@ -63,8 +63,8 @@ namespace IssueLabelerService
                     Description = issue.Body,
                 };
 
-                var categoryPredictor = await _modelHolderFactory.GetPredictor(issue.RepositoryName, LabelType.Category).ConfigureAwait(false);
-                var servicePredictor = await _modelHolderFactory.GetPredictor(issue.RepositoryName, LabelType.Service).ConfigureAwait(false);
+                var categoryPredictor = await _modelHolderFactory.GetPredictor(issue.RepositoryOwnerName, issue.RepositoryName, LabelType.Category).ConfigureAwait(false);
+                var servicePredictor = await _modelHolderFactory.GetPredictor(issue.RepositoryOwnerName, issue.RepositoryName, LabelType.Service).ConfigureAwait(false);
 
                 var categorySuggestions = await categoryPredictor.Predict(ghIssue).ConfigureAwait(false);
                 var serviceSuggestions = await servicePredictor.Predict(ghIssue).ConfigureAwait(false);

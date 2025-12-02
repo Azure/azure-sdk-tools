@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\test\action.yml" Link="action.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="GitHub.Actions.Core" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.ML" />
   </ItemGroup>
 

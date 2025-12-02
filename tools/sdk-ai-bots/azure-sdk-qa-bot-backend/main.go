@@ -21,6 +21,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/completion", handler.CompletionHandler)
 	r.POST("/feedback", handler.FeedBackHandler)
 	r.POST("/record_answer", handler.AnswerRecordHandler)
+	r.POST("/code_review", handler.CodeReviewHandler)
 
 	return r
 }

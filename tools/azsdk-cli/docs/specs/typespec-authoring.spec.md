@@ -448,7 +448,7 @@ azsdk typespec authoring --request <typespec-request> --additional-information <
 
 **Options:**
 
-- `--request`: the TypeSpec request to authoring
+- `--request`: the TypeSpec request to author
 - `--additional-information <value>`: Set the additional information, such as the context (optional)
 
 **Expected Output:**

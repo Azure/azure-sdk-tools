@@ -87,10 +87,10 @@ Update Java package name to groupId+artifactName format
 
 .DESCRIPTION
 Updates the Package field in a work item from artifact name to the format "com.azure+{artifactName}".
-Validates that the work item exists and is for Java language before updating.
+Validates that the work item is for Java language before updating.
 
-.PARAMETER WorkItemId
-The ID of the work item to update
+.PARAMETER WorkItem
+The work item object (hashtable) from Invoke-Query.
 
 .PARAMETER DevOpsOrganization
 The Azure DevOps organization name. Default: azure-sdk
@@ -102,15 +102,15 @@ If specified, shows what would be updated without making actual changes
 Boolean indicating success or failure
 
 .EXAMPLE
-Update-JavaPackageName -WorkItemId 12345 -DevOpsOrganization "azure-sdk" -DevOpsProject "internal"
+Update-JavaPackageName -WorkItem $workItem -DryRun
 
 .EXAMPLE
-Update-JavaPackageName -WorkItemId 12345 -DryRun
+Update-JavaPackageName -WorkItem $workItem -DevOpsOrganization "azure-sdk"
 #>
 function Update-JavaPackageName {
   param (
     [Parameter(Mandatory = $true)]
-    [int]$WorkItemId,
+    [hashtable]$WorkItem,
     [Parameter(Mandatory = $false)]
     [string]$DevOpsOrganization = "azure-sdk",
     [Parameter(Mandatory = $false)]
@@ -118,40 +118,27 @@ function Update-JavaPackageName {
   )
 
   try {
-    Write-Host "Processing work item [$WorkItemId]..."
-    
-    # Get the work item to verify it exists and get current package name
-    # Note: az boards work-item show doesn't accept --project parameter, work item IDs are org-level
-    $workItemJson = az boards work-item show --id $WorkItemId --organization "https://dev.azure.com/$DevOpsOrganization" --output json 2>&1
-    
-    if ($LASTEXITCODE -ne 0) {
-      Write-Host "ERROR: Work item [$WorkItemId] not found or access denied" -ForegroundColor Red
-      Write-Host "Command: az boards work-item show --id $WorkItemId --organization https://dev.azure.com/$DevOpsOrganization" -ForegroundColor Yellow
-      Write-Host "Exit Code: $LASTEXITCODE" -ForegroundColor Yellow
-      Write-Host "Output: $workItemJson" -ForegroundColor Yellow
-      return $false
-    }
-    
-    $workItem = $workItemJson | ConvertFrom-Json
+    $workItemId = $WorkItem.id
+    Write-Host "Processing work item [$workItemId]..."
     
     # Verify it's a Java work item
-    $language = $workItem.fields."Custom.Language"
+    $language = $WorkItem.fields["Custom.Language"]
     if ($language -ne "Java") {
-      Write-Host "WARNING: Work item [$WorkItemId] is not a Java package (Language: $language). Skipping." -ForegroundColor Yellow
+      Write-Host "WARNING: Work item [$workItemId] is not a Java package (Language: $language). Skipping." -ForegroundColor Yellow
       return $false
     }
     
     # Get current package name
-    $currentPackageName = $workItem.fields."Custom.Package"
+    $currentPackageName = $WorkItem.fields["Custom.Package"]
     
     if ([string]::IsNullOrWhiteSpace($currentPackageName)) {
-      Write-Host "WARNING: Work item [$WorkItemId] has empty Package field. Skipping." -ForegroundColor Yellow
+      Write-Host "WARNING: Work item [$workItemId] has empty Package field. Skipping." -ForegroundColor Yellow
       return $false
     }
     
     # Check if already in the new format (contains '+')
     if ($currentPackageName -like "*+*") {
-      Write-Host "INFO: Work item [$WorkItemId] package name '$currentPackageName' already contains '+'. Skipping." -ForegroundColor Cyan
+      Write-Host "INFO: Work item [$workItemId] package name '$currentPackageName' already contains '+'. Skipping." -ForegroundColor Cyan
       return $true
     }
     
@@ -162,26 +149,26 @@ function Update-JavaPackageName {
     Write-Host "  New Package:     $newPackageName"
     
     if ($DryRun) {
-      Write-Host "  [DRY RUN] Would update work item [$WorkItemId]" -ForegroundColor Cyan
+      Write-Host "  [DRY RUN] Would update work item [$workItemId]" -ForegroundColor Cyan
       return $true
     }
     
     # Update the work item using Azure CLI format
     $fieldsParam = "Custom.Package=$newPackageName"
     
-    $updateResult = az boards work-item update --id $WorkItemId --fields $fieldsParam --organization "https://dev.azure.com/$DevOpsOrganization" --output json 2>&1
+    $updateResult = az boards work-item update --id $workItemId --fields $fieldsParam --organization "https://dev.azure.com/$DevOpsOrganization" --output json 2>&1
     
     if ($LASTEXITCODE -eq 0) {
-      Write-Host "  Successfully updated work item [$WorkItemId]" -ForegroundColor Green
+      Write-Host "  Successfully updated work item [$workItemId]" -ForegroundColor Green
       return $true
     } else {
-      Write-Host "  ERROR: Failed to update work item [$WorkItemId]" -ForegroundColor Red
+      Write-Host "  ERROR: Failed to update work item [$workItemId]" -ForegroundColor Red
       Write-Host "  Error details: $updateResult" -ForegroundColor Red
       return $false
     }
   }
   catch {
-    Write-Host "ERROR: Exception updating work item [$WorkItemId]: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "ERROR: Exception updating work item [$workItemId]: $($_.Exception.Message)" -ForegroundColor Red
     return $false
   }
 }
@@ -210,22 +197,15 @@ if ($PSCommandPath) {
   
   # Process each work item
   $successCount = 0
-  $skipCount = 0
   $failCount = 0
   
   foreach ($workItem in $javaWorkItems) {
-    $result = Update-JavaPackageName -WorkItemId $workItem.id -DevOpsOrganization $DevOpsOrganization -DryRun:$DryRun
+    $result = Update-JavaPackageName -WorkItem $workItem -DevOpsOrganization $DevOpsOrganization -DryRun:$DryRun
     
     if ($result -eq $true) {
       $successCount++
     } elseif ($result -eq $false) {
-      # Check if it was skipped or failed
-      $currentPackage = $workItem.fields["Custom.Package"]
-      if ($currentPackage -like "*+*" -or [string]::IsNullOrWhiteSpace($currentPackage)) {
-        $skipCount++
-      } else {
-        $failCount++
-      }
+      $failCount++
     }
     
     Write-Host ""
@@ -237,7 +217,6 @@ if ($PSCommandPath) {
   Write-Host "========================================" -ForegroundColor Cyan
   Write-Host "Total work items: $($javaWorkItems.Count)"
   Write-Host "Successfully updated: $successCount" -ForegroundColor Green
-  Write-Host "Skipped: $skipCount" -ForegroundColor Yellow
   Write-Host "Failed: $failCount" -ForegroundColor Red
   
   if ($DryRun) {

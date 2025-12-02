@@ -46,7 +46,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(CustomizedCodeUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(TypeSpecAuthoringTool),
-
             typeof(APIViewReviewTool),
             typeof(VerifySetupTool),
             typeof(TestTool),

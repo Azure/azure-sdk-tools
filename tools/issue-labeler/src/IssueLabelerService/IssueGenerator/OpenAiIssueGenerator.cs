@@ -35,16 +35,16 @@ namespace IssueLabelerService
                 tokenCredential: new DefaultAzureCredential()
             );
         }
-        public async Task<string> GenerateIssue(string repositoryName)
+        public async Task<string> GenerateIssue(IssueGeneratorPayload payload)
         {
             var modelName = _config.AnswerModelName;
             var instructions = _config.IssueGeneratorInstruction;
-            var repoLabels = await GetLabelsAsync(repositoryName);
-            var applicableServiceLabels = GetServiceLabelsForPrompt(repoLabels);
-            var applicableCategoryLabels = GetCategoryLabelsForPrompt(repoLabels);
+            var repoLabels = await GetLabelsAsync(payload.RepositoryName);
+            var applicableServiceLabels = payload.ServiceLabels is null ? GetServiceLabelsForPrompt(repoLabels) : payload.ServiceLabels;
+            var applicableCategoryLabels = payload.CategoryLabels is null ? GetCategoryLabelsForPrompt(repoLabels) : payload.CategoryLabels;
             var replacements = new Dictionary<string, string>
             {
-                { "repositoryName", repositoryName },
+                { "repositoryName", payload.RepositoryName },
                 { "numIssues", "50"},
                 { "applicableServiceLabels", applicableServiceLabels},
                 { "applicableCategoryLabels", applicableCategoryLabels}
@@ -58,15 +58,11 @@ namespace IssueLabelerService
             var contextBlock = GetContextBlock(retrievalResult);
 
             var response = await _ragService.SendMessageQnaAsync(instructions, message, modelName, contextBlock);
-
-            // var formattedResponse = FormatResponse(SuggestionsAnswerType, issue, response);
-
-            // _logger.LogInformation($"Open AI generated issue for {repositoryName} using the Complete Triage model: \n{response}");
             var issues = JsonConvert.DeserializeObject<IEnumerable<IssueTriageContent>>(response);
 
             // Write answer to JSON file - answerData is an array of objects
-            var jsonFileName = $"issue_answer_{repositoryName}_3.json";
-            var fileName = $"issue_answer_{repositoryName}_3.tsv";
+            var jsonFileName = $"{payload.OutputFilename}.json";
+            var fileName = $"{payload.OutputFilename}.tsv";
             using StreamWriter writer = new StreamWriter(fileName);
             writer.WriteLine(FormatIssueRecord("CategoryLabel", "ServiceLabel", "Title", "Body"));
             foreach (var issue in issues)
@@ -78,6 +74,10 @@ namespace IssueLabelerService
             }
             await File.WriteAllTextAsync(jsonFileName, response);
             _logger.LogInformation($"Answer written to file: {fileName}");
+
+            // Upload TSV file to Blob storage
+            await UploadToBlobAsync(fileName, payload.RepositoryName);
+
             return response;
         }
 
@@ -171,6 +171,20 @@ namespace IssueLabelerService
             }
 
             return labels;
+        }
+
+        private async Task UploadToBlobAsync(string filePath, string repositoryName)
+        {
+            var containerClient = _blobClient.GetBlobContainerClient("generated-issues");
+            await containerClient.CreateIfNotExistsAsync();
+
+            var blobName = $"{repositoryName}/{Path.GetFileName(filePath)}";
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            using var fileStream = File.OpenRead(filePath);
+            await blobClient.UploadAsync(fileStream, overwrite: true);
+
+            _logger.LogInformation($"Uploaded TSV file to blob: {blobName}");
         }
 
         private string GetCategoryLabelsForPrompt(IEnumerable<Label> labels)

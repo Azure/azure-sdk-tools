@@ -17,7 +17,6 @@ namespace IssueLabelerService
 {
     public class AzureSdkIssueGeneratorService
     {
-        private static readonly ActionResult EmptyResult = new JsonResult(new TriageOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly Configuration _configurationService;
         private IssueGeneratorFactory _issueGeneratorServices;
@@ -32,10 +31,10 @@ namespace IssueLabelerService
         [Function("AzureSdkIssueGeneratorService")]
         public async Task<ActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest request)
         {
-            string repositoryName;
+            IssueGeneratorPayload payload;
             try
             {
-                repositoryName = await DeserializeIssuePayloadAsync(request);
+                payload = await DeserializeIssuePayloadAsync(request);
             }
             catch (Exception ex)
             {
@@ -51,11 +50,11 @@ namespace IssueLabelerService
             try
             {
                 var generatorService = _issueGeneratorServices.GetIssueGeneratorService(config);
-                var answer = await generatorService.GenerateIssue(repositoryName);
+                var answer = await generatorService.GenerateIssue(payload);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error generating issue for repository {repositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                _logger.LogError($"Error generating issue for repository {payload.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
 
                 result.Answer = null;
                 result.AnswerType = null;
@@ -65,11 +64,11 @@ namespace IssueLabelerService
             return new JsonResult(result);
         }
 
-        private async Task<string> DeserializeIssuePayloadAsync(HttpRequest request)
+        private async Task<IssueGeneratorPayload> DeserializeIssuePayloadAsync(HttpRequest request)
         {
             using var bodyReader = new StreamReader(request.Body);
             var requestBody = await bodyReader.ReadToEndAsync();
-            return JsonConvert.DeserializeObject<string>(requestBody);
+            return JsonConvert.DeserializeObject<IssueGeneratorPayload>(requestBody);
         }
     }
 }

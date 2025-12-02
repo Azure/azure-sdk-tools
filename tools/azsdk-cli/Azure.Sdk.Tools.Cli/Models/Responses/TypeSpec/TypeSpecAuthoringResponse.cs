@@ -10,8 +10,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         [JsonPropertyName("is_successful")]
         public bool IsSuccessful { get; set; }
 
-        [JsonPropertyName("answer")]
-        public string Answer { get; set; } = string.Empty;
+        [JsonPropertyName("solution")]
+        public string Solution { get; set; } = string.Empty;
 
         [JsonPropertyName("references")]
         public List<DocumentReference> References { get; set; } = new();
@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
                 return string.Empty;
             }
             var result = new StringBuilder();
-            result.AppendLine($"**Answer:** {Answer}");
+            result.AppendLine($"**Solution:** {Solution}");
 
             if (References.Any())
             {

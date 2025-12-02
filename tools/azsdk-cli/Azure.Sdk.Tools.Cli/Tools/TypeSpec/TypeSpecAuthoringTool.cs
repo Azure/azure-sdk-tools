@@ -137,6 +137,14 @@ Returns an answer with supporting references and documentation links
                     }
                 };
 
+                if (!string.IsNullOrWhiteSpace(additionalInformation))
+                {
+                    completionRequest.AdditionalInfos.Add(new AdditionalInfo
+                    {
+                        Content = additionalInformation
+                    });
+                }
+
                 // Call the service
                 var response = await _aiCompletionService.SendCompletionRequestAsync(
                     completionRequest, ct);

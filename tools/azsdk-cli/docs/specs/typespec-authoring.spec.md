@@ -312,7 +312,6 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 | `--request` | string | Yes | N/A | The TypeSpec-related request or task description |
 | `--additional-information` | string | No | "" | Additional context for the request |
 | `--category` | string | No | Auto-detected | Request category (e.g., "versioning", "resource-modeling", "routing") |
-| `--mode` | string | No | "agent-model" | Request mode: "agent-model" or "file-model" |
 | `--typespec-source-path` | string | No | Current directory | Path to TypeSpec source file or folder |
 
 **Output Format**:

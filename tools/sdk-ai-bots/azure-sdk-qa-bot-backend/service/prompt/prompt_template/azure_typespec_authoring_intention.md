@@ -29,7 +29,7 @@ The question must be classified into one of these categories:
 - **Versioning**: Questions about versioning API, such as:
     - How to add property/operation/model?
     - How to avoid breaking change?
-    - How to evolute api version for a service? e.g. add a api version, make a api version stable, replace a api version and so on
+    - How to evolve api version for a service? e.g. add a api version, make a api version stable, replace a api version and so on
 
 - **Arm Resource Manager(ARM) Template**: Questions about how to select suitable ARM template, such as:
   - I want to define a Cancel operation that follow ARM guideline, could you suggest what is the template I shall use in typespec ARM library?

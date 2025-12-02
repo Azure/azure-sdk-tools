@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-                var authResult = await RetriveAiCompletionAccessTokenAsync(cancellationToken);
+                var authResult = await RetrieveAiCompletionAccessTokenAsync(cancellationToken);
                 if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
                 {
                     httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
@@ -161,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return isValid;
         }
-        private async Task<AuthenticationResult> RetriveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
+        private async Task<AuthenticationResult> RetrieveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
         {
             if (_msalApp != null)
             {

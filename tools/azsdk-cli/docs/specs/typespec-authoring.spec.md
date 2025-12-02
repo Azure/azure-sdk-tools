@@ -176,7 +176,7 @@ enum Versions {
 ```
 
 According to the ARM versioning guideline and best practices, the expected code should:
-1. add a new api version enum option and decorated with @previewVersion
+1. add a new API version enum option and decorate it with @previewVersion
 
 ```typespec main.tsp
 /** The available API versions. */

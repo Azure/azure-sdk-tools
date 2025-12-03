@@ -25,9 +25,7 @@ jobs:
       inputs:
         targetType: 'filePath'
         filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
-        arguments: >-
-          -AzsdkCliPath $(System.DefaultWorkingDirectory)/azsdk
-          -CsprojPath $(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+        arguments: '-AzsdkExePath $(System.DefaultWorkingDirectory)/azsdk'
         pwsh: true
         workingDirectory: '$(System.DefaultWorkingDirectory)'
     

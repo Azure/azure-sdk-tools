@@ -7,50 +7,47 @@
     a markdown documentation file (mcp-tools.md) containing the tool names and descriptions
     in a table format.
 
-.PARAMETER AzsdkCliPath
+.PARAMETER AzsdkExePath
     Path to the Azure SDK CLI executable (azsdk).
 
-.PARAMETER CsprojPath
-    Path to the Azure.Sdk.Tools.Cli.csproj file to extract the version number.
-
 .EXAMPLE
-    ./update-mcp-tools-docs.ps1 -AzsdkCliPath "./artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk" -CsprojPath "./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj"
+    ./update-mcp-tools-docs.ps1 -AzsdkExePath "./azsdk"
 #>
 
 param(
     [Parameter(Mandatory=$true)]
-    [string]$AzsdkCliPath,
-    
-    [Parameter(Mandatory=$true)]
-    [string]$CsprojPath
+    [string]$AzsdkExePath
 )
 
 $ErrorActionPreference = "Stop"
 
 function Get-McpVersion {
-    param([string]$azsdkPath)
+    param([string]$exePath)
     
-    if (-not (Test-Path $azsdkPath)) {
-        throw "Azure SDK CLI executable not found at: $azsdkPath"
+    if (-not (Test-Path $exePath)) {
+        throw "Azure SDK CLI executable not found at: $exePath"
     }
     
-    $versionOutput = & $azsdkPath --version 2>&1
+    $versionOutput = & $exePath --version 2>&1
     
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to run azsdk --version command. Exit code: $LASTEXITCODE"
     }
     
-    return $versionOutput.Trim()
+    # Remove the +sha part from version (e.g., "0.5.9+adef6a4419984a5852e4118d05f695b90d007044" -> "0.5.9")
+    $version = $versionOutput.Trim() -replace '\+.*$', ''
+    
+    return $version
 }
 
 function Get-McpToolsList {
-    param([string]$azsdkPath)
+    param([string]$exePath)
     
-    if (-not (Test-Path $azsdkPath)) {
-        throw "Azure SDK CLI executable not found at: $azsdkPath"
+    if (-not (Test-Path $exePath)) {
+        throw "Azure SDK CLI executable not found at: $exePath"
     }
     
-    $jsonOutput = & $azsdkPath list --output json 2>&1
+    $jsonOutput = & $exePath list --output json 2>&1
     
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to run azsdk list command. Exit code: $LASTEXITCODE"
@@ -114,8 +111,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 
 # Main script execution
 try {
-    $version = Get-McpVersion -azsdkPath $AzsdkCliPath
-    $tools = Get-McpToolsList -azsdkPath $AzsdkCliPath
+    $version = Get-McpVersion -exePath $AzsdkExePath
+    $tools = Get-McpToolsList -exePath $AzsdkExePath
     $outputPath = Join-Path (Get-Location) "tools/azsdk-cli/docs/mcp-tools.md"
     
     Generate-McpToolsMarkdown -tools $tools -version $version -outputPath $outputPath

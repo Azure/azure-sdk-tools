@@ -27,15 +27,20 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Get-VersionFromCsproj {
-    param([string]$csprojPath)
+function Get-McpVersion {
+    param([string]$azsdkPath)
     
-    if (-not (Test-Path $csprojPath)) {
-        throw "Csproj file not found at: $csprojPath"
+    if (-not (Test-Path $azsdkPath)) {
+        throw "Azure SDK CLI executable not found at: $azsdkPath"
     }
     
-    [xml]$csprojXml = Get-Content $csprojPath
-    return $csprojXml.Project.PropertyGroup.VersionPrefix
+    $versionOutput = & $azsdkPath --version 2>&1
+    
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to run azsdk --version command. Exit code: $LASTEXITCODE"
+    }
+    
+    return $versionOutput.Trim()
 }
 
 function Get-McpToolsList {
@@ -109,7 +114,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 
 # Main script execution
 try {
-    $version = Get-VersionFromCsproj -csprojPath $CsprojPath
+    $version = Get-McpVersion -azsdkPath $AzsdkCliPath
     $tools = Get-McpToolsList -azsdkPath $AzsdkCliPath
     $outputPath = Join-Path (Get-Location) "tools/azsdk-cli/docs/mcp-tools.md"
     

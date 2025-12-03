@@ -10,23 +10,15 @@ jobs:
     - checkout: self
       displayName: 'Checkout current branch'
     
-    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-      parameters:
-        Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: main
-            WorkingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools-main
-        Paths:
-          - 'tools/azsdk-cli/**'
-    
     - template: /eng/pipelines/templates/steps/install-dotnet.yml
     
-    - task: DotNetCoreCLI@2
-      displayName: 'Build Azure SDK CLI (Release)'
+    - task: PowerShell@2
+      displayName: 'Install Azure SDK MCP'
       inputs:
-        command: 'build'
-        projects: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj'
-        arguments: '--configuration Release'
+        targetType: 'inline'
+        script: './eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $(System.DefaultWorkingDirectory)'
+        pwsh: true
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
     
     - task: PowerShell@2
       displayName: 'Generate MCP tools documentation'
@@ -34,7 +26,16 @@ jobs:
         targetType: 'filePath'
         filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
         arguments: >-
-          -AzsdkCliPath $(System.DefaultWorkingDirectory)/artifacts/bin/Azure.Sdk.Tools.Cli/Release/net8.0/azsdk
+          -AzsdkCliPath $(System.DefaultWorkingDirectory)/azsdk
           -CsprojPath $(System.DefaultWorkingDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
         pwsh: true
-        workingDirectory: '$(System.DefaultWorkingDirectory)/azure-sdk-tools-main'
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+    
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: azure-sdk-tools
+        PRBranchName: update-mcp-tools-documentation-$(Build.BuildId)
+        CommitMsg: "Update MCP tools documentation"
+        PRTitle: "Update MCP tools documentation"
+        WorkingDirectory: $(System.DefaultWorkingDirectory)
+        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts/

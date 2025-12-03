@@ -4,6 +4,7 @@
 
 ### Features Added
 
+- Moved `azsdk_check_api_spec_ready_for_sdk` and `azsdk_link_sdk_pull_request_to_release_plan` under release plan command hierarchy.
 - Added APIView tools to expose APIView functionality to MCP agents (`get-comments`) and CLI (`get-content`)
 
 ### Breaking Changes

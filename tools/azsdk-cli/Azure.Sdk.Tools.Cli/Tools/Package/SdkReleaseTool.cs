@@ -58,8 +58,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await ReleasePackageAsync(packageName, language, branch, dryRun);
         }
 
-        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
-        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool dryRun = false)
+        [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass dryRun as true.")]
+        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main")
         {
             try
             {

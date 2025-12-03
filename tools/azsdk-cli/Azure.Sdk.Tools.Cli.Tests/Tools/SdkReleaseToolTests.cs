@@ -119,7 +119,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             {
                 Assert.That(result.PackageName, Is.EqualTo(packageName));
                 Assert.That(result.Language, Is.EqualTo(SdkLanguage.Python));
-                //Assert.That(result.ReleasePipelineStatus, Is.EqualTo("Dry Run"));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Package 'azure-template' is ready for release."));
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo(string.Empty));
                 Assert.That(result.PipelineBuildId, Is.EqualTo(0));

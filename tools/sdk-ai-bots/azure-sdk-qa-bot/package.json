@@ -46,7 +46,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^18.0.0",
+    "@types/node": "^20.19.0",
     "env-cmd": "^10.1.0",
     "nodemon": "^3.1.7",
     "shx": "^0.3.3",

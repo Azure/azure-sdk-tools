@@ -65,7 +65,7 @@ This naming convention ensures consistency and makes it easy to identify which e
 
 ## Deployment
 
-This section describe how to update bot service logic in Azure web app
+This section describes how to update bot service logic in Azure web app
 
 > **Prerequisites**
 >

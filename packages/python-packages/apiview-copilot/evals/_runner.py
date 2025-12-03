@@ -221,12 +221,20 @@ class EvaluationRunner:
         try:
             # Load each test file once and reuse parsed data
             test_file_to_case = {}
+
+            def load_single_file(test_file: Path) -> tuple[Path, dict]:
+                return test_file, self._context._load_test_file(test_file)
+
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                futures = [executor.submit(load_single_file, test_file) for test_file in target.test_files]
+                for future in as_completed(futures):
+                    test_file, test_case = future.result()
+                    test_file_to_case[test_file] = test_case
+
             testcase_ids = []
             test_file_paths = []
 
-            for test_file in target.test_files:
-                test_case = self._context._load_test_file(test_file)
-                test_file_to_case[test_file] = test_case
+            for test_file, test_case in test_file_to_case.items():
                 testcase_id = test_case.get("testcase")
                 if testcase_id:
                     testcase_ids.append(testcase_id)

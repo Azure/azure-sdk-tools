@@ -297,7 +297,7 @@ class EvaluationRunner:
 
         # Execute evaluation
         evaluator_class = get_evaluator_class(target.config.kind)
-        evaluator = evaluator_class(target.config, jsonl_file=fresh_jsonl)
+        evaluator = evaluator_class(target.config, sample_testcase=testcases[0] if testcases else None)
 
         results = []
         for run in range(self.num_runs):

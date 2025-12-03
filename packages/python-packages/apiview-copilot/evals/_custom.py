@@ -198,9 +198,9 @@ class BaseEvaluator(ABC):
 
 
 class PromptyEvaluator(BaseEvaluator):
-    def __init__(self, config, jsonl_file=None):
+    def __init__(self, config, sample_testcase: dict | None = None):
         self.config = config
-        self._jsonl_file = jsonl_file
+        self._sample_testcase = sample_testcase
 
         # Optionally, you can set up a model config for SimilarityEvaluator if needed
         settings = SettingsManager()
@@ -328,12 +328,12 @@ class PromptyEvaluator(BaseEvaluator):
     @property
     def evaluator_config(self) -> dict[str, Any]:
         config = {}
-        with open(self._jsonl_file, encoding="utf-8") as f:
-            first_line = json.loads(f.readline())
-        fields = set(first_line.keys())
+        
+        if self._sample_testcase:
+            fields = set(self._sample_testcase.keys())
+            for field in fields:
+                config[field] = f"${{data.{field}}}"
 
-        for field in fields:
-            config[field] = f"${{data.{field}}}"
         config["actual"] = "${target.actual}"
         return {"column_mapping": config}
 

@@ -92,10 +92,13 @@ class ExecutionContext:
         output_name = f"{workflow_name}.jsonl"
         out_path = tmp_dir / output_name
 
-        with out_path.open("w", encoding="utf-8") as out_f:
-            for test_case in testcases:
-                out_f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False))
-                out_f.write("\n")
+        lines = [
+            json.dumps(test_case, separators=(",", ":"), ensure_ascii=False)
+            for test_case in testcases
+        ]
+        content = "\n".join(lines) + "\n"
+
+        out_path.write_text(content, encoding="utf-8")
 
         with self._temp_files_lock:
             self._temp_files.append(out_path)

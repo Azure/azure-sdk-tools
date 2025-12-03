@@ -61,7 +61,7 @@ This naming convention ensures consistency and makes it easy to identify which e
 
 - prod: Production environment for Azure SDK team
 - preprod: re-production environment for Azure SDK team
-- dev: Dev environment for Azure SDK tesing team
+- dev: Dev environment for Azure SDK testing team
 
 ## Deployment
 

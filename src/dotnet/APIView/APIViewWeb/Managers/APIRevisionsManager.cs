@@ -556,6 +556,10 @@ namespace APIViewWeb.Managers
             await _notificationManager.SubscribeAsync(review, user);
             await _reviewsRepository.UpsertReviewAsync(review);
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            
+            // Update LastUpdatedOn for all existing revisions asynchronously when a new revision is added
+            _ = Task.Run(async () => await UpdateExistingRevisionsLastUpdatedOnAsync(review.Id, apiRevision.Id));
+            
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
             if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
@@ -571,6 +575,33 @@ namespace APIViewWeb.Managers
             }
             return apiRevision;
             //await GenerateAIReview(review, revision);
+        }
+
+        /// <summary>
+        /// Update LastUpdatedOn for all existing revisions in a review when a new revision is added
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="newRevisionId"></param>
+        /// <returns></returns>
+        private async Task UpdateExistingRevisionsLastUpdatedOnAsync(string reviewId, string newRevisionId)
+        {
+            try
+            {
+                var existingRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+                var currentTime = DateTime.UtcNow;
+                foreach (var existingRevision in existingRevisions)
+                {
+                    if (existingRevision.Id != newRevisionId)
+                    {
+                        existingRevision.LastUpdatedOn = currentTime;
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(existingRevision);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
         }
 
         /// <summary>

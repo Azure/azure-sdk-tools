@@ -244,6 +244,7 @@ extends:
             dependsOn: BuildTestAndPackage
             VerifyChangelog: ${{ parameters.VerifyChangelog }}
             ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
+            CustomReleaseJobs: ${{ parameters.CustomReleaseJobs }}
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

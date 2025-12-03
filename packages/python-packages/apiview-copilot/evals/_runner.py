@@ -240,22 +240,19 @@ class EvaluationRunner:
                     testcase_ids.append(testcase_id)
                     test_file_paths.append(test_file)
 
-            # Resolve cache strategy
-            cache_lookup = {}
-            if self._use_recording:
-                cache_lookup = load_recordings(testcase_ids, test_file_paths)
+            # Resolve recordings strategy
+            recordings_lookup = load_recordings(testcase_ids, test_file_paths) if self._use_recording else {}
 
-            # Partition test data based on cache
-            cached_azure_rows = []
+            # Partition test data based on recordings
+            recorded_azure_rows = []
             fresh_testcases = []
             fresh_test_file_paths = []
 
-            for test_file in target.test_files:
-                test_case = test_file_to_case[test_file]
+            for test_file, test_case in test_file_to_case.items():
                 testcase_id = test_case.get("testcase")
 
-                if testcase_id and testcase_id in cache_lookup:
-                    cached_azure_rows.append(cache_lookup[testcase_id])
+                if testcase_id and testcase_id in recordings_lookup:
+                    recorded_azure_rows.append(recordings_lookup[testcase_id])
                 else:
                     fresh_testcases.append(test_case)
                     fresh_test_file_paths.append(test_file)
@@ -271,12 +268,12 @@ class EvaluationRunner:
                 save_recordings(fresh_testcase_ids, fresh_test_file_paths, fresh_results)
 
             # Combine all results
-            cached_rows = [row for row in cached_azure_rows]
+            recorded_rows = [row for row in recorded_azure_rows]
             fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
-            all_cached_rows = cached_rows + fresh_rows
-            combined_result = {"rows": all_cached_rows, "metrics": {}, "studio_url": None}
+            all_recorded_rows = recorded_rows + fresh_rows
+            combined_result = {"rows": all_recorded_rows, "metrics": {}, "studio_url": None}
 
-            all_passed = all(row.get("outputs.metrics.success", False) for row in all_cached_rows)
+            all_passed = all(row.get("outputs.metrics.success", False) for row in all_recorded_rows)
 
             return EvaluationResult(
                 target=target,

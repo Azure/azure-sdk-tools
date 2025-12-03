@@ -72,22 +72,29 @@ class ExecutionContext:
         except Exception as e:
             raise ValueError(f"Failed to read/parse test file {test_file}: {e}") from e
 
-    def create_temporary_jsonl_file(self, target: EvaluationTarget) -> Path:
+    def create_temporary_jsonl_file(self, testcases: list[dict], workflow_name: str) -> Path:
         """
-        Collect all test files with the *.json extension in the given directory
-        and store them as a single JSONL file in a temporary directory.
+        Create a temporary JSONL file from a list of test cases.
 
-        Each source JSON file is parsed and written as one compact JSON object per line.
-        Returns the Path to the created JSONL file.
+        Args:
+            testcases: List of test case dictionaries to write to the file.
+            workflow_name: Name used for the output filename (e.g., "my_workflow" -> "my_workflow.jsonl").
+
+        Returns:
+            Path to the created JSONL file. The file is tracked and will be cleaned up
+            automatically when cleanup() is called on this ExecutionContext.
+
+        Note:
+            Each test case is serialized as a compact JSON object on a single line.
+            The temporary file is thread-safe and managed by the context's cleanup system.
         """
         tmp_dir = Path(tempfile.mkdtemp(prefix="evals_executor_"))
-        output_name = f"{target.workflow_name}.jsonl"
+        output_name = f"{workflow_name}.jsonl"
         out_path = tmp_dir / output_name
 
         with out_path.open("w", encoding="utf-8") as out_f:
-            for test_file in target.test_files:
-                obj = self._load_test_file(test_file)
-                out_f.write(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
+            for test_case in testcases:
+                out_f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False))
                 out_f.write("\n")
 
         with self._temp_files_lock:
@@ -276,13 +283,8 @@ class EvaluationRunner:
         if not testcases:
             return []
 
-        # Create temporary file for testcases
-        tmp_dir = Path(tempfile.mkdtemp(prefix="evals_fresh_"))
-        fresh_jsonl = tmp_dir / f"fresh_{target.workflow_name}.jsonl"
-
-        with fresh_jsonl.open("w", encoding="utf-8") as f:
-            for test_case in testcases:
-                f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False) + "\n")
+        # Create temporary JSONL file to feed to evaluator
+        fresh_jsonl = self._context.create_temporary_jsonl_file(testcases, f"fresh_{target.workflow_name}")
 
         # Execute evaluation
         evaluator_class = get_evaluator_class(target.config.kind)
@@ -302,13 +304,6 @@ class EvaluationRunner:
                 **self._context._credential_kwargs,
             )
             results.append(result)
-
-        # Cleanup
-        try:
-            fresh_jsonl.unlink()
-            tmp_dir.rmdir()
-        except OSError:
-            pass
 
         return results
 

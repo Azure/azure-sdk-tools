@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -11,7 +10,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
-using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
@@ -178,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_run_generate_sdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline.")]
         public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
         {
             try

@@ -4,7 +4,7 @@ import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOpti
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import config from '../config/config.js';
-import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGeneratorV2.js';
+import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';
@@ -53,7 +53,7 @@ export class RAGModel implements PromptCompletionModel {
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    await thinkingHandler.start(context, conversationMessages);
+    const replyStartTimestamp = await thinkingHandler.start(context, conversationMessages);
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
@@ -71,7 +71,7 @@ export class RAGModel implements PromptCompletionModel {
     }
     // TODO: try merge cancelTimer and stop into one method
     await thinkingHandler.safeCancelTimer();
-    await thinkingHandler.stop(ragReply, currentPrompt);
+    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt);
 
     return { status: 'success' };
   }

@@ -45,6 +45,7 @@ Cognitive - Anomaly Detector,,e99695
 Cognitive - Bing,,e99695
 Cognitive - Computer Vision,,e99695
 Cognitive - Content Moderator,,e99695
+Cognitive - Content Understanding,,e99695
 Cognitive - Custom Vision,,e99695
 Cognitive - Face,,e99695
 Cognitive - Form Recognizer,,e99695
@@ -171,6 +172,7 @@ Monitor,"Monitor, Monitor Ingestion, Monitor Query",e99695
 Monitor - ApplicationInsights,,e99695
 Monitor - Exporter,Monitor OpenTelemetry Exporter,e99695
 MySQL,,e99695
+NetApp Files,,e99695
 Network,,e99695
 Network - Application Gateway,,e99695
 Network - Bastion,,e99695

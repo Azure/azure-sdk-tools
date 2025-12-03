@@ -241,10 +241,9 @@ class EvaluationRunner:
                     test_file_paths.append(test_file)
 
             # Resolve cache strategy
+            cache_lookup = {}
             if self._use_recording:
                 cache_lookup = load_recordings(testcase_ids, test_file_paths)
-            else:
-                cache_lookup = {}
 
             # Partition test data based on cache
             cached_azure_rows = []
@@ -261,13 +260,15 @@ class EvaluationRunner:
                     fresh_testcases.append(test_case)
                     fresh_test_file_paths.append(test_file)
 
-            # Execute fresh testcases if needed
-            fresh_results = []
-            if fresh_testcases:
-                fresh_results = self._run_azure_evaluation(fresh_testcases, target)
+            # Execute fresh testcases
+            fresh_results = self._run_azure_evaluation(fresh_testcases, target)
 
-                if self._use_recording:
-                    save_recordings(fresh_test_file_paths, fresh_results)
+            if self._use_recording:
+                fresh_testcase_ids = [
+                    test_file_to_case[tf].get("testcase") 
+                    for tf in fresh_test_file_paths
+                ]
+                save_recordings(fresh_testcase_ids, fresh_test_file_paths, fresh_results)
 
             # Combine all results
             cached_rows = [row for row in cached_azure_rows]

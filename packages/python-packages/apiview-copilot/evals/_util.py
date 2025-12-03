@@ -35,31 +35,19 @@ def load_recordings(testcase_ids: list[str], test_file_paths: list[Path]) -> dic
 
     return recordings_lookup
 
-def save_recordings(test_file_paths: list[Path], azure_results: list[dict]) -> None:
+def save_recordings(
+    testcase_ids: list[str],
+    test_file_paths: list[Path], 
+    azure_results: list[dict]
+) -> None:
     """Save fresh evaluation results to individual recording files.
     
     Args:
         test_file_paths: List of test file paths corresponding to the results
         azure_results: List of Azure AI evaluation results to save
     """
-    # Build mapping from testcase_id to test_file_path
-    testcase_to_file = {}
-    for test_file_path in test_file_paths:
-        # Load test file to get testcase_id
-        try:
-            with test_file_path.open("r", encoding="utf-8") as f:
-                if test_file_path.suffix == ".json":
-                    test_data = json.load(f)
-                elif test_file_path.suffix in [".yaml", ".yml"]:
-                    test_data = yaml.safe_load(f)
-                else:
-                    continue
-                    
-                testcase_id = test_data.get("testcase")
-                if testcase_id:
-                    testcase_to_file[testcase_id] = test_file_path
-        except (json.JSONDecodeError, IOError, yaml.YAMLError):
-            continue
+    # Build mapping from testcase_id to test_file_path without re-parsing files
+    testcase_to_file = dict(zip(testcase_ids, test_file_paths))
     
     # Save each result to its individual cache file
     for azure_result in azure_results:

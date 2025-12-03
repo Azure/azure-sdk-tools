@@ -5,17 +5,74 @@ import (
 )
 
 type AgenticSearchRequest struct {
-	Messages          []KnowledgeAgentMessage     `json:"messages"`
-	TargetIndexParams []KnowledgeAgentIndexParams `json:"targetIndexParams,omitempty"`
+	Messages                 []KnowledgeAgentMessage   `json:"messages"`
+	KnowledgeSourceParams    []KnowledgeSourceParams   `json:"knowledgeSourceParams,omitempty"`
+	IncludeActivity          bool                      `json:"includeActivity,omitempty"`
+	MaxRuntimeInSeconds      *int                      `json:"maxRuntimeInSeconds,omitempty"`
+	MaxOutputSize            *int                      `json:"maxOutputSize,omitempty"`
+	RetrievalReasoningEffort *RetrievalReasoningEffort `json:"retrievalReasoningEffort,omitempty"`
+	OutputMode               OutputMode                `json:"outputMode,omitempty"`
 }
 
-type KnowledgeAgentIndexParams struct {
-	FilterAddOn                string  `json:"filterAddOn"`
-	IncludeReferenceSourceData *bool   `json:"includeReferenceSourceData,omitempty"`
-	IndexName                  string  `json:"indexName"`
-	MaxDocsForReranker         *int    `json:"maxDocsForReranker,omitempty"`
-	RerankerThreshold          float64 `json:"rerankerThreshold"`
+// KnowledgeSourceKind is an enum for knowledge source types
+type KnowledgeSourceKind string
+
+const (
+	KnowledgeSourceKindSearchIndex       KnowledgeSourceKind = "searchIndex"       // A knowledge source that retrieves data from a Search Index
+	KnowledgeSourceKindAzureBlob         KnowledgeSourceKind = "azureBlob"         // A knowledge source that retrieves and ingests data from Azure Blob Storage to a Search Index
+	KnowledgeSourceKindWeb               KnowledgeSourceKind = "web"               // A knowledge source that retrieves data from the web
+	KnowledgeSourceKindRemoteSharePoint  KnowledgeSourceKind = "remoteSharePoint"  // A knowledge source that retrieves data from a remote SharePoint endpoint
+	KnowledgeSourceKindIndexedSharePoint KnowledgeSourceKind = "indexedSharePoint" // A knowledge source that retrieves and ingests data from SharePoint to a Search Index
+	KnowledgeSourceKindIndexedOneLake    KnowledgeSourceKind = "indexedOneLake"    // A knowledge source that retrieves and ingests data from OneLake to a Search Index
+)
+
+// KnowledgeSourceParams contains parameters for knowledge source retrieval
+type KnowledgeSourceParams struct {
+	KnowledgeSourceName        string              `json:"knowledgeSourceName"`
+	Kind                       KnowledgeSourceKind `json:"kind"`
+	FilterAddOn                string              `json:"filterAddOn,omitempty"`
+	IncludeReferenceSourceData *bool               `json:"includeReferenceSourceData,omitempty"`
+	IncludeReferences          *bool               `json:"includeReferences,omitempty"`
+	RerankerThreshold          *float64            `json:"rerankerThreshold,omitempty"`
+	AlwaysQuerySource          *bool               `json:"alwaysQuerySource,omitempty"`
 }
+
+// OutputMode is an enum for output mode values
+type OutputMode string
+
+const (
+	OutputModeAnswerSynthesis OutputMode = "answerSynthesis" // Synthesize an answer for the response payload
+	OutputModeExtractiveData  OutputMode = "extractiveData"  // Return data from the knowledge sources directly without generative alteration
+)
+
+// RetrievalReasoningEffortKind is an enum for reasoning effort
+type RetrievalReasoningEffortKind string
+
+const (
+	RetrievalReasoningEffortMinimal RetrievalReasoningEffortKind = "minimal" // Does not perform any source selections, query planning, or iterative search
+	RetrievalReasoningEffortLow     RetrievalReasoningEffortKind = "low"     // Use low reasoning during retrieval
+	RetrievalReasoningEffortMedium  RetrievalReasoningEffortKind = "medium"  // Use a moderate amount of reasoning during retrieval
+)
+
+// RetrievalReasoningEffort specifies the level of LLM processing for retrieval
+type RetrievalReasoningEffort struct {
+	Kind RetrievalReasoningEffortKind `json:"kind"`
+}
+
+// ActivityRecordType is an enum for activity record types
+type ActivityRecordType string
+
+const (
+	ActivityRecordTypeAgenticReasoning     ActivityRecordType = "agenticReasoning"
+	ActivityRecordTypeSearchIndex          ActivityRecordType = "searchIndex"
+	ActivityRecordTypeWeb                  ActivityRecordType = "web"
+	ActivityRecordTypeAzureBlob            ActivityRecordType = "azureBlob"
+	ActivityRecordTypeIndexedSharePoint    ActivityRecordType = "indexedSharePoint"
+	ActivityRecordTypeIndexedOneLake       ActivityRecordType = "indexedOneLake"
+	ActivityRecordTypeRemoteSharePoint     ActivityRecordType = "remoteSharePoint"
+	ActivityRecordTypeModelQueryPlanning   ActivityRecordType = "modelQueryPlanning"
+	ActivityRecordTypeModelAnswerSynthesis ActivityRecordType = "modelAnswerSynthesis"
+)
 
 type AgenticSearchResponse struct {
 	Activity   []KnowledgeAgentActivityRecord `json:"activity"`
@@ -24,20 +81,49 @@ type AgenticSearchResponse struct {
 }
 
 type KnowledgeAgentActivityRecord struct {
-	ElapsedMs    int64                             `json:"elapsedMs"`
-	ID           int64                             `json:"id"`
-	InputTokens  int64                             `json:"inputTokens"`
-	OutputTokens int64                             `json:"outputTokens"`
-	Type         string                            `json:"type"`
-	Count        int                               `json:"count,omitempty"`
-	Query        KnowledgeAgentActivityRecordQuery `json:"query,omitempty"`
-	QueryTime    string                            `json:"queryTime,omitempty"`
-	TargetIndex  string                            `json:"targetIndex,omitempty"`
+	// Common fields
+	ID        int64              `json:"id"`
+	Type      ActivityRecordType `json:"type"`
+	ElapsedMs int64              `json:"elapsedMs,omitempty"`
+	Error     *ActivityError     `json:"error,omitempty"` // New in 2025-11-01-preview
+
+	// For LLM activities (modelQueryPlanning, modelAnswerSynthesis)
+	InputTokens  int64 `json:"inputTokens,omitempty"`
+	OutputTokens int64 `json:"outputTokens,omitempty"`
+
+	// For agenticReasoning activities
+	RetrievalReasoningEffort *RetrievalReasoningEffort `json:"retrievalReasoningEffort,omitempty"`
+	ReasoningTokens          int64                     `json:"reasoningTokens,omitempty"`
+
+	// For search activities (searchIndex, web, azureBlob, etc.)
+	KnowledgeSourceName  string                 `json:"knowledgeSourceName,omitempty"`
+	QueryTime            string                 `json:"queryTime,omitempty"`
+	Count                int                    `json:"count,omitempty"`
+	SearchIndexArguments *SearchIndexArguments  `json:"searchIndexArguments,omitempty"`
+	WebArguments         map[string]interface{} `json:"webArguments,omitempty"`
+	AzureBlobArguments   map[string]interface{} `json:"azureBlobArguments,omitempty"`
+	SharePointArguments  map[string]interface{} `json:"sharePointArguments,omitempty"`
+	OneLakeArguments     map[string]interface{} `json:"oneLakeArguments,omitempty"`
 }
 
-type KnowledgeAgentActivityRecordQuery struct {
-	Filter string `json:"filter,omitempty"`
-	Search string `json:"search,omitempty"`
+// SearchIndexArguments represents arguments for searchIndex activity
+type SearchIndexArguments struct {
+	Search                    string           `json:"search,omitempty"`
+	Filter                    string           `json:"filter,omitempty"`
+	SourceDataFields          []FieldReference `json:"sourceDataFields,omitempty"`
+	SearchFields              []FieldReference `json:"searchFields,omitempty"`
+	SemanticConfigurationName string           `json:"semanticConfigurationName,omitempty"`
+}
+
+// FieldReference represents a field reference in search arguments
+type FieldReference struct {
+	Name string `json:"name"`
+}
+
+// ActivityError represents an error in an activity record
+type ActivityError struct {
+	Message string `json:"message,omitempty"`
+	Code    string `json:"code,omitempty"`
 }
 
 type KnowledgeAgentReference struct {

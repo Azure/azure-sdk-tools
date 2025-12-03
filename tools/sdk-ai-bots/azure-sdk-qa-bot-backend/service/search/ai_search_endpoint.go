@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
@@ -28,7 +29,7 @@ func NewSearchClient() *SearchClient {
 		BaseUrl: config.AppConfig.AI_SEARCH_BASE_URL,
 		ApiKey:  config.AI_SEARCH_APIKEY,
 		Index:   config.AppConfig.AI_SEARCH_INDEX,
-		Agent:   config.AppConfig.AI_SEARCH_AGENT,
+		Agent:   config.AppConfig.AI_SEARCH_KNOWLEDGE_BASE,
 	}
 }
 
@@ -359,21 +360,28 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		filters = append(filters, filter)
 	}
 
-	targetIndexParam := model.KnowledgeAgentIndexParams{
-		IndexName:         s.Index,
-		RerankerThreshold: model.RerankScoreMediumRelevanceThreshold,
+	knowledgeSourceParams := []model.KnowledgeSourceParams{
+		{
+			KnowledgeSourceName: config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
+			Kind:                model.KnowledgeSourceKindSearchIndex,
+			FilterAddOn:         strings.Join(filters, " or "),
+			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
+		},
 	}
-	if len(filters) > 0 {
-		targetIndexParam.FilterAddOn = strings.Join(filters, " or ")
+
+	req := &model.AgenticSearchRequest{
+		Messages:                 messages,
+		KnowledgeSourceParams:    knowledgeSourceParams,
+		IncludeActivity:          true,
+		OutputMode:               model.OutputModeExtractiveData,
+		RetrievalReasoningEffort: &model.RetrievalReasoningEffort{Kind: model.RetrievalReasoningEffortMedium},
 	}
-	req := &model.AgenticSearchRequest{}
-	req.Messages = messages
-	req.TargetIndexParams = []model.KnowledgeAgentIndexParams{targetIndexParam}
+
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/agents/%s/%s", s.BaseUrl, s.Agent, "/retrieve?api-version=2025-05-01-preview"), bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/knowledgebases/%s/retrieve?api-version=2025-11-01-preview", s.BaseUrl, s.Agent), bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -385,7 +393,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		b, _ := io.ReadAll(resp.Body)
 		log.Println(string(b))
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)

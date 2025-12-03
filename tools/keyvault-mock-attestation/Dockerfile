@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/cbl-mariner/base/nodejs:18
+FROM mcr.microsoft.com/azurelinux/base/nodejs:20
 
 WORKDIR /usr/src/app
 

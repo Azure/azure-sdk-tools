@@ -94,6 +94,9 @@ const (
 	QuestionScope_Unknown   QuestionScope = "unknown"
 	QuestionScope_Branded   QuestionScope = "branded"
 	QuestionScope_Unbranded QuestionScope = "unbranded"
+	QuestionScope_MgmtPlane QuestionScope = "resource-management"
+	QuestionScope_DataPlane QuestionScope = "data-plane"
+	QuestionScope_Common    QuestionScope = "common"
 )
 
 type IntentionResult struct {

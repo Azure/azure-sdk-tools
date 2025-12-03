@@ -60,6 +60,15 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         Branded,
 
         [EnumMember(Value = "unbranded")]
-        Unbranded
+        Unbranded,
+
+        [EnumMember(Value = "resource-management")]
+        ResourceManagement,
+
+        [EnumMember(Value = "data-plane")]
+        DataPlane,
+
+        [EnumMember(Value = "common")]
+        Common
     }
 }

@@ -1,11 +1,9 @@
 using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.LeanModels
 {
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AICommentChangeAction
     {
         Created = 0,
@@ -13,8 +11,7 @@ namespace APIViewWeb.LeanModels
         Modified
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ReviewChangeAction
     {
         Created = 0,
@@ -26,8 +23,7 @@ namespace APIViewWeb.LeanModels
         UnDeleted
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum APIRevisionChangeAction
     {
         Created = 0,
@@ -37,8 +33,7 @@ namespace APIViewWeb.LeanModels
         UnDeleted
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentChangeAction
     {
         Created = 0,

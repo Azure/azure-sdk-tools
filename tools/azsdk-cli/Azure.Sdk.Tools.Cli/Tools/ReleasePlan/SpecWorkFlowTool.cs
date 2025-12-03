@@ -433,11 +433,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 response.TypeSpecProject = typeSpecProjectPath;
                 logger.LogInformation("Running SDK generation pipeline");
                 var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(apiSpecBranchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch);
-                response = new ReleaseWorkflowResponse()
-                {
-                    Status = "Success",
-                    Details = [$"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
-                };
+                response.Status = "Success";
+                response.Details.Add($"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created.");
                 return response;
             }
             catch (Exception ex)

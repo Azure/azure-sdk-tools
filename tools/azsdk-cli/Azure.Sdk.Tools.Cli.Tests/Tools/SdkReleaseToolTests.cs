@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 });
             devOpsService = mockDevOpsService.Object;
 
-            var sdkReleaseTool = new SdkReleaseTool(
+            sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
                 logger);
         }

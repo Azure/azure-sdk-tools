@@ -882,6 +882,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
+                language = language.Equals("dotnet", StringComparison.OrdinalIgnoreCase) ? ".NET" : language;
+
                 // Verify language and get repo name
                 if (!IsValidLanguage(language))
                 {

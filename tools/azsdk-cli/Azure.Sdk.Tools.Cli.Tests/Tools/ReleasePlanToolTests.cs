@@ -26,7 +26,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             logger = new TestLogger<ReleasePlanTool>();
             devOpsService = new MockDevOpsService();
-            gitHubService = new Mock<IGitHubService>().Object;
+            gitHubService = new MockGitHubService();
+            // gitHubService = new Mock<IGitHubService>().Object;
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
             typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
@@ -311,6 +312,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             var updateStatus = await releasePlanTool.UpdateLanguageExclusionJustification(100, "This is a test justification for excluding certain languages.");
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
+        }
+
+        [Test]
+        public async Task Test_link_sdk_pull_request_to_release_plan()
+        {
+            var cases = new (string language, string pullRequestUrl)[]
+            {
+                ("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345"),
+                (".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
+                ("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345"),
+                ("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345"),
+            };
+
+            foreach (var (language, pullRequestUrl) in cases)
+            {
+                var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
+                Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
+            }
         }
     }
 }

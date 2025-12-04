@@ -29,7 +29,7 @@ from ._prompt_runner import run_prompt
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._settings import SettingsManager
-from ._utils import get_language_pretty_name, get_prompt_path
+from ._utils import get_language_pretty_name
 
 # Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -233,12 +233,13 @@ class ApiViewReview:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
     def _execute_prompt_task(
-        self, *, prompt_path: str, inputs: dict, task_name: str, status_idx: int, status_array: List[str]
+        self, *, folder: str, filename: str, inputs: dict, task_name: str, status_idx: int, status_array: List[str]
     ) -> Optional[dict]:
         """Execute a single prompt task with percent progress tracking.
 
         Args:
-            prompt_path (str): Path to the prompt file.
+            folder (str): Folder containing the prompt file.
+            filename (str): Name of the prompt file.
             inputs (dict): Dictionary of inputs for the prompt.
             task_name (str): Name of the task (e.g., "summary", "guideline").
             status_idx (int): Index in the status array to update.
@@ -255,7 +256,7 @@ class ApiViewReview:
 
         try:
             # Run the prompt
-            response = self._run_prompt(prompt_path, inputs)
+            response = self._run_prompt(folder, filename, inputs)
             result = json.loads(response)
 
             # Mark this task as done (for numeric progress only)
@@ -334,7 +335,8 @@ class ApiViewReview:
             guideline_key = f"{guideline_tag}_{section_idx}"
             all_futures[guideline_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=get_prompt_path(folder="api_review", filename=guideline_prompt_file),
+                folder="api_review",
+                filename=guideline_prompt_file,
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "context": guideline_context_string,
@@ -350,7 +352,8 @@ class ApiViewReview:
             generic_key = f"{generic_tag}_{section_idx}"
             all_futures[generic_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=get_prompt_path(folder="api_review", filename=generic_prompt_file),
+                folder="api_review",
+                filename=generic_prompt_file,
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "custom_rules": generic_metadata["custom_rules"],
@@ -367,7 +370,8 @@ class ApiViewReview:
             context_string = context.to_markdown() if context else ""
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=get_prompt_path(folder="api_review", filename=context_prompt_file),
+                folder="api_review",
+                filename=context_prompt_file,
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "context": context_string,
@@ -439,9 +443,6 @@ class ApiViewReview:
         Filter generic comments by running the filter prompt on each comment, separating into keep
         and discard lists, reporting counts, and dumping to debug log if enabled.
         """
-        prompt_file = "filter_generic_comment.prompty"
-        prompt_path = get_prompt_path(folder="api_review", filename=prompt_file)
-
         self._print_message("\nFiltering generic comments...")
 
         # Submit each generic comment to the executor for parallel processing
@@ -454,7 +455,8 @@ class ApiViewReview:
             context_text = context.to_markdown() if search_result else "EMPTY"
             futures[idx] = self.executor.submit(
                 self._run_prompt,
-                prompt_path,
+                "api_review",
+                "filter_generic_comment.prompty",
                 inputs={
                     "content": comment.model_dump(),
                     "language": get_language_pretty_name(self.language),
@@ -545,8 +547,6 @@ class ApiViewReview:
                 continue
             batches[line_id] = matches
 
-        prompt_path = get_prompt_path(folder="api_review", filename="merge_comments.prompty")
-
         self._print_message("\nDeduplicating comments...")
 
         # Submit all batches to the executor for parallel processing
@@ -566,7 +566,8 @@ class ApiViewReview:
             # Submit the task to the executor
             futures[line_no] = self.executor.submit(
                 self._run_prompt,
-                prompt_path,
+                "api_review",
+                "merge_comments.prompty",
                 {"comments": batch, "context": context},
             )
 
@@ -592,15 +593,13 @@ class ApiViewReview:
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
-        filter_prompt_file = "filter_comment_with_metadata.prompty"
-        filter_prompt_path = get_prompt_path(folder="api_review", filename=filter_prompt_file)
-
         # Submit each comment to the executor for parallel processing
         futures = {}
         for idx, comment in enumerate(self.results.comments):
             futures[idx] = self.executor.submit(
                 self._run_prompt,
-                filter_prompt_path,
+                folder="api_review",
+                filename="filter_comment_with_metadata.prompty",
                 inputs={
                     "content": comment.model_dump(),
                     "language": get_language_pretty_name(self.language),
@@ -676,8 +675,7 @@ class ApiViewReview:
                 "existing": [e.model_dump() for e in existing_comments],
                 "language": get_language_pretty_name(self.language),
             }
-            prompt_path = get_prompt_path(folder="api_review", filename="filter_existing_comment.prompty")
-            tasks.append((idx, comment, prompt_path, inputs))
+            tasks.append((idx, comment, "api_review", "filter_existing_comment.prompty", inputs))
             indices.append(idx)
 
         total = len(tasks)
@@ -722,9 +720,6 @@ class ApiViewReview:
         """
         Score all comments using the judge prompt, processing each comment in parallel.
         """
-        prompt_file = "judge_comment_confidence.prompty"
-        prompt_path = get_prompt_path(folder="api_review", filename=prompt_file)
-
         self._print_message("\nScoring comments...")
 
         # Submit each comment to the executor for parallel processing
@@ -735,7 +730,8 @@ class ApiViewReview:
             context = self.search.build_context(search_results)
             futures[idx] = self.executor.submit(
                 self._run_prompt,
-                prompt_path,
+                "api_review",
+                "judge_comment_confidence.prompty",
                 inputs={
                     "content": comment.model_dump(),
                     "language": get_language_pretty_name(self.language),
@@ -812,12 +808,13 @@ class ApiViewReview:
             except Exception as e:
                 self.logger.error(f"Failed to write judge debug logs: {str(e)}")
 
-    def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
+    def _run_prompt(self, folder: str, filename: str, inputs: dict, max_retries: int = 5) -> str:
         """
         Run a prompt with retry logic.
         """
         return self.run_prompt(
-            prompt_path=prompt_path,
+            folder=folder,
+            filename=filename,
             inputs=inputs,
             settings=self.settings,
             max_retries=max_retries,

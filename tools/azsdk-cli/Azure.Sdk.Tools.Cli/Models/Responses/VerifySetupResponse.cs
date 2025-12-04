@@ -23,7 +23,8 @@ public class VerifySetupResponse : CommandResponse
             foreach (var result in Results)
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
-                sb.AppendLine($"    Instructions: {string.Join(", ", result.Instructions)}");
+                sb.AppendLine($"        Instructions: {string.Join(", ", result.Instructions)}");
+                sb.AppendLine($"        Failure Output: {result.FailureOutput}\n");
             }
         }
         else
@@ -47,4 +48,8 @@ public class RequirementCheckResult
     /// Instructions for resolving issues found during the requirement check.
     /// </summary>
     public List<string> Instructions { get; set; }
+    /// <summary>
+    /// Output from any failures encountered during the requirement check.
+    /// </summary>
+    public string FailureOutput { get; set; }
 }

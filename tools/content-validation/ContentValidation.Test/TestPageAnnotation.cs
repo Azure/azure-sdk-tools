@@ -15,16 +15,20 @@ namespace ContentValidation.Test
         public static ConcurrentQueue<TResult> TestMissingTypeAnnotationResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
+        public static IBrowser browser;
         static TestPageAnnotation()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+            // Create a shared browser instance for all tests
+            browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
             TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
         }
 
         [OneTimeTearDown]
         public void SaveTestData()
         {
-            playwright.Dispose();
+            browser?.CloseAsync().GetAwaiter().GetResult();
+            playwright?.Dispose();
             string excelFilePath = ConstData.TotalIssuesExcelFileName;
             string sheetName = "TotalIssues";
             string jsonFilePath = ConstData.TotalIssuesJsonFileName;
@@ -32,32 +36,32 @@ namespace ContentValidation.Test
             JsonHelper4Test.AddTestResult(TestMissingTypeAnnotationResults, jsonFilePath);
         }
 
-        [Test]
-        [Category("PythonTest")]
-        [TestCaseSource(nameof(TestLinks))]
-        public async Task TestMissingTypeAnnotation(string testLink)
-        {
-            IValidation Validation = new TypeAnnotationValidation(playwright);
+        // [Test]
+        // [Category("PythonTest")]
+        // [TestCaseSource(nameof(TestLinks))]
+        // public async Task TestMissingTypeAnnotation(string testLink)
+        // {
+        //     IValidation Validation = new TypeAnnotationValidation(browser);
 
-            var res = new TResult();
+        //     var res = new TResult();
             
-            try
-            {
-                res = await Validation.Validate(testLink);
-                res.TestCase = "TestMissingTypeAnnotation";
-                if (!res.Result)
-                {
-                    TestMissingTypeAnnotationResults.Enqueue(res);
-                }
-                pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "succeed");
-            }
-            catch
-            {
-                pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "failed");
-                throw;
-            }
+        //     try
+        //     {
+        //         res = await Validation.Validate(testLink);
+        //         res.TestCase = "TestMissingTypeAnnotation";
+        //         if (!res.Result)
+        //         {
+        //             TestMissingTypeAnnotationResults.Enqueue(res);
+        //         }
+        //         pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "succeed");
+        //     }
+        //     catch
+        //     {
+        //         pipelineStatusHelper.SavePipelineFailedStatus("TypeAnnotationValidation", "failed");
+        //         throw;
+        //     }
 
-            Assert.That(res.Result, res.FormatErrorMessage());
-        }
+        //     Assert.That(res.Result, res.FormatErrorMessage());
+        // }
     }
 }

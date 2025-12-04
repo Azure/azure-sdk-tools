@@ -4,18 +4,17 @@ namespace UtilityLibraries;
 
 public class InconsistentTextFormatValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
-    public InconsistentTextFormatValidation(IPlaywright playwright)
+    public InconsistentTextFormatValidation(IBrowser browser)
     {
-        _playwright = playwright;
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
 
     public async Task<TResult> Validate(string testLink)
     {
-        //Create a browser instance.
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        //Create a new page from the shared browser instance.
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
         var res = new TResult();
@@ -57,7 +56,7 @@ public class InconsistentTextFormatValidation : IValidation
             }
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
 
         return res;
     }

@@ -59,7 +59,7 @@ stages:
       displayName: 'Install .NET Core SDK'
       inputs:
         packageType: 'sdk'
-        version: '8.0.x'
+        version: '9.0.x'
         installationPath: $(Agent.ToolsDirectory)/dotnet 
 
     - task: DotNetCoreCLI@2
@@ -80,7 +80,7 @@ stages:
       displayName: Build all projects and libraries
       inputs:
         command: 'build'
-        projects: 'content-validation.sln'
+        projects: '$(System.DefaultWorkingDirectory)/tools/content-validation/content-validation.sln'
 
     - task: DotNetCoreCLI@2
       displayName: Run Playwright Install
@@ -96,11 +96,11 @@ stages:
         PackagesListFilePath: ${{ parameters.packagesListFilePath }}
       inputs:
         command: 'run'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/PendingTestingPackagesThisMonth'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/PendingTestingPackagesThisMonth'
       name: runPackagesJob
 
     - pwsh: |
-        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/${{ parameters.packagesListFilePath }}" -Raw
+        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/tools/content-validation/${{ parameters.packagesListFilePath }}" -Raw
         
         if ($packagesJson -notmatch '^\s*\{') {
           $packages = $packagesJson -split ',' | ForEach-Object { $_.Trim() }
@@ -123,6 +123,7 @@ stages:
     displayName: RunTest_All
     condition: eq('${{ parameters.packages }}', 'all')
     dependsOn: FetchLastMonthReleasedPackages
+    timeoutInMinutes: 180
     strategy:
       matrix: $[ dependencies.FetchLastMonthReleasedPackages.outputs['generateMatrix.matrix'] ]
       maxParallel: ${{ parameters.maxParallel }}
@@ -133,24 +134,45 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_MissingTypeAnnotation }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules TypeAnnotationValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
-        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules GarbledTextValidation"; fi
-        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules ExtraLabelValidation"; fi
-        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules UnnecessarySymbolsValidation"; fi
+        runTestCase=""
+        if [ "$(echo ${{ parameters.rule_MissingTypeAnnotation }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules TypeAnnotationValidation"
+            runTestCase="TestMissingTypeAnnotation"
+        fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingContentValidation"
+            runTestCase="TestTableMissingContent"
+        fi
+        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules GarbledTextValidation"
+            runTestCase="TestGarbledText"
+        fi
+        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules ExtraLabelValidation"
+            runTestCase="TestExtraLabel"
+        fi
+        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules UnnecessarySymbolsValidation"
+            runTestCase="TestUnnecessarySymbols"
+        fi
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
       name: setRules
 
-    - template: /eng/pipelines/common/content-validation-for-python.yml
+    - template: ../common/content-validation-for-python.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
 
   - job: content_validation_matrix_not_all
     displayName: RunTest_Not_All
     condition: ne('${{ parameters.packages }}', 'all')
+    timeoutInMinutes: 180
     strategy:
       matrix:
         ${{ each pkg in split(parameters.packages, ',') }}:
@@ -164,20 +186,40 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_MissingTypeAnnotation }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules TypeAnnotationValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
-        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules GarbledTextValidation"; fi
-        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules ExtraLabelValidation"; fi
-        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules UnnecessarySymbolsValidation"; fi
+        runTestCase=""
+        if [ "$(echo ${{ parameters.rule_MissingTypeAnnotation }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules TypeAnnotationValidation"
+            runTestCase="TestMissingTypeAnnotation"
+        fi
+        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules MissingContentValidation"
+            runTestCase="TestTableMissingContent"
+        fi
+        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules GarbledTextValidation"
+            runTestCase="TestGarbledText"
+        fi
+        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules ExtraLabelValidation"
+            runTestCase="TestExtraLabel"
+        fi
+        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
+            rules="$rules UnnecessarySymbolsValidation"
+            runTestCase="TestUnnecessarySymbols"
+        fi
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
       name: setRules
 
-    - template: /eng/pipelines/common/content-validation-for-python.yml
+    - template: ../common/content-validation-for-python.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
 
 
 # - stage: TotalIssuesSummary

@@ -296,7 +296,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 var response = new ReleaseWorkflowResponse();
-                language = inputSanitizer.SanitizeName(language);
+                language = inputSanitizer.SanitizeLanguage(language);
                 if (!IsValidLanguage(language))
                 {
                     response.ResponseError = $"Unsupported language to get pull request details. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";

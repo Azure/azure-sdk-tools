@@ -309,7 +309,7 @@ describe('ThinkingHandler', () => {
       };
 
       // Test the stop method with error
-      await thinkingHandler.stop(ragError, mockPrompt);
+      await thinkingHandler.stop(new Date(), ragError, mockPrompt);
 
       // Verify that updateActivity was called with error message
       expect(mockContext.updateActivity).toHaveBeenCalledWith({
@@ -334,7 +334,7 @@ describe('ThinkingHandler', () => {
       };
 
       // Test the stop method with error
-      await thinkingHandler.stop(ragError, mockPrompt);
+      await thinkingHandler.stop(new Date(), ragError, mockPrompt);
 
       // Verify that updateActivity was called with service error message
       expect(mockContext.updateActivity).toHaveBeenCalledWith({

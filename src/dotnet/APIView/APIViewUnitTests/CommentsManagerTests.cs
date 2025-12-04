@@ -90,6 +90,9 @@ public class CommentsManagerTests
             });
 
         Mock<IBackgroundTaskQueue> backgroundTaskQueueMock = new();
+        Mock<ICopilotAuthenticationService> copilotAuthService = new();
+        copilotAuthService.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
             {
@@ -117,6 +120,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            copilotAuthService.Object,
             logger.Object
         );
     }
@@ -727,6 +731,221 @@ public class CommentsManagerTests
         Assert.Contains("test-user", comment.Upvotes);
         Assert.True(comment.IsResolved);
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Exactly(4)); // 1 severity + 1 vote + 1 reply + 1 resolve
+    }
+
+    #endregion
+
+    #region  CommentsFeedback
+
+    [Fact]
+    public async Task AddCommentFeedbackAsync_AddsFeedbackToComment()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            Feedback = new List<CommentFeedback>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+            Comment = "This is incorrect because...",
+            IsDelete = false
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        Assert.Single(comment.Feedback);
+        Assert.Contains("FactuallyIncorrect", comment.Feedback[0].Reasons);
+        Assert.Equal("This is incorrect because...", comment.Feedback[0].Comment);
+        Assert.False(comment.Feedback[0].IsDelete);
+        Assert.Equal("test-user", comment.Feedback[0].SubmittedBy);
+        Assert.NotNull(comment.Feedback[0].SubmittedOn);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCommentFeedbackAsync_MultipleReasons_StoresAllReasons()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            Feedback = new List<CommentFeedback>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason>
+                {
+                    AICommentFeedbackReason.FactuallyIncorrect,
+                    AICommentFeedbackReason.RenderingBug,
+                    AICommentFeedbackReason.OutdatedGuideline
+                },
+            Comment = "Multiple issues found",
+            IsDelete = false
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        Assert.Single(comment.Feedback);
+        Assert.Equal(3, comment.Feedback[0].Reasons.Count);
+        Assert.Contains("FactuallyIncorrect", comment.Feedback[0].Reasons);
+        Assert.Contains("RenderingBug", comment.Feedback[0].Reasons);
+        Assert.Contains("OutdatedGuideline", comment.Feedback[0].Reasons);
+    }
+
+    [Fact]
+    public async Task AddCommentFeedbackAsync_DeletionFeedback_MarksAsDelete()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            Feedback = new List<CommentFeedback>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason>(),
+            Comment = "This comment is egregiously wrong",
+            IsDelete = true
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        Assert.Single(comment.Feedback);
+        Assert.True(comment.Feedback[0].IsDelete);
+        Assert.Equal("This comment is egregiously wrong", comment.Feedback[0].Comment);
+        Assert.Empty(comment.Feedback[0].Reasons);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_WithFeedback_AddsFeedbackToComment()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel> { comment });
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                Comment = "Batch feedback",
+                IsDelete = false
+            },
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Single(comment.Feedback);
+        Assert.Contains("FactuallyIncorrect", comment.Feedback[0].Reasons);
+        Assert.Equal("Batch feedback", comment.Feedback[0].Comment);
+        Assert.False(comment.Feedback[0].IsDelete);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_DeleteWithFeedback_PreservesFeedback()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason>(),
+                Comment = "Deleting because it's egregiously wrong",
+                IsDelete = true
+            },
+            Disposition = ConversationDisposition.Delete
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Single(comment.Feedback);
+        Assert.True(comment.Feedback[0].IsDelete);
+        Assert.Equal("Deleting because it's egregiously wrong", comment.Feedback[0].Comment);
+        Assert.True(comment.IsDeleted);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_DownvoteWithFeedback_AddsBoth()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        ResolveBatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            Vote = FeedbackVote.Down,
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                Comment = "Downvoting with reason",
+                IsDelete = false
+            },
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.Single(comment.Downvotes);
+        Assert.Contains("test-user", comment.Downvotes);
+        Assert.Single(comment.Feedback);
+        Assert.Contains("FactuallyIncorrect", comment.Feedback[0].Reasons);
+        Assert.Equal("Downvoting with reason", comment.Feedback[0].Comment);
     }
 
     #endregion

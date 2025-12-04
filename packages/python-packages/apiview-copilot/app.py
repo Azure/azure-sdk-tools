@@ -17,8 +17,6 @@ import threading
 import time
 from enum import Enum
 
-import prompty
-import prompty.azure
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -30,7 +28,7 @@ from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, get_prompt_path
+from src._utils import get_language_pretty_name, run_prompty
 from src.agent._agent import get_main_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
@@ -225,20 +223,8 @@ async def summarize_api(
             summary_content = request.target
 
         pretty_language = get_language_pretty_name(request.language)
-
-        prompt_path = get_prompt_path(folder="summarize", filename=summary_prompt_file)
         inputs = {"language": pretty_language, "content": summary_content}
-
-        # Run prompty in a thread pool to avoid blocking
-        loop = asyncio.get_running_loop()
-
-        def run_prompt():
-            os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
-            return prompty.execute(prompt_path, inputs=inputs)
-
-        summary = await loop.run_in_executor(None, run_prompt)
-        if not summary:
-            raise HTTPException(status_code=500, detail="Summary could not be generated.")
+        summary = await asyncio.to_thread(run_prompty, folder="summarize", filename=summary_prompt_file, inputs=inputs)
         return SummarizeResponse(summary=summary)
     except Exception as e:
         logger.error("Error in /api-review/summarize: %s", e, exc_info=True)

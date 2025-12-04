@@ -92,68 +92,150 @@
 
     <!-- Bulk Actions Section -->
     <div class="bulk-actions-section">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <label class="form-label fw-semibold mb-0">
-          Message (Optional):
-        </label>
-        <div class="d-flex align-items-center gap-2">          
-          <!-- Disposition Dropdown -->
-          <p-dropdown 
-            [options]="dispositionOptions" 
-            [(ngModel)]="selectedDisposition"
-            optionLabel="label" 
-            optionValue="value"
-            [style]="{'min-width': '150px'}"
-            placeholder="Disposition">
-            <ng-template let-option pTemplate="item">
-              <div class="d-flex align-items-center">
-                <i [class]="option.icon + ' me-2'"></i>
-                <span>{{ option.label }}</span>
-              </div>
-            </ng-template>
-            <ng-template let-option pTemplate="selectedItem">
-              <div class="d-flex align-items-center">
-                <i [class]="option.icon + ' me-2'"></i>
-                <span>{{ option.label }}</span>
-              </div>
-            </ng-template>
-          </p-dropdown>
+      <!-- Actions Row -->
+      <div class="d-flex align-items-center justify-content-end gap-2 mb-3">
+        <!-- Disposition Dropdown -->
+        <p-dropdown 
+          [options]="dispositionOptions" 
+          [(ngModel)]="selectedDisposition"
+          optionLabel="label" 
+          optionValue="value"
+          [style]="{'min-width': '150px'}"
+          placeholder="Disposition">
+          <ng-template let-option pTemplate="item">
+            <div class="d-flex align-items-center">
+              <i [class]="option.icon + ' me-2'"></i>
+              <span>{{ option.label }}</span>
+            </div>
+          </ng-template>
+          <ng-template let-option pTemplate="selectedItem">
+            <div class="d-flex align-items-center">
+              <i [class]="option.icon + ' me-2'"></i>
+              <span>{{ option.label }}</span>
+            </div>
+          </ng-template>
+        </p-dropdown>
 
-           <!-- Vertical Separator -->
-          <div class="vr mx-2"></div>
+         <!-- Vertical Separator -->
+        <div class="vr mx-2"></div>
 
-          <!-- Severity Component -->
-          <app-comment-severity
-            [severity]="selectedSeverity"
-            [canEdit]="canEditSeverity"
-            [editable]="canEditSeverity"
-            (severityChange)="selectedSeverity = $event">
-          </app-comment-severity>
-          
-          <!-- Vertical Separator -->
-          <div class="vr mx-2"></div>
-          
-          <!-- Vote Buttons -->
-          <div class="d-flex align-items-center vote-section">
-            <button 
-              type="button"
-              class="btn btn-link p-2 vote-btn"
-              title="Upvote selected issues"
-              (click)="toggleBatchVote('up')">
-              <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
-            </button>
-            <button 
-              type="button"
-              class="btn btn-link p-2 vote-btn"
-              title="Downvote selected issues"
-              (click)="toggleBatchVote('down')">
-              <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
-            </button>
+        <!-- Severity Component -->
+        <app-comment-severity
+          [severity]="selectedSeverity"
+          [canEdit]="canEditSeverity"
+          [editable]="canEditSeverity"
+          (severityChange)="selectedSeverity = $event">
+        </app-comment-severity>
+        
+        <!-- Vertical Separator -->
+        <div class="vr mx-2"></div>
+        
+        <!-- Vote Buttons -->
+        <div class="d-flex align-items-center vote-section">
+          <button 
+            type="button"
+            class="btn btn-link p-2 vote-btn"
+            title="Upvote selected issues"
+            (click)="toggleBatchVote('up')">
+            <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
+          </button>
+          <button 
+            type="button"
+            class="btn btn-link p-2 vote-btn"
+            title="Downvote selected issues"
+            (click)="toggleBatchVote('down')">
+            <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Inline Feedback Section (appears when downvoting AI comments for keepOpen/resolve) -->
+      <div *ngIf="showInlineFeedback && selectedDisposition !== 'delete'" class="inline-feedback-section mb-3 border rounded">
+        <!-- Feedback Header - Collapsible -->
+        <div class="feedback-header p-2 d-flex align-items-center justify-content-between" 
+             (click)="feedbackExpanded = !feedbackExpanded"
+             style="cursor: pointer; background-color: var(--base-fg-color); border-bottom: 1px solid var(--border-color);">
+          <div class="d-flex align-items-center flex-grow-1">
+            <span class="fw-semibold" style="font-size: 0.875rem;">
+              Feedback for AI
+              <span *ngIf="feedbackReasons.length > 0" class="text-muted fw-normal ms-2" style="font-size: 0.8rem;">
+                ({{ feedbackReasons.length }} reason(s) selected)
+              </span>
+              <span *ngIf="!feedbackExpanded && feedbackReasons.length === 0" class="text-danger fw-normal ms-2" style="font-size: 0.8rem;">
+                <i class="bi bi-exclamation-circle me-1"></i>Selecting at least one reason is mandatory
+              </span>
+            </span>
+          </div>
+          <i class="bi" [class.bi-chevron-down]="feedbackExpanded" [class.bi-chevron-right]="!feedbackExpanded"></i>
+        </div>
+        
+        <!-- Feedback Content - Collapsible -->
+        <div *ngIf="feedbackExpanded" class="p-3 bg-light">
+          <div class="row g-3">
+            <!-- Feedback Reasons - Multi-select Dropdown -->
+            <div class="col-12">
+              <p-multiSelect 
+                [options]="feedbackReasonOptions"
+                [(ngModel)]="feedbackReasons"
+                [placeholder]="feedbackReasons.length > 0 ? feedbackReasons.length + ' reason(s) selected' : 'Select one or more reasons'"
+                [showHeader]="false"
+                [style]="{'width': '100%'}"
+                [scrollHeight]="'200px'"
+                appendTo="body"
+                styleClass="feedback-multiselect"
+                panelStyleClass="feedback-multiselect-panel">
+                <ng-template let-reason pTemplate="item">
+                  <div class="p-multiselect-item-custom">{{ reason.label }}</div>
+                </ng-template>
+              </p-multiSelect>
+              <small *ngIf="!canSubmitFeedback" class="text-danger d-block mt-1">
+                <i class="bi bi-exclamation-circle me-1"></i>Please select at least one reason
+              </small>
+            </div>
+            
+            <!-- Additional Details -->
+            <div class="col-12">
+              <label for="feedbackAdditionalComments" class="form-label fw-semibold mb-1" style="font-size: 0.875rem;">
+                Add more context (optional)
+              </label>
+              <textarea 
+                id="feedbackAdditionalComments"
+                class="form-control form-control-sm" 
+                [(ngModel)]="feedbackAdditionalComments"
+                rows="2"
+                placeholder="Provide additional feedback...">
+              </textarea>
+            </div>
           </div>
         </div>
       </div>
       
+      <!-- Deletion Reason Section (only for delete disposition) -->
+      <div *ngIf="selectedDisposition === 'delete'" class="mb-3">
+        <div class="alert alert-warning d-flex align-items-start" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+          <div>
+            <strong>Delete Comment</strong>
+            <p class="mb-0 mt-1">Only delete comments that are egregiously wrong or harmful. Please explain why this comment should be removed.</p>
+          </div>
+        </div>
+        <label for="deletionReason" class="form-label fw-semibold">Reason for deletion <span class="text-danger">*</span></label>
+        <textarea 
+          id="deletionReason"
+          class="form-control" 
+          [(ngModel)]="deletionReason"
+          placeholder="Explain why this comment is egregiously wrong and must be deleted..."
+          rows="3"
+          required>
+        </textarea>
+        <small *ngIf="!isDeletionReasonValid" class="text-danger d-block mt-1">
+          <i class="bi bi-exclamation-circle me-1"></i>Deletion reason is required
+        </small>
+      </div>
+      
+      <!-- Message Section (for keepOpen and resolve) -->
       <textarea 
+        *ngIf="selectedDisposition !== 'delete'"
         class="form-control resolution-comment-textarea mb-3"
         [(ngModel)]="resolutionComment"
         [placeholder]="getPlaceholderText()"
@@ -171,7 +253,7 @@
         <button 
           type="button" 
           class="btn btn-primary" 
-          [disabled]="getSelectedCount() === 0"
+          [disabled]="getSelectedCount() === 0 || (showInlineFeedback && selectedDisposition !== 'delete' && !canSubmitFeedback) || !isDeletionReasonValid"
           (click)="resolveSelected()">
           <i class="pi pi-check"></i>
           Apply Changes ({{ getSelectedCount() }})

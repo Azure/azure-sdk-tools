@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, S
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { OverlayPanel } from 'primeng/overlaypanel';
+import { take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
@@ -14,6 +15,8 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
+import { AICommentFeedback } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteReason } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
 
 interface AICommentInfoItem {
   icon: string;
@@ -26,7 +29,6 @@ interface AICommentInfoItem {
 interface AICommentInfo {
   items: AICommentInfoItem[];
 }
-
 @Component({
   selector: 'app-comment-thread',
   templateUrl: './comment-thread.component.html',
@@ -84,6 +86,19 @@ export class CommentThreadComponent {
   showRelatedCommentsDialog: boolean = false;
   relatedComments: CommentItemModel[] = [];
   selectedCommentId: string = ''; 
+
+  showAIFeedbackDialog: boolean = false;
+  showAIDeleteDialog: boolean = false;
+  pendingDownvoteAction: CommentUpdatesDto | null = null;
+  pendingDeleteAction: CommentUpdatesDto | null = null;
+
+  get pendingDownvoteCommentId(): string {
+    return this.pendingDownvoteAction?.commentId || '';
+  }
+
+  get pendingDeleteCommentId(): string {
+    return this.pendingDeleteAction?.commentId || '';
+  }
 
   private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
 
@@ -287,6 +302,9 @@ export class CommentThreadComponent {
   }
 
   showReplyEditor(event: Event) {
+    if (this.codePanelRowData!.draftCommentText === undefined) {
+      this.codePanelRowData!.draftCommentText = '';
+    }
     this.codePanelRowData!.showReplyTextBox = true;
   }
 
@@ -294,15 +312,26 @@ export class CommentThreadComponent {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
     const title = target.getAttribute("data-element-id");
-    this.deleteCommentActionEmitter.emit(
-      {
-        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-        title: title // Used for Sample Instance of CommentThread
-      } as CommentUpdatesDto
-    );
+
+    const deleteAction = {
+      commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      commentId: commentId,
+      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+      title: title // Used for Sample Instance of CommentThread
+    } as CommentUpdatesDto;
+    
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    
+    if (comment?.commentSource === CommentSource.AIGenerated) {
+      this.pendingDeleteAction = deleteAction;
+      setTimeout(() => {
+        this.showAIDeleteDialog = true;
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+    } else {
+      this.deleteCommentActionEmitter.emit(deleteAction);
+    }
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
@@ -422,14 +451,88 @@ export class CommentThreadComponent {
   toggleDownVoteAction(event: Event) {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
-    this.commentDownvoteActionEmitter.emit(
-      { 
-        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      } as CommentUpdatesDto
-    );
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
+    const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
+    
+    const downvoteAction = { 
+      commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
+      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      commentId: commentId,
+      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+    } as CommentUpdatesDto;
+    
+    if (isAIComment && !hasDownvote) {
+      this.pendingDownvoteAction = downvoteAction;
+      setTimeout(() => {
+        this.showAIFeedbackDialog = true;
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+    } else {
+      this.commentDownvoteActionEmitter.emit(downvoteAction);
+    }
+  }
+
+  onAIFeedbackSubmit(feedback: AICommentFeedback): void {
+    this.showAIFeedbackDialog = false;
+    
+    if (this.pendingDownvoteAction) {
+      this.commentDownvoteActionEmitter.emit(this.pendingDownvoteAction);
+    }
+    
+    if (feedback.reasons.length > 0) {
+      this.commentsService.submitAICommentFeedback(
+        this.reviewId,
+        feedback.commentId,
+        feedback.reasons,
+        feedback.additionalComments,
+        false
+      ).pipe(take(1)).subscribe({
+        next: () => {
+        },
+        error: (error: any) => {
+          console.error('Failed to submit feedback:', error);
+        }
+      });
+    }
+    
+    this.pendingDownvoteAction = null;
+  }
+
+  onAIFeedbackCancel(): void {
+    this.showAIFeedbackDialog = false;
+    this.pendingDownvoteAction = null;
+  }
+
+  onAIDeleteConfirm(deleteReason: AICommentDeleteReason): void {
+    this.showAIDeleteDialog = false;
+    
+    if (this.pendingDeleteAction) {
+      this.deleteCommentActionEmitter.emit(this.pendingDeleteAction);
+    }
+    
+    if (deleteReason.reason.trim().length > 0) {
+      this.commentsService.submitAICommentFeedback(
+        this.reviewId,
+        deleteReason.commentId,
+        [],
+        deleteReason.reason,
+        true
+      ).pipe(take(1)).subscribe({
+        next: () => {
+        },
+        error: (error: any) => {
+          console.error('Failed to submit deletion reason:', error);
+        }
+      });
+    }
+    
+    this.pendingDeleteAction = null;
+  }
+
+  onAIDeleteCancel(): void {
+    this.showAIDeleteDialog = false;
+    this.pendingDeleteAction = null;
   }
 
   toggleResolvedCommentExpandState() {
@@ -588,19 +691,29 @@ export class CommentThreadComponent {
   }
 
   onResolveSelectedComments(resolutionData: CommentResolutionData) {
-    const { commentIds, batchVote, resolutionComment, disposition, severity } = resolutionData;
+    const { commentIds, batchVote, resolutionComment, disposition, severity, feedbackReasons, feedbackAdditionalComments } = resolutionData;
     
     if (commentIds.length === 0) {
       this.showRelatedCommentsDialog = false;
       return;
     }
 
+    const hasFeedbackReasons = feedbackReasons && feedbackReasons.length > 0;
+    const hasFeedbackComment = feedbackAdditionalComments && feedbackAdditionalComments.trim().length > 0;
+    
+    const feedback = (hasFeedbackReasons || hasFeedbackComment) ? {
+      reasons: feedbackReasons || [],
+      comment: feedbackAdditionalComments || '',
+      isDelete: disposition === 'delete'
+    } : undefined;
+
     this.commentsService.commentsBatchOperation(this.reviewId, {
       commentIds: commentIds,
       vote: batchVote || 'none',
       commentReply: resolutionComment || undefined,
       disposition: disposition,
-      severity: severity
+      severity: severity,
+      feedback: feedback
     }).subscribe({
       next: (response) => {
         const createdComments = response.body || [];

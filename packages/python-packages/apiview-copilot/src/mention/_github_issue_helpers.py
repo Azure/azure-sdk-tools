@@ -1,8 +1,7 @@
 import json
 
-import prompty
 from src._github_manager import GithubManager
-from src._utils import get_prompt_path
+from src._utils import run_prompty
 
 
 def create_issue(
@@ -86,14 +85,14 @@ def execute_workflow(
         **dedup_inputs,
         "issue_context": issue_context,
     }
-    
+
     # Build labels with language support if provided
     labels = _build_labels_with_language(
         base_labels or [],
         language,
         language_labels or {},
     )
-    
+
     # Fetch recent issues
     recent_issues = _fetch_recent_issues(client, owner, repo, workflow_tag, source_tag)
 
@@ -146,9 +145,7 @@ def _fetch_recent_issues(
     return client.search_issues(owner=owner, repo=repo, query=query)
 
 
-def _check_for_duplicate(
-    plan: dict, recent_issues: list[dict], dedup_prompt_file: str, dedup_inputs: dict
-) -> dict:
+def _check_for_duplicate(plan: dict, recent_issues: list[dict], dedup_prompt_file: str, dedup_inputs: dict) -> dict:
     """
     Check if issue already exists using deduplication prompt.
 
@@ -164,16 +161,12 @@ def _check_for_duplicate(
     if not recent_issues:
         return {"action": "create"}
 
-    dedup_prompt_path = get_prompt_path(folder="mention", filename=dedup_prompt_file)
-    
     # Merge plan context and custom inputs
     full_inputs = {
         **dedup_inputs,
         "existing_issues": _format_issues_for_dedup(recent_issues),
     }
-    
-    raw_dedup = prompty.execute(dedup_prompt_path, inputs=full_inputs)
-
+    raw_dedup = run_prompty(folder="mention", filename=dedup_prompt_file, inputs=full_inputs)
     try:
         return json.loads(raw_dedup)
     except json.JSONDecodeError as e:

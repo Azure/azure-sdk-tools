@@ -94,7 +94,12 @@ export class CommentsService {
     vote?: 'none' | 'up' | 'down',
     commentReply?: string,
     disposition?: 'keepOpen' | 'resolve' | 'delete',
-    severity?: CommentSeverity
+    severity?: CommentSeverity,
+    feedback?: {
+      reasons: string[],
+      comment: string,
+      isDelete: boolean
+    }
   }) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -125,6 +130,24 @@ export class CommentsService {
     })
 
     return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/toggleCommentDownVote`, {}, { 
+      headers: headers,
+      observe: 'response',
+      withCredentials: true
+    });
+  }
+
+  submitAICommentFeedback(reviewId: string, commentId: string, reasons: string[], comment: string, isDelete: boolean = false) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    })
+
+    const body = {
+      reasons: reasons,
+      comment: comment,
+      isDelete: isDelete
+    };
+
+    return this.http.post(this.baseUrl + `/${reviewId}/${commentId}/feedback`, body, { 
       headers: headers,
       observe: 'response',
       withCredentials: true

@@ -188,11 +188,6 @@ extends:
               image: $(WINDOWSVMIMAGE)
               os: windows
 
-            templateContext:
-              sdl: 
-                componentgovernance:
-                  enabled: true # Enable CG temporarily in the Test job to clear CG history
-
             steps:
               - script: |
                   npm install -g @angular/cli@16.1.8

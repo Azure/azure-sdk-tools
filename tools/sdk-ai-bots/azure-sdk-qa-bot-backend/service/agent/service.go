@@ -688,7 +688,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	for _, file := range files {
 		chunk := processDocument(file)
 		result = append(result, chunk)
-		log.Printf("✓ Completed document: %s/%s", file.ContextID, file.Title)
+		log.Printf("✓ Completed document: %s/%s#%s", file.ContextID, file.Title, file.Header1)
 	}
 
 	// Add remaining ready chunks (avoid duplicates by chunk content)

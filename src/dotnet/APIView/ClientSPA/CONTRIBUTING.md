@@ -15,14 +15,14 @@ This is the SPA Client project for [APIView](../APIViewWeb/CONTRIBUTING.md)
     npm install
     ```
 
-### Runing SPA CLient Locally
+### Running SPA CLient Locally
 To run client SPA locally use the angular serve command with ssl option
 ```
- ng serve --ssl
+ npx ng serve --ssl
 ```
 
-### Testing SPA CLient Locally
+### Testing SPA Client Locally
 To run client SPA tests use angular test command
 ```
- ng test
+ npx ng test
 ```

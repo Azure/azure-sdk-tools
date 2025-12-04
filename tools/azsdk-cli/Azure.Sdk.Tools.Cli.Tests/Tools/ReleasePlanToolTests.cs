@@ -27,7 +27,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             logger = new TestLogger<ReleasePlanTool>();
             devOpsService = new MockDevOpsService();
             gitHubService = new MockGitHubService();
-            // gitHubService = new Mock<IGitHubService>().Object;
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
             typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);

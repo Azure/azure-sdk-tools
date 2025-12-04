@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.15.2",
+  "version": "2.16.0",
   "description": "",
   "files": [
     "dist"
@@ -20,7 +20,9 @@
     "hlc-code-gen": "./dist/hlcCodeGenCli.js",
     "hlc-code-gen-for-pipeline": "./dist/autoGenerateInPipeline.js",
     "code-gen-pipeline": "./dist/autoGenerateInPipeline.js",
-    "rlc-code-gen": "./dist/rlcCodegenCli.js"
+    "rlc-code-gen": "./dist/rlcCodegenCli.js",
+    "update-changelog": "./dist/generateChangelogCli.js",
+    "update-version": "./dist/updateBumpVersionCli.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

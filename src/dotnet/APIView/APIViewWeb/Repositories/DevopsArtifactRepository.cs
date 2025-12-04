@@ -87,8 +87,8 @@ namespace APIViewWeb.Repositories
         private async Task<string> getAccessToken()
         {
             // APIView deployed instances uses managed identity to authenticate requests to Azure DevOps.
-            // For local testing, VS will use developer credentials to create token
-            var credential = new DefaultAzureCredential();
+            // For local testing, CLI-based credentials are used to create token
+            var credential = Helpers.CredentialProvider.GetAzureCredential();
             var tokenRequestContext = new TokenRequestContext(VssAadSettings.DefaultScopes);
             var token = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
             return token.Token;

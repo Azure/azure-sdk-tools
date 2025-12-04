@@ -17,6 +17,7 @@
   },
   "bin": {
     "changelog-tool": "./dist/changelogToolCli.js",
+    "compare-api-review": "./dist/compareApiReviewCli.js",
     "hlc-code-gen": "./dist/hlcCodeGenCli.js",
     "hlc-code-gen-for-pipeline": "./dist/autoGenerateInPipeline.js",
     "code-gen-pipeline": "./dist/autoGenerateInPipeline.js",

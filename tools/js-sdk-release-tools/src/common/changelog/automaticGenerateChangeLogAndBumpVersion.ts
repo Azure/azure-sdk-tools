@@ -35,6 +35,52 @@ export enum UpdateMode {
     Both = 'both'
 }
 
+/**
+ * Generate changelog by comparing two API review files
+ * @param oldApiMdPath - Path to the old API review file (e.g., from npm package)
+ * @param newApiMdPath - Path to the new API review file (e.g., from local package)
+ * @param oldSDKType - SDK type of the old package
+ * @param newSDKType - SDK type of the new package
+ * @returns Generated changelog object with content and flags
+ */
+export async function generateChangelogFromApiReviewFiles(
+    oldApiMdPath: string,
+    newApiMdPath: string,
+    oldSDKType: SDKType,
+    newSDKType: SDKType
+) {
+    logger.info(`Generating changelog by comparing API review files`);
+    logger.info(`Old API file: ${oldApiMdPath}`);
+    logger.info(`New API file: ${newApiMdPath}`);
+
+    if (!fs.existsSync(oldApiMdPath)) {
+        throw new Error(`Old API review file not found: ${oldApiMdPath}`);
+    }
+    if (!fs.existsSync(newApiMdPath)) {
+        throw new Error(`New API review file not found: ${newApiMdPath}`);
+    }
+    
+    const diffDetector = new DifferenceDetector(
+        { path: oldApiMdPath, sdkType: oldSDKType },
+        { path: newApiMdPath, sdkType: newSDKType },
+    );
+    
+    const detectResult = await diffDetector.detect();
+    const detectContext = diffDetector.getDetectContext();
+    
+    const changelogGenerator = new ChangelogGenerator(
+        detectContext,
+        detectResult,
+    );
+    
+    const changelog = changelogGenerator.generate();
+    
+    logger.info(`Changelog generated successfully`);
+    logger.info(`Has breaking changes: ${changelog.hasBreakingChange}`);
+    logger.info(`Has features: ${changelog.hasFeature}`);
+    logger.info(`\n=== Generated Changelog ===\n${changelog.content}\n===========================\n`);
+}
+
 export async function generateChangelogAndBumpVersion(
     packageFolderPath: string,
     options: {

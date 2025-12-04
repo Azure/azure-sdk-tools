@@ -150,18 +150,12 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
-            // Point to the main README.md file in the package directory
-            var readmePath = Path.Combine(packagePath, "README.md");
-            if (!File.Exists(readmePath))
-            {
-                return new PackageCheckResponse(1, "", $"README.md not found at expected location: {readmePath}");
-            }
 
             var command = "pwsh";
             var args = new[] {
                 "-File", scriptPath,
                 "-SettingsPath", settingsPath,
-                "-ScanPaths", readmePath,
+                "-ScanPaths", packagePath,
             };
 
             var timeout = TimeSpan.FromMinutes(10);

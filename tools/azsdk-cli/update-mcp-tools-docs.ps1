@@ -34,9 +34,6 @@ function Get-McpVersion {
         throw "Failed to run azsdk --version command. Exit code: $LASTEXITCODE"
     }
     
-    # Remove the +sha part from version (e.g., "0.5.9+adef6a4419984a5852e4118d05f695b90d007044" -> "0.5.9")
-    $version = $versionOutput.Trim() -replace '\+.*$', ''
-    
     return $version
 }
 
@@ -70,7 +67,7 @@ function Generate-McpToolsMarkdown {
     )
     
     # sort by name - empty names at bottom
-    $mcpTools = $tools | Sort-Object -Property mcpToolName
+    $mcpTools = $tools | Sort-Object -Property @{Expression = {-not [string]::IsNullOrEmpty($_.mcpToolName)}; Descending = $true}, mcpToolName
     
     # Generate markdown content
     $markdown = @"
@@ -87,10 +84,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
     
     foreach ($tool in $mcpTools) {
         $name = $tool.mcpToolName
-        $command = $tool.commandLine
-        $description = $tool.description
-
-        $description = $description -replace '\|', '\|'
+        $command = [string]::IsNullOrEmpty($tool.commandLine) ? "" : "``$($tool.commandLine)``"
+        $description = $tool.description -replace '\|', '\|'
         
         $markdown += "| $name | $command | $description |`n"
     }

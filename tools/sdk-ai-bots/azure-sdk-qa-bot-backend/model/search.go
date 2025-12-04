@@ -127,11 +127,12 @@ type ActivityError struct {
 }
 
 type KnowledgeAgentReference struct {
-	ActivitySource int         `json:"activitySource"`
-	DocKey         string      `json:"docKey"`
-	ID             string      `json:"id"`
-	SourceData     interface{} `json:"sourceData"`
-	Type           string      `json:"type"`
+	ActivitySource int     `json:"activitySource"`
+	DocKey         string  `json:"docKey"`
+	ID             string  `json:"id"`
+	SourceData     *Index  `json:"sourceData"`
+	Type           string  `json:"type"`
+	RerankerScore  float64 `json:"rerankerScore"`
 }
 
 type KnowledgeAgentMessage struct {

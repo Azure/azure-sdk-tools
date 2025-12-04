@@ -366,6 +366,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 			Kind:                model.KnowledgeSourceKindSearchIndex,
 			FilterAddOn:         strings.Join(filters, " or "),
 			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
+			IncludeReferences:   to.Ptr(true),
 		},
 	}
 
@@ -381,7 +382,10 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/knowledgebases/%s/retrieve?api-version=2025-11-01-preview", s.BaseUrl, s.Agent), bytes.NewReader(body))
+	knowledgeBaseAPI := config.AppConfig.AI_SEARCH_KNOWLEDGE_BASE_API
+	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_BASE_URL}", s.BaseUrl)
+	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_AGENT}", s.Agent)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, knowledgeBaseAPI, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -403,6 +407,5 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 	if err := json.Unmarshal(b, httpResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
-
 	return httpResp, nil
 }

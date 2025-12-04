@@ -11,6 +11,8 @@
 
 ### Bugs Fixed
 
+- Fixed invalid language error in `azsdk_link_sdk_pull_request_to_release_plan` tool
+
 ### Other Changes
 
 ## 0.5.9 (2025-11-24)

@@ -304,6 +304,7 @@ export async function initCommand(argv: any) {
 export async function syncCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let localSpecRepo = argv["local-spec-repo"];
+  const batch = argv["batch"] ?? false;
 
   const tempRoot = await createTempDirectory(outputDir);
   const repoRoot = await getRepoRoot(outputDir);
@@ -312,6 +313,11 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
+  if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
+    throw new Error(
+      "tsp-location.yaml is missing required field(s) for sync operation: directory, commit, repo",
+    );
+  }
   const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
@@ -323,6 +329,12 @@ export async function syncCommand(argv: any) {
   await mkdir(srcDir, { recursive: true });
 
   if (localSpecRepo) {
+    if (batch) {
+      localSpecRepo = resolve(localSpecRepo, tspLocation.directory);
+      Logger.info(
+        `Resolved local spec repo path using tsp-location.yaml directory: ${localSpecRepo}`,
+      );
+    }
     if (localSpecRepo.endsWith("tspconfig.yaml")) {
       // If the path is to tspconfig.yaml, we need to remove it to get the spec directory
       localSpecRepo = localSpecRepo.split("tspconfig.yaml")[0];
@@ -405,6 +417,11 @@ export async function generateCommand(argv: any) {
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
+  if (!tspLocation.directory) {
+    throw new Error(
+      "tsp-location.yaml is missing required field(s) for generate operation: directory",
+    );
+  }
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   if (!projectName) {
@@ -492,24 +509,73 @@ export async function generateCommand(argv: any) {
   }
 }
 
+/**
+ * Processes batch updates for multiple directories specified in the tsp-location.yaml file.
+ *
+ * Iterates over each directory listed in the `batch` property of the provided TspLocation object,
+ * updating each by invoking the updateCommand with the appropriate output directory.
+ * If any batch directory fails to process, the function logs the error and immediately throws,
+ * halting further batch processing.
+ *
+ * @param tspLocation - The TspLocation object containing batch directory information.
+ * @param outputDir - The base output directory where batch directories are located.
+ * @param argv - Command line arguments object, which will be updated for each batch directory.
+ * @returns Promise that resolves when all batch directories have been processed successfully.
+ * @throws Error if processing any batch directory fails.
+ */
+async function processBatchUpdate(tspLocation: TspLocation, outputDir: string, argv: any) {
+  // Process each directory in the batch
+  for (const batchDir of tspLocation.batch ?? []) {
+    const fullBatchPath = resolve(outputDir, batchDir);
+    Logger.info(`Processing batch directory: ${batchDir}`);
+
+    try {
+      argv["output-dir"] = fullBatchPath;
+      await updateCommand(argv);
+      Logger.info(`Successfully processed batch directory: ${batchDir}`);
+    } catch (error) {
+      Logger.error(`Failed to process batch directory ${batchDir}: ${error}`);
+      throw error; // Stop processing and propagate the error immediately
+    }
+  }
+
+  Logger.info("All batch directories processed successfully");
+}
+
 export async function updateCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repo = argv["repo"];
   const commit = argv["commit"];
   let tspConfig = argv["tsp-config"];
 
+  const tspLocation: TspLocation = await readTspLocation(outputDir);
+
+  // Check if this is a batch configuration
+  if (tspLocation.batch) {
+    Logger.info(`Found batch configuration with ${tspLocation.batch.length} directories`);
+    if (argv["local-spec-repo"]) {
+      const specRepoRoot = await getRepoRoot(argv["local-spec-repo"]);
+      Logger.info(
+        `During batch processing will use local spec repo root with child library tsp-location.yaml data to resolve path to typespec project directory: ${specRepoRoot}`,
+      );
+      argv["local-spec-repo"] = specRepoRoot;
+      argv["batch"] = true;
+    }
+    await processBatchUpdate(tspLocation, outputDir, argv);
+    return;
+  }
+
+  // Original non-batch logic
   if (repo && !commit) {
     throw new Error(
       "Commit SHA is required when specifying `--repo`; please specify a commit using `--commit`",
     );
   }
   if (commit) {
-    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspLocation.commit = commit ?? tspLocation.commit;
     tspLocation.repo = repo ?? tspLocation.repo;
     await writeTspLocationYaml(tspLocation, outputDir);
   } else if (tspConfig) {
-    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspConfig = resolveTspConfigUrl(tspConfig);
     tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
     tspLocation.repo = tspConfig.repo ?? tspLocation.repo;

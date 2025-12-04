@@ -18,7 +18,6 @@ from typing import Dict, Type
 
 import yaml
 from evals._custom import (
-    CustomAPIViewEvaluator,
     PromptyEvaluator,
     PromptySummaryEvaluator,
 )
@@ -145,7 +144,6 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
 
 
 # Register evaluators at module load time to prevent circular imports
-register_evaluator("apiview", CustomAPIViewEvaluator)
 register_evaluator("prompt", PromptyEvaluator)
 register_evaluator("summarize_prompt", PromptySummaryEvaluator)
 

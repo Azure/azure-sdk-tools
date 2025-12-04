@@ -19,6 +19,45 @@
     },
     "expected_package_output": [
       {
+        "Name": "Azure.Core",
+        "Version": "1.46.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/Azure.Core",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/Azure.Core/README.md",
+        "ChangeLogPath": "sdk/core/Azure.Core/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "Azure.Core",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "safeName": "AzureCore",
+          "name": "Azure.Core",
+          "triggeringPaths": [
+            "/sdk/resourcemanager",
+            "/eng/Versioning.targets",
+            "/eng/Packages.Data.props",
+            "/eng/Directory.Build.Common.props",
+            "/eng/Directory.Build.Common.targets",
+            "/eng/service.proj",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CheckAOTCompat": true,
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": {
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          }
+        },
+        "SpecProjectPath": null
+      },
+      {
         "Name": "Azure.Identity",
         "Version": "1.14.0-beta.4",
         "DevVersion": null,
@@ -41,52 +80,15 @@
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
           "BuildSnippets": true,
-          "CheckAOTCompat": true,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "None",
             "ArtifactName": "Azure.Identity"
           }
-        }
-      },
-      {
-        "Name": "Azure.Core",
-        "Version": "1.46.0-beta.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Azure.Core",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Azure.Core/README.md",
-        "ChangeLogPath": "sdk/core/Azure.Core/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Azure.Core",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Azure.Core",
-          "safeName": "AzureCore",
-          "triggeringPaths": [
-            "/sdk/resourcemanager",
-            "/eng/Versioning.targets",
-            "/eng/Packages.Data.props",
-            "/eng/Directory.Build.Common.props",
-            "/eng/Directory.Build.Common.targets",
-            "/eng/service.proj",
-            "/sdk/core/ci.yml"
-          ]
         },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": {
-            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
-            "ArtifactName": "Azure.Core"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Template",
@@ -104,8 +106,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Template",
           "safeName": "AzureTemplate",
+          "name": "Azure.Template",
           "triggeringPaths": [
             "config",
             "devcontainer",
@@ -119,11 +121,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": [],
           "CheckAOTCompat": false,
-          "BuildSnippets": true
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -157,22 +160,23 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Messaging.EventHubs",
           "safeName": "AzureMessagingEventHubs",
+          "name": "Azure.Messaging.EventHubs",
           "triggeringPaths": [
             "/sdk/eventhub/Azure.Messaging.EventHubs.Shared",
             "/sdk/eventhub/ci.yml"
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
+          "BuildSnippets": true,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "None",
             "ArtifactName": "Azure.Messaging.EventHubs"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": true
-        }
+          }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -204,8 +208,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Core",
           "safeName": "AzureCore",
+          "name": "Azure.Core",
           "triggeringPaths": [
             "/sdk/resourcemanager",
             "/eng/Versioning.targets",
@@ -217,14 +221,15 @@
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
             "ArtifactName": "Azure.Core"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Template",
@@ -242,8 +247,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Template",
           "safeName": "AzureTemplate",
+          "name": "Azure.Template",
           "triggeringPaths": [
             "config",
             "devcontainer",
@@ -257,11 +262,12 @@
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": [],
           "CheckAOTCompat": false,
-          "BuildSnippets": true
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -295,19 +301,20 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.AI.TextAnalytics",
           "safeName": "AzureAITextAnalytics",
+          "name": "Azure.AI.TextAnalytics",
           "triggeringPaths": [
             "/sdk/textanalytics/Azure.AI.TextAnalytics.Legacy.Shared",
             "/sdk/textanalytics/ci.yml"
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": [],
           "CheckAOTCompat": false,
-          "BuildSnippets": true
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": true,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -341,8 +348,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Core",
           "safeName": "AzureCore",
+          "name": "Azure.Core",
           "triggeringPaths": [
             "/sdk/resourcemanager",
             "/eng/Versioning.targets",
@@ -354,14 +361,15 @@
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
             "ArtifactName": "Azure.Core"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Core.Amqp",
@@ -379,18 +387,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "AzureCoreAmqp",
+          "name": "Azure.Core.Amqp",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "AzureCoreAmqp",
-          "name": "Azure.Core.Amqp"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": null,
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
-        }
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Core.Experimental",
@@ -408,18 +417,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "AzureCoreExperimental",
+          "name": "Azure.Core.Experimental",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "AzureCoreExperimental",
-          "name": "Azure.Core.Experimental"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": null,
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
-        }
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.Core.Expressions.DataFactory",
@@ -437,18 +447,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "AzureCoreExpressionsDataFactory",
+          "name": "Azure.Core.Expressions.DataFactory",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "AzureCoreExpressionsDataFactory",
-          "name": "Azure.Core.Expressions.DataFactory"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": null,
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
-        }
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Microsoft.Azure.Core.NewtonsoftJson",
@@ -466,18 +477,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "MicrosoftAzureCoreNewtonsoftJson",
+          "name": "Microsoft.Azure.Core.NewtonsoftJson",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "MicrosoftAzureCoreNewtonsoftJson",
-          "name": "Microsoft.Azure.Core.NewtonsoftJson"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": null,
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
-        }
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Microsoft.Azure.Core.Spatial",
@@ -495,18 +507,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "MicrosoftAzureCoreSpatial",
+          "name": "Microsoft.Azure.Core.Spatial",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "MicrosoftAzureCoreSpatial",
-          "name": "Microsoft.Azure.Core.Spatial"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": null,
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
-        }
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
@@ -524,18 +537,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "MicrosoftAzureCoreSpatialNewtonsoftJson",
+          "name": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "MicrosoftAzureCoreSpatialNewtonsoftJson",
-          "name": "Microsoft.Azure.Core.Spatial.NewtonsoftJson"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": null,
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
-        }
+          "BuildSnippets": false,
+          "AOTTestInputs": null
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "System.ClientModel",
@@ -560,14 +574,15 @@
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
           "BuildSnippets": false,
-          "CheckAOTCompat": true,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "None",
             "ArtifactName": "System.ClientModel"
           }
-        }
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -601,8 +616,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Core",
           "safeName": "AzureCore",
+          "name": "Azure.Core",
           "triggeringPaths": [
             "/sdk/resourcemanager",
             "/eng/Versioning.targets",
@@ -614,14 +629,15 @@
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
             "ArtifactName": "Azure.Core"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
+          }
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "Azure.ResourceManager",
@@ -639,18 +655,19 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.ResourceManager",
           "safeName": "AzureResourceManager",
+          "name": "Azure.ResourceManager",
           "triggeringPaths": [
             "/sdk/resourcemanager/ci.mgmt.yml"
           ]
         },
         "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": [],
           "CheckAOTCompat": false,
-          "BuildSnippets": false
-        }
+          "CIMatrixConfigs": [],
+          "BuildSnippets": false,
+          "AOTTestInputs": []
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -684,8 +701,8 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Core",
           "safeName": "AzureCore",
+          "name": "Azure.Core",
           "triggeringPaths": [
             "/sdk/resourcemanager",
             "/eng/Versioning.targets",
@@ -697,14 +714,15 @@
           ]
         },
         "CIParameters": {
+          "CheckAOTCompat": true,
           "CIMatrixConfigs": [],
+          "BuildSnippets": false,
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
             "ArtifactName": "Azure.Core"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
+          }
+        },
+        "SpecProjectPath": null
       }
     ]
   }

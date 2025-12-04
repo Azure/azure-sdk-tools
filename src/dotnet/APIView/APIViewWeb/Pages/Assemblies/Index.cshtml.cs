@@ -47,6 +47,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public (IEnumerable<ReviewListItemModel> Reviews, int TotalCount, int TotalPages,
             int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
+        
+        public string SearchQuery { get; set; } = string.Empty;
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
 
@@ -119,6 +121,9 @@ namespace APIViewWeb.Pages.Assemblies
             languages = (fromUrl)? languages.Select(x => HttpUtility.UrlDecode(x)) : languages;
             state = state.Select(x => HttpUtility.UrlDecode(x));
             status = status.Select(x => HttpUtility.UrlDecode(x));
+
+            // Set search query for the view
+            SearchQuery = search != null ? string.Join(" ", search) : string.Empty;
 
             // Update selected properties
             if (languages.Any())

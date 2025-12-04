@@ -57,6 +57,21 @@ def require_roles(*roles: AppRole):
 
     async def _dep(claims: dict = Depends(_require_auth)):
         token_roles = _safe_get_app_roles(claims)
+        aud = claims.get("aud")
+        roles = claims.get("roles")
+        appid = claims.get("appid")
+        azp = claims.get("azp")
+        sub = claims.get("sub")
+        print(
+            "Required roles: %s | aud: %s | roles: %s | appid: %s | azp: %s | sub: %s | all claims: %s",
+            required,
+            aud,
+            roles,
+            appid,
+            azp,
+            sub,
+            claims,
+        )
         if not required.intersection(token_roles):
             raise HTTPException(status_code=403, detail="Unauthorized.")
         return claims

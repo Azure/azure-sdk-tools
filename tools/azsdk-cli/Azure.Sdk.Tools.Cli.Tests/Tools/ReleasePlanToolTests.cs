@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private IUserHelper userHelper;
         private IEnvironmentHelper environmentHelper;
         private ReleasePlanTool releasePlanTool;
+        private IInputSanitizer inputSanitizer;
 
         [SetUp]
         public void Setup()
@@ -27,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             logger = new TestLogger<ReleasePlanTool>();
             devOpsService = new MockDevOpsService();
             gitHubService = new MockGitHubService();
+            inputSanitizer = new InputSanitizer();
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
             typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
@@ -51,7 +53,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 logger,
                 userHelper,
                 gitHubService,
-                environmentHelper);
+                environmentHelper,
+                inputSanitizer);
         }
 
         [Test]
@@ -145,7 +148,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 logger,
                 userHelper,
                 gitHubService,
-                environmentHelperMock.Object);
+                environmentHelperMock.Object,
+                inputSanitizer);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -185,7 +189,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 logger,
                 userHelper,
                 gitHubService,
-                environmentHelperMock.Object);
+                environmentHelperMock.Object,
+                inputSanitizer);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -322,7 +327,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 (".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
                 ("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
                 ("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
                 ("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
+                ("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
                 ("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345"),
                 ("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345"),
             };

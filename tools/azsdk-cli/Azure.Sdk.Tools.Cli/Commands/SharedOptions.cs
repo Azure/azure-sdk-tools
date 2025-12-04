@@ -29,7 +29,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SampleGeneratorTool),
             typeof(SampleTranslatorTool),
             typeof(ReleasePlanTool),
-            typeof(ReleaseReadinessTool),
             typeof(SpecWorkflowTool),
             typeof(SdkBuildTool),
             typeof(SdkGenerationTool),

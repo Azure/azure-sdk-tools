@@ -29,7 +29,7 @@ namespace APIViewIntegrationTests.RepositoryTests
             _cosmosDBname = "CosmosPullRequestRepositoryTestsDB";
             config["CosmosDBName"] = _cosmosDBname;
 
-            var credential = new ChainedTokenCredential(new AzureCliCredential(), new AzureDeveloperCliCredential()); 
+            var credential = new ChainedTokenCredential(new AzureCliCredential(), new AzureDeveloperCliCredential());
             _cosmosClient = new CosmosClient(config["CosmosEndpoint"], credential);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();

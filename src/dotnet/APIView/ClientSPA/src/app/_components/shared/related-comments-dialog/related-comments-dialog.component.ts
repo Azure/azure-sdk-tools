@@ -42,18 +42,15 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   selectedDisposition: ConversationDisposition = 'keepOpen';
   selectedSeverity: CommentSeverity | null = null;
   
-  // Inline feedback state for AI comment downvotes
   showInlineFeedback: boolean = false;
-  feedbackExpanded: boolean = true; // Start expanded
+  feedbackExpanded: boolean = true;
   feedbackReasons: string[] = [];
   feedbackAdditionalComments: string = '';
   
-  // Deletion reason state
   deletionReason: string = '';
   
   readonly availableFeedbackReasons = AI_COMMENT_FEEDBACK_REASONS;
   
-  // Feedback reasons for multi-select dropdown
   get feedbackReasonOptions() {
     return this.availableFeedbackReasons.map(r => ({ label: r.label, value: r.key }));
   }
@@ -148,7 +145,6 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     }
   }
   
-  // Check if deletion reason is required and provided
   get isDeletionReasonValid(): boolean {
     return this.selectedDisposition !== 'delete' || this.deletionReason.trim().length > 0;
   }
@@ -225,7 +221,6 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       this.showInlineFeedback = false;
     } else {
       this.batchVote = voteType;
-      // Show inline feedback when downvoting AI-generated comments
       if (voteType === 'down' && this.hasAIGeneratedComments) {
         this.showInlineFeedback = true;
       } else {
@@ -247,8 +242,6 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   }
   
   get hasAIGeneratedComments(): boolean {
-    // If no comments are selected, check all comments
-    // If comments are selected, check only selected ones
     const commentsToCheck = this.selectedCommentIds.size > 0
       ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
       : this.relatedComments;

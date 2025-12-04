@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task TestRunReleaseWithDryRun()
+        public async Task TestRunReleaseWithCheckReady()
         {
             var packageName = "azure-template";
             var language = "Python";

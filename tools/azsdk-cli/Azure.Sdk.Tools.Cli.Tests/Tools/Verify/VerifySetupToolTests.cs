@@ -247,6 +247,7 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
 
         // Assert
+        Assert.That(result.Results, Is.Not.Empty);
         Assert.That(result.Results.Count, Is.EqualTo(1));
         Assert.That(result.Results[0].Requirement, Does.Contain("Python"));
         Assert.That(result.ResponseError, Is.Null);

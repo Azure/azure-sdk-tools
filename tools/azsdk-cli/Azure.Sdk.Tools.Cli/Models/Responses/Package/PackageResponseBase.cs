@@ -47,17 +47,17 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 
         public void SetLanguage(string language)
         {
-            if (Enum.TryParse<SdkLanguage>(language, true, out var lang))
-            {
-                Language = lang;
-            }
+            Language = SdkLanguageHelpers.GetSdkLanguage(language);
         }
         public void SetPackageType(string packageType)
         {
-            if (Enum.TryParse<SdkType>(packageType, true, out var type))
+            PackageType = packageType switch
             {
-                PackageType = type;
-            }
+                "client" => SdkType.Dataplane,
+                "mgmt" => SdkType.Management,
+                "spring" => SdkType.Spring,
+                _ => SdkType.Unknown,
+            };
         }
     }
 }

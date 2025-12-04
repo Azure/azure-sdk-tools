@@ -38,12 +38,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             DefaultValueFactory = _ => "main",
         };
         
+        private readonly Option<bool> checkReadyOpt = new("--check-ready")
+        {
+            Description = "Verify package release readiness without triggering the release pipeline",
+            Required = false,
+        };
+        
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
             new McpCommand(commandName, "Run the release pipeline for the package", ReleaseSdkToolName)
             {
-                packageNameOpt, languageOpt, branchOpt, SharedOptions.DryRun,
+                packageNameOpt, languageOpt, branchOpt, checkReadyOpt
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -51,12 +57,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var packageName = parseResult.GetValue(packageNameOpt);
             var language = parseResult.GetValue(languageOpt);
             var branch = parseResult.GetValue(branchOpt);
-            var dryRun = parseResult.GetValue(SharedOptions.DryRun);
-            return await ReleasePackageAsync(packageName, language, branch, dryRun);
+            var checkReady = parseResult.GetValue(checkReadyOpt);
+            return await ReleasePackageAsync(packageName, language, branch, checkReady);
         }
 
         [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass dryRun as true.")]
-        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool dryRun = false)
+        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false)
         {
             try
             {
@@ -111,11 +117,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return response;
                 }
 
-                // If dry-run mode, return readiness check results without triggering release
-                if (dryRun)
+                // If check-ready mode, return readiness check results without triggering release
+                if (checkReady)
                 {
                     response.ReleaseStatusDetails = releaseReadiness.PackageReadinessDetails;
-                    logger.LogInformation("[DRY RUN] Package readiness check completed for {packageName} in {language}.", packageName, language);
+                    logger.LogInformation("[CHECK READY] Package readiness check completed for {packageName} in {language}.", packageName, language);
                     return response;
                 }
 

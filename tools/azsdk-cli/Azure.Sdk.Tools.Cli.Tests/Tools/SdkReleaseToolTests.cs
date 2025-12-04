@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             var packageName = "azure-template";
             var language = "Python";
-            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", dryRun: true);
+            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", checkReady: true);
             
             Assert.That(result, Is.Not.Null);
             Assert.Multiple(() =>

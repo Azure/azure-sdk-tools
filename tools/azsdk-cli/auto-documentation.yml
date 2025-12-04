@@ -1,3 +1,8 @@
+parameters:
+  - name: ToolDirectory
+    type: string
+    default: ''
+
 jobs:
   - job: UpdateMCPDocumentation
     displayName: 'Update MCP Tools Documentation'
@@ -30,8 +35,6 @@ jobs:
     - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
       parameters:
         RepoName: azure-sdk-tools
-        PRBranchName: update-mcp-tools-documentation-$(Build.BuildId)
+        PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
         CommitMsg: "Update MCP tools documentation"
-        PRTitle: "Update MCP tools documentation"
         WorkingDirectory: $(System.DefaultWorkingDirectory)
-        ScriptDirectory: $(System.DefaultWorkingDirectory)/eng/common/scripts/

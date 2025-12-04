@@ -183,7 +183,7 @@ Describe "Get-ReleasePlansForCPEXAttestation" {
             # Normalize whitespace to make matching resilient
             $norm = ($wiql -replace '\s+', ' ').Trim()
 
-            # Work item type is Triage
+            # Work item type is Release Plan
             $norm | Should -Match "\[System\.WorkItemType\]\s*=\s*'Release Plan'"
 
             # Release Plan is in Finished State

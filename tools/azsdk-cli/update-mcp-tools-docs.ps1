@@ -70,34 +70,33 @@ function Generate-McpToolsMarkdown {
     )
     
     # sort by name
-    $mcpTools = $tools | Sort-Object -Property mcpToolName
+    $mcpTools = $tools | Sort-Object -Property commandLine
     
     # Generate markdown content
     $markdown = @"
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools supported by the Azure SDK MCP server version $version.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tool commands supported by the Azure SDK MCP server version $version.
 
 ## Tools list
 
-| Name | Command | Description |
-|------|---------|-------------|
+| Command | Description |
+|---------|-------------|
 
 "@
     
     foreach ($tool in $mcpTools) {
-        $name = $tool.mcpToolName
         $command = $tool.commandLine
         $description = $tool.description
 
         $description = $description -replace '\|', '\|'
-        
+
         # Skip commands (not tools)
-        if ([string]::IsNullOrEmpty($name)) {
+        if ([string]::IsNullOrEmpty($command)) {
             continue
         }
         
-        $markdown += "| $name | $command | $description |`n"
+        $markdown += "| $command | $description |`n"
     }
 
     # Write to file
@@ -113,7 +112,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 try {
     $version = Get-McpVersion -exePath $AzsdkExePath
     $tools = Get-McpToolsList -exePath $AzsdkExePath
-    $outputPath = Join-Path (Get-Location) "tools/azsdk-cli/docs/mcp-tools.md"
+    $outputPath = Join-Path (Get-Location) "tools/azsdk-cli/docs/mcp-commands.md"
     
     Generate-McpToolsMarkdown -tools $tools -version $version -outputPath $outputPath
     

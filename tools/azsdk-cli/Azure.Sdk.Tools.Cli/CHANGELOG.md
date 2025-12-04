@@ -10,6 +10,8 @@
 
 ### Bugs Fixed
 
+- .NET validation GeneratedCode check had scriptPath passed in twice
+
 ### Other Changes
 
 ## 0.5.9 (2025-11-24)

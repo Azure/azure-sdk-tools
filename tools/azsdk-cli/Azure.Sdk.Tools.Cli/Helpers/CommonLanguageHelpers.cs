@@ -150,7 +150,6 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
-
             var command = "pwsh";
             var args = new[] {
                 "-File", scriptPath,

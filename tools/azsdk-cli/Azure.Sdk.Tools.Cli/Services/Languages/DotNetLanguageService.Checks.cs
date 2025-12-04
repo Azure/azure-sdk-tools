@@ -39,7 +39,7 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
-            var options = new PowershellOptions(scriptPath, args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
+            var options = new PowershellOptions(args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
             var result = await powershellHelper.Run(options, ct);
 
             if (result.ExitCode == 0)

@@ -16,7 +16,7 @@ public class RbacClient : IRbacClient
     public ArmClient ArmClient { get; set; }
     private ILogger Log { get; }
 
-    public RbacClient(ILogger logger, DefaultAzureCredential credential)
+    public RbacClient(ILogger logger, TokenCredential credential)
     {
         Log = logger;
         ArmClient = new ArmClient(credential);

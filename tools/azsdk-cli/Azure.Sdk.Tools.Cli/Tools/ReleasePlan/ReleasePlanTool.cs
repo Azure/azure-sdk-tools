@@ -24,7 +24,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         ILogger<ReleasePlanTool> logger,
         IUserHelper userHelper,
         IGitHubService githubService,
-        IEnvironmentHelper environmentHelper
+        IEnvironmentHelper environmentHelper,
+        IInputSanitizer inputSanitizer
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [new("release-plan", "Manage release plans in AzureDevops")];
@@ -881,6 +882,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.ResponseError = "Either work item ID or release plan ID is required to link SDK pull request to release plan.";
                     return response;
                 }
+
+                language = inputSanitizer.SanitizeName(language);
 
                 // Verify language and get repo name
                 if (!IsValidLanguage(language))

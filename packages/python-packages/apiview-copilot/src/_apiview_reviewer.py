@@ -680,10 +680,10 @@ class ApiViewReview:
 
         total = len(tasks)
         futures = {}
-        for i, (idx, comment, prompt_path, inputs) in enumerate(tasks):
-            futures[idx] = self.executor.submit(self._run_prompt, prompt_path, inputs)
+        for i, (idx, comment, folder, filename, inputs) in enumerate(tasks):
+            futures[idx] = self.executor.submit(self._run_prompt, folder, filename, inputs)
 
-        for i, (idx, comment, prompt_path, inputs) in enumerate(tasks):
+        for i, (idx, comment, folder, filename, inputs) in enumerate(tasks):
             try:
                 response = futures[idx].result()
                 response_json = json.loads(response)

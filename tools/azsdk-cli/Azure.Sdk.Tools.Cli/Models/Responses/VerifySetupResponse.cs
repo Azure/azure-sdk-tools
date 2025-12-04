@@ -24,7 +24,7 @@ public class VerifySetupResponse : CommandResponse
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
                 sb.AppendLine($"        Instructions: {string.Join(", ", result.Instructions)}");
-                sb.AppendLine($"        Failure Output: {result.FailureOutput}\n");
+                sb.AppendLine($"        Requirement Status Details: {result.RequirementStatusDetails}\n");
             }
         }
         else
@@ -49,7 +49,7 @@ public class RequirementCheckResult
     /// </summary>
     public List<string> Instructions { get; set; }
     /// <summary>
-    /// Output from any failures encountered during the requirement check.
+    /// Output from any issues encountered during the requirement check.
     /// </summary>
-    public string FailureOutput { get; set; }
+    public string RequirementStatusDetails { get; set; }
 }

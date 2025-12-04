@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         }
         public void SetPackageType(string packageType)
         {
-            PackageType = packageType switch
+            PackageType = packageType.ToLower() switch
             {
                 "client" => SdkType.Dataplane,
                 "mgmt" => SdkType.Management,

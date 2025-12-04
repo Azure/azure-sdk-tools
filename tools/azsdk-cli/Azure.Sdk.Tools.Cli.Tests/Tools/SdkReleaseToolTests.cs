@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task TestRunReleaseWitCsharpLanguage()
+        public async Task TestRunReleaseWithCsharpLanguage()
         {
             var packageName = "Azure.Template";
             var language = "csharp";

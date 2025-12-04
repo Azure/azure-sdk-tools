@@ -24,6 +24,8 @@ namespace Azure.Sdk.Tools.Cli.Options
     /// </summary>
     public string? ClientId { get; set; } = Environment.GetEnvironmentVariable(AzureSDKBotClientIdEnvironmentVariable) ?? string.Empty;
 
+    public string? AuthScope { get; set; } = Environment.GetEnvironmentVariable(AzureSDKBotScopeEnvironmentVariable) ?? string.Empty;
+
         /// <summary>
         /// Timeout for HTTP requests in seconds. Default is 30 seconds.
         /// </summary>
@@ -54,5 +56,10 @@ namespace Azure.Sdk.Tools.Cli.Options
     /// Environment variable name for the service application client ID.
     /// </summary>
     public const string AzureSDKBotClientIdEnvironmentVariable = "AI_COMPLETION_BOT_CLIENT_ID";
+
+    /// <summary>
+    /// Environment variable name for the service application authentication scope.
+    /// </summary>
+    public const string AzureSDKBotScopeEnvironmentVariable = "AI_COMPLETION_BOT_SCOPE";
   }
 }

@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly AiCompletionOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly IPublicClientApplication? _msalApp;
-        private readonly IList<string> scopes = new List<string>() { "api://azure-sdk-qa-bot/token" };
+        private readonly IList<string> scopes = new List<string>();
         private readonly string authUrl = "https://login.microsoftonline.com/organizations/";
 
         public AiCompletionService(
@@ -53,6 +53,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 // Configure persistent token cache
                 ConfigureTokenCache(_msalApp);
+            }
+
+            if (!string.IsNullOrEmpty(_options.AuthScope)) {
+                scopes.Add(_options.AuthScope);
             }
 
             ConfigureHttpClient();
@@ -165,6 +169,11 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             if (_msalApp != null)
             {
+                if (scopes.Count == 0)
+                {
+                    _logger.LogError("No authentication scopes configured for AI completion service. Please set environment variable {EnvVar}.", AiCompletionOptions.AzureSDKBotScopeEnvironmentVariable);
+                    return null;
+                }
                 var accounts = await _msalApp.GetAccountsAsync();
                 AuthenticationResult? authResult = null;
                 if (accounts.Any())
@@ -195,9 +204,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                         .ExecuteAsync(cts.Token);
                         _logger.LogInformation("Interactive authentication completed successfully");
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        _logger.LogError("Interactive authentication failed");
+                        _logger.LogError(ex, "Interactive authentication failed: {Message}", ex.Message);
                         authResult = null;
                     }
                 }
@@ -273,7 +282,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             throw response.StatusCode switch
             {
-                HttpStatusCode.Unauthorized => new InvalidOperationException("Unauthorized: Invalid or missing AI completion service client id"),
+                HttpStatusCode.Unauthorized => new InvalidOperationException("Unauthorized: Invalid or missing AI completion service client id or scope."),
                 HttpStatusCode.BadRequest => new ArgumentException($"Bad request: {content}"),
                 HttpStatusCode.TooManyRequests => new InvalidOperationException("Rate limit exceeded. Please try again later."),
                 HttpStatusCode.InternalServerError => new InvalidOperationException("AI completion service is experiencing issues"),

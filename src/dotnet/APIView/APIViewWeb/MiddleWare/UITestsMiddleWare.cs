@@ -20,7 +20,7 @@ namespace APIViewWeb.MiddleWare
         public async Task InvokeAsync(HttpContext httpContext, IConfiguration config)
         {
             var credential = CredentialProvider.GetAzureCredential();
-            var cosmosClient = new CosmosClient(config["CosmosEndpoint"], credential);
+            using var cosmosClient = new CosmosClient(config["CosmosEndpoint"], credential);
             var dataBaseResponse = await cosmosClient.CreateDatabaseIfNotExistsAsync(config["CosmosDBName"]);
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id");
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");

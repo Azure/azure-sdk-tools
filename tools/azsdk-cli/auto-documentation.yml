@@ -10,8 +10,6 @@ jobs:
     - checkout: self
       displayName: 'Checkout current branch'
     
-    - template: /eng/pipelines/templates/steps/install-dotnet.yml
-    
     - task: PowerShell@2
       displayName: 'Install Azure SDK MCP'
       inputs:

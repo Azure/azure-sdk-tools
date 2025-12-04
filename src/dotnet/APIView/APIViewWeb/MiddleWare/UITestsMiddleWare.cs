@@ -4,7 +4,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
-using Azure.Identity;
+using APIViewWeb.Helpers;
 using System;
 
 namespace APIViewWeb.MiddleWare
@@ -19,7 +19,8 @@ namespace APIViewWeb.MiddleWare
 
         public async Task InvokeAsync(HttpContext httpContext, IConfiguration config)
         {
-            var cosmosClient = new CosmosClient(config["CosmosEndpoint"], new DefaultAzureCredential());
+            var credential = CredentialProvider.GetAzureCredential();
+            using var cosmosClient = new CosmosClient(config["CosmosEndpoint"], credential);
             var dataBaseResponse = await cosmosClient.CreateDatabaseIfNotExistsAsync(config["CosmosDBName"]);
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id");
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");
@@ -28,7 +29,7 @@ namespace APIViewWeb.MiddleWare
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("UsageSamples", "/ReviewId");
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("UserPreference", "/ReviewId");
 
-            var blobServiceClient = new BlobServiceClient(new Uri(config["StorageAccountUrl"]), new DefaultAzureCredential());
+            var blobServiceClient = new BlobServiceClient(new Uri(config["StorageAccountUrl"]), credential);
             var blobCodeFileContainerClient = blobServiceClient.GetBlobContainerClient("codefiles");
             var blobOriginalContainerClient = blobServiceClient.GetBlobContainerClient("originals");
             var blobUsageSampleRepository = blobServiceClient.GetBlobContainerClient("usagesamples");

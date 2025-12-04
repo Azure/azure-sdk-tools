@@ -31,7 +31,7 @@ parameters:
     default: []
   - name: SkipReleaseStage
     type: boolean
-    default: true
+    default: false
   - name: ReleaseBinaries
     type: boolean
     default: false
@@ -228,7 +228,7 @@ extends:
                 Publish: false
                 ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
-      - ${{ if and(ne(parameters.SkipReleaseStage, true), eq(variables['System.TeamProject'], 'internal'))}}:
+      - ${{ if and(ne(parameters.SkipReleaseStage, true), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - template: /eng/pipelines/templates/stages/archetype-sdk-publish-net.yml
           parameters:
             Feed: 'public/azure-sdk-for-net'
@@ -242,7 +242,7 @@ extends:
             VerifyChangelog: ${{ parameters.VerifyChangelog }}
             ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
-      - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
+      - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages
           displayName: Publish Docker Images
           dependsOn: BuildTestAndPackage

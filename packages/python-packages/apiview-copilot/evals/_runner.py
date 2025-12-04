@@ -14,12 +14,11 @@ from azure.identity import AzurePipelinesCredential
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import evals._custom
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
 from evals._util import (
-    append_results_to_cache,
-    load_cache_lookup,
+    save_recordings,
+    load_recordings,
 )
 from src._settings import SettingsManager
 
@@ -131,11 +130,11 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_cache: bool = False):
+    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._results_lock = threading.Lock()
-        self._use_cache = use_cache
+        self._use_recording = use_recording
 
     def _ensure_context(self):
         if self._context is None:
@@ -227,8 +226,8 @@ class EvaluationRunner:
                     test_file_paths.append(test_file)
 
             # Resolve cache strategy
-            if self._use_cache:
-                cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
+            if self._use_recording:
+                cache_lookup = load_recordings(testcase_ids, test_file_paths)
             else:
                 cache_lookup = {}
 
@@ -252,8 +251,8 @@ class EvaluationRunner:
             if fresh_testcases:
                 fresh_results = self._run_azure_evaluation(fresh_testcases, target)
 
-                if self._use_cache:
-                    append_results_to_cache(fresh_test_file_paths, fresh_results)
+                if self._use_recording:
+                    save_recordings(fresh_test_file_paths, fresh_results)
 
             # Combine all results
             cached_rows = [row for row in cached_azure_rows]
@@ -261,7 +260,7 @@ class EvaluationRunner:
             all_cached_rows = cached_rows + fresh_rows
             combined_result = {"rows": all_cached_rows, "metrics": {}, "studio_url": None}
 
-            all_passed = all(row.get("outputs.metrics.correct_action", False) for row in all_cached_rows)
+            all_passed = all(row.get("outputs.metrics.success", False) for row in all_cached_rows)
 
             return EvaluationResult(
                 target=target,
@@ -331,7 +330,7 @@ class EvaluationRunner:
                 for filename, eval_result in raw_results.items():
                     print(f"    == {filename} ==")
                     for res in eval_result["rows"]:
-                        success = res["outputs.metrics.correct_action"]
+                        success = res["outputs.metrics.success"]
                         testcase_name = res["inputs.testcase"]
                         score = res["outputs.metrics.score"]
                         print(f"      -  {'✅' if success else '❌'} {score} - {testcase_name}")
@@ -344,7 +343,7 @@ class EvaluationRunner:
                 for filename, eval_result in raw_results.items():
                     print(f"    == {filename} ==")
                     for res in eval_result["rows"]:
-                        success = res["outputs.metrics.correct_action"]
+                        success = res["outputs.metrics.success"]
                         testcase_name = res["inputs.testcase"]
                         score = res["outputs.metrics.score"]
                         print(f"      -  {'✅' if success else '❌'} {score} - {testcase_name}")
@@ -371,8 +370,10 @@ class EvaluationRunner:
         print("=" * 60)
         print(f"Total targets: {len(results)}")
         print(f"✅ Successful: {len(successful)}")
-        print(f"❌ Failed: {len(failed)}")
-        print(f"💥 Errored: {len(errored)}")
+        if len(failed) > 0:
+            print(f"❌ Failed: {len(failed)}")
+        if len(errored) > 0:
+            print(f"💥 Errored: {len(errored)}")
         print()
 
         if errored:
@@ -408,7 +409,7 @@ class EvaluationRunner:
             raw_results = list(result.raw_results[0].values())[0]["rows"] if result.raw_results else []
             for row in raw_results:
                 testcase = row.get("inputs.testcase")
-                status = "pass" if row.get("outputs.metrics.correct_action") == True else "fail"
+                status = "pass" if row.get("outputs.metrics.success") == True else "fail"
                 score = row.get("outputs.metrics.score")
                 case_id = f"{eval_timestamp}|{workflow_name}|{testcase}"
                 pk = eval_date.replace("-", "_")
@@ -431,5 +432,4 @@ class EvaluationRunner:
 __all__ = [
     "ExecutionContext",
     "EvaluationResult",
-    "EvaluationExecutor",
 ]

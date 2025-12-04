@@ -14,9 +14,13 @@ from __future__ import annotations
 import dataclasses
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Type
+from typing import Dict, Type
 
 import yaml
+from evals._custom import (
+    PromptyEvaluator,
+    PromptySummaryEvaluator,
+)
 
 # Global evaluator registry
 _EVALUATOR_REGISTRY: Dict[str, Type] = {}
@@ -85,13 +89,20 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
 
     # require a directory (we expect a folder containing test-config.yaml)
     if not input_path.exists():
-        _fail(f"Workflow path must be either a directory containing 'test-config.yaml' or a sibling of 'test-config.yaml': {input_path}")
+        _fail(
+            f"Workflow path must be either a directory containing 'test-config.yaml' or a sibling of 'test-config.yaml': {input_path}"
+        )
 
     base_dir = input_path
 
     # look for "test-config.yaml" or "test-config.yml" inside the directory, or as a sibling of the input path
     parent_dir = base_dir.parent
-    candidates = [base_dir / "test-config.yaml", base_dir / "test-config.yml", parent_dir / "test-config.yaml", parent_dir / "test-config.yml"]
+    candidates = [
+        base_dir / "test-config.yaml",
+        base_dir / "test-config.yml",
+        parent_dir / "test-config.yaml",
+        parent_dir / "test-config.yml",
+    ]
     yaml_path = None
     for c in candidates:
         if c.exists() and c.is_file():
@@ -130,6 +141,11 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
         kind=kind,
         source_file=yaml_path,
     )
+
+
+# Register evaluators at module load time to prevent circular imports
+register_evaluator("prompt", PromptyEvaluator)
+register_evaluator("summarize_prompt", PromptySummaryEvaluator)
 
 
 __all__ = [

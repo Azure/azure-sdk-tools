@@ -51,20 +51,8 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
-        if ( options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
-            let sourcePath = "src";
-            if(await exists(path.join(generatedPackageDir, "generated"))) 
-            {
-                sourcePath = "generated";
-            }else if(await exists(path.join(generatedPackageDir, "src","generated"))) {
-                sourcePath = path.join("src", "generated");
-            }
-            logger.info(`Should only remove ${sourcePath} for RLC generation in ${options.runMode} mode.`)
-            await emptyDir(path.join(generatedPackageDir, sourcePath));
-        } else {
-            logger.info(`Should remove all for RLC generation in ${options.runMode} mode`)
-            await remove(generatedPackageDir);
-        }
+
+        await cleanUpPackageDirectory(generatedPackageDir, options.runMode);
         if (!options.skipGeneration) {
             logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
             // TODO: remove it, since this function is used in pipeline.

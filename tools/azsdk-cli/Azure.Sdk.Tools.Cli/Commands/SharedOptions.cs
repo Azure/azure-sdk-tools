@@ -79,6 +79,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             DefaultValueFactory = _ => Environment.CurrentDirectory,
         };
 
+        public static Option<bool> DryRun = new("--dry-run")
+        {
+            Description = "Perform a dry run without executing the actual operation",
+            Required = false,
+        };
+
         public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand

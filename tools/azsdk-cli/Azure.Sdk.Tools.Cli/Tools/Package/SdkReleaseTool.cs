@@ -37,18 +37,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
             DefaultValueFactory = _ => "main",
         };
-
-        private readonly Option<bool> dryRunOpt = new("--dry-run")
-        {
-            Description = "Verify package release readiness without triggering the release pipeline",
-            Required = false,
-        };
+        
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
         protected override Command GetCommand() =>
             new McpCommand(commandName, "Run the release pipeline for the package", ReleaseSdkToolName)
             {
-                packageNameOpt, languageOpt, branchOpt, dryRunOpt,
+                packageNameOpt, languageOpt, branchOpt, SharedOptions.DryRun,
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -56,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var packageName = parseResult.GetValue(packageNameOpt);
             var language = parseResult.GetValue(languageOpt);
             var branch = parseResult.GetValue(branchOpt);
-            var dryRun = parseResult.GetValue(dryRunOpt);
+            var dryRun = parseResult.GetValue(SharedOptions.DryRun);
             return await ReleasePackageAsync(packageName, language, branch, dryRun);
         }
 

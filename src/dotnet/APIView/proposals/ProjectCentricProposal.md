@@ -46,7 +46,7 @@ The new **Project** model will:
 
 ### ✓ Group all language reviews under a single entity
 
-Bound by the same cross-language identifier for a TypeSpec-defined service (nominally, that TypeSpec namespace).
+Bound by the same cross-language identifier for a TypeSpec-defined service (the TypeSpec namespace).
 
 ### ✓ Allow early namespace approval before any SDK is generated
 
@@ -67,7 +67,7 @@ Every Project has exactly one TypeSpec Review.
 ### ✓ Provide a means to group related Projects under a higher-level umbrella (future work).
 
 Projects can manually be aggregated into service portfolios in the future. For example, KeyVault Keys, Secrets, and Certificates
-could be grouped under a single KeyVault service portfolio.
+could be grouped under a single KeyVault service portfolio. This is out of scope for this proposal, but is a natural extension of this model.
 
 ---
 
@@ -85,7 +85,6 @@ A Project:
 
 The Project’s human-facing namespace is tracked separately via TypeSpec namespace history, not the ProjectId.
 
-
 ```
 Project → Review (TypeSpec) [required]
         → Review (Python)
@@ -95,7 +94,6 @@ Project → Review (TypeSpec) [required]
 ```
 
 ---
-
 
 ## Project Identity & Namespace Matching
 
@@ -107,7 +105,7 @@ Each Project is assigned a stable, opaque identifier (ProjectId), which is a GUI
 
 The Project’s human-facing namespace (as defined in TypeSpec) is tracked separately from the ProjectId. APIView maintains a namespace history for each Project, recording all proposed, approved, rejected, and withdrawn namespaces over time. This allows Projects to evolve their namespaces without losing historical context or breaking identity links.
 
-When a new Review (for any language) is uploaded, APIView uses the Review’s CrossLanguagePackageId to find the correct Project. The attachment is successful if the CrossLanguagePackageId matches any namespace in the Project’s namespace history. This decouples identity from namespace and supports scenarios where namespaces change or are superseded.
+When a new Review (for any language) is uploaded, APIView uses the Review’s CrossLanguagePackageId to find the correct Project. The attachment is successful if the CrossLanguagePackageId matches any namespace in the Project’s namespace history. If CrossLanguagePackageId is not provided (for example, in a manual review) but the package namespace matches one already approved, it provides a backup means to attach the revision to the review and project. This decouples identity from namespace and supports scenarios where namespaces change or are superseded.
 
 This approach resolves several open questions about identity, namespace changes, and review attachment, and provides a robust foundation for future enhancements.
 
@@ -115,18 +113,21 @@ This approach resolves several open questions about identity, namespace changes,
 
 #### **When just a TypeSpec `tspconfig.yaml` is available**
 
-User can manually create a Project in APIView by providing the `tspconfig.yaml` file or its URI. APIView will:
+User can manually create a Project in APIView by providing the URI to the `tspconfig.yaml` file. This is required because `tspconfig.yaml` does NOT contain any information about the TypeSpec namespace. 
 
-* Parse the file to extract Project metadata (name, description, namespaces)
+APIView will:
+
+* Infer the TypeSpec namespace from the URL.
+* IF a main.tsp file is present in the same directory, it will compile it enough to extract Namespace, Service Name and Decription, if available. This is optional and only used for convenience. If main.tsp is not present, the inferred namespace will be used as a fallback.
+* Parse the file to extract language-specific metadata like package name and namespace.
 * Create the Project
 * Register the namespaces as proposals (in proposed status)
 
 #### **When a TypeSpec Review is uploaded**
 
-If it has metadata:
-
-* Create a Project from `tspconfig.yaml`
-* Attach the TypeSpec review as the canonical spec for that Project
+* Compile the TypeSpec to get the namespace, service name, and description from the TypeSpec file.
+* Parse language-specific metadata from `tspconfig.yaml`
+* Create the Project and attach the TypeSpec review as the canonical spec for that Project
 
 #### **When a language Review is uploaded**
 
@@ -136,6 +137,8 @@ APIView will automatically:
 * Find the matching Project
 * Attach the Review to the Project
 * Register its namespaces as proposals (if not already approved)
+
+If the `CrossLanguagePackageId` is not provided, APIView will use the package namespace from the Review to find the matching Project. This provides a fallback mechanism for scenarios where the `CrossLanguagePackageId` is missing or incorrect.
 
 ---
 
@@ -153,11 +156,11 @@ model Project {
   Description?: string;
   /** Service-level contacts. */
   Owners?: string[];
-  /** Convenience field for the latest approved (or proposed) namespace. */
-  Namespace: string;
+  /** Field for the latest approved (or proposed) TypeSpec namespace. */
+  @convenience Namespace: string;
   NamespaceInfo: ProjectNamespaceInfo;
   /** Associated Review IDs. */
-  ReviewIds: string[];
+  @convenience ReviewIds: string[];
   ChangeHistory?: ProjectChangeHistory[];
   CreatedOn: utcDateTime;
   LastUpdatedOn: utcDateTime;
@@ -236,17 +239,17 @@ We will also remove the `NamespaceReviewStatus` enum.
 
 1. EngSys parses `tspconfig.yaml` from a TypeSpec Review
 2. It emits Project metadata JSON
-3. APIView ingests the JSON and creates/updates the Project
+3. TypeSpec is compiled to get namespace, service name, and description
+3. APIView ingests the JSON in conjunction with the TypeSpec metadata to creates/updates the Project
 4. TypeSpec Review is created/linked
 5. Namespace proposals are initialized
 
 ### Workflow 2 — Attaching Language Reviews
 
 1. EngSys runs APIView parser for a given language.
-2. APIView reads `CrossLanguagePackageId`
-3. APIView finds the Project
-4. The Review is attached
-5. Namespace proposals are registered/updated as needed
+2. APIView attempts to match `CrossLanguagePackageId` with Project namespace. If not found, it uses the package namespace as a fallback.
+3. The Review is attached
+4. Namespace proposals are registered/updated as needed
 
 ### Workflow 3 — Namespace Approval Process
 
@@ -259,7 +262,7 @@ We will also remove the `NamespaceReviewStatus` enum.
 
 ### Alternative Workflow 1 — Manual Project Creation
 
-1. User uploads `tspconfig.yaml` or provides its URI
+1. User provides URL to `tspconfig.yaml`
 2. APIView parses it and creates a Project
 3. User uploads TypeSpec Review and language Reviews later, which will attach automatically
 
@@ -290,8 +293,7 @@ We will also remove the `NamespaceReviewStatus` enum.
 
 ## Open Questions
 
-1. Do we care about just namespace or also package name? The current proposal has both fields, so approval, rejection, etc. is implicitly for both. Is that acceptable?
-2. The namespace behavior proposed would mean that a Project could have multiple rejected namespaces, and other Projects would not be able to use those namespaces. Is that acceptable?
+1. The namespace behavior proposed would mean that a Project could have multiple rejected namespaces, and other Projects would not be able to use those namespaces. Is that acceptable?
 
 ---
 

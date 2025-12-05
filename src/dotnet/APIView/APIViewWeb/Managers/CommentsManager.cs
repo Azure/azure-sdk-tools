@@ -313,7 +313,7 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task AddAgentComment (CommentItemModel comment, string response)
+        private async Task AddAgentComment(CommentItemModel comment, string response)
         {
             var commentResult = new CommentItemModel
             {
@@ -325,7 +325,8 @@ namespace APIViewWeb.Managers
                 ResolutionLocked = false,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 CreatedOn = DateTime.UtcNow,
-                CommentType = CommentType.APIRevision
+                CommentType = CommentType.APIRevision,
+                CommentSource = CommentSource.AIGenerated
             };
 
             await _commentsRepository.UpsertCommentAsync(commentResult);

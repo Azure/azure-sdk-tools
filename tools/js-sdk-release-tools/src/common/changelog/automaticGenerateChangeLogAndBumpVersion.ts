@@ -66,7 +66,11 @@ export async function generateChangelogAndBumpVersion(
     const skdReleaseDate = options.skdReleaseDate ?? getCurrentDate();
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
-        await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, isStableRelease, updateMode);
+        if (!npmViewResult) {
+            await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, false, updateMode);
+        } else {
+            await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, isStableRelease, updateMode);
+        }
         logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ' : ' stable'} release successfully`);
     } else {
         if (!stableVersion) {

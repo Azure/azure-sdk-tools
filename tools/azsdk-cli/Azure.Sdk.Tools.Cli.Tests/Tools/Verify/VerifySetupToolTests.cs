@@ -61,11 +61,11 @@ internal class VerifySetupToolTests
         // Create temp directory for tests
 
         languageServices = [
-            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
-            new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object),
-            new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
-            new GoLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object),
-            new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object)
+            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new GoLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
         ];
 
         SetupSuccessfulProcessMocks();
@@ -229,7 +229,7 @@ internal class VerifySetupToolTests
         // Arrange - Set up multiple language specs, but only request python
         var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
         {
-            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
+            { SdkLanguage.Python, ("Python >= 3.14", new[] { "python", "--version" }, new List<string> { "Install Python 3.14" }) },
             { SdkLanguage.Java, ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) },
             { SdkLanguage.DotNet, (".NET >= 8.0", new[] { "dotnet", "--version" }, new List<string> { "Install .NET 8.0" }) }
         };
@@ -247,6 +247,9 @@ internal class VerifySetupToolTests
         var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
 
         // Assert
+        Assert.That(result.Results, Is.Not.Empty);
+        Assert.That(result.Results.Count, Is.EqualTo(1));
+        Assert.That(result.Results[0].Requirement, Does.Contain("Python"));
         Assert.That(result.ResponseError, Is.Null);
     }
 

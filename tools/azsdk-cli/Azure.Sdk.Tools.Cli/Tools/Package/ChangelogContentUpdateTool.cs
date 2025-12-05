@@ -33,9 +33,10 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
     private const string UpdateChangelogContentCommandName = "update-changelog-content";
+    private const string UpdateChangelogContentToolName = "azsdk_package_update_changelog_content";
 
     protected override Command GetCommand() =>
-        new(UpdateChangelogContentCommandName, "Updates changelog content for Azure SDK packages.") { SharedOptions.PackagePath };
+        new McpCommand(UpdateChangelogContentCommandName, "Updates changelog content for Azure SDK packages.", UpdateChangelogContentToolName) { SharedOptions.PackagePath };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
@@ -51,7 +52,7 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
     /// <param name="packagePath">The absolute path to the package directory.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
     /// <returns>A response indicating the result of the changelog update operation.</returns>
-    [McpServerTool(Name = "azsdk_package_update_changelog_content"), Description("Updates the changelog content for a specified package.")]
+    [McpServerTool(Name = UpdateChangelogContentToolName), Description("Updates the changelog content for a specified package.")]
     public async Task<PackageOperationResponse> UpdateChangelogContentAsync(
         [Description("The absolute path to the package directory.")] string packagePath,
         CancellationToken ct)

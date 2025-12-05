@@ -34,8 +34,8 @@ Configure the following environment variables for the evaluation framework:
 ```bash
 AZURE_OPENAI_ENDPOINT=https://your-openai-resource.openai.azure.com/
 AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=your-deployment-name
-COPILOT_INSTRUCTIONS_REPOSITORY_NAME=azure-sdk-tools
-COPILOT_INSTRUCTIONS_PATH=path/to/copilot-instructions.md
+REPOSITORY_NAME=Owner/RepoName 
+COPILOT_INSTRUCTIONS_PATH_MCP_EVALS=path/to/.github/copilot-instructions.md
 ```
 
 ### Running Evaluations

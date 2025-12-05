@@ -58,4 +58,30 @@ public static class SdkLanguageHelpers
         }
         return SdkLanguage.Unknown;
     }
+
+    public static SdkLanguage GetSdkLanguage(string language)
+    {
+        switch (language.ToLower())
+        {
+            case ".net":
+            case "dotnet":
+            case "c#":
+            case "csharp":
+                return SdkLanguage.DotNet;
+            case "java":
+                return SdkLanguage.Java;
+            case "javascript":
+            case "js":
+            case "typescript":
+                return SdkLanguage.JavaScript;
+            case "python":
+                return SdkLanguage.Python;
+            case "go":
+                return SdkLanguage.Go;
+            case "rust":
+                return SdkLanguage.Rust;
+            default:
+                return SdkLanguage.Unknown;
+        }
+    }
 }

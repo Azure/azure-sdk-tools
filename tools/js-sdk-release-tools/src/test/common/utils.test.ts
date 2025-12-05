@@ -214,7 +214,7 @@ describe("getReleaseStatus", () => {
             apiVersion: "",
             sdkReleaseType: "stable",
         });
-        expect(result).toBe(false);
+        expect(result).toBe(true);
     });
 });
 

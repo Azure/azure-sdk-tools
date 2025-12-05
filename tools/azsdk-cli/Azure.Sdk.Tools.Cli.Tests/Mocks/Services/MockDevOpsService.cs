@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(true);
         }
 
         Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan)

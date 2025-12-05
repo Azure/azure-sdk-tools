@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
 
@@ -34,20 +34,16 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
 
+            // APIView Services
+            services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
+            services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
+            services.AddSingleton<IAPIViewService, APIViewService>();
+
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
-
-            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
-            {
-                DotNet = typeof(DotNetSampleLanguageContext),
-                Java = typeof(JavaSampleLanguageContext),
-                Python = typeof(PythonSampleLanguageContext),
-                JavaScript = typeof(TypeScriptSampleLanguageContext),
-                Go = typeof(GoSampleLanguageContext),
-            });
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
@@ -85,6 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITelemetryService, TelemetryService>();
             services.ConfigureOpenTelemetry();
 
+            services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>
             {
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection

@@ -72,10 +72,6 @@
                             </div>
                         </div>
                     </li>
-                    <li class="list-group-item">
-                        <p-inputSwitch (onChange)="onProfileChange($event)" [(ngModel)]="useSplitIndexPage" />
-                        <label class="ms-2">Use split index page</label>
-                    </li>
                 </ul>
                 <div class="mt-4 d-grid gap-2">
                     <button type="button" class="btn btn-primary btn-lg" (click)="saveProfileChanges()" [disabled]="disableSaveButton">Save changes</button>

@@ -58,11 +58,6 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _userProfileCache.SetUserEmailIfNullOrEmpty(User);
             var userPreference = (await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin())).Preferences;
-            var spaUrl = "https://spa." + Request.Host.ToString();
-            if (userPreference.UseBetaIndexPage == true)
-            {
-                return Redirect(spaUrl);
-            }
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any())
             {

@@ -121,14 +121,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         {
             var response = new ReleaseWorkflowResponse()
             {
-                Status = "Failed"
+                Status = "Failed",
+                ResponseErrors = [],
             };
 
             try
             {
                 if (workItemId == 0)
                 {
-                    response.Details.Add("Work item ID is required to check if release plan is ready for SDK generation.");
+                    response.ResponseErrors.Add("Work item ID is required to check if release plan is ready for SDK generation.");
                     return response;
                 }
 
@@ -138,7 +139,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (sdkInfoList == null || sdkInfoList.Count == 0)
                 {
-                    response.Details.Add($"SDK details are not present in the release plan. Update the SDK details using the information in tspconfig.yaml");
+                    response.ResponseErrors.Add($"SDK details are not present in the release plan. Update the SDK details using the information in tspconfig.yaml");
                     return response;
                 }
 
@@ -146,13 +147,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (sdkInfo == null || string.IsNullOrWhiteSpace(sdkInfo.Language))
                 {
-                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a language specified. Update the SDK details using the information in tspconfig.yaml.");
+                    response.ResponseErrors.Add($"Release plan work item with ID {workItemId} does not have a language specified. Update the SDK details using the information in tspconfig.yaml.");
                     return response;
                 }
 
                 if (string.IsNullOrWhiteSpace(sdkInfo.PackageName))
                 {
-                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a package name specified for {sdkInfo.Language}. Update the SDK details using the information in tspconfig.yaml.");
+                    response.ResponseErrors.Add($"Release plan work item with ID {workItemId} does not have a package name specified for {sdkInfo.Language}. Update the SDK details using the information in tspconfig.yaml.");
                     return response;
                 }
                 response.SetLanguage(sdkInfo.Language);
@@ -171,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             catch (Exception ex)
             {
                 response.Status = "Failed";
-                response.Details.Add($"Failed to check if Release Plan is ready for SDK generation. Error: {ex.Message}");
+                response.ResponseErrors.Add($"Failed to check if Release Plan is ready for SDK generation. Error: {ex.Message}");
                 return response;
             }
         }
@@ -183,9 +184,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 var response = new ReleaseWorkflowResponse()
                 {
-                    Status = "Success"
+                    Status = "Success",
+                    ResponseErrors = []
                 };
-                language = inputSanitizer.SanitizeName(language);
+                language = inputSanitizer.SanitizeLanguage(language);
                 logger.LogInformation(
                     "Generating SDK for TypeSpec project: {TypespecProjectRoot}, API Version: {ApiVersion}, SDK Release Type: {SdkReleaseType}, Language: {Language}, Pull Request Number: {PullRequestNumber}, Work Item ID: {WorkItemId}",
                     typespecProjectRoot,
@@ -197,20 +199,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Is language supported for SDK generation
                 if (!DevOpsService.IsSDKGenerationSupported(language))
                 {
-                    response.Details.Add($"SDK generation is currently not supported by agent for {language}");
+                    response.ResponseErrors.Add($"SDK generation is currently not supported by agent for {language}");
                     response.Status = "Failed";
                 }
                 response.SetLanguage(language);
                 // Is valid typespec project path
                 if (!TypeSpecProject.IsValidTypeSpecProjectPath(typespecProjectRoot))
                 {
-                    response.Details.Add($"Invalid TypeSpec project root path [{typespecProjectRoot}].");
+                    response.ResponseErrors.Add($"Invalid TypeSpec project root path [{typespecProjectRoot}].");
                     response.Status = "Failed";
                 }
 
                 if (string.IsNullOrEmpty(apiVersion))
                 {
-                    response.Details.Add("API version is required to generate SDK.");
+                    response.ResponseErrors.Add("API version is required to generate SDK.");
                     response.Status = "Failed";
                 }
 
@@ -218,7 +220,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
                 if (string.IsNullOrEmpty(sdkReleaseType) || !validReleaseTypes.Contains(sdkReleaseType))
                 {
-                    response.Details.Add("SDK release type must be set as either beta or stable to generate SDK.");
+                    response.ResponseErrors.Add("SDK release type must be set as either beta or stable to generate SDK.");
                     response.Status = "Failed";
                 }
 
@@ -228,6 +230,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var readiness = await IsSdkDetailsPresentInReleasePlanAsync(workItemId, language);
                     if (!readiness.Status.Equals("Success"))
                     {
+                        response.ResponseErrors.AddRange(readiness.ResponseErrors);
                         response.Details.AddRange(readiness.Details);
                         response.Status = "Failed";
                     }
@@ -237,7 +240,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
                 {
-                    var failureDetails = string.Join(",", response.Details);
+                    var failureDetails = string.Join(",", response.ResponseErrors);
                     logger.LogInformation("SDK generation failed with details: [{FailureDetails}]", failureDetails);
                     return response;
                 }
@@ -272,7 +275,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             catch (Exception ex)
             {
                 var errorResponse = new ReleaseWorkflowResponse();
-                errorResponse.Details.Add($"Failed to run pipeline to generate SDK, Details: {ex.Message}");
+                errorResponse.ResponseError = $"Failed to run pipeline to generate SDK, Details: {ex.Message}";
                 errorResponse.Status = "Failed";
                 errorResponse.ExitCode = 1;
                 return errorResponse;
@@ -293,7 +296,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 var response = new ReleaseWorkflowResponse();
-                language = inputSanitizer.SanitizeName(language);
+                language = inputSanitizer.SanitizeLanguage(language);
                 if (!IsValidLanguage(language))
                 {
                     response.ResponseError = $"Unsupported language to get pull request details. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";

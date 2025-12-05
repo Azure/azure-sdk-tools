@@ -1,16 +1,21 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
-using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
+    public class SdkReleaseTool(
+        IDevOpsService devopsService,
+        ILogger<SdkReleaseTool> logger,
+        ILogger<ReleaseReadinessTool> releaseReadinessLogger,
+        IInputSanitizer inputSanitizer) : MCPTool
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
         
@@ -60,6 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     PackageName = packageName
                 };
+                language = inputSanitizer.SanitizeLanguage(language);
                 response.SetLanguage(language);
 
                 bool isValidParams = true;

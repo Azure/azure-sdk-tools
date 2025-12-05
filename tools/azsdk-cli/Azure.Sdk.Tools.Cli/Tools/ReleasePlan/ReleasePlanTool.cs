@@ -883,7 +883,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                language = inputSanitizer.SanitizeName(language);
+                language = inputSanitizer.SanitizeLanguage(language);
 
                 // Verify language and get repo name
                 if (!IsValidLanguage(language))

@@ -5,6 +5,7 @@ import urllib.request
 import os
 import yaml
 import re
+import requests
 import urllib.parse
 
 
@@ -27,13 +28,50 @@ def _parse_typespec(yaml_url):
     parsed_url = urllib.parse.urlparse(yaml_url)
     path_parts = parsed_url.path.strip('/').split('/')
     typespec_ns = None
-    # TODO: Actually compile the typespec if available to get the namespace, service name and description...
 
-    # Look for pattern: .../<provider>/<namespace>/tspconfig.yaml
-    if len(path_parts) >= 3 and path_parts[-1].lower() == 'tspconfig.yaml':
-        typespec_ns = path_parts[-2]
-    elif path_parts:
-        typespec_ns = path_parts[-1]
+    # Try to extract namespace from main.tsp if available
+    # Download main.tsp from the same directory as tspconfig.yaml
+    if len(path_parts) >= 1:
+        tsp_dir = '/'.join(path_parts[:-1])
+        main_tsp_url = None
+        if 'githubusercontent.com' in yaml_url:
+            # Extract user, repo, and branch from path
+            path_split = parsed_url.path.strip('/').split('/')
+            # Format: /<user>/<repo>/<branch>/.../<namespace>/tspconfig.yaml
+            if len(path_split) >= 4:
+                user = path_split[0]
+                repo = path_split[1]
+                branch = path_split[2]
+                rest = '/'.join(path_split[3:-1])  # skip tspconfig.yaml
+                main_tsp_url = f'https://raw.githubusercontent.com/{user}/{repo}/{branch}/{rest}/main.tsp'
+            else:
+                main_tsp_url = None
+        elif 'github.com' in yaml_url and '/blob/' in yaml_url:
+            # If user passed a blob URL, convert to raw
+            repo_parts = yaml_url.split('github.com/', 1)[-1].split('/blob/', 1)
+            user_repo = repo_parts[0]
+            main_tsp_url = f'https://raw.githubusercontent.com/{user_repo}/{tsp_dir}/main.tsp'
+        elif yaml_url.startswith('http'):
+            # Generic case
+            main_tsp_url = urllib.parse.urljoin(yaml_url, '../main.tsp')
+        # Try to download and parse main.tsp
+        if main_tsp_url:
+            try:
+                resp = requests.get(main_tsp_url, timeout=5)
+                if resp.status_code == 200:
+                    # Look for: namespace <NamespaceName>;
+                    match = re.search(r'namespace\s+([\w\.]+)\s*;', resp.text)
+                    if match:
+                        typespec_ns = match.group(1)
+            except Exception:
+                pass
+
+    # Fallback to URL-based extraction if not found
+    if not typespec_ns:
+        if len(path_parts) >= 3 and path_parts[-1].lower() == 'tspconfig.yaml':
+            typespec_ns = path_parts[-2]
+        elif path_parts:
+            typespec_ns = path_parts[-1]
     if typespec_ns:
         ns_type = 'management' if 'Management' in typespec_ns else 'data-plane'
         return {'typespec': {'namespace': typespec_ns, 'type': ns_type}}

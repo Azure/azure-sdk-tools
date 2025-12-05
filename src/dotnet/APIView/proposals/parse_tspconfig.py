@@ -1,8 +1,12 @@
 # Parse TypeSpec config YAML files to extract language-specific metadata
 import sys
+import tempfile
+import urllib.request
 import os
 import yaml
 import re
+import urllib.parse
+
 
 def _fill_vars(s, data):
     """Replace {var} in string s with value from data dict, recursively."""
@@ -17,6 +21,23 @@ def _fill_vars(s, data):
         prev = s
         s = re.sub(r'\{([^{}]+)\}', replacer, s)
     return s
+
+def _parse_typespec(yaml_url):
+    """Extract TypeSpec namespace from yaml_url."""
+    parsed_url = urllib.parse.urlparse(yaml_url)
+    path_parts = parsed_url.path.strip('/').split('/')
+    typespec_ns = None
+    # TODO: Actually compile the typespec if available to get the namespace, service name and description...
+
+    # Look for pattern: .../<provider>/<namespace>/tspconfig.yaml
+    if len(path_parts) >= 3 and path_parts[-1].lower() == 'tspconfig.yaml':
+        typespec_ns = path_parts[-2]
+    elif path_parts:
+        typespec_ns = path_parts[-1]
+    if typespec_ns:
+        ns_type = 'management' if 'Management' in typespec_ns else 'data-plane'
+        return {'typespec': {'namespace': typespec_ns, 'type': ns_type}}
+    return None
 
 def _parse_python(data):
     package_name = data.get('package-name') or data.get('package_name')
@@ -126,22 +147,54 @@ def parse_language_metadata(yaml_data):
     return result
 
 def parse_yaml_file(path):
-    with open(path, 'r', encoding='utf-8') as f:
-        return yaml.safe_load(f)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        print(f"YAML parsing error in {path}: {e}")
+        return None
 
 def main():
-    if len(sys.argv) < 2:
-        print('Usage: python parse_tspconfig.py <yaml-file1> [<yaml-file2> ...]')
+    # TODO: For testing purposes, set sys.argv if running interactively and no argument is provided
+    if len(sys.argv) == 1:
+        sys.argv.append("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/storage/Microsoft.BlobStorage/tspconfig.yaml")
+    
+    if len(sys.argv) != 2:
+        print('Usage: python parse_tspconfig.py <yaml-url>')
         sys.exit(1)
-    for yaml_path in sys.argv[1:]:
-        if not os.path.isfile(yaml_path):
-            print(f"File not found: {yaml_path}")
-            continue
-        data = parse_yaml_file(yaml_path)
-        meta = parse_language_metadata(data)
-        print(f"--- {os.path.basename(yaml_path)} ---")
-        for entry in meta:
-            print(entry)
+
+    yaml_url = sys.argv[1]
+    if not (yaml_url.startswith('http://') or yaml_url.startswith('https://')):
+        print('Error: Input must be a YAML URL (http/https).')
+        sys.exit(1)
+
+    # Convert GitHub blob URL to raw URL if needed
+    if 'github.com' in yaml_url and '/blob/' in yaml_url:
+        parts = yaml_url.split('github.com/', 1)[-1].split('/blob/', 1)
+        user_repo = parts[0]
+        path = parts[1]
+        yaml_url = f'https://raw.githubusercontent.com/{user_repo}/{path}'
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.yaml') as tmp:
+        urllib.request.urlretrieve(yaml_url, tmp.name)
+        yaml_path = tmp.name
+    if not os.path.isfile(yaml_path):
+        print(f"File not found: {yaml_path}")
+        sys.exit(1)
+    data = parse_yaml_file(yaml_path)
+    if data is None:
+        print("Aborting due to invalid YAML file.")
+        sys.exit(1)
+    meta = parse_language_metadata(data)
+
+    # Extract TypeSpec metadata from yaml_url
+    typespec_meta = _parse_typespec(yaml_url)
+    if typespec_meta:
+        meta.append(typespec_meta)
+
+    print(f"--- {os.path.basename(yaml_path)} ---")
+    for entry in meta:
+        print(entry)
 
 if __name__ == '__main__':
     main()

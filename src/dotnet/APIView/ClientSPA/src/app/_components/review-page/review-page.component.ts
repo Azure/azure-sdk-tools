@@ -670,6 +670,16 @@ export class ReviewPageComponent implements OnInit {
     this.codePanelComponent.scrollToNode(undefined, value);
   }
 
+  handleDismissSidebarAndNavigate(event: {revisionId: string, elementId: string}) {
+    this.conversationSidePanel = false;
+    this.router.navigate(['/review', this.reviewId], {
+      queryParams: {
+        activeApiRevisionId: event.revisionId,
+        nId: event.elementId
+      }
+    });
+  }
+
   handleRealTimeReviewUpdates() {
     this.signalRService.onReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (updatedReview: Review) => {

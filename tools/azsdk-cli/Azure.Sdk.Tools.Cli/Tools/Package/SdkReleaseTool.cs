@@ -4,20 +4,21 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
     public class SdkReleaseTool(
-            IDevOpsService devopsService,
-            ILogger<SdkReleaseTool> logger,
-            ILogger<ReleaseReadinessTool> releaseReadinessLogger,
-            IInputSanitizer inputSanitizer) : MCPTool
+        IDevOpsService devopsService,
+        ILogger<SdkReleaseTool> logger,
+        ILogger<ReleaseReadinessTool> releaseReadinessLogger,
+        IInputSanitizer inputSanitizer) : MCPTool
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         private readonly string commandName = "release";

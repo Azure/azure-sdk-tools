@@ -27,7 +27,8 @@ public class AzureService : IAzureService
                 new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
                 new AzurePowerShellCredential(new AzurePowerShellCredentialOptions { TenantId = tenantId }),
                 new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions { TenantId = tenantId }),
-                new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId })
+                new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId }),
+                new ManagedIdentityCredential(clientId: Environment.GetEnvironmentVariable("AZURE_CLIENT_ID"))
             );
         }
         catch (CredentialUnavailableException)

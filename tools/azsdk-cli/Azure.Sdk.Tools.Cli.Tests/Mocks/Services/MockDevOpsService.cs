@@ -8,6 +8,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
+        public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language)
+        {
+            throw new NotImplementedException();
+        }
+        
         Task<List<ReleasePlanDetails>> IDevOpsService.ListOverdueReleasePlansAsync()
         {
             return Task.FromResult(new List<ReleasePlanDetails>());

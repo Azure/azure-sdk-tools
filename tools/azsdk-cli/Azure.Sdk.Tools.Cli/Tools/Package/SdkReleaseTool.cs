@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IInputSanitizer inputSanitizer) : MCPTool
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
-        
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         private readonly string commandName = "release";
@@ -68,36 +68,48 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 language = inputSanitizer.SanitizeLanguage(language);
                 response.SetLanguage(language);
 
-                bool isValidParams = true;
                 if (string.IsNullOrWhiteSpace(packageName))
                 {
-                    response.ReleaseStatusDetails = "Package name cannot be null or empty. ";
-                    isValidParams = false;
+                    response.ReleaseStatusDetails = "Package name cannot be null or empty.";
+                    response.ReleasePipelineStatus = "Failed";
+                    logger.LogError("{details}", response.ReleaseStatusDetails);
+                    return response;
                 }
+
                 if (string.IsNullOrWhiteSpace(language) || !ValidLanguages.Contains(language, StringComparer.OrdinalIgnoreCase))
                 {
-                    response.ReleaseStatusDetails += "Language must be one of the following: " + string.Join(", ", ValidLanguages);
-                    isValidParams = false;
+                    response.ReleaseStatusDetails = "Language must be one of the following: " + string.Join(", ", ValidLanguages);
+                    response.ReleasePipelineStatus = "Failed";
+                    logger.LogError("{details}", response.ReleaseStatusDetails);
+                    return response;
                 }
 
                 // Get the package work item from DevOps
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
-                    response.ReleaseStatusDetails = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch in the specific language repo.";
+                    logger.LogInformation("Exact package not found; falling back to partial matches");
+                    var packages = await devopsService.ListPartialPackageWorkItemAsync(packageName, language);
+                    if (packages == null || packages.Count == 0)
+                    {
+                        response.ReleaseStatusDetails = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch in the specific language repo.";
+                        response.ReleasePipelineStatus = "Failed";
+                        logger.LogError("{details}", response.ReleaseStatusDetails);
+                        return response;
+                    }
+                    var packageNames = packages.Select(p => p.PackageName).Distinct().ToList();
+
+                    response.ReleaseStatusDetails = $"The package {packageName} could not be found. Did you mean one of the following available packages? [{string.Join(", ", packageNames)}]";
+                    response.NextSteps = ["Select the package and run SDK release tool"];
                     response.ReleasePipelineStatus = "Failed";
-                    isValidParams = false;
+                    logger.LogError("{details}", response.ReleaseStatusDetails);
+                    return response;
                 }
+                
                 response.PackageType = package?.PackageType ?? SdkType.Unknown;
                 if (string.IsNullOrEmpty(package?.PipelineDefinitionUrl))
                 {
                     response.ReleaseStatusDetails += $"No release pipeline found for package '{packageName}' in language '{language}'. Please check the package name and language.";
-                    response.ReleasePipelineStatus = "Failed";
-                    isValidParams = false;
-                }
-
-                if (!isValidParams)
-                {
                     response.ReleasePipelineStatus = "Failed";
                     logger.LogError("{details}", response.ReleaseStatusDetails);
                     return response;

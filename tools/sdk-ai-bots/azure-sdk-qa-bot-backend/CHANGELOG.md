@@ -1,5 +1,12 @@
 # Release History
 
+## 0.4.0 (2025-12-04)
+
+### Features Added
+
+* Migrate Agentic Search to use adopt latest API version
+* Add TypeSpec to Swagger mapping knowledge to help solve TypeSpec migration questions
+
 ## 0.3.0 (2025-11-27)
 
 ### Bugs Fixed

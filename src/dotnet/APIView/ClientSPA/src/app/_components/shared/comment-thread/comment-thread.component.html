@@ -1,5 +1,5 @@
 <div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info {{ floatItemStart }}">
-    <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span>
+    <small class="d-flex align-items-center"><i class="bi bi-check-circle-fill" style="color: var(--primary-color); margin-right: 6px;"></i>Resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}</span>
     </small>
 </div>
 <div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" 

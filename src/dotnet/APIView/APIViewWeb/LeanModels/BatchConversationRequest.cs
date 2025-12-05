@@ -26,7 +26,7 @@ namespace APIViewWeb.LeanModels
         Delete
     }
 
-    public class ResolveBatchConversationRequest
+    public class BatchConversationRequest
     {
         [JsonPropertyName("commentIds")]
         public List<string> CommentIds { get; set; }

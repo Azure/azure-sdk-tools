@@ -8,8 +8,11 @@
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
       <div class="line-actions">
-          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)">
-            <span class="text-decoration-none" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
+          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)" class="line-number-container">
+            <span class="text-decoration-none line-number-text" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
+            <button *ngIf="canAddComment(item)" type="button" class="btn btn-sm add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
+              <i class="bi bi-plus-lg"></i>
+            </button>
             <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
               <ng-template pTemplate="item" let-item>
                 <span pRipple [attr.data-item-id]="index" class="flex align-items-center p-menuitem-link">
@@ -19,7 +22,6 @@
               </ng-template>
             </p-menu>
           </span>
-          <span class="small toggle-user-comments-btn {{item.toggleCommentsClasses}}"></span>
           <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
       <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">

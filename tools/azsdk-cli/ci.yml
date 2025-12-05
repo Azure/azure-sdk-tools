@@ -15,6 +15,10 @@ pr:
     include:
       - tools/azsdk-cli
 
+variables:
+  - name: ToolDir
+    value: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
@@ -22,7 +26,7 @@ extends:
       SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
-    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+    ToolDirectory: $(ToolDir)
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests    
     VerifyChangelog: true
     StandaloneExeMatrix:
@@ -50,3 +54,8 @@ extends:
           TargetRepoName: azure-rest-api-specs
           TargetRepoOwner: Azure
           TargetRepoCommit: main
+      CustomReleaseJobs:
+      - template: /tools/azsdk-cli/auto-documentation.yml
+        parameters:
+          ToolDirectory: $(ToolDir)
+          

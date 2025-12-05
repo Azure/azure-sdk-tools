@@ -84,7 +84,16 @@
     .reply-editor-container .border-bottom { border-bottom: 1px solid transparent !important; }
     .emoji-active { color: orange; }
     .comment-action-btn, .editor-action-btn { border-color: var(--border-color) !important; }
-    .resolution-info { margin-bottom: 1px; }
+    
+    .resolution-info { 
+        margin-bottom: 2px;
+        padding: 3px 8px;
+        background-color: var(--base-fg-color);
+        border-left: 2px solid var(--primary-color);
+        border-radius: 2px;
+        width: fit-content;
+    }
+    
     .resolved-toggler { color: var(--primary-color); font-weight: bolder; cursor: pointer; }
 
     .rendered-comment-content {

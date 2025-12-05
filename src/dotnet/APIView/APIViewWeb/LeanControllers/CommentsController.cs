@@ -45,12 +45,11 @@ namespace APIViewWeb.LeanControllers
             var comments = await _commentsManager.GetCommentsAsync(reviewId, false);
             var commentsInAPIRevision = comments.Where(c => c.CommentType == CommentType.APIRevision).ToList();
             var sampleComments = comments.Where(c => c.CommentType == CommentType.SampleRevision).ToList();
-
             var totalActiveConversiations = 0;
             var totalActiveConversationInApiRevisions = 0;
             var totalActiveConversationInSampleRevisions = 0;
 
-            foreach (var group in comments.GroupBy(c => c.ElementId))
+            foreach (var group in comments.GroupBy(c => c.ThreadId ?? c.ElementId))
             {
                 if (!group.Any(c => c.IsResolved))
                 {
@@ -58,7 +57,7 @@ namespace APIViewWeb.LeanControllers
                 }
             }
 
-            foreach (var group in sampleComments.GroupBy(c => c.ElementId))
+            foreach (var group in sampleComments.GroupBy(c => c.ThreadId ?? c.ElementId))
             {
                 if (!group.Any(c => c.IsResolved))
                 {
@@ -66,7 +65,7 @@ namespace APIViewWeb.LeanControllers
                 }
             }
 
-            foreach (var group in commentsInAPIRevision.GroupBy(c => c.ElementId))
+            foreach (var group in commentsInAPIRevision.GroupBy(c => c.ThreadId ?? c.ElementId))
             {
                 if (!group.Any(c => c.IsResolved))
                 {
@@ -109,6 +108,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="commentType"></param>
         /// <param name="severity"></param>
         /// <param name="resolutionLocked"></param>
+        /// <param name="threadId"></param>
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
         public async Task<ActionResult> CreateCommentAsync(
@@ -119,7 +119,8 @@ namespace APIViewWeb.LeanControllers
             [FromForm] string apiRevisionId = null,
             [FromForm] string sampleRevisionId = null,
             [FromForm] CommentSeverity? severity = null,
-            bool resolutionLocked = false)
+            bool resolutionLocked = false,
+            [FromForm] string threadId = null)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
             {
@@ -137,7 +138,8 @@ namespace APIViewWeb.LeanControllers
                 CreatedBy = User.GetGitHubLogin(),
                 CreatedOn = DateTime.UtcNow,
                 CommentType = commentType,
-                Severity = severity
+                Severity = severity,
+                ThreadId = threadId 
             };
 
             bool isApiViewAgentTagged = AgentHelpers.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
@@ -187,15 +189,16 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Resolve a single comment thread
+        /// UnResolve comments in a comment thread
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="elementId"></param>
+        /// <param name="threadId"></param>
         /// <returns></returns>
-        [HttpPatch("{reviewId}/resolveComments", Name = "ResolveComments")]
-        public async Task<ActionResult> ResolveCommentsAsync(string reviewId, string elementId)
+        [HttpPatch("{reviewId}/unResolveComments", Name = "UnResolveComments")]
+        public async Task<ActionResult> UnResolveCommentsAsync(string reviewId, string elementId, string threadId = null)
         {
-            await _commentsManager.ResolveConversation(User, reviewId, elementId);
+            await _commentsManager.UnresolveConversation(User, reviewId, elementId, threadId);
             return Ok();
         }
 
@@ -206,22 +209,23 @@ namespace APIViewWeb.LeanControllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPatch("{reviewId}/commentsBatchOperation", Name = "CommentsBatchOperation")]
-        public async Task<ActionResult> CommentsBatchOperation(string reviewId, [FromBody] ResolveBatchConversationRequest request)
+        public async Task<ActionResult> CommentsBatchOperation(string reviewId, [FromBody] BatchConversationRequest request)
         {
             List<CommentItemModel> createdComments = await _commentsManager.CommentsBatchOperationAsync(User, reviewId, request);
             return new LeanJsonResult(createdComments, StatusCodes.Status201Created);
         }
 
         /// <summary>
-        /// UnResolve comments in a comment thread
+        /// Resolve comments in a comment thread
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="elementId"></param>
+        /// <param name="threadId"></param>
         /// <returns></returns>
-        [HttpPatch("{reviewId}/unResolveComments", Name = "UnResolveComments")]
-        public async Task<ActionResult> UnResolveCommentsAsync(string reviewId, string elementId)
+        [HttpPatch("{reviewId}/resolveComments", Name = "ResolveComments")]
+        public async Task<ActionResult> ResolveCommentsAsync(string reviewId, string elementId, string threadId = null)
         {
-            await _commentsManager.UnresolveConversation(User, reviewId, elementId);
+            await _commentsManager.ResolveConversation(User, reviewId, elementId, threadId);
             return Ok();
         }
 

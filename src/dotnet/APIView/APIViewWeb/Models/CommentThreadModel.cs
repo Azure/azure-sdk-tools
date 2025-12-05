@@ -8,10 +8,11 @@ namespace APIViewWeb.Models
 {
     public class CommentThreadModel
     {
-        public CommentThreadModel(string reviewId, string lineId, IEnumerable<CommentItemModel> comments)
+        public CommentThreadModel(string reviewId, string lineId, string threadId, IEnumerable<CommentItemModel> comments)
         {
             ReviewId = reviewId;
             LineId = lineId;
+            ThreadId = threadId;
             CrossLanguageId = comments.FirstOrDefault().CrossLanguageId;
             LineClass = comments.FirstOrDefault().SectionClass;
             Comments = comments;
@@ -21,6 +22,7 @@ namespace APIViewWeb.Models
         }
 
         public string ReviewId { get; set; }
+        public string ThreadId { get; set; }
         public IEnumerable<CommentItemModel> Comments { get; set; }
         public string LineId { get; set; }
         public string CrossLanguageId { get; set; }

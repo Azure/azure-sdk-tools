@@ -50,6 +50,7 @@ namespace APIViewWeb.LeanModels
         public string APIRevisionId { get; set; }
         public string SampleRevisionId { get; set; }
         public string ElementId { get; set; }
+        public string ThreadId { get; set; }
         public string SectionClass { get; set; }
         public string CommentText { get; set; }
         public string CrossLanguageId { get; set; }

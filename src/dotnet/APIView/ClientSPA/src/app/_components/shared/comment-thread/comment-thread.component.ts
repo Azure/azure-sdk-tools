@@ -316,6 +316,7 @@ export class CommentThreadComponent {
     const deleteAction = {
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
       nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      threadId: this.codePanelRowData!.threadId,
       commentId: commentId,
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
       title: title // Used for Sample Instance of CommentThread
@@ -352,6 +353,7 @@ export class CommentThreadComponent {
         {
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          threadId: this.codePanelRowData!.threadId,
           title: title // Used for Sample Instance of CommentThread
         }
       );
@@ -373,11 +375,19 @@ export class CommentThreadComponent {
       elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
     } else if (this.instanceLocation === "samples") {
       elementId = target.closest(".user-comment-thread")?.getAttribute("title");
+    } else if (this.instanceLocation === "code-panel") {
+      if (this.codePanelRowData?.comments && this.codePanelRowData.comments.length > 0) {
+        elementId = this.codePanelRowData.comments[0].elementId;
+      } else {
+        elementId = this.codePanelRowData?.nodeId;
+      }
     }
 
     const HTML_STRIP_REGEX = /<\/?[^>]+(>|$)/g
     const emptyCommentContentWarningMessage = { severity: 'info', icon: 'bi bi-info-circle', summary: "Comment Info", detail: "Comment content is empty. No action taken.", key: 'bc', life: 3000 };
 
+    const nodeIdValue = this.codePanelRowData?.nodeId || elementId;
+    const elementIdValue = elementId || this.codePanelRowData?.nodeId;
 
     if (replyEditorContainer) {
       const content = this.getEditorContent("replyEditor");
@@ -388,12 +398,13 @@ export class CommentThreadComponent {
         this.saveCommentActionEmitter.emit(
           { 
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
-            nodeId: this.codePanelRowData!.nodeId,
+            nodeId: nodeIdValue,
             nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+            threadId: this.codePanelRowData!.threadId,
             commentText: content,
             allowAnyOneToResolve: this.allowAnyOneToResolve,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-            elementId: elementId,
+            elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
             severity: this.selectedSeverity
           } as CommentUpdatesDto
@@ -413,12 +424,13 @@ export class CommentThreadComponent {
         this.saveCommentActionEmitter.emit(
           { 
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
-            nodeId: this.codePanelRowData!.nodeId,
+            nodeId: nodeIdValue,
             nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+            threadId: this.codePanelRowData!.threadId,
             commentId: commentId,
             commentText: content,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-            elementId: elementId,
+            elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup
           } as CommentUpdatesDto
         );
@@ -442,6 +454,7 @@ export class CommentThreadComponent {
       { 
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        threadId: this.codePanelRowData!.threadId,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
       } as CommentUpdatesDto
@@ -458,6 +471,7 @@ export class CommentThreadComponent {
     const downvoteAction = { 
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
       nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      threadId: this.codePanelRowData!.threadId,
       commentId: commentId,
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
     } as CommentUpdatesDto;
@@ -548,10 +562,16 @@ export class CommentThreadComponent {
   }
 
   handleThreadResolutionButtonClick(action: string) {
+    const isResolving = action === "Resolve";
+    if (isResolving) {
+      this.threadResolvedBy = this.userProfile?.userName;
+    }
+    
     this.commentResolutionActionEmitter.emit(
       { 
-        commentThreadUpdateAction: (action == "Resolve") ? CommentThreadUpdateAction.CommentResolved  : CommentThreadUpdateAction.CommentUnResolved,
+        commentThreadUpdateAction: isResolving ? CommentThreadUpdateAction.CommentResolved : CommentThreadUpdateAction.CommentUnResolved,
         elementId: this.codePanelRowData!.comments[0].elementId,
+        threadId: this.codePanelRowData!.threadId,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
         resolvedBy: this.userProfile?.userName
@@ -767,6 +787,7 @@ export class CommentThreadComponent {
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
         commentId: commentId,
+        threadId: comment?.threadId || commentCodeRow.threadId || this.codePanelRowData?.threadId,
         nodeIdHashed: commentCodeRow.nodeIdHashed,
         severity: severity,
         associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
@@ -778,12 +799,15 @@ export class CommentThreadComponent {
     commentIds.forEach(commentId => {
       const comment = this.relatedComments.find(c => c.id === commentId);
       if (comment) {
-        const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === comment.elementId);
+        const commentCodeRow = this.allCodePanelRowData?.find(row => 
+          row.threadId === comment.threadId || row.comments?.some(c => c.id === commentId)
+        );
         
         this.batchResolutionActionEmitter.emit({
           commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
           elementId: comment.elementId,
           commentId: comment.id,
+          threadId: comment.threadId || commentCodeRow?.threadId || this.codePanelRowData?.threadId,
           nodeIdHashed: commentCodeRow?.nodeIdHashed ?? this.codePanelRowData?.nodeIdHashed,
           associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup ?? this.codePanelRowData?.associatedRowPositionInGroup,
           resolvedBy: this.userProfile?.userName
@@ -794,12 +818,15 @@ export class CommentThreadComponent {
 
   private emitCreationEvents(createdComments: CommentItemModel[]): void {
     createdComments.forEach(createdComment => {
-      const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === createdComment.elementId);
+      const commentCodeRow = this.allCodePanelRowData?.find(row => 
+        row.threadId === createdComment.threadId || row.nodeId === createdComment.elementId
+      );
       
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
         comment: createdComment,
         elementId: createdComment.elementId,
+        threadId: createdComment.threadId || commentCodeRow?.threadId || this.codePanelRowData?.threadId,
         nodeIdHashed: commentCodeRow?.nodeIdHashed,
         associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup,
         reviewId: this.reviewId

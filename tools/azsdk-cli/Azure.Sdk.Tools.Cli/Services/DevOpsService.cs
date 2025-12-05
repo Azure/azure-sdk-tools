@@ -980,7 +980,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var packageWorkItems = await FetchWorkItemsAsync(query);
             if (packageWorkItems.Count == 0)
             {
-                throw new Exception($"Failed to find package work item with package name {packageName}. Please check package name, package version and language values.");
+                return null;
             }
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
         }

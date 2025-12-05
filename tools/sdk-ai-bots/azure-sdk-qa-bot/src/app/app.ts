@@ -80,7 +80,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
     if (question) messages.push(question);
     const answer: Message =
-      msg.reply && msg.reply.has_result ? { role: 'assistant', content: msg.reply.answer } : undefined;
+      msg.reply ? { role: 'assistant', content: msg.reply.answer } : undefined;
     if (answer) messages.push(answer);
   });
 

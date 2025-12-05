@@ -6,4 +6,4 @@ build
 .runs
 *.log
 flow.flex.yaml
-cache
+recordings

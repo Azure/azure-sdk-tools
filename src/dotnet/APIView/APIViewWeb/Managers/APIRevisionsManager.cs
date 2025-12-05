@@ -713,6 +713,15 @@ namespace APIViewWeb.Managers
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
                     if (apiRevision != null)
                     {
+                        if (codeFile.CrossLanguageMetadata == null)
+                        {
+                            CodeFile existingCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevisionId, apiRevision.Files.Single().FileId);
+                            if (existingCodeFile?.CrossLanguageMetadata != null)
+                            {
+                                codeFile.CrossLanguageMetadata = existingCodeFile.CrossLanguageMetadata;
+                            }
+                        }
+
                         await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, apiRevision.Files.Single().FileId, codeFile);
                         var file = apiRevision.Files.FirstOrDefault();
                         file.VersionString = codeFile.VersionString;

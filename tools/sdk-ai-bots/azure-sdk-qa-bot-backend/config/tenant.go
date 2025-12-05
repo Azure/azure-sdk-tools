@@ -22,6 +22,7 @@ var typespecSources = []model.Source{
 	model.Source_TypeSpecMigration,
 	model.Source_TypeSpecHttpSpecs,
 	model.Source_StaticAzureDocs,
+	model.Source_StaticTypeSpecToSwaggerMapping,
 }
 
 var allSources = append(typespecSources,
@@ -32,8 +33,9 @@ var allSources = append(typespecSources,
 	model.Source_AzureSDKDocsEng)
 
 var SourceTopK = map[model.Source]int{
-	model.Source_TypeSpecMigration: 3,
-	model.Source_TypeSpecQA:        3,
+	model.Source_TypeSpecMigration:              3,
+	model.Source_TypeSpecQA:                     3,
+	model.Source_StaticTypeSpecToSwaggerMapping: 3,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{

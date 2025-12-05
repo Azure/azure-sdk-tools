@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
@@ -255,4 +256,120 @@ public class APIRevisionsManagerTests
             CrossLanguageMetadata = crossLanguageMetadata
         };
     }
+
+    #region UpdateAPIRevisionCodeFileAsync Tests
+
+    private const string TestReviewId = "test-review-id";
+    private const string TestApiRevisionId = "test-revision-id";
+    private const string TestFileId = "test-file-id";
+    private const string TestFileName = "test-package_python.json";
+
+    private async Task<CodeFile> SetupUpdateAPIRevisionCodeFileAsyncTest(
+        CodeFile pipelineCodeFile,
+        CodeFile existingCodeFile = null)
+    {
+        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, pipelineCodeFile);
+
+        _mockDevopsArtifactRepository
+            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
+                It.IsAny<string>(), "zip"))
+            .ReturnsAsync(zipStream);
+
+        _mockReviewsRepository
+            .Setup(x => x.GetReviewAsync(TestReviewId))
+            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" });
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = TestApiRevisionId,
+                Language = "Python",
+                Files = new List<APICodeFileModel> { new() { FileId = TestFileId, FileName = TestFileName } }
+            });
+
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileFromStorageAsync(TestApiRevisionId, TestFileId))
+            .ReturnsAsync(existingCodeFile);
+
+        CodeFile capturedCodeFile = null;
+        _mockCodeFileRepository
+            .Setup(x => x.UpsertCodeFileAsync(TestApiRevisionId, TestFileId, It.IsAny<CodeFile>()))
+            .Callback<string, string, CodeFile>((_, _, cf) => capturedCodeFile = cf)
+            .Returns(Task.CompletedTask);
+
+        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal");
+
+        return capturedCodeFile;
+    }
+
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_PreservesCrossLanguageMetadata_WhenNewCodeFileHasNone()
+    {
+        CrossLanguageMetadata existingMetadata = CreateTestMetadata("ExistingPackage", "existing.module.Class", "ExistingPackage.Class");
+        CodeFile existingCodeFile = CreatePipelineCodeFile(existingMetadata);
+        existingCodeFile.VersionString = "1.0.0";
+
+        CodeFile result = await SetupUpdateAPIRevisionCodeFileAsyncTest(CreatePipelineCodeFile(null), existingCodeFile);
+
+        Assert.NotNull(result.CrossLanguageMetadata);
+        Assert.Equal("ExistingPackage", result.CrossLanguageMetadata.CrossLanguagePackageId);
+        Assert.Equal("ExistingPackage.Class", result.CrossLanguageMetadata.CrossLanguageDefinitionId["existing.module.Class"]);
+    }
+
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_KeepsNewCrossLanguageMetadata_WhenNewCodeFileHasIt()
+    {
+        CrossLanguageMetadata newMetadata = CreateTestMetadata("NewPackage", "new.module.Class", "NewPackage.Class");
+
+        CodeFile result = await SetupUpdateAPIRevisionCodeFileAsyncTest(CreatePipelineCodeFile(newMetadata), null);
+
+        _mockCodeFileRepository.Verify(x => x.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        Assert.NotNull(result.CrossLanguageMetadata);
+        Assert.Equal("NewPackage", result.CrossLanguageMetadata.CrossLanguagePackageId);
+    }
+
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_HandlesNoExistingCodeFile_Gracefully()
+    {
+        CodeFile result = await SetupUpdateAPIRevisionCodeFileAsyncTest(CreatePipelineCodeFile(null), null);
+
+        Assert.NotNull(result);
+        Assert.Null(result.CrossLanguageMetadata);
+    }
+
+    private async Task<MemoryStream> CreateZipArchiveWithCodeFile(string reviewId, string apiRevisionId, string fileId,
+        CodeFile codeFile)
+    {
+        MemoryStream zipStream = new();
+        using (ZipArchive archive = new(zipStream, ZipArchiveMode.Create, true))
+        {
+            // Path format: apiview/{reviewId}/{apiRevisionId}/{fileId}.json
+            string entryPath = $"apiview/{reviewId}/{apiRevisionId}/{fileId}.json";
+            ZipArchiveEntry entry = archive.CreateEntry(entryPath);
+
+            using Stream entryStream = entry.Open();
+            await codeFile.SerializeAsync(entryStream);
+        }
+
+        zipStream.Position = 0;
+        return zipStream;
+    }
+
+    private static CodeFile CreatePipelineCodeFile(CrossLanguageMetadata metadata = null) => new()
+    {
+        Name = TestFileName,
+        Language = "Python",
+        VersionString = "2.0.0",
+        PackageName = "test-package",
+        PackageVersion = "1.0.0",
+        CrossLanguageMetadata = metadata
+    };
+
+    private static CrossLanguageMetadata CreateTestMetadata(string packageId, string key, string value) => new()
+    {
+        CrossLanguagePackageId = packageId,
+        CrossLanguageDefinitionId = new Dictionary<string, string> { { key, value } }
+    };
+    #endregion
 }

@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
@@ -12,7 +13,7 @@ public class GraphClient : IGraphClient
     public GraphServiceClient GraphServiceClient { get; }
     private ILogger Log { get; }
 
-    public GraphClient(ILogger logger, DefaultAzureCredential credential)
+    public GraphClient(ILogger logger, TokenCredential credential)
     {
         Log = logger;
         GraphServiceClient = new GraphServiceClient(credential);

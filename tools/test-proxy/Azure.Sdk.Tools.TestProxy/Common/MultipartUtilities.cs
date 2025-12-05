@@ -5,6 +5,8 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Web;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
@@ -429,6 +431,133 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                     break; // end boundary, stop processing this layer
                 }
             }
+        }
+
+        /// <summary>
+        /// Normalizes file paths in Content-Disposition header values by converting Windows-style backslashes to forward slashes.
+        /// This ensures cross-platform compatibility when comparing multipart/form-data requests.
+        /// </summary>
+        /// <param name="value">The Content-Disposition header value to normalize.</param>
+        /// <returns>The normalized Content-Disposition header value with forward slashes in filenames.</returns>
+        public static string NormalizeFilenameFromContentDispositionValue(string value)
+        {
+            if (string.IsNullOrEmpty(value) || !value.Contains("filename"))
+            {
+                return value;
+            }
+
+            var spanValue = value.AsSpan();
+            var semicolonIndex = spanValue.IndexOf(';');
+            if (semicolonIndex == -1) // no header parameters
+            {
+                return value;
+            }
+
+            var outputValue = new StringBuilder(value.Length);
+            var dispositionType = spanValue[..(semicolonIndex + 1)];
+            outputValue.Append(dispositionType); // disposition type with ;
+
+            var remaining = spanValue[(semicolonIndex + 1)..];
+
+            // parse each parameter
+            while (!remaining.IsEmpty)
+            {
+                // leading white space
+                int nonWhitespace = 0;
+                while (nonWhitespace < remaining.Length && char.IsWhiteSpace(remaining[nonWhitespace]))
+                {
+                    nonWhitespace++;
+                }
+                outputValue.Append(remaining[..nonWhitespace]);
+                remaining = remaining[nonWhitespace..];
+
+                // get param slice: "name=value" and param name and value
+                var nextSemicolon = remaining.IndexOf(';');
+                var param = nextSemicolon == -1 ? remaining : remaining.Slice(0, nextSemicolon + 1);
+                var equalIndex = param.IndexOf('=');
+                var paramName = equalIndex == -1 ? param : param.Slice(0, equalIndex);
+                var paramValue = equalIndex == -1 ? ReadOnlySpan<char>.Empty : param.Slice(equalIndex + 1);
+
+                if (paramName.SequenceEqual("filename".AsSpan()))
+                {
+                    outputValue.Append(paramName);
+                    outputValue.Append('=');
+                    
+                    // normalize \ to /
+                    var backslash = paramValue.IndexOf("\\");
+                    while (backslash != -1)
+                    {
+                        var first = paramValue[..backslash];
+                        var second = paramValue[(backslash + 1)..];
+                        outputValue.Append(first);
+                        outputValue.Append('/');
+                        paramValue = second;
+                        backslash = paramValue.IndexOf("\\");
+                    }
+                    outputValue.Append(paramValue);
+                }
+                else if (paramName.SequenceEqual("filename*".AsSpan()))
+                {
+                    outputValue.Append(paramName);
+                    outputValue.Append('=');
+
+                    // Get encoding
+                    var firstQuote = paramValue.IndexOf('\'');
+                    var encodingSpan = firstQuote == -1 ? [] : paramValue[..firstQuote];
+                    var encodingString = encodingSpan.IsEmpty ? "UTF-8" : encodingSpan.ToString();
+                    Encoding encoding = Encoding.GetEncoding(encodingString);
+                    if (firstQuote == -1) // filename* is malformed
+                    {
+                        outputValue.Append(paramValue);
+                        remaining = nextSemicolon == -1 ? [] : remaining[(nextSemicolon + 1)..];
+                        continue;
+                    }
+
+                    // Get language
+                    var encodedValue = paramValue[(firstQuote + 1)..];
+                    var secondQuote = encodedValue.IndexOf('\'');
+                    if (secondQuote == -1) // filename* is malformed
+                    {
+                        outputValue.Append(paramValue);
+                        remaining = nextSemicolon == -1 ? [] : remaining[(nextSemicolon + 1)..];
+                        continue;
+                    }
+                    var lang = encodedValue[..secondQuote];
+                    outputValue.Append(encodingSpan);
+                    outputValue.Append('\'');
+                    outputValue.Append(lang);
+                    outputValue.Append('\'');
+                    encodedValue = encodedValue[(secondQuote + 1)..];
+
+                    // Decode
+                    var decoded = HttpUtility.UrlDecode(encodedValue.ToString(), encoding);
+                    var decodedSpan = decoded.AsSpan();
+
+                    // normalize \ to /
+                    StringBuilder normalizedEncoded = new(decodedSpan.Length);
+                    var backslash = decodedSpan.IndexOf("\\");
+                    while (backslash != -1)
+                    {
+                        var first = decodedSpan[..backslash];
+                        var second = decodedSpan[(backslash + 1)..];
+                        normalizedEncoded.Append(first);
+                        normalizedEncoded.Append('/');
+                        decodedSpan = second;
+                        backslash = decodedSpan.IndexOf("\\");
+                    }
+                    normalizedEncoded.Append(decodedSpan);
+
+                    // Encode again
+                    var reEncoded = HttpUtility.UrlEncode(normalizedEncoded.ToString(), encoding);
+                    outputValue.Append(reEncoded);
+                }
+                else
+                {
+                    outputValue.Append(param); // append entire param if not filename or filename*
+                }
+                remaining = nextSemicolon == -1 ? ReadOnlySpan<char>.Empty : remaining[(nextSemicolon + 1)..];
+            }
+            return outputValue.ToString();
         }
 
         /// <summary>

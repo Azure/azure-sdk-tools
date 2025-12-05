@@ -16,7 +16,7 @@ param updateNodes bool = false
 param workspaceId string
 
 var kubernetesVersion = '1.32.4'
-var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
+var nodeResourceGroup = 'SSS3PT_rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {
   name: 'systemap'
@@ -103,7 +103,7 @@ resource newCluster 'Microsoft.ContainerService/managedClusters@2024-10-01' = if
   }
 }
 
-resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenanceConfigurations@2023-05-02-preview' = if (!updateNodes) {
+resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenanceConfigurations@2025-10-01' = if (!updateNodes) {
   name: 'aksManagedNodeOSUpgradeSchedule'
   parent: newCluster
   properties: {

@@ -72,6 +72,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
 
             var result = teams.FirstOrDefault(team => team.Name == teamName);
+            bool teamCreatedOrUpdated = false;
 
             if (result == default)
             {
@@ -85,6 +86,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     result = await service.CreateTeamForProjectAsync(pipeline.Project.Id.ToString(), newTeam);
                 }
+                teamCreatedOrUpdated = true;
             }
             else
             {
@@ -96,11 +98,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     {
                         result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
                     }
+                    teamCreatedOrUpdated = true;
                 }
             }
             if (result != default)
             {
-                await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, persistChanges);
+                if (teamCreatedOrUpdated)
+                {
+                    await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, persistChanges);
+                }
                 await SyncTeamWithCodeownersFile(pipeline, result, gitHubToAADConverter, persistChanges);
             }
         }
@@ -121,33 +127,17 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     return;
                 }
 
-                // Get set of team members in the CODEOWNERS file
-                var contactsDescriptors = new List<string>();
-                foreach (string contact in contacts)
-                {
-                    if (!contactsCache.ContainsKey(contact))
-                    {
-                        // TODO: Better to have retry if no success on this call.
-                        var userPrincipal = await gitHubToAADConverter.GetUserPrincipalNameFromGithubAsync(contact);
-                        if (!string.IsNullOrEmpty(userPrincipal))
-                        {
-                            contactsCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
-                        }
-                        else
-                        {
-                            logger.LogInformation(
-                                "Cannot find the user principal for GitHub contact '{contact}'",
-                                contact);
-                            contactsCache[contact] = null;
-                        }
-                    }
-                    contactsDescriptors.Add(contactsCache[contact]);
-                }
+                var distinctContacts = contacts
+                    .Where(contact => !string.IsNullOrEmpty(contact))
+                    .Distinct()
+                    .ToList();
 
-                var contactsSet = new HashSet<string>(contactsDescriptors);
-                // Get set of team members in the DevOps teams
+                var contactsDescriptors = await ResolveContactDescriptorsAsync(distinctContacts, gitHubToAADConverter);
+
+                var contactsSet = new HashSet<string>(contactsDescriptors.Where(d => d != null));
+                
                 var teamMembers = await service.GetMembersAsync(team);
-                var teamDescriptors = new List<String>();
+                var teamDescriptors = new List<string>();
                 foreach (var member in teamMembers)
                 {
                     if (!teamMemberCache.ContainsKey(member.Identity.Id))
@@ -157,19 +147,20 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     }
                     teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
                 }
-                var teamSet = new HashSet<string>(teamDescriptors);
-                var contactsToRemove = teamSet.Except(contactsSet);
-                var contactsToAdd = contactsSet.Except(teamSet);
-                string teamDescriptor = "";
-
-                if (contactsToRemove.Any() || contactsToAdd.Any())
+                var teamSet = new HashSet<string>(teamDescriptors.Where(d => d != null));
+                
+                if (contactsSet.SetEquals(teamSet))
                 {
-                    teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                    return;
                 }
-
+                
+                var contactsToRemove = teamSet.Except(contactsSet).ToList();
+                var contactsToAdd = contactsSet.Except(teamSet).ToList();
+                
+                string teamDescriptor = await service.GetDescriptorAsync(team.Id);
                 foreach (string descriptor in contactsToRemove)
                 {
-                    if (persistChanges && descriptor != null)
+                    if (persistChanges)
                     {
                         logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                         await service.RemoveMember(teamDescriptor, descriptor);
@@ -178,13 +169,46 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 foreach (string descriptor in contactsToAdd)
                 {
-                    if (persistChanges && descriptor != null)
+                    if (persistChanges)
                     {
                         logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                         await service.AddToTeamAsync(teamDescriptor, descriptor);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves contact GitHub handles to descriptors with caching
+        /// </summary>
+        private async Task<List<string>> ResolveContactDescriptorsAsync(
+            List<string> contacts,
+            GitHubToAADConverter gitHubToAADConverter)
+        {
+            var contactsDescriptors = new List<string>();
+            
+            foreach (string contact in contacts)
+            {
+                if (!contactsCache.ContainsKey(contact))
+                {
+                    var userPrincipal = await gitHubToAADConverter.GetUserPrincipalNameFromGithubAsync(contact);
+                    if (!string.IsNullOrEmpty(userPrincipal))
+                    {
+                        contactsCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
+                    }
+                    else
+                    {
+                        logger.LogInformation(
+                            "Cannot find the user principal for GitHub contact '{contact}'",
+                            contact);
+                        // Cache null results to avoid re-requesting
+                        contactsCache[contact] = null;
+                    }
+                }
+                contactsDescriptors.Add(contactsCache[contact]);
+            }
+            
+            return contactsDescriptors;
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)

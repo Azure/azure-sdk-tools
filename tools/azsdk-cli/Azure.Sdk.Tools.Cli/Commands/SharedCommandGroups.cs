@@ -74,6 +74,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup APIView = new(
+            Verb: "apiview",
+            Description: "Commands for interacting with APIView services and functionality",
+            Options: []
+        );
+
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

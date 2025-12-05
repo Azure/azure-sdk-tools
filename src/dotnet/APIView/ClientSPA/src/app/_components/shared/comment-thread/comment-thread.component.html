@@ -142,9 +142,9 @@
                 </p-dropdown>
             </div>
         </div>
-        <app-editor editorId="replyEditor" [style]="{ width: '100%'}"></app-editor>
+        <app-editor editorId="replyEditor" [(content)]="codePanelRowData!.draftCommentText" [style]="{ width: '100%'}"></app-editor>
         <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
-            <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="getEditorContent('replyEditor').length === 0" (click)="saveCommentAction($event)">Add comment</button>
+            <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="!codePanelRowData!.draftCommentText || codePanelRowData!.draftCommentText.length === 0" (click)="saveCommentAction($event)">Add comment</button>  
             <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
             <button 
                 type="button" 
@@ -166,7 +166,7 @@
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(resolveThreadButtonText)" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{resolveThreadButtonText}} Conversation</button>
+        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
     </div>
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
@@ -214,3 +214,19 @@
         </div>
     </ng-template>
 </p-overlayPanel>
+
+<!-- AI Comment Feedback Dialog (for downvotes) -->
+<app-ai-comment-feedback-dialog
+    [(visible)]="showAIFeedbackDialog"
+    [commentId]="pendingDownvoteCommentId"
+    (feedbackSubmit)="onAIFeedbackSubmit($event)"
+    (cancel)="onAIFeedbackCancel()">
+</app-ai-comment-feedback-dialog>
+
+<!-- AI Comment Delete Dialog (for deletions) -->
+<app-ai-comment-delete-dialog
+    [(visible)]="showAIDeleteDialog"
+    [commentId]="pendingDeleteCommentId"
+    (deleteConfirm)="onAIDeleteConfirm($event)"
+    (cancel)="onAIDeleteCancel()">
+</app-ai-comment-delete-dialog>

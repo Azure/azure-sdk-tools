@@ -15,7 +15,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private Mock<IDevOpsService> mockDevOpsService;
         private Mock<IGitHubService> mockGitHubService;
-        private Mock<IGitHelper> mockGitHelper;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
         private ILogger<SpecWorkflowTool> logger;
         private SpecWorkflowTool specWorkflowTool;
@@ -26,13 +25,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             mockDevOpsService = new Mock<IDevOpsService>();
             mockGitHubService = new Mock<IGitHubService>();
-            mockGitHelper = new Mock<IGitHelper>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             logger = new TestLogger<SpecWorkflowTool>();
             inputSanitizer = new InputSanitizer();
 
-            mockGitHelper.Setup(x => x.GetBranchName(It.IsAny<string>()))
-                .Returns("testBranch");
             mockTypeSpecHelper.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>()))
                 .Returns(true);
             mockTypeSpecHelper.Setup(x => x.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>()))
@@ -41,7 +37,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             specWorkflowTool = new SpecWorkflowTool(
                 mockGitHubService.Object,
                 mockDevOpsService.Object,
-                mockGitHelper.Object,
                 mockTypeSpecHelper.Object,
                 logger,
                 inputSanitizer

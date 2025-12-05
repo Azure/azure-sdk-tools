@@ -8,6 +8,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
+        Task<List<ReleasePlanDetails>> IDevOpsService.ListOverdueReleasePlansAsync()
+        {
+            return Task.FromResult(new List<ReleasePlanDetails>());
+        }
+        
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             throw new NotImplementedException();
@@ -26,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(true);
         }
 
         Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan)

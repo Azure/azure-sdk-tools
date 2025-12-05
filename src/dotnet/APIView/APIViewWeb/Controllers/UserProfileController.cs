@@ -39,15 +39,13 @@ namespace APIViewWeb.Controllers
         /// <param name="email">This is the main email used for notifications</param>
         /// <param name="languages">The languages that the user has selected to approve</param>
         /// <param name="theme">The app theme</param>
-        /// <param name="useBetaIndexPage">If to use the beta index page</param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme", bool useBetaIndexPage=false)
+        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
         {
             await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: email, new UserPreferenceDto()
             {
                 Theme = theme,
-                UseBetaIndexPage = useBetaIndexPage,
                 ApprovedLanguages = new HashSet<string>(languages)
             });
             return RedirectToPage("/Assemblies/Index");

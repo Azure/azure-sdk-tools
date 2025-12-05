@@ -55,7 +55,6 @@ namespace APIViewWeb.Repositories
                     existingUserProfile.Preferences.ShowComments = (userPreferenceDto.ShowComments != null) ? (bool)userPreferenceDto.ShowComments : existingUserProfile.Preferences.ShowComments;
                     existingUserProfile.Preferences.ShowSystemComments = (userPreferenceDto.ShowSystemComments != null) ? (bool)userPreferenceDto.ShowSystemComments : existingUserProfile.Preferences.ShowSystemComments;
                     existingUserProfile.Preferences.DisableCodeLinesLazyLoading = (userPreferenceDto.DisableCodeLinesLazyLoading != null) ? (bool)userPreferenceDto.DisableCodeLinesLazyLoading : existingUserProfile.Preferences.DisableCodeLinesLazyLoading;
-                    existingUserProfile.Preferences.UseBetaIndexPage = (userPreferenceDto.UseBetaIndexPage != null) ? (bool)userPreferenceDto.UseBetaIndexPage : existingUserProfile.Preferences.UseBetaIndexPage;
                     existingUserProfile.Preferences.Theme = (userPreferenceDto.Theme != null) ? userPreferenceDto.Theme : existingUserProfile.Preferences.Theme;
                     existingUserProfile.Preferences.ScrollBarSize = (userPreferenceDto.ScrollBarSize != null) ? (ScrollBarSizes)userPreferenceDto.ScrollBarSize : existingUserProfile.Preferences.ScrollBarSize;
                 }

@@ -143,6 +143,27 @@ namespace APIViewWeb
         }
 
         /// <summary>
+        /// Get distinct package names for a language 
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<string>> GetPackageNamesAsync(string language)
+        {
+            var queryDefinition = new QueryDefinition(
+                "SELECT DISTINCT VALUE r.PackageName FROM Reviews r WHERE r.Language = @language AND r.IsClosed = false AND r.IsDeleted = false AND IS_DEFINED(r.PackageName) AND r.PackageName != null")
+                .WithParameter("@language", language);
+
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<string>(queryDefinition);
+            var packageNames = new List<string>();
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                packageNames.AddRange(result.Resource);
+            }
+            return packageNames.Where(p => !string.IsNullOrEmpty(p)).OrderBy(p => p);
+        }
+
+        /// <summary>
         /// Get Reviews based on search criteria
         /// </summary>
         /// <param name="search"></param>
@@ -355,7 +376,7 @@ SELECT VALUE {
                 }
 
             }
-            result.Remove(result.Length - 1, 1);
+                result.Remove(result.Length - 1, 1);
             result.Append(")");
             return result.ToString();
         }

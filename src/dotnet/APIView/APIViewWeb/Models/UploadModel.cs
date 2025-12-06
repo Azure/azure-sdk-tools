@@ -22,6 +22,9 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty]
         public string FilePath { get; set; }
 
+        [BindProperty]
+        public string PackageName { get; set; }
+
         public static string[] SupportedLanguages => LanguageService.SupportedLanguages;
     }
 }

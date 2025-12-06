@@ -71,6 +71,18 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
+        /// Retrieves distinct package names for a language
+        /// </summary>
+        /// <param name="language">The language to filter by</param>
+        /// <returns>A list of distinct package names</returns>
+        [HttpGet("languages/{language}/packagenames", Name = "GetPackageNames")]
+        public async Task<ActionResult<IEnumerable<string>>> GetPackageNamesAsync(string language)
+        {
+            var result = await _reviewManager.GetPackageNamesAsync(language);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
         /// Retrieves a review by its id
         /// </summary>
         /// <param name="reviewId"></param>

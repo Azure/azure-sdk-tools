@@ -21,7 +21,7 @@ sample:
   language: python
   package_name: azure.widget
   code: "class WidgetObject:"
-  error_context: "Guideline about naming conventions is outdated"
+  issue_context: "Guideline about naming conventions is outdated"
   existing_issues: |
     [
       {
@@ -78,7 +78,7 @@ For each existing issue (stop at first match):
   2. Extract guideline URL from EXISTING issue body
   3. If URLs match exactly AND languages match → return no-op with that issue number
 
-If all existing issues checked with no URL match → return create
+If all existing issues checked with no URL match → compare semantically, if still no match return create
 
 user:
 **NEW ISSUE:**

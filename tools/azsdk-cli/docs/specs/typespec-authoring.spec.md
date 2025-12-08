@@ -39,7 +39,7 @@
 
 ## Background / Problem Statement
 
-TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec contributes to producing high-quality SDKs. However, Azure API developers face significant challenges when authoring TypeSpec
+TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec contributes to producing high-quality SDKs. However, Azure API developers face significant challenges when authoring TypeSpec.
 
 ### Current State
 
@@ -176,7 +176,7 @@ enum Versions {
 ```
 
 According to the ARM versioning guideline and best practices, the expected code should:
-1. add a new api version enum option and decorated with @previewVersion
+1. add a new API version enum option and decorate it with @previewVersion
 
 ```typespec main.tsp
 /** The available API versions. */
@@ -316,7 +316,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 ```json
 {
-  "result": "succeeded",
+  "is_successful":true,
   "solution": "<solution-for-the-typespec-task>",
   "references": [
     {
@@ -432,7 +432,7 @@ This feature/tool is complete when:
   - Generated TypeSpec code passes compilation without errors
   - Generated code follows Azure ARM/DP/SDK guidelines (validated by automated linter/validator)
   - Generated code matches expected patterns for resource hierarchy and routing
-  - Generated code includes proper syntax, e.g. decorators, templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`)
+  - Generated code includes proper syntax, e.g. decorators, templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`; the correct decorator is `@armResourceOperations`)
 
 - **Documentation Reference Quality**: For each agent response:
   - Responses include relevant documentation links (e.g., TypeSpec Azure guidelines)
@@ -469,9 +469,9 @@ add a new preview API version 2025-10-01-preview for service widget
 
 **Expected Agent Activity:**
 
-1. Add a enum option v2025_10_01_preview in version enum for this new api version and decorate with @previewVersion
+1. Add a enum option v2025_10_01_preview in version enum for this new API version and decorate with @previewVersion
 2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-3. summarize all the actions taken and display the reference docs
+3. Summarize all the actions taken and display the reference docs
 
 ### Scenario 2: Update TypeSpec to follow Azure guidelines
 
@@ -483,7 +483,7 @@ add an azure resource named asset for the api version 2025-10-01-preview
 
 **Expected Agent Activity:**
 
-1. generate azure trackedResource model Asset and resource interface Assets using azure mgmt templates. Decorated @added(Versions.v2025_10_01_preview) 
+1. Generate azure trackedResource model Asset and resource interface Assets using azure mgmt templates. Decorated @added(Versions.v2025_10_01_preview) 
 2. summarize all the actions taken and display the reference docs
 
 ---
@@ -506,7 +506,10 @@ azsdk typespec authoring --request <typespec-request> --additional-information <
 **Expected Output:**
 
 ```text
-**Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.\n **Step-by-step guidance:**\n 1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix. and decorate @previewVersion on the enum. 2. add an example folder for this version and copy the relative examples
+**Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
+**Step-by-step guidance:**
+1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix and decorate @previewVersion on the enum.
+2. Add an example folder for this version and copy the relative examples.
 ```
 
 **Error Cases:**

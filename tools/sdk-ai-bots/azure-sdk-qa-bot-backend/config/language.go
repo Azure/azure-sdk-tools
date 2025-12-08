@@ -17,7 +17,7 @@ var baseLanguageSources = []model.Source{
 
 var languageConfigMap = map[string]LanguageConfig{
 	"python": {
-		Sources: appendBaseLanguageSources(model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki),
+		Sources: appendBaseLanguageSources(model.Source_StaticAzureSDKForPythonReviewMeeting),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('python_*', 'title') or search.ismatch('general_*', 'title')",
 		},

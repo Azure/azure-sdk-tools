@@ -479,8 +479,8 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		return nil, err
 	}
 	for _, activity := range resp.Activity {
-		if activity.Type == "AzureSearchQuery" {
-			log.Printf("Agentic search sub query: %s", activity.Query.Search)
+		if activity.Type == model.ActivityRecordTypeSearchIndex {
+			log.Printf("Agentic search sub query: %s", activity.SearchIndexArguments.Search)
 		}
 	}
 	if resp.Response == nil {
@@ -688,7 +688,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	for _, file := range files {
 		chunk := processDocument(file)
 		result = append(result, chunk)
-		log.Printf("✓ Completed document: %s/%s", file.ContextID, file.Title)
+		log.Printf("✓ Completed document: %s/%s#%s", file.ContextID, file.Title, file.Header1)
 	}
 
 	// Add remaining ready chunks (avoid duplicates by chunk content)

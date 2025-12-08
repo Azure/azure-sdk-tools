@@ -159,7 +159,7 @@ func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
 	messages := []model.Message{
 		{
 			Role:    model.Role_User,
-			Content: "Is there a way to enhance this to knowledge of Azure SDK Q&A Bot so that the recommendation may improve",
+			Content: "How to enhance the knowledge of Azure SDK Q&A Bot?",
 		},
 	}
 

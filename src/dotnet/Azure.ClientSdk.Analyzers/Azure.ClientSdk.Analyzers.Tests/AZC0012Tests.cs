@@ -80,5 +80,52 @@ namespace Azure.Data
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0012ProducedForSingleWordStructNames()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public struct {|AZC0012:Point|} { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0012NotProducedForMultiWordStructs()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public struct DataPoint { }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0012NotProducedForNonPublicStructs()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    internal struct Point { }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0012NotProducedForNestedStructs()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public class NiceProgram {
+        public struct Point { }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

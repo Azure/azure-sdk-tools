@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 using Octokit;
@@ -24,7 +25,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         ILogger<ReleasePlanTool> logger,
         IUserHelper userHelper,
         IGitHubService githubService,
-        IEnvironmentHelper environmentHelper
+        IEnvironmentHelper environmentHelper,
+        IInputSanitizer inputSanitizer
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [new("release-plan", "Manage release plans in AzureDevops")];
@@ -35,6 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string linkNamespaceApprovalIssueCommandName = "link-namespace-approval";
         private const string checkApiReadinessCommandName = "check-api-readiness";
         private const string linkSdkPrCommandName = "link-sdk-pr";
+        private const string listOverdueReleasePlansCommandName = "list-overdue";
 
         // MCP Tool Names
         private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
@@ -189,7 +192,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             },
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
-            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, }
+            new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
+            new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline")
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -235,6 +239,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 case linkSdkPrCommandName:
                     return await LinkSdkPullRequestToReleasePlan(commandParser.GetValue(languageOpt), commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
+
+                case listOverdueReleasePlansCommandName:
+                    return await ListOverdueReleasePlans();
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -882,6 +889,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
+                language = inputSanitizer.SanitizeLanguage(language);
+
                 // Verify language and get repo name
                 if (!IsValidLanguage(language))
                 {
@@ -975,6 +984,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // This should not be a hard error when context is not updated in PR description
                 logger.LogError(ex, "Failed to update pull request description for {repoOwner}/{repoName}#{prNumber}", repoOwner, repoName, prNumber);
                 return;
+            }
+        }
+
+        public async Task<ReleasePlanListResponse> ListOverdueReleasePlans()
+        {
+            try
+            {
+                var releasePlans = await devOpsService.ListOverdueReleasePlansAsync();
+                return new ReleasePlanListResponse
+                {
+                    Message = "List of overdue Release plans:",
+                    ReleasePlanDetailsList = releasePlans
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving overdue release plans");
+                return new ReleasePlanListResponse { ResponseError = $"An error occurred while retrieving overdue release plans: {ex.Message}" };
             }
         }
     }

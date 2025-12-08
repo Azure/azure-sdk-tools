@@ -541,16 +541,6 @@ export class ReviewPageComponent implements OnInit {
     this.scrollToNodeIdHashed.next(nodeIdHashed);
   }
 
-  handleMarkAsViewedEmitter(state: boolean) {
-    this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe({
-      next: (apiRevision: APIRevision) => {
-        this.activeAPIRevision = apiRevision;
-        const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
-        this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
-      }
-    });
-  }
-
   handleSubscribeEmitter(state: boolean) {
     this.reviewsService.toggleReviewSubscriptionByUser(this.reviewId!, state).pipe(take(1)).subscribe();
   }

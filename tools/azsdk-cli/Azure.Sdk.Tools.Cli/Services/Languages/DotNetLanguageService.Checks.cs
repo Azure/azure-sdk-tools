@@ -38,7 +38,7 @@ public partial class DotnetLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
             }
 
-            var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
+            var args = new[] {"-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
             var options = new PowershellOptions(scriptPath, args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
             var result = await powershellHelper.Run(options, ct);
 

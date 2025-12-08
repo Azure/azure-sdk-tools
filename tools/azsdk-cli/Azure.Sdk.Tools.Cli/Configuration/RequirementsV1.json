@@ -28,7 +28,7 @@
             },
             {
                 "requirement": "longpaths in git config should be enabled for Windows",
-                "check": ["pwsh", "-Command", "if ((git config --get core.longpaths) -ne 'true') { exit 1 }"],
+                "check": ["pwsh", "-Command", "if ($IsWindows -and (git config --get core.longpaths) -ne 'true') { exit 1 }"],
                 "instructions": ["git config --global core.longpaths true"]
             },
             {

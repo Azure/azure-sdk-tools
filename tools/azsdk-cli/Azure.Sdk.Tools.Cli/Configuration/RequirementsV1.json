@@ -27,8 +27,8 @@
                 "instructions": ["Download and install GitHub CLI"]
             },
             {
-                "requirement": "git config longpaths should be enabled for Windows",
-                "check": ["pwsh", "-Command", "\"if ((git config --get core.longpaths) -ne 'true') { exit 1 }\""],
+                "requirement": "longpaths in git config should be enabled for Windows",
+                "check": ["pwsh", "-Command", "if ((git config --get core.longpaths) -ne 'true') { exit 1 }"],
                 "instructions": ["git config --global core.longpaths true"]
             },
             {

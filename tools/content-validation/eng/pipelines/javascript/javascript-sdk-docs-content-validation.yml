@@ -19,36 +19,23 @@ parameters:
   type: string
   default: 'packagesList.txt'
 
-- name: rule_InconsistentTextFormat
+- name: selectedRule
+  displayName: "Select one validation rule to run test"
+  type: string
+  default: 'ExtraLabel'
+  values:
+  - InconsistentTextFormat
+  - TableMissingContent
+  - GarbledText
+  - ExtraLabel
+  - UnnecessarySymbols
+  - ErrorDisplay
+
+- name: createIssue
+  displayName: Create issue for this run.
   type: boolean
   default: false
-  displayName: "Create issue for rule InconsistentTextFormat"
 
-- name: rule_TableMissingContent
-  type: boolean
-  default: false
-  displayName: "Create issue for rule TableMissingContent"
-
-
-- name: rule_GarbledText
-  type: boolean
-  default: false
-  displayName: "Create issue for rule GarbledText"
-
-- name: rule_ExtraLabel
-  type: boolean
-  default: true
-  displayName: "Create issue for rule ExtraLabel"
-
-- name: rule_UnnecessarySymbols
-  type: boolean
-  default: false
-  displayName: "Create issue for rule UnnecessarySymbols"
-
-- name: rule_ErrorDisplay
-  type: boolean
-  default: false
-  displayName: "Create issue for rule ErrorDisplay"
 
 stages:
 - stage: Content_Validation_Test
@@ -140,30 +127,45 @@ stages:
     - script: |
         rules=""
         runTestCase=""
-        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules InconsistentTextFormatValidation"
+
+        case "${{ parameters.selectedRule }}" in
+          "InconsistentTextFormat")
             runTestCase="TestInconsistentTextFormat"
-        fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules MissingContentValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="InconsistentTextFormatValidation"
+            fi
+            ;;
+          "TableMissingContent")
             runTestCase="TestTableMissingContent"
-        fi
-        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules GarbledTextValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="MissingContentValidation"
+            fi
+            ;;
+          "GarbledText")
             runTestCase="TestGarbledText"
-        fi
-        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules ExtraLabelValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="GarbledTextValidation"
+            fi
+            ;;
+          "ExtraLabel")
             runTestCase="TestExtraLabel"
-        fi
-        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules UnnecessarySymbolsValidation"; 
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="ExtraLabelValidation"
+            fi
+            ;;
+          "UnnecessarySymbols")
             runTestCase="TestUnnecessarySymbols"
-        fi
-        if [ "$(echo ${{ parameters.rule_ErrorDisplay }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules ErrorDisplayValidation"; 
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="UnnecessarySymbolsValidation"
+            fi
+            ;;
+          "ErrorDisplay")
             runTestCase="TestErrorDisplay"
-        fi
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="ErrorDisplayValidation"
+            fi
+            ;;
+        esac
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
@@ -196,30 +198,45 @@ stages:
     - script: |
         rules=""
         runTestCase=""
-        if [ "$(echo ${{ parameters.rule_InconsistentTextFormat }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules InconsistentTextFormatValidation"
+        
+        case "${{ parameters.selectedRule }}" in
+          "InconsistentTextFormat")
             runTestCase="TestInconsistentTextFormat"
-        fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules MissingContentValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="InconsistentTextFormatValidation"
+            fi
+            ;;
+          "TableMissingContent")
             runTestCase="TestTableMissingContent"
-        fi
-        if [ "$(echo ${{ parameters.rule_GarbledText }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules GarbledTextValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="MissingContentValidation"
+            fi
+            ;;
+          "GarbledText")
             runTestCase="TestGarbledText"
-        fi
-        if [ "$(echo ${{ parameters.rule_ExtraLabel }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules ExtraLabelValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="GarbledTextValidation"
+            fi
+            ;;
+          "ExtraLabel")
             runTestCase="TestExtraLabel"
-        fi
-        if [ "$(echo ${{ parameters.rule_UnnecessarySymbols }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules UnnecessarySymbolsValidation"; 
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="ExtraLabelValidation"
+            fi
+            ;;
+          "UnnecessarySymbols")
             runTestCase="TestUnnecessarySymbols"
-        fi
-        if [ "$(echo ${{ parameters.rule_ErrorDisplay }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules ErrorDisplayValidation"; 
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="UnnecessarySymbolsValidation"
+            fi
+            ;;
+          "ErrorDisplay")
             runTestCase="TestErrorDisplay"
-        fi
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="ErrorDisplayValidation"
+            fi
+            ;;
+        esac
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"

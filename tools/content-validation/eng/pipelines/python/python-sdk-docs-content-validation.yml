@@ -31,7 +31,7 @@ parameters:
   - UnnecessarySymbols
 
 - name: createIssue
-  displayName: Create issue for this run?
+  displayName: Create issue for this run.
   type: boolean
   default: false
 

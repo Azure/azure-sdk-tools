@@ -19,15 +19,18 @@ parameters:
   type: string
   default: 'packagesList.txt'
 
-- name: rule_EmptyTags
-  type: boolean
-  default: false
-  displayName: "Create issue for rule EmptyTags"
+- name: selectedRule
+  displayName: "Select one validation rule to run test"
+  type: string
+  default: 'EmptyTags'
+  values:
+  - EmptyTags
+  - TableMissingContent
 
-- name: rule_TableMissingContent
+- name: createIssue
+  displayName: Create issue for this run.
   type: boolean
   default: false
-  displayName: "Create issue for rule TableMissingContent"
 
 
 stages:
@@ -120,14 +123,22 @@ stages:
     - script: |
         rules=""
         runTestCase=""
-        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules EmptyTagsValidation"
+
+        case "${{ parameters.selectedRule }}" in
+          "EmptyTags")
             runTestCase="TestEmptyTags"
-        fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules MissingContentValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="EmptyTagsValidation"
+            fi
+            ;;
+          "TableMissingContent")
             runTestCase="TestTableMissingContent"
-        fi
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="MissingContentValidation"
+            fi
+            ;;
+        esac
+
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
@@ -160,14 +171,21 @@ stages:
     - script: |
         rules=""
         runTestCase=""
-        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules EmptyTagsValidation"
+        
+        case "${{ parameters.selectedRule }}" in
+          "EmptyTags")
             runTestCase="TestEmptyTags"
-        fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then 
-            rules="$rules MissingContentValidation"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="EmptyTagsValidation"
+            fi
+            ;;
+          "TableMissingContent")
             runTestCase="TestTableMissingContent"
-        fi
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="MissingContentValidation"
+            fi
+            ;;
+        esac
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"

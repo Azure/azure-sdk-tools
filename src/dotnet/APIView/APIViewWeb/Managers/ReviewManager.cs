@@ -115,6 +115,16 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Get distinct package names for a language
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<string>> GetPackageNamesAsync(string language)
+        {
+            return _reviewsRepository.GetPackageNamesAsync(language);
+        }
+
+        /// <summary>
         /// Get List of Reviews for the Review Page
         /// </summary>
         /// <param name="search"></param>

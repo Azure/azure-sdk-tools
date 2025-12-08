@@ -8,7 +8,7 @@ namespace IssueLabelerService
     {
         private ILogger<AnswerFactory> _logger;
         private TriageRag _ragService;
-        private TokenCredential _credential;
+        private readonly TokenCredential _credential;
         private ConcurrentDictionary<string, IAnswerService> _qnaServices = new();
 
         public AnswerFactory(ILogger<AnswerFactory> logger, TriageRag ragService, TokenCredential credential)

@@ -167,9 +167,13 @@
         }
         
         &.active {
-            background-color: var(--base-fg-color);
-            color: var(--base-text-color);
-            box-shadow: inset 0 0 0 1px var(--border-color);
+            background-color: var(--code-inner-border-color, #0969da);
+            color: #fff;
+            
+            &:hover {
+                background-color: var(--code-inner-border-color, #0969da);
+                color: #fff;
+            }
         }
         
         i {

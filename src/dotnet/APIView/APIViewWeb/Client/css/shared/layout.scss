@@ -268,8 +268,13 @@ input[type="search"]::-webkit-search-cancel-button {
         }
         
         &.active {
-            background-color: var(--base-fg-color);
-            color: var(--base-text-color);
+            background-color: var(--code-inner-border-color, #0969da);
+            color: #fff;
+            
+            &:hover {
+                background-color: var(--code-inner-border-color, #0969da);
+                color: #fff;
+            }
         }
         
         i {

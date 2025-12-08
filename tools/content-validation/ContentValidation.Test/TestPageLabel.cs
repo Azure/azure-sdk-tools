@@ -19,16 +19,20 @@ namespace ContentValidation.Test
         public static ConcurrentQueue<TResult> TestMissingGenericsResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
+        public static IBrowser browser;
 
         static TestPageLabel()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+            // Create a shared browser instance for all tests
+            browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
             TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
         }
 
         [OneTimeTearDown]
         public void SaveTestData()
         {
+            browser?.CloseAsync().GetAwaiter().GetResult();
             playwright?.Dispose();
 
             string excelFilePath = ConstData.TotalIssuesExcelFileName;
@@ -50,7 +54,7 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestExtraLabel(string testLink)
         {
-            IValidation Validation = new ExtraLabelValidation(playwright);
+            IValidation Validation = new ExtraLabelValidation(browser);
 
             var res = new TResult();
             try
@@ -83,7 +87,7 @@ namespace ContentValidation.Test
             try
             {
 
-                IValidation Validation = new UnnecessarySymbolsValidation(playwright);
+                IValidation Validation = new UnnecessarySymbolsValidation(browser);
 
                 res = await Validation.Validate(testLink);
 
@@ -112,7 +116,7 @@ namespace ContentValidation.Test
             try
             {
 
-                IValidation Validation = new MissingGenericsValidation(playwright);
+                IValidation Validation = new MissingGenericsValidation(browser);
 
                 res = await Validation.Validate(testLink);
 

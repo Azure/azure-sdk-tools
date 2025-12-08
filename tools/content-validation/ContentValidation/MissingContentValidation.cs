@@ -4,11 +4,11 @@ namespace UtilityLibraries;
 
 public class MissingContentValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
-    public MissingContentValidation(IPlaywright playwright)
+    public MissingContentValidation(IBrowser browser)
     {
-        _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
 
     public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("CommonValidation", "contains");
@@ -19,10 +19,15 @@ public class MissingContentValidation : IValidation
         var res = new TResult();
         var errorList = new List<string>();
 
-        // Create a browser instance.
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        // Create a new page from the shared browser instance.
+        Console.WriteLine($"[MissingContentValidation] Creating new page for: {testLink}");
+        var page = await _browser.NewPageAsync();
+        Console.WriteLine($"[MissingContentValidation] Page created, navigating to URL...");
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
+        Console.WriteLine($"[MissingContentValidation] Navigation complete");
+        
+        // Keep the page visible for debugging
+        await Task.Delay(3000); // Wait 3 seconds to see the browser
 
         // Get all td and th elements
         var cellElements = await page.Locator("th,td").ElementHandlesAsync();
@@ -60,7 +65,7 @@ public class MissingContentValidation : IValidation
             res.LocationsOfErrors = formattedList;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
         return res;
     }
 

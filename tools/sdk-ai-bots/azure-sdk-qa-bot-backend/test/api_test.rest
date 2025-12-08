@@ -1,7 +1,7 @@
 ### You need to install REST Client extension for your vscode, to run this test
 
 ### Remote test (refer to README to get the backend endpoint and access token)
-POST https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net/completion HTTP/1.1
+POST https://[backend_endpoint]/completion HTTP/1.1
 Content-type: application/json; charset=utf-8
 Authorization: Bearer [Replace_with_your_access_token]
 
@@ -21,16 +21,6 @@ Content-type: application/json; charset=utf-8
     "tenant_id": "azure_sdk_qa_bot",
     "message": {
         "role": "user",
-        "content": "how could I fix provisioningState property must be set to readOnly."
+        "content": "how to onboard typespec?"
     }
-}
-
-### Local test
-POST http://localhost:8088/code_review HTTP/1.1
-Content-type: application/json; charset=utf-8
-
-{
-  "code": "## 12.28.0b1 (2025-12-04)\n\n### Features Added\n- Added support for service version 2026-02-06.\n- Added support for the keywords `if_modified_since`, `if_unmodified_since`, `etag`, and `match_condition` to \nconditionally perform `BlobClient`'s `set_blob_tags` and `get_blob_tags` operations.\n- Added support for the keyword `start_from` in `ContainerClient`'s `list_blobs`, `list_blob_names`, and `walk_blobs`\nAPIs, which specifies the full path to start listing paths from.\n- Added support for the keyword `user_delegation_oid` to `generate_blob_sas` and `generate_container_sas`, which\nspecifies the Entra ID of the user that is authorized to use the generated SAS URL.\n- Added support for `UseDevelopmentStorage=true;` as a valid connection string for Azurite.\n- Added the ability to skip auto decompression on `BlobClient.download_blob` via the `decompress` keyword.\n\n## 12.27.1 (2025-10-29)\n\n### Bugs Fixed\n- Fixed MyPy `attr-defined` errors for `BlobClient`.",
-  "file_path": "CHANGELOG.md",
-  "language": "python"
 }

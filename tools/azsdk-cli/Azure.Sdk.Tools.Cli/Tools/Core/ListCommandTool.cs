@@ -49,7 +49,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
                     }
                     description = registeredMcpTool?.ProtocolTool?.Description ?? "";
                 }
-                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", description));
+                var optionInfos = command.Options?.Select(arg => new OptionInfo(arg.Name, arg.Description, arg.ValueType.ToString(), arg.Required)).ToList();
+                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", description, optionInfos));
             }
         }
 
@@ -66,7 +67,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
                 if (!tools.Any(t=> t.McpToolName == mcpTool.Name))
                 {
                     // Add new tool that does not have CLI command representation
-                    tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? ""));
+                    var required = new HashSet<string>();    
+                    if (mcpTool.InputSchema.TryGetProperty("required", out var reqArray))
+                    {
+                        foreach (var r in reqArray.EnumerateArray())
+                        {
+                            required.Add(r.GetString());
+                        }
+                    }
+
+                    var options = new List<OptionInfo>();
+                    var props = mcpTool.InputSchema.GetProperty("properties");
+                    foreach (var prop in props.EnumerateObject())
+                    {
+                        string name = prop.Name;
+                        string type = prop.Value.GetProperty("type").GetString() ?? "";
+                        bool isRequired = required.Contains(name);
+
+                        options.Add(new OptionInfo(name, "", type, isRequired));
+                    }
+
+                    tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? "", options));
                 }                
             }
             return tools.OrderBy(t => string.IsNullOrEmpty(t.McpToolName)).ThenBy(t => t.McpToolName).ToList();

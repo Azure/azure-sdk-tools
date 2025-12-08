@@ -365,6 +365,58 @@ TypeSpec authoring is language-agnostic. The generated SDKs target specific lang
 
 ---
 
+## Alternatives
+
+### Alternative 1: Use llm.txt for AI Context
+
+**Description:**
+
+Instead of building a dedicated TypeSpec authoring tool with RAG integration, provide a comprehensive `llm.txt` file in TypeSpec repositories that contains all Azure TypeSpec guidelines, ARM patterns, and best practices. AI assistants like GitHub Copilot would automatically read this file to improve their context when helping with TypeSpec authoring.
+
+**Pros:**
+
+- Simpler implementation - no backend service or MCP tool needed
+- Standard approach that works with any AI assistant that supports llm.txt
+- Easier to maintain - guidelines are in plain text files that can be updated by documentation teams
+- No authentication or API dependencies
+- Works offline once the file is in the repository
+
+**Cons:**
+
+- Limited context window - llm.txt files must be small enough to fit in AI context, limiting the depth of guidance
+- No dynamic retrieval - all content must be loaded upfront, can't retrieve specific relevant sections based on user request
+- No tracking of documentation references or versioning
+- Context lost in the middle - when llm.txt content is large, AI models may miss critical information in the middle of the context window (the "lost in the middle" phenomenon)
+- Distraction from irrelevant content - loading all llm.txt content upfront can distract the AI from the specific task, potentially causing incorrect document retrieval or pattern matching
+- Performance degradation with longer contexts - larger llm.txt files lead to slower AI response times and reduced accuracy
+- Computational and cost challenges - processing large static context files on every request increases token usage and API costs
+
+---
+
+### Alternative 2: Hybrid Approach - llm.txt + Knowledge Base
+
+**Description:**
+
+Combine llm.txt files for basic context with selective Knowledge Base queries for complex scenarios. The llm.txt would contain high-level guidelines and common patterns, while the TypeSpec authoring tool would query the Knowledge Base only for advanced scenarios requiring deep domain expertise.
+
+**Pros:**
+
+- Best of both worlds - basic guidance available immediately via llm.txt
+- Reduced Knowledge Base API calls for simple scenarios (cost savings)
+- Better offline support with llm.txt as baseline
+- Knowledge Base can focus on complex edge cases
+
+**Cons:**
+
+- Increased complexity - need to determine when to use llm.txt vs KB, requires decision logic to route requests appropriately
+- Potential inconsistency between llm.txt content and KB responses
+- Maintenance burden - must keep both llm.txt and KB in sync
+- Unclear boundaries between "simple" and "complex" scenarios
+- May still result in hallucinations for medium-complexity cases that rely only on llm.txt
+
+
+---
+
 ## Success Criteria
 
 This feature/tool is complete when:

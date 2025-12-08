@@ -33,6 +33,16 @@ namespace APIViewWeb.Controllers
             return Ok();
         }
 
+        [HttpPut]
+        public async Task<ActionResult> UpdateTheme(string theme = "light-theme")
+        {
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceDto: new UserPreferenceDto()
+            {
+                Theme = theme
+            });
+            return Ok();
+        }
+
         /// <summary>
         /// Update the user profile and preference properties
         /// </summary>

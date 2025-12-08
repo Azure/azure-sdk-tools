@@ -47,93 +47,93 @@ namespace ContentValidation.Test
             JsonHelper4Test.AddTestResult(TestMissingGenericsResults, jsonFilePath);
         }
 
-        // [Test]
-        // [Category("PythonTest")]
-        // [Category("JavaTest")]
-        // [Category("JsTest")]
-        // [TestCaseSource(nameof(TestLinks))]
-        // public async Task TestExtraLabel(string testLink)
-        // {
-        //     IValidation Validation = new ExtraLabelValidation(browser);
+        [Test]
+        [Category("PythonTest")]
+        [Category("JavaTest")]
+        [Category("JsTest")]
+        [TestCaseSource(nameof(TestLinks))]
+        public async Task TestExtraLabel(string testLink)
+        {
+            IValidation Validation = new ExtraLabelValidation(browser);
 
-        //     var res = new TResult();
-        //     try
-        //     {
-        //         res = await Validation.Validate(testLink);
-        //         res.TestCase = "TestExtraLabel";
-        //         if (!res.Result)
-        //         {
-        //             TestExtraLabelResults.Enqueue(res);
-        //         }
-        //         pipelineStatusHelper.SavePipelineFailedStatus("ExtraLabelValidation", "succeed");
-        //     }
-        //     catch
-        //     {
-        //         pipelineStatusHelper.SavePipelineFailedStatus("ExtraLabelValidation", "failed");
-        //         throw;
-        //     }
+            var res = new TResult();
+            try
+            {
+                res = await Validation.Validate(testLink);
+                res.TestCase = "TestExtraLabel";
+                if (!res.Result)
+                {
+                    TestExtraLabelResults.Enqueue(res);
+                }
+                pipelineStatusHelper.SavePipelineFailedStatus("ExtraLabelValidation", "succeed");
+            }
+            catch
+            {
+                pipelineStatusHelper.SavePipelineFailedStatus("ExtraLabelValidation", "failed");
+                throw;
+            }
 
-        //     Assert.That(res.Result, res.FormatErrorMessage());
-        // }
+            Assert.That(res.Result, res.FormatErrorMessage());
+        }
 
-        // [Test]
-        // [Category("PythonTest")]
-        // [Category("JavaTest")]
-        // [Category("JsTest")]
-        // [TestCaseSource(nameof(TestLinks))]
-        // public async Task TestUnnecessarySymbols(string testLink)
-        // {
-        //     var res = new TResult();
-        //     try
-        //     {
+        [Test]
+        [Category("PythonTest")]
+        [Category("JavaTest")]
+        [Category("JsTest")]
+        [TestCaseSource(nameof(TestLinks))]
+        public async Task TestUnnecessarySymbols(string testLink)
+        {
+            var res = new TResult();
+            try
+            {
 
-        //         IValidation Validation = new UnnecessarySymbolsValidation(browser);
+                IValidation Validation = new UnnecessarySymbolsValidation(browser);
 
-        //         res = await Validation.Validate(testLink);
+                res = await Validation.Validate(testLink);
 
-        //         res.TestCase = "TestUnnecessarySymbols";
-        //         if (!res.Result)
-        //         {
-        //             TestUnnecessarySymbolsResults.Enqueue(res);
-        //         }
-        //         pipelineStatusHelper.SavePipelineFailedStatus("UnnecessarySymbolsValidation", "succeed");
-        //     }
-        //     catch
-        //     {
-        //         pipelineStatusHelper.SavePipelineFailedStatus("UnnecessarySymbolsValidation", "failed");
-        //         throw;
-        //     }
+                res.TestCase = "TestUnnecessarySymbols";
+                if (!res.Result)
+                {
+                    TestUnnecessarySymbolsResults.Enqueue(res);
+                }
+                pipelineStatusHelper.SavePipelineFailedStatus("UnnecessarySymbolsValidation", "succeed");
+            }
+            catch
+            {
+                pipelineStatusHelper.SavePipelineFailedStatus("UnnecessarySymbolsValidation", "failed");
+                throw;
+            }
 
-        //     Assert.That(res.Result, res.FormatErrorMessage());
-        // }
+            Assert.That(res.Result, res.FormatErrorMessage());
+        }
 
-        // [Test]
-        // [Category("JavaTest")]
-        // [TestCaseSource(nameof(TestLinks))]
-        // public async Task TestMissingGenerics(string testLink)
-        // {
-        //     var res = new TResult();
-        //     try
-        //     {
+        [Test]
+        [Category("JavaTest")]
+        [TestCaseSource(nameof(TestLinks))]
+        public async Task TestMissingGenerics(string testLink)
+        {
+            var res = new TResult();
+            try
+            {
 
-        //         IValidation Validation = new MissingGenericsValidation(browser);
+                IValidation Validation = new MissingGenericsValidation(browser);
 
-        //         res = await Validation.Validate(testLink);
+                res = await Validation.Validate(testLink);
 
-        //         res.TestCase = "TestMissingGenerics";
-        //         if (!res.Result)
-        //         {
-        //             TestMissingGenericsResults.Enqueue(res);
-        //         }
-        //         pipelineStatusHelper.SavePipelineFailedStatus("MissingGenericsValidation", "succeed");
-        //     }
-        //     catch
-        //     {
-        //         pipelineStatusHelper.SavePipelineFailedStatus("MissingGenericsValidation", "failed");
-        //         throw;
-        //     }
+                res.TestCase = "TestMissingGenerics";
+                if (!res.Result)
+                {
+                    TestMissingGenericsResults.Enqueue(res);
+                }
+                pipelineStatusHelper.SavePipelineFailedStatus("MissingGenericsValidation", "succeed");
+            }
+            catch
+            {
+                pipelineStatusHelper.SavePipelineFailedStatus("MissingGenericsValidation", "failed");
+                throw;
+            }
 
-        //     Assert.That(res.Result, res.FormatErrorMessage());
-        // }
+            Assert.That(res.Result, res.FormatErrorMessage());
+        }
     }
 }

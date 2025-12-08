@@ -1,22 +1,19 @@
 # Release History
 
-## 0.5.10 (Unreleased)
+## 0.5.10 (2025-12-08)
 
 ### Features Added
-- Add CLI command to identify in progress release plans with past due date
 
+- Add CLI command to identify in progress release plans with past due date
 - Allow non-exact matches for package name in `azsdk_release_sdk` tool
 - Moved `azsdk_check_api_spec_ready_for_sdk` and `azsdk_link_sdk_pull_request_to_release_plan` under release plan command hierarchy.
 - Added APIView tools to expose APIView functionality to MCP agents (`get-comments`) and CLI (`get-content`)
-
-### Breaking Changes
 
 ### Bugs Fixed
 
 - .NET validation GeneratedCode check had scriptPath passed in twice
 - Fixed invalid language error in `azsdk_link_sdk_pull_request_to_release_plan` tool
-
-### Other Changes
+- Fixed issues in package and release plan responses so package_type, language and TypeSpec project path are set in the telemetry.
 
 ## 0.5.9 (2025-11-24)
 

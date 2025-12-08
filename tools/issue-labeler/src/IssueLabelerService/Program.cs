@@ -71,6 +71,7 @@ var host = new HostBuilder()
             return new SearchIndexClient(searchEndpoint, credential);
         });
 
+        services.AddSingleton<TokenCredential>(credential);
         services.AddSingleton<TriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();

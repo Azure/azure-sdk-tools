@@ -13,6 +13,7 @@
 
 ### Bugs Fixed
 
+- .NET validation GeneratedCode check had scriptPath passed in twice
 - Fixed invalid language error in `azsdk_link_sdk_pull_request_to_release_plan` tool
 
 ### Other Changes

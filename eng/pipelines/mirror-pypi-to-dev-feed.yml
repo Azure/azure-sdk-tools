@@ -2,9 +2,12 @@ parameters:
   - name: PackageSpecifiers
     type: string
     default: <package1>==1.0.0,<package2>==1.0.0
+  - name: ImageOverride
+    type: string
+    default: "ubuntu-24.04"
   - name: PythonVersionOverride
     type: string
-    default: "3.9"
+    default: "3.10"
   - name: DevFeed
     type: string
     default: "public/azure-sdk-for-python"
@@ -22,7 +25,7 @@ jobs:
 
     pool:
       name: azsdk-pool
-      demands: ImageOverride -equals ubuntu-24.04
+      demands: ImageOverride -equals ${{ parameters.ImageOverride }}
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml

@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.11 (unreleased)
+## 0.5.11 (Unreleased)
 
 ### Features Added
 

@@ -21,7 +21,7 @@ jobs:
         targetType: 'inline'
         script: >
           ./eng/common/mcp/azure-sdk-mcp.ps1
-          -InstallDirectory $(Agent.TempDirectory)/azsdk
+          -InstallDirectory $(Agent.TempDirectory)
         pwsh: true
         workingDirectory: '$(System.DefaultWorkingDirectory)'
 
@@ -31,7 +31,7 @@ jobs:
         targetType: 'filePath'
         filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
         arguments: >
-          -AzsdkExePath $(Agent.TempDirectory)/azsdk/azsdk
+          -AzsdkExePath $(Agent.TempDirectory)/azsdk
         pwsh: true
         workingDirectory: '$(System.DefaultWorkingDirectory)'
     

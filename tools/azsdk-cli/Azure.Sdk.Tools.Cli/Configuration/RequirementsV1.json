@@ -27,6 +27,11 @@
                 "instructions": ["Download and install GitHub CLI"]
             },
             {
+                "requirement": "longpaths in git config should be enabled for Windows",
+                "check": ["pwsh", "-Command", "if ($IsWindows -and (git config --get core.longpaths) -ne 'true') { exit 1 }"],
+                "instructions": ["Check the Registry Editor to ensure that LongPathsEnabled exists and is set to 1 in `HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\FileSystem`.", "git config --global core.longpaths true"]
+            },
+            {
                 "requirement": "python",
                 "check": ["python", "--version"],
                 "instructions": ["Install Python from https://www.python.org/downloads/"]

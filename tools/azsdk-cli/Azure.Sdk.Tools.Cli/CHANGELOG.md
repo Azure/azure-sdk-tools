@@ -6,6 +6,18 @@
 
 - Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
 
+### Breaking Changes
+
+- None
+
+### Bugs Fixed
+
+- None
+
+### Other Changes
+
+- None
+
 ## 0.5.10 (2025-12-08)
 
 ### Features Added

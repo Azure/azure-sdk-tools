@@ -162,7 +162,6 @@ class EvaluationRunner:
         cpu_count = os.cpu_count() or 4
         max_workers = min(cpu_count * 2, workflow_count)
         results = []
-        completed_count = 0
         total_targets = len(discovery_result.targets)
 
         # Session header

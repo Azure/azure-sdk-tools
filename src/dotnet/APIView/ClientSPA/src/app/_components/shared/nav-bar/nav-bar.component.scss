@@ -1,4 +1,5 @@
 @import "../../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+@import "../../../../../../APIViewWeb/Client/css/shared/navbar-shared";
 
 #apiview-logo {
     @include apiview-logo;
@@ -11,6 +12,53 @@
 .navbar-brand {
     padding-top: 0px;
     padding-bottom: 0px;
+}
+
+// Notification badge - red dot in top right
+.notification-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--danger-color, #cf222e);
+    border-radius: 50%;
+    border: 2px solid var(--navbar-bg, #21252b);
+}
+
+// Profile dropdown extension
+.profile-dropdown {
+    border-radius: 12px;
+}
+
+// Dropdown menu styling
+.dropdown-menu {
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    
+    .dropdown-item {
+        color: var(--base-text-color);
+        padding: 10px 16px;
+        
+        &:hover, &:focus {
+            background-color: var(--base-fg-color);
+            color: var(--base-text-color);
+        }
+    }
+    
+    .dropdown-header {
+        color: var(--text-muted-color);
+    }
+    
+    .dropdown-divider {
+        border-color: var(--border-color);
+    }
+    
+    .dropdown-item-text {
+        color: var(--text-muted-color);
+    }
 }
 
 :host ::ng-deep {

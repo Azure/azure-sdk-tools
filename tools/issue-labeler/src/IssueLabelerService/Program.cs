@@ -23,7 +23,13 @@ var host = new HostBuilder()
         var isRunningInAzure = functionConfig["IsRunningInAzure"] == "true";
 
         // Use appropriate credential based on environment
-        TokenCredential credential = isRunningInAzure ? new ManagedIdentityCredential() : new DefaultAzureCredential();
+        TokenCredential credential = isRunningInAzure 
+            ? new ManagedIdentityCredential()
+            : new ChainedTokenCredential(
+                new AzureCliCredential(),
+                new VisualStudioCredential(),
+                new VisualStudioCodeCredential()
+            );
 
         var builder = new ConfigurationBuilder();
         builder.AddAzureAppConfiguration(options =>

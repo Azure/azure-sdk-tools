@@ -180,7 +180,7 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False):
+def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False, style: str = "compact"):
     """
     Runs the specified test case(s).
     """
@@ -190,7 +190,7 @@ def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = Fals
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording)
+    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"))
     try:
         results = runner.run(targets)
         if save:
@@ -204,7 +204,6 @@ def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = Fals
                     raise exc
 
         runner.show_results(results)
-        runner.show_summary(results)
     finally:
         runner.cleanup()
 
@@ -1181,6 +1180,14 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--use-recording"],
                 action="store_true",
                 help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
+            )
+            ac.argument(
+                "style",
+                options_list=["--style", "-s"],
+                type=str,
+                choices=["compact", "verbose"],
+                default="compact",
+                help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
 
         with ArgumentsContext(self, "search") as ac:

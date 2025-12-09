@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add(newTheme);
             
             fetch(`/userprofile/updatetheme?theme=${encodeURIComponent(newTheme)}`, {
-                method: 'PUT'
+                method: 'PUT',
+                credentials: 'include'
             }).catch(err => console.error('Failed to save theme preference:', err));
         });
     });

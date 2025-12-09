@@ -36,6 +36,12 @@ namespace APIViewWeb.Controllers
         [HttpPut]
         public async Task<ActionResult> UpdateTheme(string theme = "light-theme")
         {
+            var validThemes = new HashSet<string> { "light-theme", "dark-theme", "dark-solarized-theme" };
+            if (!validThemes.Contains(theme))
+            {
+                return BadRequest($"Invalid theme. Valid themes are: {string.Join(", ", validThemes)}");
+            }
+
             await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceDto: new UserPreferenceDto()
             {
                 Theme = theme

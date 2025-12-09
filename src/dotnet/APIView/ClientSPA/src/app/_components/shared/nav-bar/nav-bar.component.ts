@@ -129,17 +129,4 @@ export class NavBarComponent implements OnInit {
       });
     }
   }
-
-  getHighlightTheme(appTheme: string): string {
-    switch (appTheme) {
-      case 'dark-theme':
-        return 'atom-one-dark';
-      case 'light-theme':
-        return 'atom-one-light';
-      case 'dark-solarized-theme':
-        return 'monokai';
-      default:
-        return 'atom-one-light';
-    }
-  }
 }

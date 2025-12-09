@@ -19,14 +19,14 @@
                 
                 <!-- Help icon with dropdown menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-clarity-region="help-menu">
+                    <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Help menu" data-clarity-region="help-menu">
                         <i class="bi bi-question-circle"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" target="_blank">
+                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" target="_blank" rel="noopener noreferrer">
                             <i class="bi bi-book me-2"></i>Documentation
                         </a></li>
-                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank">
+                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank" rel="noopener noreferrer">
                             <i class="bi bi-bug me-2"></i>Report an Issue
                         </a></li>
                     </ul>
@@ -34,7 +34,7 @@
                 
                 <!-- Notifications icon with badge -->
                 <li *ngIf="isLoggedIn" class="nav-item">
-                    <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" data-clarity-region="notifications-button">
+                    <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" aria-label="Notifications" data-clarity-region="notifications-button">
                         <i class="bi bi-bell"></i>
                         <span *ngIf="notifications.length > 0" class="notification-badge"></span>
                     </a>
@@ -42,7 +42,7 @@
                 
                 <!-- User profile avatar with dropdown -->
                 <li *ngIf="isLoggedIn" class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-clarity-region="user-profile-menu">
+                    <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">
                         <img class="user-avatar" src="https://github.com/{{userProfile?.userName}}.png?size=32" alt="{{userProfile?.userName}}" />
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end profile-dropdown">

@@ -171,7 +171,7 @@ class EvaluationRunner:
         print(f"{'='*60}")
         print("test session starts")
         print(f"{'='*60}")
-        print(f"{BOLD}collected {discovery_result.total_test_files}{END} across {BOLD}{workflow_count} workflows {END} ")
+        print(f"{BOLD}collected {discovery_result.total_test_files}{END} across {BOLD}{workflow_count} workflows {END}")
         print()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -333,6 +333,7 @@ class EvaluationRunner:
                     'status': 'errored',
                     'failed_testcases': [],
                     'passed_testcases': [],
+                    'partial_testcases': [],
                     'total_testcases': 0
                 })
             elif result.raw_results:
@@ -366,7 +367,7 @@ class EvaluationRunner:
 
         errored = [s for s in workflow_stats if s['status'] == 'errored']
         failed = [s for s in workflow_stats if s['status'] == 'failed']
-        passed = [s for s in workflow_stats if s['status'] == 'passed']
+
         has_partial = any(len(s['partial_testcases']) > 0 for s in workflow_stats)
         
         # failures section
@@ -390,7 +391,7 @@ class EvaluationRunner:
                     print()
 
         if has_partial:
-            print(f"{YELLOW}{BOLD}=" * 60)
+            print(f"{YELLOW}{BOLD}{'=' * 60}")
             print("PARTIAL PASSES")
             print("=" * 60 + RESET)
             
@@ -404,7 +405,7 @@ class EvaluationRunner:
                         print()
 
         if self._verbose and any(len(s['passed_testcases']) > 0 for s in workflow_stats):
-            print(f"{GREEN}{BOLD}=" * 60)
+            print(f"{GREEN}{BOLD}{'=' * 60}")
             print("PASSED")
             print("=" * 60 + RESET)
             
@@ -419,7 +420,7 @@ class EvaluationRunner:
         
         # short test summary info
         if failed or errored or has_partial:
-            print(f"{YELLOW}=" * 60)
+            print(f"{YELLOW}{'=' * 60}")
             print("test summary")
             print("=" * 60 + RESET)
             

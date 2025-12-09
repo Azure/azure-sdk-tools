@@ -80,7 +80,8 @@ namespace APIViewIntegrationTests
             PackageNameManager = serviceProvider.GetService<PackageNameManager>();
             User = TestUser.GetTestuser();
 
-            _cosmosClient = new CosmosClient(_config["CosmosEndpoint"], new DefaultAzureCredential());
+            var credential = new ChainedTokenCredential(new AzureCliCredential(), new AzureDeveloperCliCredential());
+            _cosmosClient = new CosmosClient(_config["CosmosEndpoint"], credential);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(_config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIRevisions", "/ReviewId").Wait();
@@ -92,7 +93,7 @@ namespace APIViewIntegrationTests
             CommentRepository = new CosmosCommentsRepository(_config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(_config, _cosmosClient);
 
-            var blobServiceClient = new BlobServiceClient(new Uri(_config["StorageAccountUrl"]), new DefaultAzureCredential());
+            var blobServiceClient = new BlobServiceClient(new Uri(_config["StorageAccountUrl"]), credential);
             _blobCodeFileContainerClient = blobServiceClient.GetBlobContainerClient("codefiles");
             _blobOriginalContainerClient = blobServiceClient.GetBlobContainerClient("originals");
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);

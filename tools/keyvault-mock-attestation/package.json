@@ -2,16 +2,13 @@
   "name": "keyvault-mock-attestation",
   "version": "1.0.0",
   "description": "Azure ManagedHSM attestation service",
-  "main": "index.js",
+  "main": "src/index.js",
   "author": "Microsoft Corporation",
   "license": "MIT",
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js"
   },
   "dependencies": {
-    "body-parser": "^2.2.1",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.0",
     "node-jose": "^2.2.0"
   },
   "devDependencies": {}

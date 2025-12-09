@@ -14,6 +14,8 @@ $(() => {
   const reviewUploadForm = $( '#review-upload-form' );
   const reviewUploadSubmitBtn = $( '#review-upload-submit-btn' );
 
+  let packageSelectInitialized = false;
+
 
   // Import underscorejs
   var _ = require('underscore');
@@ -87,6 +89,15 @@ $(() => {
     (<any>languageSelect).SumoSelect({
       placeholder: 'Language'
     });
+
+    const currentLanguage = languageSelect.val() as string;
+    if (currentLanguage === 'Python') {
+      $("#package-name-group").removeClass("d-none");
+      loadPackageNamesForLanguage('Python');
+    } else {
+      $("#package-name-group").addClass("d-none");
+      resetPackageSelect();
+    }
   });
 
   $("#review-upload-submit-btn").on("click", function (event) {
@@ -139,9 +150,80 @@ $(() => {
       $("#create-review-via-upload").removeClass("d-none");
       $("#create-review-via-path").addClass("d-none");
     }
+
+    if ($(this).val() === 'Python') {
+      $("#package-name-group").removeClass("d-none");
+      loadPackageNamesForLanguage('Python');
+    } else {
+      $("#package-name-group").addClass("d-none");
+      resetPackageSelect();
+    }
   });
 
-  // Open / Close right Offcanvas Menu
+  function loadPackageNamesForLanguage(language: string) {
+    const packageSelect = $('#review-package-select');
+    const packageLoading = $('#package-loading');
+    if (!language || language === '') {
+      return;
+    }
+
+    packageLoading.show();
+
+    const url = `/api/reviews/languages/${encodeURIComponent(language)}/packagenames`;
+
+    $.ajax({
+      url: url,
+      method: 'GET'
+    }).done(function(response) {
+      packageLoading.hide();
+
+      let optionsHtml = '<option value="">No related package</option>';
+      if (response && Array.isArray(response)) {
+        response.forEach(function(name: string) {
+          optionsHtml += `<option value="${name}">${name}</option>`;
+        });
+      }
+
+      packageSelect.html(optionsHtml);
+
+      if (!packageSelectInitialized) {
+        (<any>packageSelect).SumoSelect({
+          search: true,
+          searchText: 'Search packages...',
+          placeholder: 'No related package'
+        });
+        packageSelectInitialized = true;
+      } else {
+        try {
+          const sumo = (<any>packageSelect[0]).sumo;
+          sumo.unload();
+          (<any>packageSelect).SumoSelect({
+            search: true,
+            searchText: 'Search packages...',
+            placeholder: 'No related package'
+          });
+        } catch (e) {
+          // Silent fail - SumoSelect will still work
+        }
+      }
+    }).fail(function() {
+      packageLoading.hide();
+    });
+  }
+
+  function resetPackageSelect() {
+    const packageSelect = $('#review-package-select');
+
+    packageSelect.html('<option value="">No related package</option>');
+
+    if (packageSelectInitialized) {
+      try {
+        (<any>packageSelect[0]).sumo.reload();
+      } catch (e) {
+        // Silent fail
+      }
+    }
+  }  // Open / Close right Offcanvas Menu
   $("#index-right-offcanvas-toggle").on('click', function () {
     updatePageSettings(function () {
       rightOffCanvasNavToggle("index-main-container");

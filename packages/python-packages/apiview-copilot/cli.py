@@ -47,7 +47,7 @@ from src._models import APIViewComment
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, get_prompt_path
+from src._utils import get_language_pretty_name, run_prompty
 from src.agent._agent import get_main_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -180,15 +180,17 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_cache: bool = False):
+def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False, style: str = "compact"):
     """
     Runs the specified test case(s).
     """
+    if test_paths is None:
+        test_paths = []
     from evals._discovery import discover_targets
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs, use_cache=use_cache)
+    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"))
     try:
         results = runner.run(targets)
         if save:
@@ -202,7 +204,6 @@ def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_
                     raise exc
 
         runner.show_results(results)
-        runner.show_summary(results)
     finally:
         runner.cleanup()
 
@@ -973,9 +974,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
 
     comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
 
-    prompt_path = get_prompt_path(folder="other", filename="analyze_comment_themes")
-    inputs = {"comments": comment_texts}
-    theme_output = prompty.execute(prompt_path, inputs=inputs)
+    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
     print(theme_output)
 
     print(f"Comment count: {len(comment_texts)}")
@@ -1177,10 +1176,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
             ac.argument(
-                "use_cache",
-                options_list=["--use-cache"],
+                "use_recording",
+                options_list=["--use-recording"],
                 action="store_true",
-                help="Use cached results for testcases when available.",
+                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
+            )
+            ac.argument(
+                "style",
+                options_list=["--style", "-s"],
+                type=str,
+                choices=["compact", "verbose"],
+                default="compact",
+                help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
 
         with ArgumentsContext(self, "search") as ac:

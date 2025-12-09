@@ -17,15 +17,24 @@ Currently, APIView has a simple permissions model based on a configuration-level
 
 ## 2. Proposed User Roles
 
-The following roles are proposed, ordered from least to most permissive:
+Roles are divided into two categories based on their scope:
 
-| Role | Description | Scope |
-|------|-------------|-------|
-| **ServiceTeam** | Service team members who create and manage reviews | Not language-specific |
-| **SdkTeam** | SDK team members with additional privileges | Not language-specific |
-| **DeputyArchitect** | Similar permissions to Architect, for designated backups | Per-language |
-| **Architect** | Elevated permissions for API review approval | Per-language |
-| **Admin** | Highest level permissions, for APIView maintainers only | Not language-specific |
+### Global Roles
+These roles apply to all languages and cannot be language-scoped:
+
+| Role | Description |
+|------|-------------|
+| **ServiceTeam** | Service team members who create and manage reviews |
+| **SdkTeam** | SDK team members with additional privileges |
+| **Admin** | Highest level permissions, for APIView maintainers only |
+
+### Language-Scoped Roles
+These roles **must** be assigned to a specific language:
+
+| Role | Description |
+|------|-------------|
+| **DeputyArchitect** | Similar permissions to Architect, for designated backups |
+| **Architect** | Elevated permissions for API review approval |
 
 ---
 
@@ -52,24 +61,25 @@ The following roles are proposed, ordered from least to most permissive:
 
 ## 4. Data Storage
 
-Create a new `Permissions` container in Cosmos DB:
+Create a new `Permissions` container in Cosmos DB.
 
-**User Permission Document:**
+### Role Assignment Schema (Discriminated Union)
+
+Role assignments use a discriminated union pattern with a `kind` field to distinguish between global and language-scoped roles. This design **enforces at the schema level** that:
+- Global roles (`Admin`, `SdkTeam`, `ServiceTeam`) cannot have a language
+- Language-scoped roles (`Architect`, `DeputyArchitect`) must have a language
+
+**Global Role Assignment:**
 ```json
-{
-  "id": "user-almend",
-  "type": "user",
-  "userId": "almend",
-  "roles": [
-    { "role": "SdkTeam", "language": null },
-    { "role": "Architect", "language": "Python" }
-  ],
-  "lastUpdatedOn": "2024-12-04T00:00:00Z",
-  "lastUpdatedBy": "admin"
-}
+{ "kind": "global", "role": "SdkTeam" }
 ```
 
-**Group Permission Document:**
+**Language-Scoped Role Assignment:**
+```json
+{ "kind": "scoped", "role": "Architect", "language": "Python" }
+```
+
+### Group Permission Document
 ```json
 {
   "id": "group-python-architects",
@@ -77,7 +87,7 @@ Create a new `Permissions` container in Cosmos DB:
   "groupId": "python-architects",
   "groupName": "Python Architects",
   "roles": [
-    { "role": "Architect", "language": "Python" }
+    { "kind": "scoped", "role": "Architect", "language": "Python" }
   ],
   "members": ["almend", "johanste"],
   "lastUpdatedOn": "2024-12-04T00:00:00Z",
@@ -93,14 +103,11 @@ The key to this system is computing a user's **effective permissions** by mergin
 ```csharp
 public async Task<EffectivePermissions> GetEffectivePermissionsAsync(string userId)
 {
-    // 1. Get direct user permissions
-    var userPerms = await _permissionRepo.GetUserPermissionsAsync(userId);
-    
-    // 2. Get all groups where user is a member
+    // 1. Get all groups where user is a member
     var groups = await _permissionRepo.GetGroupsForUserAsync(userId);
     
-    // 3. Merge roles (direct + group-inherited), highest role wins per language
-    return MergePermissions(userPerms, groups);
+    // 2. Merge group-inherited, highest role wins per language
+    return MergePermissions(groups);
 }
 ```
 
@@ -111,14 +118,148 @@ public async Task<EffectivePermissions> GetEffectivePermissionsAsync(string user
 
 ---
 
-## 6. API Summary Table
+## 6. UI-Backend Communication
+
+### Overview
+
+The user's effective permissions will be returned as part of the existing `UserProfile` response. This approach:
+- **Minimizes API calls** - No separate request needed for permissions
+- **Ensures consistency** - Permissions are always in sync with the user profile
+- **Simplifies caching** - Single source of truth for user data
+
+### Backend Changes
+
+Extend `UserProfileModel` to include the computed effective permissions:
+
+```csharp
+public class UserProfileModel
+{
+    [JsonPropertyName("id")]
+    public string UserName { get; set; }
+    
+    [JsonPropertyName("userName")]
+    public string UserNameAlias => UserName;
+    
+    public string Email { get; set; }
+    public UserPreferenceModel Preferences { get; set; }
+    
+    // New: Effective permissions (computed from group memberships)
+    public EffectivePermissions Permissions { get; set; }
+}
+```
+
+The `GET /api/userprofile` endpoint will compute and return the user's effective permissions:
+
+```csharp
+[HttpGet]
+public async Task<ActionResult<UserProfileModel>> GetUserProfile([FromQuery] string userName = null)
+{
+    userName = userName ?? User.GetGitHubLogin();
+    var userProfile = await _userProfileCache.GetUserProfileAsync(userName);
+    
+    // Compute effective permissions from group memberships
+    userProfile.Permissions = await _permissionsManager.GetEffectivePermissionsAsync(userName);
+    
+    return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
+}
+```
+
+Define the permission types:
+
+```typescript
+// Global roles (no language scope)
+export type GlobalRole = "Unknown" | "ServiceTeam" | "SdkTeam" | "Admin";
+
+// Language-scoped roles (require language)
+export type LanguageScopedRole = "DeputyArchitect" | "Architect";
+
+// Discriminated union for role assignments
+export type RoleAssignment = 
+    | { kind: "global"; role: GlobalRole }
+    | { kind: "scoped"; role: LanguageScopedRole; language: string };
+
+export interface EffectivePermissions {
+    userId: string;
+    roles: RoleAssignment[];
+}
+```
+
+### Permission Helper Service
+
+Create a service to check permissions in the UI:
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class PermissionsService {
+    
+    /** Check if user has a global role */
+    hasGlobalRole(permissions: EffectivePermissions, role: GlobalRole): boolean {
+        return permissions.roles.some(r => 
+            r.kind === "global" && r.role === role
+        );
+    }
+    
+    /** Check if user has a language-scoped role for a specific language */
+    hasLanguageRole(permissions: EffectivePermissions, role: LanguageScopedRole, language: string): boolean {
+        return permissions.roles.some(r => 
+            r.kind === "scoped" && r.role === role && r.language === language
+        );
+    }
+    
+    /** Check if user is Admin */
+    isAdmin(permissions: EffectivePermissions): boolean {
+        return this.hasGlobalRole(permissions, "Admin");
+    }
+    
+    /** Check if user can approve for a specific language */
+    canApprove(permissions: EffectivePermissions, language: string): boolean {
+        return this.isAdmin(permissions) ||
+               this.hasLanguageRole(permissions, "Architect", language) ||
+               this.hasLanguageRole(permissions, "DeputyArchitect", language);
+    }
+}
+```
+
+### Example Response
+
+`GET /api/userprofile` response:
+
+```json
+{
+  "userName": "almend",
+  "email": "almend@microsoft.com",
+  "preferences": { ... },
+  "permissions": {
+    "userId": "almend",
+    "roles": [
+      { "kind": "global", "role": "SdkTeam" },
+      { "kind": "scoped", "role": "Architect", "language": "Python" },
+      { "kind": "scoped", "role": "DeputyArchitect", "language": "Java" }
+    ]
+  }
+}
+```
+
+### UI Usage Example
+
+```typescript
+// In a component
+if (this.permissionsService.canApprove(this.userProfile.permissions, review.language)) {
+    this.showApproveButton = true;
+}
+
+if (this.permissionsService.isAdmin(this.userProfile.permissions)) {
+    this.showAdminPanel = true;
+}
+```
+
+---
+
+## 7. API Summary Table
 
 | Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
 | GET | `/api/permissions/me` | Get current user's permissions | Authenticated |
-| GET | `/api/permissions/users/{userId}` | Get user's permissions | Admin |
-| PUT | `/api/permissions/users/{userId}/roles` | Assign role to user | Admin |
-| DELETE | `/api/permissions/users/{userId}/roles/{role}` | Remove role from user | Admin |
 | GET | `/api/permissions/groups` | List all groups | Admin |
 | GET | `/api/permissions/groups/{groupId}` | Get group details | Admin |
 | POST | `/api/permissions/groups` | Create group | Admin |
@@ -129,7 +270,7 @@ public async Task<EffectivePermissions> GetEffectivePermissionsAsync(string user
 
 ---
 
-## 7. Related Issues
+## 8. Related Issues
 
 - [[APIView] Improve the concept of "Approvers" #8784](https://github.com/Azure/azure-sdk-tools/issues/8784)
 

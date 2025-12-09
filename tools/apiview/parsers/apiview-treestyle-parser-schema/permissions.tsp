@@ -1,45 +1,45 @@
 namespace ApiView;
 
-/** User roles within APIView with increasing permission levels */
-enum UserRole {
+/** Roles that apply globally to all languages */
+enum GlobalRole {
+    /** Default value */
+    Unknown,
     /** Service team members who create and manage reviews */
     ServiceTeam,
     /** SDK team members with additional privileges */
     SdkTeam,
-    /** Deputy architect with architect-like permissions */
-    DeputyArchitect,
-    /** Architect with elevated API review permissions */
-    Architect,
     /** Admin with full system permissions */
     Admin
 }
 
-/** Represents a role assignment that can be global or language-scoped */
-model RoleAssignment {
-    /** The role being assigned */
-    role: UserRole;
-    /** 
-     * The language this role applies to. 
-     * If null or empty, the role is global (applies to all languages).
-     */
-    language?: string;
+/** Roles that must be scoped to a specific language */
+enum LanguageScopedRole {
+    /** Deputy architect with architect-like permissions for a specific language */
+    DeputyArchitect,
+    /** Architect with elevated API review permissions for a specific language */
+    Architect
 }
 
-/** User permissions model stored in Cosmos DB */
-model UserPermissions {
-    /** Document ID (format: "user-{userId}") */
-    id: string;
-    /** Document type discriminator */
-    type: "user";
-    /** GitHub username */
-    userId: string;
-    /** List of role assignments for this user */
-    roles: Array<RoleAssignment>;
-    /** Timestamp when permissions were last updated */
-    lastUpdatedOn: utcDateTime;
-    /** Who last updated these permissions */
-    lastUpdatedBy: string;
+/** Assignment for global roles - applies to all languages */
+model GlobalRoleAssignment {
+    /** Discriminator for role assignment type */
+    kind: "global";
+    /** The global role being assigned */
+    role: GlobalRole;
 }
+
+/** Assignment for language-scoped roles - requires a specific language */
+model LanguageScopedRoleAssignment {
+    /** Discriminator for role assignment type */
+    kind: "scoped";
+    /** The language-scoped role being assigned */
+    role: LanguageScopedRole;
+    /** The specific language this role applies to (required) */
+    language: string;
+}
+
+/** A role assignment can be either global or language-scoped */
+alias RoleAssignment = GlobalRoleAssignment | LanguageScopedRoleAssignment;
 
 /** Group-based permission assignment stored in Cosmos DB */
 model GroupPermissions {
@@ -59,6 +59,8 @@ model GroupPermissions {
     lastUpdatedOn: utcDateTime;
     /** Who last updated this group */
     lastUpdatedBy: string;
+    /** List of service names associated with this group */
+    serviceNames: Array<string>;
 }
 
 /** Computed effective permissions (direct + group-inherited) */

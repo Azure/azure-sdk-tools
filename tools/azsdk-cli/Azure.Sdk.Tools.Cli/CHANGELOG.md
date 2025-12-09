@@ -8,15 +8,9 @@
 
 ### Breaking Changes
 
-- None
-
 ### Bugs Fixed
 
-- None
-
 ### Other Changes
-
-- None
 
 ## 0.5.10 (2025-12-08)
 

@@ -284,7 +284,7 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var chunks []model.Index
 	var err error
 	switch chunk.ContextID {
-	case model.Source_StaticAzureDocs, model.Source_TypeSpecMigration:
+	case model.Source_TypeSpecQA, model.Source_TypeSpecMigration:
 		chunks, err = s.GetHeader1CompleteContext(chunk)
 	case model.Source_StaticTypeSpecToSwaggerMapping:
 		chunks, err = s.GetHeader2CompleteContext(chunk)

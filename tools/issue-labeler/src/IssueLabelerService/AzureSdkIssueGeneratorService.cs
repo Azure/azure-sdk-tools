@@ -34,7 +34,7 @@ namespace IssueLabelerService
             IssueGeneratorPayload payload;
             try
             {
-                payload = await DeserializeIssuePayloadAsync(request);
+                payload = await DeserializeGeneratorPayloadAsync(request);
             }
             catch (Exception ex)
             {
@@ -64,7 +64,7 @@ namespace IssueLabelerService
             return new JsonResult(result);
         }
 
-        private async Task<IssueGeneratorPayload> DeserializeIssuePayloadAsync(HttpRequest request)
+        private async Task<IssueGeneratorPayload> DeserializeGeneratorPayloadAsync(HttpRequest request)
         {
             using var bodyReader = new StreamReader(request.Body);
             var requestBody = await bodyReader.ReadToEndAsync();

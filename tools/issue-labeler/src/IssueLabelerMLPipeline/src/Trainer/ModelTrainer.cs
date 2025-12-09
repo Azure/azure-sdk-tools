@@ -76,7 +76,7 @@ public static class ModelTrainer
 
         var loader = mlContext.Data.CreateTextLoader(textLoaderOptions);
         var dataPaths = syntheticDataPaths is not null 
-            ? syntheticDataPaths.Append(dataPath).ToArray() 
+            ? [.. syntheticDataPaths, dataPath] 
             : new[] { dataPath };
         var data = loader.Load(dataPaths);
         var split = mlContext.Data.TrainTestSplit(data, testFraction: 0.2);

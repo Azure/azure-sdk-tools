@@ -87,9 +87,15 @@ try
                         argsData.Verbose,
                         requireBothLabels: true);
 
+                    string[]? syntheticDataPaths = null;
+                    if (argsData.TrainWithSyntheticData)
+                    {
+                        syntheticDataPaths = await DownloadSyntheticData(repo, tempDir);
+                    }
+
                     // Train models
-                    ModelTrainer.CreateModel(issuesDataPath, categoryIssuesModelPath, ModelType.Issue, LabelType.Category);
-                    ModelTrainer.CreateModel(issuesDataPath, serviceIssuesModelPath, ModelType.Issue, LabelType.Service);
+                    ModelTrainer.CreateModel(issuesDataPath, categoryIssuesModelPath, ModelType.Issue, LabelType.Category, syntheticDataPaths);
+                    ModelTrainer.CreateModel(issuesDataPath, serviceIssuesModelPath, ModelType.Issue, LabelType.Service, syntheticDataPaths);
 
                     // Upload models to blob storage
                     if (!argsData.DryRun)
@@ -147,9 +153,14 @@ try
                         argsData.Verbose,
                         requireBothLabels: true);
 
+                    string[]? syntheticDataPaths = null;
+                    if (argsData.TrainWithSyntheticData) {
+                        syntheticDataPaths = await DownloadSyntheticData(repo, tempDir);
+                    }
+
                     // Train models
-                    ModelTrainer.CreateModel(pullsDataPath, categoryPullsModelPath, ModelType.PullRequest, LabelType.Category);
-                    ModelTrainer.CreateModel(pullsDataPath, servicePullsModelPath, ModelType.PullRequest, LabelType.Service);
+                    ModelTrainer.CreateModel(pullsDataPath, categoryPullsModelPath, ModelType.PullRequest, LabelType.Category, syntheticDataPaths);
+                    ModelTrainer.CreateModel(pullsDataPath, servicePullsModelPath, ModelType.PullRequest, LabelType.Service, syntheticDataPaths);
 
                     // Upload models to blob storage
                     if (!argsData.DryRun)
@@ -199,4 +210,40 @@ async Task UploadModelToBlob(BlobContainerClient containerClient, string localPa
     await blobClient.UploadAsync(localPath, overwrite: true);
 
     Console.WriteLine($"Successfully uploaded model to blob: {blobName}");
+}
+
+async Task<string[]> DownloadSyntheticData(string repo, string tempDir)
+{
+    Console.WriteLine("Downloading synthetic data from blob storage...");
+    
+    var blobServiceClient = new BlobServiceClient(new Uri(argsData.BlobStorageUri!), credential);
+    var containerClient = blobServiceClient.GetBlobContainerClient($"generated-issues/{repo}");
+
+    if (!await containerClient.ExistsAsync())
+    {
+        Console.WriteLine($"No synthetic data container 'generated-issues/{repo}' found");
+        return [];
+    }
+
+    var localFilePaths = new List<string>();
+
+    await foreach (var blobItem in containerClient.GetBlobsAsync())
+    {
+        var blobClient = containerClient.GetBlobClient(blobItem.Name);
+        var localFilePath = Path.Combine(tempDir, blobItem.Name);
+        
+        // Ensure directory exists for nested blob paths
+        var directory = Path.GetDirectoryName(localFilePath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        
+        Console.WriteLine($"Downloading: {blobItem.Name}");
+        await blobClient.DownloadToAsync(localFilePath);
+        localFilePaths.Add(localFilePath);
+    }
+    
+    Console.WriteLine("Synthetic data download complete.");
+    return [.. localFilePaths];
 }

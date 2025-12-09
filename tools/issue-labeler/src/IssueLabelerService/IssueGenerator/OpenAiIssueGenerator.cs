@@ -39,15 +39,30 @@ namespace IssueLabelerService
         {
             var modelName = _config.AnswerModelName;
             var instructions = _config.IssueGeneratorInstruction;
+            
+            if (string.IsNullOrEmpty(instructions))
+            {
+                throw new InvalidOperationException("IssueGeneratorInstruction is not configured. Please add it to your configuration.");
+            }
+
+            if (string.IsNullOrEmpty(_config.IssueGeneratorMessage))
+            {
+                throw new InvalidOperationException("IssueGeneratorMessage is not configured. Please add it to your configuration.");
+            }
+
             var repoLabels = await GetLabelsAsync(payload.RepositoryName);
+            // Pass in lists of specific service/category labels we want to generate issues for in payload
+            // Otherwise, use full list of labels
             var applicableServiceLabels = payload.ServiceLabels is null ? GetServiceLabelsForPrompt(repoLabels) : payload.ServiceLabels;
             var applicableCategoryLabels = payload.CategoryLabels is null ? GetCategoryLabelsForPrompt(repoLabels) : payload.CategoryLabels;
+            // 50 seems to be about the upper limit for quality data
+            var numIssues = payload.numIssues is null ? "50" : payload.numIssues;
             var replacements = new Dictionary<string, string>
             {
                 { "repositoryName", payload.RepositoryName },
-                { "numIssues", "50"},
-                { "applicableServiceLabels", applicableServiceLabels},
-                { "applicableCategoryLabels", applicableCategoryLabels}
+                { "numIssues", numIssues },
+                { "applicableServiceLabels", applicableServiceLabels },
+                { "applicableCategoryLabels", applicableCategoryLabels }
             };
             var message = AzureSdkIssueLabelerService.FormatTemplate(_config.IssueGeneratorMessage, replacements, _logger);
 
@@ -60,17 +75,25 @@ namespace IssueLabelerService
             var response = await _ragService.SendMessageQnaAsync(instructions, message, modelName, contextBlock);
             var issues = JsonConvert.DeserializeObject<IEnumerable<IssueTriageContent>>(response);
 
+            if (issues == null)
+            {
+                _logger.LogError($"Failed to deserialize issues from response: {response}");
+                throw new InvalidOperationException("Failed to deserialize issues from AI response.");
+            }
+
             // Write answer to JSON file - answerData is an array of objects
             var jsonFileName = $"{payload.OutputFilename}.json";
             var fileName = $"{payload.OutputFilename}.tsv";
-            using StreamWriter writer = new StreamWriter(fileName);
-            writer.WriteLine(FormatIssueRecord("CategoryLabel", "ServiceLabel", "Title", "Body"));
-            foreach (var issue in issues)
+            await using (StreamWriter writer = new StreamWriter(fileName))
             {
-                if (issue.Category is null || issue.Service is null || issue.Title is null || issue.Body is null
-                || !applicableCategoryLabels.Contains(issue.Category) || !applicableServiceLabels.Contains(issue.Service)) continue;
+                await writer.WriteLineAsync(FormatIssueRecord("CategoryLabel", "ServiceLabel", "Title", "Body"));
+                foreach (var issue in issues)
+                {
+                    if (issue.Category is null || issue.Service is null || issue.Title is null || issue.Body is null
+                    || !applicableCategoryLabels.Contains(issue.Category) || !applicableServiceLabels.Contains(issue.Service)) continue;
 
-                writer.WriteLine(FormatIssueRecord(issue.Category, issue.Service, issue.Title, issue.Body));
+                    await writer.WriteLineAsync(FormatIssueRecord(issue.Category, issue.Service, issue.Title, issue.Body));
+                }
             }
             await File.WriteAllTextAsync(jsonFileName, response);
             _logger.LogInformation($"Answer written to file: {fileName}");

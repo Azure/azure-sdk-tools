@@ -19,6 +19,7 @@ public struct Args
     public bool DryRun { get; set; }
     public bool RetrainIssues { get; set; }
     public bool RetrainPulls { get; set; }
+    public bool TrainWithSyntheticData { get; set; }
 
     static void ShowUsage(string? message)
     {
@@ -50,6 +51,7 @@ public struct Args
                                            Defaults to: 30,30,300,300,3000,3000.
               --verbose                    Enable verbose output.
               --dry-run                    Download and train models without uploading to blob storage.
+              --train-with-synthetic-data  Include synthetic data when training models.
             """);
 
         Environment.Exit(1);
@@ -174,6 +176,10 @@ public struct Args
 
                 case "--dry-run":
                     argsData.DryRun = true;
+                    break;
+
+                case "--train-with-synthetic-data":
+                    argsData.TrainWithSyntheticData = true;
                     break;
 
                 default:

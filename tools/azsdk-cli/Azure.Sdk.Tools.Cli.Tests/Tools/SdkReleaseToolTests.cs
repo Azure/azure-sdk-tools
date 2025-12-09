@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var packageName = "azure-template";
             var language = "Python";
             var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", checkReady: true);
-            
+
             Assert.That(result, Is.Not.Null);
             Assert.Multiple(() =>
             {
@@ -121,7 +121,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo(string.Empty));
                 Assert.That(result.PipelineBuildId, Is.EqualTo(0));
             });
-          
+        }
+
         [Test]
         public async Task TestRunReleaseWithCsharpLanguage()
         {

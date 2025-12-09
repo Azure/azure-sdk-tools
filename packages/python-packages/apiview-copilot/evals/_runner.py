@@ -133,7 +133,6 @@ class EvaluationRunner:
     def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False, verbose: bool = False):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
-        self._results_lock = threading.Lock()
         self._use_recording = use_recording
         self._verbose = verbose
 
@@ -188,12 +187,7 @@ class EvaluationRunner:
                     result = future.result()
                     results.append(result)
 
-                    with self._results_lock:
-                        completed_count += 1
-
                 except Exception as e:
-                    with self._results_lock:
-                        completed_count += 1
 
                     print('\033[91mE\033[0m', end='', flush=True)
                     results.append(EvaluationResult(target=target, raw_results=[], success=False, error=str(e)))

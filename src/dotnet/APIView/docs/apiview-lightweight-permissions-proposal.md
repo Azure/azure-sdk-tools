@@ -98,7 +98,7 @@ Role assignments use a discriminated union pattern with a `kind` field to distin
 
 ## 5. Effective Permissions Resolution
 
-The key to this system is computing a user's **effective permissions** by merging their direct role assignments with roles inherited from group memberships.
+The key to this system is computing a user's **effective permissions** by merging roles inherited from all their group memberships.
 
 ```csharp
 public async Task<EffectivePermissions> GetEffectivePermissionsAsync(string userId)
@@ -106,12 +106,12 @@ public async Task<EffectivePermissions> GetEffectivePermissionsAsync(string user
     // 1. Get all groups where user is a member
     var groups = await _permissionRepo.GetGroupsForUserAsync(userId);
     
-    // 2. Merge group-inherited, highest role wins per language
+    // 2. Merge roles from all groups, highest role wins per language
     return MergePermissions(groups);
 }
 ```
 
-**Example**: User has direct `SdkTeam` (global) + group membership gives `Architect` (Python)
+**Example**: group membership  "Sdk team" gives `SdkTeam` (global) + group membership "Python Architects" gives `Architect` (Python)
 - `HasRole(Architect, "Python")` → ✅ true
 - `HasRole(Architect, "Java")` → ❌ false  
 - `HasRole(SdkTeam, "Java")` → ✅ true (global applies)
@@ -186,38 +186,51 @@ export interface EffectivePermissions {
 
 ### Permission Helper Service
 
-Create a service to check permissions in the UI:
+Create a service to check permissions in the UI. Methods accept arrays of roles to allow checking multiple roles in a single call:
 
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
     
-    /** Check if user has a global role */
-    hasGlobalRole(permissions: EffectivePermissions, role: GlobalRole): boolean {
+    /** Check if user has any of the specified global roles */
+    hasGlobalRole(permissions: EffectivePermissions, roles: GlobalRole | GlobalRole[]): boolean {
+        const roleArray = Array.isArray(roles) ? roles : [roles];
         return permissions.roles.some(r => 
-            r.kind === "global" && r.role === role
+            r.kind === "global" && roleArray.includes(r.role)
         );
     }
     
-    /** Check if user has a language-scoped role for a specific language */
-    hasLanguageRole(permissions: EffectivePermissions, role: LanguageScopedRole, language: string): boolean {
+    /** Check if user has any of the specified language-scoped roles for a specific language */
+    hasLanguageRole(permissions: EffectivePermissions, roles: LanguageScopedRole | LanguageScopedRole[], language: string): boolean {
+        const roleArray = Array.isArray(roles) ? roles : [roles];
         return permissions.roles.some(r => 
-            r.kind === "scoped" && r.role === role && r.language === language
+            r.kind === "scoped" && roleArray.includes(r.role) && r.language === language
         );
     }
     
-    /** Check if user is Admin */
-    isAdmin(permissions: EffectivePermissions): boolean {
-        return this.hasGlobalRole(permissions, "Admin");
-    }
-    
-    /** Check if user can approve for a specific language */
+    /** Check if user can approve for a specific language (Architect, DeputyArchitect, or Admin) */
     canApprove(permissions: EffectivePermissions, language: string): boolean {
-        return this.isAdmin(permissions) ||
-               this.hasLanguageRole(permissions, "Architect", language) ||
-               this.hasLanguageRole(permissions, "DeputyArchitect", language);
+        return this.hasGlobalRole(permissions, "Admin") ||
+               this.hasLanguageRole(permissions, ["Architect", "DeputyArchitect"], language);
+    }
+    
+    /** Check if user has elevated global permissions (SdkTeam or Admin) */
+    hasElevatedAccess(permissions: EffectivePermissions): boolean {
+        return this.hasGlobalRole(permissions, ["Admin"]);
     }
 }
+```
+
+**Usage examples:**
+```typescript
+// Check for a single role
+this.permissionsService.hasGlobalRole(permissions, "SdkTeam");
+
+// Check for multiple roles at once
+this.permissionsService.hasGlobalRole(permissions, ["SdkTeam", "Admin"]);
+
+// Check language-scoped roles
+this.permissionsService.hasLanguageRole(permissions, ["Architect", "DeputyArchitect"], "Python");
 ```
 
 ### Example Response
@@ -248,8 +261,14 @@ if (this.permissionsService.canApprove(this.userProfile.permissions, review.lang
     this.showApproveButton = true;
 }
 
-if (this.permissionsService.isAdmin(this.userProfile.permissions)) {
+// Check for admin-only features
+if (this.permissionsService.hasGlobalRole(this.userProfile.permissions, "Admin")) {
     this.showAdminPanel = true;
+}
+
+// Check for elevated access (SdkTeam or Admin)
+if (this.permissionsService.hasElevatedAccess(this.userProfile.permissions)) {
+    this.showAdvancedOptions = true;
 }
 ```
 

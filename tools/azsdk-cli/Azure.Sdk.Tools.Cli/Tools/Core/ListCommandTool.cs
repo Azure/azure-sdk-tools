@@ -67,27 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
                 if (!tools.Any(t=> t.McpToolName == mcpTool.Name))
                 {
                     // Add new tool that does not have CLI command representation
-                    var required = new HashSet<string>();    
-                    if (mcpTool.InputSchema.TryGetProperty("required", out var reqArray))
-                    {
-                        foreach (var r in reqArray.EnumerateArray())
-                        {
-                            required.Add(r.GetString());
-                        }
-                    }
-
-                    var options = new List<OptionInfo>();
-                    var props = mcpTool.InputSchema.GetProperty("properties");
-                    foreach (var prop in props.EnumerateObject())
-                    {
-                        string name = prop.Name;
-                        string type = prop.Value.GetProperty("type").GetString() ?? "";
-                        bool isRequired = required.Contains(name);
-
-                        options.Add(new OptionInfo(name, "", type, isRequired));
-                    }
-
-                    tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? "", options));
+                    tools.Add(new ToolInfo(mcpTool.Name, "", mcpTool.Description ?? ""));
                 }                
             }
             return tools.OrderBy(t => string.IsNullOrEmpty(t.McpToolName)).ThenBy(t => t.McpToolName).ToList();

@@ -44,16 +44,16 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             sb.AppendLine(
                 $"{("Name").PadRight(nameWidth)}{sep}" +
                 $"{("Command").PadRight(cmdWidth)}{sep}" +
-                $"{("Description").PadRight(descWidth)}{sep}" +
-                $"{("Options").PadRight(optsWidth)}"
+                $"{("Options").PadRight(optsWidth)}{sep}" +
+                $"{("Description").PadRight(descWidth)}"
             );
 
             // --- Underline ---
             sb.AppendLine(
                 $"{new string('-', nameWidth)}{sep}" +
                 $"{new string('-', cmdWidth)}{sep}" +
-                $"{new string('-', descWidth)}{sep}" +
-                $"{new string('-', optsWidth)}"
+                $"{new string('-', optsWidth)}{sep}" +
+                $"{new string('-', descWidth)}"
             );
 
             // --- Rows ---
@@ -66,13 +66,20 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
                 string cmdCell = (tool?.CommandLine ?? string.Empty).PadRight(cmdWidth);
                 string descCell = (tool?.Description ?? string.Empty).PadRight(descWidth);
 
+                var horizontalLine =
+                    $"{new string('-', nameWidth)}{sep}" +
+                    $"{new string('-', cmdWidth)}{sep}" +
+                    $"{new string('-', optsWidth)}{sep}" +
+                    $"{new string('-', descWidth)}";
+
                 if (optionLines.Count == 0)
                 {
-                    sb.AppendLine($"{nameCell}{sep}{cmdCell}{sep}{descCell}{sep}{string.Empty.PadRight(optsWidth)}");
+                    sb.AppendLine($"{nameCell}{sep}{cmdCell}{sep}{string.Empty.PadRight(optsWidth)}{sep}{descCell}");
+                    sb.AppendLine(horizontalLine);
                     continue;
                 }
 
-                sb.AppendLine($"{nameCell}{sep}{cmdCell}{sep}{descCell}{sep}{optionLines[0].PadRight(optsWidth)}");
+                sb.AppendLine($"{nameCell}{sep}{cmdCell}{sep}{optionLines[0].PadRight(optsWidth)}{sep}{descCell}");
 
                 // Continuation lines: only Options column, blanks elsewhere
                 for (int i = 1; i < optionLines.Count; i++)
@@ -80,17 +87,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
                     sb.AppendLine(
                         $"{string.Empty.PadRight(nameWidth)}{sep}" +
                         $"{string.Empty.PadRight(cmdWidth)}{sep}" +
-                        $"{string.Empty.PadRight(descWidth)}{sep}" +
-                        $"{optionLines[i].PadRight(optsWidth)}"
+                        $"{optionLines[i].PadRight(optsWidth)}{sep}" +
+                        $"{string.Empty.PadRight(descWidth)}"
                     );
                 }
-
-                    sb.AppendLine(
-                        new string('-', nameWidth) + sep +
-                        new string('-', cmdWidth) + sep + 
-                        new string('-', descWidth)+ sep +
-                        new string('-', optsWidth)
-                    );
+                sb.AppendLine(horizontalLine);
             }
             return sb.ToString();
         }

@@ -16,17 +16,17 @@ namespace APIViewWeb
         public ReviewCommentsModel(string reviewId, IEnumerable<CommentItemModel> comments)
         {
             _threads = comments
-                .OrderBy(c => c.CreatedOn)
                 .GroupBy(c => c.ElementId ?? string.Empty)
                 .ToDictionary(
                     lineGroup => lineGroup.Key,
                     lineGroup => lineGroup
-                        .GroupBy(c => c.ThreadId ?? c.Id) 
+                        .GroupBy(c => c.ThreadId ?? c.Id)
                         .Select(threadGroup => new CommentThreadModel(
                             reviewId,
                             lineGroup.Key,
                             threadGroup.Key,
-                            threadGroup))
+                            threadGroup.OrderBy(c => c.CreatedOn)))
+                        .OrderByDescending(t => t.Comments.Min(c => c.CreatedOn)) // Threads ordered by creation (oldest comment): newest threads first
                         .ToList()
                 );
         }

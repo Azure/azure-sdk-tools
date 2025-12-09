@@ -565,6 +565,10 @@ export class CommentThreadComponent {
     const isResolving = action === "Resolve";
     if (isResolving) {
       this.threadResolvedBy = this.userProfile?.userName;
+      // Collapse the thread when resolving
+      this.threadResolvedAndExpanded = false;
+      this.threadResolvedStateToggleText = 'Show';
+      this.threadResolvedStateToggleIcon = 'bi-arrows-expand';
     }
     
     this.commentResolutionActionEmitter.emit(

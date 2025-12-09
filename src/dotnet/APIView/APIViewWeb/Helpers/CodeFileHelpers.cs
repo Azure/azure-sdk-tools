@@ -434,7 +434,10 @@ namespace APIViewWeb.Helpers
                 commentsForRow.AssociatedRowPositionInGroup = rowData.RowPositionInGroup;
                 int lineIndex = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count - 1;
 
-                List<IGrouping<string, CommentItemModel>> commentsByThread = commentsForRow.CommentsObj.GroupBy(c => c.ThreadId).ToList();
+                List<IGrouping<string, CommentItemModel>> commentsByThread = commentsForRow.CommentsObj
+                    .GroupBy(c => c.ThreadId)
+                    .OrderByDescending(g => g.Min(c => c.CreatedOn))
+                    .ToList();
                 var threadRows = new List<CodePanelRowData>();
                 foreach (IGrouping<string, CommentItemModel> threadGroup in commentsByThread)
                 {
@@ -443,7 +446,7 @@ namespace APIViewWeb.Helpers
                         Type = CodePanelRowDatatype.CommentThread,
                         NodeIdHashed = nodeIdHashed,
                         AssociatedRowPositionInGroup = rowData.RowPositionInGroup,
-                        CommentsObj = threadGroup.ToList(),
+                        CommentsObj = threadGroup.OrderBy(c => c.CreatedOn).ToList(),
                         ThreadId = threadGroup.Key, 
                         IsResolvedCommentThread = threadGroup.Any(c => c.IsResolved),
                         IsHiddenAPI = commentsForRow.IsHiddenAPI

@@ -30,9 +30,12 @@ type Config struct {
 	AOAI_CHAT_CONTEXT_MAX_TOKENS   int
 	AOAI_CHAT_COMPLETIONS_ENDPOINT string
 
-	AI_SEARCH_BASE_URL string
-	AI_SEARCH_INDEX    string
-	AI_SEARCH_AGENT    string
+	AI_SEARCH_BASE_URL           string
+	AI_SEARCH_INDEX              string
+	AI_SEARCH_AGENT              string
+	AI_SEARCH_KNOWLEDGE_BASE     string
+	AI_SEARCH_KNOWLEDGE_SOURCE   string
+	AI_SEARCH_KNOWLEDGE_BASE_API string
 
 	STORAGE_BASE_URL            string
 	STORAGE_KNOWLEDGE_CONTAINER string

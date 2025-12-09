@@ -106,7 +106,15 @@ public class VerifySetupTool : LanguageMcpTool
                         Requirement = req.requirement,
                         Instructions = req.instructions,
                     });
-                }
+                } else if (result.Message != null)
+                {
+                    response.Results.Add(new RequirementCheckResult
+                    {
+                        Requirement = req.requirement,
+                        Instructions = req.instructions,
+                        RequirementStatusDetails = result.Message
+                    });
+                } 
             }
             return response;
         }
@@ -142,7 +150,7 @@ public class VerifySetupTool : LanguageMcpTool
                 logger.LogError("Command {Command} failed with exit code {ExitCode}.\n\nInstructions: {Instructions}", string.Join(' ', command), result.ExitCode, req.instructions);
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}.\n Output: {trimmed}."
+                    Message = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}: {trimmed}."
                 };
             }
 
@@ -153,7 +161,7 @@ public class VerifySetupTool : LanguageMcpTool
                 logger.LogError("Command {Command} failed, requires upgrade to version {Version}.", string.Join(' ', command), versionCheckResult);
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
+                    Message = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
                 };
             }
         }
@@ -162,14 +170,11 @@ public class VerifySetupTool : LanguageMcpTool
             logger.LogError(ex, "Command {Command} failed to execute.\n\nInstructions: {Instructions}", string.Join(' ', command), req.instructions);
             return new DefaultCommandResponse
             {
-                ResponseError = $"Command {string.Join(' ', command)} failed to execute.\n Exception: {ex.Message}"
+                Message = $"Command {string.Join(' ', command)} failed to execute.\n\tException: {ex.Message}"
             };
         }
 
-        return new DefaultCommandResponse
-        {
-            Message = $"Command {string.Join(' ', command)} succeeded. Output: {trimmed}"
-        };
+        return new DefaultCommandResponse();
     }
 
     private List<SetupRequirements.Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)

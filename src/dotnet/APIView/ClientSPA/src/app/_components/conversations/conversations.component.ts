@@ -25,6 +25,7 @@ export class ConversationsComponent implements OnChanges {
 
   @Output() scrollToNodeEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();
+  @Output() dismissSidebarAndNavigateEmitter : EventEmitter<{revisionId: string, elementId: string}> = new EventEmitter<{revisionId: string, elementId: string}>();
 
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
   numberOfActiveThreads: number = 0;
@@ -130,7 +131,10 @@ export class ConversationsComponent implements OnChanges {
     if (this.activeApiRevisionId && this.activeApiRevisionId === revisionIdForConversationGroup) {
       this.scrollToNodeEmitter.emit(elementIdForConversationGroup);
     } else {
-      window.open(`review/${this.review?.id}?activeApiRevisionId=${revisionIdForConversationGroup}&nId=${elementIdForConversationGroup}`, '_blank');
+      this.dismissSidebarAndNavigateEmitter.emit({
+        revisionId: revisionIdForConversationGroup!,
+        elementId: elementIdForConversationGroup
+      });
     }
   }
 
@@ -193,6 +197,7 @@ export class ConversationsComponent implements OnChanges {
     this.commentsService.toggleCommentUpVote(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.toggleCommentUpVote(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
   }
@@ -202,6 +207,7 @@ export class ConversationsComponent implements OnChanges {
     this.commentsService.toggleCommentDownVote(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.toggleCommentDownVote(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
   }

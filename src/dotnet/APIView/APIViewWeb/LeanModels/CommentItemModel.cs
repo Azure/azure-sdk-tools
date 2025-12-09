@@ -1,20 +1,17 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.LeanModels
 {
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentType
     {
         APIRevision = 0,
         SampleRevision
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentSeverity
     {
         Question = 0,
@@ -23,8 +20,7 @@ namespace APIViewWeb.LeanModels
         MustFix = 3
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentSource
     {
         UserGenerated,
@@ -43,8 +39,7 @@ namespace APIViewWeb.LeanModels
 
     public class CommentItemModel
     {
-        [System.Text.Json.Serialization.JsonPropertyName("id")]
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
         public string APIRevisionId { get; set; }

@@ -69,7 +69,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
-                logger);
+                logger,
+                new InputSanitizer());
         }
 
         [Test]
@@ -93,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task TestRunReleaseWithInvalidLanguage()
         {
             var packageName = "Azure.Template";
-            var language = "csharp";
+            var language = "net";
             var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language);
             Assert.That(result, Is.Not.Null);
             Assert.Multiple(() =>
@@ -120,6 +121,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo(string.Empty));
                 Assert.That(result.PipelineBuildId, Is.EqualTo(0));
             });
+          
+        [Test]
+        public async Task TestRunReleaseWithCsharpLanguage()
+        {
+            var packageName = "Azure.Template";
+            var language = "csharp";
+            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Language, Is.EqualTo(SdkLanguage.DotNet));
+
+            result.SetPackageType("mgmt");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Management));
+            result.SetPackageType("client");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Dataplane));
+            result.SetPackageType("spring");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Spring));
+            result.SetPackageType("data");
+            Assert.That(result.PackageType, Is.EqualTo(SdkType.Unknown));
         }
     }
 }

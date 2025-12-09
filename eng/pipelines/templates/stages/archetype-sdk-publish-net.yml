@@ -8,6 +8,7 @@ parameters:
   ExeMatrix: []
   VerifyChangelog: false
   ToolDirectory: ''
+  CustomReleaseJobs: []
 # Needs Github Release variable group linked.
 # Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
 
@@ -135,3 +136,6 @@ stages:
           artifactName: processed-files
           targetPath: $(Artifacts)
         condition: always()
+
+  - ${{ each job in parameters.CustomReleaseJobs }}:
+    - ${{ job }}

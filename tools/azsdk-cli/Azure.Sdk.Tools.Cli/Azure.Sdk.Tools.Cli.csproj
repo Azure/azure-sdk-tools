@@ -14,6 +14,7 @@
     <AssemblyName>azsdk</AssemblyName>
     <VersionPrefix>0.5.10</VersionPrefix>
     <VersionSuffix></VersionSuffix>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->
     <PackageReleaseNotes>See CHANGELOG.md for release notes</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/Azure/azure-sdk-tools</RepositoryUrl>

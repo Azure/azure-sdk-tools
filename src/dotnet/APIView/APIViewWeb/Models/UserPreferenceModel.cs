@@ -1,14 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using APIViewWeb.LeanModels;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.Models
 {
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ScrollBarSizes
     {
         Small = 0,
@@ -35,7 +33,6 @@ namespace APIViewWeb.Models
         public bool ShowComments { get; set; }
         public bool ShowSystemComments { get; set; }
         public bool DisableCodeLinesLazyLoading { get; set; }
-        public bool UseBetaIndexPage { get; set; }
         public string Theme { get; set; } = "light-theme";
         public ScrollBarSizes ScrollBarSize { get; set; } = ScrollBarSizes.Small;
     }

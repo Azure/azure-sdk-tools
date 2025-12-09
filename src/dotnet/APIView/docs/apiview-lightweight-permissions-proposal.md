@@ -213,18 +213,13 @@ export class PermissionsService {
         return this.hasGlobalRole(permissions, "Admin") ||
                this.hasLanguageRole(permissions, ["Architect", "DeputyArchitect"], language);
     }
-    
-    /** Check if user has elevated global permissions (SdkTeam or Admin) */
-    hasElevatedAccess(permissions: EffectivePermissions): boolean {
-        return this.hasGlobalRole(permissions, ["Admin"]);
-    }
 }
 ```
 
 **Usage examples:**
 ```typescript
 // Check for a single role
-this.permissionsService.hasGlobalRole(permissions, "SdkTeam");
+this.permissionsService.hasGlobalRole(permissions, "Admin");
 
 // Check for multiple roles at once
 this.permissionsService.hasGlobalRole(permissions, ["SdkTeam", "Admin"]);

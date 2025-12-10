@@ -2,6 +2,7 @@
 import sys
 import tempfile
 import urllib.request
+import json
 import os
 import yaml
 import re
@@ -151,9 +152,9 @@ def _parse_rust(data):
 def parse_language_metadata(yaml_data):
     """
     Extract language, package name, and namespace from a TypeSpec config dict.
-    Returns a list of dicts: [{language, package_name, namespace}]
+    Returns a dict: {language: {package_name, namespace}}
     """
-    result = []
+    result = {}
     options = yaml_data.get('options', {})
     # Gather parameters for curly-brace substitution
     params = {}
@@ -177,11 +178,10 @@ def parse_language_metadata(yaml_data):
             lang_opts['_params'] = params
             package_name, namespace = extractor(lang_opts)
             if namespace or package_name:
-                result.append({
-                    'language': lang,
+                result[lang] = {
                     'package_name': package_name,
                     'namespace': namespace
-                })
+                }
     return result
 
 def parse_yaml_file(path):
@@ -228,11 +228,10 @@ def main():
     # Extract TypeSpec metadata from yaml_url
     typespec_meta = _parse_typespec(yaml_url)
     if typespec_meta:
-        meta.append(typespec_meta)
+        meta['typespec'] = typespec_meta['typespec']
 
     print(f"--- {os.path.basename(yaml_path)} ---")
-    for entry in meta:
-        print(entry)
+    print(json.dumps(meta, indent=2))
 
 if __name__ == '__main__':
     main()

@@ -13,10 +13,15 @@ export async function backupNodeModules(folder: string) {
 }
 
 export async function restoreNodeModules(folder: string) {
-    const nodeModulesPath = path.join(folder, "node_modules_backup");
+    const nodeModulesBackupPath = path.join(folder, "node_modules_backup");
+    const nodeModulesPath = nodeModulesBackupPath.replace('_backup', '');
     if (fs.existsSync(nodeModulesPath)) {
-        logger.info(`Start to rename '${nodeModulesPath}' to '${nodeModulesPath.replace('_backup', '')}'.`);
-        fs.renameSync(nodeModulesPath, `${nodeModulesPath.replace('_backup', '')}`);
+        logger.info(`Remove existing '${nodeModulesPath}' first.`);
+        fs.rmSync(nodeModulesPath, { recursive: true, force: true });
+    }
+    if (fs.existsSync(nodeModulesBackupPath)) {
+        logger.info(`Start to rename '${nodeModulesBackupPath}' to '${nodeModulesPath}'.`);
+        fs.renameSync(nodeModulesBackupPath, `${nodeModulesPath}`);
     }
     if ('/' === path.dirname(folder)) return;
     await restoreNodeModules(path.dirname(folder));

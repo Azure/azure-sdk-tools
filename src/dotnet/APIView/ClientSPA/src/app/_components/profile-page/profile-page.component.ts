@@ -96,6 +96,16 @@ export class ProfilePageComponent {
   }
 
   onProfileChange(event: any){
+    if (event !== null && event !== undefined) {
+      // Update the model for input fields
+      if (typeof event === 'string') {
+        this.notificationEmail = event;
+      }
+      // Update the model for multiselect changes
+      if (event.value !== undefined) {
+        this.selectedLanguages = event.value;
+      }
+    }
     this.disableSaveButton = false;
   }
 }

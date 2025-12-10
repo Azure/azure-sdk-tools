@@ -12,7 +12,7 @@
                     <li class="list-group-item">
                         <div class="mb-1">
                             <label for="emailInput" class="form-label fw-semibold">Notification email</label>
-                            <input type="email" pInputText [style]="{'width':'100%'}" [(ngModel)]="notificationEmail" id="emailInput" (ngModelChange)="onProfileChange($event)"  aria-describedby="emaiInputlHelp"/>
+                            <input type="email" pInputText [style]="{'width':'100%'}" [ngModel]="notificationEmail" id="emailInput" (ngModelChange)="onProfileChange($event)"  aria-describedby="emaiInputlHelp"/>
                             <div id="emaiInputlHelp" class="form-text">Enter your email to get notifications. Leave blank to stop emails.</div>
                         </div>
                     </li>
@@ -23,9 +23,9 @@
                                 <p-multiSelect
                                     id="reviewLanguagesMultiSelect"
                                     (onChange)="onProfileChange($event)"
-                                    [options]="languages" 
-                                    [filter]="false" 
-                                    [(ngModel)]="selectedLanguages" 
+                                    [options]="languages"
+                                    [filter]="false"
+                                    [ngModel]="selectedLanguages"
                                     optionLabel="label"
                                     placeholder="Select languages you want to be able to approve."
                                     [showClear]="true"
@@ -52,7 +52,7 @@
                                     (onChange)="onProfileChange($event)"
                                     id="scrollBarDropdown"
                                     [options]="scrollBarSizes"
-                                    [(ngModel)]="selectedScrollBarSize" 
+                                    [(ngModel)]="selectedScrollBarSize"
                                     [style]="{'width':'100%'}">
                                 </p-dropdown>
                             </div>

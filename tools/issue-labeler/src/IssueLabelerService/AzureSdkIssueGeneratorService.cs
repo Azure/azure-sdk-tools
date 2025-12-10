@@ -29,7 +29,7 @@ namespace IssueLabelerService
         }
 
         [Function("AzureSdkIssueGeneratorService")]
-        public async Task<ActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest request)
+        public async Task Run([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest request)
         {
             IssueGeneratorPayload payload;
             try
@@ -39,13 +39,11 @@ namespace IssueLabelerService
             catch (Exception ex)
             {
                 _logger.LogError($"Unable to deserialize payload: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                return new BadRequestResult();
+                return;
             }
 
             var config = _configurationService.GetDefault();
             TriageOutput result = new TriageOutput {};
-
-            // Enable answers if both the configuration enable answers and the issue predict answers are true
 
             try
             {
@@ -55,13 +53,7 @@ namespace IssueLabelerService
             catch (Exception ex)
             {
                 _logger.LogError($"Error generating issue for repository {payload.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-
-                result.Answer = null;
-                result.AnswerType = null;
             }
-
-
-            return new JsonResult(result);
         }
 
         private async Task<IssueGeneratorPayload> DeserializeGeneratorPayloadAsync(HttpRequest request)

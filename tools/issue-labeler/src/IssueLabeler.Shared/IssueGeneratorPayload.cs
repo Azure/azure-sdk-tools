@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using Newtonsoft.Json;
+
 namespace IssueLabeler.Shared
 {
     public class IssueGeneratorPayload
@@ -7,5 +10,8 @@ namespace IssueLabeler.Shared
         public string? numIssues { get; set; }
         public string? CategoryLabels { get; set; }
         public string? ServiceLabels { get; set; }
+        [DefaultValue(true)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        public bool UploadToBlob { get; set; }
     }
 }

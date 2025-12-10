@@ -6,8 +6,6 @@ public struct Args
     public string? GitHubToken { get; set; }
     public string Org { get; set; }
     public List<string> Repos { get; set; }
-    public string? BlobStorageUri { get; set; }
-    public string? BlobContainerName { get; set; }
     public string? AppConfigEndpoint { get; set; }
     public string[]? ExcludedAuthors { get; set; }
     public int? IssuesLimit { get; set; }
@@ -29,9 +27,6 @@ public struct Args
             Required arguments:
               --github-token               GitHub token to be used for API calls.
               --repo                       The GitHub repositories in format org/repo (comma separated for multiple).
-              --blob-storage-uri           Azure Blob Storage URI (e.g., https://account.blob.core.windows.net).
-                                           Uses DefaultAzureCredential for authentication.
-              --blob-container-name        Azure Blob Storage container name for model storage.
               --app-config-endpoint        Azure App Configuration endpoint URL.
                                            Uses DefaultAzureCredential for authentication.
 
@@ -88,22 +83,6 @@ public struct Args
                     }
                     argsData.Org = org;
                     argsData.Repos = repos;
-                    break;
-
-                case "--blob-storage-uri":
-                    if (!argUtils.TryGetString("--blob-storage-uri", out string? blobStorageUri))
-                    {
-                        return null;
-                    }
-                    argsData.BlobStorageUri = blobStorageUri;
-                    break;
-
-                case "--blob-container-name":
-                    if (!argUtils.TryGetString("--blob-container-name", out string? blobContainerName))
-                    {
-                        return null;
-                    }
-                    argsData.BlobContainerName = blobContainerName;
                     break;
 
                 case "--app-config-endpoint":
@@ -198,24 +177,6 @@ public struct Args
         if (argsData.Org is null || argsData.Repos is null || argsData.Repos.Count == 0)
         {
             ShowUsage("Missing required --repo argument.");
-            return null;
-        }
-
-        if (!argsData.DryRun && argsData.BlobStorageUri is null)
-        {
-            ShowUsage("Missing required --blob-storage-uri argument (required when not in dry-run mode).");
-            return null;
-        }
-
-        if (!argsData.DryRun && argsData.BlobContainerName is null)
-        {
-            ShowUsage("Missing required --blob-container-name argument (required when not in dry-run mode).");
-            return null;
-        }
-
-        if (argsData.AppConfigEndpoint is null)
-        {
-            ShowUsage("Missing required --app-config-endpoint argument.");
             return null;
         }
 

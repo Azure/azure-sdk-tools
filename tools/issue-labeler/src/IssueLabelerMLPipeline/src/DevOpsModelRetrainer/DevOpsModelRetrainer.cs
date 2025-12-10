@@ -58,132 +58,25 @@ try
         // Process issues models
         if (argsData.RetrainIssues)
         {
-            var categoryIssuesModelBlobName = GetConfigValue(fullRepoName, "IssueModelForCategoryLabels");
-            var serviceIssuesModelBlobName = GetConfigValue(fullRepoName, "IssueModelForServiceLabels");
-
-            if (categoryIssuesModelBlobName is null || serviceIssuesModelBlobName is null)
-            {
-                Console.WriteLine($"WARNING: Skipping issues models for {fullRepoName}: Missing configuration for IssueModelForCategoryLabels or IssueModelForServiceLabels");
-            }
-            else
-            {
-                var issuesDataPath = Path.Combine(tempDir, $"{repo}-issues.tsv");
-                var categoryIssuesModelPath = Path.Combine(tempDir, $"{repo}-category-issues-model.zip");
-                var serviceIssuesModelPath = Path.Combine(tempDir, $"{repo}-service-issues-model.zip");
-
-                try
-                {
-                    // Download issues data from GitHub
-                    await GitHubDataDownloader.DownloadIssuesAsync(
-                        argsData.GitHubToken,
-                        argsData.Org,
-                        [repo],
-                        issuesDataPath,
-                        argsData.IssuesLimit,
-                        argsData.PageSize,
-                        argsData.PageLimit,
-                        argsData.Retries,
-                        argsData.ExcludedAuthors,
-                        argsData.Verbose,
-                        requireBothLabels: true);
-
-                    string[]? syntheticDataPaths = null;
-                    if (argsData.TrainWithSyntheticData)
-                    {
-                        syntheticDataPaths = await DownloadSyntheticData(repo, tempDir);
-                    }
-
-                    // Train models
-                    ModelTrainer.CreateModel(issuesDataPath, categoryIssuesModelPath, ModelType.Issue, LabelType.Category, syntheticDataPaths);
-                    ModelTrainer.CreateModel(issuesDataPath, serviceIssuesModelPath, ModelType.Issue, LabelType.Service, syntheticDataPaths);
-
-                    // Upload models to blob storage
-                    if (!argsData.DryRun)
-                    {
-                        Console.WriteLine("Connecting to Azure Blob Storage...");
-                        var blobServiceClient = new BlobServiceClient(new Uri(argsData.BlobStorageUri!), credential);
-                        var containerClient = blobServiceClient.GetBlobContainerClient(argsData.BlobContainerName);
-                        await containerClient.CreateIfNotExistsAsync();
-                        await UploadModelToBlob(containerClient, categoryIssuesModelPath, categoryIssuesModelBlobName);
-                        await UploadModelToBlob(containerClient, serviceIssuesModelPath, serviceIssuesModelBlobName);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Dry run mode: Would upload to {categoryIssuesModelBlobName} and {serviceIssuesModelBlobName}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ERROR: Error retraining issues models for {fullRepoName}: {ex.Message}");
-                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                    success = false;
-                }
-            }
+            success &= await RetrainModelAsync(
+                repo,
+                fullRepoName,
+                ModelType.Issue,
+                categoryConfigKey: "IssueModelForCategoryLabels",
+                serviceConfigKey: "IssueModelForServiceLabels",
+                downloadLimit: argsData.IssuesLimit);
         }
 
         // Process pull requests models
         if (argsData.RetrainPulls)
         {
-            var categoryPullsModelBlobName = GetConfigValue(fullRepoName, "PrModelForCategoryLabels");
-            var servicePullsModelBlobName = GetConfigValue(fullRepoName, "PrModelForServiceLabels");
-
-            if (categoryPullsModelBlobName is null || servicePullsModelBlobName is null)
-            {
-                Console.WriteLine($"WARNING: Skipping pulls models for {fullRepoName}: Missing configuration for PrModelForCategoryLabels or PrModelForServiceLabels");
-            }
-            else
-            {
-                var pullsDataPath = Path.Combine(tempDir, $"{repo}-pulls.tsv");
-                var categoryPullsModelPath = Path.Combine(tempDir, $"{repo}-category-pulls-model.zip");
-                var servicePullsModelPath = Path.Combine(tempDir, $"{repo}-service-pulls-model.zip");
-
-                try
-                {
-                    // Download pull requests data from GitHub
-                    await GitHubDataDownloader.DownloadPullRequestsAsync(
-                        argsData.GitHubToken,
-                        argsData.Org,
-                        [repo],
-                        pullsDataPath,
-                        argsData.PullsLimit,
-                        argsData.PageSize,
-                        argsData.PageLimit,
-                        argsData.Retries,
-                        argsData.ExcludedAuthors,
-                        argsData.Verbose,
-                        requireBothLabels: true);
-
-                    string[]? syntheticDataPaths = null;
-                    if (argsData.TrainWithSyntheticData) {
-                        syntheticDataPaths = await DownloadSyntheticData(repo, tempDir);
-                    }
-
-                    // Train models
-                    ModelTrainer.CreateModel(pullsDataPath, categoryPullsModelPath, ModelType.PullRequest, LabelType.Category, syntheticDataPaths);
-                    ModelTrainer.CreateModel(pullsDataPath, servicePullsModelPath, ModelType.PullRequest, LabelType.Service, syntheticDataPaths);
-
-                    // Upload models to blob storage
-                    if (!argsData.DryRun)
-                    {
-                        Console.WriteLine("Connecting to Azure Blob Storage...");
-                        var blobServiceClient = new BlobServiceClient(new Uri(argsData.BlobStorageUri!), credential);
-                        var containerClient = blobServiceClient.GetBlobContainerClient(argsData.BlobContainerName);
-                        await containerClient.CreateIfNotExistsAsync();
-                        await UploadModelToBlob(containerClient!, categoryPullsModelPath, categoryPullsModelBlobName);
-                        await UploadModelToBlob(containerClient!, servicePullsModelPath, servicePullsModelBlobName);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Dry run mode: Would upload to {categoryPullsModelBlobName} and {servicePullsModelBlobName}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ERROR: Error retraining pull requests models for {fullRepoName}: {ex.Message}");
-                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                    success = false;
-                }
-            }
+            success &= await RetrainModelAsync(
+                repo,
+                fullRepoName,
+                ModelType.PullRequest,
+                categoryConfigKey: "PrModelForCategoryLabels",
+                serviceConfigKey: "PrModelForServiceLabels",
+                downloadLimit: argsData.PullsLimit);
         }
     }
 }
@@ -202,6 +95,97 @@ finally
 
 return success ? 0 : 1;
 
+async Task<bool> RetrainModelAsync(
+    string repo,
+    string fullRepoName,
+    ModelType modelType,
+    string categoryConfigKey,
+    string serviceConfigKey,
+    int? downloadLimit)
+{
+    var typeName = modelType == ModelType.Issue ? "issues" : "pulls";
+    var categoryModelBlobName = GetConfigValue(fullRepoName, categoryConfigKey);
+    var serviceModelBlobName = GetConfigValue(fullRepoName, serviceConfigKey);
+
+    if (categoryModelBlobName is null || serviceModelBlobName is null)
+    {
+        Console.WriteLine($"WARNING: Skipping {typeName} models for {fullRepoName}: Missing configuration for {categoryConfigKey} or {serviceConfigKey}");
+        return true; // Not a failure, just skipped
+    }
+
+    var dataPath = Path.Combine(tempDir, $"{repo}-{typeName}.tsv");
+    var categoryModelPath = Path.Combine(tempDir, $"{repo}-category-{typeName}-model.zip");
+    var serviceModelPath = Path.Combine(tempDir, $"{repo}-service-{typeName}-model.zip");
+
+    try
+    {
+        // Download data from GitHub
+        if (modelType == ModelType.Issue)
+        {
+            await GitHubDataDownloader.DownloadIssuesAsync(
+                argsData.GitHubToken,
+                argsData.Org,
+                [repo],
+                dataPath,
+                downloadLimit,
+                argsData.PageSize,
+                argsData.PageLimit,
+                argsData.Retries,
+                argsData.ExcludedAuthors,
+                argsData.Verbose,
+                requireBothLabels: true);
+        }
+        else
+        {
+            await GitHubDataDownloader.DownloadPullRequestsAsync(
+                argsData.GitHubToken,
+                argsData.Org,
+                [repo],
+                dataPath,
+                downloadLimit,
+                argsData.PageSize,
+                argsData.PageLimit,
+                argsData.Retries,
+                argsData.ExcludedAuthors,
+                argsData.Verbose,
+                requireBothLabels: true);
+        }
+
+        string[]? syntheticDataPaths = null;
+        if (argsData.TrainWithSyntheticData)
+        {
+            syntheticDataPaths = await DownloadSyntheticData(repo, tempDir);
+        }
+
+        // Train models
+        ModelTrainer.CreateModel(dataPath, categoryModelPath, modelType, LabelType.Category, syntheticDataPaths);
+        ModelTrainer.CreateModel(dataPath, serviceModelPath, modelType, LabelType.Service, syntheticDataPaths);
+
+        // Upload models to blob storage
+        if (!argsData.DryRun)
+        {
+            Console.WriteLine("Connecting to Azure Blob Storage...");
+            var blobServiceClient = new BlobServiceClient(new Uri(GetConfigValue(fullRepoName, "BlobAccountUri")!), credential);
+            var containerClient = blobServiceClient.GetBlobContainerClient(GetConfigValue(fullRepoName, "BlobContainerName")!);
+            await containerClient.CreateIfNotExistsAsync();
+            await UploadModelToBlob(containerClient, categoryModelPath, categoryModelBlobName);
+            await UploadModelToBlob(containerClient, serviceModelPath, serviceModelBlobName);
+        }
+        else
+        {
+            Console.WriteLine($"Dry run mode: Skip upload to {categoryModelBlobName} and {serviceModelBlobName}");
+        }
+
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR: Error retraining {typeName} models for {fullRepoName}: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        return false;
+    }
+}
+
 async Task UploadModelToBlob(BlobContainerClient containerClient, string localPath, string blobName)
 {
     Console.WriteLine($"Uploading model to blob: {blobName}...");
@@ -216,21 +200,25 @@ async Task<string[]> DownloadSyntheticData(string repo, string tempDir)
 {
     Console.WriteLine("Downloading synthetic data from blob storage...");
     
-    var blobServiceClient = new BlobServiceClient(new Uri(argsData.BlobStorageUri!), credential);
-    var containerClient = blobServiceClient.GetBlobContainerClient($"generated-issues/{repo}");
+    var blobServiceClient = new BlobServiceClient(new Uri(GetConfigValue($"{argsData.Org}/{repo}", "BlobAccountUri")!), credential);
+    // Container name cannot contain slashes - use "generated-issues" as container and repo as prefix
+    var containerClient = blobServiceClient.GetBlobContainerClient("generated-issues");
 
     if (!await containerClient.ExistsAsync())
     {
-        Console.WriteLine($"No synthetic data container 'generated-issues/{repo}' found");
+        Console.WriteLine($"No synthetic data container 'generated-issues' found");
         return [];
     }
 
     var localFilePaths = new List<string>();
+    var prefix = $"{repo}/";
 
-    await foreach (var blobItem in containerClient.GetBlobsAsync())
+    await foreach (var blobItem in containerClient.GetBlobsAsync(prefix: prefix))
     {
         var blobClient = containerClient.GetBlobClient(blobItem.Name);
-        var localFilePath = Path.Combine(tempDir, blobItem.Name);
+        // Remove the repo prefix from the local file path
+        var localFileName = blobItem.Name.StartsWith(prefix) ? blobItem.Name[prefix.Length..] : blobItem.Name;
+        var localFilePath = Path.Combine(tempDir, localFileName);
         
         // Ensure directory exists for nested blob paths
         var directory = Path.GetDirectoryName(localFilePath);
@@ -244,6 +232,14 @@ async Task<string[]> DownloadSyntheticData(string repo, string tempDir)
         localFilePaths.Add(localFilePath);
     }
     
-    Console.WriteLine("Synthetic data download complete.");
+    if (localFilePaths.Count == 0)
+    {
+        Console.WriteLine($"No synthetic data found with prefix '{prefix}'");
+    }
+    else
+    {
+        Console.WriteLine($"Synthetic data download complete. Downloaded {localFilePaths.Count} file(s).");
+    }
+    
     return [.. localFilePaths];
 }

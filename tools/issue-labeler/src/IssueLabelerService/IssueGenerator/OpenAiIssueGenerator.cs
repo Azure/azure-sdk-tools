@@ -81,7 +81,8 @@ namespace IssueLabelerService
                 throw new InvalidOperationException("Failed to deserialize issues from AI response.");
             }
 
-            // Write answer to JSON file - answerData is an array of objects
+            // Write answer to TSV for model input, as well as more readable JSON file
+            // to local storage
             var jsonFileName = $"{payload.OutputFilename}.json";
             var fileName = $"{payload.OutputFilename}.tsv";
             await using (StreamWriter writer = new StreamWriter(fileName))
@@ -99,7 +100,10 @@ namespace IssueLabelerService
             _logger.LogInformation($"Answer written to file: {fileName}");
 
             // Upload TSV file to Blob storage
-            await UploadToBlobAsync(fileName, payload.RepositoryName);
+            if (payload.UploadToBlob)
+            {    
+                await UploadToBlobAsync(fileName, payload.RepositoryName);
+            }
 
             return response;
         }

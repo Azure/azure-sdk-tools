@@ -37,6 +37,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() activeApiRevisionId: string | undefined;
   @Input() userProfile : UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
+  @Input() showDocumentation: boolean = true;
   @Input() loadFailed : boolean = false;
   @Input() loadFailedMessage : string | undefined;
   @Input() codeLineSearchText: string | undefined;

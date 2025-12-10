@@ -53,7 +53,8 @@
         height: 42px;
         &.p-2 { padding: .5rem !important; }
         &.collapsed { border: 1px solid var(--border-color) !important; border-radius: .375rem !important; }
-        .d-flex.align-items-center:first-child, .severity-header-container { margin-left: 2rem; }
+        .d-flex.align-items-center:first-child {margin-left: 1rem;}
+        .severity-header-container { margin-left: 2rem; }
         .severity-header-container { display: flex; align-items: center; margin-right: 1rem; margin-bottom: .1rem; }
     }
 

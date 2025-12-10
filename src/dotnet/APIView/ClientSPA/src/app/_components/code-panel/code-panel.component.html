@@ -22,9 +22,9 @@
               </ng-template>
             </p-menu>
           </span>
-          <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
+          <span *ngIf="showDocumentation" class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
-      <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+      <div class="code-line-content" [style.padding-left.px]="((item.indent-1) * 15)">
           <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
           [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
       </div>

@@ -6,6 +6,7 @@ import { ReviewNavComponent } from 'src/app/_components/review-nav/review-nav.co
 import { CodePanelComponent } from 'src/app/_components/code-panel/code-panel.component';
 import { DialogModule } from 'primeng/dialog';
 import { TreeSelectModule } from 'primeng/treeselect';
+import { TreeModule } from 'primeng/tree';
 import { ButtonModule } from 'primeng/button';
 import { UiScrollModule  } from 'ngx-ui-scroll' ;
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
@@ -26,6 +27,7 @@ const routes: Routes = [
     CommonModule,
     DialogModule,
     TreeSelectModule,
+    TreeModule,
     ButtonModule,
     UiScrollModule,
     ReviewPageLayoutModule,

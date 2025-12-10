@@ -26,6 +26,7 @@ import { SimplemdeModule } from 'ngx-simplemde';
 import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
 import { environment } from 'src/environments/environment';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { TooltipModule } from 'primeng/tooltip';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
   baseUrl: environment.assetsPath 
@@ -65,6 +66,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     SidebarModule,
     TimeagoModule,
     InputTextModule,
+    TooltipModule,
     SimplemdeModule,
     MonacoEditorModule
   ],
@@ -88,6 +90,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     SplitterModule,
     SidebarModule,
     InputTextModule,
+    TooltipModule,
     TimeagoModule.forRoot(),
     SimplemdeModule.forRoot(),
     MonacoEditorModule.forRoot(monacoEditorConfig)

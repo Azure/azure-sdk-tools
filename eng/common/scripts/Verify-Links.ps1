@@ -167,11 +167,12 @@ function ProcessNpmLink([System.Uri]$linkUri) {
   $urlString = $linkUri.ToString()
   
   # First try versioned pattern: /package/NAME/v/VERSION -> registry.npmjs.org/NAME/VERSION
-  $apiUrl = $urlString -replace '^https?://(?:www\.)?npmjs\.com/package/(.*)/v/(.*)$', 'https://registry.npmjs.org/$1/$2'
+  # Use [^/?#]+ to capture only package name and version, exclude query params/fragments with .*$
+  $apiUrl = $urlString -replace '^https?://(?:www\.)?npmjs\.com/package/([^/?#]+(?:/[^/?#]+)*)/v/([^/?#]+).*$', 'https://registry.npmjs.org/$1/$2'
   
   # If no change, try non-versioned pattern: /package/NAME -> registry.npmjs.org/NAME
   if ($apiUrl -eq $urlString) {
-    $apiUrl = $urlString -replace '^https?://(?:www\.)?npmjs\.com/package/(.*)$', 'https://registry.npmjs.org/$1'
+    $apiUrl = $urlString -replace '^https?://(?:www\.)?npmjs\.com/package/([^/?#]+(?:/[^/?#]+)*).*$', 'https://registry.npmjs.org/$1'
   }
 
   return ProcessStandardLink ([System.Uri]$apiUrl)

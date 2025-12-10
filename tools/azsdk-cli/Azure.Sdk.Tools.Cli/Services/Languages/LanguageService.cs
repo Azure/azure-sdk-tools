@@ -143,10 +143,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// </summary>
         /// <param name="packagePath">The path to the package containing the tests.</param>
         /// <param name="ct">A cancellation token.</param>
-        /// <returns>True if all tests pass; otherwise, false.</returns>
-        public virtual Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+        /// <returns>A <see cref="TestRunResponse"/> containing process output details.</returns>
+        public virtual Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
         {
-            return Task.FromResult(true);
+            return Task.FromResult(new TestRunResponse(0, "This is not an applicable operation for this language."));
         }
 
         /// <summary>

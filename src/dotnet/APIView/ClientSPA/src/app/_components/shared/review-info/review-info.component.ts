@@ -55,6 +55,7 @@ export class ReviewInfoComponent {
   }
 
   onRightPanelCheckChange(event: any) {
+    this.showPageOptions = event.target.checked;
     this.pageOptionsEmitter.emit(event.target.checked);
   }
 }

@@ -12,7 +12,7 @@
             </app-revision-options>
         </ng-template>
         <ng-template *ngIf="showPageoptionsButton" pTemplate="end">
-            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [(ngModel)]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off" data-clarity-region="toggle-page-options"/>
+            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [ngModel]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off" data-clarity-region="toggle-page-options"/>
             <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="page-right-panel"><i class="fa fa-bars"></i></label>
         </ng-template>
     </p-menubar>

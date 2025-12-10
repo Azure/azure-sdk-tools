@@ -110,31 +110,30 @@ else if (string.IsNullOrWhiteSpace(openAiApiKey))
 ### 5. Modern SDK Usage
 - **Direct OpenAI SDK**: Uses the official OpenAI SDK which is actively maintained
 
-## Decision Matrix: Azure vs. External Providers
+## Decision Matrix: Microsoft Foundry vs. External Providers
 
-Use the following matrix to determine when to use Azure OpenAI versus external providers when using the Azure SDK CLI/MCP:
+Use the following matrix to determine when to use Microsoft Foundry versus external providers when using the Azure SDK CLI/MCP:
 
 | Scenario | Recommended Provider | Rationale |
 |----------|---------------------|-----------|
-| **Working with Microsoft confidential data** (e.g., unannounced APIs, internal specs) | Azure OpenAI | Data stays within Microsoft's infrastructure; complies with confidentiality requirements |
-| **Production Azure SDK development** | Azure OpenAI | Enterprise-grade security, compliance, and support; consistent with Azure ecosystem |
-| **CI/CD pipelines in Azure DevOps** | Azure OpenAI | Seamless integration with Azure services; Entra ID authentication |
+| **Working with Microsoft confidential data** (e.g., unannounced APIs, internal specs) | Microsoft Foundry | Data stays within Microsoft's infrastructure; complies with confidentiality requirements |
+| **Production Azure SDK development** | Microsoft Foundry | Enterprise-grade security, compliance, and support; consistent with Azure ecosystem |
+| **CI/CD pipelines in Azure DevOps** | Microsoft Foundry | Seamless integration with Azure services; Entra ID authentication |
 | **Local development with non-sensitive data** | External Provider (optional) | Flexibility to use local LLM servers; no Azure credentials needed |
-| **Offline development** | External Provider (local) | Local LLM servers (Ollama, LM Studio) work without internet connectivity |
 | **Cost-sensitive experimentation** | External Provider | May offer different pricing models; useful for high-volume testing |
-| **Evaluating alternative models** | External Provider | Access to models not available on Azure OpenAI |
+| **Evaluating alternative models** | External Provider | Access to models not available on Microsoft Foundry |
 
 ### Key Decision Factors
 
-1. **Data Sensitivity**: If working with any Microsoft confidential information, **always use Azure OpenAI**
-2. **Compliance Requirements**: Azure OpenAI provides enterprise compliance certifications required for production workloads
-3. **Authentication Needs**: Azure OpenAI integrates with Entra ID for seamless corporate authentication
+1. **Data Sensitivity**: If working with any Microsoft confidential information, **always use Microsoft Foundry**
+2. **Compliance Requirements**: Microsoft Foundry provides enterprise compliance certifications required for production workloads
+3. **Authentication Needs**: Microsoft Foundry integrates with Entra ID for seamless corporate authentication
 4. **Network Constraints**: External providers may be necessary in air-gapped or restricted network environments
 5. **Model Availability**: Some specialized models may only be available through specific providers
 
 ### Default Recommendation
 
-**Use Azure OpenAI (default configuration)** unless you have a specific need for an external provider AND are certain that no confidential data will be processed.
+**Use Microsoft Foundry (default configuration)** unless you have a specific need for an external provider AND are certain that no confidential data will be processed.
 
 ## Potential Issues and Considerations
 

@@ -205,11 +205,21 @@ The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase 
 
 **Enhanced Tool Behavior:**
 
+The tool accepts customization requests from multiple [entry points](#entry-points) through the `customizationRequest` parameter. This unified text input allows the tool to handle:
+
+- Build failures (compilation errors, linting, typing checks)
+- User prompts (natural language requests from agents or CLI)
+- API review feedback (comments from API View or PRs)
+- Breaking changes analysis output
+
+**Two-Phase Workflow:**
+
 1. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
-   - Analyze build failures and determine if TypeSpec decorators can resolve issues
+   - Analyze the customization request to determine if TypeSpec decorators can address the issues
    - Apply `client.tsp` adjustments (decorators, naming, grouping, scope configurations)
    - Re-run TypeSpec compilation and regenerate SDK code
    - Validate build and proceed to Phase B only if issues remain
+   - **Note**: The TypeSpec microagent may identify parts of the request that cannot be handled via `client.tsp` changes and forward those to Phase B
 
 2. **Phase B – [Code Customizations](#code-customizations):**
    - If Phase A doesn't resolve all issues, apply language-specific code patches
@@ -226,7 +236,12 @@ The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase 
 #### New inputs
 
 - `--package-path`/`packagePath`: The path to the package (SDK) directory to check. Lives in one of the `azure-sdk-for-*` repos.
-- [optional] `--update-commit-sha`/`commitSha`: The SHA of the commit in `azure-rest-api-specs` to use when regenerating the SDK.
+- `--customization-request`/`customizationRequest`: A text blob containing the customization request. This supports multiple [entry points](#entry-points):
+  - **Build failures**: Compilation errors, linting violations, typing check failures
+  - **User prompts**: Natural language requests like "rename the FooClient to BarClient for .NET"
+  - **API review feedback**: Feedback from API View or PR comments
+  - **Breaking changes**: Output from breaking changes analysis tools
+- [optional] `--typespec-project-path`/`typespecProjectPath`: The path to the TypeSpec project directory containing `client.tsp`. Used when operating from the azure-rest-api-specs repository to specify which TypeSpec project to work with.
 
 **Workflow:**
 
@@ -285,12 +300,31 @@ When users are operating from within an SDK repo without a local clone of the az
 
 ### CLI Usage Examples
 
-```bash
-# Default build
-azsdk package build --project-path /path/to/sdk
+**Example 1: User-provided customization request**
 
-# If build fails, CLI orchestrates fix workflow internally:
-azsdk package customized-code-update --project-path /path/to/sdk
+```bash
+# Apply specific customization from user prompt
+azsdk package customized-code-update \
+  --project-path /path/to/sdk \
+  --customization-request "Rename FooClient to BarClient for .NET"
+```
+
+**Example 2: API review feedback**
+
+```bash
+# Apply feedback from API View
+azsdk package customized-code-update \
+  --project-path /path/to/sdk \
+  --customization-request "API review feedback: Model names should be PascalCase. Change 'fooModel' to 'FooModel'"
+```
+
+**Example 3: Build failure handling**
+
+```bash
+# Apply fixes for build errors
+azsdk package customized-code-update \
+  --project-path /path/to/sdk \
+  --customization-request "Build failed with: error CS0246: The type or namespace name 'FooModel' could not be found"
 ```
 
 **Behavior:**
@@ -301,29 +335,46 @@ azsdk package customized-code-update --project-path /path/to/sdk
 
 ### MCP Usage Examples
 
-```json
-{
-  "tool": "azsdk_package_build_code",
-  "arguments": {
-    "projectPath": "/path/to/sdk"
-  }
-}
-```
-
-On failure:
+**Example 1: User-provided customization request**
 
 ```json
 {
   "tool": "azsdk_customized_code_update",
   "arguments": {
-    "projectPath": "/path/to/sdk",
-    "approvalRequired": true
+    "packagePath": "/path/to/sdk",
+    "customizationRequest": "Rename FooClient to BarClient for .NET"
   }
 }
 ```
 
-### Agent Conversation Example
+**Example 2: Working from azure-rest-api-specs repo**
 
+```json
+{
+  "tool": "azsdk_customized_code_update",
+  "arguments": {
+    "packagePath": "/path/to/sdk",
+    "typespecProjectPath": "/path/to/specs/Foo/",
+    "customizationRequest": "Breaking changes detected: FooOptions.timeout property type changed from int to Duration"
+  }
+}
+```
+
+**Example 3: Build failure handling**
+
+```json
+{
+  "tool": "azsdk_customized_code_update",
+  "arguments": {
+    "packagePath": "/path/to/sdk",
+    "customizationRequest": "Build failed with: error CS0246: The type or namespace name 'FooModel' could not be found"
+  }
+}
+```
+
+### Agent Conversation Examples
+
+**Example 1: Build Failure Entry Point**
 ```text
 User: My SDK build failed, can you fix it?
 Agent: Running build now...
@@ -336,6 +387,32 @@ Agent: Build succeeded! Here's the summary:
 Approve these changes?
 User: Approve.
 Agent: Changes applied. SDK build passing.
+```
+
+**Example 2: User Prompt Entry Point**
+```text
+User: I need to rename the FooClient to BarClient for .NET only
+Agent: I'll apply that customization to client.tsp...
+Agent: Added @clientName("BarClient", "csharp") to FooClient in client.tsp
+Agent: Regenerating SDK and validating build...
+Agent: Build succeeded! Changes summary:
+- client.tsp: Added @clientName("BarClient", "csharp") decorator
+Approve these changes?
+User: Approve.
+Agent: Changes applied.
+```
+
+**Example 3: API Review Feedback Entry Point**
+```text
+User: API review feedback says: "Model names should follow PascalCase convention. Change 'fooModel' to 'FooModel' for Python"
+Agent: Analyzing feedback and determining if TypeSpec changes can address this...
+Agent: This requires a @clientName decorator in client.tsp for Python scope.
+Agent: Applied @clientName("FooModel", "python") to fooModel, regenerating SDK...
+Agent: Build succeeded! Changes summary:
+- client.tsp: Added @clientName("FooModel", "python") to fooModel
+Approve these changes?
+User: Approve.
+Agent: Changes applied. You can now submit this for API review.
 ```
 
 ---

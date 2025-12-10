@@ -1,6 +1,6 @@
 import { InvocationContext } from '@azure/functions';
 import { SearchClient, AzureKeyCredential } from '@azure/search-documents';
-import { ChainedTokenCredential, DefaultAzureCredential, AzureCliCredential, EnvironmentCredential, ManagedIdentityCredential } from '@azure/identity';
+import { ChainedTokenCredential, AzureCliCredential, EnvironmentCredential, ManagedIdentityCredential } from '@azure/identity';
 
 /**
  * Document interface for AI Search operations

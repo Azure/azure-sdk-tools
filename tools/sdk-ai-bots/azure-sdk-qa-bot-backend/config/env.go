@@ -95,25 +95,27 @@ func GetBotTenantID() string {
 }
 
 func initCredential() error {
-	var err error
-	var cred azcore.TokenCredential
-	if os.Getenv("PROD_MODE") == "true" {
-		log.Println("Using ManagedIdentityCredential for production")
-		clientID := os.Getenv("AZURE_CLIENT_ID")
-		if clientID == "" {
-			return fmt.Errorf("AZURE_CLIENT_ID environment variable required when PROD_MODE is true")
-		}
-		cred, err = azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
-			ID: azidentity.ClientID(clientID),
-		})
-	} else {
-		log.Println("Using DefaultAzureCredential for local development")
-		cred, err = azidentity.NewDefaultAzureCredential(nil) // CodeQL [SM05142] This is guarded for local development
-	}
+	azCLI, err := azidentity.NewAzureCLICredential(nil)
 	if err != nil {
 		return err
 	}
-	Credential = cred
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	var opts *azidentity.ManagedIdentityCredentialOptions
+	if len(clientID) > 0 {
+		opts = &azidentity.ManagedIdentityCredentialOptions{
+			ID: azidentity.ClientID(os.Getenv("AZURE_CLIENT_ID")),
+		}
+	}
+
+	miCred, err := azidentity.NewManagedIdentityCredential(opts)
+	if err != nil {
+		return err
+	}
+	chain, err := azidentity.NewChainedTokenCredential([]azcore.TokenCredential{azCLI, miCred}, nil)
+	if err != nil {
+		return err
+	}
+	Credential = chain
 	return nil
 }
 

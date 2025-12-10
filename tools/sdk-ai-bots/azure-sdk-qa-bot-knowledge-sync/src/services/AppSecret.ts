@@ -1,4 +1,4 @@
-import { DefaultAzureCredential } from '@azure/identity';
+import { AzureCliCredential, EnvironmentCredential, ChainedTokenCredential, ManagedIdentityCredential } from '@azure/identity';
 import { SecretClient } from '@azure/keyvault-secrets';
 
 /**
@@ -15,8 +15,12 @@ export async function initSecrets(): Promise<void> {
     try {
         console.log('Loading secrets from Azure Key Vault...');
         
-        // Create a credential using DefaultAzureCredential
-        const credential = new DefaultAzureCredential();
+        // Create a credential
+        const credential = new ChainedTokenCredential(
+            new ManagedIdentityCredential(),
+            new EnvironmentCredential(),
+            new AzureCliCredential()
+        );
 
         // Establish a connection to the Key Vault client
         const client = new SecretClient(keyVaultEndpoint, credential);

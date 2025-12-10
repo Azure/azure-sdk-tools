@@ -111,6 +111,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		result.FullContext = &fullContext
 	}
 	result.Intension = intension
+	result.References = utils.FilterInvalidReferenceLinks(result.References, chunks)
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
@@ -427,17 +428,17 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	}
 	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
 	promptParser := prompt.DefaultPromptParser{}
-	if len(resp.Choices) > 0 {
-		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
-		if err != nil {
-			respStr, _ := resp.MarshalJSON()
-			log.Printf("ERROR: %s, response:%s", err, respStr)
-			return nil, err
-		}
-		return answer, nil
+	if len(resp.Choices) == 0 {
+		return nil, fmt.Errorf("no choices found in response")
 	}
-	log.Printf("No choices found in response")
-	return nil, fmt.Errorf("no choices found in response")
+	answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
+	if err != nil {
+		respStr, _ := resp.MarshalJSON()
+		log.Printf("ERROR: %s, response:%s", err, respStr)
+		return nil, err
+	}
+	return answer, nil
+
 }
 
 func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {

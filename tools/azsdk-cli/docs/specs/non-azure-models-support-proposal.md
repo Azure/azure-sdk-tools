@@ -122,6 +122,15 @@ else if (string.IsNullOrWhiteSpace(openAiApiKey))
 - **Mixed Authentication**: When both API key and Azure credentials are available, API key takes precedence
 - **Recommendation**: Document security best practices for credential management
 
+### 3. Confidential Data Leakage Risk
+- **Issue**: When using non-Microsoft model providers, there is a risk of accidentally sending Microsoft confidential data (e.g., unannounced TypeSpec APIs still in development, internal service specifications, or other proprietary information) to external parties
+- **Risk**: Sensitive information could be exposed to third-party model providers who may use the data for training or other purposes, potentially violating confidentiality agreements or revealing unreleased product features
+- **Mitigations**:
+  - **Explicit opt-in mechanism**: Require users to explicitly opt-in to using non-Azure endpoints via a CLI flag (e.g., `--allow-external-provider`) to ensure intentional use
+  - **Warning prompts**: Display a warning message when a non-Azure endpoint is detected, reminding users about data confidentiality considerations
+  - **Environment variable safeguards**: Consider requiring a specific environment variable (e.g., `AZSDK_ALLOW_EXTERNAL_AI_PROVIDERS=true`) to enable non-Azure providers
+  - **Documentation**: Clearly document the risks of using external providers with confidential data and provide guidance on appropriate use cases
+
 ## Conclusion
 
 The implementation in PR #12747 provides flexible endpoint configuration and authentication support while maintaining backward compatibility with existing Azure deployments.

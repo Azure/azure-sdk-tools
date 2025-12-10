@@ -9,8 +9,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { IndexPageComponent } from './_components/index-page/index-page.component';
 import { ReviewsListComponent } from './_components/reviews-list/reviews-list.component';
-import { TabMenuModule } from 'primeng/tabmenu';
-import { ToastModule } from 'primeng/toast';
+import { Toast } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { BadgeModule } from 'primeng/badge';
 import { Observable } from 'rxjs';
@@ -40,9 +39,8 @@ export function initializeApp(configService: ConfigService) {
         BadgeModule,
         BrowserModule,
         BrowserAnimationsModule,
-        TabMenuModule,
         ToolbarModule,
-        ToastModule], providers: [
+        Toast], providers: [
         ConfigService,
         {
             provide: APP_INITIALIZER,

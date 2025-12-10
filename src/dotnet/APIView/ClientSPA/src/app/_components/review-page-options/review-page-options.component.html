@@ -147,43 +147,43 @@
     <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showCommentsSwitch"
+            <p-toggleSwitch [(ngModel)]="showCommentsSwitch"
             (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toggle-comments" />
             <label class="ms-2">Comments</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch"
+            <p-toggleSwitch [(ngModel)]="showSystemCommentsSwitch"
             (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostics" />
             <label class="ms-2">System comments</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showDocumentationSwitch"
+            <p-toggleSwitch [(ngModel)]="showDocumentationSwitch"
             (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
             <label class="ms-2">Documentation</label>
         </li>
         <li *ngIf="hasHiddenAPIs" class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showHiddenAPISwitch"
+            <p-toggleSwitch [(ngModel)]="showHiddenAPISwitch"
             (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
             <label class="ms-2">Hidden APIs</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch"
+            <p-toggleSwitch [(ngModel)]="showLineNumbersSwitch"
             (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toggle-line-numbers"/>
             <label class="ms-2">Line numbers</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
+            <p-toggleSwitch [(ngModel)]="showLeftNavigationSwitch"
             (onChange)="onShowLeftNavigationSwitchChange($event)" data-clarity-region="toggle-left-navigation" />
             <label class="ms-2">Left navigation</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="disableCodeLinesLazyLoading"
+            <p-toggleSwitch [(ngModel)]="disableCodeLinesLazyLoading"
             (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
             <label class="ms-2">Disable lazy loading</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff style :</label>
-            <p-dropdown
+            <p-select
                 (onChange)="onDiffStyleChange($event)"
                 [options]="diffStyleOptions"
                 [(ngModel)]="selectedDiffStyle"
@@ -230,7 +230,7 @@
     <app-page-options-section sectionName="Review Options">
     <ul class="list-group">
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="subscribeSwitch"
+            <p-toggleSwitch [(ngModel)]="subscribeSwitch"
             (onChange)="onSubscribeSwitchChange($event)"
             data-clarity-region="toggle-subscribe" />
             <label class="ms-2">Subscribe</label>
@@ -265,7 +265,7 @@
                 <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
             </div>
             <div class="float-end">
-                <p-inputSwitch [(ngModel)]="overrideActiveConversationforApproval"/>
+                <p-toggleSwitch [(ngModel)]="overrideActiveConversationforApproval"/>
                 <label class="ms-2">Override</label>
             </div>
         </li>
@@ -274,7 +274,7 @@
                 <p class="mb-0">This API has fatal diagnostics.</p>
             </div>
             <div class="float-end">
-                <p-inputSwitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
+                <p-toggleSwitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
                 <label class="ms-2">Override</label>
             </div>
         </li>

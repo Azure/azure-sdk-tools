@@ -1,6 +1,6 @@
 <div style="display: flex; justify-content: space-between;">
     <span *ngIf="activeApiRevisionsMenu.length > 0" class="border-start ps-2">
-        <p-dropdown
+        <p-select
             [options]="activeApiRevisionsMenu"
             [(ngModel)]="selectedActiveAPIRevision"
             optionLabel="label"
@@ -64,12 +64,12 @@
                     <div *ngIf="(apiRevision.apiRevisionType === 'Manual' || apiRevision.language === 'TypeSpec') && apiRevision.label">{{ apiRevision.label }}</div>
                 </div>
             </ng-template>
-        </p-dropdown>
+        </p-select>
     </span>
 
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
         <label class="small fw-semibold" for="diff-api-revision-select">Diff :</label>
-        <p-dropdown
+        <p-select
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
             optionLabel="label"
@@ -133,11 +133,11 @@
                     <div *ngIf="(apiRevision.apiRevisionType === 'Manual' || apiRevision.language === 'TypeSpec') && apiRevision.label">{{ apiRevision.label }}</div>
                 </div>
             </ng-template>
-        </p-dropdown>
+        </p-select>
     </span>
 
     <span *ngIf="samplesRevisions.length > 0" class="border-start ps-2">
-        <p-dropdown
+        <p-select
             [options]="activeSamplesRevisionsMenu"
             [(ngModel)]="selectedActiveSamplesRevision"
             optionLabel="label"
@@ -175,11 +175,11 @@
                     </div>
                 </div>
             </ng-template>
-        </p-dropdown>
+        </p-select>
     </span>
 
     <span *ngIf="crossLanguageAPIRevisions.length > 0" class="ms-2 ps-2">
-        <p-dropdown
+        <p-select
             [options]="crossLanguageAPIRevisionsMenu"
             [(ngModel)]="selectedCrossLanguageAPIRevision"
             optionLabel="label"
@@ -229,6 +229,6 @@
                     <div *ngIf="(apiRevision.apiRevisionType === 'Manual' || apiRevision.language === 'TypeSpec') && apiRevision.label">{{ apiRevision.label }}</div>
                 </div>
             </ng-template>
-        </p-dropdown>
+        </p-select>
     </span>
 </div>

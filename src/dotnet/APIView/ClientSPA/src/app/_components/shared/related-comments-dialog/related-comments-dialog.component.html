@@ -95,7 +95,7 @@
       <!-- Actions Row -->
       <div class="d-flex align-items-center justify-content-end gap-2 mb-3">
         <!-- Disposition Dropdown -->
-        <p-dropdown 
+        <p-select 
           [options]="dispositionOptions" 
           [(ngModel)]="selectedDisposition"
           optionLabel="label" 
@@ -114,7 +114,7 @@
               <span>{{ option.label }}</span>
             </div>
           </ng-template>
-        </p-dropdown>
+        </p-select>
 
          <!-- Vertical Separator -->
         <div class="vr mx-2"></div>

@@ -78,14 +78,14 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar">
+<p-drawer *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true"  styleClass="revisions-sidebar">
     <app-revisions-list *ngIf="review"
         [review]="review"
         [userProfile]="userProfile"
         [revisionSidePanel]="revisionSidePanel!">
     </app-revisions-list>
-</p-sidebar>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="conversation-sidebar">
+</p-drawer>
+<p-drawer *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true"  styleClass="conversation-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
             <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
@@ -102,8 +102,8 @@
         (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
         (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
     </app-conversations >
-</p-sidebar>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar">
+</p-drawer>
+<p-drawer *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true"  styleClass="cross-language-revisions-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
             <h4>Cross Language Revisions</h4>
@@ -117,4 +117,4 @@
             (crossLangaugeAPIRevisionChange)="handleCrossLangaugeAPIRevisionChange($event)"></app-revision-options>
         </span>
     </div>
-</p-sidebar>
+</p-drawer>

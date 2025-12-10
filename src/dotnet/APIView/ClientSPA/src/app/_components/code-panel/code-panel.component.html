@@ -3,7 +3,8 @@
     <span class="visually-hidden">Loading...</span>
 </div>
 <div *ngIf="codePanelRowSource;" id="viewport" class="{{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
-  <p-messages class="sticky-top" *ngIf="showNoDiffInContentMessage()" [(value)]="noDiffInContentMessage" [closable]="false" />
+  <!-- TODO: Update message component for PrimeNG 20 -->
+  <!-- <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" [(value)]="noDiffInContentMessage" [closable]="false" /> -->
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">

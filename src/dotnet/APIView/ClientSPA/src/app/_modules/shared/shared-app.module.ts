@@ -8,24 +8,24 @@ import { RevisionsListComponent } from 'src/app/_components/revisions-list/revis
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { TableModule } from 'primeng/table';
 import { ChipModule } from 'primeng/chip';
-import { DropdownModule } from 'primeng/dropdown';
+import { Select } from 'primeng/select';
 import { MenubarModule } from 'primeng/menubar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SplitterModule } from 'primeng/splitter';
-import { SidebarModule } from 'primeng/sidebar';
+import { Drawer } from 'primeng/drawer';
 import { TimeagoModule } from 'ngx-timeago';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
-import { MessagesModule } from 'primeng/messages';
+import { Message } from 'primeng/message';
 import { BadgeModule } from 'primeng/badge';
 import { SimplemdeModule } from 'ngx-simplemde';
 import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
 import { environment } from 'src/environments/environment';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { ToggleSwitch } from 'primeng/toggleswitch';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
   baseUrl: environment.assetsPath 
@@ -50,19 +50,19 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     ContextMenuModule,
     TableModule,
     ChipModule,
-    DropdownModule,
+    Select,
     MenubarModule,
-    MessagesModule,
+    Message,
     MultiSelectModule,
     FormsModule,
     IconFieldModule,
     InputIconModule,
-    InputSwitchModule,
+    ToggleSwitch,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,
     SplitterModule,
-    SidebarModule,
+    Drawer,
     TimeagoModule,
     InputTextModule,
     SimplemdeModule,
@@ -74,19 +74,19 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     ContextMenuModule,
     TableModule,
     ChipModule,
-    DropdownModule,
+    Select,
     MenubarModule,
-    MessagesModule,
+    Message,
     MultiSelectModule,
     FormsModule,
     IconFieldModule,
     InputIconModule,
-    InputSwitchModule,
+    ToggleSwitch,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,
     SplitterModule,
-    SidebarModule,
+    Drawer,
     InputTextModule,
     TimeagoModule.forRoot(),
     SimplemdeModule.forRoot(),

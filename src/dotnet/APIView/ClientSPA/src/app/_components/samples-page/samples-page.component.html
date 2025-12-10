@@ -45,7 +45,7 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
+<p-drawer [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true"  styleClass="edit-samples-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
             <h4 *ngIf="samplesUpdateState == 'add'">Add usage samples</h4>
@@ -118,7 +118,7 @@
             </button>
         </div> 
     </ng-container>
-</p-sidebar>
+</p-drawer>
 <p-dialog header="Delete usage sample" 
     [modal]="true" [(visible)]="showSamplesDeleteModal"
     [style]="{ width: '20dvw' }">

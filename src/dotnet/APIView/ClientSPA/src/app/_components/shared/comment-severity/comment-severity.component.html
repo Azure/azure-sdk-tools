@@ -3,7 +3,7 @@
   <div *ngIf="!editable">
     <!-- Editable dropdown -->
     <div *ngIf="canEdit">
-      <p-dropdown 
+      <p-select 
         [options]="severityOptions" 
         [ngModel]="currentSeverityValue"
         (ngModelChange)="onSeverityChange($event)"
@@ -13,7 +13,7 @@
         [style]="{'width': '140px'}"
         styleClass="severity-dropdown"
         (click)="$event.stopPropagation()">
-      </p-dropdown>
+      </p-select>
     </div>
     <!-- Read-only badge when no edit permission -->
     <div *ngIf="!canEdit && hasSeverity">
@@ -28,7 +28,7 @@
     <div *ngIf="canEdit">
       <!-- Edit mode -->
       <div *ngIf="isEditingMode" class="severity-edit-container">
-        <p-dropdown 
+        <p-select 
           [options]="severityOptions" 
           [ngModel]="currentSeverityValue"
           (ngModelChange)="onSeverityChange($event)"
@@ -38,7 +38,7 @@
           [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
           styleClass="severity-dropdown"
           (click)="$event.stopPropagation()">
-        </p-dropdown>
+        </p-select>
       </div>
       <!-- Badge with edit icon -->
       <div *ngIf="!isEditingMode" 

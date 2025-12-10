@@ -16,7 +16,7 @@ import { DividerModule } from 'primeng/divider';
 import { DialogModule } from 'primeng/dialog';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { Popover } from 'primeng/popover';
 import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
 import { SharedAppModule } from './shared-app.module';
 import { CommonModule } from '@angular/common'; 
@@ -61,7 +61,7 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     TimelineModule,
     DividerModule,
     TooltipModule,
-    OverlayPanelModule
+    Popover
   ],
   imports: [
     CommonModule,
@@ -73,7 +73,7 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     DialogModule,
     CheckboxModule,
     TooltipModule,
-    OverlayPanelModule
+    Popover
   ]
 })
 export class ReviewPageLayoutModule { }

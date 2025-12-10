@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren, ViewChild } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
-import { OverlayPanel } from 'primeng/overlaypanel';
+import { Popover } from 'primeng/popover';
 import { take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
@@ -60,7 +60,7 @@ export class CommentThreadComponent {
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
-  @ViewChild('aiInfoPanel') aiInfoPanel!: OverlayPanel;
+  @ViewChild('aiInfoPanel') aiInfoPanel!: Popover;
   
   assetsPath : string = environment.assetsPath;
   currentAIInfoStructured: AICommentInfo | null = null;

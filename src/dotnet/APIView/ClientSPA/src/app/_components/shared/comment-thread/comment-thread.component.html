@@ -20,7 +20,7 @@
              class="severity-header-container">
             <div *ngIf="canEditSeverity">
                 <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
-                    <p-dropdown 
+                    <p-select 
                         [options]="severityOptions" 
                         [ngModel]="getSeverityEnumValue(codePanelRowData!.comments[0].severity)"
                         (ngModelChange)="onSeverityChange($event, codePanelRowData!.comments[0].id)"
@@ -30,7 +30,7 @@
                         [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
                         styleClass="severity-dropdown"
                         (click)="$event.stopPropagation()">
-                    </p-dropdown>
+                    </p-select>
                 </div>
                 <div *ngIf="isEditingSeverity !== codePanelRowData!.comments[0].id" 
                      class="severity-badge-editable d-flex align-items-center" 
@@ -130,7 +130,7 @@
                 <span class="text-muted">Add comment on line {{ actualLineNumber }}</span>
             </div>
             <div class="d-flex align-items-center" style="margin-right: 20px;">
-                <p-dropdown 
+                <p-select 
                     id="severity-select"
                     [options]="severityOptions" 
                     [(ngModel)]="selectedSeverity" 
@@ -139,7 +139,7 @@
                     optionValue="value"
                     [style]="{'min-width': '120px'}"
                     [showClear]="false">
-                </p-dropdown>
+                </p-select>
             </div>
         </div>
         <app-editor editorId="replyEditor" [(content)]="codePanelRowData!.draftCommentText" [style]="{ width: '100%'}"></app-editor>
@@ -185,7 +185,7 @@
 </app-related-comments-dialog>
 
 <!-- AI Information Overlay Panel -->
-<p-overlayPanel #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
+<p-popover #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
     <ng-template pTemplate="content">
         <div class="ai-info-content" *ngIf="currentAIInfoStructured">
             <div class="ai-info-body">
@@ -213,7 +213,7 @@
             </div>
         </div>
     </ng-template>
-</p-overlayPanel>
+</p-popover>
 
 <!-- AI Comment Feedback Dialog (for downvotes) -->
 <app-ai-comment-feedback-dialog

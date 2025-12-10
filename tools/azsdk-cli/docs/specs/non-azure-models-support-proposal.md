@@ -156,6 +156,54 @@ Use the following matrix to determine when to use Microsoft Foundry versus exter
   - **Environment variable safeguards**: Consider requiring a specific environment variable (e.g., `AZSDK_ALLOW_EXTERNAL_AI_PROVIDERS=true`) to enable non-Azure providers
   - **Documentation**: Clearly document the risks of using external providers with confidential data and provide guidance on appropriate use cases
 
+## Scope and Focus: Azure SDK CLI/MCP and Non-Azure SDKs
+
+### Primary Purpose
+
+The Azure SDK CLI/MCP is designed primarily for **Azure SDK development workflows**. Its core functionality, including code generation, API review, testing utilities, and development automation, is tailored specifically for the Azure SDK ecosystem.
+
+### Support for Non-Azure SDKs
+
+While the non-Azure model support enables technical flexibility, the question arises whether supporting non-Azure SDKs (such as the OpenAI .NET SDK) is desirable or meaningful within this tool.
+
+#### Considerations
+
+1. **Limited Applicability**: Most Azure SDK CLI/MCP workflows (TypeSpec generation, Azure API reviews, SDK packaging) are Azure-specific and would not apply to non-Azure SDKs
+2. **Ownership Context**: Microsoft owns the OpenAI .NET SDK, which creates a unique situation where some Azure SDK tooling concepts could theoretically apply
+3. **Workflow Overlap**: Only a subset of generic workflows (e.g., code quality checks, documentation generation, testing patterns) might be applicable to non-Azure SDKs
+
+#### Value Assessment
+
+| Aspect | Azure SDKs | Non-Azure SDKs (e.g., OpenAI .NET) |
+|--------|-----------|-----------------------------------|
+| TypeSpec/API generation | ✅ Full support | ❌ Not applicable |
+| Azure-specific reviews | ✅ Full support | ❌ Not applicable |
+| Generic code quality tools | ✅ Full support | ⚠️ Limited applicability |
+| Documentation workflows | ✅ Full support | ⚠️ Partial applicability |
+| Testing utilities | ✅ Full support | ⚠️ Limited applicability |
+
+### Alternative: Dedicated OpenAI SDK Tooling
+
+Given the limited overlap, a **separate dedicated tooling solution for OpenAI SDK development** could be a logical alternative.
+
+#### Cost-Effectiveness Analysis
+
+| Factor | Shared Tooling (Current Approach) | Dedicated OpenAI Tooling |
+|--------|----------------------------------|-------------------------|
+| **Development cost** | Lower (reuses existing infrastructure) | Higher (new tool development) |
+| **Maintenance cost** | Moderate (shared codebase complexity) | Higher (separate maintenance) |
+| **Feature fit** | Generic features only | Purpose-built for OpenAI workflows |
+| **User experience** | May feel misaligned for OpenAI users | Tailored experience |
+| **Long-term scalability** | Constrained by Azure SDK focus | Independent evolution |
+
+#### Recommendation
+
+For non-Azure SDKs like the OpenAI .NET SDK:
+
+1. **Short-term**: The current flexible model support provides a low-cost way to experiment with limited cross-SDK workflows
+2. **Long-term**: If significant demand emerges for OpenAI-specific tooling, a **dedicated solution would be more appropriate** than expanding Azure SDK CLI/MCP scope
+3. **Decision criteria**: Evaluate based on actual usage patterns and user feedback before investing in dedicated tooling
+
 ## Conclusion
 
 The implementation in PR #12747 provides flexible endpoint configuration and authentication support while maintaining backward compatibility with existing Azure deployments.

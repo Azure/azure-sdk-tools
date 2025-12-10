@@ -167,6 +167,11 @@ public class CommentsManagerTests
         commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "el1"))
             .ReturnsAsync(new List<CommentItemModel> { comment });
 
+        CommentItemModel capturedAgentComment = null;
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => capturedAgentComment = c)
+            .Returns(Task.CompletedTask);
+
         CommentUpdatesDto commentUpdate = null;
         string calledMethod = string.Empty;
         hubContextMock.Setup(g =>
@@ -182,6 +187,8 @@ public class CommentsManagerTests
 
         Assert.Equal("ReceiveCommentUpdates", calledMethod);
         Assert.Equal("review1", commentUpdate.ReviewId);
+        Assert.NotNull(capturedAgentComment);
+        Assert.Equal(CommentSource.AIGenerated, capturedAgentComment.CommentSource);
     }
 
     #region ToggleVoteAsync Tests

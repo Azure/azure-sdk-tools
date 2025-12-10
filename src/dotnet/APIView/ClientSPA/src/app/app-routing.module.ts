@@ -3,12 +3,11 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { IndexPageComponent } from './_components/index-page/index-page.component';
 import { AuthGuard } from './_guards/auth.guard';
-import { FeaturesGuard } from './_guards/features.guard';
 import { CONVERSATION_PAGE_NAME, INDEX_PAGE_NAME, PROFILE_PAGE_NAME, REVIEW_PAGE_NAME, REVISION_PAGE_NAME, SAMPLES_PAGE_NAME } from './_helpers/router-helpers';
 import { ProfilePageComponent } from './_components/profile-page/profile-page.component';
 
 const routes: Routes = [
-  { path: '', component: IndexPageComponent, canActivate: [AuthGuard, FeaturesGuard], data: { pageName: INDEX_PAGE_NAME } },
+  { path: '', component: IndexPageComponent, canActivate: [AuthGuard], data: { pageName: INDEX_PAGE_NAME } },
   { path: '',
      runGuardsAndResolvers: 'always',
      canActivate: [AuthGuard],

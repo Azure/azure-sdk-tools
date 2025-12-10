@@ -649,7 +649,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			continue
 		}
 
-		if strings.HasPrefix(chunk.ContextID, "static") {
+		if strings.HasPrefix(string(chunk.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)
 			continue
 		}
@@ -678,7 +678,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 
 		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
 
-		if strings.HasPrefix(result.ContextID, "static") {
+		if strings.HasPrefix(string(result.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, result)
 			continue
 		}

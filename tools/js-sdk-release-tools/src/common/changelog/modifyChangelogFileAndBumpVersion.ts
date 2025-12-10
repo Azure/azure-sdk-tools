@@ -34,7 +34,7 @@ export async function makeChangesForFirstRelease(
     isStableRelease: boolean,
     updateMode: UpdateMode = UpdateMode.Both
 ) {
-    const newVersion = '1.0.0-beta.1';
+    const newVersion = isStableRelease ? '1.0.0' : '1.0.0-beta.1';
     const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
     const content = `# Release History
     

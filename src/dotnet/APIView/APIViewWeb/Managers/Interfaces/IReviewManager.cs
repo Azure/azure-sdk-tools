@@ -14,6 +14,7 @@ namespace APIViewWeb.Managers
         public Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, FilterAndSortParams filterAndSortParams);
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false);
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false);
+        public Task<IEnumerable<string>> GetPackageNamesAsync(string language);
         public Task<(IEnumerable<ReviewListItemModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewListAsync(
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, bool? isApproved, int offset, int limit, string orderBy);
         public Task<ReviewListItemModel> GetReviewAsync(ClaimsPrincipal user, string id);

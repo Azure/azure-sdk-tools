@@ -10,10 +10,12 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
+#if DEBUG
 [McpServerToolType, Description("Cleans up various engsys resources")]
 public class CleanupTool : MCPTool
 {
     public const string CleanupAgentsCommandName = "agents";
+    private const string CleanupAiAgentsToolName = "azsdk_cleanup_ai_agents";
     private readonly IAzureAgentServiceFactory agentServiceFactory;
     private readonly ILogger<CleanupTool> logger;
 
@@ -37,7 +39,7 @@ public class CleanupTool : MCPTool
         ];
     }
 
-    protected override Command GetCommand() => new(CleanupAgentsCommandName, "Cleanup ai agents") { projectEndpointOpt };
+    protected override Command GetCommand() => new McpCommand(CleanupAgentsCommandName, "Cleanup ai agents", CleanupAiAgentsToolName) { projectEndpointOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
@@ -50,7 +52,7 @@ public class CleanupTool : MCPTool
         return await CleanupAgents(projectEndpoint, ct);
     }
 
-    [McpServerTool(Name = "azsdk_cleanup_ai_agents"), Description("Clean up AI agents in an AI foundry project. Leave projectEndpoint empty if not specified")]
+    [McpServerTool(Name = CleanupAiAgentsToolName), Description("Clean up AI agents in an AI foundry project. Leave projectEndpoint empty if not specified")]
     public async Task<DefaultCommandResponse> CleanupAgents(string? projectEndpoint = null, CancellationToken ct = default)
     {
         try
@@ -66,3 +68,4 @@ public class CleanupTool : MCPTool
         }
     }
 }
+#endif

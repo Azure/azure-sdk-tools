@@ -2,16 +2,16 @@
   "main": "dist/src/index.js",
   "dependencies": {
     "lodash": "4.17.21",
-    "@azure-tools/typespec-ts": "0.38.4"
+    "@azure-tools/typespec-ts": "0.46.1"
   },
   "devDependencies": {
-    "@azure-tools/typespec-azure-rulesets": "0.53.0",
+    "@azure-tools/typespec-azure-rulesets": "0.62.0",
     "vitest": "3.1.0",
-    "@azure-tools/typespec-azure-core": "0.53.0",
-    "@azure-tools/typespec-client-generator-core": "0.53.0",
-    "@typespec/compiler": "~0.67.0",
-    "@typespec/http": "~0.67.0",
-    "@typespec/rest": "~0.67.0",
-    "@typespec/versioning": "~0.67.0"
+    "@azure-tools/typespec-azure-core": "^0.62.0",
+    "@azure-tools/typespec-client-generator-core": "^0.62.0",
+    "@typespec/compiler": "^1.6.0",
+    "@typespec/http": "^1.6.0",
+    "@typespec/rest": "^0.76.0",
+    "@typespec/versioning": "^0.76.0"
   }
 }

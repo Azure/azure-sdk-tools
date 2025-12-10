@@ -13,11 +13,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private TestLogger<ReleasePlanTool> logger;
         private IDevOpsService devOpsService;
+        private IGitHelper gitHelper;
         private IGitHubService gitHubService;
         private ITypeSpecHelper typeSpecHelper;
         private IUserHelper userHelper;
         private IEnvironmentHelper environmentHelper;
         private ReleasePlanTool releasePlanTool;
+        private IInputSanitizer inputSanitizer;
 
         [SetUp]
         public void Setup()
@@ -25,7 +27,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             logger = new TestLogger<ReleasePlanTool>();
             devOpsService = new MockDevOpsService();
-            gitHubService = new Mock<IGitHubService>().Object;
+            gitHubService = new MockGitHubService();
+            inputSanitizer = new InputSanitizer();
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
             typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
@@ -39,13 +42,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             environmentHelperMock.Setup(x => x.GetBooleanVariable(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
             environmentHelper = environmentHelperMock.Object;
 
+            var gitHelperMock = new Mock<IGitHelper>();
+            gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
+            gitHelper = gitHelperMock.Object;
+
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
+                gitHelper,
                 typeSpecHelper,
                 logger,
                 userHelper,
                 gitHubService,
-                environmentHelper);
+                environmentHelper,
+                inputSanitizer);
         }
 
         [Test]
@@ -134,11 +143,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var testReleasePlanTool = new ReleasePlanTool(
                 devOpsService,
+                gitHelper,
                 typeSpecHelper,
                 logger,
                 userHelper,
                 gitHubService,
-                environmentHelperMock.Object);
+                environmentHelperMock.Object,
+                inputSanitizer);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -173,11 +184,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var testReleasePlanTool = new ReleasePlanTool(
                 devOpsService,
+                gitHelper,
                 typeSpecHelper,
                 logger,
                 userHelper,
                 gitHubService,
-                environmentHelperMock.Object);
+                environmentHelperMock.Object,
+                inputSanitizer);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -244,7 +257,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
 
-            sdkDetails = "[{\"Language\":\".NET\",\"PackageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"com.azure.resourcemanager.contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
+            sdkDetails = "[{\"Language\":\".NET\",\"PackageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"azure-resourcemanager-contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
             updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
         }
@@ -259,7 +272,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.True(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
         }
 
-
         [Test]
         public async Task Test_Update_SDK_Details_Data_language_excl()
         {
@@ -271,11 +283,62 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public  async Task Test_update_language_exclusion_justification()
+        public async Task Test_Update_SDK_Details_single_invalid_package_name()
+        {
+            var languagePackageMap = new Dictionary<string, string>
+            {
+                { "Javascript", "@invalid/package/name" },
+                { "Go", "invalid/package/name" },
+            };
+
+            foreach (var (language, package) in languagePackageMap)
+            {
+                string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
+                var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+                Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+                Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
+            }
+        }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_multiple_invalid_package_names()
+        {
+            string sdkDetails = "[{\"language\":\"JavaScript\",\"packageName\":\"@invalid/package\"}," +
+                        "{\"language\":\"Go\",\"packageName\":\"invalid/package\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("JavaScript -> @invalid/package"));
+            Assert.That(updateStatus.ResponseError, Does.Contain("Go -> invalid/package"));
+        }
+        
+        [Test]
+        public async Task Test_update_language_exclusion_justification()
         {
             var updateStatus = await releasePlanTool.UpdateLanguageExclusionJustification(100, "This is a test justification for excluding certain languages.");
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
         }
 
+        [Test]
+        public async Task Test_link_sdk_pull_request_to_release_plan()
+        {
+            var cases = new (string language, string pullRequestUrl)[]
+            {
+                ("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345"),
+                (".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
+                ("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
+                ("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
+                ("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345"),
+                ("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345"),
+            };
+
+            foreach (var (language, pullRequestUrl) in cases)
+            {
+                var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
+                Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
+            }
+        }
     }
 }

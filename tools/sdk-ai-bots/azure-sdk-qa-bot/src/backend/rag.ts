@@ -128,12 +128,14 @@ export interface RagApiError {
 
 // Feedback request interface
 export interface FeedbackRequestPayload {
+  channel_id?: string;
   tenant_id: string;
   messages: Message[];
   reaction: Reaction;
   comment?: string;
   reasons?: string[];
   link?: string;
+  user_name?: string;
 }
 
 // TODO: reuse function to post request to RAG backend
@@ -173,9 +175,9 @@ export async function getRAGReply(
 
 export async function sendFeedback(payload: FeedbackRequestPayload, options: RAGOptions, meta: object): Promise<void> {
   logger.info(
-    `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${
+    `Post feedback to RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${
       payload.tenant_id
-    }`,
+    } from user ${payload.user_name || 'unknown'}`,
     { meta }
   );
   try {

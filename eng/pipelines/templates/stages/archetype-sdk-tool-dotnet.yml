@@ -31,7 +31,7 @@ parameters:
     default: []
   - name: SkipReleaseStage
     type: boolean
-    default: true
+    default: false
   - name: ReleaseBinaries
     type: boolean
     default: false
@@ -66,6 +66,9 @@ parameters:
         Image: $(MACVMIMAGE)
         Os: macOS
   - name: CustomJobs
+    type: jobList
+    default: []
+  - name: CustomReleaseJobs
     type: jobList
     default: []
 
@@ -228,7 +231,7 @@ extends:
                 Publish: false
                 ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
-      - ${{ if and(ne(parameters.SkipReleaseStage, true), eq(variables['System.TeamProject'], 'internal'))}}:
+      - ${{ if and(ne(parameters.SkipReleaseStage, true), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - template: /eng/pipelines/templates/stages/archetype-sdk-publish-net.yml
           parameters:
             Feed: 'public/azure-sdk-for-net'
@@ -241,8 +244,9 @@ extends:
             dependsOn: BuildTestAndPackage
             VerifyChangelog: ${{ parameters.VerifyChangelog }}
             ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
+            CustomReleaseJobs: ${{ parameters.CustomReleaseJobs }}
 
-      - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
+      - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages
           displayName: Publish Docker Images
           dependsOn: BuildTestAndPackage

@@ -6,6 +6,7 @@ using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -20,6 +21,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILogger<ReleaseReadinessTool> logger
     ) : MCPTool
     {
+        private const string CheckPackageReleaseReadinessToolName = "azsdk_check_package_release_readiness";
+        
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
         private readonly Option<string> packageNameOpt = new("--package-name")
         {
             Description = "SDK package name",
@@ -34,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
         protected override Command GetCommand() =>
-            new("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
+            new McpCommand("release-readiness", "Checks release readiness of a SDK package", CheckPackageReleaseReadinessToolName) { packageNameOpt, languageOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -44,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await CheckPackageReleaseReadinessAsync(packageName, language);
         }
 
-        [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
+        [McpServerTool(Name = CheckPackageReleaseReadinessToolName), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
         public async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
@@ -109,15 +113,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Check last pipeline run status for the package and verify it completed successfully
                 package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
-                if (string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status))
-                {
-                    package.IsPackageReady = false;
-                }
+                bool hasPipelineWarning = string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status);
 
                 // Package release readiness status
                 if (package.IsPackageReady)
                 {
                     package.PackageReadinessDetails = $"Package '{packageName}' is ready for release. Queue a release pipeline run using the link {package.PipelineDefinitionUrl} to release the package.";
+                    
+                    // Add warning about pipeline status if not successful
+                    if (hasPipelineWarning)
+                    {
+                        package.PackageReadinessDetails += $"\n\nWARNING: The last known CI pipeline status for this package has failed. This might cause issues when running the release pipeline if the error was not a transient failure. Please review the last pipeline run at {package.LatestPipelineRun} to verify the failure was transient before proceeding with the release.";
+                    }
                 }
                 else
                 {

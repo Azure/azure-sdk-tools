@@ -11,7 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Core" Version="1.47.3" />
+    <PackageReference Include="Azure.AI.Translation.Text" Version="2.0.0-alpha.20251117.1" />
+    <PackageReference Include="Azure.Core" Version="1.50.0" />
     <PackageReference Include="Azure.Core.Expressions.DataFactory" Version="1.0.0" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.3" />
     <PackageReference Include="Azure.Security.Attestation" Version="1.0.0" />

@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Immutable;
+using System.ComponentModel;
+using ApiView;
 using APIView.Analysis;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
-using System.Collections.Immutable;
-using System.ComponentModel;
-using ApiView;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -47,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29.8";
+        public const string CurrentVersion = "29.9";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -81,7 +81,7 @@ namespace CSharpAPIParser.TreeToken
                 Language = "C#",
                 ParserVersion = CurrentVersion,
                 PackageName = assemblySymbol.Name,
-                PackageVersion = assemblySymbol.Identity.Version.ToString()
+                PackageVersion = GetPackageVersion(assemblySymbol) ?? assemblySymbol.Identity.Version.ToString()
             };
 
             if (dependencies != null)
@@ -203,6 +203,8 @@ namespace CSharpAPIParser.TreeToken
             if (nameSpaceToken != null)
             {
                 nameSpaceToken.RenderClasses.Add("namespace");
+                // Always set NavigationDisplayName for namespace, regardless of hidden status
+                // This ensures the namespace appears in the navigation tree
                 nameSpaceToken.NavigationDisplayName = namespaceSymbol.ToDisplayString();
             }
             namespaceLine.Tokens.Last().HasSuffixSpace = true;
@@ -293,8 +295,39 @@ namespace CSharpAPIParser.TreeToken
 
             DisplayName(reviewLine, namedType, namedType);
 
-            // Add navigation short name and render classes to Type name token. Navigation tree is built dynamically based on these properties
-            var typeToken = reviewLine.Tokens.FirstOrDefault(t => t.Kind == TokenKind.TypeName && string.IsNullOrEmpty(t.NavigateToId));
+            // Add navigation short name and render classes to the type name token
+            // Find the token representing the type name - it's the first token after the type keyword that's not a modifier
+            // Look for the token right before punctuation or base type (: or {)
+            var typeKeywordIndex = reviewLine.Tokens.FindIndex(t => 
+                t.Value == "class" || t.Value == "struct" || t.Value == "interface" || t.Value == "enum" || t.Value == "delegate");
+            
+            ReviewToken? typeToken = null;
+            if (typeKeywordIndex >= 0 && typeKeywordIndex < reviewLine.Tokens.Count - 1)
+            {
+                // The type name is typically the first non-generic, non-navigatable token after the type keyword
+                for (int i = typeKeywordIndex + 1; i < reviewLine.Tokens.Count; i++)
+                {
+                    var token = reviewLine.Tokens[i];
+                    // Stop at punctuation that indicates end of type name (: for base class, < for generics, { for body)
+                    if (token.Kind == TokenKind.Punctuation && (token.Value == ":" || token.Value == "{" || token.Value == "<"))
+                        break;
+                    // Skip generic type parameters and other punctuation
+                    if (token.Kind == TokenKind.Punctuation)
+                        continue;
+                    // Found the type name token - prefer one without NavigateToId
+                    if (string.IsNullOrEmpty(token.NavigateToId))
+                    {
+                        typeToken = token;
+                        break;
+                    }
+                    // Fallback: use any non-punctuation token
+                    if (typeToken == null && token.Kind != TokenKind.Punctuation)
+                    {
+                        typeToken = token;
+                    }
+                }
+            }
+            
             if (typeToken != null)
             {
                 typeToken.NavigationDisplayName = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
@@ -1078,6 +1111,23 @@ namespace CSharpAPIParser.TreeToken
                 throw new InvalidOperationException(
                     $"Duplicate LineId values found: {string.Join(", ", duplicates.Distinct())}");
             }
+        }
+
+        public static string? GetPackageVersion(IAssemblySymbol assemblySymbol)
+        {
+            var attr = assemblySymbol
+                .GetAttributes()
+                .FirstOrDefault(a => a.AttributeClass?.Name == "AssemblyInformationalVersionAttribute");
+
+            if (attr == null || attr.ConstructorArguments.Length == 0)
+                return null;
+            
+            var infoVersion = attr.ConstructorArguments[0].Value as string;
+            if (string.IsNullOrWhiteSpace(infoVersion))
+                return null;
+
+            var version = infoVersion.Split('+')[0].Trim();
+            return version.Length == 0 ? null : version;
         }
     }
 }

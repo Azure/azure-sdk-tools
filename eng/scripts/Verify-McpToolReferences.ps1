@@ -140,6 +140,7 @@ if ($instructionTools.Count -eq 0) {
     exit 0
 }
 
+$declarationConstantPattern = [regex]::new('\[McpServerTool\(Name\s*=\s*([A-Za-z]+)')
 $declarationString = '\[McpServerTool\(Name\s*=\s*\"(' + $ReferencePattern + ')\"'
 try {
     $declarationPattern = [regex]::new($declarationString)
@@ -157,6 +158,23 @@ foreach ($file in Get-ChildItem -Path $ToolSourcePath -Recurse -Include *.cs -Fi
     foreach ($match in $matches) {
         $toolName = $match.Groups[1].Value
         $declaredTools.Add($toolName) | Out-Null
+    }
+
+    # Find mcp tool names declared using string variable
+    $mcpConstantMatches = $declarationConstantPattern.Matches($content)
+    foreach ($constMatch in $mcpConstantMatches) {
+        $mcpConstantName = $constMatch.Groups[1].Value
+        $mcpToolNameConstantPattern = 'const string ' + $mcpConstantName + ' = "(' + $ReferencePattern + ')"'
+        $constantRegex = [regex]::new($mcpToolNameConstantPattern)
+        $constValueMatches = $constantRegex.Matches($content)
+        if ($constValueMatches.Count -eq 0) {
+            Write-Error "Could not find value for MCP tool name constant '$mcpConstantName' in file '$($file.FullName)'."
+            exit 1
+        }
+        foreach ($valueMatch in $constValueMatches) {
+            $toolName = $valueMatch.Groups[1].Value
+            $declaredTools.Add($toolName) | Out-Null
+        }
     }
 }
 

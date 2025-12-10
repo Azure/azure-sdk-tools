@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -35,11 +34,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         // Command names
         private const string BuildSdkCommandName = "build";
+        private const string BuildSdkToolName = "azsdk_package_build_code";
         private const string AzureSdkForPythonRepoName = "azure-sdk-for-python";
         private const int CommandTimeoutInMinutes = 30;
 
         protected override Command GetCommand() =>
-            new(BuildSdkCommandName, "Builds SDK source code for a specified language and project.") { SharedOptions.PackagePath };
+            new McpCommand(BuildSdkCommandName, "Builds SDK source code for a specified language and project", BuildSdkToolName) { SharedOptions.PackagePath };
 
         public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await BuildSdkAsync(packagePath, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_build_code"), Description("Build/compile SDK code for a specified project locally.")]
+        [McpServerTool(Name = BuildSdkToolName), Description("Build/compile SDK code for a specified project locally.")]
         public async Task<PackageOperationResponse> BuildSdkAsync(
             [Description("Absolute path to the SDK project.")]
             string packagePath,
@@ -57,16 +57,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
 
-                // Validate inputs
-                if (string.IsNullOrEmpty(packagePath))
+                // Validate package path
+                if (string.IsNullOrWhiteSpace(packagePath))
                 {
-                    return PackageOperationResponse.CreateFailure("Package path is required.");
+                    return PackageOperationResponse.CreateFailure("Package path is required and cannot be empty.");
                 }
 
-                if (!Directory.Exists(packagePath))
+                // Resolves relative paths to absolute
+                string fullPath = Path.GetFullPath(packagePath);
+                
+                if (!Directory.Exists(fullPath))
                 {
-                    return PackageOperationResponse.CreateFailure($"Path does not exist: {packagePath}");
+                    return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
                 }
+
+                packagePath = fullPath;
+                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
@@ -101,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         { "PackagePath", packagePath }
                     };
-                    
+
                     // Create and execute process options for the build script
                     var processOptions = this.specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, CommandTimeoutInMinutes);
                     if (processOptions != null)
@@ -114,7 +120,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while building SDK");
-                return PackageOperationResponse.CreateFailure($"An error occurred: {ex.Message}", nextSteps: ["Check the build logs for details about the error", "Resolve the issue", "Re-run the tool"]);
+                return PackageOperationResponse.CreateFailure(
+                    $"An error occurred: {ex.Message}",
+                    nextSteps: [
+                        "Check the build logs for details about the error",
+                        "Resolve the issue",
+                        "Re-run the tool",
+                        "Run verify setup tool if the issue is environment related"
+                        ]);
             }
         }
     }

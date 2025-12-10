@@ -639,7 +639,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 
 		// Check if this document appears at least twice in agentic results
 		docKey := fmt.Sprintf("%s|%s", chunk.ContextID, chunk.Title)
-		if agenticDocFrequency[docKey] >= 2 && !strings.HasPrefix(chunk.ContextID, "static") {
+		if agenticDocFrequency[docKey] >= 2 && !strings.HasPrefix(string(chunk.ContextID), "static") {
 			// Document appears multiple times, fetch complete content
 			if !processedFiles[chunk.Title] {
 				needCompleteFiles = append(needCompleteFiles, chunk)

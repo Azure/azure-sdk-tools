@@ -11,7 +11,7 @@ namespace APIViewWeb
 {
     public class ReviewCommentsModel
     {
-        private Dictionary<string, List<CommentThreadModel>> _threads;
+        private readonly Dictionary<string, List<CommentThreadModel>> _threads;
 
         public ReviewCommentsModel(string reviewId, IEnumerable<CommentItemModel> comments)
         {
@@ -47,12 +47,9 @@ namespace APIViewWeb
                 return result;
             }
 
-            foreach (var thread in threadModels)
+            foreach (var thread in threadModels.Where(thread => !string.IsNullOrEmpty(thread.LineClass) && !thread.LineClass.Contains("lvl_1_")))
             {
-                if (!string.IsNullOrEmpty(thread.LineClass) && !thread.LineClass.Contains("lvl_1_"))
-                {
-                    thread.LineClass += " d-none";
-                }
+                thread.LineClass += " d-none";
             }
             return result;
         }

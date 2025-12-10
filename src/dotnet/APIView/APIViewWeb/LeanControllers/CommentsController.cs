@@ -46,8 +46,6 @@ namespace APIViewWeb.LeanControllers
             var commentsInAPIRevision = comments.Where(c => c.CommentType == CommentType.APIRevision).ToList();
             var sampleComments = comments.Where(c => c.CommentType == CommentType.SampleRevision).ToList();
             var totalActiveConversiations = 0;
-            var totalActiveConversationInApiRevisions = 0;
-            var totalActiveConversationInSampleRevisions = 0;
 
             foreach (var group in comments.GroupBy(c => c.ThreadId ?? c.ElementId))
             {
@@ -57,21 +55,11 @@ namespace APIViewWeb.LeanControllers
                 }
             }
 
-            foreach (var group in sampleComments.GroupBy(c => c.ThreadId ?? c.ElementId))
-            {
-                if (!group.Any(c => c.IsResolved))
-                {
-                    totalActiveConversationInApiRevisions++;
-                }
-            }
+            int totalActiveConversationInApiRevisions = sampleComments.GroupBy(c => c.ThreadId ?? c.ElementId)
+                .Count(group => !group.Any(c => c.IsResolved));
 
-            foreach (var group in commentsInAPIRevision.GroupBy(c => c.ThreadId ?? c.ElementId))
-            {
-                if (!group.Any(c => c.IsResolved))
-                {
-                    totalActiveConversationInSampleRevisions++;
-                }
-            }
+            int totalActiveConversationInSampleRevisions = commentsInAPIRevision.GroupBy(c => c.ThreadId ?? c.ElementId)
+                .Count(group => !group.Any(c => c.IsResolved));
 
             dynamic conversationInfobject = new ExpandoObject();
             conversationInfobject.TotalActiveConversations = totalActiveConversiations;

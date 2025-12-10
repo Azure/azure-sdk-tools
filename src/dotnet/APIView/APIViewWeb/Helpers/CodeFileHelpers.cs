@@ -439,18 +439,17 @@ namespace APIViewWeb.Helpers
                     .OrderByDescending(g => g.Min(c => c.CreatedOn))
                     .ToList();
                 var threadRows = new List<CodePanelRowData>();
-                foreach (IGrouping<string, CommentItemModel> threadGroup in commentsByThread)
+                foreach (var threadRow in commentsByThread.Select(threadGroup => new CodePanelRowData
+                         {
+                             Type = CodePanelRowDatatype.CommentThread,
+                             NodeIdHashed = nodeIdHashed,
+                             AssociatedRowPositionInGroup = rowData.RowPositionInGroup,
+                             CommentsObj = threadGroup.OrderBy(c => c.CreatedOn).ToList(),
+                             ThreadId = threadGroup.Key, 
+                             IsResolvedCommentThread = threadGroup.Any(c => c.IsResolved),
+                             IsHiddenAPI = commentsForRow.IsHiddenAPI
+                         }))
                 {
-                    var threadRow = new CodePanelRowData
-                    {
-                        Type = CodePanelRowDatatype.CommentThread,
-                        NodeIdHashed = nodeIdHashed,
-                        AssociatedRowPositionInGroup = rowData.RowPositionInGroup,
-                        CommentsObj = threadGroup.OrderBy(c => c.CreatedOn).ToList(),
-                        ThreadId = threadGroup.Key, 
-                        IsResolvedCommentThread = threadGroup.Any(c => c.IsResolved),
-                        IsHiddenAPI = commentsForRow.IsHiddenAPI
-                    };
                     threadRow.RowClassesObj.Add("user-comment-thread");
                     threadRows.Add(threadRow);
                 }

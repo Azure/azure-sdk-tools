@@ -120,7 +120,6 @@ Use the following matrix to determine when to use Microsoft Foundry versus exter
 | **Production Azure SDK development** | Microsoft Foundry | Enterprise-grade security, compliance, and support; consistent with Azure ecosystem |
 | **CI/CD pipelines in Azure DevOps** | Microsoft Foundry | Seamless integration with Azure services; Entra ID authentication |
 | **Local development with non-sensitive data** | External Provider (optional) | Flexibility to use local LLM servers; no Azure credentials needed |
-| **Cost-sensitive experimentation** | External Provider | May offer different pricing models; useful for high-volume testing |
 | **Applying workflows to non-Azure SDKs** (e.g., OpenAI .NET SDK) | External Provider | Enables using Azure SDK CLI/MCP tools with SDKs outside the Azure ecosystem |
 | **Accessing models not available in Microsoft Foundry** | External Provider | Access to specialized or newer models that may not yet be deployed in Microsoft Foundry |
 

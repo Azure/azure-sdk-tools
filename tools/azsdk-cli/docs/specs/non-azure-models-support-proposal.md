@@ -168,41 +168,41 @@ While the non-Azure model support enables technical flexibility, the question ar
 
 #### Considerations
 
-1. **Limited Applicability**: Most Azure SDK CLI/MCP workflows (TypeSpec generation, Azure API reviews, SDK packaging) are Azure-specific and would not apply to non-Azure SDKs
-2. **Ownership Context**: Microsoft owns the OpenAI .NET SDK, which creates a unique situation where some Azure SDK tooling concepts could theoretically apply
-3. **Workflow Overlap**: Only a subset of generic workflows (e.g., code quality checks, documentation generation, testing patterns) might be applicable to non-Azure SDKs
+1. **Shared Technology Stack**: The OpenAI .NET SDK is TypeSpec-based, similar to Azure SDKs, which means many Azure SDK CLI/MCP workflows (TypeSpec generation, code generation patterns) could be applicable
+2. **Ownership Context**: Microsoft owns the OpenAI .NET SDK, which creates a unique situation where Azure SDK tooling concepts naturally align
+3. **Workflow Overlap**: Due to the shared TypeSpec foundation, a significant subset of workflows (code generation, API reviews, documentation generation, testing patterns) could be applicable to the OpenAI .NET SDK
 
 #### Value Assessment
 
 | Aspect | Azure SDKs | Non-Azure SDKs (e.g., OpenAI .NET) |
 |--------|-----------|-----------------------------------|
-| TypeSpec/API generation | ✅ Full support | ❌ Not applicable |
+| TypeSpec/API generation | ✅ Full support | ✅ Applicable (TypeSpec-based) |
 | Azure-specific reviews | ✅ Full support | ❌ Not applicable |
-| Generic code quality tools | ✅ Full support | ⚠️ Limited applicability |
-| Documentation workflows | ✅ Full support | ⚠️ Partial applicability |
-| Testing utilities | ✅ Full support | ⚠️ Limited applicability |
+| Generic code quality tools | ✅ Full support | ✅ Applicable |
+| Documentation workflows | ✅ Full support | ✅ Applicable |
+| Testing utilities | ✅ Full support | ⚠️ Partial applicability |
 
 ### Alternative: Dedicated OpenAI SDK Tooling
 
-Given the limited overlap, a **separate dedicated tooling solution for OpenAI SDK development** could be a logical alternative.
+Given that the OpenAI .NET SDK shares the TypeSpec foundation with Azure SDKs, **leveraging existing Azure SDK CLI/MCP infrastructure** may be more efficient than building dedicated tooling.
 
 #### Cost-Effectiveness Analysis
 
 | Factor | Shared Tooling (Current Approach) | Dedicated OpenAI Tooling |
 |--------|----------------------------------|-------------------------|
 | **Development cost** | Lower (reuses existing infrastructure) | Higher (new tool development) |
-| **Maintenance cost** | Moderate (shared codebase complexity) | Higher (separate maintenance) |
-| **Feature fit** | Generic features only | Purpose-built for OpenAI workflows |
-| **User experience** | May feel misaligned for OpenAI users | Tailored experience |
-| **Long-term scalability** | Constrained by Azure SDK focus | Independent evolution |
+| **Maintenance cost** | Lower (shared TypeSpec tooling) | Higher (separate maintenance) |
+| **Feature fit** | High overlap due to TypeSpec | Purpose-built but duplicative |
+| **User experience** | Familiar for TypeSpec users | Separate learning curve |
+| **Long-term scalability** | Benefits from Azure SDK investments | Independent evolution |
 
 #### Recommendation
 
 For non-Azure SDKs like the OpenAI .NET SDK:
 
-1. **Short-term**: The current flexible model support provides a low-cost way to experiment with limited cross-SDK workflows
-2. **Long-term**: If significant demand emerges for OpenAI-specific tooling, a **dedicated solution would be more appropriate** than expanding Azure SDK CLI/MCP scope
-3. **Decision criteria**: Evaluate based on actual usage patterns and user feedback before investing in dedicated tooling
+1. **Short-term**: The current flexible model support combined with shared TypeSpec infrastructure provides a cost-effective way to support OpenAI SDK workflows
+2. **Long-term**: Given the TypeSpec commonality, **extending Azure SDK CLI/MCP to support OpenAI SDK workflows may be more cost-effective** than dedicated tooling
+3. **Decision criteria**: Focus on identifying OpenAI-specific requirements that cannot be met by existing TypeSpec-based tooling
 
 ## Conclusion
 

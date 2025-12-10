@@ -11,6 +11,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 
 namespace APIViewWeb
@@ -19,11 +20,13 @@ namespace APIViewWeb
     {
         private readonly Container _reviewsContainer;
         private readonly Container _legacyReviewsContainer;
+        private readonly ILogger<CosmosReviewRepository> _logger;
 
-        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient)
+        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient, ILogger<CosmosReviewRepository> logger)
         {
             _reviewsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "Reviews");
             _legacyReviewsContainer = cosmosClient.GetContainer("APIView", "Reviews");
+            _logger = logger;
         }
 
         public async Task UpsertReviewAsync(ReviewListItemModel review)
@@ -358,6 +361,42 @@ SELECT VALUE {
             result.Remove(result.Length - 1, 1);
             result.Append(")");
             return result.ToString();
+        }
+
+        /// <summary>
+        /// Update a review's LastUpdatedOn timestamp to reflect revision changes
+        /// Only updates if the provided lastUpdatedOn is more recent than the review's current timestamp
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="lastUpdatedOn"></param>
+        /// <returns></returns>
+        public async Task UpdateReviewLastUpdatedOnAsync(string reviewId, DateTime lastUpdatedOn)
+        {
+            try
+            {
+                var response = await _reviewsContainer.ReadItemAsync<ReviewListItemModel>(reviewId, new PartitionKey(reviewId));
+                var review = response.Resource;
+                
+                if (review.LastUpdatedOn < lastUpdatedOn)
+                {
+                    review.LastUpdatedOn = lastUpdatedOn;
+                    
+                    var requestOptions = new ItemRequestOptions
+                    {
+                        IfMatchEtag = response.ETag
+                    };
+                    
+                    await _reviewsContainer.UpsertItemAsync(review, new PartitionKey(reviewId), requestOptions);
+                }
+            }
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Review {ReviewId} not found when attempting to update LastUpdatedOn timestamp. The review may have been deleted.", reviewId);
+            }
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.PreconditionFailed)
+            {
+                _logger.LogDebug("ETag mismatch when updating LastUpdatedOn for review {ReviewId}. Another concurrent operation has already updated the review, which is acceptable.", reviewId);
+            }
         }
     }
 }

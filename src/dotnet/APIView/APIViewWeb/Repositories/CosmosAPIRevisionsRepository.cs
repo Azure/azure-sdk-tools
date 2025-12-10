@@ -19,12 +19,12 @@ namespace APIViewWeb
     public class CosmosAPIRevisionsRepository : ICosmosAPIRevisionsRepository
     {
         private readonly Container _apiRevisionContainer;
-        private readonly Container _reviewsContainer;
+        private readonly ICosmosReviewRepository _reviewsRepository;
 
-        public CosmosAPIRevisionsRepository(IConfiguration configuration, CosmosClient cosmosClient)
+        public CosmosAPIRevisionsRepository(IConfiguration configuration, CosmosClient cosmosClient, ICosmosReviewRepository reviewsRepository)
         {
             _apiRevisionContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "APIRevisions");
-            _reviewsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "Reviews");
+            _reviewsRepository = reviewsRepository;
         }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace APIViewWeb
             await _apiRevisionContainer.UpsertItemAsync(revision, new PartitionKey(revision.ReviewId));
             
             // Update the parent review's LastUpdatedOn if this revision is more recent
-            await UpdateParentReviewLastUpdatedOnAsync(revision.ReviewId, revision.LastUpdatedOn);
+            await _reviewsRepository.UpdateReviewLastUpdatedOnAsync(revision.ReviewId, revision.LastUpdatedOn);
         }
 
         /// <summary>
@@ -331,30 +331,5 @@ namespace APIViewWeb
             return reviewIds;
         }
 
-        /// <summary>
-        /// Update the parent review's LastUpdatedOn timestamp to reflect revision changes
-        /// Only updates if the revision's LastUpdatedOn is more recent than the review's
-        /// </summary>
-        /// <param name="reviewId"></param>
-        /// <param name="revisionLastUpdatedOn"></param>
-        /// <returns></returns>
-        private async Task UpdateParentReviewLastUpdatedOnAsync(string reviewId, DateTime revisionLastUpdatedOn)
-        {
-            try
-            {
-                var response = await _reviewsContainer.ReadItemAsync<ReviewListItemModel>(reviewId, new PartitionKey(reviewId));
-                var review = response.Resource;
-                
-                if (review.LastUpdatedOn < revisionLastUpdatedOn)
-                {
-                    review.LastUpdatedOn = revisionLastUpdatedOn;
-                    await _reviewsContainer.UpsertItemAsync(review, new PartitionKey(reviewId));
-                }
-            }
-            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                // Review not found, skip update
-            }
-        }
     }
 }

@@ -6,9 +6,10 @@ export interface AICommentDeleteReason {
 }
 
 @Component({
-  selector: 'app-ai-comment-delete-dialog',
-  templateUrl: './ai-comment-delete-dialog.component.html',
-  styleUrls: ['./ai-comment-delete-dialog.component.scss']
+    selector: 'app-ai-comment-delete-dialog',
+    templateUrl: './ai-comment-delete-dialog.component.html',
+    styleUrls: ['./ai-comment-delete-dialog.component.scss'],
+    standalone: false
 })
 export class AICommentDeleteDialogComponent {
   @Input() visible: boolean = false;

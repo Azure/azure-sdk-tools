@@ -6,9 +6,10 @@ import { SamplesRevision } from 'src/app/_models/samples';
 import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
-  selector: 'app-review-page-layout',
-  templateUrl: './review-page-layout.component.html',
-  styleUrls: ['./review-page-layout.component.scss']
+    selector: 'app-review-page-layout',
+    templateUrl: './review-page-layout.component.html',
+    styleUrls: ['./review-page-layout.component.scss'],
+    standalone: false
 })
 export class ReviewPageLayoutComponent {
   @Input() review : Review | undefined = undefined;

@@ -19,9 +19,10 @@ import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLin
 import { DoublyLinkedList } from 'src/app/_helpers/doubly-linkedlist';
 
 @Component({
-  selector: 'app-code-panel',
-  templateUrl: './code-panel.component.html',
-  styleUrls: ['./code-panel.component.scss']
+    selector: 'app-code-panel',
+    templateUrl: './code-panel.component.html',
+    styleUrls: ['./code-panel.component.scss'],
+    standalone: false
 })
 export class CodePanelComponent implements OnChanges{
   @Input() codePanelRowData: CodePanelRowData[] = [];

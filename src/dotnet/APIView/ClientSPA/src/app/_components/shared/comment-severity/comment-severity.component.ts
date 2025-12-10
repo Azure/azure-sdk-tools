@@ -3,9 +3,10 @@ import { CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 
 @Component({
-  selector: 'app-comment-severity',
-  templateUrl: './comment-severity.component.html',
-  styleUrls: ['./comment-severity.component.scss']
+    selector: 'app-comment-severity',
+    templateUrl: './comment-severity.component.html',
+    styleUrls: ['./comment-severity.component.scss'],
+    standalone: false
 })
 export class CommentSeverityComponent {
   @Input() severity: CommentSeverity | string | null | undefined;

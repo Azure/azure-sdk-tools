@@ -7,9 +7,10 @@ import { APIRevision } from 'src/app/_models/revision';
 import { SamplesRevision } from 'src/app/_models/samples';
 
 @Component({
-  selector: 'app-revision-options',
-  templateUrl: './revision-options.component.html',
-  styleUrls: ['./revision-options.component.scss']
+    selector: 'app-revision-options',
+    templateUrl: './revision-options.component.html',
+    styleUrls: ['./revision-options.component.scss'],
+    standalone: false
 })
 export class RevisionOptionsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];

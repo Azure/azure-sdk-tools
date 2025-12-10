@@ -8,9 +8,10 @@ export interface AICommentFeedback {
 }
 
 @Component({
-  selector: 'app-ai-comment-feedback-dialog',
-  templateUrl: './ai-comment-feedback-dialog.component.html',
-  styleUrls: ['./ai-comment-feedback-dialog.component.scss']
+    selector: 'app-ai-comment-feedback-dialog',
+    templateUrl: './ai-comment-feedback-dialog.component.html',
+    styleUrls: ['./ai-comment-feedback-dialog.component.scss'],
+    standalone: false
 })
 export class AICommentFeedbackDialogComponent {
   @Input() visible: boolean = false;

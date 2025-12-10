@@ -17,7 +17,6 @@ from pathlib import Path
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from evals._util import ensure_json_obj
 from src._settings import SettingsManager
-from src._utils import get_prompt_path
 
 
 def _review_apiview(testcase: str, query: str, language: str):

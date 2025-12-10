@@ -100,7 +100,6 @@ public class CommentsTokenAuthControllerTests
             Files = [new APICodeFileModel { FileId = "file1" }],
             ChangeHistory = [],
             Approvers = [],
-            ViewedBy = [],
             AssignedReviewers = [],
             HeadingsOfSectionsWithDiff = new Dictionary<string, HashSet<int>>()
         };

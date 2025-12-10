@@ -113,7 +113,7 @@ public class VerifySetupTool : LanguageMcpTool
                         Requirement = req.requirement,
                         Instructions = req.instructions,
                         RequirementStatusDetails = result.Message,
-                        Reason = req.reason ?? null
+                        Reason = req.reason
                     });
                 } 
             }

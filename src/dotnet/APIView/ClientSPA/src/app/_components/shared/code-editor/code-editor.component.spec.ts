@@ -3,10 +3,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorComponent } from './code-editor.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { ReviewNavComponent } from '../../review-nav/review-nav.component';
 import { FormsModule } from '@angular/forms';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CodeEditorComponent', () => {
   let component: CodeEditorComponent;
@@ -14,27 +15,26 @@ describe('CodeEditorComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+    declarations: [
         CodeEditorComponent,
         ReviewNavComponent
-      ],
-      imports: [
-        HttpClientTestingModule,
-        FormsModule,
-        MonacoEditorModule.forRoot()
-      ],
-      providers: [
+    ],
+    imports: [FormsModule,
+        MonacoEditorModule.forRoot()],
+    providers: [
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap({ test: 'test' }),
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: convertToParamMap({ test: 'test' }),
+                },
+                queryParams: of(convertToParamMap({ test: 'test' }))
             },
-            queryParams: of(convertToParamMap({ test: 'test' }))
-          },
-        }
-      ]
-    });
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(CodeEditorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

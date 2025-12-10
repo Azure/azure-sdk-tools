@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { RevisionPageComponent } from './revision-page.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewPageLayoutComponent } from '../shared/review-page-layout/review-page-layout.component';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
@@ -16,6 +16,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('RevisionPageComponent', () => {
   let component: RevisionPageComponent;
@@ -23,37 +24,36 @@ describe('RevisionPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+    declarations: [
         RevisionPageComponent,
         NavBarComponent,
         ReviewInfoComponent,
         RevisionsListComponent,
         ReviewPageLayoutComponent,
         LanguageNamesPipe
-      ],
-      imports: [
-        BrowserAnimationsModule,
-        HttpClientTestingModule,
+    ],
+    imports: [BrowserAnimationsModule,
         MenubarModule,
         MenuModule,
         ContextMenuModule,
         DropdownModule,
         SidebarModule,
         ReactiveFormsModule,
-        FormsModule
-      ],
-      providers: [
+        FormsModule],
+    providers: [
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap({ reviewId: 'test' })
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: convertToParamMap({ reviewId: 'test' })
+                }
             }
-          }
         },
-        MessageService
-      ]
-    });
+        MessageService,
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(RevisionPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

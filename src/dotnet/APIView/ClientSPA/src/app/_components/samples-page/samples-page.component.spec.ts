@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SamplesPageComponent } from './samples-page.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewPageLayoutComponent } from '../shared/review-page-layout/review-page-layout.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
@@ -18,6 +18,7 @@ import { PanelModule } from 'primeng/panel';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
 import { Dialog, DialogModule } from 'primeng/dialog';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('SamplesPageComponent', () => {
   let component: SamplesPageComponent;
@@ -25,17 +26,15 @@ describe('SamplesPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+    declarations: [
         SamplesPageComponent,
         NavBarComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
         PageOptionsSectionComponent,
         LanguageNamesPipe
-      ],
-      imports: [
-        BrowserAnimationsModule,
-        HttpClientTestingModule,
+    ],
+    imports: [BrowserAnimationsModule,
         SplitterModule,
         SidebarModule,
         PanelModule,
@@ -43,21 +42,22 @@ describe('SamplesPageComponent', () => {
         MenubarModule,
         ReactiveFormsModule,
         FormsModule,
-        DialogModule
-      ],
-      providers: [
+        DialogModule],
+    providers: [
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap({ reviewId: 'test' }),
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: convertToParamMap({ reviewId: 'test' }),
+                },
+                queryParams: of(convertToParamMap({ activeSamplesRevisionId: 'test' }))
             },
-            queryParams: of(convertToParamMap({ activeSamplesRevisionId: 'test' }))
-          },
         },
-        MessageService
-      ]
-    });
+        MessageService,
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(SamplesPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

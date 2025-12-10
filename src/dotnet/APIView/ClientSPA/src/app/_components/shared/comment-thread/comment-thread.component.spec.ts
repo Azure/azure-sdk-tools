@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CommentThreadComponent } from './comment-thread.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { MessageService } from 'primeng/api';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
@@ -15,17 +16,16 @@ describe('CommentThreadComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [CommentThreadComponent],
-      imports: [
-        HttpClientTestingModule,
-        ReviewPageModule,
+    declarations: [CommentThreadComponent],
+    imports: [ReviewPageModule,
         SharedAppModule,
-        NoopAnimationsModule
-      ],
-      providers: [
-        MessageService
-      ]
-    });
+        NoopAnimationsModule],
+    providers: [
+        MessageService,
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(CommentThreadComponent);
     component = fixture.componentInstance;
     component.codePanelRowData = new CodePanelRowData();

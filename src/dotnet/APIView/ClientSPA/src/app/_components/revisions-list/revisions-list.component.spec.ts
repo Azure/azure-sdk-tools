@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { RevisionsListComponent } from './revisions-list.component';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { AppModule } from 'src/app/app.module';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('RevisionListComponent', () => {
   let component: RevisionsListComponent;
@@ -11,13 +12,11 @@ describe('RevisionListComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RevisionsListComponent],
-      imports: [
-        HttpClientTestingModule,
-        SharedAppModule,
-        AppModule
-      ]
-    });
+    declarations: [RevisionsListComponent],
+    imports: [SharedAppModule,
+        AppModule],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+});
     fixture = TestBed.createComponent(RevisionsListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

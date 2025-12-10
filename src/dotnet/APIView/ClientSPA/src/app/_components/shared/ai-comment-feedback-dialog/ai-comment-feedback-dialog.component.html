@@ -25,11 +25,12 @@
       <div *ngFor="let reason of feedbackReasons" class="reason-item">
         <p-checkbox 
           [value]="reason.key"
-          [label]="reason.label"
           [(ngModel)]="selectedReasons"
           [binary]="false"
+          [inputId]="'reason-' + reason.key"
           styleClass="reason-checkbox">
         </p-checkbox>
+        <label [for]="'reason-' + reason.key" class="ms-2">{{ reason.label }}</label>
       </div>
     </div>
 

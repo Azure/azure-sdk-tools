@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ConversationPageComponent } from './conversation-page.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewPageLayoutComponent } from '../shared/review-page-layout/review-page-layout.component';
 import { ConversationsComponent } from '../conversations/conversations.component';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
@@ -12,6 +12,7 @@ import { MenubarModule } from 'primeng/menubar';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SidebarModule } from 'primeng/sidebar';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('ConversationPageComponent', () => {
   let component: ConversationPageComponent;
@@ -19,32 +20,31 @@ describe('ConversationPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+    declarations: [
         ConversationPageComponent,
         ConversationsComponent,
         NavBarComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
         LanguageNamesPipe
-      ],
-      imports: [
-        BrowserAnimationsModule,
-        HttpClientTestingModule,
+    ],
+    imports: [BrowserAnimationsModule,
         MenuModule,
         SidebarModule,
-        MenubarModule
-      ],
-      providers: [
+        MenubarModule],
+    providers: [
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap({ reviewId: 'test' })
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: convertToParamMap({ reviewId: 'test' })
+                }
             }
-          }
-        }
-      ]
-    });
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(ConversationPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

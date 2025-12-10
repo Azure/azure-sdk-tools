@@ -2,12 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ConversationsComponent } from './conversations.component';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
@@ -15,24 +16,23 @@ describe('ConversationComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ConversationsComponent],
-      imports: [
-        HttpClientTestingModule,
-        ReviewPageModule,
-        SharedAppModule
-      ],
-      providers: [
+    declarations: [ConversationsComponent],
+    imports: [ReviewPageModule,
+        SharedAppModule],
+    providers: [
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap({ reviewId: 'test' }),
-            },
-            queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
-          }
-        }
-      ]
-    });
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: convertToParamMap({ reviewId: 'test' }),
+                },
+                queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
+            }
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(ConversationsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -10,8 +10,7 @@ import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageCon
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { Message } from 'primeng/api/message';
-import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
+import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
@@ -49,7 +48,7 @@ export class CodePanelComponent implements OnChanges{
   
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   
-  noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
+  noDiffInContentMessage : ToastMessageOptions[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
 
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;

@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from "@angular/common/http/testing";
+import { HttpTestingController, provideHttpClientTesting } from "@angular/common/http/testing";
 import { ApiTreeBuilderData} from "../_models/revision";
 import { TestBed } from "@angular/core/testing";
 import { CodePanelRowData } from "../_models/codePanelModels";
@@ -10,6 +10,7 @@ import contentWithFullDiff from "./test-data/content-with-diff-full-style.json";
 import contentWithAddedOnly from "./test-data/content-with-only-added-diff.json";
 import contentWithRemovedOnly from "./test-data/content-with-only-removed-diff.json";
 import contentWithAttributeDiff from "./test-data/content-with-attribute-diff-only.json";
+import { provideHttpClient, withInterceptorsFromDi } from "@angular/common/http";
  
 describe('API Tree Builder', () => {
     let httpMock: HttpTestingController;
@@ -17,8 +18,9 @@ describe('API Tree Builder', () => {
   
     beforeEach(() => {
       TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-      });
+    imports: [],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+});
 
       httpMock = TestBed.inject(HttpTestingController);
       apiTreeBuilder = new Worker(new URL('./apitree-builder.worker', import.meta.url));

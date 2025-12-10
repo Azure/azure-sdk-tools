@@ -1,7 +1,9 @@
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { providePrimeNG } from 'primeng/config';
+import Lara from '@primeng/themes/lara';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -26,41 +28,40 @@ export function initializeApp(configService: ConfigService) {
   }
 }
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    IndexPageComponent,
-    ReviewsListComponent,
-    ProfilePageComponent
-  ],
-  imports: [
-    SharedAppModule,
-    CommonModule,
-    AppRoutingModule,
-    BadgeModule,
-    BrowserModule,
-    BrowserAnimationsModule,
-    TabMenuModule,
-    ToolbarModule,
-    ToastModule,
-    HttpClientModule
-  ],
-  providers: [
-    ConfigService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      deps: [ConfigService],
-      multi: true
-    },
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: HttpErrorInterceptorService,
-      multi: true
-    },
-    MessageService,
-    CookieService
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        IndexPageComponent,
+        ReviewsListComponent,
+        ProfilePageComponent
+    ],
+    bootstrap: [AppComponent], imports: [SharedAppModule,
+        CommonModule,
+        AppRoutingModule,
+        BadgeModule,
+        BrowserModule,
+        BrowserAnimationsModule,
+        TabMenuModule,
+        ToolbarModule,
+        ToastModule], providers: [
+        ConfigService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeApp,
+            deps: [ConfigService],
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: HttpErrorInterceptorService,
+            multi: true
+        },
+        MessageService,
+        CookieService,
+        provideHttpClient(withInterceptorsFromDi()),
+        providePrimeNG({
+            theme: {
+                preset: Lara
+            }
+        })
+    ] })
 export class AppModule { }

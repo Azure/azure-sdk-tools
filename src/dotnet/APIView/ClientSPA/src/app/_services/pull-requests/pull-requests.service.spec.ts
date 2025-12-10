@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 
 import { PullRequestsService } from './pull-requests.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConfigService } from '../config/config.service';
 import { of } from 'rxjs';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('PullRequestsService', () => {
   let service: PullRequestsService;
@@ -15,12 +16,14 @@ describe('PullRequestsService', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [
+    imports: [],
+    providers: [
         PullRequestsService,
-        { provide: ConfigService, useValue: configServiceMock }
-      ]
-    });
+        { provide: ConfigService, useValue: configServiceMock },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     service = TestBed.inject(PullRequestsService);
   });
 

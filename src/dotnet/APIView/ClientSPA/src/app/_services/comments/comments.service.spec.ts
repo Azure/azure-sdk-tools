@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
 import { CommentsService } from './comments.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConfigService } from '../config/config.service';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -11,17 +12,19 @@ describe('CommentsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [
+    imports: [],
+    providers: [
         CommentsService,
         {
-          provide: ConfigService,
-          useValue: {
-            apiUrl: 'https://localhost:5001/api/'
-          }
-        }
-      ]
-    });
+            provide: ConfigService,
+            useValue: {
+                apiUrl: 'https://localhost:5001/api/'
+            }
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     service = TestBed.inject(CommentsService);
     httpMock = TestBed.inject(HttpTestingController);
     configService = TestBed.inject(ConfigService);

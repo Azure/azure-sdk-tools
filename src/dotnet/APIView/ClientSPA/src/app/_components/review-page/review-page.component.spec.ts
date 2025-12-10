@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ReviewPageComponent } from './review-page.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -18,7 +18,7 @@ import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { MessageService } from 'primeng/api';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { Review } from 'src/app/_models/review';
 
@@ -31,7 +31,7 @@ describe('ReviewPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ 
+    declarations: [
         ReviewPageComponent,
         ReviewNavComponent,
         ReviewPageOptionsComponent,
@@ -42,28 +42,27 @@ describe('ReviewPageComponent', () => {
         ReviewsListComponent,
         RevisionsListComponent,
         ApprovalPipe
-      ],
-      imports: [
-        HttpClientTestingModule,
-        BrowserAnimationsModule,
+    ],
+    imports: [BrowserAnimationsModule,
         SharedAppModule,
-        ReviewPageModule
-      ],
-      providers: [
+        ReviewPageModule],
+    providers: [
         {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap({ reviewId: 'test' }),
+            provide: ActivatedRoute,
+            useValue: {
+                snapshot: {
+                    paramMap: convertToParamMap({ reviewId: 'test' }),
+                },
+                queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
             },
-            queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
-          },
         },
         APIRevisionsService,
         ReviewsService,
-        MessageService
-      ]
-    });
+        MessageService,
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     fixture = TestBed.createComponent(ReviewPageComponent);
     component = fixture.componentInstance;
     reviewsService = TestBed.inject(ReviewsService);

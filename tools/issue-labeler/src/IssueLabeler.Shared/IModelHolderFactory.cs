@@ -30,7 +30,7 @@ namespace IssueLabeler.Shared
         {
             var modelHolders = new IModelHolder[2];
 
-            if (this.models.TryGetValue((owner, repo, LabelType.Service), out var categoryHolder) &&
+            if (this.models.TryGetValue((owner, repo, LabelType.Category), out var categoryHolder) &&
             this.models.TryGetValue((owner, repo, LabelType.Service), out var serviceHolder))
             {
                 modelHolders[0] = serviceHolder;

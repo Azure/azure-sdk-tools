@@ -1,41 +1,59 @@
-<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+@if (isLoading) {
+  <div class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
-</div>
-<p *ngIf="!isLoading && (getAPIRevisionWithComments()).length == 0" class="ms-4">This Review has no comments</p>
-<p-timeline *ngIf="!isLoading" [value]="getAPIRevisionWithComments()">
+  </div>
+}
+@if (!isLoading && (getAPIRevisionWithComments()).length == 0) {
+  <p class="ms-4">This Review has no comments</p>
+}
+@if (!isLoading) {
+  <p-timeline [value]="getAPIRevisionWithComments()">
     <ng-template pTemplate="marker" let-apiRevision>
-        <i class="bi bi-clock-history"></i>
+      <i class="bi bi-clock-history"></i>
     </ng-template>
     <ng-template pTemplate="content" let-apiRevision>
-        <div class="pb-3 conversation-group-revision-id" [attr.data-conversation-group-revision-id]="apiRevision.id">
-            <span>
-                <i class="{{ getAPIRevisionTypeClass(apiRevision) }} me-2"></i>
-                <span class="me-2" *ngIf="apiRevision.pullRequestNo"> {{ apiRevision.pullRequestNo }}</span>
-                <span class="emphasis-badge info me-2">version: {{ apiRevision.packageVersion }}</span>
-                <i class="fas fa-check-circle text-success me-2" *ngIf="apiRevision.isApproved"></i>
-                <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="me-2">{{ apiRevision.createdBy }}</span>
-                <span *ngIf="apiRevision.isReleased" class="emphasis-badge success me-2">released: {{ apiRevision.releasedOn | timeago }}</span>
-                <span class="emphasis-badge secondary me-2">created: {{ apiRevision.createdOn | timeago }}</span>
-                <span class="emphasis-badge secondary me-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
-                <span class="me-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
-            </span>
-            <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last" class="my-2 conversation-group-threads">
-                <a class="small conversation-group-element-id" (click)="navigateToCommentThreadOnRevisionPage($event)">{{ commentThread!.comments[0].elementId }}</a>
-                <app-comment-thread 
-                    [codePanelRowData]="commentThread"
-                    [allComments]="comments"
-                    [instanceLocation]='"conversations"'
-                    [userProfile]="userProfile"
-                    [preferredApprovers]="preferredApprovers"
-                    [reviewId]="review?.id || ''"
-                    (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
-                    (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
-                    (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
-                    (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
-                    (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
-                    (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)"
-                ></app-comment-thread>
-            </div>
-        </div>
+      <div class="pb-3 conversation-group-revision-id" [attr.data-conversation-group-revision-id]="apiRevision.id">
+        <span>
+          <i class="{{ getAPIRevisionTypeClass(apiRevision) }} me-2"></i>
+          @if (apiRevision.pullRequestNo) {
+            <span class="me-2"> {{ apiRevision.pullRequestNo }}</span>
+          }
+          <span class="emphasis-badge info me-2">version: {{ apiRevision.packageVersion }}</span>
+          @if (apiRevision.isApproved) {
+            <i class="fas fa-check-circle text-success me-2"></i>
+          }
+          @if (apiRevision.apiRevisionType !== 'Automatic') {
+            <span class="me-2">{{ apiRevision.createdBy }}</span>
+          }
+          @if (apiRevision.isReleased) {
+            <span class="emphasis-badge success me-2">released: {{ apiRevision.releasedOn | timeago }}</span>
+          }
+          <span class="emphasis-badge secondary me-2">created: {{ apiRevision.createdOn | timeago }}</span>
+          <span class="emphasis-badge secondary me-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+          @if (apiRevision.label) {
+            <span class="me-2">{{ apiRevision.label }}</span>
+          }
+        </span>
+        @for (commentThread of commentThreads.get(apiRevision.id); track commentThread; let isLast = $last) {
+          <div class="my-2 conversation-group-threads">
+            <a class="small conversation-group-element-id" (click)="navigateToCommentThreadOnRevisionPage($event)">{{ commentThread!.comments[0].elementId }}</a>
+            <app-comment-thread
+              [codePanelRowData]="commentThread"
+              [allComments]="comments"
+              [instanceLocation]='"conversations"'
+              [userProfile]="userProfile"
+              [preferredApprovers]="preferredApprovers"
+              [reviewId]="review?.id || ''"
+              (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+              (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
+              (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+              (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
+              (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+              (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)"
+            ></app-comment-thread>
+          </div>
+        }
+      </div>
     </ng-template>
-</p-timeline>
+  </p-timeline>
+}

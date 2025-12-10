@@ -1,178 +1,235 @@
-<div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info {{ floatItemStart }}">
+@if (codePanelRowData!.isResolvedCommentThread) {
+  <div class="resolution-info {{ floatItemStart }}">
     <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span>
-    </small>
+  </small>
 </div>
-<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" 
-     class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}"
-     [class.thread-collapsed]="isThreadCollapsed">
-    <div *ngIf="instanceLocation === 'code-panel' && codePanelRowData!.comments && codePanelRowData!.comments.length > 0" 
-         class="comment-thread-header d-flex justify-content-between align-items-center p-2 pb-1 mb-2"
-         [class.collapsed]="isThreadCollapsed">
+}
+@if (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded) {
+  <div
+    class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}"
+    [class.thread-collapsed]="isThreadCollapsed">
+    @if (instanceLocation === 'code-panel' && codePanelRowData!.comments && codePanelRowData!.comments.length > 0) {
+      <div
+        class="comment-thread-header d-flex justify-content-between align-items-center p-2 pb-1 mb-2"
+        [class.collapsed]="isThreadCollapsed">
         <div class="d-flex align-items-center" (click)="toggleThreadCollapse()" style="cursor: pointer;">
-            <i class="bi" 
-               [class.bi-chevron-down]="!isThreadCollapsed" 
-               [class.bi-chevron-right]="isThreadCollapsed" 
-               style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
-            <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
+          <i class="bi"
+            [class.bi-chevron-down]="!isThreadCollapsed"
+            [class.bi-chevron-right]="isThreadCollapsed"
+          style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
+          <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
         </div>
-        <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 && 
-                    hasSeverity(codePanelRowData!.comments[0].severity)" 
-             class="severity-header-container">
-            <div *ngIf="canEditSeverity">
-                <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
-                    <p-select 
-                        [options]="severityOptions" 
-                        [ngModel]="getSeverityEnumValue(codePanelRowData!.comments[0].severity)"
-                        (ngModelChange)="onSeverityChange($event, codePanelRowData!.comments[0].id)"
-                        (onHide)="onSeverityDropdownHide()"
-                        optionLabel="label" 
-                        optionValue="value"
-                        [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
-                        styleClass="severity-dropdown"
-                        (click)="$event.stopPropagation()">
+        @if (codePanelRowData!.comments && codePanelRowData!.comments.length > 0 &&
+          hasSeverity(codePanelRowData!.comments[0].severity)) {
+          <div
+            class="severity-header-container">
+            @if (canEditSeverity) {
+              <div>
+                @if (isEditingSeverity === codePanelRowData!.comments[0].id) {
+                  <div class="severity-edit-container">
+                    <p-select
+                      [options]="severityOptions"
+                      [ngModel]="getSeverityEnumValue(codePanelRowData!.comments[0].severity)"
+                      (ngModelChange)="onSeverityChange($event, codePanelRowData!.comments[0].id)"
+                      (onHide)="onSeverityDropdownHide()"
+                      optionLabel="label"
+                      optionValue="value"
+                      [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
+                      styleClass="severity-dropdown"
+                      (click)="$event.stopPropagation()">
                     </p-select>
-                </div>
-                <div *ngIf="isEditingSeverity !== codePanelRowData!.comments[0].id" 
-                     class="severity-badge-editable d-flex align-items-center" 
-                     [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)"
-                     (click)="startEditingSeverity(codePanelRowData!.comments[0].id); $event.stopPropagation()">
+                  </div>
+                }
+                @if (isEditingSeverity !== codePanelRowData!.comments[0].id) {
+                  <div
+                    class="severity-badge-editable d-flex align-items-center"
+                    [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)"
+                    (click)="startEditingSeverity(codePanelRowData!.comments[0].id); $event.stopPropagation()">
                     <span class="severity-text">{{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}</span>
                     <i class="pi pi-pencil ms-1 severity-edit-icon"></i>
-                </div>
-            </div>
-            <div *ngIf="!canEditSeverity">
+                  </div>
+                }
+              </div>
+            }
+            @if (!canEditSeverity) {
+              <div>
                 <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs">
-                    {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
+                  {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
                 </span>
-            </div>
-        </div>
-    </div>
-    <div *ngIf="!isThreadCollapsed" class="timeline-container">
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+    @if (!isThreadCollapsed) {
+      <div class="timeline-container">
         <p-timeline [value]="codePanelRowData!.comments">
-        <ng-template pTemplate="marker" let-comment>
-            <img *ngIf="comment.createdBy !== 'azure-sdk'" [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
-            <img *ngIf="comment.createdBy === 'azure-sdk'" alt="Azure SDK Copilot" src="{{assetsPath}}/icons/copilot.svg" width="40" height="40" class="user-avartar"/>
-        </ng-template>        
-        <ng-template pTemplate="content" let-comment>
+          <ng-template pTemplate="marker" let-comment>
+            @if (comment.createdBy !== 'azure-sdk') {
+              <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
+            }
+            @if (comment.createdBy === 'azure-sdk') {
+              <img alt="Azure SDK Copilot" src="{{assetsPath}}/icons/copilot.svg" width="40" height="40" class="user-avartar"/>
+            }
+          </ng-template>
+          <ng-template pTemplate="content" let-comment>
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
-                <ng-template pTemplate="header">
-                    <div class="d-flex align-items-center">
-                        <span class="fw-bold">{{ comment.createdBy }}</span>
-                        <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
-                        <!-- AI-generated Badge - Simple custom design -->
-                        <span *ngIf="isAIGenerated(comment) && hasAIInfo(comment)"
-                              class="ai-badge-custom ms-2"
-                              (click)="showAIInfo($event, comment)"
-                              title="Click to view AI information">
-                            AI-generated <i class="pi pi-info-circle"></i>
-                        </span>
-                        <!-- AI-generated Badge without icon - when no AI info available -->
-                        <span *ngIf="isAIGenerated(comment) && !hasAIInfo(comment)"
-                              class="ai-badge-custom ms-2">
-                            AI-generated
-                        </span>
-                    </div>
-                </ng-template>
-                <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
+              <ng-template pTemplate="header">
+                <div class="d-flex align-items-center">
+                  <span class="fw-bold">{{ comment.createdBy }}</span>
+                  <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                  <!-- AI-generated Badge - Simple custom design -->
+                  @if (isAIGenerated(comment) && hasAIInfo(comment)) {
+                    <span
+                      class="ai-badge-custom ms-2"
+                      (click)="showAIInfo($event, comment)"
+                      title="Click to view AI information">
+                      AI-generated <i class="pi pi-info-circle"></i>
+                    </span>
+                  }
+                  <!-- AI-generated Badge without icon - when no AI info available -->
+                  @if (isAIGenerated(comment) && !hasAIInfo(comment)) {
+                    <span
+                      class="ai-badge-custom ms-2">
+                      AI-generated
+                    </span>
+                  }
                 </div>
-                <div *ngIf="!comment.isInEditMode && hasRelatedComments(comment)" class="mt-2">
-                    <button class="related-comments-btn" (click)="showRelatedComments(comment)" pTooltip="View related issues" tooltipPosition="bottom">
-                        <span class="related-comments-indicator">
-                            <i class="pi pi-eye me-1"></i>{{ getRelatedCommentsCount(comment) }} related
-                        </span>
-                    </button>
+              </ng-template>
+              @if (!comment.isInEditMode) {
+                <div [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
                 </div>
-                <div *ngIf="comment.isInEditMode" class="mt-2 p-2 edit-editor-container">
-                    <app-editor [content]="comment.commentText" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>
-                    <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
-                        <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="getEditorContent(comment.id).length === 0" (click)="saveCommentAction($event)">Save</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
-                    </div>
+              }
+              @if (!comment.isInEditMode && hasRelatedComments(comment)) {
+                <div class="mt-2">
+                  <button class="related-comments-btn" (click)="showRelatedComments(comment)" pTooltip="View related issues" tooltipPosition="bottom">
+                    <span class="related-comments-indicator">
+                      <i class="pi pi-eye me-1"></i>{{ getRelatedCommentsCount(comment) }} related
+                    </span>
+                  </button>
                 </div>
-                <ng-template pTemplate="icons">
-                    <p-menu appendTo="body" [attr.data-menu-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
-                        <ng-template pTemplate="submenuheader" let-item>
-                            <span *ngIf="item?.label" class="ms-2">{{ item.label }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="item" let-item>
-                            <a pRipple [attr.data-item-id]="comment.id" [attr.data-element-id]="comment.elementId" class="flex align-items-center p-menuitem-link">
-                                <img *ngIf="item?.title" src="{{assetsPath}}/images/{{ item?.title! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25" class="ms-2">
-                                <i *ngIf="item?.icon" class="ms-2 {{item?.icon}}"></i>
-                                <span class="ms-2">{{ item.label }}</span>
-                            </a>
-                        </ng-template>
-                    </p-menu>
-                    <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
-                        <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
-                        <ng-template #noUpVotes>
-                            <span class="bi bi-hand-thumbs-up"></span>
-                        </ng-template>
-                    </button>
-                    <button *ngIf="comment.createdBy == 'azure-sdk'" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
-                        <span *ngIf="comment.downvotes.length > 0; else noDownVotes" class="bi bi-hand-thumbs-down-fill emoji-active" pTooltip="{{comment.downvotes.join(', ')}}" tooltipPosition="bottom">{{comment.downvotes.length}}</span>
-                        <ng-template #noDownVotes>
-                            <span class="bi bi-hand-thumbs-down"></span>
-                        </ng-template>
-                    </button>
-                    <button *ngIf="(getCommentActionMenuContent(comment.id)).length > 0" class="p-panel-header-icon p-link" (click)="toggleActionMenu($event, comment.id)">
-                        <span class="bi bi-three-dots-vertical"></span>
-                    </button>
-                </ng-template>
+              }
+              @if (comment.isInEditMode) {
+                <div class="mt-2 p-2 edit-editor-container">
+                  <app-editor [content]="comment.commentText" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>
+                  <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
+                    <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="getEditorContent(comment.id).length === 0" (click)="saveCommentAction($event)">Save</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
+                  </div>
+                </div>
+              }
+              <ng-template pTemplate="icons">
+                <p-menu appendTo="body" [attr.data-menu-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
+                  <ng-template pTemplate="submenuheader" let-item>
+                    @if (item?.label) {
+                      <span class="ms-2">{{ item.label }}</span>
+                    }
+                  </ng-template>
+                  <ng-template pTemplate="item" let-item>
+                    <a pRipple [attr.data-item-id]="comment.id" [attr.data-element-id]="comment.elementId" class="flex align-items-center p-menuitem-link">
+                      @if (item?.title) {
+                        <img src="{{assetsPath}}/images/{{ item?.title! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25" class="ms-2">
+                      }
+                      @if (item?.icon) {
+                        <i class="ms-2 {{item?.icon}}"></i>
+                      }
+                      <span class="ms-2">{{ item.label }}</span>
+                    </a>
+                  </ng-template>
+                </p-menu>
+                <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
+                  @if (comment.upvotes.length > 0) {
+                    <span class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
+                  } @else {
+                    <span class="bi bi-hand-thumbs-up"></span>
+                  }
+                </button>
+                @if (comment.createdBy == 'azure-sdk') {
+                  <button [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
+                    @if (comment.downvotes.length > 0) {
+                      <span class="bi bi-hand-thumbs-down-fill emoji-active" pTooltip="{{comment.downvotes.join(', ')}}" tooltipPosition="bottom">{{comment.downvotes.length}}</span>
+                    } @else {
+                      <span class="bi bi-hand-thumbs-down"></span>
+                    }
+                  </button>
+                }
+                @if ((getCommentActionMenuContent(comment.id)).length > 0) {
+                  <button class="p-panel-header-icon p-link" (click)="toggleActionMenu($event, comment.id)">
+                    <span class="bi bi-three-dots-vertical"></span>
+                  </button>
+                }
+              </ng-template>
             </p-panel>
-        </ng-template>
-    </p-timeline>
-    </div>
-    <div *ngIf="!isThreadCollapsed && (codePanelRowData!.showReplyTextBox)" class="px-2 pb-2 reply-editor-container">
-        <div *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0" 
-             class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+          </ng-template>
+        </p-timeline>
+      </div>
+    }
+    @if (!isThreadCollapsed && (codePanelRowData!.showReplyTextBox)) {
+      <div class="px-2 pb-2 reply-editor-container">
+        @if (!codePanelRowData!.comments || codePanelRowData!.comments.length === 0) {
+          <div
+            class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
             <div class="d-flex align-items-center" style="margin-left: 18px;">
-                <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=20" width="20" height="20" class="user-avartar me-2"/>
-                <span class="text-muted">Add comment on line {{ actualLineNumber }}</span>
+              <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=20" width="20" height="20" class="user-avartar me-2"/>
+              <span class="text-muted">Add comment on line {{ actualLineNumber }}</span>
             </div>
             <div class="d-flex align-items-center" style="margin-right: 20px;">
-                <p-select 
-                    id="severity-select"
-                    [options]="severityOptions" 
-                    [(ngModel)]="selectedSeverity" 
-                    (ngModelChange)="onSeveritySelectionChange($event)"
-                    optionLabel="label" 
-                    optionValue="value"
-                    [style]="{'min-width': '120px'}"
-                    [showClear]="false">
-                </p-select>
+              <p-select
+                id="severity-select"
+                [options]="severityOptions"
+                [(ngModel)]="selectedSeverity"
+                (ngModelChange)="onSeveritySelectionChange($event)"
+                optionLabel="label"
+                optionValue="value"
+                [style]="{'min-width': '120px'}"
+                [showClear]="false">
+              </p-select>
             </div>
-        </div>
+          </div>
+        }
         <app-editor editorId="replyEditor" [(content)]="codePanelRowData!.draftCommentText" [style]="{ width: '100%'}"></app-editor>
         <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
-            <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="!codePanelRowData!.draftCommentText || codePanelRowData!.draftCommentText.length === 0" (click)="saveCommentAction($event)">Add comment</button>  
-            <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
-            <button 
-                type="button" 
-                class="btn btn-sm btn-outline-secondary editor-action-btn" 
-                [class.active]="allowAnyOneToResolve" 
-                data-bs-toggle="button" 
-                [attr.aria-pressed]="allowAnyOneToResolve" 
-                (click)="toggleAllowAnyOneToResolve()">
-                <i *ngIf="allowAnyOneToResolve; else resolutionLocked" class="bi bi-check-square"></i>
-                <ng-template #resolutionLocked>
-                    <i class="bi bi-square"></i>
-                </ng-template>
-                Allow anyone to resolve
-            </button>
+          <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="!codePanelRowData!.draftCommentText || codePanelRowData!.draftCommentText.length === 0" (click)="saveCommentAction($event)">Add comment</button>
+          <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary editor-action-btn"
+            [class.active]="allowAnyOneToResolve"
+            data-bs-toggle="button"
+            [attr.aria-pressed]="allowAnyOneToResolve"
+            (click)="toggleAllowAnyOneToResolve()">
+            @if (allowAnyOneToResolve) {
+              <i class="bi bi-check-square"></i>
+            } @else {
+              <i class="bi bi-square"></i>
+            }
+            Allow anyone to resolve
+          </button>
         </div>
-    </div>
-    <div *ngIf="!isThreadCollapsed" class="mt-2 d-grid gap-2">
-        <div *ngIf="!(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
+      </div>
+    }
+    @if (!isThreadCollapsed) {
+      <div class="mt-2 d-grid gap-2">
+        @if (!(codePanelRowData!.showReplyTextBox)) {
+          <div class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
-        </div>
-        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
-    </div>
-</div>
-<div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
+          </div>
+        }
+        @if (codePanelRowData!.comments?.length! > 0) {
+          <button type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
+        }
+      </div>
+    }
+  </div>
+}
+@if (instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)) {
+  <div class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
-</div>
+  </div>
+}
 
 <app-related-comments-dialog
   [relatedComments]="relatedComments"
@@ -186,47 +243,53 @@
 
 <!-- AI Information Overlay Panel -->
 <p-popover #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
-    <ng-template pTemplate="content">
-        <div class="ai-info-content" *ngIf="currentAIInfoStructured">
-            <div class="ai-info-body">
-                <div class="ai-info-item" *ngFor="let item of currentAIInfoStructured.items">
-                    <i class="pi ai-info-icon" [ngClass]="item.icon"></i>
-                    <div class="ai-info-details">
-                        <span class="ai-info-label">{{ item.label }}</span>
-                        <span class="ai-info-value" [ngClass]="item.valueClass || ''">
-                            <ng-container *ngIf="item.valueList && item.valueList.length > 0; else singleValue">
-                                <code *ngFor="let id of item.valueList; let last = last">
-                                    {{ id }}<ng-container *ngIf="!last">, </ng-container>
-                                </code>
-                            </ng-container>
-                            <ng-template #singleValue>
-                                <ng-container *ngIf="item.valueClass; else codeValue">
-                                    {{ item.value }}
-                                </ng-container>
-                                <ng-template #codeValue>
-                                    <code>{{ item.value }}</code>
-                                </ng-template>
-                            </ng-template>
-                        </span>
-                    </div>
-                </div>
+  <ng-template pTemplate="content">
+    @if (currentAIInfoStructured) {
+      <div class="ai-info-content">
+        <div class="ai-info-body">
+          @for (item of currentAIInfoStructured.items; track item) {
+            <div class="ai-info-item">
+              <i class="pi ai-info-icon" [ngClass]="item.icon"></i>
+              <div class="ai-info-details">
+                <span class="ai-info-label">{{ item.label }}</span>
+                <span class="ai-info-value" [ngClass]="item.valueClass || ''">
+                  @if (item.valueList && item.valueList.length > 0) {
+                    @for (id of item.valueList; track id; let last = $last) {
+                      <code>
+                        {{ id }}@if (!last) {
+                        ,
+                      }
+                    </code>
+                  }
+                } @else {
+                  @if (item.valueClass) {
+                    {{ item.value }}
+                  } @else {
+                    <code>{{ item.value }}</code>
+                  }
+                }
+              </span>
             </div>
-        </div>
-    </ng-template>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</ng-template>
 </p-popover>
 
 <!-- AI Comment Feedback Dialog (for downvotes) -->
 <app-ai-comment-feedback-dialog
-    [(visible)]="showAIFeedbackDialog"
-    [commentId]="pendingDownvoteCommentId"
-    (feedbackSubmit)="onAIFeedbackSubmit($event)"
-    (cancel)="onAIFeedbackCancel()">
+  [(visible)]="showAIFeedbackDialog"
+  [commentId]="pendingDownvoteCommentId"
+  (feedbackSubmit)="onAIFeedbackSubmit($event)"
+  (cancel)="onAIFeedbackCancel()">
 </app-ai-comment-feedback-dialog>
 
 <!-- AI Comment Delete Dialog (for deletions) -->
 <app-ai-comment-delete-dialog
-    [(visible)]="showAIDeleteDialog"
-    [commentId]="pendingDeleteCommentId"
-    (deleteConfirm)="onAIDeleteConfirm($event)"
-    (cancel)="onAIDeleteCancel()">
+  [(visible)]="showAIDeleteDialog"
+  [commentId]="pendingDeleteCommentId"
+  (deleteConfirm)="onAIDeleteConfirm($event)"
+  (cancel)="onAIDeleteCancel()">
 </app-ai-comment-delete-dialog>

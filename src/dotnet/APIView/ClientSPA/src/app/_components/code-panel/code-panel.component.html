@@ -1,67 +1,81 @@
 
-<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+@if (isLoading) {
+  <div class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
-</div>
-<div *ngIf="codePanelRowSource;" id="viewport" class="{{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
-  <!-- TODO: Update message component for PrimeNG 20 -->
-  <!-- <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" [(value)]="noDiffInContentMessage" [closable]="false" /> -->
-  <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
-    [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
-      <div class="line-actions">
-          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)">
-            <span class="text-decoration-none" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
-            <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
-              <ng-template pTemplate="item" let-item>
-                <span pRipple [attr.data-item-id]="index" class="flex align-items-center p-menuitem-link">
-                  <i *ngIf="item?.icon" class="mx-2 {{item?.icon}}"></i>
-                  {{ item.label }}
-                </span>
-              </ng-template>
-            </p-menu>
-          </span>
+  </div>
+}
+@if (codePanelRowSource;) {
+  <div id="viewport" class="{{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
+    <!-- TODO: Update message component for PrimeNG 20 -->
+    <!-- <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" [(value)]="noDiffInContentMessage" [closable]="false" /> -->
+    <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
+      [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
+      @if (item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation) {
+        <div class="line-actions">
+          @if (showLineNumbers && item.lineNumber > 0) {
+            <span [ngClass]="getLineNumberClassObject(item)">
+              <span class="text-decoration-none" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
+              <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
+                <ng-template pTemplate="item" let-item>
+                  <span pRipple [attr.data-item-id]="index" class="flex align-items-center p-menuitem-link">
+                    @if (item?.icon) {
+                      <i class="mx-2 {{item?.icon}}"></i>
+                    }
+                    {{ item.label }}
+                  </span>
+                </ng-template>
+              </p-menu>
+            </span>
+          }
           <span class="small toggle-user-comments-btn {{item.toggleCommentsClasses}}"></span>
           <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
-      </div>
-      <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
-          <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
-          [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
-      </div>
-    </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">
-      <div class="code-line-content">
-        <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
-      </div>
-    </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
-      <app-comment-thread
-        [codePanelRowData]="item"
-        [allComments]="allComments"
-        [allCodePanelRowData]="codePanelRowData"
-        [associatedCodeLine]="getAssociatedCodeLine(item)"
-        [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
-        [userProfile]="userProfile"
-        [preferredApprovers]="preferredApprovers"
-        [reviewId]="reviewId || ''"
-        (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
-        (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
-        (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
-        (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
-        (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
-        (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
-        (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
-        (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
-      </app-comment-thread>
-    </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguage">
-      <app-cross-lang-view
-        [codePanelRowData]="item"
-        [userProfile]="userProfile"
-        (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
-      ></app-cross-lang-view>
-    </ng-container>
+        </div>
+        <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+          @for (token of item.rowOfTokens; track token) {
+            <span [ngClass]="getTokenClassObject(token)"
+            [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
+          }
+        </div>
+      }
+      @if (item.type === CodePanelRowDatatype.Diagnostics) {
+        <div class="code-line-content">
+          <span>{{ item.diagnostics.text }} @if (item.diagnostics.helpLinkUri) {
+            <a href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a>
+          }</span>
+        </div>
+      }
+      @if (item.type === CodePanelRowDatatype.CommentThread) {
+        <app-comment-thread
+          [codePanelRowData]="item"
+          [allComments]="allComments"
+          [allCodePanelRowData]="codePanelRowData"
+          [associatedCodeLine]="getAssociatedCodeLine(item)"
+          [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
+          [userProfile]="userProfile"
+          [preferredApprovers]="preferredApprovers"
+          [reviewId]="reviewId || ''"
+          (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
+          (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+          (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
+          (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+          (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+          (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
+          (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
+          (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
+        </app-comment-thread>
+      }
+      @if (item.type === CodePanelRowDatatype.CrossLanguage) {
+        <app-cross-lang-view
+          [codePanelRowData]="item"
+          [userProfile]="userProfile"
+          (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
+        ></app-cross-lang-view>
+      }
+    </div>
   </div>
-</div>
-<div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !codePanelRowSource">
-  <h5 [innerHTML]="loadFailedMessage"></h5>
-</div>
+}
+@if (!isLoading && !codePanelRowSource) {
+  <div class="pt-4 d-flex justify-content-center align-items-center">
+    <h5 [innerHTML]="loadFailedMessage"></h5>
+  </div>
+}

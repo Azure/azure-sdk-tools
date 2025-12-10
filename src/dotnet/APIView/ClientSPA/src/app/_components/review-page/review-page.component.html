@@ -1,120 +1,134 @@
 <app-review-page-layout
-    [review]="review"
-    [sideMenu]="sideMenu"
-    [apiRevisions]="apiRevisions"
-    [activeApiRevisionId]="activeApiRevisionId"
-    [diffApiRevisionId]="diffApiRevisionId"
-    [userProfile]="userProfile"
-    [showPageoptionsButton]="true"
-    (pageOptionsEmitter)="handlePageOptionsEmitter($event)">
-    <p-splitter
-        [panelSizes]="panelSizes"
-        [minSizes]="minSizes"
-        [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
-        <ng-template pTemplate>
-            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
-                <app-review-nav
-                    [reviewPageNavigation]="reviewPageNavigation"
-                    [loadFailed]="loadFailed"
-                    (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
-            </div>
-        </ng-template>
-        <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center border review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
-                <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
-                    [crossLanguageRowData]="crossLanguageRowData"
-                    [language]="language" [languageSafeName]="languageSafeName"
-                    [isDiffView]="!!diffApiRevisionId"
-                    [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
-                    [userProfile]="userProfile"
-                    [allComments]="comments"
-                    [loadFailed]="loadFailed"
-                    [loadFailedMessage]="loadFailedMessage"
-                    [showLineNumbers]="showLineNumbers"
-                    [scrollToNodeIdHashed]="scrollToNodeIdHashed"
-                    [scrollToNodeId]="scrollToNodeId"
-                    [codeLineSearchText]="codeLineSearchText"
-                    [codeLineSearchInfo]="codeLineSearchInfo"
-                    [preferredApprovers]="preferredApprovers"
-                    (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
-                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
-                </app-code-panel>
-            </div>
-        </ng-template>
-        <ng-template pTemplate>
-            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
-                <app-review-page-options
-                    [loadingStatus]="getLoadingStatus()"
-                    [isDiffView]="!!diffApiRevisionId"
-                    [contentHasDiff]="codePanelData?.hasDiff"
-                    [diffStyleInput]="diffStyle!"
-                    [userProfile]="userProfile"
-                    [review]="review"
-                    [activeAPIRevision]="activeAPIRevision"
-                    [diffAPIRevision]="diffAPIRevision"
-                    [preferredApprovers]="preferredApprovers"
-                    [hasFatalDiagnostics]="hasFatalDiagnostics"
-                    [hasActiveConversation]="hasActiveConversation"
-                    [hasHiddenAPIs]="hasHiddenAPIs"
-                    [codeLineSearchInfo]="codeLineSearchInfo"
-                    (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
-                    (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
-                    (showCommentsEmitter)="handleShowCommentsEmitter($event)"
-                    (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
-                    (diffStyleEmitter)="handleDiffStyleEmitter($event)"
-                    (subscribeEmitter)="handleSubscribeEmitter($event)"
-                    (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
-                    (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
-                    (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"
-                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
-                    (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
-                    (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
-                    (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"
-                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
-                    (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
-                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
-                    (namespaceApprovalEmitter)="handleNamespaceApprovalEmitter($event)"></app-review-page-options>
-            </div>
-        </ng-template>
-    </p-splitter>
+  [review]="review"
+  [sideMenu]="sideMenu"
+  [apiRevisions]="apiRevisions"
+  [activeApiRevisionId]="activeApiRevisionId"
+  [diffApiRevisionId]="diffApiRevisionId"
+  [userProfile]="userProfile"
+  [showPageoptionsButton]="true"
+  (pageOptionsEmitter)="handlePageOptionsEmitter($event)">
+  <p-splitter
+    [panelSizes]="panelSizes"
+    [minSizes]="minSizes"
+    [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
+    <ng-template pTemplate>
+      @if (showLeftNavigation) {
+        <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
+          <app-review-nav
+            [reviewPageNavigation]="reviewPageNavigation"
+            [loadFailed]="loadFailed"
+          (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
+        </div>
+      }
+    </ng-template>
+    <ng-template pTemplate>
+      <div class="col flex align-items-center justify-content-center border review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
+        <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
+          [crossLanguageRowData]="crossLanguageRowData"
+          [language]="language" [languageSafeName]="languageSafeName"
+          [isDiffView]="!!diffApiRevisionId"
+          [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
+          [userProfile]="userProfile"
+          [allComments]="comments"
+          [loadFailed]="loadFailed"
+          [loadFailedMessage]="loadFailedMessage"
+          [showLineNumbers]="showLineNumbers"
+          [scrollToNodeIdHashed]="scrollToNodeIdHashed"
+          [scrollToNodeId]="scrollToNodeId"
+          [codeLineSearchText]="codeLineSearchText"
+          [codeLineSearchInfo]="codeLineSearchInfo"
+          [preferredApprovers]="preferredApprovers"
+          (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
+          (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+        </app-code-panel>
+      </div>
+    </ng-template>
+    <ng-template pTemplate>
+      @if (showPageOptions) {
+        <div class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
+          <app-review-page-options
+            [loadingStatus]="getLoadingStatus()"
+            [isDiffView]="!!diffApiRevisionId"
+            [contentHasDiff]="codePanelData?.hasDiff"
+            [diffStyleInput]="diffStyle!"
+            [userProfile]="userProfile"
+            [review]="review"
+            [activeAPIRevision]="activeAPIRevision"
+            [diffAPIRevision]="diffAPIRevision"
+            [preferredApprovers]="preferredApprovers"
+            [hasFatalDiagnostics]="hasFatalDiagnostics"
+            [hasActiveConversation]="hasActiveConversation"
+            [hasHiddenAPIs]="hasHiddenAPIs"
+            [codeLineSearchInfo]="codeLineSearchInfo"
+            (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
+            (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
+            (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+            (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
+            (diffStyleEmitter)="handleDiffStyleEmitter($event)"
+            (subscribeEmitter)="handleSubscribeEmitter($event)"
+            (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
+            (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
+            (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"
+            (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
+            (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
+            (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
+            (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"
+            (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
+            (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
+            (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+          (namespaceApprovalEmitter)="handleNamespaceApprovalEmitter($event)"></app-review-page-options>
+        </div>
+      }
+    </ng-template>
+  </p-splitter>
 </app-review-page-layout>
-<p-drawer *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true"  styleClass="revisions-sidebar">
-    <app-revisions-list *ngIf="review"
+@if (getLoadingStatus() === 'completed') {
+  <p-drawer [(visible)]="revisionSidePanel!" position="right" [modal]="true"  styleClass="revisions-sidebar">
+    @if (review) {
+      <app-revisions-list
         [review]="review"
         [userProfile]="userProfile"
         [revisionSidePanel]="revisionSidePanel!">
-    </app-revisions-list>
-</p-drawer>
-<p-drawer *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true"  styleClass="conversation-sidebar">
+      </app-revisions-list>
+    }
+  </p-drawer>
+}
+@if (getLoadingStatus() === 'completed') {
+  <p-drawer [(visible)]="conversationSidePanel!" position="right" [modal]="true"  styleClass="conversation-sidebar">
     <ng-template pTemplate="header">
-        <div class="flex align-items-center gap-2">
-            <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
-        </div>
+      <div class="flex align-items-center gap-2">
+        <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
+      </div>
     </ng-template>
     <app-conversations
-        [apiRevisions]="apiRevisions"
-        [comments]="comments"
-        [review]="review"
-        [userProfile]="userProfile"
-        [activeApiRevisionId]="activeApiRevisionId"
-        [preferredApprovers]="preferredApprovers"
-        (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
-        (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
-        (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
+      [apiRevisions]="apiRevisions"
+      [comments]="comments"
+      [review]="review"
+      [userProfile]="userProfile"
+      [activeApiRevisionId]="activeApiRevisionId"
+      [preferredApprovers]="preferredApprovers"
+      (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
+      (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
+      (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
     </app-conversations >
-</p-drawer>
-<p-drawer *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true"  styleClass="cross-language-revisions-sidebar">
+  </p-drawer>
+}
+@if (getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0) {
+  <p-drawer [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true"  styleClass="cross-language-revisions-sidebar">
     <ng-template pTemplate="header">
-        <div class="flex align-items-center gap-2">
-            <h4>Cross Language Revisions</h4>
-        </div>
+      <div class="flex align-items-center gap-2">
+        <h4>Cross Language Revisions</h4>
+      </div>
     </ng-template>
-    <div class="py-3" *ngFor="let groupedRevision of crossLanguageAPIRevisions">
+    @for (groupedRevision of crossLanguageAPIRevisions; track groupedRevision) {
+      <div class="py-3">
         <span>
-            <img src="{{assetsPath}}/images/{{ groupedRevision.label! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
-            <app-revision-options
+          <img src="{{assetsPath}}/images/{{ groupedRevision.label! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
+          <app-revision-options
             [crossLanguageAPIRevisions]="groupedRevision.items"
-            (crossLangaugeAPIRevisionChange)="handleCrossLangaugeAPIRevisionChange($event)"></app-revision-options>
+          (crossLangaugeAPIRevisionChange)="handleCrossLangaugeAPIRevisionChange($event)"></app-revision-options>
         </span>
-    </div>
-</p-drawer>
+      </div>
+    }
+  </p-drawer>
+}

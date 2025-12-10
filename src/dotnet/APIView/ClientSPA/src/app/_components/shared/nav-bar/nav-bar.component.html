@@ -1,127 +1,145 @@
 <nav class="navbar navbar-expand-sm navbar-toggleable-sm main-nav-cst-theme">
-    <div class="container-fluid">
-        <a href="/" class="navbar-brand"><img id="apiview-logo" alt="apiview-logo" src="{{assetsPath}}/images/apiview.png" />apiview.dev</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="navbar-collapse collapse">
-            <ul class="navbar-nav ms-auto align-items-center">
-                <!-- Requested Reviews link (for approvers) -->
-                <li *ngIf="isLoggedIn && isApprover" class="nav-item">
-                    <a href="{{RequestReviewPageUrl}}" class="nav-link nav-btn">
-                        <i class="bi bi-inbox-fill me-1"></i>Requested Reviews
-                    </a>
-                </li>
-                
-                <!-- Vertical divider -->
-                <li *ngIf="isLoggedIn" class="nav-divider"></li>
-                
-                <!-- Help icon with dropdown menu -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Help menu" data-clarity-region="help-menu">
-                        <i class="bi bi-question-circle"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" target="_blank" rel="noopener noreferrer">
-                            <i class="bi bi-book me-2"></i>Documentation
-                        </a></li>
-                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank" rel="noopener noreferrer">
-                            <i class="bi bi-bug me-2"></i>Report an Issue
-                        </a></li>
-                    </ul>
-                </li>
-                
-                <!-- Notifications icon with badge -->
-                <li *ngIf="isLoggedIn" class="nav-item">
-                    <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" aria-label="Notifications" data-clarity-region="notifications-button">
-                        <i class="bi bi-bell"></i>
-                        <span *ngIf="notifications.length > 0" class="notification-badge"></span>
-                    </a>
-                </li>
-                
-                <!-- User profile avatar with dropdown -->
-                <li *ngIf="isLoggedIn" class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">
-                        <img class="user-avatar" src="https://github.com/{{userProfile?.userName}}.png?size=32" alt="{{userProfile?.userName}}" />
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
-                        <li class="dropdown-header profile-header">
-                            <div class="d-flex align-items-center">
-                                <img class="rounded-circle me-3" src="https://github.com/{{userProfile?.userName}}.png?size=48" alt="{{userProfile?.userName}}" width="48" height="48" />
-                                <div>
-                                    <div class="fw-semibold profile-name">{{userProfile?.userName}}</div>
-                                    <div class="small text-muted" *ngIf="userProfile?.email">{{userProfile?.email}}</div>
-                                </div>
-                            </div>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li class="theme-row">
-                            <span class="theme-label">Theme</span>
-                            <div class="theme-buttons">
-                                <button type="button" 
-                                    class="theme-btn" 
-                                    [class.active]="selectedTheme.data === 'light-theme'"
-                                    (click)="changeTheme(themes[0])"
-                                    title="Light">
-                                    <i class="bi bi-sun"></i>
-                                </button>
-                                <button type="button" 
-                                    class="theme-btn" 
-                                    [class.active]="selectedTheme.data === 'dark-theme'"
-                                    (click)="changeTheme(themes[1])"
-                                    title="Dark">
-                                    <i class="bi bi-moon"></i>
-                                </button>
-                                <button type="button" 
-                                    class="theme-btn" 
-                                    [class.active]="selectedTheme.data === 'dark-solarized-theme'"
-                                    (click)="changeTheme(themes[2])"
-                                    title="Solarized">
-                                    <i class="bi bi-circle-half"></i>
-                                </button>
-                            </div>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/profile/{{userProfile?.userName}}" data-clarity-region="user-settings-link">
-                            <i class="bi bi-gear me-2"></i>Settings
-                        </a></li>
-                        <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}" data-clarity-region="user-logout-link">
-                            <i class="bi bi-box-arrow-right me-2"></i>Log out
-                        </a></li>
-                    </ul>
-                </li>
+  <div class="container-fluid">
+    <a href="/" class="navbar-brand"><img id="apiview-logo" alt="apiview-logo" src="{{assetsPath}}/images/apiview.png" />apiview.dev</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+      aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="navbar-collapse collapse">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <!-- Requested Reviews link (for approvers) -->
+        @if (isLoggedIn && isApprover) {
+          <li class="nav-item">
+            <a href="{{RequestReviewPageUrl}}" class="nav-link nav-btn">
+              <i class="bi bi-inbox-fill me-1"></i>Requested Reviews
+            </a>
+          </li>
+        }
+
+        <!-- Vertical divider -->
+        @if (isLoggedIn) {
+          <li class="nav-divider"></li>
+        }
+
+        <!-- Help icon with dropdown menu -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Help menu" data-clarity-region="help-menu">
+            <i class="bi bi-question-circle"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-book me-2"></i>Documentation
+            </a></li>
+            <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-bug me-2"></i>Report an Issue
+            </a></li>
+          </ul>
+        </li>
+
+        <!-- Notifications icon with badge -->
+        @if (isLoggedIn) {
+          <li class="nav-item">
+            <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" aria-label="Notifications" data-clarity-region="notifications-button">
+              <i class="bi bi-bell"></i>
+              @if (notifications.length > 0) {
+                <span class="notification-badge"></span>
+              }
+            </a>
+          </li>
+        }
+
+        <!-- User profile avatar with dropdown -->
+        @if (isLoggedIn) {
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">
+              <img class="user-avatar" src="https://github.com/{{userProfile?.userName}}.png?size=32" alt="{{userProfile?.userName}}" />
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+              <li class="dropdown-header profile-header">
+                <div class="d-flex align-items-center">
+                  <img class="rounded-circle me-3" src="https://github.com/{{userProfile?.userName}}.png?size=48" alt="{{userProfile?.userName}}" width="48" height="48" />
+                  <div>
+                    <div class="fw-semibold profile-name">{{userProfile?.userName}}</div>
+                    @if (userProfile?.email) {
+                      <div class="small text-muted">{{userProfile?.email}}</div>
+                    }
+                  </div>
+                </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li class="theme-row">
+                <span class="theme-label">Theme</span>
+                <div class="theme-buttons">
+                  <button type="button"
+                    class="theme-btn"
+                    [class.active]="selectedTheme.data === 'light-theme'"
+                    (click)="changeTheme(themes[0])"
+                    title="Light">
+                    <i class="bi bi-sun"></i>
+                  </button>
+                  <button type="button"
+                    class="theme-btn"
+                    [class.active]="selectedTheme.data === 'dark-theme'"
+                    (click)="changeTheme(themes[1])"
+                    title="Dark">
+                    <i class="bi bi-moon"></i>
+                  </button>
+                  <button type="button"
+                    class="theme-btn"
+                    [class.active]="selectedTheme.data === 'dark-solarized-theme'"
+                    (click)="changeTheme(themes[2])"
+                    title="Solarized">
+                    <i class="bi bi-circle-half"></i>
+                  </button>
+                </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/profile/{{userProfile?.userName}}" data-clarity-region="user-settings-link">
+                <i class="bi bi-gear me-2"></i>Settings
+              </a></li>
+              <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}" data-clarity-region="user-logout-link">
+                <i class="bi bi-box-arrow-right me-2"></i>Log out
+              </a></li>
             </ul>
-        </div>
+          </li>
+        }
+      </ul>
     </div>
+  </div>
 </nav>
 
 <p-drawer [(visible)]="notificationsSidePanel!" position="right" [modal]="true"  styleClass="notifications-sidebar">
-    <ng-template pTemplate="header">
-        <div class="d-flex align-items-center gap-2 w-100">
-            <h4 class="mb-0">Notifications</h4>
-            <button type="button" class="btn btn-link btn-sm small ms-auto" *ngIf="notifications.length > 0" (click)="clearAllNotification()">Clear all</button>
-        </div>
-    </ng-template>
-    <p-selectButton
-        *ngIf="notifications.length > 0 && reviewId"
-        class="notifications-filter-button"
-        [options]="notificationsFilters"
-        [(ngModel)]="notificationsFilter"
-        (onChange)="updateNotificationsFilter($event)"
-        optionLabel="label"
-        optionValue="value"
-        [style]="{'margin-top':'8px'}" />
-    <div *ngFor="let notification of filteredNotifications()" class="toast show my-3" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <i *ngIf="notification.level == 'error'; else notError" class="bi bi-exclamation-triangle me-2"></i>
-            <ng-template #notError>
-                <i class="bi bi-check-circle me-2"></i>
-            </ng-template>
-            <strong class="me-auto">{{ notification.title }}</strong>
-            <small>{{ notification.createdOn | timeago }}</small>
-            <button type="button" class="btn-close" aria-label="Close" (click)="clearNotification(notification.id)"></button>
-        </div>
-        <div class="toast-body" [innerHTML]="notification.message"></div>
+  <ng-template pTemplate="header">
+    <div class="d-flex align-items-center gap-2 w-100">
+      <h4 class="mb-0">Notifications</h4>
+      @if (notifications.length > 0) {
+        <button type="button" class="btn btn-link btn-sm small ms-auto" (click)="clearAllNotification()">Clear all</button>
+      }
     </div>
+  </ng-template>
+  @if (notifications.length > 0 && reviewId) {
+    <p-selectButton
+      class="notifications-filter-button"
+      [options]="notificationsFilters"
+      [(ngModel)]="notificationsFilter"
+      (onChange)="updateNotificationsFilter($event)"
+      optionLabel="label"
+      optionValue="value"
+      [style]="{'margin-top':'8px'}" />
+  }
+  @for (notification of filteredNotifications(); track notification) {
+    <div class="toast show my-3" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        @if (notification.level == 'error') {
+          <i class="bi bi-exclamation-triangle me-2"></i>
+        } @else {
+          <i class="bi bi-check-circle me-2"></i>
+        }
+        <strong class="me-auto">{{ notification.title }}</strong>
+        <small>{{ notification.createdOn | timeago }}</small>
+        <button type="button" class="btn-close" aria-label="Close" (click)="clearNotification(notification.id)"></button>
+      </div>
+      <div class="toast-body" [innerHTML]="notification.message"></div>
+    </div>
+  }
 </p-drawer>

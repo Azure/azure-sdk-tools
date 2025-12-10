@@ -237,7 +237,7 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async insertRowTypeIntoScroller(codePanelRowDatatype:  CodePanelRowDatatype) {
-    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?['relax']();
 
     const updatedCodeLinesData : CodePanelRowData[] = [];
 
@@ -282,7 +282,7 @@ export class CodePanelComponent implements OnChanges{
 
   async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, targetRowType: string,
       insertPosition : number, propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
-    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?['relax']();
 
     let preData = [];
     let nodeIndex = 0;
@@ -330,7 +330,7 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async removeRowTypeFromScroller(codePanelRowDatatype:  CodePanelRowDatatype) {
-    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?['relax']();
 
     const indexesToRemove : number[] = [];
     let filteredCodeLinesData : CodePanelRowData[] = [];
@@ -354,7 +354,7 @@ export class CodePanelComponent implements OnChanges{
 
   async removeItemsFromScroller(nodeIdHashed: string, codePanelRowDatatype:  CodePanelRowDatatype,
     propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string, associatedRowPositionInGroup?: number) {
-    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?['relax']();
 
     const indexesToRemove : number[] = [];
     const filteredCodeLinesData : CodePanelRowData[] = [];
@@ -402,7 +402,7 @@ export class CodePanelComponent implements OnChanges{
       this.codePanelRowData[targetIndex] = updateData;
     }
       
-    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?['relax']();
     await this.codePanelRowSource?.adapter?.fix({
       updater: ({ data, element }) => {
         if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
@@ -778,11 +778,11 @@ export class CodePanelComponent implements OnChanges{
     if (hasMatch) {
       this.codeLineSearchInfo = new CodeLineSearchInfo(this.codeLineSearchMatchInfo.head, this.codeLineSearchMatchInfo.length);
 
-      if (this.codeLineSearchInfo.currentMatch?.value.rowIndex! < this.codePanelRowSource?.adapter?.firstVisible.$index! ||
-        this.codeLineSearchInfo.currentMatch?.value.rowIndex! > this.codePanelRowSource?.adapter?.lastVisible.$index!) {
+      if (this.codeLineSearchInfo.currentMatch?.value.rowIndex! < this.codePanelRowSource?.adapter?['firstVisible'].$index! ||
+        this.codeLineSearchInfo.currentMatch?.value.rowIndex! > this.codePanelRowSource?.adapter?['lastVisible'].$index!) {
           // Scroll first match into view
         await this.scrollToNode(this.codeLineSearchInfo.currentMatch!.value.nodeIdHashed, undefined, false, false);
-        await this.codePanelRowSource?.adapter?.relax();
+        await this.codePanelRowSource?.adapter?['relax']();
       }
 
       this.highlightSearchMatches();
@@ -948,12 +948,12 @@ export class CodePanelComponent implements OnChanges{
    */
   private navigateToCodeLineWithSearchMatch() {
     if (this.codeLineSearchInfo?.currentMatch) {
-      const firstVisibleIndex = this.codePanelRowSource?.adapter?.firstVisible.$index!;
-      const lastVisibleIndex = this.codePanelRowSource?.adapter?.lastVisible.$index!;
+      const firstVisibleIndex = this.codePanelRowSource?.adapter?['firstVisible'].$index!;
+      const lastVisibleIndex = this.codePanelRowSource?.adapter?['lastVisible'].$index!;
 
       if (this.codeLineSearchInfo?.currentMatch && (this.codeLineSearchInfo?.currentMatch.value.rowIndex < firstVisibleIndex || this.codeLineSearchInfo?.currentMatch.value.rowIndex > lastVisibleIndex)) {
         this.scrollToNode(this.codeLineSearchInfo?.currentMatch.value.nodeIdHashed, undefined, false, false);
-        this.codePanelRowSource?.adapter?.relax();
+        this.codePanelRowSource?.adapter?['relax']();
       }
       this.highlightActiveSearchMatch();
     }

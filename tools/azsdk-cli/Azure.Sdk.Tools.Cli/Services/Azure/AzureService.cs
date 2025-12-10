@@ -28,7 +28,7 @@ public class AzureService : IAzureService
                 new AzurePowerShellCredential(new AzurePowerShellCredentialOptions { TenantId = tenantId }),
                 new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions { TenantId = tenantId }),
                 new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId }),
-                new ManagedIdentityCredential(clientId: Environment.GetEnvironmentVariable("AZURE_CLIENT_ID"))
+                new ManagedIdentityCredential(GetUserAssignedManagedIdentityClientId())
             );
         }
         catch (CredentialUnavailableException)
@@ -41,5 +41,10 @@ public class AzureService : IAzureService
     {
         return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
                Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
+    }
+
+    private static string GetUserAssignedManagedIdentityClientId()
+    {
+        return Environment.GetEnvironmentVariable("AZURE_CLIENT_ID") ?? string.Empty;
     }
 }

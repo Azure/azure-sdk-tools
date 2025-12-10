@@ -29,7 +29,8 @@
             {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"]
+                "instructions": ["Install Python from https://www.python.org/downloads/"],
+                "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],
         "java": [
@@ -89,7 +90,8 @@
             {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"]
+                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"],
+                "reason": "`azpysdk` is used for validating Python SDKs."
             },
             {
                 "requirement": "sdk_generator",

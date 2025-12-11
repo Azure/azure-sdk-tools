@@ -34,7 +34,8 @@
             {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"]
+                "instructions": ["Install Python from https://www.python.org/downloads/"],
+                "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],
         "java": [
@@ -94,22 +95,23 @@
             {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"],
+                "reason": "`azpysdk` is used for validating Python SDKs."
             },
             {
                 "requirement": "sdk_generator",
                 "check": ["sdk_generator", "--help"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with sdk_generator --help"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with sdk_generator --help"]
             },
             {
                 "requirement": "ghtools",
                 "check": ["python", "-m", "pip", "show", "GitPython"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with pip show GitPython"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with pip show GitPython"]
             },
             {
                 "requirement": "pytest >= 8.3.5",
                 "check": ["pytest", "--version"],
-                "instructions": ["Navigate to your SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with pytest --version"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with pytest --version"]
             }
         ]
     }

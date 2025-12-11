@@ -282,13 +282,7 @@ Describe "Update-AttestationStatusInWorkItem" {
 # --------------------- Add Attestation Entry to Kusto Database ---------------------
 Describe 'Add Attestation Entry to Kusto Database' {
     It 'posts a valid JSON envelope and CSL when run with required params' {
-        Mock -CommandName Invoke-RestMethod -MockWith {
-            # Simulate Kusto mgmt success response
-            @{
-                Status    = 200
-                Operation = 'DataAppend'
-            }
-        } -Verifiable
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
 
         $tableName    = 'TestKpiEvidenceStream'
         $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'

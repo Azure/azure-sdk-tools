@@ -38,20 +38,17 @@ describe.sequential("Verify commands", () => {
   });
 
   afterAll(async () => {
-    await rm(joinPaths(repoRoot, "eng", "emitter-package.json"));
-
-    // This is generated in the first test using the command
-    const emitterPackageLock = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
-    if (await doesFileExist(emitterPackageLock)) {
-      await rm(emitterPackageLock);
-    }
-
-    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
-    await rm("./test/examples/initGlobalConfig/", { recursive: true });
-    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
+    await rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
+    await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", {
+      recursive: true,
+      force: true,
+    });
+    await rm("./test/examples/initGlobalConfig/", { recursive: true, force: true });
+    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true, force: true });
     await rm(
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
-      { recursive: true },
+      { recursive: true, force: true },
     );
     await rm(joinPaths(repoRoot, "sdk/keyvault"), { recursive: true, force: true });
   });

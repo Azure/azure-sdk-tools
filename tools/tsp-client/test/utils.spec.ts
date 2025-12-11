@@ -134,7 +134,7 @@ describe("Verify fs functions", function () {
   });
 
   afterAll(async () => {
-    await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"));
+    await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"), { force: true });
   });
 
   it("Check parseTspClientRepoConfig", async function () {

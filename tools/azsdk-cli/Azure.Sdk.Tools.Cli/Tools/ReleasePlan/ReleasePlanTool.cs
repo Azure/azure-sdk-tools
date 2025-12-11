@@ -33,15 +33,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         // Commands
         private const string getReleasePlanDetailsCommandName = "get";
-        private const string createReleasePlanCommandName = "create";
+        private const string createReleasePlanCommandName = "CREATE";
         private const string linkNamespaceApprovalIssueCommandName = "link-namespace-approval";
-        private const string checkApiReadinessCommandName = "check-api-readiness";
+        private const string checkApiReadinessCommandName = "check_api_readiness";
         private const string linkSdkPrCommandName = "link-sdk-pr";
         private const string listOverdueReleasePlansCommandName = "list-overdue";
 
         // MCP Tool Names
-        private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
-        private const string GetReleasePlanToolName = "azsdk_get_release_plan";
+        private const string GetReleasePlanForSpecPrToolName = "-get-release-plan-for-spec-pr";
+        private const string GetReleasePlanToolName = "_get_release_plan";
         private const string CreateReleasePlanToolName = "azsdk_create_release_plan";
         private const string UpdateSdkDetailsToolName = "azsdk_update_sdk_details_in_release_plan";
         private const string LinkNamespaceApprovalToolName = "azsdk_link_namespace_approval_issue";

@@ -117,7 +117,7 @@ The current state exposes gaps in both TypeSpec customization and code customiza
 
 ### Why This Matters
 
-We should minimize the amount of time service teams spend on customizing their TypeSpec for each SDK language. Let them focus on what they are experts on - the service API - rather than figuring out how to apply SDK-specific feedback to their TypeSpec.
+We should minimize the amount of time service teams spend on customizing client SDKs. Let them focus on what they are experts on - the service API - instead of figuring out the right way to apply SDK customizations.
 
 We can reduce the time spent in the outer loop by detecting and handling common client customization scenarios automatically while devs are still in the inner loop. When service teams still have feedback to address from the outer loop, we should make it both easy to apply and to verify those changes are correct.
 
@@ -482,6 +482,10 @@ Assumptions for running the customization tooling in [agentic](#agentic-context)
 
 - **Concurrent Builds**: How do we handle multiple simultaneous customization workflows?
 - **Resource Management**: What are the performance implications of two-phase fixes?
+
+### CLI mode
+
+- Does this workflow make sense in a CLI mode, or is it primarily useful in an agentic context?
 
 ## Alternatives Considered
 

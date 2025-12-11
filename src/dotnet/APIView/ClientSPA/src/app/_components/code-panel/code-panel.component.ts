@@ -10,8 +10,7 @@ import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageCon
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { Message } from 'primeng/api/message';
-import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
+import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
@@ -46,10 +45,10 @@ export class CodePanelComponent implements OnChanges{
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
-  
+
   @ViewChildren(Menu) menus!: QueryList<Menu>;
-  
-  noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
+
+  noDiffInContentMessage : ToastMessageOptions[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
 
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
@@ -199,7 +198,7 @@ export class CodePanelComponent implements OnChanges{
     const rowType = codeLine.getAttribute('data-row-type')!;
     const existingCommentThread = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.commentThread;
     const exisitngCodeLine = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.codeLines[rowPositionInGroup];
-    
+
     if (!existingCommentThread || !existingCommentThread[rowPositionInGroup]) {
       const commentThreadRow = new CodePanelRowData();
       commentThreadRow.type = CodePanelRowDatatype.CommentThread;
@@ -266,7 +265,7 @@ export class CodePanelComponent implements OnChanges{
               this.codePanelRowData[i].toggleDocumentationClasses = this.codePanelRowData[i].toggleDocumentationClasses?.replace('bi-arrow-up-square', 'bi-arrow-down-square');
             }
             updatedCodeLinesData.push(this.codePanelRowData[i]);
-            break;         
+            break;
         }
       }
       else {
@@ -286,13 +285,13 @@ export class CodePanelComponent implements OnChanges{
 
     let preData = [];
     let nodeIndex = 0;
-    let insertPositionFound = false;    
+    let insertPositionFound = false;
 
     while (nodeIndex < this.codePanelRowData.length) {
       if (insertPositionFound) {
         break;
       }
-      
+
       if (this.codePanelRowData[nodeIndex].nodeIdHashed === nodeIdhashed) {
         if (insertPosition === -1) {
           break;
@@ -311,7 +310,7 @@ export class CodePanelComponent implements OnChanges{
       if (propertyToChange === "toggleDocumentationClasses") {
         postData[0].toggleDocumentationClasses = postData[0].toggleDocumentationClasses?.replace(iconClassToremove, iconClassToAdd);
       }
-  
+
       if (propertyToChange === "toggleCommentsClasses") {
         preData[preData.length - 1].toggleCommentsClasses = preData[preData.length - 1].toggleCommentsClasses?.replace(iconClassToremove, iconClassToAdd);
       }
@@ -374,7 +373,7 @@ export class CodePanelComponent implements OnChanges{
         const index = indexesToRemove[0];
         filteredCodeLinesData[index].toggleDocumentationClasses = filteredCodeLinesData[index].toggleDocumentationClasses?.replace(iconClassToremove, iconClassToAdd);
       }
-  
+
       if (propertyToChange === "toggleCommentsClasses") {
         const index = indexesToRemove[0] - 1;
         filteredCodeLinesData[index].toggleCommentsClasses = filteredCodeLinesData[index].toggleCommentsClasses?.replace(iconClassToremove, iconClassToAdd);
@@ -401,7 +400,7 @@ export class CodePanelComponent implements OnChanges{
     if (targetIndex !== -1) {
       this.codePanelRowData[targetIndex] = updateData;
     }
-      
+
     await this.codePanelRowSource?.adapter?.relax();
     await this.codePanelRowSource?.adapter?.fix({
       updater: ({ data, element }) => {
@@ -447,7 +446,7 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  async scrollToNode( 
+  async scrollToNode(
     nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined,
     highlightRow: boolean = true, updateQueryParams: boolean = true): Promise<void> {
     let index = 0;
@@ -539,7 +538,7 @@ export class CodePanelComponent implements OnChanges{
           next: () => {
             this.updateCommentTextInCommentThread(commentUpdates);
           }
-        });    
+        });
       }
     else {
       this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
@@ -549,7 +548,7 @@ export class CodePanelComponent implements OnChanges{
               commentUpdates.comment = response;
             }
           }
-        );    
+        );
       }
   }
 
@@ -569,20 +568,20 @@ export class CodePanelComponent implements OnChanges{
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
         }
-      });    
+      });
     }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
         }
-      });    
+      });
     }
   }
 
   handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.reviewId!;
-    
+
     switch (commentUpdates.commentThreadUpdateAction) {
       case CommentThreadUpdateAction.CommentCreated:
         if (commentUpdates.comment) {
@@ -665,12 +664,12 @@ export class CodePanelComponent implements OnChanges{
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow : CodePanelRowData | undefined = undefined;
     if (direction == CodeLineRowNavigationDirection.next) {
-      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ? 
+      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ?
         this.commentThreadNavaigationPointer + 1 : firstVisible;
       navigateToRow = this.findNextCommentThread(startIndex);
     }
     else {
-      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ? 
+      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ?
         this.commentThreadNavaigationPointer - 1 : lastVisible;
       navigateToRow = this.findPrevCommentthread(startIndex);
     }
@@ -688,12 +687,12 @@ export class CodePanelComponent implements OnChanges{
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow : CodePanelRowData | undefined = undefined;
     if (direction == CodeLineRowNavigationDirection.next) {
-      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ? 
+      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ?
         this.diffNodeNavaigationPointer : firstVisible;
       navigateToRow = this.findNextDiffNode(startIndex);
     }
     else {
-      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ? 
+      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ?
         this.diffNodeNavaigationPointer: lastVisible;
       navigateToRow = this.findPrevDiffNode(startIndex);
     }
@@ -715,7 +714,7 @@ export class CodePanelComponent implements OnChanges{
           switch (row.diffKind) {
             case DIFF_ADDED:
               codeLineText = `+ ${codeLineText}`;
-              break; 
+              break;
             case DIFF_REMOVED:
               codeLineText = `- ${codeLineText}`;
               break;
@@ -750,7 +749,7 @@ export class CodePanelComponent implements OnChanges{
 
     let hasMatch = false;
     this.codeLineSearchMatchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
-    
+
     this.codePanelRowData.forEach((row, idx) => {
       let codeLineAsString = undefined;
       if (row.type == CodePanelRowDatatype.CodeLine || row.type == CodePanelRowDatatype.Documentation) {
@@ -774,7 +773,7 @@ export class CodePanelComponent implements OnChanges{
         }
       }
     });
-    
+
     if (hasMatch) {
       this.codeLineSearchInfo = new CodeLineSearchInfo(this.codeLineSearchMatchInfo.head, this.codeLineSearchMatchInfo.length);
 
@@ -798,7 +797,7 @@ export class CodePanelComponent implements OnChanges{
   async highlightSearchMatches() {
     this.clearSearchMatchHighlights();
     const codeLines = this.elementRef.nativeElement.querySelectorAll('.code-line');
-    
+
     codeLines.forEach((codeLine) => {
       const nodeIdhashed = codeLine.getAttribute('data-node-id');
       const rowType = codeLine.getAttribute('data-row-type');
@@ -818,22 +817,22 @@ export class CodePanelComponent implements OnChanges{
           let newInnerHTML = '';
           let lastIndex = 0;
 
-          for (let i = matchIndex; i < matches.length; i++) {          
+          for (let i = matchIndex; i < matches.length; i++) {
             let match = matches[i];
             const matchStartIndex = match.index!;
             const matchEndIndex = matchStartIndex + match[0].length;
-  
+
             const tokenStart = currentOffset;
             const tokenEnd = currentOffset + tokenLength;
-  
+
             if (matchStartIndex < tokenEnd && matchEndIndex > tokenStart) {
               const highlightStart = Math.max(0, matchStartIndex - tokenStart);
               const highlightEnd = Math.min(tokenLength, matchEndIndex - tokenStart);
-        
+
               const beforeMatch = tokenContent.slice(lastIndex, highlightStart);
               const matchText = tokenContent.slice(highlightStart, highlightEnd);
               lastIndex = highlightEnd;
-        
+
               newInnerHTML += `${beforeMatch}<mark class="codeline-search-match-highlight search-match-${i}">${matchText}</mark>`;
               matchIndex++;
             }
@@ -927,7 +926,7 @@ export class CodePanelComponent implements OnChanges{
         activeMatch.classList.remove('active');
       }
       const codeLine = this.elementRef.nativeElement.querySelector(
-        `.code-line[data-node-id="${nodeIdHashed}"][data-row-position-in-group="${rowPositionInGroup}"][data-row-type="${rowType}"]`    
+        `.code-line[data-node-id="${nodeIdHashed}"][data-row-position-in-group="${rowPositionInGroup}"][data-row-type="${rowType}"]`
       );
       if (codeLine) {
         const match = codeLine.querySelector(`.search-match-${matchId}`) as HTMLElement;
@@ -1024,7 +1023,7 @@ export class CodePanelComponent implements OnChanges{
     this.hasActiveConversationEmitter.emit(hasActiveConversation);
   }
 
-  private loadCodePanelViewPort() { 
+  private loadCodePanelViewPort() {
     this.setMaxLineNumberWidth();
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
@@ -1050,11 +1049,11 @@ export class CodePanelComponent implements OnChanges{
   private updateCommentTextInCommentThread(data: CommentUpdatesDto) {
     const commentThread = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
     const comment = commentThread.comments.find(c => c.id === data.commentId);
-    
+
     if (!comment) {
       return;
     }
-    
+
     if (data.commentText) {
       comment.commentText = data.commentText;
     }
@@ -1106,10 +1105,10 @@ export class CodePanelComponent implements OnChanges{
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
     const commentThread = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!];
     const isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
-    
+
     commentThread.isResolvedCommentThread = isResolved;
     commentThread.commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
-  
+
     this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }

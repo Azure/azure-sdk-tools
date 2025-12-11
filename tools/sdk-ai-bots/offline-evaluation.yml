@@ -85,6 +85,7 @@ extends:
                   AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
                   AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+                  GOPROXY: https://proxy.golang.org,direct
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'

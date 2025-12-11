@@ -4,8 +4,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using ModelContextProtocol.Protocol;
-using OpenTelemetry;
-using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;
@@ -19,65 +18,32 @@ internal class TelemetryService : ITelemetryService
 {
     private readonly bool _isEnabled;
     private readonly List<KeyValuePair<string, object?>> _tagsList;
+    private readonly TracerProvider _tracerProvider;
     private readonly IMachineInformationProvider _informationProvider;
+    private readonly ILogger<TelemetryService> _logger;
     private readonly TaskCompletionSource _isInitialized = new TaskCompletionSource();
 
     internal ActivitySource Parent { get; }
 
-    public TelemetryService(IMachineInformationProvider informationProvider, IOptions<AzSdkToolsMcpServerConfiguration> options)
+    public TelemetryService(
+        TracerProvider tracerProvider,
+        ILogger<TelemetryService> logger,
+        IMachineInformationProvider informationProvider,
+        IOptions<AzSdkToolsMcpServerConfiguration> options
+    )
     {
         _isEnabled = options.Value.IsTelemetryEnabled;
-        _tagsList = new List<KeyValuePair<string, object?>>()
-        {
+        _tagsList = [
             new(TagName.AzSdkToolVersion, options.Value.Version),
-        };
+        ];
 
         Parent = new ActivitySource(options.Value.Name, options.Value.Version, _tagsList);
+
+        _tracerProvider = tracerProvider;
+        _logger = logger;
         _informationProvider = informationProvider;
 
         Task.Factory.StartNew(InitializeTagList);
-    }
-
-    public static TracerProvider RegisterCliTelemetry(bool debug)
-    {
-        var builder = OpenTelemetry.Sdk.CreateTracerProviderBuilder();
-        builder
-            .AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
-            .SetSampler(new AlwaysOnSampler())
-            .AddProcessor(new TelemetryProcessor());
-
-#if !DEBUG
-            // Only upload telemetry when not in debug mode
-            builder.AddOtlpExporter(otlp =>
-                otlp.ExportProcessorType = ExportProcessorType.Simple
-            );
-#endif
-
-        // output to console when --debug is passed (separate from dotnet debug build/config mode)
-        if (debug)
-        {
-            builder.AddConsoleExporter();
-        }
-
-        return builder.Build();
-    }
-
-    public static void RegisterServerTelemetry(IServiceCollection services, bool debug = false)
-    {
-        var builder = services.AddOpenTelemetry()
-            .WithTracing(b =>
-            {
-                b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddProcessor(new TelemetryProcessor());
-                if (debug) { b.AddConsoleExporter(); }
-            });
-
-#if !DEBUG
-            // Only upload telemetry when not in debug mode
-            builder.UseOtlpExporter();
-#endif
     }
 
     public ValueTask<Activity?> StartActivity(string activityId) => StartActivity(activityId, null);
@@ -91,11 +57,16 @@ internal class TelemetryService : ITelemetryService
 
         await _isInitialized.Task;
 
-        var activity = Parent.StartActivity(activityId);
+        var activity = Parent.StartActivity(activityId, ActivityKind.Server);
 
         if (activity == null)
         {
+#if DEBUG
+            // Fail fast if we're generating null activities so we can catch silent issues in development
+            throw new Exception($"Failed to start activity '{activityId}' as there is no listener registered");
+#else
             return activity;
+#endif
         }
 
         if (clientInfo != null)
@@ -109,6 +80,11 @@ internal class TelemetryService : ITelemetryService
         _tagsList.ForEach(kvp => activity.AddTag(kvp.Key, kvp.Value));
 
         return activity;
+    }
+
+    public void Flush()
+    {
+        _tracerProvider?.ForceFlush(2000);
     }
 
     public void Dispose()

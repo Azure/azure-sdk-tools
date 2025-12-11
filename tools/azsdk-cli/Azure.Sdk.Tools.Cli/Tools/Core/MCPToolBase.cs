@@ -27,7 +27,6 @@ public abstract class MCPToolBase
     private bool debug = false;
     private IOutputHelper output { get; set; }
     private ITelemetryService telemetryService { get; set; }
-
     public virtual CommandGroup[] CommandHierarchy { get; set; } = [];
 
     public void Initialize(IOutputHelper outputHelper, ITelemetryService telemetryService, bool debug = false)
@@ -46,11 +45,7 @@ public abstract class MCPToolBase
             throw new InvalidOperationException("Tool must be initialized with Initialize() before use");
         }
 
-        using var tracer = TelemetryService.RegisterCliTelemetry(debug);
-
-        // TODO: add client info
         using var activity = await telemetryService.StartActivity(ActivityName.CommandExecuted);
-        Activity.Current = activity;
 
         try
         {
@@ -60,9 +55,7 @@ public abstract class MCPToolBase
             activity?.SetTag(TagName.CommandArgs, commandLine);
 
             CommandResponse response = await HandleCommand(parseResult, cancellationToken);
-            var result = output.Format(response);
-
-            activity?.SetTag(TagName.CommandResponse, result);
+            activity?.SetTag(TagName.CommandResponse, response);
 
             if (response.ExitCode == 0)
             {
@@ -87,6 +80,11 @@ public abstract class MCPToolBase
             activity?.AddException(ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
+        }
+        finally
+        {
+            // Force upload of events since we won't have background batching in CLI mode
+            telemetryService.Flush();
         }
     }
 

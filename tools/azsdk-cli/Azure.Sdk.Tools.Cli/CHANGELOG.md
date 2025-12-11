@@ -10,6 +10,9 @@
 
 ### Bugs Fixed
 
+- Fixed test failures being reported as a success to the agent.
+- Test result output is now made available to the agent.
+
 ### Other Changes
 
 ## 0.5.10 (2025-12-08)

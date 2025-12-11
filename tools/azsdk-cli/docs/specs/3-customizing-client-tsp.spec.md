@@ -1,4 +1,4 @@
-# Spec: Customizing Client TypeSpec
+# Spec: Customizing Clients
 
 ## Table of Contents
 

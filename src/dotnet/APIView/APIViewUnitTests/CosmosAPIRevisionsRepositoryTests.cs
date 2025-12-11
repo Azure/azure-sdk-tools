@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -16,22 +17,21 @@ public class CosmosAPIRevisionsRepositoryTests
     private const string TestReviewId = "test-review-id";
     
     private readonly Mock<Container> _mockApiRevisionContainer;
-    private readonly Mock<Container> _mockReviewsContainer;
+    private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
     private readonly CosmosAPIRevisionsRepository _repository;
 
     public CosmosAPIRevisionsRepositoryTests()
     {
         _mockApiRevisionContainer = new Mock<Container>();
-        _mockReviewsContainer = new Mock<Container>();
+        _mockReviewsRepository = new Mock<ICosmosReviewRepository>();
         
         var mockConfiguration = new Mock<IConfiguration>();
         mockConfiguration.Setup(x => x["CosmosDBName"]).Returns("TestDB");
 
         var mockCosmosClient = new Mock<CosmosClient>();
         mockCosmosClient.Setup(x => x.GetContainer("TestDB", "APIRevisions")).Returns(_mockApiRevisionContainer.Object);
-        mockCosmosClient.Setup(x => x.GetContainer("TestDB", "Reviews")).Returns(_mockReviewsContainer.Object);
 
-        _repository = new CosmosAPIRevisionsRepository(mockConfiguration.Object, mockCosmosClient.Object);
+        _repository = new CosmosAPIRevisionsRepository(mockConfiguration.Object, mockCosmosClient.Object, _mockReviewsRepository.Object);
     }
 
     private static APIRevisionListItemModel CreateTestRevision(string reviewId = TestReviewId)
@@ -68,27 +68,12 @@ public class CosmosAPIRevisionsRepositoryTests
                 CreateMockResponse(item));
     }
 
-    private void SetupReviewRead(ReviewListItemModel review)
+    private void SetupReviewUpdate()
     {
-        _mockReviewsContainer
-            .Setup(x => x.ReadItemAsync<ReviewListItemModel>(
-                review.Id,
-                It.IsAny<PartitionKey>(),
-                It.IsAny<ItemRequestOptions>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateMockResponse(review));
-    }
-
-    private void SetupReviewUpsert()
-    {
-        _mockReviewsContainer
-            .Setup(x => x.UpsertItemAsync(
-                It.IsAny<ReviewListItemModel>(),
-                It.IsAny<PartitionKey>(),
-                It.IsAny<ItemRequestOptions>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ReviewListItemModel item, PartitionKey pk, ItemRequestOptions opt, CancellationToken ct) =>
-                CreateMockResponse(item));
+        _mockReviewsRepository
+            .Setup(x => x.UpdateReviewLastUpdatedOnAsync(
+                It.IsAny<string>(),
+                It.IsAny<DateTime>()));
     }
 
     private static ItemResponse<T> CreateMockResponse<T>(T resource)
@@ -99,66 +84,31 @@ public class CosmosAPIRevisionsRepositoryTests
     }
 
     [Fact]
-    public async Task UpsertRevision_UpdatesParentReview_WhenNewer()
+    public async Task UpsertRevision_CallsUpdateReviewLastUpdatedOn()
     {
         // Arrange
         var revision = CreateTestRevision();
-        var review = CreateTestReview(TestReviewId, DateTime.UtcNow.AddDays(-5)); // 5 days old
+        DateTime capturedTimestamp = default;
 
         SetupRevisionUpsert();
-        SetupReviewRead(review);
-        SetupReviewUpsert();
+        _mockReviewsRepository
+            .Setup(x => x.UpdateReviewLastUpdatedOnAsync(TestReviewId, It.IsAny<DateTime>()))
+            .Callback<string, DateTime>((id, timestamp) => capturedTimestamp = timestamp);
 
         // Act
         await _repository.UpsertAPIRevisionAsync(revision);
 
         // Assert
         VerifyRevisionUpserted();
-        VerifyReviewRead(TestReviewId);
-        VerifyReviewUpdated(TestReviewId, review.LastUpdatedOn);
-    }
-
-    [Fact]
-    public async Task UpsertRevision_SkipsParentReview_WhenOlder()
-    {
-        // Arrange
-        var revision = CreateTestRevision();
-        var review = CreateTestReview(TestReviewId, DateTime.UtcNow); // Current time (newer)
-
-        SetupRevisionUpsert();
-        SetupReviewRead(review);
-
-        // Act
-        await _repository.UpsertAPIRevisionAsync(revision);
-
-        // Assert
-        VerifyRevisionUpserted();
-        VerifyReviewRead(TestReviewId);
-        VerifyReviewNotUpdated();
-    }
-
-    [Fact]
-    public async Task UpsertRevision_HandlesReviewNotFound()
-    {
-        // Arrange
-        var reviewId = "non-existent-review";
-        var revision = CreateTestRevision(reviewId);
-
-        SetupRevisionUpsert();
-        _mockReviewsContainer
-            .Setup(x => x.ReadItemAsync<ReviewListItemModel>(
-                reviewId,
-                It.IsAny<PartitionKey>(),
-                It.IsAny<ItemRequestOptions>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new CosmosException("Not Found", HttpStatusCode.NotFound, 0, "", 0));
-
-        // Act & Assert - should not throw
-        await _repository.UpsertAPIRevisionAsync(revision);
-
-        VerifyRevisionUpserted();
-        VerifyReviewRead(reviewId);
-        VerifyReviewNotUpdated();
+        
+        // Verify UpdateReviewLastUpdatedOnAsync was called with current timestamp
+        _mockReviewsRepository.Verify(
+            x => x.UpdateReviewLastUpdatedOnAsync(TestReviewId, It.IsAny<DateTime>()),
+            Times.Once);
+        
+        // Verify timestamp is current (between 2020 and now)
+        Assert.True(capturedTimestamp > new DateTime(2020, 1, 1));
+        Assert.True(capturedTimestamp <= DateTime.UtcNow.AddSeconds(1));
     }
 
     private void VerifyRevisionUpserted() =>
@@ -169,31 +119,4 @@ public class CosmosAPIRevisionsRepositoryTests
                 It.IsAny<ItemRequestOptions>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-
-    private void VerifyReviewRead(string reviewId) =>
-        _mockReviewsContainer.Verify(
-            x => x.ReadItemAsync<ReviewListItemModel>(
-                reviewId,
-                It.IsAny<PartitionKey>(),
-                It.IsAny<ItemRequestOptions>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-
-    private void VerifyReviewUpdated(string reviewId, DateTime oldLastUpdatedOn) =>
-        _mockReviewsContainer.Verify(
-            x => x.UpsertItemAsync(
-                It.Is<ReviewListItemModel>(r => r.Id == reviewId && r.LastUpdatedOn > oldLastUpdatedOn),
-                It.IsAny<PartitionKey>(),
-                It.IsAny<ItemRequestOptions>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-
-    private void VerifyReviewNotUpdated() =>
-        _mockReviewsContainer.Verify(
-            x => x.UpsertItemAsync(
-                It.IsAny<ReviewListItemModel>(),
-                It.IsAny<PartitionKey>(),
-                It.IsAny<ItemRequestOptions>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
 }

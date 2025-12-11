@@ -143,8 +143,6 @@ What are we trying to achieve with this design?
 
 ### Overview
 
-### Overview
-
 The design will address the identified gaps by implementing a unified two-phase build failure handling and customization workflow that:
 
 1. **Creates AI agent expertise** through a shareable TypeSpec client customizations reference document that teaches agents how to apply `Azure.ClientGenerator.Core` decorators effectively.
@@ -171,7 +169,7 @@ Additionally, it can be referenced by custom prompts or agents when knowledge of
 
 There is an existing [CustomizedCodeUpdateTool](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/TypeSpec/CustomizedCodeUpdateTool.cs) that supports updating customized SDK code after generating an SDK from TypeSpec. Splitting `client.tsp` customization into its own tool (see alternative 1) will put the burden on our users to know whether TypeSpec or SDK code customizations are required to address feedback or breakages. Applying and verifying `client.tsp` customizations should be merged with this existing tool.
 
-Name (CLI): `azsdk tsp customized-update`
+Name (CLI): `azsdk tsp client customized-update`
 Name (MCP): `azsdk_customized_code_update`
 
 #### Current Inputs

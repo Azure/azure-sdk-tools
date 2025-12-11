@@ -72,6 +72,7 @@ extends:
                     echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
               
               - script: |
+                  export GOPROXY=https://proxy.golang.org,direct
                   go build -o qa-bot-service
                   chmod +x qa-bot-service
                   ./qa-bot-service &
@@ -85,7 +86,6 @@ extends:
                   AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
                   AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-                  GOPROXY: https://proxy.golang.org,direct
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'

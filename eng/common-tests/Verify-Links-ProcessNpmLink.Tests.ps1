@@ -3,7 +3,8 @@ Import-Module Pester
 BeforeAll {
     . $PSScriptRoot/../common/scripts/Verify-Links.ps1
     
-    # Helper function to test URL transformation without making web requests
+    # Helper function to test URL transformation logic directly without web requests
+    # This mirrors the transformation logic in ProcessNpmLink to enable unit testing
     function Get-TransformedNpmUrl([System.Uri]$linkUri) {
         $urlString = $linkUri.ToString()
         if ($urlString -match '^https?://(?:www\.)?npmjs\.com/package/([^?#]+)/v/([^?#]+)') {

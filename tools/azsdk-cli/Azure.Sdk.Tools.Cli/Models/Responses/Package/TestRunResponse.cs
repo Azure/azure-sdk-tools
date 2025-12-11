@@ -20,17 +20,14 @@ public class TestRunResponse : PackageResponseBase
         {
             ResponseError = error;
         }
-    }
-
-    public TestRunResponse(ProcessResult processResult)
-    {
-        ExitCode = processResult.ExitCode;
-        TestRunOutput = processResult.Output;
-
-        if (ExitCode != 0)
+        else if (exitCode != 0)
         {
             ResponseError = "Test run failed with a non-zero exit code";
         }
+    }
+
+    public TestRunResponse(ProcessResult processResult) : this(processResult.ExitCode, processResult.Output)
+    {
     }
 
     protected override string Format()

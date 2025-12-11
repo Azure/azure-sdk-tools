@@ -281,7 +281,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         packageInfo);
                 }
 
-                return PackageOperationResponse.CreateSuccess($"{successMessage} Output:\n{trimmedOutput}", packageInfo, nextSteps);
+                return PackageOperationResponse.CreateSuccess($"{successMessage}", packageInfo, nextSteps);
             }
             catch (Exception ex)
             {

@@ -47,7 +47,7 @@ from src._models import APIViewComment
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, get_prompt_path
+from src._utils import get_language_pretty_name, run_prompty
 from src.agent._agent import get_main_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -180,15 +180,17 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_cache: bool = False):
+def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False, style: str = "compact"):
     """
     Runs the specified test case(s).
     """
+    if test_paths is None:
+        test_paths = []
     from evals._discovery import discover_targets
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs, use_cache=use_cache)
+    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"))
     try:
         results = runner.run(targets)
         if save:
@@ -202,7 +204,6 @@ def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False, use_
                     raise exc
 
         runner.show_results(results)
-        runner.show_summary(results)
     finally:
         runner.cleanup()
 
@@ -332,7 +333,7 @@ def review_job_start(
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/start"
 
-    resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
+    resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
     if resp.status_code == 202:
         return resp.json()
     else:
@@ -346,7 +347,7 @@ def review_job_get(job_id: str):
     api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
 
-    headers = _build_auth_header(base_url)
+    headers = _build_auth_header()
     resp = requests.get(url, headers=headers, timeout=10)
     if resp.status_code == 200:
         return resp.json()
@@ -450,7 +451,7 @@ def review_summarize(language: str, target: str, base: str = None):
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/summarize"
 
-    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
+    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
         print(summary)
@@ -500,7 +501,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     payload = {"user_input": user_input}
                     if current_thread_id:
                         payload["thread_id"] = current_thread_id
-                    resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(base_url), timeout=60)
+                    resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
@@ -574,7 +575,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
-                headers=_build_auth_header(base_url),
+                headers=_build_auth_header(),
                 timeout=60,
             )
             data = resp.json()
@@ -622,7 +623,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
-                headers=_build_auth_header(base_url),
+                headers=_build_auth_header(),
                 timeout=60,
             )
             data = resp.json()
@@ -907,7 +908,7 @@ def check_health(include_auth: bool = False):
     base_url = settings.get("WEBAPP_ENDPOINT")
     headers = []
     if include_auth:
-        headers = _build_auth_header(base_url)
+        headers = _build_auth_header()
         api_endpoint = f"{base_url}/auth-test"
     else:
         api_endpoint = f"{base_url}/health-test"
@@ -973,9 +974,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
 
     comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
 
-    prompt_path = get_prompt_path(folder="other", filename="analyze_comment_themes")
-    inputs = {"comments": comment_texts}
-    theme_output = prompty.execute(prompt_path, inputs=inputs)
+    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
     print(theme_output)
 
     print(f"Comment count: {len(comment_texts)}")
@@ -983,7 +982,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
 
 
-def _build_auth_header(base_url):
+def _build_auth_header():
     """
     Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
     """
@@ -998,7 +997,7 @@ def _build_auth_header(base_url):
     except ClientAuthenticationError as e:
         logging.error("Authentication failed: %s", e)
         print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
-        raise SystemExit(1)
+        sys.exit(1)
     return {"Authorization": f"Bearer {token.token}"}
 
 
@@ -1177,10 +1176,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
             ac.argument(
-                "use_cache",
-                options_list=["--use-cache"],
+                "use_recording",
+                options_list=["--use-recording"],
                 action="store_true",
-                help="Use cached results for testcases when available.",
+                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
+            )
+            ac.argument(
+                "style",
+                options_list=["--style", "-s"],
+                type=str,
+                choices=["compact", "verbose"],
+                default="compact",
+                help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
 
         with ArgumentsContext(self, "search") as ac:

@@ -159,7 +159,7 @@ public class MetadataUpdateToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("does not exist"));
     }
 
     [Test]

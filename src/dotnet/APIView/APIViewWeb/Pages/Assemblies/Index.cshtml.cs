@@ -47,6 +47,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         public (IEnumerable<ReviewListItemModel> Reviews, int TotalCount, int TotalPages,
             int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
+        
+        public string SearchQuery { get; set; } = string.Empty;
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
 
@@ -56,11 +58,6 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _userProfileCache.SetUserEmailIfNullOrEmpty(User);
             var userPreference = (await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin())).Preferences;
-            var spaUrl = "https://spa." + Request.Host.ToString();
-            if (userPreference.UseBetaIndexPage == true)
-            {
-                return Redirect(spaUrl);
-            }
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any())
             {
@@ -102,7 +99,17 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var file = Upload.Files?.SingleOrDefault();
-            var review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+            ReviewListItemModel review = null;
+
+            if (!string.IsNullOrEmpty(Upload.PackageName))
+            {
+                review = await _reviewManager.GetReviewAsync(language: Upload.Language, packageName: Upload.PackageName);
+            }
+
+            if (review == null)
+            {
+                review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+            }
 
             if (review != null)
             {
@@ -119,6 +126,9 @@ namespace APIViewWeb.Pages.Assemblies
             languages = (fromUrl)? languages.Select(x => HttpUtility.UrlDecode(x)) : languages;
             state = state.Select(x => HttpUtility.UrlDecode(x));
             status = status.Select(x => HttpUtility.UrlDecode(x));
+
+            // Set search query for the view
+            SearchQuery = search != null ? string.Join(" ", search) : string.Empty;
 
             // Update selected properties
             if (languages.Any())

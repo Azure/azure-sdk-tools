@@ -2,12 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb
 {
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ParserStyle {
         Flat = 0,
         Tree

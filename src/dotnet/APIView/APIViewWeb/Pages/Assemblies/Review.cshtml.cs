@@ -286,30 +286,6 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         /// <summary>
-        /// Mark a Review as Viewed
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="revisionId"></param>
-        /// <returns></returns>
-        public async Task<ActionResult> OnPostToggleViewedAsync(string id, string revisionId)
-        {
-            string userName = User.GetGitHubLogin();
-            var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
-
-            if (revision.ViewedBy.Contains(userName))
-            {
-                revision.ViewedBy.Remove(userName);
-            }
-            else
-            {
-                revision.ViewedBy.Add(userName);
-            }
-
-            await _apiRevisionsManager.UpdateAPIRevisionAsync(revision);
-            return RedirectToPage(new { id = id, revisionId = revisionId });
-        }
-
-        /// <summary>
         /// Approve or Revert Approval for a Review
         /// </summary>
         /// <param name="id"></param>

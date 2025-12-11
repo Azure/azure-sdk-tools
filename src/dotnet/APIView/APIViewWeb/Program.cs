@@ -1,5 +1,5 @@
 using System;
-using Azure.Identity;
+using APIViewWeb.Helpers;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -29,9 +29,10 @@ namespace APIViewWeb
                     // Load configuration from Azure App Configuration
                     config.AddAzureAppConfiguration(options =>
                     {
-                        options.Connect(new Uri(appConfigUrl), new DefaultAzureCredential()).ConfigureKeyVault(kv => 
+                        var credential = CredentialProvider.GetAzureCredential();
+                        options.Connect(new Uri(appConfigUrl), credential).ConfigureKeyVault(kv => 
                         { 
-                            kv.SetCredential(new DefaultAzureCredential());
+                            kv.SetCredential(credential);
                         })
                         .Select(KeyFilter.Any)
                         .ConfigureRefresh(refresh =>

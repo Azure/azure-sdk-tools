@@ -156,7 +156,7 @@ export function getNewVersion(stableVersion: string | undefined, usedVersions: s
 
 export async function isStableSDKReleaseType(apiVersionType: string, options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     let isStableRelease = apiVersionType != ApiVersionType.Preview;
-    if(options.apiVersion && options.sdkReleaseType ) {
+    if(options.sdkReleaseType ) {
         logger.info(`Detected appVersion is ${options.apiVersion}, sdkReleaseType is ${options.sdkReleaseType}`);
         isStableRelease = options.sdkReleaseType == 'stable'
     }

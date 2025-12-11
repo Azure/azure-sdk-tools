@@ -66,6 +66,9 @@
     "workbox-cli": "^7.1.0"
   },
   "overrides": {
-    "glob@<10.5.0": "10.5.0"
+    "glob@<10.5.0": "10.5.0",
+    "workbox-cli": {
+      "update-notifier": "5.1.0"
+    }
   }
 }

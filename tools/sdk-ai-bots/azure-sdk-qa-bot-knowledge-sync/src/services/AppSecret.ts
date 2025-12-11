@@ -1,4 +1,4 @@
-import { AzureCliCredential, EnvironmentCredential, ChainedTokenCredential, ManagedIdentityCredential } from '@azure/identity';
+import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential, WorkloadIdentityCredential} from '@azure/identity';
 import { SecretClient } from '@azure/keyvault-secrets';
 
 /**
@@ -18,8 +18,8 @@ export async function initSecrets(): Promise<void> {
         // Create a credential
         const credential = new ChainedTokenCredential(
             new ManagedIdentityCredential(),
-            new EnvironmentCredential(),
-            new AzureCliCredential()
+            new AzureCliCredential(),
+            new WorkloadIdentityCredential()
         );
 
         // Establish a connection to the Key Vault client

@@ -97,36 +97,40 @@ func GetBotTenantID() string {
 func initCredential() error {
 	var creds []azcore.TokenCredential
 
+	// 1: Workload Identity
+	workloadCred, err := azidentity.NewWorkloadIdentityCredential(nil)
+	if err == nil {
+		creds = append(creds, workloadCred)
+		log.Printf("Workload Identity credential added")
+	} else {
+		log.Printf("Workload Identity credential not available: %v", err)
+	}
+
+	// 2: Managed Identity
 	clientID := os.Getenv("AZURE_CLIENT_ID")
-	var opts *azidentity.ManagedIdentityCredentialOptions
+	var miOpts *azidentity.ManagedIdentityCredentialOptions
 	if len(clientID) > 0 {
-		opts = &azidentity.ManagedIdentityCredentialOptions{
+		miOpts = &azidentity.ManagedIdentityCredentialOptions{
 			ID: azidentity.ClientID(clientID),
 		}
 	}
-
-	miCred, err := azidentity.NewManagedIdentityCredential(opts)
+	miCred, err := azidentity.NewManagedIdentityCredential(miOpts)
 	if err == nil {
 		creds = append(creds, miCred)
+		log.Printf("Managed Identity credential added")
 	} else {
 		log.Printf("Managed Identity credential not available: %v", err)
 	}
 
+	// 3: Azure CLI
 	azCLI, err := azidentity.NewAzureCLICredential(nil)
 	if err == nil {
 		creds = append(creds, azCLI)
+		log.Printf("Azure CLI credential added")
 	} else {
 		log.Printf("Azure CLI credential not available: %v", err)
 	}
 
-	envCred, err := azidentity.NewEnvironmentCredential(nil)
-	if err == nil {
-		creds = append(creds, envCred)
-	} else {
-		log.Printf("Environment credential not available: %v", err)
-	}
-
-	// Ensure we have at least one credential
 	if len(creds) == 0 {
 		return fmt.Errorf("no valid credentials available")
 	}

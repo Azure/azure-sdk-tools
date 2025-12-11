@@ -1,4 +1,4 @@
-import { AzureCliCredential, EnvironmentCredential, ChainedTokenCredential, ManagedIdentityCredential } from '@azure/identity';
+import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential, WorkloadIdentityCredential } from '@azure/identity';
 import { AppConfigurationClient } from '@azure/app-configuration';
 import * as dotenv from 'dotenv';
 
@@ -40,8 +40,8 @@ export async function initConfiguration(): Promise<void> {
         // Create a credential
         const credential = new ChainedTokenCredential(
             new ManagedIdentityCredential(),
-            new EnvironmentCredential(),
-            new AzureCliCredential()
+            new AzureCliCredential(),
+            new WorkloadIdentityCredential()
         );
 
         // Create the App Configuration client

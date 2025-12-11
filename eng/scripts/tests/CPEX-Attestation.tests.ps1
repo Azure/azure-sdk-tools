@@ -7,20 +7,20 @@ Describe "Get-TriagesForCPEXAttestation" {
     BeforeAll {
         . (Join-Path $PSScriptRoot "../../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
 
-        Set-Variable -Name capturedFields -Scope Script -Value $null
-        Set-Variable -Name capturedWiql   -Scope Script -Value $null
+        Set-Variable -Name CapturedFields -Scope Script -Value $null
+        Set-Variable -Name CapturedWiql   -Scope Script -Value $null
     }
 
     Context 'builds the correct WIQL and field list' {
         BeforeEach {  
-            $script:capturedFields = $null
-            $script:capturedWiql   = $null
+            $script:CapturedFields = $null
+            $script:CapturedWiql   = $null
 
             Mock -CommandName Invoke-Query -MockWith {
                 param($fields, $wiql, $output)
 
-                $script:capturedFields = $fields
-                $script:capturedWiql   = $wiql
+                $script:CapturedFields = $fields
+                $script:CapturedWiql   = $wiql
                 
                 $workItems = @()
                 $workItems += @{
@@ -65,13 +65,13 @@ Describe "Get-TriagesForCPEXAttestation" {
             )
 
             foreach($field in $expectedFields) {
-                $script:capturedFields | Should -Contain $field
+                $script:CapturedFields | Should -Contain $field
             }
         }
 
         It 'assembles WIQL with correct work item type, attestation status, tag exclusions, etc' {
             $null = Get-TriagesForCPEXAttestation
-            $wiql = $script:capturedWiql
+            $wiql = $script:CapturedWiql
             
             # Normalize whitespace to make matching resilient
             $norm = ($wiql -replace '\s+', ' ').Trim()
@@ -118,20 +118,20 @@ Describe "Get-ReleasePlansForCPEXAttestation" {
     BeforeAll {
         . (Join-Path $PSScriptRoot "../../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
 
-        Set-Variable -Name capturedFields -Scope Script -Value $null
-        Set-Variable -Name capturedWiql   -Scope Script -Value $null
+        Set-Variable -Name CapturedFields -Scope Script -Value $null
+        Set-Variable -Name CapturedWiql   -Scope Script -Value $null
     }
 
     Context 'builds the correct WIQL and field list' {
         BeforeEach {  
-            $script:capturedFields = $null
-            $script:capturedWiql   = $null
+            $script:CapturedFields = $null
+            $script:CapturedWiql   = $null
 
             Mock -CommandName Invoke-Query -MockWith {
                 param($fields, $wiql, $output)
 
-                $script:capturedFields = $fields
-                $script:capturedWiql   = $wiql
+                $script:CapturedFields = $fields
+                $script:CapturedWiql   = $wiql
                 
                 $workItems = @()
                 $workItems += @{
@@ -172,13 +172,13 @@ Describe "Get-ReleasePlansForCPEXAttestation" {
             )
 
             foreach($field in $expectedFields) {
-                $script:capturedFields | Should -Contain $field
+                $script:CapturedFields | Should -Contain $field
             }
         }
 
         It 'assembles WIQL with correct work item type, completion status, attestation status, tag exclusions, etc' {
             $null = Get-ReleasePlansForCPEXAttestation
-            $wiql = $script:capturedWiql
+            $wiql = $script:CapturedWiql
             
             # Normalize whitespace to make matching resilient
             $norm = ($wiql -replace '\s+', ' ').Trim()
@@ -227,8 +227,8 @@ Describe "Update-AttestationStatusInWorkItem" {
     BeforeAll {
         . (Join-Path $PSScriptRoot "../../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
 
-        Set-Variable -Name capturedId -Scope Script -Value $null
-        Set-Variable -Name capturedFields -Scope Script -Value $null
+        Set-Variable -Name CapturedId -Scope Script -Value $null
+        Set-Variable -Name CapturedFields -Scope Script -Value $null
     }
 
     BeforeEach {
@@ -270,11 +270,48 @@ Describe "Update-AttestationStatusInWorkItem" {
         Assert-MockCalled UpdateWorkItem -Exactly 1
         $result | Should -BeTrue
         
-        $id = $script:capturedId
-        $fields = $script:capturedFields
+        $id = $script:CapturedId
+        $fields = $script:CapturedFields
 
         $id | Should -Be $workItemId
         $fields | Where-Object { $_ -like "*$fieldName=$status*" } | Should -Not -BeNullOrEmpty
         $fields | Where-Object { $_ -like "*$expectedDateField=$($script:FixedDate)*" } | Should -Not -BeNullOrEmpty
+    }
+}
+
+# --------------------- Add Attestation Entry to Kusto Database ---------------------
+Describe 'Add Attestation Entry to Kusto Database' {
+    It 'posts a valid JSON envelope and CSL when run with required params' {
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            # Simulate Kusto mgmt success response
+            @{
+                Status    = 200
+                Operation = 'DataAppend'
+            }
+        } -Verifiable
+
+        $tableName    = 'TestKpiEvidenceStream'
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetId     = '11314123-2343-1232-2133-213412341344'
+        $targetType   = 'ProductSku'
+        $status       = 1
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+        
+        & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -TableName $tableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -ParameterFilter {
+            $Method -eq 'Post' -and
+            $ContentType -eq 'application/json' -and
+            $Uri -match '/v1/rest/mgmt$' -and
+            $Headers.Authorization -like 'Bearer *' -and
+            ($Body | ConvertFrom-Json).db -eq 'CPEX_Attestation_DB' -and
+            ($Body | ConvertFrom-Json).csl -match ([regex]::Escape($tableName)) -and
+            ($Body | ConvertFrom-Json).csl -match ('ActionItemId\s*=\s*"' + [regex]::Escape($actionItemId) + '"') -and
+            ($Body | ConvertFrom-Json).csl -match ('TargetId\s*=\s*"' + [regex]::Escape($targetId) + '"') -and
+            ($Body | ConvertFrom-Json).csl -match ('TargetType\s*=\s*"' + [regex]::Escape($targetType) + '"') -and
+            ($Body | ConvertFrom-Json).csl -match ('Status\s*=\s*int\s*\(\s*' + [regex]::Escape($status.ToString()) + '\s*\)') -and
+            ($Body | ConvertFrom-Json).csl -match ('EvidenceUrl\s*=\s*"' + [regex]::Escape($evidenceUrl) + '"') 
+            ($Body | ConvertFrom-Json).csl -match 'CreatedTime\s*=\s*datetime\s*\(\s*now\s*\)'
+        }
     }
 }

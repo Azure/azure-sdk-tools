@@ -12,6 +12,7 @@ Command line interface for APIView Copilot.
 
 import asyncio
 import json
+import logging
 import os
 import pathlib
 import sys
@@ -20,22 +21,33 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import colorama
+import prompty
+import prompty.azure
 import requests
+from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from src._apiview import ApiViewClient
+from src._apiview import (
+    ApiViewClient,
+)
 from src._apiview import get_active_reviews as _get_active_reviews
+from src._apiview import (
+    get_apiview_cosmos_client,
+    get_approvers,
+    get_comments_in_date_range,
+)
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
-from src._database_manager import ContainerNames, get_database_manager
+from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
+from src._models import APIViewComment
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, run_prompty
 from src.agent._agent import get_main_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -168,21 +180,23 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
+def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False, style: str = "compact"):
     """
     Runs the specified test case(s).
     """
+    if test_paths is None:
+        test_paths = []
     from evals._discovery import discover_targets
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs)
+    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"))
     try:
         results = runner.run(targets)
         if save:
             report = runner.generate_report(results)
             for doc in report:
-                db = get_database_manager()
+                db = DatabaseManager.get_instance()
                 try:
                     db.evals.upsert(doc["id"], data=doc)
                 except Exception as exc:
@@ -190,7 +204,6 @@ def run_evals(test_paths: list[str], num_runs: int = 1, save: bool = False):
                     raise exc
 
         runner.show_results(results)
-        runner.show_summary(results)
     finally:
         runner.cleanup()
 
@@ -320,7 +333,7 @@ def review_job_start(
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/start"
 
-    resp = requests.post(api_endpoint, json=payload, timeout=60)
+    resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
     if resp.status_code == 202:
         return resp.json()
     else:
@@ -333,7 +346,9 @@ def review_job_get(job_id: str):
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
-    resp = requests.get(url, timeout=10)
+
+    headers = _build_auth_header()
+    resp = requests.get(url, headers=headers, timeout=10)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -435,7 +450,8 @@ def review_summarize(language: str, target: str, base: str = None):
     settings = SettingsManager()
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/summarize"
-    response = requests.post(api_endpoint, json=payload, timeout=60)
+
+    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
         print(summary)
@@ -461,6 +477,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
             base_url = settings.get("WEBAPP_ENDPOINT")
             api_endpoint = f"{base_url}/agent/chat"
             session = requests.Session()
+            # Inline _build_auth_header in requests below
             while True:
                 try:
                     user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -484,7 +501,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     payload = {"user_input": user_input}
                     if current_thread_id:
                         payload["thread_id"] = current_thread_id
-                    resp = session.post(api_endpoint, json=payload, timeout=60)
+                    resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
@@ -558,6 +575,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(),
                 timeout=60,
             )
             data = resp.json()
@@ -605,6 +623,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                headers=_build_auth_header(),
                 timeout=60,
             )
             data = resp.json()
@@ -625,7 +644,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
 
 def db_get(container_name: str, id: str):
     """Retrieve an item from the database."""
-    db = get_database_manager()
+    db = DatabaseManager.get_instance()
     container = db.get_container_client(container_name)
     try:
         item = container.get(id)
@@ -636,7 +655,7 @@ def db_get(container_name: str, id: str):
 
 def db_delete(container_name: str, id: str):
     """Soft-delete an item from the database."""
-    db = get_database_manager()
+    db = DatabaseManager.get_instance()
     container = db.get_container_client(container_name)
     try:
         container.delete_item(item=id, partition_key=id)
@@ -692,7 +711,7 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
-    reviews = _get_active_reviews(start_date, end_date, environment)
+    reviews = _get_active_reviews(start_date, end_date, environment=environment)
     pretty_language = get_language_pretty_name(language).lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
@@ -881,6 +900,107 @@ def revoke_permissions(assignee_id: str = None):
         print(f"✅ Re-created 'CanNotDelete' lock for resource group '{rg_name}'...")
 
 
+def check_health(include_auth: bool = False):
+    """
+    Checks that the APIView Copilot service is healthy and accessible.
+    """
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    headers = []
+    if include_auth:
+        headers = _build_auth_header()
+        api_endpoint = f"{base_url}/auth-test"
+    else:
+        api_endpoint = f"{base_url}/health-test"
+    try:
+        resp = requests.get(api_endpoint, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            print("✅ APIView Copilot service is healthy.")
+        else:
+            print(f"❌ Service health check failed: {resp.status_code} - {resp.text}")
+    except Exception as e:
+        print(f"❌ Service health check error: {e}")
+
+
+ANALYZE_COMMENT_LANGUAGES = [
+    "C",
+    "C#",
+    "C++",
+    "Go",
+    "Java",
+    "JavaScript",
+    "Json",
+    "Kotlin",
+    "Python",
+    "Rust",
+    "Swagger",
+    "Swift",
+    "TypeSpec",
+    "Xml",
+]
+
+
+def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
+    """
+    Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
+    """
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    filtered = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic" and c.get("IsDeleted") != True]
+
+    allowed_commenters = get_approvers(language=language)
+
+    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+    review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
+    if review_ids:
+        params = []
+        clauses = []
+        for i, rid in enumerate(review_ids):
+            param_name = f"@id_{i}"
+            clauses.append(f"c.id = {param_name}")
+            params.append({"name": param_name, "value": rid})
+        query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+        review_results = list(
+            reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+        )
+        review_lang_map = {r["id"]: r.get("Language", "").lower() for r in review_results}
+    else:
+        review_lang_map = {}
+
+    language = language.lower()
+    comments = [APIViewComment(**c) for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == language]
+
+    if allowed_commenters:
+        comments = [c for c in comments if c.created_by in allowed_commenters]
+
+    comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
+
+    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
+    print(theme_output)
+
+    print(f"Comment count: {len(comment_texts)}")
+    created_by_set = {comment.created_by for comment in comments if comment.created_by}
+    print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
+
+
+def _build_auth_header():
+    """
+    Helper to build Authorization header with Bearer token for WEBAPP_ENDPOINT requests.
+    """
+    from src._credential import get_credential
+
+    credential = get_credential()
+    settings = SettingsManager()
+    app_id = settings.get("APP_ID")
+    scope = f"api://{app_id}/.default"
+    try:
+        token = credential.get_token(scope)
+    except ClientAuthenticationError as e:
+        logging.error("Authentication failed: %s", e)
+        print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
+        sys.exit(1)
+    return {"Authorization": f"Bearer {token.token}"}
+
+
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -890,6 +1010,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
+            g.command("analyze-comments", "analyze_comments")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -905,6 +1026,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
+            g.command("check", "check_health")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
@@ -962,6 +1084,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Path to a JSON file containing comments.",
                 options_list=["--comments-path", "-c"],
             )
+            ac.argument(
+                "include_auth",
+                action="store_true",
+                help="Include authentication in the health check.",
+            )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
@@ -1007,7 +1134,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "language",
                 type=str,
                 help="The language of the test case.",
-                options_list=["--language", "-l"],
+                options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
@@ -1047,6 +1174,20 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--test-paths", "-p"],
                 default=[],
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
+            )
+            ac.argument(
+                "use_recording",
+                options_list=["--use-recording"],
+                action="store_true",
+                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
+            )
+            ac.argument(
+                "style",
+                options_list=["--style", "-s"],
+                type=str,
+                choices=["compact", "verbose"],
+                default="compact",
+                help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
 
         with ArgumentsContext(self, "search") as ac:
@@ -1138,11 +1279,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 "language",
                 type=str,
                 help="The language of the APIView file",
-                options_list=["--language", "-l"],
+                options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
-                "target", type=str, help="The path to the APIView file to summarize.", options_list=["--target", "-t"]
+                "target", type=str, help="The path to the APIView file to summarize.", options_list=("--target", "-t")
             )
             ac.argument(
                 "base",
@@ -1200,6 +1341,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "language",
+                type=str,
+                help="Language to filter comments (e.g., python)",
+                choices=ANALYZE_COMMENT_LANGUAGES,
+                options_list=("--language", "-l"),
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

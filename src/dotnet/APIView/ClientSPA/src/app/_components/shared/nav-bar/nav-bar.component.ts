@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { combineLatest } from 'rxjs';
+import { combineLatest, take } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { NotificationsFilter, SiteNotification } from 'src/app/_models/notificationsModel';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { SelectItemModel } from 'src/app/_models/review';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
@@ -32,6 +33,14 @@ export class NavBarComponent implements OnInit {
   reviewId: string | null = null;
   isApprover: boolean = false;
 
+  // Theme options
+  themes : SelectItemModel[] = [
+    { label: "Light", data: "light-theme" },
+    { label: "Dark", data: "dark-theme" },
+    { label: "Solarized", data: "dark-solarized-theme" }
+  ];
+  selectedTheme : SelectItemModel = { label: "Light", data: "light-theme" };
+
   constructor(private userProfileService: UserProfileService, private configService: ConfigService,
     private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute,
     private http: HttpClient
@@ -49,6 +58,11 @@ export class NavBarComponent implements OnInit {
       this.userProfile = userProfile;
       if (isLoggedIn && userProfile) {
         this.checkApproverStatus();
+        // Initialize theme selection from user preferences
+        const currentTheme = this.themes.find(t => t.data === userProfile.preferences.theme);
+        if (currentTheme) {
+          this.selectedTheme = currentTheme;
+        }
       }
     });
 
@@ -99,5 +113,20 @@ export class NavBarComponent implements OnInit {
         this.isApprover = false;
       }
     });
+  }
+
+  changeTheme(theme: SelectItemModel) {
+    this.selectedTheme = theme;
+    if (this.userProfile) {
+      this.userProfile.preferences.theme = theme.data;
+      this.userProfileService.updateUserProfile(this.userProfile).pipe(take(1)).subscribe({
+        next: () => {
+          window.location.reload();
+        },
+        error: (error: any) => {
+          console.error('Failed to update theme:', error);
+        }
+      });
+    }
   }
 }

@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -11,7 +12,8 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
-    private DotNetLanguageSpecificChecks _languageChecks = null!;
+    private Mock<ICommonValidationHelpers> _commonValidationHelperMock = null!;
+    private DotnetLanguageService _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
     private const string RequiredDotNetVersion = "9.0.102";
@@ -21,13 +23,17 @@ internal class DotNetLanguageSpecificChecksTests
     {
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
+        _gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
+        _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
 
-        _languageChecks = new DotNetLanguageSpecificChecks(
+        _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
             _gitHelperMock.Object,
-            NullLogger<DotNetLanguageSpecificChecks>.Instance);
+            NullLogger<DotnetLanguageService>.Instance,
+            _commonValidationHelperMock.Object,
+            Mock.Of<IFileHelper>());
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
         _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");

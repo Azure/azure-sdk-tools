@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using APIViewWeb.Extensions;
@@ -11,6 +12,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
+using APIViewWeb.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -28,11 +30,12 @@ namespace APIViewWeb.LeanControllers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly string _copilotEndpoint;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ICopilotAuthenticationService _copilotAuthService;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
             IReviewManager reviewManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager, IConfiguration configuration,
-            IHubContext<SignalRHub> signalRHub, IHttpClientFactory httpClientFactory)
+            IHubContext<SignalRHub> signalRHub, IHttpClientFactory httpClientFactory, ICopilotAuthenticationService copilotAuthService)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
@@ -41,6 +44,7 @@ namespace APIViewWeb.LeanControllers
             _signalRHubContext = signalRHub;
             _copilotEndpoint = configuration["CopilotServiceEndpoint"];
             _httpClientFactory = httpClientFactory;
+            _copilotAuthService = copilotAuthService;
         }
 
         /// <summary>
@@ -98,7 +102,11 @@ namespace APIViewWeb.LeanControllers
                         // If Copilot review is in progress let verify that this is not due to a dropped background job
                         var pollUrl = $"{_copilotEndpoint}/api-review/{apiRevision.CopilotReviewJobId}";
                         var client = _httpClientFactory.CreateClient();
-                        var response = await client.GetAsync(pollUrl);
+                        
+                        var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+                        
+                        HttpResponseMessage response = await client.SendAsync(request);
                         response.EnsureSuccessStatusCode();
                         var pollResponseString = await response.Content.ReadAsStringAsync();
                         var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
@@ -145,31 +153,6 @@ namespace APIViewWeb.LeanControllers
             {
                 await _apiRevisionsManager.RestoreAPIRevisionAsync(user: User, reviewId: deleteParams.reviewId, revisionId: apiRevisionId);
             }
-        }
-
-        /// <summary>
-        /// Endpoint used by Client SPA toggling ViewdBy property
-        /// </summary>
-        /// <param name="apiRevisionId"></param>
-        /// <param name="state"></param> true = viewed, false = not viewed
-        /// <returns></returns>
-        [HttpPost("{apiRevisionId}/toggleViewedBy", Name = "ToggleViewedBy")]
-        public async Task<ActionResult<APIRevisionListItemModel>> ToggleViewedByAsync(string apiRevisionId, [FromQuery] bool state)
-        {
-            string userName = User.GetGitHubLogin();
-            var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
-
-            if (state)
-            {
-                apiRevision.ViewedBy.Add(userName);
-            }
-            else 
-            {
-                apiRevision.ViewedBy.Remove(userName);
-            }
-
-            await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
-            return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
 
         /// <summary>

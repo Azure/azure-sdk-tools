@@ -13,21 +13,22 @@ const (
 type Source string
 
 const (
-	Source_TypeSpec                Source = "typespec_docs"
-	Source_TypeSpecAzure           Source = "typespec_azure_docs"
-	Source_AzureRestAPISpec        Source = "azure_rest_api_specs_wiki"
-	Source_AzureSDKForPython       Source = "azure_sdk_for_python_docs"
-	Source_AzureSDKForPythonWiki   Source = "azure_sdk_for_python_wiki"
-	Source_TypeSpecQA              Source = "static_typespec_qa"
-	Source_AzureAPIGuidelines      Source = "azure_api_guidelines"
-	Source_AzureResourceManagerRPC Source = "azure_resource_manager_rpc"
-	Source_TypeSpecMigration       Source = "static_typespec_migration_docs"
-	Source_AzureSDKDocsEng         Source = "azure-sdk-docs-eng"
-	Source_AzureSDKGuidelines      Source = "azure-sdk-guidelines"
-	Source_TypeSpecAzureHttpSpecs  Source = "typespec_azure_http_specs"
-	Source_TypeSpecHttpSpecs       Source = "typespec_http_specs"
-	Source_AzureSDKForGo           Source = "azure_sdk_for_go_docs"
-	Source_StaticAzureDocs         Source = "static_azure_docs"
+	Source_TypeSpec                       Source = "typespec_docs"
+	Source_TypeSpecAzure                  Source = "typespec_azure_docs"
+	Source_AzureRestAPISpec               Source = "azure_rest_api_specs_wiki"
+	Source_AzureSDKForPython              Source = "azure_sdk_for_python_docs"
+	Source_AzureSDKForPythonWiki          Source = "azure_sdk_for_python_wiki"
+	Source_TypeSpecQA                     Source = "static_typespec_qa"
+	Source_AzureAPIGuidelines             Source = "azure_api_guidelines"
+	Source_AzureResourceManagerRPC        Source = "azure_resource_manager_rpc"
+	Source_TypeSpecMigration              Source = "static_typespec_migration_docs"
+	Source_AzureSDKDocsEng                Source = "azure-sdk-docs-eng"
+	Source_AzureSDKGuidelines             Source = "azure-sdk-guidelines"
+	Source_TypeSpecAzureHttpSpecs         Source = "typespec_azure_http_specs"
+	Source_TypeSpecHttpSpecs              Source = "typespec_http_specs"
+	Source_AzureSDKForGo                  Source = "azure_sdk_for_go_docs"
+	Source_StaticAzureDocs                Source = "static_azure_docs"
+	Source_StaticTypeSpecToSwaggerMapping Source = "static_typespec_to_swagger_mapping"
 )
 
 type Role string
@@ -82,7 +83,7 @@ type CompletionResp struct {
 	HasResult         bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
 	References        []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
 	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
-	Intension         *IntensionResult `json:"intension" jsonschema:"omitempty,description=The intension of the question"`
+	Intention         *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
 }
 
@@ -94,9 +95,10 @@ const (
 	QuestionScope_Unbranded QuestionScope = "unbranded"
 )
 
-type IntensionResult struct {
-	Question string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category string        `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
-	Scope    QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+type IntentionResult struct {
+	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
 }

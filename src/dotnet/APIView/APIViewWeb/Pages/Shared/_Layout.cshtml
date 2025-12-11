@@ -39,29 +39,81 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm main-nav-cst-theme">
             <div class="container-fluid">
-                <a href="/" class="navbar-brand"><img id="apiview-logo" alt="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
+                <a href="/" class="navbar-brand" data-clarity-region="apiview-home-logo"><img id="apiview-logo" alt="apiview-logo" src="~/icons/apiview.png" />apiview.dev</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse">
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto align-items-center">
                         @if (User.Identity.IsAuthenticated) {
                             <li class="nav-item">
                                 <span asp-resource="@Model" asp-requirement="@ApproverRequirement.Instance">
-                                    <a class="nav-link" asp-area="" asp-page="/Assemblies/RequestedReviews">Requested Reviews</a>
+                                    <a class="nav-link nav-btn" asp-area="" asp-page="/Assemblies/RequestedReviews">
+                                        <i class="bi bi-inbox-fill me-1"></i>Requested Reviews
+                                    </a>
                                 </span>
                             </li>
-                            <li class="nav-item">
-                                <a asp-page="Profile" asp-route-UserName="@User.GetGitHubLogin()" class="nav-link">Profile</a>
-                            </li>
-                            <li class="nav-item">
-                                <a asp-action="Logout" asp-controller="Account" class="nav-link">Log Out</a>
+                            
+                            <!-- Vertical divider -->
+                            <li class="nav-divider"></li>
+                        }
+                        
+                        <!-- Help icon with dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-question-circle"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end navbar-dropdown">
+                                <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-book me-2"></i>Documentation
+                                </a></li>
+                                <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-bug me-2"></i>Report an Issue
+                                </a></li>
+                            </ul>
+                        </li>
+                        
+                        @if (User.Identity.IsAuthenticated) {
+                            <!-- User profile avatar with dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <img class="user-avatar" src="https://github.com/@(User.GetGitHubLogin()).png?size=32" alt="@User.GetGitHubLogin()" />
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end navbar-dropdown profile-dropdown">
+                                    <li class="dropdown-header profile-header">
+                                        <div class="d-flex align-items-center">
+                                            <img class="rounded-circle me-3" src="https://github.com/@(User.GetGitHubLogin()).png?size=48" alt="@User.GetGitHubLogin()" width="48" height="48" />
+                                            <div>
+                                                <div class="fw-semibold profile-name">@User.GetGitHubLogin()</div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="theme-row">
+                                        <span class="theme-label">Theme</span>
+                                        <div class="theme-buttons">
+                                            <button type="button" class="theme-btn @(theme == "light-theme" ? "active" : "")" data-theme="light-theme" title="Light">
+                                                <i class="bi bi-sun"></i>
+                                            </button>
+                                            <button type="button" class="theme-btn @(theme == "dark-theme" ? "active" : "")" data-theme="dark-theme" title="Dark">
+                                                <i class="bi bi-moon"></i>
+                                            </button>
+                                            <button type="button" class="theme-btn @(theme == "dark-solarized-theme" ? "active" : "")" data-theme="dark-solarized-theme" title="Solarized">
+                                                <i class="bi bi-circle-half"></i>
+                                            </button>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-page="Profile" asp-route-UserName="@User.GetGitHubLogin()">
+                                        <i class="bi bi-gear me-2"></i>Settings
+                                    </a></li>
+                                    <li><a class="dropdown-item" asp-action="Logout" asp-controller="Account">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Log out
+                                    </a></li>
+                                </ul>
                             </li>
                         }
-                        <li class="nav-item">
-                            <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link">Help</a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -81,14 +133,6 @@
             </div>
         </div>
     </main>
-
-    <footer class="border-top footer text-muted">
-        <div class="container text-center">
-            &copy; @DateTime.Now.Year - apiview.dev
-            - <a href="https://github.com/Azure/azure-sdk-tools/">Feedback</a>
-            - <a href="https://github.com/Azure/azure-sdk-tools/commit/@Startup.VersionHash">@Startup.VersionHash</a>
-        </div>
-    </footer>
 
     <environment include="Development">
         <script src="~/lib/jquery/dist/jquery.js"></script>

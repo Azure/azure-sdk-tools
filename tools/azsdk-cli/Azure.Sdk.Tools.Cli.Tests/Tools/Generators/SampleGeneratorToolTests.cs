@@ -4,13 +4,15 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 using Azure.Sdk.Tools.Cli.Services;
-using Moq;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Telemetry;
-using LibGit2Sharp;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.Samples;
-using Azure.Sdk.Tools.Cli.Samples;
+using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
+using LibGit2Sharp;
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators;
 
@@ -22,6 +24,16 @@ public class SampleGeneratorToolTests
     private Mock<IMicroagentHostService> microagentHostServiceMock;
     private SampleGeneratorTool tool;
     private Mock<ITelemetryService> telemetryServiceMock;
+    private Mock<INpxHelper> _mockNpxHelper;
+    private Mock<IProcessHelper> _mockProcessHelper;
+    private Mock<IPythonHelper> _mockPythonHelper;
+    private Mock<IPowershellHelper> _mockPowerShellHelper;
+    private Mock<IGitHelper> _mockGitHelper;
+    private Mock<LanguageService> _mockGoLanguageService;
+    private TestLogger<SdkBuildTool> _logger;
+    private List<LanguageService> _languageServices;
+    private IGitHelper realGitHelper;
+    private Mock<ICommonValidationHelpers> _commonValidationHelpers;
 
 
     [Test]
@@ -60,7 +72,8 @@ public class SampleGeneratorToolTests
         using var tempRepo = TempDirectory.Create($"sample-gen-{language}");
         var repoRoot = tempRepo.DirectoryPath;
         Repository.Init(repoRoot);
-        var packagePath = Path.Combine(repoRoot, "sdk", "group", "service", "pkg");
+        var relativePath = Path.Combine("sdk", "group", "service", "pkg");
+        var packagePath = Path.Combine(repoRoot, relativePath);
         Directory.CreateDirectory(packagePath);
 
         switch (language)
@@ -97,39 +110,43 @@ public class SampleGeneratorToolTests
             .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
-        var resolverMock = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
         var gitHubServiceMock = new Mock<IGitHubService>();
         var gitLogger = new TestLogger<GitHelper>();
         var realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
-        resolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
+
+        if (language == SdkLanguage.Go)
+        {
+            _mockGoLanguageService
+                .Setup(m => m.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns<string, CancellationToken>((packagePath, ct) => Task.FromResult(new PackageInfo()
+                {
+                    RelativePath = relativePath,
+                    RepoRoot = repoRoot,
+                    SamplesDirectory = packagePath,
+                    Language = SdkLanguage.Go,
+                    PackageName = "sdk/group/service/pkg",
+                    PackagePath = packagePath,
+                    PackageVersion = "1.5.0",
+                    SdkType = SdkType.Dataplane,
+                    ServiceName = "service"
+                }));
+        }
+
+        var mockGitHelper = new Mock<IGitHelper>();
+        mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(repoRoot);
+        mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns(() =>
         {
             return language switch
             {
-                SdkLanguage.DotNet => new DotNetPackageInfoHelper(realGitHelper, new TestLogger<DotNetPackageInfoHelper>()),
-                SdkLanguage.Java => new JavaPackageInfoHelper(realGitHelper, new TestLogger<JavaPackageInfoHelper>()),
-                SdkLanguage.Python => new PythonPackageInfoHelper(realGitHelper, new TestLogger<PythonPackageInfoHelper>()),
-                SdkLanguage.JavaScript => new JavaScriptPackageInfoHelper(realGitHelper, new TestLogger<JavaScriptPackageInfoHelper>()),
-                SdkLanguage.Go => new GoPackageInfoHelper(realGitHelper, new TestLogger<GoPackageInfoHelper>()),
-                _ => throw new InvalidOperationException($"Unexpected language value '{language}' in test case.")
+                SdkLanguage.DotNet => "azure-sdk-for-net",
+                SdkLanguage.Java => "azure-sdk-for-java",
+                SdkLanguage.JavaScript => "azure-sdk-for-js",
+                SdkLanguage.Python => "azure-sdk-for-python",
+                SdkLanguage.Go => "azure-sdk-for-go",
+                _ => "unknown-sdk"
             };
         });
-        var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
-        sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
-        {
-            // Use a real FileHelper instance instead of mock
-            var fileHelper = new FileHelper(new TestLogger<FileHelper>());
-            
-            return language switch
-            {
-                SdkLanguage.DotNet => new DotNetSampleLanguageContext(fileHelper),
-                SdkLanguage.Java => new JavaSampleLanguageContext(fileHelper),
-                SdkLanguage.Python => new PythonSampleLanguageContext(fileHelper),
-                SdkLanguage.JavaScript => new TypeScriptSampleLanguageContext(fileHelper),
-                SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
-                _ => throw new InvalidOperationException($"Unexpected language value '{language}' in test sample context resolver.")
-            };
-        });
-        tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, resolverMock.Object, sampleCtxResolverMock.Object);
+        tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, mockGitHelper.Object, _languageServices);
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
@@ -241,6 +258,7 @@ public class SampleGeneratorToolTests
     public async Task GenerateSamples_SkipsInvalidSamples()
     {
         var (_, packagePath) = CreateFakeGoPackage();
+
         var samples = new List<GeneratedSample>
         {
             new("", "package main\nfunc main(){}"),
@@ -273,14 +291,7 @@ public class SampleGeneratorToolTests
         var pkgPath = Path.Combine(tempDir.DirectoryPath, "sdk", "group", "service", "pkg");
         Directory.CreateDirectory(pkgPath);
 
-        var nullResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
-        nullResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((IPackageInfoHelper?)null);
-        var sampleCtxResolver = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
-        // Use a real FileHelper instance
-        var fileHelper = new FileHelper(new TestLogger<FileHelper>());
-        sampleCtxResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GoSampleLanguageContext(fileHelper));
-
-        var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, nullResolver.Object, sampleCtxResolver.Object);
+        var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, _mockGitHelper.Object, []);
         errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = errorTool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Anything", "--package-path", pkgPath]);
@@ -333,19 +344,37 @@ public class SampleGeneratorToolTests
         _outputHelper = new OutputHelper();
         microagentHostServiceMock = new Mock<IMicroagentHostService>();
         telemetryServiceMock = new Mock<ITelemetryService>();
-        var packageInfoResolverMock = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
-        packageInfoResolverMock
-            .Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>()), new TestLogger<GoPackageInfoHelper>()));
-        var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
+        _mockNpxHelper = new Mock<INpxHelper>();
+        _mockPowerShellHelper = new Mock<IPowershellHelper>();
+        _mockProcessHelper = new Mock<IProcessHelper>();
+        _mockPythonHelper = new Mock<IPythonHelper>();
+        _mockGitHelper = new Mock<IGitHelper>();
+        _logger = new TestLogger<SdkBuildTool>();
+        _mockGoLanguageService = new Mock<LanguageService>();
+        _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
+
+        var languageLogger = new TestLogger<LanguageService>();
+        var gitLogger = new TestLogger<GitHelper>();
+        var gitHubServiceMock = new Mock<IGitHubService>();
+        realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
-        sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GoSampleLanguageContext(fileHelper));
+        _languageServices = [
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper),
+            _mockGoLanguageService.Object,
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper)
+        ];
+
+        _mockGoLanguageService.Setup(ls => ls.Language).Returns(SdkLanguage.Go);
+        _mockGoLanguageService.Setup(r => r.SampleLanguageContext).Returns(new GoSampleLanguageContext(fileHelper));
+
         tool = new SampleGeneratorTool(
             microagentHostServiceMock.Object,
             logger,
-            packageInfoResolverMock.Object,
-            sampleCtxResolverMock.Object
+            _mockGitHelper.Object,
+            _languageServices
         );
 
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
@@ -353,9 +382,10 @@ public class SampleGeneratorToolTests
 
     private (string repoRoot, string packagePath) CreateFakeGoPackage()
     {
-        var tempDir = TempDirectory.Create("sample-gen-repo");
+        var tempDir = TempDirectory.Create("azure-sdk-for-go");
         var repoRoot = tempDir.DirectoryPath;
-        var packagePath = Path.Combine(repoRoot, "sdk", "security", "keys", "azkeys");
+        var relativePath = Path.Combine("sdk", "security", "keys", "azkeys");
+        var packagePath = Path.Combine(repoRoot, relativePath);
         Directory.CreateDirectory(packagePath);
         if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
         {
@@ -365,6 +395,24 @@ public class SampleGeneratorToolTests
         var engScripts = Path.Combine(repoRoot, "eng", "scripts");
         Directory.CreateDirectory(engScripts);
         File.WriteAllText(Path.Combine(engScripts, "Language-Settings.ps1"), "$Language = 'Go'\n");
+        _mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(repoRoot);
+        _mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-go");
+
+        _mockGoLanguageService
+            .Setup(m => m.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns<string, CancellationToken>((packagePath, ct) => Task.FromResult(new PackageInfo()
+            {
+                RelativePath = relativePath,
+                RepoRoot = repoRoot,
+                SamplesDirectory = packagePath,
+                Language = SdkLanguage.Go,
+                PackageName = "sdk/security/keyvault/azkeys",
+                PackagePath = packagePath,
+                PackageVersion = "1.5.0",
+                SdkType = SdkType.Dataplane,
+                ServiceName = "keyvault"
+            }));
+
         return (repoRoot, packagePath);
     }
     [Test]
@@ -478,7 +526,7 @@ public class SampleGeneratorToolTests
             Assert.That(_outputHelper.Outputs.Count, Is.GreaterThan(0));
         });
         var error = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr).Output;
-        Assert.That(error, Does.Contain("No git repository found"));
+        Assert.That(error, Does.Contain("Unable to determine language for package"));
     }
 
     [Test]
@@ -494,31 +542,5 @@ public class SampleGeneratorToolTests
 
         // Assert: parser/tool should fail with non-zero exit code
         Assert.That(exitCode, Is.Not.EqualTo(0), "Expected non-zero exit code when required --prompt option is missing");
-    }
-
-    [Test]
-    public async Task GenerateSamples_SampleContextResolverReturnsNull_ReturnsError()
-    {
-        var (repoRoot, packagePath) = CreateFakeGoPackage();
-
-        // Package info resolver returns a valid helper.
-        var pkgResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
-        pkgResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>()), new TestLogger<GoPackageInfoHelper>()));
-
-        // Sample context resolver returns null to trigger validation error.
-        var sampleCtxResolver = new Mock<ILanguageSpecificResolver<SampleLanguageContext>>();
-        sampleCtxResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((SampleLanguageContext?)null);
-
-        var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, pkgResolver.Object, sampleCtxResolver.Object);
-        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
-        var command = errorTool.GetCommandInstances().First();
-        var parseResult = command.Parse(["generate", "--prompt", "Scenario", "--package-path", packagePath]);
-        int exitCode = await parseResult.InvokeAsync();
-
-        Assert.That(exitCode, Is.EqualTo(1), "Expected validation error exit code when sample context resolver returns null");
-        var firstRelevant = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr);
-        Assert.That(firstRelevant.Output, Does.Contain("Unable to determine language"));
     }
 }

@@ -30,9 +30,12 @@ type Config struct {
 	AOAI_CHAT_CONTEXT_MAX_TOKENS   int
 	AOAI_CHAT_COMPLETIONS_ENDPOINT string
 
-	AI_SEARCH_BASE_URL string
-	AI_SEARCH_INDEX    string
-	AI_SEARCH_AGENT    string
+	AI_SEARCH_BASE_URL           string
+	AI_SEARCH_INDEX              string
+	AI_SEARCH_AGENT              string
+	AI_SEARCH_KNOWLEDGE_BASE     string
+	AI_SEARCH_KNOWLEDGE_SOURCE   string
+	AI_SEARCH_KNOWLEDGE_BASE_API string
 
 	STORAGE_BASE_URL            string
 	STORAGE_KNOWLEDGE_CONTAINER string
@@ -96,7 +99,13 @@ func initCredential() error {
 	var cred azcore.TokenCredential
 	if os.Getenv("PROD_MODE") == "true" {
 		log.Println("Using ManagedIdentityCredential for production")
-		cred, err = azidentity.NewManagedIdentityCredential(nil)
+		clientID := os.Getenv("AZURE_CLIENT_ID")
+		if clientID == "" {
+			return fmt.Errorf("AZURE_CLIENT_ID environment variable required when PROD_MODE is true")
+		}
+		cred, err = azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+			ID: azidentity.ClientID(clientID),
+		})
 	} else {
 		log.Println("Using DefaultAzureCredential for local development")
 		cred, err = azidentity.NewDefaultAzureCredential(nil) // CodeQL [SM05142] This is guarded for local development

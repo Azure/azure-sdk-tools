@@ -1,0 +1,14 @@
+[tool.mypy]
+python_version = "3.11"
+plugins = []
+# Make mypy useful but not noisy at first; tighten later
+warn_unused_ignores = true
+warn_return_any = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+strict_optional = true
+# Third‑party libraries without type hints
+ignore_missing_imports = true
+

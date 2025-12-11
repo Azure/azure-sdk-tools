@@ -25,9 +25,13 @@ public sealed class TelemetryProcessor : BaseProcessor<Activity>
         {
             activity.SetTag(TelemetryConstants.TagName.TypeSpecProject, typeSpecProject);
         }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.SdkType) is SdkType sdkType)
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.PackageType) is string packageType)
         {
-            activity.SetTag(TelemetryConstants.TagName.SdkType, sdkType);
+            activity.SetTag(TelemetryConstants.TagName.PackageType, packageType);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.OperationStatus) is string operationStatus)
+        {
+            activity.SetTag(TelemetryConstants.TagName.OperationStatus, operationStatus);
         }
 
         // TokenUsageHelper telemetry

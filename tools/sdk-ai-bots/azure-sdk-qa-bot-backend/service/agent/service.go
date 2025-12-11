@@ -75,29 +75,44 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, err
 	}
 
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+
 	// 1. Build messages from the openai request
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
 	// 2. Build query for search
-	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
+	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Run agentic search and knowledge search in parallel, then merge results
-	chunks, err := s.runParallelSearchAndMergeResults(ctx, req, query)
-	if err != nil {
-		log.Printf("Parallel search failed: %v", err)
-		return nil, model.NewSearchFailureError(err)
+	// 3. Check if we need RAG processing
+	var chunks []string
+	var prompt string
+	promptTemplate := tenantConfig.PromptTemplate
+
+	if intention != nil && !intention.NeedsRagProcessing {
+		// Skip RAG workflow for non-technical messages
+		log.Printf("Skipping RAG workflow - non-technical message detected")
+		chunks = []string{}
+		promptTemplate = "common/non_technical_question.md"
+	} else {
+		// Run agentic search and knowledge search in parallel, then merge results
+		chunks, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+		if err != nil {
+			log.Printf("Parallel search failed: %v", err)
+			return nil, model.NewSearchFailureError(err)
+		}
 	}
 
 	// 4. Build prompt
-	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	prompt, err := s.buildPrompt(intension, chunks, tenantConfig.PromptTemplate)
+	prompt, err = s.buildPrompt(intention, chunks, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
 	}
 
 	// 5. Get answer from LLM
-	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
+	llmMessages = append([]azopenai.ChatRequestMessageClassification{
+		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
+	}, llmMessages...)
 	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
@@ -110,35 +125,39 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		fullContext := strings.Join(chunks, "-------------------------\n")
 		result.FullContext = &fullContext
 	}
-	result.Intension = intension
+	result.Intention = intention
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
 
-func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
-	promptParser := prompt.IntensionPromptParser{}
+func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+	promptParser := prompt.IntentionPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
 	if err != nil {
-		log.Printf("Failed to parse intension prompt: %v", err)
+		log.Printf("Failed to parse intention prompt: %v", err)
 		return nil, err
 	}
 
-	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
+	messages = append([]azopenai.ChatRequestMessageClassification{
+		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
+	}, messages...)
 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 	}, nil)
 
 	if err != nil {
-		log.Printf("LLM intension recognition failed: %v", err)
+		log.Printf("LLM intention recognition failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
 	if len(resp.Choices) > 0 {
 		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
+			respStr, _ := resp.MarshalJSON()
+			log.Printf("Failed to parse intention response: %v, response:%s", err, respStr)
 			return nil, err
 		}
 		return result, nil
@@ -214,7 +233,7 @@ func getImageDataURI(url string) (string, error) {
 		log.Printf("Failed to get token: %v", err)
 		return "", err
 	}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		log.Printf("Failed to create request: %v", err)
 		return "", err
@@ -347,14 +366,14 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	return llmMessages, reasoningModelMessages
 }
 
-func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntensionResult) {
+func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntentionResult) {
 	query := req.Message.Content
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
 	}
 	intentStart := time.Now()
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	intentResult, err := s.RecongnizeIntension(tenantConfig.IntensionPromptTemplate, messages)
+	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -377,7 +396,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intention *model.IntentionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
@@ -392,11 +411,11 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 			break
 		}
 	}
-	intensionStr, _ := json.Marshal(intension)
+	intentionStr, _ := json.Marshal(intention)
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
 		"context":   strings.Join(chunks, "-------------------------\n"),
-		"intension": string(intensionStr),
+		"intention": string(intentionStr),
 	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -407,75 +426,14 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 
 func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	schema := map[string]interface{}{
-		"type": "object",
-		"properties": map[string]interface{}{
-			"has_result": map[string]interface{}{
-				"type":        "boolean",
-				"description": "true if you can answer current question",
-			},
-			"answer": map[string]interface{}{
-				"type":        "string",
-				"description": "your complete, formatted response",
-			},
-			"references": map[string]interface{}{
-				"type":        "array",
-				"description": "put all supporting for your answer references from Knowledge",
-				"items": map[string]interface{}{
-					"type": "object",
-					"properties": map[string]interface{}{
-						"title": map[string]interface{}{
-							"type":        "string",
-							"description": "section or document title",
-						},
-						"source": map[string]interface{}{
-							"type":        "string",
-							"description": "document source",
-						},
-						"link": map[string]interface{}{
-							"type":        "string",
-							"description": "complete link to the reference",
-						},
-						"content": map[string]interface{}{
-							"type":        "string",
-							"description": "relevant extract that supports your answer",
-						},
-					},
-					"required":             []string{"title", "source", "link", "content"},
-					"additionalProperties": false,
-				},
-			},
-			"reasoning_progress": map[string]interface{}{
-				"type":        "string",
-				"description": "output your reasoning progress of generating the answer",
-			},
-		},
-		"required":             []string{"has_result", "answer", "references", "reasoning_progress"},
-		"additionalProperties": false,
-	}
-
-	schemaBytes, err := json.Marshal(schema)
-	if err != nil {
-		log.Printf("ERROR marshaling schema: %s", err)
-		return nil, err
-	}
-
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
 		DeploymentName: &s.model,
-		ResponseFormat: &azopenai.ChatCompletionsJSONSchemaResponseFormat{
-			JSONSchema: &azopenai.ChatCompletionsJSONSchemaResponseFormatJSONSchema{
-				Name:        to.Ptr("bot-response-format"),
-				Description: to.Ptr("Bot Response Format"),
-				Schema:      schemaBytes,
-				Strict:      to.Ptr(true),
-			},
-		},
-		TopP: to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		TopP:           to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
 	}, nil)
-
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
@@ -489,7 +447,8 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	if len(resp.Choices) > 0 {
 		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("ERROR: %s, content:%s", err, *resp.Choices[0].Message.Content)
+			respStr, _ := resp.MarshalJSON()
+			log.Printf("ERROR: %s, response:%s", err, respStr)
 			return nil, err
 		}
 		return answer, nil
@@ -519,7 +478,11 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	log.Printf("Agentic search sub queries: %+v", resp.Activity)
+	for _, activity := range resp.Activity {
+		if activity.Type == model.ActivityRecordTypeSearchIndex {
+			log.Printf("Agentic search sub query: %s", activity.SearchIndexArguments.Search)
+		}
+	}
 	if resp.Response == nil {
 		return nil, nil
 	}
@@ -641,7 +604,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			continue
 		}
 		processedChunks[chunkKey] = true
-		if strings.HasPrefix(chunk.ContextID, "static") {
+		if strings.HasPrefix(string(chunk.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)
 			continue
 		}
@@ -670,7 +633,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 
 		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
 
-		if strings.HasPrefix(result.ContextID, "static") {
+		if strings.HasPrefix(string(result.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, result)
 			continue
 		}
@@ -725,7 +688,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	for _, file := range files {
 		chunk := processDocument(file)
 		result = append(result, chunk)
-		log.Printf("✓ Completed document: %s/%s", file.ContextID, file.Title)
+		log.Printf("✓ Completed document: %s/%s#%s", file.ContextID, file.Title, file.Header1)
 	}
 
 	// Add remaining ready chunks (avoid duplicates by chunk content)

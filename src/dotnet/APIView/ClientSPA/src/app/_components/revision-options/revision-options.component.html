@@ -1,10 +1,11 @@
 <div style="display: flex; justify-content: space-between;">
     <span *ngIf="activeApiRevisionsMenu.length > 0" class="border-start ps-2">
-        <p-dropdown 
+        <p-dropdown
             [options]="activeApiRevisionsMenu"
             [(ngModel)]="selectedActiveAPIRevision"
             optionLabel="label"
             inputId="active-api-revision-select"
+            data-clarity-region="active-api-revision-dropdown"
             [panelStyle]="{'width':'40dvw'}"
             [filter]="true"
             [resetFilterOnHide]="true"
@@ -21,8 +22,8 @@
                     </div>
                     <p-selectButton
                     class="api-revision-filter-button"
-                    [options]="filterOptions" 
-                    [(ngModel)]="activeApiRevisionsFilterValue" 
+                    [options]="filterOptions"
+                    [(ngModel)]="activeApiRevisionsFilterValue"
                     (onChange)="activeApiRevisionFilterFunction($event)"
                     [style]="{'margin-top':'8px'}">
                         <ng-template let-item pTemplate>
@@ -65,14 +66,15 @@
             </ng-template>
         </p-dropdown>
     </span>
-    
+
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
         <label class="small fw-semibold" for="diff-api-revision-select">Diff :</label>
-        <p-dropdown 
+        <p-dropdown
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
             optionLabel="label"
             inputId="diff-api-revision-select"
+            data-clarity-region="diff-api-revision-dropdown"
             [panelStyle]="{'width':'40dvw'}"
             [filter]="true"
             [resetFilterOnHide]="true"
@@ -91,8 +93,8 @@
                     </div>
                     <p-selectButton
                     class="api-revision-filter-button"
-                    [options]="filterOptions" 
-                    [(ngModel)]="diffApiRevisionsFilterValue" 
+                    [options]="filterOptions"
+                    [(ngModel)]="diffApiRevisionsFilterValue"
                     (onChange)="diffApiRevisionFilterFunction($event)"
                     [style]="{'margin-top':'8px'}">
                         <ng-template let-item pTemplate>
@@ -135,7 +137,7 @@
     </span>
 
     <span *ngIf="samplesRevisions.length > 0" class="border-start ps-2">
-        <p-dropdown 
+        <p-dropdown
             [options]="activeSamplesRevisionsMenu"
             [(ngModel)]="selectedActiveSamplesRevision"
             optionLabel="label"
@@ -177,7 +179,7 @@
     </span>
 
     <span *ngIf="crossLanguageAPIRevisions.length > 0" class="ms-2 ps-2">
-        <p-dropdown 
+        <p-dropdown
             [options]="crossLanguageAPIRevisionsMenu"
             [(ngModel)]="selectedCrossLanguageAPIRevision"
             optionLabel="label"

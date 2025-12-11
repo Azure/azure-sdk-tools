@@ -25,6 +25,11 @@
 /eng/common/pipelines/codeowners-linter.yml @weshaggard
 
 ###########
+# Files used to manage tsp-client version and installation
+###########
+/eng/common/tsp-client @catalinaperalta @raych1
+
+###########
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
@@ -36,6 +41,7 @@
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao
+/tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp

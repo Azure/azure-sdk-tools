@@ -6,29 +6,90 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="navbar-collapse collapse">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- Requested Reviews link (for approvers) -->
                 <li *ngIf="isLoggedIn && isApprover" class="nav-item">
-                    <a href="{{RequestReviewPageUrl}}" class="nav-link">Requested Reviews</a>
-                </li>
-                <li *ngIf="isLoggedIn"  class="nav-item">
-                    <a class="nav-link position-relative" (click)="notificationsSidePanel = !notificationsSidePanel">
-                        <i class="bi bi-bell"></i>
-                        <span *ngIf="notifications.length > 0" class="position-absolute top-50 start-0 translate-middle bg-danger border border-light rounded-circle" style="padding: 0.2rem;">
-                            <span class="visually-hidden">New alerts</span>
-                        </span>
+                    <a href="{{RequestReviewPageUrl}}" class="nav-link nav-btn">
+                        <i class="bi bi-inbox-fill me-1"></i>Requested Reviews
                     </a>
                 </li>
-                <li *ngIf="isLoggedIn" class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle"></i>
+                
+                <!-- Vertical divider -->
+                <li *ngIf="isLoggedIn" class="nav-divider"></li>
+                
+                <!-- Help icon with dropdown menu -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Help menu" data-clarity-region="help-menu">
+                        <i class="bi bi-question-circle"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" [routerLink]="['/profile', userProfile?.userName]" target="_blank">Profile</a></li>
-                        <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}">Log Out</a></li>
+                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-book me-2"></i>Documentation
+                        </a></li>
+                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-bug me-2"></i>Report an Issue
+                        </a></li>
                     </ul>
                 </li>
-                <li class="nav-item">
-                    <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link">Help</a>
+                
+                <!-- Notifications icon with badge -->
+                <li *ngIf="isLoggedIn" class="nav-item">
+                    <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" aria-label="Notifications" data-clarity-region="notifications-button">
+                        <i class="bi bi-bell"></i>
+                        <span *ngIf="notifications.length > 0" class="notification-badge"></span>
+                    </a>
+                </li>
+                
+                <!-- User profile avatar with dropdown -->
+                <li *ngIf="isLoggedIn" class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">
+                        <img class="user-avatar" src="https://github.com/{{userProfile?.userName}}.png?size=32" alt="{{userProfile?.userName}}" />
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+                        <li class="dropdown-header profile-header">
+                            <div class="d-flex align-items-center">
+                                <img class="rounded-circle me-3" src="https://github.com/{{userProfile?.userName}}.png?size=48" alt="{{userProfile?.userName}}" width="48" height="48" />
+                                <div>
+                                    <div class="fw-semibold profile-name">{{userProfile?.userName}}</div>
+                                    <div class="small text-muted" *ngIf="userProfile?.email">{{userProfile?.email}}</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="theme-row">
+                            <span class="theme-label">Theme</span>
+                            <div class="theme-buttons">
+                                <button type="button" 
+                                    class="theme-btn" 
+                                    [class.active]="selectedTheme.data === 'light-theme'"
+                                    (click)="changeTheme(themes[0])"
+                                    title="Light">
+                                    <i class="bi bi-sun"></i>
+                                </button>
+                                <button type="button" 
+                                    class="theme-btn" 
+                                    [class.active]="selectedTheme.data === 'dark-theme'"
+                                    (click)="changeTheme(themes[1])"
+                                    title="Dark">
+                                    <i class="bi bi-moon"></i>
+                                </button>
+                                <button type="button" 
+                                    class="theme-btn" 
+                                    [class.active]="selectedTheme.data === 'dark-solarized-theme'"
+                                    (click)="changeTheme(themes[2])"
+                                    title="Solarized">
+                                    <i class="bi bi-circle-half"></i>
+                                </button>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/profile/{{userProfile?.userName}}" data-clarity-region="user-settings-link">
+                            <i class="bi bi-gear me-2"></i>Settings
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}" data-clarity-region="user-logout-link">
+                            <i class="bi bi-box-arrow-right me-2"></i>Log out
+                        </a></li>
+                    </ul>
                 </li>
             </ul>
         </div>

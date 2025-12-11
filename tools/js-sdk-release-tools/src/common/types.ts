@@ -69,3 +69,8 @@ export interface NpmPackageInfo {
     name: string;
     version: string;
 }
+
+export enum ModularSDKType {
+    ManagementPlane = 'ManagementPlane',
+    DataPlane = 'DataPlane',
+}

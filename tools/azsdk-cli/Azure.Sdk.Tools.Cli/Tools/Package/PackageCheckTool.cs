@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
@@ -18,14 +19,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run validation checks for SDK packages")]
     [McpServerToolType]
     public class PackageCheckTool(
-        ILogger<PackageCheckTool> logger,
-        ILanguageChecks languageChecks,
-        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoHelpers
-    ) : MCPMultiCommandTool
+        ILogger<LanguageMcpTool> logger,
+        IGitHelper gitHelper,
+        IEnumerable<LanguageService> languageServices
+    ) : LanguageMcpTool(languageServices, logger: logger, gitHelper: gitHelper)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.Package,
+        ];
 
-        private const string RunChecksCommandName = "run-checks";
+        private const string PackageRunCheckToolName = "azsdk_package_run_check";
+
+        private readonly Argument<PackageCheckType> checkTypeArg = new("check-type")
+        {
+            Description = "Type of validation check to run",
+            DefaultValueFactory = _ => PackageCheckType.All
+        };
 
         private readonly Option<bool> fixOption = new("--fix")
         {
@@ -33,52 +42,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
         };
 
-        protected override List<Command> GetCommands()
-        {
-            // Add the package path option to the parent command so it can be used without subcommands
-            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
-
-            // Create sub-commands for each check type
-            var checkTypeValues = Enum.GetValues<PackageCheckType>();
-            foreach (var checkType in checkTypeValues)
-            {
-                var checkName = checkType.ToString().ToLowerInvariant();
-                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
-                parentCommand.Subcommands.Add(subCommand);
-            }
-
-            // Return all commands - parent and subcommands so the handlers get registered
-            return [parentCommand, .. parentCommand.Subcommands];
-        }
+        protected override Command GetCommand() =>
+            new McpCommand("validate", "Run validation checks for SDK packages", PackageRunCheckToolName) { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
             var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
+            var checkType = parseResult.GetValue(checkTypeArg);
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
             var fixCheckErrors = parseResult.GetValue(fixOption);
-
-            // If this is the parent command (run-checks), default to All
-            if (commandName == RunChecksCommandName)
-            {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
-            }
-
-            // Check if this is a subcommand by checking if its parent is the run-checks command
-            if (command.Parents.Any(p => p.Name == RunChecksCommandName))
-            {
-                // Parse the subcommand name back to enum
-                if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
-                {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
-                }
-            }
-
-            throw new ArgumentException($"Unknown command: {commandName}");
+            return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
+        [McpServerTool(Name = PackageRunCheckToolName), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
         public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
@@ -124,68 +102,103 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var results = new List<PackageCheckResponse>();
             var overallSuccess = true;
             var failedChecks = new List<string>();
+            var successfulChecks = new List<string>();
 
             // Run dependency check
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var dependencyCheckResult = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Dependency");
             }
+            else if (dependencyCheckResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Dependency");
+            }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Changelog");
             }
+            else if (changelogValidationResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Changelog");
+            }
 
             // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
+            var readmeValidationResult = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("README");
             }
+            else if (readmeValidationResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("README");
+            }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var spellingCheckResult = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Spelling");
             }
+            else if (spellingCheckResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Spelling");
+            }
 
             // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+            var snippetUpdateResult = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Snippets");
             }
+            else if (snippetUpdateResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Snippets");
+            }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
+            var lintCodeResult = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Linting");
             }
+            else if (lintCodeResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Linting");
+            }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            var formatCodeResult = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Format");
+            }
+            else if (formatCodeResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Format");
             }
 
             // Run AOT compatibility check
@@ -196,6 +209,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 overallSuccess = false;
                 failedChecks.Add("AOT Compatibility");
             }
+            else if (aotCompatResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("AOT Compatibility");
+            }
 
             // Run generated code check
             var generatedCodeResult = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
@@ -205,14 +222,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 overallSuccess = false;
                 failedChecks.Add("Generated Code");
             }
-
+            else if (generatedCodeResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Generated Code");
+            }
             // Run sample validation
-            var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+            var sampleValidationResult = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
             results.Add(sampleValidationResult);
             if (sampleValidationResult.ExitCode != 0)
             {
                 overallSuccess = false;
-                failedChecks.Add("Samples");
+                failedChecks.Add("Sample Validation");
+            }
+            else if (sampleValidationResult.CheckStatusDetails != "noop")
+            {
+                successfulChecks.Add("Sample Validation");
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
@@ -227,9 +251,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             else
             {
-                nextSteps.Add($"The following checks failed: {string.Join(", ", failedChecks)}");
-                nextSteps.Add("Address the issues identified above before proceeding with package release.");
-                nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
+                if (failedChecks.Any())
+                {
+                    nextSteps.Add($"Failed checks: {string.Join(", ", failedChecks)}");
+                    nextSteps.Add("Address the issues identified above before proceeding with package release.");
+                    nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
+                }
 
                 // Add specific guidance from individual check failures
                 foreach (var result in results.Where(r => r.ExitCode != 0 && r.NextSteps?.Any() == true))
@@ -247,7 +274,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -260,7 +293,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 };
                 return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
             }
-            else
+            else if (result.CheckStatusDetails != "noop")
             {
                 result.NextSteps = new List<string>
                 {
@@ -275,7 +308,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running dependency check");
 
-            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -287,7 +326,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Run language-specific dependency update commands (e.g., pip upgrade, npm update)"
                 };
             }
-            else
+            else if (result.CheckStatusDetails != "noop")
             {
                 result.NextSteps = new List<string>
                 {
@@ -302,7 +341,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running README validation");
 
-            var result = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -314,7 +359,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Verify that all code samples in the README are working and up-to-date"
                 };
             }
-            else
+            else if (result.CheckStatusDetails != "noop")
             {
                 result.NextSteps = new List<string>
                 {
@@ -329,7 +374,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -337,7 +388,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running snippet update");
 
-            var result = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -345,7 +402,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code linting");
 
-            var result = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -353,13 +416,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code formatting");
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
+            var result = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
             return result;
         }
 
         private async Task<PackageCheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running generated code checks");
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
             return result;
@@ -368,6 +442,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running AOT compatibility checks");
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
             return result;
@@ -376,8 +455,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running sample validation");
+            var languageChecks = GetLanguageService(packagePath);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
-            var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -385,10 +469,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                var packageInfoHelper = await packageInfoHelpers.Resolve(packagePath);
-                if (packageInfoHelper != null)
+                var languageService = GetLanguageService(packagePath);
+                if (languageService != null)
                 {
-                    var info = await packageInfoHelper.ResolvePackageInfo(packagePath, ct);
+                    var info = await languageService.GetPackageInfo(packagePath, ct);
                     response.PackageName = info.PackageName;
                     response.Version = info.PackageVersion;
                     response.PackageType = info.SdkType;
@@ -399,6 +483,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
+        }        
+
+        private static PackageCheckResponse CreateUnsupportedLanguageResponse(string packagePath)
+        {
+            return new PackageCheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
         }
     }
 }

@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Immutable;
+using System.ComponentModel;
+using ApiView;
 using APIView.Analysis;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
-using System.Collections.Immutable;
-using System.ComponentModel;
-using ApiView;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -47,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29.8";
+        public const string CurrentVersion = "29.9";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -81,7 +81,7 @@ namespace CSharpAPIParser.TreeToken
                 Language = "C#",
                 ParserVersion = CurrentVersion,
                 PackageName = assemblySymbol.Name,
-                PackageVersion = assemblySymbol.Identity.Version.ToString()
+                PackageVersion = GetPackageVersion(assemblySymbol) ?? assemblySymbol.Identity.Version.ToString()
             };
 
             if (dependencies != null)
@@ -203,6 +203,8 @@ namespace CSharpAPIParser.TreeToken
             if (nameSpaceToken != null)
             {
                 nameSpaceToken.RenderClasses.Add("namespace");
+                // Always set NavigationDisplayName for namespace, regardless of hidden status
+                // This ensures the namespace appears in the navigation tree
                 nameSpaceToken.NavigationDisplayName = namespaceSymbol.ToDisplayString();
             }
             namespaceLine.Tokens.Last().HasSuffixSpace = true;
@@ -293,8 +295,39 @@ namespace CSharpAPIParser.TreeToken
 
             DisplayName(reviewLine, namedType, namedType);
 
-            // Add navigation short name and render classes to Type name token. Navigation tree is built dynamically based on these properties
-            var typeToken = reviewLine.Tokens.FirstOrDefault(t => t.Kind == TokenKind.TypeName && string.IsNullOrEmpty(t.NavigateToId));
+            // Add navigation short name and render classes to the type name token
+            // Find the token representing the type name - it's the first token after the type keyword that's not a modifier
+            // Look for the token right before punctuation or base type (: or {)
+            var typeKeywordIndex = reviewLine.Tokens.FindIndex(t => 
+                t.Value == "class" || t.Value == "struct" || t.Value == "interface" || t.Value == "enum" || t.Value == "delegate");
+            
+            ReviewToken? typeToken = null;
+            if (typeKeywordIndex >= 0 && typeKeywordIndex < reviewLine.Tokens.Count - 1)
+            {
+                // The type name is typically the first non-generic, non-navigatable token after the type keyword
+                for (int i = typeKeywordIndex + 1; i < reviewLine.Tokens.Count; i++)
+                {
+                    var token = reviewLine.Tokens[i];
+                    // Stop at punctuation that indicates end of type name (: for base class, < for generics, { for body)
+                    if (token.Kind == TokenKind.Punctuation && (token.Value == ":" || token.Value == "{" || token.Value == "<"))
+                        break;
+                    // Skip generic type parameters and other punctuation
+                    if (token.Kind == TokenKind.Punctuation)
+                        continue;
+                    // Found the type name token - prefer one without NavigateToId
+                    if (string.IsNullOrEmpty(token.NavigateToId))
+                    {
+                        typeToken = token;
+                        break;
+                    }
+                    // Fallback: use any non-punctuation token
+                    if (typeToken == null && token.Kind != TokenKind.Punctuation)
+                    {
+                        typeToken = token;
+                    }
+                }
+            }
+            
             if (typeToken != null)
             {
                 typeToken.NavigationDisplayName = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
@@ -311,9 +344,30 @@ namespace CSharpAPIParser.TreeToken
             reviewLine.Tokens.Last().HasSuffixSpace = true;
             BuildBaseType(reviewLine, namedType);
             reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
+
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
-                BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                try
+                {
+                    // Check if this is an extension member container
+                    if (IsExtensionMemberContainer(namedTypeSymbol))
+                    {
+                        BuildExtensionMember(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
+                    else
+                    {
+                        BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception before falling back to regular type building
+                    System.Console.Error.WriteLine($"Exception in extension member detection for type '{namedTypeSymbol?.Name}': {ex}");
+                    if (namedTypeSymbol != null)
+                    {
+                        BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
+                    }
+                }
             }
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
@@ -541,6 +595,143 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
+        private bool IsExtensionMemberContainer(INamedTypeSymbol namedType)
+        {
+            if (namedType == null)
+            {
+                return false;
+            }
+                
+            // Extension member containers are compiler-generated nested classes
+            // They have specific name patterns like <G>$ or <M>$ and contain extension marker methods
+
+            // Check if the name matches the compiler-generated pattern for extension containers
+            if (!(namedType.Name.StartsWith("<G>$") || namedType.Name.StartsWith("<M>$")))
+                return false;
+
+            // Check if this type contains extension marker methods or nested types with extension markers
+            return namedType.GetMembers().OfType<IMethodSymbol>()
+                .Any(m => IsExtensionMarkerMethod(m)) ||
+                namedType.GetTypeMembers().Any(t => t.GetMembers().OfType<IMethodSymbol>()
+                    .Any(m => IsExtensionMarkerMethod(m)));
+        }
+
+        private bool IsExtensionMarkerMethod(IMethodSymbol method)
+        {
+            if (method == null)
+                return false;
+
+            // Extension marker methods are compiler-generated methods with specific characteristics:
+            // - They are named exactly "<Extension>$" 
+            // - They have void return type and take the extension target as parameter
+            // Note: We don't check for CompilerGeneratedAttribute as it may not be accessible in the symbol model
+            return method.Name == "<Extension>$" &&
+                   method.ReturnType?.SpecialType == SpecialType.System_Void &&
+                   method.Parameters.Length >= 1;
+        }
+
+        private void BuildExtensionMember(List<ReviewLine> reviewLines, INamedTypeSymbol extensionContainer, bool inHiddenScope)
+        {
+            if (extensionContainer == null)
+            {
+                return;
+            }
+
+            bool isHidden = IsHiddenFromIntellisense(extensionContainer) || inHiddenScope;
+
+            // Find the extension marker method to get the extension target type
+            // Check both direct methods and methods in nested types
+            var extensionMarker = extensionContainer.GetMembers().OfType<IMethodSymbol>()
+                .FirstOrDefault(m => IsExtensionMarkerMethod(m));
+
+            if (extensionMarker == null)
+            {
+                // Check nested types for extension markers
+                foreach (var nestedType in extensionContainer.GetTypeMembers())
+                {
+                    extensionMarker = nestedType.GetMembers().OfType<IMethodSymbol>()
+                        .FirstOrDefault(m => IsExtensionMarkerMethod(m));
+                    if (extensionMarker != null)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (extensionMarker == null || extensionMarker.Parameters.Length == 0)
+            {
+                return;
+            }
+
+            var targetType = extensionMarker.Parameters[0].Type;
+            if (targetType == null)
+            {
+                return;
+            }
+
+            // Create the extension declaration line
+            var extensionLine = new ReviewLine()
+            {
+                LineId = extensionContainer.GetId(),
+                IsHidden = isHidden
+            };
+
+            extensionLine.Tokens.Add(ReviewToken.CreateKeywordToken("extension"));
+            extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenParenToken, false));
+            DisplayName(extensionLine, targetType);
+            extensionLine.Tokens.Last().HasSuffixSpace = true;
+
+            // Add parameter name (usually the target type name in lowercase)
+            var parameterName = extensionMarker.Parameters[0].Name;
+            extensionLine.Tokens.Add(ReviewToken.CreateTextToken(parameterName, hasSuffixSpace: false));
+            extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
+            extensionLine.Tokens.Last().HasSuffixSpace = true;
+            extensionLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
+
+            // Add all non-extension-marker members to the extension block
+            // Include members from both the container and any nested types
+            var membersToProcess = new List<ISymbol>();
+            membersToProcess.AddRange(extensionContainer.GetMembers().Where(m =>
+                m.Kind != SymbolKind.NamedType && !m.IsImplicitlyDeclared && IsAccessible(m)));
+
+            foreach (var nestedType in extensionContainer.GetTypeMembers())
+            {
+                membersToProcess.AddRange(nestedType.GetMembers().Where(m =>
+                    m.Kind != SymbolKind.NamedType && !m.IsImplicitlyDeclared && IsAccessible(m)));
+            }
+
+            foreach (var member in SymbolOrderProvider.OrderMembers(membersToProcess))
+            {
+                // Skip extension marker methods
+                if (member is IMethodSymbol method && IsExtensionMarkerMethod(method)) continue;
+
+                // Skip property/event accessors
+                if (member is IMethodSymbol m)
+                {
+                    if (m.MethodKind == MethodKind.PropertyGet ||
+                        m.MethodKind == MethodKind.PropertySet ||
+                        m.MethodKind == MethodKind.EventAdd ||
+                        m.MethodKind == MethodKind.EventRemove ||
+                        m.MethodKind == MethodKind.EventRaise)
+                    {
+                        continue;
+                    }
+                }
+                BuildMember(extensionLine.Children, member, isHidden);
+            }
+
+            reviewLines.Add(extensionLine);
+            reviewLines.Add(new ReviewLine()
+            {
+                Tokens = [
+                    ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken)
+                ],
+                IsHidden = isHidden,
+                IsContextEndLine = true
+            });
+            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = extensionLine.LineId });
+        }
+
         private bool IsSkippedAttribute(INamedTypeSymbol attributeAttributeClass)
         {
             switch (attributeAttributeClass.Name)
@@ -555,6 +746,7 @@ namespace CSharpAPIParser.TreeToken
                 case "NullableContextAttribute":
                 case "RequiresUnreferencedCodeAttribute":
                 case "RequiresDynamicCodeAttribute":
+                case "CompilerGeneratedAttribute":
                     return true;
                 default:
                     return false;
@@ -919,6 +1111,23 @@ namespace CSharpAPIParser.TreeToken
                 throw new InvalidOperationException(
                     $"Duplicate LineId values found: {string.Join(", ", duplicates.Distinct())}");
             }
+        }
+
+        public static string? GetPackageVersion(IAssemblySymbol assemblySymbol)
+        {
+            var attr = assemblySymbol
+                .GetAttributes()
+                .FirstOrDefault(a => a.AttributeClass?.Name == "AssemblyInformationalVersionAttribute");
+
+            if (attr == null || attr.ConstructorArguments.Length == 0)
+                return null;
+            
+            var infoVersion = attr.ConstructorArguments[0].Value as string;
+            if (string.IsNullOrWhiteSpace(infoVersion))
+                return null;
+
+            var version = infoVersion.Split('+')[0].Trim();
+            return version.Length == 0 ? null : version;
         }
     }
 }

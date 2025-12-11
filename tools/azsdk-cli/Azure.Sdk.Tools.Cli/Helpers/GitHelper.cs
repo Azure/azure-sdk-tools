@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 throw new InvalidOperationException($"Unable to parse repository name from remote URL: {uri}");
             }
 
-            string repoName = segments[^1].TrimEnd(".git".ToCharArray());
+            string repoName = segments[^1].Replace(".git", "");
             return repoName;
         }
     }

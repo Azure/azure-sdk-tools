@@ -8,8 +8,10 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -20,8 +22,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType]
     public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger) : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+
         // Commands
-        private const string TypespecValidationCommandName = "validate-typespec";
+        private const string TypespecValidationCommandName = "validate";
+        private const string RunTypeSpecValidationToolName = "azsdk_run_typespec_validation";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
@@ -31,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(TypespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+            new McpCommand(TypespecValidationCommandName, "Run typespec validation", RunTypeSpecValidationToolName) { typeSpecProjectPathOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -56,18 +61,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         /// Validates the TypeSpec API specification.
         /// </summary>
         /// <param name="typeSpecProjectRootPath">The root path of the TypeSpec project.</param>
-        [McpServerTool(Name = "azsdk_run_typespec_validation"), Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
-        public ObjectCommandResponse RunTypeSpecValidation(string typeSpecProjectRootPath)
+        [McpServerTool(Name = RunTypeSpecValidationToolName), Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
+        public TypeSpecValidationResponse RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
             try
             {
+                var response = new TypeSpecValidationResponse()
+                {
+                    TypeSpecProject = typeSpecProjectRootPath
+                };
                 logger.LogInformation("TypeSpec project root path: {typeSpecProjectRootPath}", typeSpecProjectRootPath);
-                var validationResults = new List<string>();
                 if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
                 {
-                    validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
-                    return new() { Result = validationResults };
+                    response.ResponseError = $"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.";
+                    return response;
                 }
+
+                response.TypeSpecProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectRootPath);
+                response.PackageType = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRootPath) ? SdkType.Management : SdkType.Dataplane;
 
                 try
                 {
@@ -85,19 +96,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                     //Run TypeSpec validation
                     logger.LogInformation("Starting TypeSpec validation");
-                    ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
+                    ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, response.validationResults);
                     logger.LogInformation("TypeSpec validation completed");
                 }
                 catch (Exception ex)
                 {
-                    validationResults.Add($"Error: {ex.Message}");
+                    response.ResponseError = $"Error: {ex.Message}";
                 }
-                return new() { Result = validationResults };
+                return response;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception in TypeSpec validation");
-                return new() { ResponseError = $"Unhandled exception: {ex.Message}" };
+                return new()
+                {
+                    ResponseError = $"Unhandled exception: {ex.Message}",
+                    TypeSpecProject = typeSpecProjectRootPath
+                };
             }
         }
 

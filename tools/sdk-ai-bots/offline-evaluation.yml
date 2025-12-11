@@ -42,14 +42,14 @@ extends:
                   python --version
                 displayName: 'check python'
               - script: |
-                  echo "Downloading Go 1.23.0..."
-                  curl -LO https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
+                  echo "Downloading Go 1.24.0..."
+                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
 
                   echo "Removing existing Go installation..."
                   sudo rm -rf /usr/local/go
 
-                  echo "Extracting Go 1.23.0..."
-                  sudo tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
+                  echo "Extracting Go 1.24.0..."
+                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
 
                   echo "Setting environment variables..."
                   echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"

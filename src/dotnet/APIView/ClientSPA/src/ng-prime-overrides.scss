@@ -1,7 +1,7 @@
 p-contextmenusub {
     ul {
         padding-left: 0rem;
-    }  
+    }
 }
 
 .p-breadcrumb {
@@ -40,10 +40,10 @@ p-contextmenusub {
     border-color: var(--border-color);
 }
 
-.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead, 
-.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot, 
-.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-scroller-viewport > .p-scroller > 
-.p-datatable-table > .p-datatable-thead, .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > 
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-scroller-viewport > .p-scroller >
+.p-datatable-table > .p-datatable-thead, .p-datatable.p-datatable-scrollable > .p-datatable-wrapper >
 .p-scroller-viewport > .p-scroller > .p-datatable-table > .p-datatable-tfoot {
     background-color: var(--base-fg-color);
 }
@@ -426,8 +426,8 @@ p-contextmenusub {
 }
 
 .p-splitter {
-    border: 0px;
-    background: var(--base-fg-color);
+    border: none !important;
+    background: transparent !important;
     border-radius: 5px;
     color: var(--base-text-color);
 }

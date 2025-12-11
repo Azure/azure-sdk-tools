@@ -139,7 +139,6 @@ What are we trying to achieve with this design?
 
 ---
 
-
 ## Design Proposal
 
 ### Overview
@@ -160,15 +159,13 @@ A TypeSpec client customizations reference document will serve as the foundation
 
 This is a living document - it can be updated over time as new decorators are added to the library or new common scenarios are identified. This is _not_ intended to contain guidance for every scenario each language SDK may encounter. For example, Go breaking changes detection looks for specific patterns in the changelog to identify client.tsp customizations. These patterns would not be covered in this document.
 
-This will live in `eng/common/knowledge/customizing-client-tsp.md` so that all language SDK repos can reference it when needed.
-
-The proposed document can be found here: [TypeSpec Client Customizations Reference](https://gist.github.com/chrisradek/f3f3f6992e36be1bab10ed3072976a26)
+This lives in `eng/common/knowledge/customizing-client-tsp.md` so that all language SDK repos can reference it when needed.
 
 #### Usage
 
 This document will be referenced by [eng/common/instructions/azsdk-tools/typespec-docs.instructions.md](eng/common/instructions/azsdk-tools/typespec-docs.instructions.md). These instructions are already included in the azure-rest-api-specs repo when the user asks TypeSpec-related questions.
 
-Additionally, it can be referenced by custom prompts, chatmodes, or agents when knowledge of how to apply client.tsp customizations is needed. For example, it can be referenced by the [api-review-feedback chatmode](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/chatmodes/api-review-feedback.chatmode.md) to provide the details on how to apply client customizations, while the chatmode provides additional validation steps or constraints.
+Additionally, it can be referenced by custom prompts or agents when knowledge of how to apply client.tsp customizations is needed.
 
 #### 2. Customized Code Update Tool
 
@@ -215,6 +212,7 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
 **Two-Phase Workflow:**
 
 1. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
+
    - Analyze the customization request to determine if TypeSpec decorators can address the issues
    - Apply `client.tsp` adjustments (decorators, naming, grouping, scope configurations)
    - Re-run TypeSpec compilation and regenerate SDK code
@@ -222,6 +220,7 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
    - **Note**: The TypeSpec microagent may identify parts of the request that cannot be handled via `client.tsp` changes and forward those to Phase B
 
 2. **Phase B – [Code Customizations](#code-customizations):**
+
    - If Phase A doesn't resolve all issues, apply language-specific code patches
    - Use existing ClientCustomizationCodePatchTool for SDK code modifications
    - Apply safe patches: imports, visibility modifiers, reserved keyword renames, annotations
@@ -241,38 +240,63 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
   - **User prompts**: Natural language requests like "rename the FooClient to BarClient for .NET"
   - **API review feedback**: Feedback from API View or PR comments
   - **Breaking changes**: Output from breaking changes analysis tools
-- [optional] `--typespec-project-path`/`typespecProjectPath`: The path to the TypeSpec project directory containing `client.tsp`. Used when operating from the azure-rest-api-specs repository to specify which TypeSpec project to work with.
+- [optional] `--typespec-project-path`/`typespecProjectPath`: The path to the TypeSpec project directory containing `tspconfig.yaml`. Used when operating from the azure-rest-api-specs repository to specify which TypeSpec project to work with.
 
 **Workflow:**
 
 ```mermaid
 flowchart TD
-    Gen[<b>1. SDK Code Generation</b><br/>• Build SDK code<br/>]
-    
-    Gen --> IfPhaseA[<b>2A. TypeSpec Customization Phase</b><br/>• Analyze build failures for TypeSpec solutions<br/>• Apply client.tsp decorators and configurations<br/>• Regenerate SDK with updated TypeSpec]
-    
-    PhaseA --> ValidateA{<b>Build Validation A</b><br/>Does build pass?}
-    
-    ValidateA -->|Yes| Success[<b>Success</b><br/>• Generate consolidated diff<br/>• Present approval checkpoint<br/>• Apply approved changes]
-    
-    ValidateA -->|No| PhaseB[<b>2B. Code Customization Phase</b><br/>• AI generates patches from diff + current code<br/>• Apply patches using ClientCustomizationCodePatchTool<br/>]
-    
-    PhaseB --> ValidateB[<b>3. Final Validation</b><br/>• Compile SDK code<br/>• If build fails → retry AI patching loop max 2x<br/>]
-    
-    ValidateB --> Success
-    
-    style Gen fill:#fff9c4
-    style PhaseA fill:#e1f5fe
-    style PhaseB fill:#f3e5f5
+    Entry[<b>1. Entry Point</b><br/>• Build failures provide error messages<br/>• User prompts provide natural language requests<br/>• API review provides feedback comments<br/>• Breaking changes analysis provides change details]
+
+    Entry --> Classify
+
+    subgraph Tool [CustomizedCodeUpdateTool]
+        Classify[<b>Classify Request</b><br/>Can TypeSpec changes<br/>address the issues?]
+
+        Classify -->|No| PhaseB
+
+        Classify -->|Yes| ApplyTsp[<b>Apply TypeSpec Customizations</b><br/>Keep track of what changes were made and what issues could not be addressed]
+
+        ApplyTsp --> RegenSDK[<b>Regenerate SDK</b><br/>Regenerate SDK with updated TypeSpec]
+
+        RegenSDK --> RegenValidate{Does generation pass?}
+
+        RegenValidate -->|No, pass context| ApplyTsp
+
+        RegenValidate -->|Yes| BuildSDK[<b>Build SDK</b><br/>Compile SDK code]
+
+        BuildSDK --> ValidateA{Does build pass?}
+
+        ValidateA -->|No, pass context| PhaseB
+
+        ValidateA -->|Yes| RemainingIssues{<b>Remaining Issues?</b><br/>Are there unresolved<br/>items from the request?}
+
+        RemainingIssues -->|Yes, pass context| PhaseB[<b>Code Customization Phase</b><br/>• Receives unresolved items from Phase A<br/>• AI generates patches from diff + current code<br/>• Apply patches using ClientCustomizationCodePatchTool]
+
+        RemainingIssues -->|No| Success[<b>Success</b><br/>• Generate consolidated diff<br/>• Present approval checkpoint<br/>• Apply approved changes]
+
+        PhaseB --> ValidateB[<b>Final Validation</b><br/>• Compile SDK code<br/>• If build fails → retry AI patching loop max 2x]
+
+        ValidateB --> Success
+    end
+
+    style Entry fill:#fff9c4
+    style Classify fill:#e1f5fe
+    style ApplyTsp fill:#e1f5fe
+    style RegenSDK fill:#e1f5fe
+    style BuildSDK fill:#e1f5fe
     style ValidateA fill:#e8f5e9
+    style RemainingIssues fill:#e1f5fe
+    style PhaseB fill:#f3e5f5
     style ValidateB fill:#e8f5e9
     style Success fill:#c8e6c9
+    style Tool fill:none,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
 **Benefits:**
 
 - **Single Tool Experience**: Users don't need to know whether TypeSpec or code fixes are needed
-- **Spec-First Approach**: Always attempts TypeSpec solutions before falling back to code patches  
+- **Spec-First Approach**: Always attempts TypeSpec solutions before falling back to code patches
 - **Backward Compatibility**: Existing tool behavior preserved when TypeSpec fixes are disabled
 - **Unified Approval**: Single consolidated diff covers both TypeSpec and code changes
 - **Intelligent Routing**: Tool determines the appropriate fix phase based on failure analysis
@@ -286,17 +310,9 @@ There are at least 2 scenarios where we want to commit `client.tsp` changes back
 
 This spec only attempts to address the first scenario where a service team is working locally. Applying changes automatically in CI is out of scope for this spec but can be considered in the future.
 
-**Operating from azure-rest-api-specs repo**
-
-When a user is operating from within the azure-rest-api-specs repo, `client.tsp` updates can be staged and committed as normal git changes. No special work is needed.
-
 **Operating from azure-sdk-for-\* repo with azure-rest-api-specs clone**
 
-When operating from within an SDK repo with a local clone of the azure-rest-api-specs repo, we can directly apply the changes to the local clone. No special work is needed.
-
-**Operating from azure-sdk-for-\* repo without azure-rest-api-specs clone**
-
-When users are operating from within an SDK repo without a local clone of the azure-rest-api-specs repo, create a git patch file that contains the changes to `client.tsp`, along with next steps for how to apply this patch file to the azure-rest-api-specs repo.
+When operating from within an SDK repo with a local clone of the azure-rest-api-specs repo, we can directly apply the changes to the local repo clones. No special work is needed. Having all repos available locally is a requirement for this spec.
 
 ### CLI Usage Examples
 
@@ -375,6 +391,7 @@ azsdk package customized-code-update \
 ### Agent Conversation Examples
 
 **Example 1: Build Failure Entry Point**
+
 ```text
 User: My SDK build failed, can you fix it?
 Agent: Running build now...
@@ -390,6 +407,7 @@ Agent: Changes applied. SDK build passing.
 ```
 
 **Example 2: User Prompt Entry Point**
+
 ```text
 User: I need to rename the FooClient to BarClient for .NET only
 Agent: I'll apply that customization to client.tsp...
@@ -403,6 +421,7 @@ Agent: Changes applied.
 ```
 
 **Example 3: API Review Feedback Entry Point**
+
 ```text
 User: API review feedback says: "Model names should follow PascalCase convention. Change 'fooModel' to 'FooModel' for Python"
 Agent: Analyzing feedback and determining if TypeSpec changes can address this...
@@ -444,7 +463,7 @@ Assumptions for running the customization tooling in [agentic](#agentic-context)
 ## Success Criteria
 
 - [ ] **Automated Detection**: Correctly identify build failure types across all supported languages
-- [ ] **Phase A Success**: Successfully apply [TypeSpec Customizations](#typespec-customizations) for common specification issues  
+- [ ] **Phase A Success**: Successfully apply [TypeSpec Customizations](#typespec-customizations) for common specification issues
 - [ ] **Phase B Success**: Successfully apply [Code Customizations](#code-customizations) for common code issues
 - [ ] **Approval Workflow**: Enforce [approval checkpoints](#approval-checkpoint) in both contexts
 - [ ] **Cross-Language**: Support .NET, Java, JavaScript, Python, and Go

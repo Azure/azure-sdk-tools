@@ -129,6 +129,54 @@ describe('CommentThreadComponent', () => {
     });
   });
 
+  describe('thread resolution collapse behavior', () => {
+    beforeEach(() => {
+      component.userProfile = { userName: 'test-user' } as any;
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.elementId = 'element1';
+      component.codePanelRowData!.comments = [comment];
+      component.codePanelRowData!.threadId = 'thread1';
+      component.codePanelRowData!.nodeIdHashed = 'hash1';
+      component.codePanelRowData!.associatedRowPositionInGroup = 0;
+    });
+
+    it('should collapse thread when resolving', () => {
+      component.threadResolvedAndExpanded = true;
+      component.threadResolvedStateToggleText = 'Hide';
+      component.threadResolvedStateToggleIcon = 'bi-arrows-collapse';
+
+      spyOn(component.commentResolutionActionEmitter, 'emit');
+
+      component.handleThreadResolutionButtonClick('Resolve');
+
+      expect(component.threadResolvedAndExpanded).toBe(false);
+      expect(component.threadResolvedStateToggleText).toBe('Show');
+      expect(component.threadResolvedStateToggleIcon).toBe('bi-arrows-expand');
+    });
+
+    it('should collapse thread on second resolve after unresolve cycle', () => {
+      spyOn(component.commentResolutionActionEmitter, 'emit');
+
+      // First resolve
+      component.handleThreadResolutionButtonClick('Resolve');
+      expect(component.threadResolvedAndExpanded).toBe(false);
+
+      // User expands the resolved thread
+      component.toggleResolvedCommentExpandState();
+      expect(component.threadResolvedAndExpanded).toBe(true);
+
+      // Unresolve (simulating the full cycle)
+      component.handleThreadResolutionButtonClick('Unresolve');
+      
+      // Second resolve - this was the bug, it should collapse again
+      component.handleThreadResolutionButtonClick('Resolve');
+      expect(component.threadResolvedAndExpanded).toBe(false);
+      expect(component.threadResolvedStateToggleText).toBe('Show');
+      expect(component.threadResolvedStateToggleIcon).toBe('bi-arrows-expand');
+    });
+  });
+
   describe('batch resolution functionality', () => {
     beforeEach(() => {
       component.userProfile = { userName: 'test-user' } as any;

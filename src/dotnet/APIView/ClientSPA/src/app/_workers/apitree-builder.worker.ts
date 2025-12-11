@@ -163,10 +163,14 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if (buildNode && node.commentThread && apiTreeBuilderData?.showComments) {
     Object.keys(node.commentThread).map(Number).forEach((key) => {
-      const comment: CodePanelRowData = node.commentThread[key];
-      if (shouldAppendIfRowIsHiddenAPI(comment)) {
-        comment.rowClasses = new Set<string>(comment.rowClasses); // Ensure that the rowClasses is a Set
-        codePanelRowData.push(comment);
+      const threads: CodePanelRowData[] = node.commentThread[key];
+      if (Array.isArray(threads)) {
+        threads.forEach((thread) => {
+          if (shouldAppendIfRowIsHiddenAPI(thread)) {
+            thread.rowClasses = new Set<string>(thread.rowClasses);
+            codePanelRowData.push(thread);
+          }
+        });
       }
     });
   }

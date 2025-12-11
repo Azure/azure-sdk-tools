@@ -61,20 +61,20 @@
         }
         
         &.user-comment-thread, &.cross-language-view {
-            padding-left: calc(var(--max-line-number-width) + 20px);
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            padding-left: calc(var(--max-line-number-width) + 10px);
+            border-top: none;
+            border-bottom: none;
 
             .user-comment-content {
                 width: min(1000px, calc(100cqw - 100px));
                 position: sticky;
-                left: calc(var(--max-line-number-width) + 50px)
+                left: calc(var(--max-line-number-width) + 10px)
             }
 
             .cross-language-view-content {
                 width: min(1030px, calc(100cqw - 100px));
                 position: sticky;
-                left: calc(var(--max-line-number-width) + 20px)
+                left: calc(var(--max-line-number-width) + 10px)
             }
         }
 
@@ -158,13 +158,66 @@
         }
     }
 
+    .line-number-container {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        
+        .add-comment-btn {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            padding: 3px 6px;
+            margin-left: 6px;
+            border: 1px solid #d0d7de;
+            background: white;
+            color: #57606a;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                background: #f6f8fa;
+                border-color: #1f232826;
+                color: #24292f;
+            }
+
+            &:active {
+                background: #eaeef2;
+                border-color: #1f232826;
+            }
+
+            &:focus {
+                outline: 2px solid #0969da;
+                outline-offset: 2px;
+            }
+
+            i {
+                font-size: 14px;
+            }
+        }
+
+        &:hover .add-comment-btn {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    .line-number-text {
+        display: inline-block;
+    }
+
     .line-actions {
         grid-column: 1;
         text-align: right;
         white-space: nowrap;
         padding-left: 5px;
-        padding-right: 5px;
-        border-right: 1px solid var(--border-color);
+        padding-right: 0px;
+        border-right: none;
         cursor: pointer;
         position: sticky;
         left: 0;

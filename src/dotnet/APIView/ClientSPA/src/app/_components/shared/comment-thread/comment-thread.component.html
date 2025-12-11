@@ -1,5 +1,5 @@
 <div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info {{ floatItemStart }}">
-    <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span>
+    <small class="d-flex align-items-center"><i class="bi bi-check-circle-fill" style="color: var(--primary-color); margin-right: 6px;"></i>Resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}</span>
     </small>
 </div>
 <div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" 
@@ -166,7 +166,7 @@
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
+        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
     </div>
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">

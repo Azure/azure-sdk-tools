@@ -115,6 +115,7 @@ namespace APIViewWeb.HostedServices
                         Severity = CommentItemModel.ParseSeverity(comment.Severity),
                         ConfidenceScore = comment.ConfidenceScore,
                         CommentSource = CommentSource.AIGenerated,
+                        ThreadId = Guid.NewGuid().ToString()
                     };
 
                     var commentText = new StringBuilder();

@@ -61,19 +61,18 @@ export class ConversationsComponent implements OnChanges {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
       const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
-      const groupedComments = this.comments
-        .reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
-          const key = comment.elementId;
-          if (!acc[key]) {
-            acc[key] = [];
-          }
-          acc[key].push(comment);
-          return acc;
-        }, {});
+      const threadGroups = this.comments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
+        const threadKey = comment.threadId || comment.elementId;
+        if (!acc[threadKey]) {
+          acc[threadKey] = [];
+        }
+        acc[threadKey].push(comment);
+        return acc;
+      }, {});
 
-      for (const elementId in groupedComments) {
-        if (groupedComments.hasOwnProperty(elementId)) {
-          const comments = groupedComments[elementId];
+      for (const threadId in threadGroups) {
+        if (threadGroups.hasOwnProperty(threadId)) {
+          const comments = threadGroups[threadId];
           const apiRevisionIds = comments.map(c => c.apiRevisionId);
 
           let apiRevisionPostion = Number.MAX_SAFE_INTEGER;
@@ -90,6 +89,7 @@ export class ConversationsComponent implements OnChanges {
             const codePanelRowData = new CodePanelRowData();
             codePanelRowData.type = CodePanelRowDatatype.CommentThread;
             codePanelRowData.comments = comments;
+            codePanelRowData.threadId = threadId; 
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
             if (!codePanelRowData.isResolvedCommentThread) {
@@ -174,18 +174,16 @@ export class ConversationsComponent implements OnChanges {
   handleSaveCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.review?.id!;
     if (commentUpdates.commentId) {
-      this.commentsService.updateComment(this.review?.id!, commentUpdates.commentId, commentUpdates.commentText!).pipe(take(1)).subscribe({
-        next: () => {
-          this.updateCommentTextInCommentThread(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
-        }
-      });
     }
     else {
-      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
+      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               commentUpdates.comment = response;
+              // Ensure threadId is set from response if not already present
+              if (!commentUpdates.threadId && response.threadId) {
+                commentUpdates.threadId = response.threadId;
+              }
               this.addCommentToCommentThread(commentUpdates);
               this.signalRService.pushCommentUpdates(commentUpdates);
             }
@@ -227,18 +225,16 @@ export class ConversationsComponent implements OnChanges {
   handleCommentResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.review?.id!;
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
-      this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe({
+      this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
-      this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe({
+      this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
-          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
@@ -254,7 +250,7 @@ export class ConversationsComponent implements OnChanges {
         }
         break;
       case CommentThreadUpdateAction.CommentResolved:
-        this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe();
+        this.applyCommentResolutionUpdate(commentUpdates);
         break;
     }
   }

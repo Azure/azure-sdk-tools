@@ -23,6 +23,9 @@ public class ApiViewAgentComment
 
     [JsonPropertyName("severity")] 
     public string Severity { get; set; }
+
+    [JsonPropertyName("threadId")]
+    public string ThreadId { get; set; }
 }
 
 public class MentionRequest

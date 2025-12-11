@@ -36,6 +36,7 @@ namespace APIViewWeb.LeanModels
         public DiffKind DiffKind { get; set; }
         public string ToggleDocumentationClasses { get; set; }
         public string ToggleCommentsClasses { get; set; }
+        public string ThreadId { get; set; }
         public CodeDiagnostic Diagnostics { get; set; }
         [JsonIgnore]
         public List<CommentItemModel> CommentsObj { get; set; } = new List<CommentItemModel>();
@@ -78,8 +79,8 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> CodeLinesObj { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CodeLines => CodeLinesObj.Count > 0 ? CodeLinesObj : null;
         [JsonIgnore]
-        public Dictionary<int, CodePanelRowData> CommentThreadObj { get; set; } = []; //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
-        public Dictionary<int, CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
+        public Dictionary<int, List<CodePanelRowData>> CommentThreadObj { get; set; } = []; //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
+        public Dictionary<int, List<CodePanelRowData>> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
         public NavigationTreeNode NavigationTreeNode { get; set; }
         public string ParentNodeIdHashed { get; set; }
         [JsonIgnore]

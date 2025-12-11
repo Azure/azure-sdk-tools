@@ -6,7 +6,7 @@ BeforeAll {
     # Helper function to test URL transformation without making web requests
     function Get-TransformedNpmUrl([System.Uri]$linkUri) {
         $urlString = $linkUri.ToString()
-        if ($urlString -match '^https?://(?:www\.)?npmjs\.com/package/([^/]+(?:/[^/]+)?)/v/(.+)$') {
+        if ($urlString -match '^https?://(?:www\.)?npmjs\.com/package/(.+)/v/(.+)$') {
             # Versioned URL: remove the /v/ segment but keep the version
             return "https://registry.npmjs.org/$($matches[1])/$($matches[2])"
         }

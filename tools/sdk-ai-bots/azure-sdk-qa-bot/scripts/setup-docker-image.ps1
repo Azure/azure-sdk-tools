@@ -9,8 +9,19 @@ param(
 )
 
 # prepare node server
+Write-Host "Running npm install..."
 npm install
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "npm install failed with exit code $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
+
+Write-Host "Running npm run build..."
 npm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "npm run build failed with exit code $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
 
 # Copy azsdk-cli source using the dedicated script
 Write-Host "Copying azsdk-cli source..."

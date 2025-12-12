@@ -165,17 +165,17 @@ public partial class GoLanguageService : LanguageService
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         try
         {
             var result = await processHelper.Run(new ProcessOptions(goUnix, ["test", "-v", "-timeout", "1h", "./..."], goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return result.ExitCode == 0;
+            return new TestRunResponse(result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunAllTests));
-            return false;
+            return new TestRunResponse(1, null, $"Running Go tests failed: {ex.Message}");
         }
     }
 

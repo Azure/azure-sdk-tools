@@ -18,5 +18,8 @@ public class SetupRequirements
         
         [JsonPropertyName("instructions")]
         public List<string> instructions { get; set; }
+
+        [JsonPropertyName("reason")]
+        public string? reason { get; set; }
     }
 }

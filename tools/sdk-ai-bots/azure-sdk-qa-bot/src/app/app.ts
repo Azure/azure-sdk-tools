@@ -86,6 +86,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
 
   const parsed = parseConversationId(context.activity.conversation.id);
   const postLink = parsed.postId ? generateLink(context, parsed.postId) : undefined;
+  const subject = context.activity.subject || (conversations.length > 0 && conversations[0].prompt ? conversations[0].prompt.textWithoutMention : undefined);
 
   switch (action) {
     case 'feedback-like':
@@ -98,6 +99,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         reasons: selectedReasons,
         link: postLink,
         user_name: context.activity.from?.name,
+        subject: subject,
       };
       await sendFeedback(goodFeedback, ragOptions, meta);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
@@ -112,6 +114,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         reasons: selectedReasons,
         link: postLink,
         user_name: context.activity.from?.name,
+        subject: subject,
       };
       await sendFeedback(badFeedback, ragOptions, meta);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');

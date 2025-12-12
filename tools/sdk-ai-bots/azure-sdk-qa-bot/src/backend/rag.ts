@@ -136,6 +136,7 @@ export interface FeedbackRequestPayload {
   reasons?: string[];
   link?: string;
   user_name?: string;
+  subject?: string;
 }
 
 // TODO: reuse function to post request to RAG backend

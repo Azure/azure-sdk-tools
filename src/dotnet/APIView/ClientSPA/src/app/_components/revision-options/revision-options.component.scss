@@ -1,10 +1,29 @@
 :host ::ng-deep {
     display: inline-block;
 
-    .p-dropdown {
+    .compact-dropdown {
         border: none;
-        .p-inputtext {
-            padding: 0.0rem 0.5rem;
+        padding: 0 !important;
+        min-height: 0 !important;
+        align-items: center;
+        line-height: normal;
+
+        .p-inputtext, .p-dropdown-label, .p-select-label, span[role="combobox"] {
+            padding: 0 0.5rem !important;
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            min-height: 0 !important;
+        }
+
+        .p-dropdown-trigger {
+            width: 1.5rem;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0 !important;
         }
 
         .p-dropdown-clear-icon {
@@ -31,7 +50,7 @@
         display: flex;
         justify-content: space-between;
     }
-    
+
     .api-revision-filter-button .p-selectbutton .p-button {
         flex-grow: 1;
         text-align: center;
@@ -45,7 +64,7 @@
         color: var(--primary-btn-color);
         background-color: var(--link-color);
     }
-    
+
     .emphasis-badge {
         border-radius: 5px;
         padding: 0px 5px 2px 5px;
@@ -63,7 +82,7 @@
             color: var(--alert-warn-color);
             border: 1px solid var(--alert-warn-border-color);
         }
-        
+
         &.success {
             background-color: var(--alert-success-bg);
             color: var(--alert-success-color);

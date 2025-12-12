@@ -1,5 +1,5 @@
-<div class="row my-1">
-    <p-menubar>
+<div class="my-1">
+    <p-menubar styleClass="review-menubar">
         <ng-template pTemplate="start">
             <img *ngIf="review?.language" src="{{assetsPath}}/images/{{ review?.language! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
             <span class="fw-semibold ms-2 me-3">{{ review?.packageName}}</span>

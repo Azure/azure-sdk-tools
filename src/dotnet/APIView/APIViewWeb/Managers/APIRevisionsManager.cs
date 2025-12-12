@@ -829,6 +829,7 @@ namespace APIViewWeb.Managers
 
         /// <summary>
         /// SoftDelete APIRevision if its not been updated after many months
+        /// Preserves the latest approved stable (GA) and latest approved preview revisions from deletion
         /// </summary>
         /// <param name="archiveAfterMonths"></param>
         /// <returns></returns>
@@ -837,24 +838,110 @@ namespace APIViewWeb.Managers
             var lastUpdatedDate = DateTime.Now.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
-            // Find all inactive reviews
-            foreach (var apiRevision in manualRevisions)
+            // Group revisions by ReviewId to process each review's revisions together
+            var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId);
+
+            foreach (var reviewGroup in revisionsByReview)
             {
-                var requestTelemetry = new RequestTelemetry { Name = "Archiving Revision " + apiRevision.Id };
-                var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
-                    await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
-                    await Task.Delay(500);
+                    // Get ALL revisions for this review (not just old ones) to find latest approved stable and preview
+                    var allRevisionsForReview = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId: reviewGroup.Key);
+
+                    // Find latest approved stable and preview revisions using semantic versioning
+                    var latestApprovedStable = FindLatestApprovedStableRevision(allRevisionsForReview);
+                    var latestApprovedPreview = FindLatestApprovedPreviewRevision(allRevisionsForReview);
+
+                    // Archive old revisions, but preserve latest approved stable and preview
+                    foreach (var apiRevision in reviewGroup)
+                    {
+                        // Skip if this is the latest approved stable or latest approved preview revision
+                        if ((latestApprovedStable != null && apiRevision.Id == latestApprovedStable.Id) ||
+                            (latestApprovedPreview != null && apiRevision.Id == latestApprovedPreview.Id))
+                        {
+                            continue; // Don't delete - this is either the latest approved GA or latest approved preview
+                        }
+
+                        var requestTelemetry = new RequestTelemetry { Name = $"Archiving Revision {apiRevision.Id}" };
+                        var operation = _telemetryClient.StartOperation(requestTelemetry);
+                        try
+                        {
+                            await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
+                            await Task.Delay(500);
+                        }
+                        catch (Exception e)
+                        {
+                            _telemetryClient.TrackException(e);
+                        }
+                        finally
+                        {
+                            _telemetryClient.StopOperation(operation);
+                        }
+                    }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    _telemetryClient.TrackException(e);
+                    _telemetryClient.TrackException(ex);
+                    _telemetryClient.TrackTrace($"Failed to process auto-archive for review {reviewGroup.Key}: {ex.Message}");
                 }
-                finally
-                {
-                    _telemetryClient.StopOperation(operation);
-                }
+            }
+        }
+
+        /// <summary>
+        /// Finds the latest approved stable (GA, non-prerelease) revision from a list of revisions
+        /// </summary>
+        /// <param name="revisions">Collection of API revisions to search</param>
+        /// <returns>The latest approved stable revision or null if no approved stable revisions exist</returns>
+        private APIRevisionListItemModel FindLatestApprovedStableRevision(IEnumerable<APIRevisionListItemModel> revisions)
+        {
+            try
+            {
+                var stableRevisions = revisions
+                    .Where(r => !r.IsDeleted && r.IsApproved && !string.IsNullOrEmpty(r.PackageVersion))
+                    .Select(r => new
+                    {
+                        Revision = r,
+                        Version = new AzureEngSemanticVersion(r.PackageVersion)
+                    })
+                    .Where(x => x.Version.IsSemVerFormat && !x.Version.IsPrerelease)
+                    .OrderBy(x => x.Version)
+                    .FirstOrDefault();
+
+                return stableRevisions?.Revision;
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Finds the latest approved preview (prerelease) revision from a list of revisions
+        /// </summary>
+        /// <param name="revisions">Collection of API revisions to search</param>
+        /// <returns>The latest approved preview revision or null if no approved preview revisions exist</returns>
+        private APIRevisionListItemModel FindLatestApprovedPreviewRevision(IEnumerable<APIRevisionListItemModel> revisions)
+        {
+            try
+            {
+                var previewRevisions = revisions
+                    .Where(r => !r.IsDeleted && r.IsApproved && !string.IsNullOrEmpty(r.PackageVersion))
+                    .Select(r => new
+                    {
+                        Revision = r,
+                        Version = new AzureEngSemanticVersion(r.PackageVersion)
+                    })
+                    .Where(x => x.Version.IsSemVerFormat && x.Version.IsPrerelease)
+                    .OrderBy(x => x.Version)
+                    .FirstOrDefault();
+
+                return previewRevisions?.Revision;
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return null;
             }
         }
 

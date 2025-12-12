@@ -34,7 +34,7 @@
         "@autorest/extension-base": "^3.5.0",
         "@azure-tools/codegen": "^3.0.283",
         "@types/jest": "^30.0.0",
-        "@types/node": "^24.0.1",
+        "@types/node": "^25.0.1",
         "@typescript-eslint/eslint-plugin": "^8.18.2",
         "@typescript-eslint/parser": "^8.18.2",
         "@types/lodash": "^4.17.5",

@@ -8,7 +8,7 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     [TestFixture]
     internal class SpecWorkflowToolTests

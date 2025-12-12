@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Moq;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools.Samples;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package.Samples;
 
 [TestFixture]
 public class SampleTranslatorToolTests

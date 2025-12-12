@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Tools.Package;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
 {
     [TestFixture]
     public class PackageCheckToolTests

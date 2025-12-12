@@ -5,7 +5,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Example;
 
 internal class HelloWorldToolTests
 {

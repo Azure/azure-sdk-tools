@@ -7,8 +7,10 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
+using Azure.Sdk.Tools.Cli.Tools.Config;
 using Azure.Sdk.Tools.Cli.Configuration;
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 {
     [TestFixture]
     public class CodeownersToolsTests

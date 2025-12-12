@@ -6,9 +6,10 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Moq;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Typespec;
 
 [TestFixture]
 public class CustomizedCodeUpdateToolAutoTests
@@ -88,7 +89,7 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -107,7 +108,7 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -128,7 +129,7 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool(new NullLogger<Azure.Sdk.Tools.Cli.Tools.CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));

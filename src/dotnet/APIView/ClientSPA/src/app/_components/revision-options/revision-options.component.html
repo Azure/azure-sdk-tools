@@ -16,7 +16,7 @@
             panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
-                <div class="flex gap-1">
+                <div class="flex flex-column gap-2">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" aria-label="Active APIRevision Filter" placeholder="Filter"
@@ -26,10 +26,9 @@
                     class="api-revision-filter-button"
                     [options]="filterOptions"
                     [(ngModel)]="activeApiRevisionsFilterValue"
-                    (onChange)="activeApiRevisionFilterFunction($event)"
-                    [style]="{'margin-top':'8px'}">
-                        <ng-template let-item pTemplate>
-                            <span class="p-button-label">
+                    (onChange)="activeApiRevisionFilterFunction($event)">
+                        <ng-template let-item pTemplate="item">
+                            <span class="p-button-label" style="font-weight: normal;">
                                 <i *ngIf="item.icon" [class]="item.icon"></i>
                                 {{ item.label }}
                             </span>
@@ -89,7 +88,7 @@
             panelStyleClass="compact-dropdown-panel"
             scrollHeight="400px">
             <ng-template pTemplate="filter" let-options="options">
-                <div class="flex gap-1">
+                <div class="flex flex-column gap-2">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" aria-label="Diff APIRevision Filter" placeholder="Filter"
@@ -99,10 +98,9 @@
                     class="api-revision-filter-button"
                     [options]="filterOptions"
                     [(ngModel)]="diffApiRevisionsFilterValue"
-                    (onChange)="diffApiRevisionFilterFunction($event)"
-                    [style]="{'margin-top':'8px'}">
-                        <ng-template let-item pTemplate>
-                            <span class="p-button-label">
+                    (onChange)="diffApiRevisionFilterFunction($event)">
+                        <ng-template let-item pTemplate="item">
+                            <span class="p-button-label" style="font-weight: normal;">
                                 <i *ngIf="item.icon" [class]="item.icon"></i>
                                 {{ item.label }}
                             </span>

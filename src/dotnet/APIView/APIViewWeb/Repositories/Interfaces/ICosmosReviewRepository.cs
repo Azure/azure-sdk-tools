@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -17,6 +18,7 @@ namespace APIViewWeb.Repositories
         public Task<IEnumerable<ReviewListItemModel>> GetPendingNamespaceApprovalReviewsAsync(IEnumerable<string> languages);
         public Task<(IEnumerable<ReviewListItemModel> Reviews, int TotalCount)> GetReviewsAsync(
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, bool? isApproved, int offset, int limit, string orderBy);
+        public Task UpdateReviewLastUpdatedOnAsync(string reviewId, DateTime lastUpdatedOn);
         public Task<IEnumerable<string>> GetPackageNamesAsync(string language);
     }
 }

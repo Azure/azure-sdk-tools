@@ -25,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private IUserHelper userHelper;
         private IEnvironmentHelper environmentHelper;
         private readonly IGitHelper gitHelper;
+        private IInputSanitizer inputSanitizer;
 
         public ReleasePlanManualTests()
         {
@@ -35,6 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             logger = new TestLogger<ReleasePlanTool>();
             gitHubService = new Mock<IGitHubService>().Object;
+            inputSanitizer = new InputSanitizer();
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
             typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
@@ -52,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
             gitHelper = gitHelperMock.Object;
 
-            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper);
+            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer);
         }
 
         [Test] // disabled by default because it makes real API calls

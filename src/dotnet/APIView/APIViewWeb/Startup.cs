@@ -115,6 +115,7 @@ namespace APIViewWeb
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
+            services.AddSingleton<IAutoReviewService, AutoReviewService>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
             services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
@@ -316,11 +317,11 @@ namespace APIViewWeb
                     }
                 };
                 
-                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential(), cosmosClientOptions);
+                return new CosmosClient(Configuration["CosmosEndpoint"], CredentialProvider.GetAzureCredential(), cosmosClientOptions);
             });
             services.AddSingleton(x =>
             {
-                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), new DefaultAzureCredential());
+                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), CredentialProvider.GetAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();

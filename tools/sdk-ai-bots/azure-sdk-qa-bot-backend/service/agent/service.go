@@ -479,8 +479,8 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		return nil, err
 	}
 	for _, activity := range resp.Activity {
-		if activity.Type == "AzureSearchQuery" {
-			log.Printf("Agentic search sub query: %s", activity.Query.Search)
+		if activity.Type == model.ActivityRecordTypeSearchIndex {
+			log.Printf("Agentic search sub query: %s", activity.SearchIndexArguments.Search)
 		}
 	}
 	if resp.Response == nil {
@@ -604,7 +604,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			continue
 		}
 		processedChunks[chunkKey] = true
-		if strings.HasPrefix(chunk.ContextID, "static") {
+		if strings.HasPrefix(string(chunk.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)
 			continue
 		}
@@ -633,7 +633,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 
 		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
 
-		if strings.HasPrefix(result.ContextID, "static") {
+		if strings.HasPrefix(string(result.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, result)
 			continue
 		}
@@ -688,7 +688,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	for _, file := range files {
 		chunk := processDocument(file)
 		result = append(result, chunk)
-		log.Printf("✓ Completed document: %s/%s", file.ContextID, file.Title)
+		log.Printf("✓ Completed document: %s/%s#%s", file.ContextID, file.Title, file.Header1)
 	}
 
 	// Add remaining ready chunks (avoid duplicates by chunk content)

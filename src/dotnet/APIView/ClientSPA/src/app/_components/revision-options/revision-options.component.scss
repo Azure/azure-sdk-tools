@@ -2,11 +2,25 @@
     display: inline-block;
 
     .compact-dropdown {
-        border: none;
+        border: none !important;
         padding: 0 !important;
         min-height: 0 !important;
         align-items: center;
         line-height: normal;
+        background: transparent !important;
+
+        .p-dropdown-label, .p-select-label {
+            color: var(--base-text-color) !important;
+            background: transparent !important;
+        }
+
+        .p-dropdown-trigger {
+            background: transparent !important;
+            color: var(--base-text-color) !important;
+            .p-dropdown-trigger-icon {
+                color: var(--base-text-color) !important;
+            }
+        }
 
         .p-inputtext, .p-dropdown-label, .p-select-label, span[role="combobox"] {
             padding: 0 0.5rem !important;
@@ -28,6 +42,7 @@
 
         .p-dropdown-clear-icon {
             right: -1rem;
+            color: var(--base-text-color) !important;
         }
 
         .p-chip .p-chip-text {
@@ -42,6 +57,48 @@
         }
     }
 
+    .compact-dropdown-panel {
+        background: var(--base-bg-color) !important;
+        border: 1px solid var(--border-color) !important;
+
+        .p-select-header {
+            background: var(--base-bg-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--base-text-color) !important;
+            padding: 0.5rem !important;
+
+            .p-inputtext {
+                background: var(--base-fg-color) !important;
+                color: var(--base-text-color) !important;
+                border: 1px solid var(--border-color) !important;
+            }
+        }
+
+        .p-select-list {
+            padding: 0 !important;
+            .p-select-option {
+                color: var(--base-text-color) !important;
+                background: transparent !important;
+                padding: 0.5rem !important;
+                margin: 0 !important;
+
+                &:hover {
+                    background: var(--client-type-bg) !important;
+                    color: var(--base-text-color) !important;
+                }
+                &.p-select-option-selected {
+                    background: var(--client-type-bg) !important;
+                    color: var(--base-text-color) !important;
+                }
+            }
+        }
+
+        .p-select-empty-message {
+             color: var(--base-text-color) !important;
+             background: var(--base-bg-color) !important;
+        }
+    }
+
     .selected-item-content{
         max-width: 25dvw;
     }
@@ -49,20 +106,34 @@
     .api-revision-filter-button .p-selectbutton {
         display: flex;
         justify-content: space-between;
+        background: transparent;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid var(--link-color);
     }
 
     .api-revision-filter-button .p-selectbutton .p-button {
         flex-grow: 1;
         text-align: center;
-        background-color: transparent;
-        border: 1px solid var(--link-color);
-        color: var(--link-color);
+        background-color: transparent !important;
+        border: none !important;
+        border-right: 1px solid var(--link-color) !important;
+        color: var(--link-color) !important;
         font-size: 0.85rem;
-    }
+        padding: 0.25rem 0.5rem !important;
 
-    .api-revision-filter-button .p-selectbutton .p-button.p-highlight {
-        color: var(--primary-btn-color);
-        background-color: var(--link-color);
+        &:last-child {
+            border-right: none !important;
+        }
+
+        &.p-highlight {
+            color: var(--primary-btn-color) !important;
+            background-color: var(--link-color) !important;
+        }
+
+        .p-button-label {
+            font-weight: normal;
+        }
     }
 
     .emphasis-badge {

@@ -13,6 +13,7 @@
             (onChange)="activeApiRevisionChange($event)"
             scrollHeight="400px"
             styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">
@@ -69,7 +70,7 @@
     </span>
 
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
-        <label class="small fw-semibold" for="diff-api-revision-select">Diff :</label>
+        <label class="small fw-semibold" for="diff-api-revision-select" style="color: var(--base-text-color);">Diff :</label>
         <p-dropdown
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
@@ -85,6 +86,7 @@
             (onClear)="diffApiRevisionClear($event)"
             placeholder="-"
             styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             scrollHeight="400px">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">
@@ -151,6 +153,7 @@
             (onChange)="activeSamplesRevisionChange($event)"
             scrollHeight="400px"
             styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">
@@ -194,6 +197,7 @@
             (onChange)="activeCrossLanguageRevisionChange($event)"
             scrollHeight="400px"
             styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">

@@ -12,7 +12,7 @@
         [minSizes]="minSizes"
         [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
         <ng-template pTemplate>
-            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
+            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded overflow-auto review-panel">
                 <app-review-nav
                     [reviewPageNavigation]="reviewPageNavigation"
                     [loadFailed]="loadFailed"
@@ -20,7 +20,7 @@
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center border review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
+            <div class="col flex align-items-center justify-content-center border rounded review-panel">
                 <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
                     [crossLanguageRowData]="crossLanguageRowData"
                     [language]="language" [languageSafeName]="languageSafeName"
@@ -43,7 +43,7 @@
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel options-panel px-3">
+            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded overflow-auto review-panel options-panel px-3">
                 <app-review-page-options
                     [loadingStatus]="getLoadingStatus()"
                     [isDiffView]="!!diffApiRevisionId"

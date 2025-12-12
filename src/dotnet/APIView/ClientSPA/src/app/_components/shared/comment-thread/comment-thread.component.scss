@@ -1,5 +1,5 @@
 :host ::ng-deep {
-    font-family: var(--font-family);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
     .ai-badge-custom, .related-comments-indicator {
         display: inline-flex;
@@ -64,10 +64,32 @@
     .p-timeline-event-content { flex: 1 1 auto; margin-left: .5rem; }
     .p-timeline .p-timeline-event-connector { background-color: var(--border-color) !important; }
     .p-timeline.p-timeline-vertical .p-timeline-event-connector { width: 2px; }
-    
+
     .p-panel { border: none; background-color: unset; p { font-size: 14px; margin-bottom: 5px; } }
-    .p-panel .p-panel-header, .p-panel .p-panel-content, .p-panel.p-panel-toggleable .p-panel-header { border: none; padding: 0; background: inherit; color: inherit; }
-    .p-panel .p-panel-footer { padding: .5rem 0; border: none; background: inherit; color: inherit; }
+    .p-panel .p-panel-header, .p-panel.p-panel-toggleable .p-panel-header { border: none; padding: 0; background: inherit; color: var(--base-text-color); font-size: 15px; }
+    .p-panel .p-panel-content { border: none; padding: 0; background: inherit; color: var(--base-text-color); }
+    .p-panel .p-panel-footer { padding: .5rem 0; border: none; background: inherit; color: var(--base-text-color); }
+
+    .p-panel-header-icon {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 0.2rem !important;
+        margin-left: 0.5rem !important;
+        color: inherit !important;
+        font-size: 1.0rem !important;
+
+        &:hover {
+            background: transparent !important;
+            color: var(--primary-color) !important;
+        }
+
+        &:focus {
+            box-shadow: none !important;
+        }
+    }
 
     .comment-thread-navigation { display: none; position: absolute; top: 50%; left: 100%; transform: translate(0, -50%); }
     .user-avartar { border: 2px solid var(--border-color); border-radius: 50%; }
@@ -166,12 +188,12 @@
         width: auto;
         background-color: var(--base-bg-color) !important;
         border: 1px solid var(--border-color) !important;
-        
+
         .p-overlaypanel-content { background-color: var(--base-bg-color) !important; padding: 0 !important; }
         &:before { border-bottom-color: var(--border-color) !important; }
         &:after { border-bottom-color: var(--base-bg-color) !important; }
     }
-    
+
     .ai-info-content { padding: .5rem; }
     .ai-info-body { display: flex; flex-direction: column; gap: .75rem; }
     .ai-info-item {
@@ -184,7 +206,7 @@
         transition: background-color .2s;
         &:hover { background-color: var(--editor-bg-color); }
     }
-    
+
     .ai-info-icon { color: var(--primary-color); font-size: 1.1rem; margin-top: .15rem; flex-shrink: 0; }
     .ai-info-details { display: flex; flex-direction: column; gap: .25rem; flex: 1; }
     .ai-info-label { font-weight: 600; font-size: .8rem; color: var(--text-color-secondary); text-transform: uppercase; letter-spacing: .5px; }

@@ -2,31 +2,21 @@ package utils
 
 import (
 	"log"
-	"regexp"
-	"strings"
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 )
 
 // FilterInvalidReferenceLinks checks if links in the LLM response actually appeared in the prompt chunks
 // to prevent hallucination. It removes references with invalid links and logs warnings.
-func FilterInvalidReferenceLinks(references []model.Reference, chunks []string) []model.Reference {
+func FilterInvalidReferenceLinks(references []model.Reference, knowledges []model.Knowledge) []model.Reference {
 	if len(references) == 0 {
 		return nil
 	}
 
 	// Extract all links from chunks
 	validLinks := make(map[string]bool)
-	// Regex to match URLs in the chunks (http/https links)
-	urlRegex := regexp.MustCompile(`https?://[^\s)]+`)
-
-	for _, chunk := range chunks {
-		matches := urlRegex.FindAllString(chunk, -1)
-		for _, match := range matches {
-			// Clean up any trailing punctuation that might have been captured
-			match = strings.TrimRight(match, ".,;:)")
-			validLinks[match] = true
-		}
+	for _, knowledge := range knowledges {
+		validLinks[knowledge.Link] = true
 	}
 
 	// Validate each reference link

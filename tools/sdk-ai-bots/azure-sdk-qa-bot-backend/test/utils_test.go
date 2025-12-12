@@ -9,38 +9,38 @@ import (
 )
 
 func TestFilterInvalidReferenceLinks_ValidLinks(t *testing.T) {
-	chunks := []string{
-		"Check out this guide: https://example.com/path?param=value&other=123#section",
-		"More info at https://docs.example.com/api",
-		"See the docs at https://example.com/guide.",
+	knowledges := []model.Knowledge{
+		{
+			Link: "https://example.com/path?param=value&other=123#section",
+		},
+		{
+			Link: "https://docs.example.com/api",
+		},
+		{
+			Link: "https://example.com/guide",
+		},
 	}
-
 	references := []model.Reference{
 		{
-			Title:  "Complex URL",
-			Source: "docs",
-			Link:   "https://example.com/path?param=value&other=123#section",
+			Title: "Complex URL",
+			Link:  "https://example.com/path?param=value&other=123#section",
 		},
 		{
-			Title:  "Normal URL",
-			Source: "docs",
-			Link:   "https://docs.example.com/api",
+			Title: "Normal URL",
+			Link:  "https://docs.example.com/api",
 		},
 		{
-			Title:  "URL with punctuation",
-			Source: "docs",
-			Link:   "https://example.com/guide",
+			Title: "URL with punctuation",
+			Link:  "https://example.com/guide",
 		},
 		{
 			Title:   "Reference without link",
-			Source:  "docs",
 			Link:    "",
 			Content: "Some content",
 		},
 		{
-			Title:  "Fake 1",
-			Source: "docs",
-			Link:   "https://fake1.com/ref",
+			Title: "Fake 1",
+			Link:  "https://fake1.com/ref",
 		},
 		{
 			Title:  "Fake 2",
@@ -49,7 +49,7 @@ func TestFilterInvalidReferenceLinks_ValidLinks(t *testing.T) {
 		},
 	}
 
-	result := utils.FilterInvalidReferenceLinks(references, chunks)
+	result := utils.FilterInvalidReferenceLinks(references, knowledges)
 	assert.Equal(t, 4, len(result))
 	assert.Equal(t, "https://example.com/path?param=value&other=123#section", result[0].Link)
 	assert.Equal(t, "https://docs.example.com/api", result[1].Link)

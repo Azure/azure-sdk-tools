@@ -1,4 +1,4 @@
-<div style="display: flex; justify-content: space-between;">
+<div class="revision-options-container">
     <span *ngIf="activeApiRevisionsMenu.length > 0" class="border-start ps-2">
         <p-dropdown
             [options]="activeApiRevisionsMenu"
@@ -23,12 +23,12 @@
                         [(ngModel)]="activeApiRevisionsSearchValue" (keyup)="activeApiRevisionSearchFunction($event)">
                     </div>
                     <p-selectButton
-                    class="api-revision-filter-button"
+                    styleClass="api-revision-filter-button"
                     [options]="filterOptions"
                     [(ngModel)]="activeApiRevisionsFilterValue"
                     (onChange)="activeApiRevisionFilterFunction($event)">
                         <ng-template let-item pTemplate="item">
-                            <span class="p-button-label" style="font-weight: normal;">
+                            <span class="p-button-label">
                                 <i *ngIf="item.icon" [class]="item.icon"></i>
                                 {{ item.label }}
                             </span>
@@ -69,7 +69,7 @@
     </span>
 
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
-        <label class="small fw-semibold" for="diff-api-revision-select" style="color: var(--base-text-color);">Diff :</label>
+        <label class="small fw-semibold diff-label" for="diff-api-revision-select">Diff :</label>
         <p-dropdown
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
@@ -95,12 +95,12 @@
                         [(ngModel)]="diffApiRevisionsSearchValue" (keyup)="diffApiRevisionSearchFunction($event)">
                     </div>
                     <p-selectButton
-                    class="api-revision-filter-button"
+                    styleClass="api-revision-filter-button"
                     [options]="filterOptions"
                     [(ngModel)]="diffApiRevisionsFilterValue"
                     (onChange)="diffApiRevisionFilterFunction($event)">
                         <ng-template let-item pTemplate="item">
-                            <span class="p-button-label" style="font-weight: normal;">
+                            <span class="p-button-label">
                                 <i *ngIf="item.icon" [class]="item.icon"></i>
                                 {{ item.label }}
                             </span>

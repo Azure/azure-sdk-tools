@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, provides intelligent analysis and recommendations for updating customization code.")]
 public class CustomizedCodeUpdateTool: LanguageMcpTool

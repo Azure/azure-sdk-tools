@@ -5,7 +5,7 @@ using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Typespec
 {
     public class TspConvertToolTests
     {

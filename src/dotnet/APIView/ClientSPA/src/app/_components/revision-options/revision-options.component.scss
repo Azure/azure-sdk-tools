@@ -1,6 +1,10 @@
 :host ::ng-deep {
     display: inline-block;
 
+    p-selectButton {
+        width: 100%;
+    }
+
     .revision-options-container {
         display: flex;
         justify-content: space-between;
@@ -124,7 +128,7 @@
         --p-togglebutton-background: transparent;
         --p-togglebutton-color: var(--link-color);
         --p-togglebutton-border-color: var(--link-color);
-        --p-togglebutton-content-padding: 2px 0.5rem;
+        --p-togglebutton-padding: 0.25rem 0.5rem;
 
         --p-togglebutton-checked-background: var(--link-color);
         --p-togglebutton-checked-color: var(--primary-btn-color);

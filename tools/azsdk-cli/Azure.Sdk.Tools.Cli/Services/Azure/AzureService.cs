@@ -27,7 +27,8 @@ public class AzureService : IAzureService
                 new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
                 new AzurePowerShellCredential(new AzurePowerShellCredentialOptions { TenantId = tenantId }),
                 new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions { TenantId = tenantId }),
-                new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId })
+                new VisualStudioCredential(new VisualStudioCredentialOptions { TenantId = tenantId }),
+                new ManagedIdentityCredential(GetManagedIdentityClientId())
             );
         }
         catch (CredentialUnavailableException)
@@ -40,5 +41,15 @@ public class AzureService : IAzureService
     {
         return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
                Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
+    }
+
+    /// <summary>
+    /// Gets the client ID for a user-assigned managed identity from the AZURE_CLIENT_ID environment variable.
+    /// Returns null if not set, allowing the credential to use system-assigned managed identity.
+    /// </summary>
+    /// <returns>The client ID for user-assigned managed identity, or null for system-assigned.</returns>
+    private static string? GetManagedIdentityClientId()
+    {
+        return Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
     }
 }

@@ -192,9 +192,9 @@ Methods with the `[McpServerTool]` attribute must specify a Name property.
 `snake_case` style naming is required for MCP server tool names.
 
 **Valid examples:**
-- `[McpServerTool(Name = "hello_world")]`
-- `[McpServerTool(Name = "test_tool")]`
-- `[McpServerTool(Name = "api_validator")]`
+- `[McpServerTool(Name = "azsdk_hello_world")]`
+- `[McpServerTool(Name = "azsdk_test_tool")]`
+- `[McpServerTool(Name = "azsdk_api_validator")]`
 
 **Invalid examples:**
 - `[McpServerTool(Name = "helloWorld")]` - camelCase

@@ -12,6 +12,7 @@
             (onHide)="resetDropDownFilter(ACTIVE_API_REVISION_SELECT)"
             (onChange)="activeApiRevisionChange($event)"
             scrollHeight="400px"
+            styleClass="compact-dropdown"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">
@@ -83,6 +84,7 @@
             [showClear]="true"
             (onClear)="diffApiRevisionClear($event)"
             placeholder="-"
+            styleClass="compact-dropdown"
             scrollHeight="400px">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">
@@ -148,6 +150,7 @@
             (onHide)="resetDropDownFilter(ACTIVE_SAMPLES_REVISION_SELECT)"
             (onChange)="activeSamplesRevisionChange($event)"
             scrollHeight="400px"
+            styleClass="compact-dropdown"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">
@@ -190,6 +193,7 @@
             (onHide)="resetDropDownFilter(CROSS_LANGUAGE_API_REVISION_SELECT)"
             (onChange)="activeCrossLanguageRevisionChange($event)"
             scrollHeight="400px"
+            styleClass="compact-dropdown"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="flex gap-1">

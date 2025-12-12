@@ -7,9 +7,12 @@ namespace IssueLabeler.Shared
 {
     public class GitHubIssuePrediction
     {
-        [ColumnName("PredictedLabel")]
-        public string Area;
+        public string? PredictedCategoryLabel { get; set; }
+        public string? PredictedServiceLabel { get; set; }
 
-        public float[] Score;
+        [ColumnName("PredictedLabel")]
+        public string? PredictedLabel { get; set; }
+
+        public float[]? Score { get; set; }
     }
 }

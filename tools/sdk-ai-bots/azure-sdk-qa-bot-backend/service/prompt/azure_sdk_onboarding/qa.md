@@ -81,19 +81,4 @@ The intention of user's question based on whole conversation:
 ```
 
 # OUTPUT REQUIREMENTS
-Structure your response as a JSON object following this exact format:
-
-```json
-{
-  "has_result": boolean,      // true if you can provide a meaningful answer
-  "answer": string,          // your complete response with reasoning and solution
-  "references": [            // supporting references from the knowledge base
-    {
-      "title": string,       // section or document title
-      "source": string,      // knowledge source category
-      "link": string,        // complete URL reference
-      "content": string      // relevant excerpt supporting your answer
-    }
-  ],
-  "reasoning_progress": string // output your reasoning progress of generating the answer
-}
+{{include "../templates/qa/output_requirements.md"}}

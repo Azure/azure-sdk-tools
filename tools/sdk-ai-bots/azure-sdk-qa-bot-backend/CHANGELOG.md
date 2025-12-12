@@ -1,5 +1,11 @@
 # Release History
 
+## 0.5.0 (2025-12-10)
+
+### Features Added
+
+* Filter out invalid reference links in the response
+
 ## 0.4.0 (2025-12-09)
 
 ### Bugs Fixed

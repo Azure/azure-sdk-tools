@@ -50,12 +50,7 @@ The Azure SDK QA Bot Backend is designed to help developers with Azure SDK quest
 6. Start the server:
 
    ```bash
-   ./run.sh start
-   
-   other commands:
-   ./run.sh restart
-   ./run.sh stop
-   ./run.sh status
+   go run main.go
    ```
 
 ## API Usage

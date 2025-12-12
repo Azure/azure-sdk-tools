@@ -1,6 +1,6 @@
 import { InvocationContext } from '@azure/functions';
 import { SearchClient, AzureKeyCredential } from '@azure/search-documents';
-import { ChainedTokenCredential, DefaultAzureCredential, AzureCliCredential, EnvironmentCredential, ManagedIdentityCredential } from '@azure/identity';
+import { ChainedTokenCredential, AzureCliCredential, ManagedIdentityCredential, WorkloadIdentityCredential} from '@azure/identity';
 
 /**
  * Document interface for AI Search operations
@@ -38,8 +38,8 @@ export class SearchService {
             // Use managed identity authentication
             const credential = new ChainedTokenCredential(
                 new ManagedIdentityCredential(),
-                new EnvironmentCredential(),
-                new AzureCliCredential()
+                new AzureCliCredential(),
+                new WorkloadIdentityCredential()
             );
             
             this.searchClient = new SearchClient(

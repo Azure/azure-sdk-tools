@@ -13,6 +13,8 @@ import { MenuModule } from 'primeng/menu';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { SidebarModule } from 'primeng/sidebar';
 import { DropdownModule } from 'primeng/dropdown';
+import { TooltipModule } from 'primeng/tooltip';
+import { RippleModule } from 'primeng/ripple';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -39,6 +41,8 @@ describe('RevisionPageComponent', () => {
         ContextMenuModule,
         DropdownModule,
         SidebarModule,
+        TooltipModule,
+        RippleModule,
         ReactiveFormsModule,
         FormsModule
       ],

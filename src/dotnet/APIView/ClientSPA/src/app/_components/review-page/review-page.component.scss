@@ -1,10 +1,15 @@
 :host ::ng-deep {
     .review-panel{
         height: calc(100vh - 100px);
+        background-color: var(--base-bg-color);
         &.approved {
             border: solid 1px var(--success-color) !important;
             box-shadow: var(--box-shadow-success);
         }
+    }
+
+    .options-panel {
+        background-color: var(--base-fg-color);
     }
 
     .p-splitter-panel-nested {

@@ -1,14 +1,61 @@
 :host ::ng-deep {
     display: inline-block;
 
-    .p-dropdown {
-        border: none;
-        .p-inputtext {
-            padding: 0.0rem 0.5rem;
+    p-selectButton {
+        width: 100%;
+    }
+
+    .revision-options-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .diff-label {
+        color: var(--base-text-color);
+    }
+
+    .compact-dropdown {
+        border: none !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+        align-items: center;
+        line-height: normal;
+        background: transparent !important;
+
+        .p-dropdown-label, .p-select-label {
+            color: var(--base-text-color) !important;
+            background: transparent !important;
+        }
+
+        .p-dropdown-trigger {
+            background: transparent !important;
+            color: var(--base-text-color) !important;
+            .p-dropdown-trigger-icon {
+                color: var(--base-text-color) !important;
+            }
+        }
+
+        .p-inputtext, .p-dropdown-label, .p-select-label, span[role="combobox"] {
+            padding: 0 0.5rem !important;
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            min-height: 0 !important;
+        }
+
+        .p-dropdown-trigger {
+            width: 1.5rem;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0 !important;
         }
 
         .p-dropdown-clear-icon {
             right: -1rem;
+            color: var(--base-text-color) !important;
         }
 
         .p-chip .p-chip-text {
@@ -23,32 +70,109 @@
         }
     }
 
+    .compact-dropdown-panel {
+        background: var(--base-bg-color) !important;
+        border: 1px solid var(--border-color) !important;
+
+        .p-select-header {
+            background: var(--base-bg-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            color: var(--base-text-color) !important;
+            padding: 0.5rem !important;
+
+            .p-inputtext {
+                background: var(--base-fg-color) !important;
+                color: var(--base-text-color) !important;
+                border: 1px solid var(--border-color) !important;
+            }
+        }
+
+        .p-select-list {
+            padding: 0 !important;
+            .p-select-option {
+                color: var(--base-text-color) !important;
+                background: transparent !important;
+                padding: 0.5rem !important;
+                margin: 0 !important;
+
+                &:hover {
+                    background: var(--client-type-bg) !important;
+                    color: var(--base-text-color) !important;
+                }
+                &.p-select-option-selected {
+                    background: var(--client-type-bg) !important;
+                    color: var(--base-text-color) !important;
+                }
+            }
+        }
+
+        .p-select-empty-message {
+             color: var(--base-text-color) !important;
+             background: var(--base-bg-color) !important;
+        }
+    }
+
     .selected-item-content{
         max-width: 25dvw;
     }
 
-    .api-revision-filter-button .p-selectbutton {
+    .api-revision-filter-button {
+        width: 100%;
+        margin-top: 8px;
         display: flex;
-        justify-content: space-between;
-    }
-    
-    .api-revision-filter-button .p-selectbutton .p-button {
-        flex-grow: 1;
-        text-align: center;
-        background-color: transparent;
-        border: 1px solid var(--link-color);
-        color: var(--link-color);
-        font-size: 0.85rem;
+
+        // PrimeNG 18 Design Tokens
+        --p-selectbutton-border-radius: 4px;
+
+        // ToggleButton tokens (used by SelectButton items)
+        --p-togglebutton-background: transparent;
+        --p-togglebutton-color: var(--link-color);
+        --p-togglebutton-border-color: var(--link-color);
+        --p-togglebutton-padding: 0.25rem 0.5rem;
+
+        --p-togglebutton-checked-background: var(--link-color);
+        --p-togglebutton-checked-color: var(--primary-btn-color);
+        --p-togglebutton-checked-border-color: var(--link-color);
+
+        --p-togglebutton-hover-background: var(--client-type-bg);
+        --p-togglebutton-hover-color: var(--link-color);
+        --p-togglebutton-hover-border-color: var(--link-color);
+
+        .p-button {
+            flex: 1 1 0;
+            min-width: 0;
+            justify-content: center;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none !important;
+
+            // Handle borders for the group look
+            &:not(:last-child) {
+                border-right: none;
+            }
+
+            // Re-apply border radius to outer corners
+            &:first-child {
+                border-top-left-radius: var(--p-selectbutton-border-radius);
+                border-bottom-left-radius: var(--p-selectbutton-border-radius);
+            }
+
+            &:last-child {
+                border-top-right-radius: var(--p-selectbutton-border-radius);
+                border-bottom-right-radius: var(--p-selectbutton-border-radius);
+            }
+        }
+
+        .p-button-label {
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
     }
 
-    .api-revision-filter-button .p-selectbutton .p-button.p-highlight {
-        color: var(--primary-btn-color);
-        background-color: var(--link-color);
-    }
-    
     .emphasis-badge {
-        border-radius: 5px;
+        border-radius: 25px;
         padding: 0px 5px 2px 5px;
+        margin: 1px;
         font-size: smaller;
         font-weight: bold;
 
@@ -63,7 +187,7 @@
             color: var(--alert-warn-color);
             border: 1px solid var(--alert-warn-border-color);
         }
-        
+
         &.success {
             background-color: var(--alert-success-bg);
             color: var(--alert-success-color);
@@ -75,5 +199,9 @@
             color: var(--alert-secondary-color);
             border: 1px solid var(--alert-secondary-border-color);
         }
+    }
+
+    .revision-option-item {
+        gap: 1px;
     }
 }

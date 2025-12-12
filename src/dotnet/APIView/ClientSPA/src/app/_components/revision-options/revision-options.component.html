@@ -1,4 +1,4 @@
-<div style="display: flex; justify-content: space-between;">
+<div class="revision-options-container">
     <span *ngIf="activeApiRevisionsMenu.length > 0" class="border-start ps-2">
         <p-dropdown
             [options]="activeApiRevisionsMenu"
@@ -12,21 +12,22 @@
             (onHide)="resetDropDownFilter(ACTIVE_API_REVISION_SELECT)"
             (onChange)="activeApiRevisionChange($event)"
             scrollHeight="400px"
+            styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
-                <div class="flex gap-1">
+                <div class="d-flex flex-column gap-1">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" aria-label="Active APIRevision Filter" placeholder="Filter"
                         [(ngModel)]="activeApiRevisionsSearchValue" (keyup)="activeApiRevisionSearchFunction($event)">
                     </div>
                     <p-selectButton
-                    class="api-revision-filter-button"
+                    styleClass="api-revision-filter-button"
                     [options]="filterOptions"
                     [(ngModel)]="activeApiRevisionsFilterValue"
-                    (onChange)="activeApiRevisionFilterFunction($event)"
-                    [style]="{'margin-top':'8px'}">
-                        <ng-template let-item pTemplate>
+                    (onChange)="activeApiRevisionFilterFunction($event)">
+                        <ng-template let-item pTemplate="item">
                             <span class="p-button-label">
                                 <i *ngIf="item.icon" [class]="item.icon"></i>
                                 {{ item.label }}
@@ -36,7 +37,7 @@
                 </div>
             </ng-template>
             <ng-template pTemplate="selectedItem">
-                <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveAPIRevision">
+                <div class="d-flex align-items-center selected-item-content" *ngIf="selectedActiveAPIRevision">
                     <i class="{{ selectedActiveAPIRevision.typeClass }}"></i>
                     <span *ngIf="selectedActiveAPIRevision.prNo"> {{ selectedActiveAPIRevision.prNo }}</span>
                     <span *ngIf="selectedActiveAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedActiveAPIRevision.packageVersion }}</span>
@@ -46,7 +47,7 @@
                 </div>
             </ng-template>
             <ng-template let-apiRevision pTemplate="item">
-                <div class="flex align-items-center gap-2">
+                <div class="d-flex flex-wrap align-items-center revision-option-item">
                     <i class="{{ apiRevision.typeClass }}"></i>
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
                     <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
@@ -67,8 +68,8 @@
         </p-dropdown>
     </span>
 
-    <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
-        <label class="small fw-semibold" for="diff-api-revision-select">Diff :</label>
+    <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-2">
+        <label class="small fw-semibold diff-label" for="diff-api-revision-select">Diff :</label>
         <p-dropdown
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
@@ -83,21 +84,22 @@
             [showClear]="true"
             (onClear)="diffApiRevisionClear($event)"
             placeholder="-"
+            styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             scrollHeight="400px">
             <ng-template pTemplate="filter" let-options="options">
-                <div class="flex gap-1">
+                <div class="d-flex flex-column gap-1">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" aria-label="Diff APIRevision Filter" placeholder="Filter"
                         [(ngModel)]="diffApiRevisionsSearchValue" (keyup)="diffApiRevisionSearchFunction($event)">
                     </div>
                     <p-selectButton
-                    class="api-revision-filter-button"
+                    styleClass="api-revision-filter-button"
                     [options]="filterOptions"
                     [(ngModel)]="diffApiRevisionsFilterValue"
-                    (onChange)="diffApiRevisionFilterFunction($event)"
-                    [style]="{'margin-top':'8px'}">
-                        <ng-template let-item pTemplate>
+                    (onChange)="diffApiRevisionFilterFunction($event)">
+                        <ng-template let-item pTemplate="item">
                             <span class="p-button-label">
                                 <i *ngIf="item.icon" [class]="item.icon"></i>
                                 {{ item.label }}
@@ -107,7 +109,7 @@
                 </div>
             </ng-template>
             <ng-template pTemplate="selectedItem">
-                <div class="flex align-items-center selected-item-content" *ngIf="selectedDiffAPIRevision">
+                <div class="d-flex align-items-center selected-item-content" *ngIf="selectedDiffAPIRevision">
                     <i class="{{ selectedDiffAPIRevision.typeClass }}"></i>
                     <span *ngIf="selectedDiffAPIRevision.prNo"> {{ selectedDiffAPIRevision.prNo }}</span>
                     <span *ngIf="selectedActiveAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedDiffAPIRevision.packageVersion }}</span>
@@ -117,7 +119,7 @@
                 </div>
             </ng-template>
             <ng-template let-apiRevision pTemplate="item">
-                <div class="flex align-items-center gap-2">
+                <div class="d-flex flex-wrap align-items-center revision-option-item">
                     <i class="{{ apiRevision.typeClass }}"></i>
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
                     <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
@@ -148,9 +150,11 @@
             (onHide)="resetDropDownFilter(ACTIVE_SAMPLES_REVISION_SELECT)"
             (onChange)="activeSamplesRevisionChange($event)"
             scrollHeight="400px"
+            styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
-                <div class="flex gap-1">
+                <div class="d-flex gap-1">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" aria-label="Active samplesRevisions Filter" placeholder="Filter"
@@ -159,7 +163,7 @@
                 </div>
             </ng-template>
             <ng-template pTemplate="selectedItem">
-                <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveSamplesRevision">
+                <div class="d-flex align-items-center selected-item-content" *ngIf="selectedActiveSamplesRevision">
                     <div class="small">
                         <span class="me-2" *ngIf="selectedActiveSamplesRevision.title">{{ selectedActiveSamplesRevision.title }}</span>
                         <span class="emphasis-badge secondary me-2" *ngIf="selectedActiveSamplesRevision.createdBy">{{ selectedActiveSamplesRevision.createdBy }}</span>
@@ -167,7 +171,7 @@
                 </div>
             </ng-template>
             <ng-template let-apiRevision pTemplate="item">
-                <div class="flex align-items-center selected-item-content">
+                <div class="d-flex align-items-center selected-item-content revision-option-item">
                     <span *ngIf="apiRevision.title">{{ apiRevision.title }}</span>
                     <div class="small">
                         <span class="emphasis-badge secondary me-2" *ngIf="apiRevision.createdOn">created: {{ apiRevision.createdOn | timeago }}</span>
@@ -190,9 +194,11 @@
             (onHide)="resetDropDownFilter(CROSS_LANGUAGE_API_REVISION_SELECT)"
             (onChange)="activeCrossLanguageRevisionChange($event)"
             scrollHeight="400px"
+            styleClass="compact-dropdown"
+            panelStyleClass="compact-dropdown-panel"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
-                <div class="flex gap-1">
+                <div class="d-flex gap-1">
                     <div class="input-group" (click)="$event.stopPropagation()">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" aria-label="Cross Language APIRevision Filter" placeholder="Filter"
@@ -201,7 +207,7 @@
                 </div>
             </ng-template>
             <ng-template pTemplate="selectedItem">
-                <div class="flex align-items-center selected-item-content" *ngIf="selectedCrossLanguageAPIRevision">
+                <div class="d-flex align-items-center selected-item-content" *ngIf="selectedCrossLanguageAPIRevision">
                     <i class="{{ selectedCrossLanguageAPIRevision.typeClass }}"></i>
                     <span *ngIf="selectedCrossLanguageAPIRevision.prNo"> {{ selectedCrossLanguageAPIRevision.prNo }}</span>
                     <span *ngIf="selectedCrossLanguageAPIRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ selectedCrossLanguageAPIRevision.packageVersion }}</span>
@@ -213,7 +219,7 @@
                 </div>
             </ng-template>
             <ng-template let-apiRevision pTemplate="item">
-                <div class="flex align-items-center gap-2">
+                <div class="d-flex flex-wrap align-items-center revision-option-item">
                     <i class="{{ apiRevision.typeClass }}"></i>
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
                     <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>

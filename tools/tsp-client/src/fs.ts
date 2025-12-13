@@ -63,7 +63,7 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
     }
     throw new Error("Could not find tsp-location.yaml");
   } catch (e) {
-    Logger.error(`Error reading tsp-location.yaml: ${e}`);
+    Logger.error(`Ran into a problem reading tsp-location.yaml: ${e}`);
     throw e;
   }
 }

@@ -30,6 +30,7 @@ import {
   updateExistingTspLocation,
   parseTspClientRepoConfig,
   TspClientConfig,
+  defaultTspClientConfigPath,
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -169,6 +170,7 @@ async function getEmitter(
 ): Promise<{ emitter: string; path?: string }> {
   // If an emitter-package.json override value is explicitly provided, use it to get the emitter
   if (emitterPackageJsonOverride) {
+    Logger.debug(`Using the provided override file to find emitter: ${emitterPackageJsonOverride}`);
     return {
       emitter: await getEmitterFromRepoConfig(emitterPackageJsonOverride),
       path: relative(repoRoot, emitterPackageJsonOverride),
@@ -185,19 +187,24 @@ async function getEmitter(
     for (const supportedEmitter of globalConfigFile.supportedEmitters) {
       if (configEmitterNames.has(supportedEmitter.name)) {
         Logger.debug(
-          `Using emitter: ${supportedEmitter.name} from tspconfig.yaml. There will be no further processing for other supported emitters.`,
+          `Found matching emitter configured in ${defaultTspClientConfigPath}: ${supportedEmitter.name}. There will be no further processing for other supported emitters.`,
         );
         return { emitter: supportedEmitter.name, path: supportedEmitter.path };
       }
     }
+    Logger.debug(
+      `No matching emitter found in ${defaultTspClientConfigPath}, will default to ${defaultRelativeEmitterPackageJsonPath} to find emitter.`,
+    );
   }
 
   try {
     // If no emitter is found in the global config, fall back to the default emitter-package.json
+    const emitterPackageJsonPath = joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath);
+    Logger.debug(
+      `Using default ${defaultRelativeEmitterPackageJsonPath} to find emitter: ${emitterPackageJsonPath}`,
+    );
     return {
-      emitter: await getEmitterFromRepoConfig(
-        joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
-      ),
+      emitter: await getEmitterFromRepoConfig(emitterPackageJsonPath),
     };
   } catch (err) {
     throw new Error(

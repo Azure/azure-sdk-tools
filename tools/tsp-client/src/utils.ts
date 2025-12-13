@@ -9,7 +9,7 @@ import { normalizeDirectory, readTspLocation } from "./fs.js";
 import { parse as parseYaml } from "yaml";
 import { getRepoRoot } from "./git.js";
 
-const defaultTspClientConfigPath = joinPaths("eng", "tsp-client-config.yaml");
+export const defaultTspClientConfigPath = joinPaths("eng", "tsp-client-config.yaml");
 
 /**
  * Reads and returns the package.json content.

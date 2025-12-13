@@ -208,7 +208,7 @@ async function getEmitter(
     };
   } catch (err) {
     throw new Error(
-      `Failed to get emitter from default emitter-package.json. Please make there is a valid emitter-package.json file in the eng/ directory of the repository or a tsp-client-config.yaml file listing supported emitters. Error: ${err}`,
+      `Failed to find a supported emitter. Please make sure the repo is properly configured with a valid emitter-package.json file in the eng/ directory of the repository or a tsp-client-config.yaml file listing supported emitters. Error: ${err}`,
     );
   }
 }

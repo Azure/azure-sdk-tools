@@ -208,7 +208,7 @@ async function getEmitter(
     };
   } catch (err) {
     throw new Error(
-      `Failed to get emitter from default emitter-package.json. Please add a valid emitter-package.json file in the eng/ directory of the repository. Error: ${err}`,
+      `Failed to get emitter from default emitter-package.json. Please make there is a valid emitter-package.json file in the eng/ directory of the repository or a tsp-client-config.yaml file listing supported emitters. Error: ${err}`,
     );
   }
 }

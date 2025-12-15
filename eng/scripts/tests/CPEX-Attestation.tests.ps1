@@ -551,7 +551,7 @@ Describe 'Parse triages' {
         Should -Invoke -CommandName AddAttestationEntry -Times ($expectation.kpiIds.Count + 1)
         Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
                 $targetId -eq $expectation.productID -and
-                $actionItemId -eq "ba2c80d5-b8be-465f-8948-283229082fd1"
+                $actionItemId -eq "ba2c80d5-b8be-465f-8948-283229082fd1" -and
                 $status -eq 1 -and
                 $targetType -eq $expectation.productType -and
                 $url -eq $expectation.url -and 

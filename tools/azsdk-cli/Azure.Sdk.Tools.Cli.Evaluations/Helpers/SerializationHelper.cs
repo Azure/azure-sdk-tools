@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             // For some reason above method will give all the messages user role. It still does the heavy lifting so I'll keep it and just change the roles. 
             var fixedChatMessages = ChatMessageHelper.EnsureChatMessageRole(translatedChatMessages, chatMessages);
 
-            await RebuildAttachmentsInChatMessagesAsync(fixedChatMessages);
+            RebuildAttachmentsInChatMessagesAsync(fixedChatMessages);
 
             return ChatMessageHelper.ParseChatMessagesIntoScenarioData(fixedChatMessages);
         }
@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         /// with files from the configured instruction directories.
         /// </summary>
         /// <param name="chatMessages">The chat messages to process</param>
-        public static async Task RebuildAttachmentsInChatMessagesAsync(List<ChatMessage> chatMessages)
+        public static void RebuildAttachmentsInChatMessagesAsync(List<ChatMessage> chatMessages)
         {
             // Only process the first message (typically the system message)
             if (chatMessages.Count == 0)
@@ -53,14 +53,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var firstMessage = chatMessages[0];
             if (firstMessage.Contents[0] is TextContent textContent && !string.IsNullOrEmpty(textContent.Text))
             {
-                textContent.Text = await RebuildAttachmentsInTextAsync(textContent.Text);
+                textContent.Text = RebuildAttachmentsInTextAsync(textContent.Text);
             }
         }
 
         /// <summary>
         /// Rebuilds attachment sections in text content by loading files from instruction directories.
         /// </summary>
-        private static async Task<string> RebuildAttachmentsInTextAsync(string text)
+        private static string RebuildAttachmentsInTextAsync(string text)
         {
             // Find the last <instructions>...</instructions> block
             var instructionsPattern = @"<instructions>.*?</instructions>";
@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 var lastMatch = matches[matches.Count - 1];
 
                 // Get the new instructions content
-                var newInstructions = await LLMSystemInstructions.BuildLLMInstructions();
+                var newInstructions = LLMSystemInstructions.BuildLLMInstructions();
 
                 // Replace the last instructions block
                 var newInstructionsBlock = $"<instructions>{newInstructions}</instructions>";

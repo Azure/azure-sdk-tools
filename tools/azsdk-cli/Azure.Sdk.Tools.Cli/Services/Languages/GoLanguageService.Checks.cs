@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
@@ -9,16 +10,32 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// </summary>
 public partial class GoLanguageService : LanguageService
 {
-
     #region Go specific functions, not part of the LanguageRepoService
 
     public async Task<bool> CheckDependencies(CancellationToken ct)
     {
         try
         {
-            var compilerExists = (await processHelper.Run(new ProcessOptions(compilerName, ["version"], compilerNameWindows, ["version"]), ct)).ExitCode == 0;
-            var linterExists = (await processHelper.Run(new ProcessOptions(linterName, ["--version"], linterNameWindows, ["--version"]), ct)).ExitCode == 0;
-            var formatterExists = (await processHelper.Run(new ProcessOptions("echo", ["package main", "|", formatterName]), ct)).ExitCode == 0;
+            var compilerExists = (await processHelper.Run(new ProcessOptions(goUnix, ["version"], goWin, ["version"]), ct)).ExitCode == 0;
+            var linterExists = (await processHelper.Run(new ProcessOptions(golangciLintUnix, ["--version"], golangciLintWin, ["--version"]), ct)).ExitCode == 0;
+
+            var tempFilePath = Path.GetTempFileName();
+            bool formatterExists = false;
+
+            try
+            {
+                await File.WriteAllTextAsync(tempFilePath, "package main", ct);
+                var gofmtOptions = new ProcessOptions(
+                    unixCommand: gofmtUnix, unixArgs: [tempFilePath],
+                    windowsCommand: gofmtWin, windowsArgs: [tempFilePath]
+                );
+                formatterExists = (await processHelper.Run(gofmtOptions, ct)).ExitCode == 0;
+            }
+            finally
+            {
+                File.Delete(tempFilePath);
+            }
+
             return compilerExists && linterExists && formatterExists;
         }
         catch (Exception ex)
@@ -32,7 +49,7 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(compilerName, ["mod", "init", moduleName], compilerNameWindows, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
+            var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
             return new PackageCheckResponse(result);
         }
         catch (Exception ex)
@@ -48,15 +65,26 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
+            var goGetArgs = new List<string>(["get", "-u", "all"]);
+            var goModVersion = await GetGoModVersionAsync(Path.Join(packagePath, "go.mod"), ct);
+
+            if (goModVersion.Major == 1 && goModVersion.Minor == 23)
+            {
+                // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
+                // that are still set at 1.23. See this issue for some context:
+                //   https://github.com/Azure/azure-sdk-for-go/issues/25407
+                goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);
+            }
+
             // Update all dependencies to the latest first
-            var updateResult = await processHelper.Run(new ProcessOptions(compilerName, ["get", "-u", "all"], compilerNameWindows, ["get", "-u", "all"], workingDirectory: packagePath), ct);
+            var updateResult = await processHelper.Run(new ProcessOptions(goUnix, [.. goGetArgs], goWin, [.. goGetArgs], workingDirectory: packagePath), ct);
             if (updateResult.ExitCode != 0)
             {
                 return new PackageCheckResponse(updateResult);
             }
 
             // Now tidy, to cleanup any deps that aren't needed
-            var tidyResult = await processHelper.Run(new ProcessOptions(compilerName, ["mod", "tidy"], compilerNameWindows, ["mod", "tidy"], workingDirectory: packagePath), ct);
+            var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: packagePath), ct);
             return new PackageCheckResponse(tidyResult);
         }
         catch (Exception ex)
@@ -70,8 +98,8 @@ public partial class GoLanguageService : LanguageService
         try
         {
             var result = await processHelper.Run(new ProcessOptions(
-                formatterName, ["-w", "."],
-                formatterNameWindows, ["-w", "."],
+                gofmtUnix, ["-w", "."],
+                gofmtWin, ["-w", "."],
                 workingDirectory: packagePath
             ), ct);
             return new PackageCheckResponse(result);
@@ -87,7 +115,7 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(linterName, ["run"], linterNameWindows, ["run"], workingDirectory: packagePath), ct);
+            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, ["run"], golangciLintWin, ["run"], workingDirectory: packagePath), ct);
             return new PackageCheckResponse(result);
         }
         catch (Exception ex)
@@ -101,7 +129,7 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(compilerName, ["build"], compilerNameWindows, ["build"], workingDirectory: packagePath), ct);
+            var result = await processHelper.Run(new ProcessOptions(goUnix, ["build"], goWin, ["build"], workingDirectory: packagePath), ct);
             return new PackageCheckResponse(result);
         }
         catch (Exception ex)
@@ -137,18 +165,46 @@ public partial class GoLanguageService : LanguageService
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return result.ExitCode == 0;
+            var result = await processHelper.Run(new ProcessOptions(goUnix, ["test", "-v", "-timeout", "1h", "./..."], goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            return new TestRunResponse(result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunAllTests));
-            return false;
+            return new TestRunResponse(1, null, $"Running Go tests failed: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Gets the version specified by the go version directive in the go.mod file.
+    /// </summary>
+    /// <param name="goModPath">Path to a go.mod file</param>
+    /// <param name="ct"></param>
+    public static async Task<Version> GetGoModVersionAsync(string goModPath, CancellationToken ct = default)
+    {
+        var text = await File.ReadAllTextAsync(goModPath, ct);
+
+        var match = GoModVersionRegex().Match(text);
+
+        if (!match.Success)
+        {
+            throw new Exception($"{goModPath} doesn't contain a go version directive");
+        }
+
+        return Version.Parse(match.Groups[1].Value);
+    }
+
+    /// <summary>
+    /// Captures the go version directive in a go.mod file
+    /// </summary>
+    /// <remarks>
+    /// Ex: "go 1.24.0", "go 1.23", etc...
+    /// </remarks>
+    [GeneratedRegex(@"^go (1\.\d+(?:\.\d+|$))", RegexOptions.Multiline)]
+    private static partial Regex GoModVersionRegex();
 }
 

@@ -17,6 +17,7 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
@@ -73,8 +74,10 @@ public class PipelineAnalysisTool(
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
+    private const string AnalyzePipelineToolName = "azsdk_analyze_pipeline";
+
     protected override Command GetCommand() =>
-        new("analyze", "Analyze a pipeline run")
+        new McpCommand("analyze", "Analyze a pipeline run", AnalyzePipelineToolName)
         {
             pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt, queryOpt,
         };
@@ -435,7 +438,7 @@ public class PipelineAnalysisTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_analyze_pipeline"), Description("Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user")]
+    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user")]
     public async Task<AnalyzePipelineResponse> AnalyzePipeline(int buildId, string query, bool analyzeWithAgent, CancellationToken ct)
     {
         try

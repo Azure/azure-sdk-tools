@@ -6,6 +6,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
@@ -23,6 +24,7 @@ public class LogAnalysisTool(
 
     // Command names
     private const string AnalyzeCommandName = "analyze";
+    private const string AnalyzeLogFileToolName = "azsdk_analyze_log_file";
 
     // Options
     private readonly Option<string> filePathOpt = new("--file", "-f")
@@ -52,7 +54,7 @@ public class LogAnalysisTool(
 
     private const int DEFAULT_CONTEXT_LINES = 20;
 
-    protected override Command GetCommand() => new(AnalyzeCommandName, "Analyze a log file for errors and issues")
+    protected override Command GetCommand() => new McpCommand(AnalyzeCommandName, "Analyze a log file for errors and issues", AnalyzeLogFileToolName)
     {
         filePathOpt, keywordsOpt, fullSearchOpt, contextLinesOpt,
     };
@@ -78,7 +80,7 @@ public class LogAnalysisTool(
         }
     }
 
-    [McpServerTool(Name = "azsdk_analyze_log_file"), Description("Analyzes a log file for errors and issues")]
+    [McpServerTool(Name = AnalyzeLogFileToolName), Description("Analyzes a log file for errors and issues")]
     public async Task<LogAnalysisResponse> AnalyzeLogFile(string filePath, bool fullSearch = false, List<string> customKeywords = null, int contextLines = -1)
     {
         try

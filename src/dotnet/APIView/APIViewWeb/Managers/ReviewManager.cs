@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -18,6 +19,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
@@ -46,6 +48,7 @@ namespace APIViewWeb.Managers
         private readonly IPollingJobQueueManager _pollingJobQueueManager;
         private readonly INotificationManager _notificationManager;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
+        private readonly ICopilotAuthenticationService _copilotAuthService;
         private readonly ILogger<ReviewManager> _logger;
 
         public ReviewManager (
@@ -64,7 +67,8 @@ namespace APIViewWeb.Managers
             IHttpClientFactory httpClientFactory, 
             IPollingJobQueueManager pollingJobQueueManager,
             INotificationManager notificationManager,
-            ICosmosPullRequestsRepository pullRequestsRepository, 
+            ICosmosPullRequestsRepository pullRequestsRepository,
+            ICopilotAuthenticationService copilotAuthService,
             ILogger<ReviewManager> logger)
         {
             _authorizationService = authorizationService;
@@ -83,6 +87,7 @@ namespace APIViewWeb.Managers
             _pollingJobQueueManager = pollingJobQueueManager;
             _notificationManager = notificationManager;
             _pullRequestsRepository = pullRequestsRepository;
+            _copilotAuthService = copilotAuthService;
             _logger = logger;
         }
 
@@ -107,6 +112,16 @@ namespace APIViewWeb.Managers
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
             return _reviewsRepository.GetReviewAsync(language, packageName, isClosed);
+        }
+
+        /// <summary>
+        /// Get distinct package names for a language
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<string>> GetPackageNamesAsync(string language)
+        {
+            return _reviewsRepository.GetPackageNamesAsync(language);
         }
 
         /// <summary>
@@ -532,6 +547,7 @@ namespace APIViewWeb.Managers
             var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
             var startUrl = $"{copilotEndpoint}/api-review/start";
             var client = _httpClientFactory.CreateClient();
+            
             var payload = new Dictionary<string, object>
             {
                 { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language, activeCodeFile.CodeFile.LanguageVariant) },
@@ -547,13 +563,21 @@ namespace APIViewWeb.Managers
                 var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(diffApiRevision, false);
                 var diffCodeLines = diffCodeFile.CodeFile.GetApiLines(skipDocs: true);
                 payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+
             }
 
             try {
                 _logger.LogInformation("Starting Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}, Language: {Language}", 
                     reviewId, activeApiRevision.Id, activeApiRevision.Language);
                 
-                var response = await client.PostAsync(startUrl, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+
+                var request = new HttpRequestMessage(HttpMethod.Post, startUrl)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+                
+                var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);

@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
@@ -24,7 +25,8 @@ public sealed partial class JavaLanguageService : LanguageService
         IMavenHelper mavenHelper,
         IMicroagentHostService microagentHost,
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         this.microagentHost = microagentHost;
         base.processHelper = processHelper;
@@ -32,6 +34,7 @@ public sealed partial class JavaLanguageService : LanguageService
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
@@ -49,6 +52,8 @@ public sealed partial class JavaLanguageService : LanguageService
             logger.LogWarning("Could not determine package version for Java package at {fullPath}", fullPath);
         }
         
+        var sdkType = DetermineSdkType(packageName);
+        
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -58,7 +63,8 @@ public sealed partial class JavaLanguageService : LanguageService
             PackageVersion = packageVersion,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = SdkLanguage.Java,
-            SamplesDirectory = BuildSamplesDirectory(fullPath)
+            SamplesDirectory = BuildSamplesDirectory(fullPath),
+            SdkType = sdkType
         };
         
         logger.LogDebug("Resolved Java package: {packageName} v{packageVersion} at {relativePath}", 
@@ -179,6 +185,34 @@ public sealed partial class JavaLanguageService : LanguageService
     }
 
     /// <summary>
+    /// Determines the SDK type based on the artifact ID following the logic from the PowerShell script Language-Settings.ps1.
+    /// </summary>
+    /// <param name="artifactId">The artifact ID (package name) to analyze</param>
+    /// <returns>The determined SDK type</returns>
+    private static SdkType DetermineSdkType(string? artifactId)
+    {
+        if (string.IsNullOrWhiteSpace(artifactId))
+        {
+            return SdkType.Unknown;
+        }
+
+        // Following the logic from azure-sdk-for-java/eng/scripts/Language-Settings.ps1
+        if (artifactId.Contains("mgmt", StringComparison.OrdinalIgnoreCase) || 
+            artifactId.Contains("resourcemanager", StringComparison.OrdinalIgnoreCase))
+        {
+            return SdkType.Management;
+        }
+        
+        if (artifactId.Contains("spring", StringComparison.OrdinalIgnoreCase))
+        {
+            return SdkType.Spring;
+        }
+        
+        // Default case - client SDKs
+        return SdkType.Dataplane;
+    }
+
+    /// <summary>
     /// Matches Java module declarations like "module com.azure.storage.blob {"
     /// </summary>
     [GeneratedRegex(@"^\s*module\s+([^\{\s]+)\s*\{", RegexOptions.Compiled | RegexOptions.Multiline)]
@@ -186,7 +220,7 @@ public sealed partial class JavaLanguageService : LanguageService
 
     private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5);
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         logger.LogInformation("Starting test execution for Java project at: {PackagePath}", packagePath);
 
@@ -197,12 +231,12 @@ public sealed partial class JavaLanguageService : LanguageService
         if (result.ExitCode == 0)
         {
             logger.LogInformation("Test execution completed successfully");
-            return true;
+            return new TestRunResponse(result);
         }
         else
         {
             logger.LogWarning("Test execution failed with exit code {ExitCode}", result.ExitCode);
-            return false;
+            return new TestRunResponse(result);
         }
 
     }

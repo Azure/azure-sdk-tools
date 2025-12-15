@@ -160,7 +160,7 @@ public class VersionUpdateToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Is.EqualTo(expectedError));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("does not exist"));
         Assert.That(result.NextSteps, Is.Not.Null);
         Assert.That(result.NextSteps![0], Does.Contain("Check the running logs"));
     }

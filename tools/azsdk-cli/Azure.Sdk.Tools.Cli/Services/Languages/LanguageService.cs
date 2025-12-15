@@ -3,6 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
@@ -12,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected IGitHelper gitHelper;
         protected ILogger<LanguageService> logger;
         protected ICommonValidationHelpers commonValidationHelpers;
+        protected IFileHelper fileHelper;
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
@@ -31,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the dependency analysis</returns>
         public virtual Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
         /// <summary>
         /// Validates the README for the specific package.
@@ -42,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the README validation</returns>
         public virtual Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -54,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the spelling check</returns>
         public virtual Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -66,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the snippet update operation</returns>
         public virtual Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -78,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the code linting operation</returns>
         public virtual Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -90,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the code formatting operation</returns>  
         public virtual Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// Validate samples for the specific package.
@@ -100,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the sample validation</returns>
         public virtual Task<PackageCheckResponse> ValidateSamples(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -111,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the AOT compatibility check</returns>
         public virtual Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -122,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the generated code check</returns>
         public virtual Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
         /// <summary>
         /// Validates the changelog for the specific package.
@@ -133,7 +135,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Result of the changelog validation</returns>
         public virtual Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new PackageCheckResponse(1, "", "This is not an applicable operation for this language."));
+            return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -141,10 +143,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// </summary>
         /// <param name="packagePath">The path to the package containing the tests.</param>
         /// <param name="ct">A cancellation token.</param>
-        /// <returns>True if all tests pass; otherwise, false.</returns>
-        public virtual Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+        /// <returns>A <see cref="TestRunResponse"/> containing process output details.</returns>
+        public virtual Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
         {
-            return Task.FromResult(true);
+            return Task.FromResult(new TestRunResponse(0, "This is not an applicable operation for this language."));
         }
 
         /// <summary>
@@ -273,6 +275,25 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     "Run validation checks"
                     ],
                 result: "noop"));
+        }
+
+        /// <summary>
+        /// Get sample language context for sample generation.
+        /// </summary>
+        public virtual SampleLanguageContext SampleLanguageContext
+        {
+            get
+            {
+                return Language switch
+                {
+                    SdkLanguage.DotNet => new DotNetSampleLanguageContext(fileHelper),
+                    SdkLanguage.Java => new JavaSampleLanguageContext(fileHelper),
+                    SdkLanguage.JavaScript => new TypeScriptSampleLanguageContext(fileHelper),
+                    SdkLanguage.Python => new PythonSampleLanguageContext(fileHelper),
+                    SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
+                    _ => throw new NotImplementedException($"Sample language context is not implemented for language: {Language}"),
+                };
+            }
         }
     }
 }

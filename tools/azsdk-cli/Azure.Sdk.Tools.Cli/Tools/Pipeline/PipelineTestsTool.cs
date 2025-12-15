@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
@@ -24,10 +25,11 @@ public class PipelineTestsTool(
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
+    private const string GetPipelineLlmArtifactsToolName = "azsdk_get_pipeline_llm_artifacts";
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
 
     protected override Command GetCommand() =>
-        new("test-results", "Get test results for a pipeline run") { buildIdArg };
+        new McpCommand("test-results", "Get test results for a pipeline run", GetPipelineLlmArtifactsToolName) { buildIdArg };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
@@ -54,7 +56,7 @@ public class PipelineTestsTool(
         buildClient = connection.GetClient<BuildHttpClient>();
     }
 
-    [McpServerTool(Name = "azsdk_get_pipeline_llm_artifacts"), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
+    [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
     public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId)
     {
         string project = "";

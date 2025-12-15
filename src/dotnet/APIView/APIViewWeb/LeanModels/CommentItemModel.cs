@@ -1,20 +1,17 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.LeanModels
 {
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentType
     {
         APIRevision = 0,
         SampleRevision
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentSeverity
     {
         Question = 0,
@@ -23,8 +20,7 @@ namespace APIViewWeb.LeanModels
         MustFix = 3
     }
 
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CommentSource
     {
         UserGenerated,
@@ -32,10 +28,18 @@ namespace APIViewWeb.LeanModels
         Diagnostic
     }
 
+    public class CommentFeedback
+    {
+        public List<string> Reasons { get; set; } = new List<string>();
+        public string Comment { get; set; } = string.Empty;
+        public bool IsDelete { get; set; }
+        public string SubmittedBy { get; set; }
+        public DateTime SubmittedOn { get; set; }
+    }
+
     public class CommentItemModel
     {
-        [System.Text.Json.Serialization.JsonPropertyName("id")]
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
         public string APIRevisionId { get; set; }
@@ -63,6 +67,7 @@ namespace APIViewWeb.LeanModels
         public List<string> MemoryIds { get; set; } = [];
         public float ConfidenceScore { get; set; }
 
+        public List<CommentFeedback> Feedback { get; set; } = [];
         public static CommentSeverity ParseSeverity(string value)
         {
             return value?.ToUpperInvariant() switch

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
@@ -15,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 public class CleanupTool : MCPTool
 {
     public const string CleanupAgentsCommandName = "agents";
+    private const string CleanupAiAgentsToolName = "azsdk_cleanup_ai_agents";
     private readonly IAzureAgentServiceFactory agentServiceFactory;
     private readonly ILogger<CleanupTool> logger;
 
@@ -38,7 +40,7 @@ public class CleanupTool : MCPTool
         ];
     }
 
-    protected override Command GetCommand() => new(CleanupAgentsCommandName, "Cleanup ai agents") { projectEndpointOpt };
+    protected override Command GetCommand() => new McpCommand(CleanupAgentsCommandName, "Cleanup ai agents", CleanupAiAgentsToolName) { projectEndpointOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
@@ -51,7 +53,7 @@ public class CleanupTool : MCPTool
         return await CleanupAgents(projectEndpoint, ct);
     }
 
-    [McpServerTool(Name = "azsdk_cleanup_ai_agents"), Description("Clean up AI agents in an AI foundry project. Leave projectEndpoint empty if not specified")]
+    [McpServerTool(Name = CleanupAiAgentsToolName), Description("Clean up AI agents in an AI foundry project. Leave projectEndpoint empty if not specified")]
     public async Task<DefaultCommandResponse> CleanupAgents(string? projectEndpoint = null, CancellationToken ct = default)
     {
         try

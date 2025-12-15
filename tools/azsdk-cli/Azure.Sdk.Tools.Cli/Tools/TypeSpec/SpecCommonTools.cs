@@ -8,6 +8,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -36,9 +37,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         // Commands
         private const string getModifiedProjectsCommandName = "modified-projects";
+        private const string GetModifiedTypeSpecProjectsToolName = "azsdk_get_modified_typespec_projects";
 
         protected override Command GetCommand() =>
-            new(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects") { repoRootOpt, targetBranchOpt };
+            new McpCommand(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects", GetModifiedTypeSpecProjectsToolName) { repoRootOpt, targetBranchOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -59,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        [McpServerTool(Name = "azsdk_get_modified_typespec_projects"), Description("This tool returns list of TypeSpec projects modified in current branch")]
+        [McpServerTool(Name = GetModifiedTypeSpecProjectsToolName), Description("This tool returns list of TypeSpec projects modified in current branch")]
         public ObjectCommandResponse GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
         {
             try

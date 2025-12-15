@@ -264,7 +264,16 @@ class TestApiViewAzure:
             old_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
             new_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
 
-            assert old_tokens == new_tokens, "Generated token file does not match the provided token file."
+            # Pretty-print both JSON objects for easier diff comparison on failure
+            old_json_str = json.dumps(old_tokens, indent=2, sort_keys=True)
+            new_json_str = json.dumps(new_tokens, indent=2, sort_keys=True)
+            
+            assert old_json_str == new_json_str, (
+                f"Generated token file does not match the provided token file.\n"
+                f"Expected file: {old_file}\n"
+                f"Generated file: {new_file}\n"
+                f"Differences will be shown in the assertion diff below."
+            )
 
     def _write_tokens(self, stub_gen):
         apiview = stub_gen.generate_tokens()

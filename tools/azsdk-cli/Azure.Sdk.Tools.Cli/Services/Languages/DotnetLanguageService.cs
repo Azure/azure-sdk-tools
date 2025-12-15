@@ -24,13 +24,15 @@ public sealed partial class DotnetLanguageService: LanguageService
         IPowershellHelper powershellHelper,
         IGitHelper gitHelper,        
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         this.powershellHelper = powershellHelper;
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
@@ -207,7 +209,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         }
     }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         var result = await processHelper.Run(new ProcessOptions(
                 command: "dotnet",
@@ -217,7 +219,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             ct
         );
 
-        return result.ExitCode == 0;
+        return new TestRunResponse(result);
     }
 
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)

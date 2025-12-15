@@ -6,6 +6,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
@@ -21,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         // Commands
         private const string checkPublicRepoCommandName = "check-public-repo";
+        private const string CheckProjectInPublicRepoToolName = "azsdk_typespec_check_project_in_public_repo";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
@@ -30,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(checkPublicRepoCommandName, "Check if TypeSpec project is in public spec repo") { typeSpecProjectPathOpt };
+            new McpCommand(checkPublicRepoCommandName, "Check if TypeSpec project is in public spec repo", CheckProjectInPublicRepoToolName) { typeSpecProjectPathOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -54,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         /// Checks if a TypeSpec project is in a public spec repository.
         /// </summary>
         /// <param name="typeSpecProjectPath">The path to the TypeSpec project.</param>
-        [McpServerTool(Name = "azsdk_typespec_check_project_in_public_repo"), Description("Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param.")]
+        [McpServerTool(Name = CheckProjectInPublicRepoToolName), Description("Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param.")]
         public DefaultCommandResponse CheckTypeSpecProjectInPublicRepo(string typeSpecProjectPath)
         {
             try

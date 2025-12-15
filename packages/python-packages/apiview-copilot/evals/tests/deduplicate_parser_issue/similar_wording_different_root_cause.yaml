@@ -3,9 +3,9 @@ language: python
 package_name: azure.compute
 code: "Optional[Union[Dict[str, invalid_type]]]"
 issue_context: |
-  [Python APIView] Parser crashes on unquoted type names
+  [Python APIView] Parser crashes on undefined type names
   
-  The parser fails when encountering unquoted identifiers in complex type annotations.
+  The parser fails when encountering undefined identifiers in complex type annotations.
   
   **Bad code:**
   ```python
@@ -24,7 +24,7 @@ existing_issues: |
       "number": 234,
       "url": "https://github.com/tjprescott/azure-sdk-tools/issues/234",
       "title": "[Python APIView] Import resolution fails for undefined types",
-      "body": "Parser cannot resolve type names that are not properly imported, causing APIView to show incorrect type information.",
+      "body": "Parser cannot resolve types imported from other modules. When using 'from typing import CustomType' where CustomType doesn't exist in typing module, APIView shows incorrect information."
       "created_at": "2025-10-10T12:00:00Z"
     }
   ]

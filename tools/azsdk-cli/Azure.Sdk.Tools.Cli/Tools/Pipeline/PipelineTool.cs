@@ -5,6 +5,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
@@ -17,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
 
         // Commands
         private const string getPipelineStatusCommandName = "status";
+        private const string GetPipelineStatusToolName = "azsdk_get_pipeline_status";
 
         // Options
         private readonly Option<int> pipelineRunIdOpt = new("--pipeline-id")
@@ -26,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
         };
 
         protected override Command GetCommand() =>
-            new(getPipelineStatusCommandName, "Get pipeline run status") { pipelineRunIdOpt };
+            new McpCommand(getPipelineStatusCommandName, "Get pipeline run status", GetPipelineStatusToolName) { pipelineRunIdOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -46,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
         /// </summary>
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <returns></returns>
-        [McpServerTool(Name = "azsdk_get_pipeline_status"), Description("Get pipeline status for a given pipeline build ID")]
+        [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given pipeline build ID")]
         public async Task<DefaultCommandResponse> GetPipelineRunStatus(int buildId)
         {
             try

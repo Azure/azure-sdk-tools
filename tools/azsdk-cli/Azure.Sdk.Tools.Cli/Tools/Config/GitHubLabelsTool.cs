@@ -9,9 +9,10 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 
-namespace Azure.Sdk.Tools.Cli.Tools.GitHub
+namespace Azure.Sdk.Tools.Cli.Tools.Config
 {
     [McpServerToolType, Description("Tools for working with GitHub labels for services")]
     public class GitHubLabelsTool(
@@ -27,6 +28,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         //command names
         private const string checkServiceLabelCommandName = "check";
         private const string createServiceLabelCommandName = "create";
+
+        // MCP Tool Names
+        private const string CheckServiceLabelToolName = "azsdk_check_service_label";
+        private const string CreateServiceLabelToolName = "azsdk_create_service_label";
 
         private readonly Argument<string> serviceLabelArg = new("service")
         {
@@ -63,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
         }
 
-        [McpServerTool(Name = "azsdk_check_service_label"), Description("Checks if a service label exists and returns its details")]
+        [McpServerTool(Name = CheckServiceLabelToolName), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -103,7 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             return result;
         }
 
-        [McpServerTool(Name = "azsdk_create_service_label"), Description("Creates a pull request to add a new service label")]
+        [McpServerTool(Name = CreateServiceLabelToolName), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try

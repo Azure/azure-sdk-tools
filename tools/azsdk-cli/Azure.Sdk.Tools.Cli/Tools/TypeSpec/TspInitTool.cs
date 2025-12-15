@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -27,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         // This is the template registry URL used by the TypeSpec compiler's init command.
         private const string AzureTemplatesUrl = "https://aka.ms/typespec/azure-init";
+
+        private const string InitTypeSpecProjectToolName = "azsdk_typespec_init_project";
 
         // command
         private const string InitCommandName = "init";
@@ -78,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 });
             }
 
-            return new(InitCommandName, "Initialize a new TypeSpec project")
+            return new McpCommand(InitCommandName, "Initialize a new TypeSpec project", InitTypeSpecProjectToolName)
             {
                 outputDirectoryArg, templateArg, serviceNamespaceArg,
             };
@@ -101,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        [McpServerTool(Name = "azsdk_init_typespec_project"), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
+        [McpServerTool(Name = InitTypeSpecProjectToolName), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
         public async Task<TspToolResponse> InitTypeSpecProjectAsync(
             [Description("Pass in the output directory where the project should be created. Must be an existing empty directory.")]
             string outputDirectory,

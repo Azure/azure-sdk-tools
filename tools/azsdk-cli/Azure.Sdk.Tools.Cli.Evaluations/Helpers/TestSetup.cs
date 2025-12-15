@@ -10,18 +10,18 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
     public static class TestSetup
     {
         // Configuration from environment variables - required
-        private static readonly string AzureOpenAIEndpoint =
-            Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
-            ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT environment variable is required");
+        private static readonly string? AzureOpenAIEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
 
-        private static readonly string AzureOpenAIModelDeploymentName =
-            Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
-            ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
+        private static readonly string? AzureOpenAIModelDeploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME");
         
+        private static readonly bool UseMCPRelease = bool.TryParse(Environment.GetEnvironmentVariable("USE_MCP_RELEASE"), out var result) && result;
         private static readonly string relativePathToCli = @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli";
-        public static string? GetRepoName => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_REPOSITORY_NAME");
-        public static string? GetRepoOwner => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_REPOSITORY_OWNER");
-        public static string? GetCopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH");
+        private static readonly string localMcpPowershellScriptPath = @"../../../../../eng/common/mcp/azure-sdk-mcp.ps1";
+        
+        // Repository configuration for conditional testing
+        public static string? RepositoryName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
+        
+        public static string? CopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH_MCP_EVALS");
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
         public static TokenCredential GetCredential(ILogger? logger = null)
@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         public static AzureOpenAIClient GetAzureOpenAIClient(ILogger? logger = null)
         {
             var credential = GetCredential(logger);
-            return new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint), credential);
+            return new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint!), credential);
         }
 
         public static IChatClient GetChatClient(ILogger? logger = null)
@@ -53,6 +53,20 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
             try
             {
+                if (UseMCPRelease)
+                {
+                    // Use MCP release
+                    return await McpClientFactory.CreateAsync(
+                        new StdioClientTransport(
+                            new()
+                            {
+                                Command = "pwsh",
+                                Arguments = [localMcpPowershellScriptPath, "-Run"]
+                            }
+                        )
+                    );
+                }
+                
                 // Run your local MCP server directly with dotnet run
                 var mcpClient = await McpClientFactory.CreateAsync(
                     new StdioClientTransport(
@@ -79,33 +93,54 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             }
         }
 
-        public static void ValidateCopilotEnvironmentConfiguration()
+        public static void ValidateEnvironmentConfiguration()
         {
-            var repoName = GetRepoName;
-            var repoOwner = GetRepoOwner;
-            var copilotInstructionsPath = GetCopilotInstructionsPath;
-            bool hasRepoName = !string.IsNullOrEmpty(repoName);
-            bool hasRepoOwner = !string.IsNullOrEmpty(repoOwner);
-            bool hasCopilotPath = !string.IsNullOrEmpty(copilotInstructionsPath);
-
-            // Check if both repo name and owner are provided
-            bool hasRepoInfo = hasRepoName && hasRepoOwner;
-
-            // Validate that we have at least one valid configuration
-            if (!hasRepoInfo && !hasCopilotPath)
+            // Validate all required environment variables
+            if (string.IsNullOrEmpty(AzureOpenAIEndpoint))
             {
                 throw new InvalidOperationException(
-                    "Invalid environment configuration: Either both COPILOT_INSTRUCTIONS_REPOSITORY_NAME and " +
-                    "COPILOT_INSTRUCTIONS_REPOSITORY_OWNER must be provided, OR COPILOT_INSTRUCTIONS_PATH must be provided.");
+                    "Invalid environment configuration: AZURE_OPENAI_ENDPOINT must be provided.");
             }
-
-            // If repo info is partially provided, it's also an error
-            if (hasRepoOwner ^ hasRepoName)
+                
+            if (string.IsNullOrEmpty(AzureOpenAIModelDeploymentName))
             {
                 throw new InvalidOperationException(
-                    "Invalid repository configuration: Both COPILOT_INSTRUCTIONS_REPOSITORY_NAME and " +
-                    "COPILOT_INSTRUCTIONS_REPOSITORY_OWNER must be provided together.");
+                    "Invalid environment configuration: AZURE_OPENAI_MODEL_DEPLOYMENT_NAME must be provided.");
             }
+                
+            if (string.IsNullOrEmpty(RepositoryName))
+            {
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: REPOSITORY_NAME must be provided.");
+            }
+                
+            if (string.IsNullOrEmpty(CopilotInstructionsPath))
+            {
+                throw new InvalidOperationException(
+                    "Invalid environment configuration: COPILOT_INSTRUCTIONS_PATH_MCP_EVALS must be provided.");
+            }
+                
+            if(!Path.Exists(CopilotInstructionsPath))
+            {
+                throw new FileNotFoundException($"Could not find copilot instructions file at path: {CopilotInstructionsPath}");
+            }
+        }
+
+        private static bool IsRunningInPipeline()
+        {
+            return Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true" ||
+                   Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID") != null;
+        }
+
+        public static bool ShouldRunEvals()
+        {
+            // If not in pipeline and no copilot instructions path then skip tests
+            if (string.IsNullOrEmpty(CopilotInstructionsPath) && !IsRunningInPipeline())
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

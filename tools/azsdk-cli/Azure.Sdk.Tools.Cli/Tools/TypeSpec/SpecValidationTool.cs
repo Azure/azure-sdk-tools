@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -26,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         // Commands
         private const string TypespecValidationCommandName = "validate";
+        private const string RunTypeSpecValidationToolName = "azsdk_run_typespec_validation";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
@@ -35,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(TypespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+            new McpCommand(TypespecValidationCommandName, "Run typespec validation", RunTypeSpecValidationToolName) { typeSpecProjectPathOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
@@ -60,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         /// Validates the TypeSpec API specification.
         /// </summary>
         /// <param name="typeSpecProjectRootPath">The root path of the TypeSpec project.</param>
-        [McpServerTool(Name = "azsdk_run_typespec_validation"), Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
+        [McpServerTool(Name = RunTypeSpecValidationToolName), Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
         public TypeSpecValidationResponse RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
             try

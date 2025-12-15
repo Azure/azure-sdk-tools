@@ -16,20 +16,23 @@ public partial class GoLanguageService : LanguageService
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers)
+        ICommonValidationHelpers commonValidationHelpers,
+        IFileHelper fileHelper)
     {
         base.processHelper = processHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
+        base.fileHelper = fileHelper;
     }
 
-    private readonly string compilerName = "go";
-    private readonly string compilerNameWindows = "go.exe";
-    private readonly string formatterName = "goimports";
-    private readonly string formatterNameWindows = "gofmt.exe";
-    private readonly string linterName = "golangci-lint";
-    private readonly string linterNameWindows = "golangci-lint.exe";
+    private readonly string goUnix = "go";
+    private readonly string goWin = "go.exe";
+    private readonly string gofmtUnix = "gofmt";
+    private readonly string gofmtWin = "gofmt.exe";
+    private readonly string golangciLintUnix = "golangci-lint";
+    private readonly string golangciLintWin = "golangci-lint.exe";
+
     public override SdkLanguage Language { get; } = SdkLanguage.Go;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
@@ -112,7 +115,6 @@ public partial class GoLanguageService : LanguageService
             };
         }
     }
-
 
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {

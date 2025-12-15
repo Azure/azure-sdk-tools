@@ -14,6 +14,7 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Repositories;
 using APIViewWeb.Models;
 using APIViewWeb.Hubs;
+using APIViewWeb.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -50,6 +51,7 @@ namespace APIViewUnitTests
         private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
         private readonly Mock<IPollingJobQueueManager> _mockPollingJobQueueManager;
+        private readonly Mock<ICopilotAuthenticationService> _mockCopilotAuth;
         private readonly TelemetryClient _telemetryClient;
         private readonly ReviewsController _controller;
         private readonly ReviewManager _reviewManager;
@@ -74,6 +76,8 @@ namespace APIViewUnitTests
             _mockCodeFileManager = new Mock<ICodeFileManager>();
             _mockHttpClientFactory = new Mock<IHttpClientFactory>();
             _mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
+            _mockCopilotAuth = new Mock<ICopilotAuthenticationService>();
+
             _telemetryClient = new TelemetryClient(new TelemetryConfiguration());
 
             // Setup UserProfileCache
@@ -105,6 +109,7 @@ namespace APIViewUnitTests
                 _mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
+                _mockCopilotAuth.Object,
                 _mockManagerLogger.Object);
 
             // Create controller that uses the real ReviewManager

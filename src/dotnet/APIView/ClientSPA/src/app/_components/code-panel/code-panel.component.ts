@@ -68,7 +68,7 @@ export class CodePanelComponent implements OnChanges{
 
   menuItemsLineActions: MenuItem[] = [];
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
+  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
     private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
 
@@ -388,7 +388,6 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
-    // Find the actual index in codePanelRowData
     let targetIndex = this.codePanelRowData.findIndex(row => {
       if (row.nodeIdHashed === updateData.nodeIdHashed && row.type === updateData.type) {
         if (updateData.type === CodePanelRowDatatype.CommentThread) {
@@ -399,18 +398,22 @@ export class CodePanelComponent implements OnChanges{
       return false;
     });
 
-    // Update the actual array reference
     if (targetIndex !== -1) {
       this.codePanelRowData[targetIndex] = updateData;
     }
       
     await this.codePanelRowSource?.adapter?.relax();
-    await this.codePanelRowSource?.adapter?.update({
-      predicate: ({ $index, data, element}) => {
+    await this.codePanelRowSource?.adapter?.fix({
+      updater: ({ data, element }) => {
         if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
-          return [updateData];
+          if (updateData.type === CodePanelRowDatatype.CommentThread) {
+            if (data.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup) {
+              Object.assign(data, updateData);
+            }
+          } else {
+            Object.assign(data, updateData);
+          }
         }
-        return true;
       }
     });
   }
@@ -585,6 +588,9 @@ export class CodePanelComponent implements OnChanges{
         if (commentUpdates.comment) {
           this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
         }
+        break;
+      case CommentThreadUpdateAction.CommentTextUpdate:
+        this.updateCommentTextInCommentThread(commentUpdates);
         break;
       case CommentThreadUpdateAction.CommentResolved:
         this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe();
@@ -1042,8 +1048,20 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private updateCommentTextInCommentThread(data: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText!;
-    this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    const commentThread = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const comment = commentThread.comments.find(c => c.id === data.commentId);
+    
+    if (!comment) {
+      return;
+    }
+    
+    if (data.commentText) {
+      comment.commentText = data.commentText;
+    }
+    if (data.severity !== undefined && data.severity !== null) {
+      comment.severity = data.severity;
+    }
+    this.updateItemInScroller(commentThread);
     this.updateHasActiveConversations();
   }
 

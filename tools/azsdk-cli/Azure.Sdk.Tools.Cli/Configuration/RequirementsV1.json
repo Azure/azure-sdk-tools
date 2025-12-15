@@ -9,7 +9,7 @@
             {
                 "requirement": "tsp-client >= 0.24.0",
                 "check": ["tsp-client", "--version"],
-                "instructions": ["cd eng/common/tsp-client", "`npm ci`"]
+                "instructions": ["cd eng/common/tsp-client", "npm ci"]
             },
             {
                 "requirement": "tsp >= 1.0.0",
@@ -27,9 +27,15 @@
                 "instructions": ["Download and install GitHub CLI"]
             },
             {
+                "requirement": "longpaths in git config should be enabled for Windows",
+                "check": ["pwsh", "-Command", "if ($IsWindows -and (git config --get core.longpaths) -ne 'true') { exit 1 }"],
+                "instructions": ["Check the Registry Editor to ensure that LongPathsEnabled exists and is set to 1 in `HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\FileSystem`.", "git config --global core.longpaths true"]
+            },
+            {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"]
+                "instructions": ["Install Python from https://www.python.org/downloads/"],
+                "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],
         "java": [
@@ -62,27 +68,12 @@
             {
                 "requirement": "go",
                 "check": ["go", "version"],
-                "instructions": ["Download and install the Go version specified in globals.yml", "Ensure your GOPATH and GOROOT environment variables are set correctly", "Add GOROOT/bin to your PATH environment variable"]
+                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/"]
             },
             {
-                "requirement": "go-junit-report",
-                "check": ["go-junit-report", "--version"],
-                "instructions": ["go install github.com/jstemmer/go-junit-report/v2@v2.1.0"]
-            },
-            {
-                "requirement": "gocov",
-                "check": ["gocov", "--version"],
-                "instructions": ["go install github.com/axw/gocov/gocov@v1.2.1"]
-            },
-            {
-                "requirement": "gocov-xml",
-                "check": ["gocov-xml", "--version"],
-                "instructions": ["go install github.com/AlekSi/gocov-xml@v1.1.0"]
-            },
-            {
-                "requirement": "gocov-html",
-                "check": ["gocov-html", "--version"],
-                "instructions": ["go install github.com/matm/gocov-html/cmd/gocov-html@v1.4.0"]
+                "requirement": "goimports",
+                "check": ["pwsh", "-Command", "Get-Command", "goimports"],
+                "instructions": ["go install golang.org/x/tools/cmd/goimports@latest"]
             },
             {
                 "requirement": "golangci-lint",
@@ -104,22 +95,23 @@
             {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],
-                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with `azpysdk --help`"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"],
+                "reason": "`azpysdk` is used for validating Python SDKs."
             },
             {
                 "requirement": "sdk_generator",
                 "check": ["sdk_generator", "--help"],
-                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with `sdk_generator --help`"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with sdk_generator --help"]
             },
             {
                 "requirement": "ghtools",
                 "check": ["python", "-m", "pip", "show", "GitPython"],
-                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with `pip show GitPython`"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with pip show GitPython"]
             },
             {
                 "requirement": "pytest >= 8.3.5",
                 "check": ["pytest", "--version"],
-                "instructions": ["Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with `pytest --version`"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with pytest --version"]
             }
         ]
     }

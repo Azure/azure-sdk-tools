@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 {
@@ -19,7 +20,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         ILogger<PullRequestTools> logger
     ) : MCPNoCommandTool
     {
-        [McpServerTool(Name = "azsdk_get_github_user_details"), Description("Connect to GitHub using personal access token.")]
+        // MCP Tool Names
+        private const string GetGitHubUserDetailsToolName = "azsdk_get_github_user_details";
+        private const string GetPullRequestLinkToolName = "azsdk_get_pull_request_link_for_current_branch";
+        private const string CreatePullRequestToolName = "azsdk_create_pull_request";
+        private const string GetPullRequestToolName = "azsdk_get_pull_request";
+
+        [McpServerTool(Name = GetGitHubUserDetailsToolName), Description("Connect to GitHub using personal access token.")]
         public async Task<DefaultCommandResponse> GetGitHubUserDetails()
         {
             try
@@ -37,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
         }
 
-        [McpServerTool(Name = "azsdk_get_pull_request_link_for_current_branch"), Description("Get pull request link for current branch in the repo. Provide absolute path to repository root as param. This tool call GetPullRequest to get pull request details.")]
+        [McpServerTool(Name = GetPullRequestLinkToolName), Description("Get pull request link for current branch in the repo. Provide absolute path to repository root as param. This tool call GetPullRequest to get pull request details.")]
         public async Task<DefaultCommandResponse> GetPullRequestForCurrentBranch(string repoPath)
         {
             try
@@ -82,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
         }
 
-        [McpServerTool(Name = "azsdk_create_pull_request"), Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
+        [McpServerTool(Name = CreatePullRequestToolName), Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
         public async Task<DefaultCommandResponse> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main", bool draft = true)
         {
             try
@@ -144,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         }
 
 
-        [McpServerTool(Name = "azsdk_get_pull_request"), Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
+        [McpServerTool(Name = GetPullRequestToolName), Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
         public async Task<DefaultCommandResponse> GetPullRequest(int pullRequestNumber, string repoPath)
         {
             try

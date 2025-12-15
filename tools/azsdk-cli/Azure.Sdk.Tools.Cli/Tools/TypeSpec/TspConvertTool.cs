@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -24,8 +25,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-        // commands
+        // Commands
         private const string ConvertCommandName = "convert";
+        private const string ConvertSwaggerToTypeSpecToolName = "azsdk_convert_swagger_to_typespec";
 
         // command options
         private readonly Option<string> outputDirectoryArg = new("--output-directory")
@@ -53,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(ConvertCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project")
+            new McpCommand(ConvertCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project", ConvertSwaggerToTypeSpecToolName)
             {
                 swaggerReadmeArg, outputDirectoryArg, isArmOption, fullyCompatibleOption,
             };
@@ -69,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
         [
-            McpServerTool(Name = "azsdk_convert_swagger_to_typespec"),
+            McpServerTool(Name = ConvertSwaggerToTypeSpecToolName),
             Description("Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project.")
         ]
         public async Task<TspToolResponse> ConvertSwaggerAsync(

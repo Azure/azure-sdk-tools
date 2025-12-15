@@ -10,18 +10,28 @@ namespace ContentValidation.Test
     [Parallelizable(ParallelScope.All)]
     public class TestPageAnnotation
     {
-        public static List<string> TestLinks { get; set; }
-
         public static ConcurrentQueue<TResult> TestMissingTypeAnnotationResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
         public static IBrowser browser;
+
+        public static IEnumerable<string> TypeAnnotationTestLinks()
+        {
+            return LoadLinks("missingtypeannotation");
+        }
+
+        private static IEnumerable<string> LoadLinks(string suffix)
+        {
+            return JsonSerializer.Deserialize<List<string>>(
+                File.ReadAllText($"../../../../../tools/content-validation/ContentValidation.Test/appsettings-{suffix}.json")
+            ) ?? new List<string>();
+        }
+
         static TestPageAnnotation()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
             // Create a shared browser instance for all tests
             browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
-            TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
         }
 
         [OneTimeTearDown]
@@ -37,8 +47,7 @@ namespace ContentValidation.Test
         }
 
         [Test]
-        [Category("PythonTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(TypeAnnotationTestLinks))]
         public async Task TestMissingTypeAnnotation(string testLink)
         {
             IValidation Validation = new TypeAnnotationValidation(browser);

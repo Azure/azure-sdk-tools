@@ -16,6 +16,9 @@ parameters:
 - name: runTestCase
   type: string
   default: ""
+- name: suffix
+  type: string
+  default: ""
 
 steps:
 - task: UseDotNet@2
@@ -58,6 +61,7 @@ steps:
     Branch: ${{ parameters.branch }}
     Language: ${{ parameters.language }}
     PackageName: ${{ parameters.packageName }}
+    AppsettingsSuffix: ${{ parameters.suffix }}
   inputs:
     command: 'run'
     workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/DataSource'
@@ -80,15 +84,6 @@ steps:
     arguments: '-e BROWSER=chromium --filter FullyQualifiedName~${{ parameters.runTestCase }}'
     testRunTitle: 'Content Validation Testing Start'
   continueOnError: true
-
-# - task: DotNetCoreCLI@2
-#   displayName: Run test case
-#   inputs:
-#     command: 'test'
-#     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
-#     arguments: '-e BROWSER=chromium --filter Category=PythonTest'
-#     testRunTitle: 'Content Validation Testing Start'
-#   continueOnError: true
 
 - task: DownloadPipelineArtifact@2
   displayName: Download The Last Artifact issues-summary

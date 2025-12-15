@@ -125,6 +125,7 @@ stages:
     - script: |
         rules=""
         runTestCase=""
+        appsettingsSuffix="${{ parameters.selectedRule }}"
         
         case "${{ parameters.selectedRule }}" in
           "MissingTypeAnnotation")
@@ -164,6 +165,9 @@ stages:
 
         echo "Selected test case: $runTestCase"
         echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
+
+        echo "Configured appsettings suffix: $appsettingsSuffix"
+        echo "##vso[task.setvariable variable=AppsettingsSuffix]$appsettingsSuffix"
       name: setRules
 
     - template: ../common/content-validation-for-python.yml
@@ -171,6 +175,7 @@ stages:
         packageName: $(PackageName)
         rules: $(SelectedRules)
         runTestCase: $(RunTestCase)
+        suffix: $(AppsettingsSuffix)
 
   - job: content_validation_matrix_not_all
     displayName: RunTest_Not_All
@@ -190,6 +195,7 @@ stages:
     - script: |
         rules=""
         runTestCase=""
+        appsettingsSuffix="${{ parameters.selectedRule }}"
         
         case "${{ parameters.selectedRule }}" in
           "MissingTypeAnnotation")
@@ -229,6 +235,9 @@ stages:
 
         echo "Selected test case: $runTestCase"
         echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
+
+        echo "Configured appsettings suffix: $appsettingsSuffix"
+        echo "##vso[task.setvariable variable=AppsettingsSuffix]$appsettingsSuffix"
       name: setRules
 
     - template: ../common/content-validation-for-python.yml
@@ -236,6 +245,7 @@ stages:
         packageName: $(PackageName)
         rules: $(SelectedRules)
         runTestCase: $(RunTestCase)
+        suffix: $(AppsettingsSuffix)
 
 
 # - stage: TotalIssuesSummary

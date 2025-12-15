@@ -10,9 +10,6 @@ namespace ContentValidation.Test
     [Parallelizable(ParallelScope.All)]
     public class TestPageContent
     {
-        public static List<string> TestLinks { get; set; }
-        public static List<string> DuplicateTestLink { get; set; }
-
         public static ConcurrentQueue<TResult> TestTableMissingContentResults = new ConcurrentQueue<TResult>();
 
         public static ConcurrentQueue<TResult> TestGarbledTextResults = new ConcurrentQueue<TResult>();
@@ -28,18 +25,51 @@ namespace ContentValidation.Test
         public static IPlaywright playwright;
         public static IBrowser browser;
 
+        public static IEnumerable<string> MissingContentTestLinks()
+        {
+            return LoadLinks("tablemissingcontent");
+        }
+
+        public static IEnumerable<string> GarbledTextTestLinks()
+        {
+            return LoadLinks("garbledtext");
+        }
+
+        public static IEnumerable<string> InconsistentTextFormatTestLinks()
+        {
+            return LoadLinks("inconsistenttextformat");
+        }
+
+        public static IEnumerable<string> ErrorDisplayTestLinks()
+        {
+            return LoadLinks("errordisplay");
+        }
+
+        public static IEnumerable<string> EmptyTagsTestLinks()
+        {
+            return LoadLinks("emptytags");
+        }
+
+        public static IEnumerable<string> DuplicateTestLink()
+        {
+            return new List<string>
+            {
+                "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python"
+            };
+        }
+
+        private static IEnumerable<string> LoadLinks(string suffix)
+        {
+            return JsonSerializer.Deserialize<List<string>>(
+                File.ReadAllText($"../../../../../tools/content-validation/ContentValidation.Test/appsettings-{suffix}.json")
+            ) ?? new List<string>();
+        }
+
         static TestPageContent()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
             // Create a shared browser instance for all tests
             browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
-            TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
-
-            //This list is for testing duplicate services.
-            DuplicateTestLink = new List<string>
-            {
-                "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python"
-            };
         }
 
 
@@ -67,11 +97,7 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("PythonTest")]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [Category("DotNetTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(MissingContentTestLinks))]
         public async Task TestTableMissingContent(string testLink)
         {
             IValidation Validation = new MissingContentValidation(browser);
@@ -97,10 +123,7 @@ namespace ContentValidation.Test
         }
 
         [Test]
-        [Category("PythonTest")]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(GarbledTextTestLinks))]
         public async Task TestGarbledText(string testLink)
         {
             IValidation Validation = new GarbledTextValidation(browser);
@@ -127,9 +150,7 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(InconsistentTextFormatTestLinks))]
         public async Task TestInconsistentTextFormat(string testLink)
         {
             IValidation Validation = new InconsistentTextFormatValidation(browser);
@@ -156,8 +177,7 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(ErrorDisplayTestLinks))]
         public async Task TestErrorDisplay(string testLink)
         {
             IValidation Validation = new ErrorDisplayValidation(browser);
@@ -184,8 +204,7 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("DotNetTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(EmptyTagsTestLinks))]
         public async Task TestEmptyTags(string testLink)
         {
             IValidation Validation = new EmptyTagsValidation(browser);
@@ -214,7 +233,6 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("SpecialTest")]
         [TestCaseSource(nameof(DuplicateTestLink))]
         public async Task TestDuplicateService(string testLink)
         {

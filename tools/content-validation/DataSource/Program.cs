@@ -30,6 +30,7 @@ namespace DataSource
             string? language = config["Language"];
             string branch = config["Branch"]!;
             string? package = config["PackageName"];
+            string? appsettingsSuffix = config["AppsettingsSuffix"];
             string? cookieName = config["CookieName"];
             string? cookieValue = config["CookieValue"];
 
@@ -113,7 +114,7 @@ namespace DataSource
                 if (existingUrls.Count > 0)
                 {
                     Console.WriteLine($"The package {package} with version {versionSuffix} already exists in the test link data.");
-                    ExportData(existingUrls);
+                    ExportData(existingUrls, appsettingsSuffix);
                     return;
                 }
             }
@@ -132,7 +133,7 @@ namespace DataSource
                 Console.WriteLine("Data saved successfully.");
             }
 
-            ExportData(allPages.Distinct().ToList());
+            ExportData(allPages.Distinct().ToList(), appsettingsSuffix);
         }
 
         static string GetPackagePageOverview(string? language, string? readme, string versionSuffix, string branch = "")
@@ -627,7 +628,7 @@ namespace DataSource
             return childLink;
         }
 
-        static void ExportData(List<string> pages)
+        static void ExportData(List<string> pages, string? appsettingsSuffix)
         {
             string jsonString = JsonConvert.SerializeObject(pages, new JsonSerializerSettings
             {
@@ -635,7 +636,7 @@ namespace DataSource
             });
 
             Console.WriteLine(jsonString);
-            File.WriteAllText("../ContentValidation.Test/appsettings.json", jsonString);
+            File.WriteAllText($"../ContentValidation.Test/appsettings-{appsettingsSuffix?.ToLower()}.json", jsonString);
         }
         
         static string ToPascalWithDots(string input)

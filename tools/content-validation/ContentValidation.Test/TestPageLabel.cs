@@ -10,8 +10,6 @@ namespace ContentValidation.Test
     [Parallelizable(ParallelScope.All)]
     public class TestPageLabel
     {
-        public static List<string> TestLinks { get; set; }
-
         public static ConcurrentQueue<TResult> TestExtraLabelResults = new ConcurrentQueue<TResult>();
 
         public static ConcurrentQueue<TResult> TestUnnecessarySymbolsResults = new ConcurrentQueue<TResult>();
@@ -21,12 +19,33 @@ namespace ContentValidation.Test
         public static IPlaywright playwright;
         public static IBrowser browser;
 
+        public static IEnumerable<string> ExtraLabelTestLinks()
+        {
+            return LoadLinks("extralabel");
+        }
+
+        public static IEnumerable<string> UnnecessarySymbolsTestLinks()
+        {
+            return LoadLinks("unnecessarysymbols");
+        }
+
+        public static IEnumerable<string> MissingGenericsTestLinks()
+        {
+            return LoadLinks("missinggenerics");
+        }
+
+        private static IEnumerable<string> LoadLinks(string suffix)
+        {
+            return JsonSerializer.Deserialize<List<string>>(
+                File.ReadAllText($"../../../../../tools/content-validation/ContentValidation.Test/appsettings-{suffix}.json")
+            ) ?? new List<string>();
+        }
+
         static TestPageLabel()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
             // Create a shared browser instance for all tests
             browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
-            TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
         }
 
         [OneTimeTearDown]
@@ -48,10 +67,7 @@ namespace ContentValidation.Test
         }
 
         [Test]
-        [Category("PythonTest")]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(ExtraLabelTestLinks))]
         public async Task TestExtraLabel(string testLink)
         {
             IValidation Validation = new ExtraLabelValidation(browser);
@@ -77,10 +93,7 @@ namespace ContentValidation.Test
         }
 
         [Test]
-        [Category("PythonTest")]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(UnnecessarySymbolsTestLinks))]
         public async Task TestUnnecessarySymbols(string testLink)
         {
             var res = new TResult();
@@ -108,8 +121,7 @@ namespace ContentValidation.Test
         }
 
         [Test]
-        [Category("JavaTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(MissingGenericsTestLinks))]
         public async Task TestMissingGenerics(string testLink)
         {
             var res = new TResult();

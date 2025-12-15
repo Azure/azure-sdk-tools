@@ -122,7 +122,7 @@ namespace APIViewWeb.Managers;
                     {
                         if (apiRev.IsApproved && await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
                         {
-                            await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(user: user, id: review.Id, apiRevision: apiRevision, notes: $"Approval Copied over from Revision with Id : {apiRev.Id}", approver: apiRev.Approvers.LastOrDefault());
+                            await _apiRevisionsManager.CopyApprovalFromAsync(targetRevision: apiRevision, sourceRevision: apiRev);
                             break;
                         }    
                     }

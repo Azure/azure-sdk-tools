@@ -290,6 +290,40 @@ namespace APIViewWeb.Managers
             return (updateReview, apiRevision);
         }
 
+        /// <summary>
+        /// Copy approval status from a source revision to a target revision.
+        /// This is used by automated processes to copy approval from a previously approved revision
+        /// when the API surface is identical. No authorization check is performed since this is
+        /// copying an existing human approval, not creating a new one.
+        /// </summary>
+        /// <param name="targetRevision">The revision to copy approval to</param>
+        /// <param name="sourceRevision">The approved revision to copy from</param>
+        public async Task CopyApprovalFromAsync(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
+        {
+            ArgumentNullException.ThrowIfNull(targetRevision);
+            ArgumentNullException.ThrowIfNull(sourceRevision);
+            
+            if (!sourceRevision.IsApproved)
+            {
+                throw new ArgumentException("Source revision must be approved to copy approval from", nameof(sourceRevision));
+            }
+
+            // Use the last approver from the source revision
+            string approver = sourceRevision.Approvers.LastOrDefault();
+            if (string.IsNullOrEmpty(approver))
+            {
+                throw new InvalidOperationException("Source revision has no approvers to copy from");
+            }
+
+            string notes = $"Approval copied from revision {sourceRevision.Id}";
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver, notes);
+            targetRevision.ChangeHistory = changeUpdate.ChangeHistory;
+            targetRevision.IsApproved = changeUpdate.ChangeStatus;
+            targetRevision.Approvers.Add(approver);
+            
+
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
+        }
 
         /// <summary>
         /// Create APIRevision from File or FilePAth

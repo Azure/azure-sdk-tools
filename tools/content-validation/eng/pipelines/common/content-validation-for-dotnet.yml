@@ -16,6 +16,9 @@ parameters:
 - name: runTestCase
   type: string
   default: ""
+- name: suffix
+  type: string
+  default: ""
 
 steps:
 - task: UseDotNet@2
@@ -58,6 +61,7 @@ steps:
     Branch: ${{ parameters.branch }}
     Language: ${{ parameters.language }}
     PackageName: ${{ parameters.packageName }}
+    AppsettingsSuffix: ${{ parameters.suffix }}
   inputs:
     command: 'run'
     workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/DataSource'
@@ -72,7 +76,7 @@ steps:
   continueOnError: false
 
 - task: DotNetCoreCLI@2
-  displayName: Run specific test method
+  displayName: Run test case
   condition: ne('${{ parameters.runTestCase }}', '')
   inputs:
     command: 'test'
@@ -80,64 +84,55 @@ steps:
     arguments: '-e BROWSER=chromium --filter FullyQualifiedName~${{ parameters.runTestCase }}'
     testRunTitle: 'Content Validation Testing Start'
   continueOnError: true
-  
-# - task: DotNetCoreCLI@2
-#   displayName: Run test case
-#   inputs:
-#     command: 'test'
-#     projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
-#     arguments: '-e BROWSER=chromium --filter Category=DotNetTest'
-#     testRunTitle: 'Content Validation Testing Start'
-#   continueOnError: true
 
-# - task: DownloadPipelineArtifact@2
-#   displayName: Download The Last Artifact issues-summary
-#   inputs:
-#     buildType: 'specific'
-#     project: '$(System.TeamProject)'
-#     pipeline: '$(System.DefinitionName)'
-#     buildVersionToDownload: 'latestFromBranch'
-#     allowPartiallySucceededBuilds: true
-#     allowFailedBuilds: false
-#     branchName: 'refs/heads/main'
-#     artifactName: 'issues-summary'
-#     downloadPath: '$(System.DefaultWorkingDirectory)/tools/content-validation/Artifacts'
-#   continueOnError: true
+- task: DownloadPipelineArtifact@2
+  displayName: Download The Last Artifact issues-summary
+  inputs:
+    buildType: 'specific'
+    project: '$(System.TeamProject)'
+    pipeline: '$(System.DefinitionName)'
+    buildVersionToDownload: 'latestFromBranch'
+    allowPartiallySucceededBuilds: true
+    allowFailedBuilds: false
+    branchName: 'refs/heads/main'
+    artifactName: 'issues-summary'
+    downloadPath: '$(System.DefaultWorkingDirectory)/tools/content-validation/Artifacts'
+  continueOnError: true
 
-# - task: DotNetCoreCLI@2
-#   displayName: Resolve data by report helper
-#   env:
-#     PackageName: ${{ parameters.packageName }}
-#     Language: ${{ parameters.language }}
-#     Rules: ${{ parameters.rules }}
-#     GitHubToken: $(azuresdk-github-pat)
-#     Owner: 'Azure'
-#     Repo: 'azure-sdk-for-net'
-#   inputs:
-#     command: 'run'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/ReportHelper'
+- task: DotNetCoreCLI@2
+  displayName: Resolve data by report helper
+  env:
+    PackageName: ${{ parameters.packageName }}
+    Language: ${{ parameters.language }}
+    Rules: ${{ parameters.rules }}
+    GitHubToken: $(azuresdk-github-pat)
+    Owner: 'Azure'
+    Repo: 'azure-sdk-for-net'
+  inputs:
+    command: 'run'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/ReportHelper'
 
-# - task: PublishPipelineArtifact@1
-#   displayName: "Upload pipeline test data"
-#   inputs:
-#     targetPath: $(System.DefaultWorkingDirectory)/tools/content-validation/Reports
-#     artifactName: ${{ parameters.packageName }}
-#     publishLocation: "pipeline"
+- task: PublishPipelineArtifact@1
+  displayName: "Upload pipeline test data"
+  inputs:
+    targetPath: $(System.DefaultWorkingDirectory)/tools/content-validation/Reports
+    artifactName: ${{ parameters.packageName }}
+    publishLocation: "pipeline"
 
 # If some rules failed, change the pipeline status to failed.
-# - task: Bash@3
-#   displayName: Check the status of test case
-#   inputs:
-#     targetType: 'inline'
-#     script: |
-#       #!/bin/bash
-#       FILE_PATH="$(System.DefaultWorkingDirectory)/tools/content-validation/eng/PipelineFailedStatus.txt"
+- task: Bash@3
+  displayName: Check the status of test case
+  inputs:
+    targetType: 'inline'
+    script: |
+      #!/bin/bash
+      FILE_PATH="$(System.DefaultWorkingDirectory)/tools/content-validation/eng/PipelineFailedStatus.txt"
 
-#       if [ ! -f "$FILE_PATH" ]; then
-#         echo "No exception was caught during the test case execution. Please check the test case running results."
-#         exit 0
-#       else
-#         echo "An exception was caught during the test case execution, interrupting subsequent execution. Printing contents and exiting abnormally."
-#         cat "$FILE_PATH"
-#         exit 1
-#       fi
+      if [ ! -f "$FILE_PATH" ]; then
+        echo "No exception was caught during the test case execution. Please check the test case running results."
+        exit 0
+      else
+        echo "An exception was caught during the test case execution, interrupting subsequent execution. Printing contents and exiting abnormally."
+        cat "$FILE_PATH"
+        exit 1
+      fi

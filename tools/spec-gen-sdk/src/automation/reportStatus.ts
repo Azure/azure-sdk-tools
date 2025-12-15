@@ -25,9 +25,10 @@ export const generateReport = (context: WorkflowContext) => {
   let markdownContent = '';
   let message = "";
   let isTypeSpec = false;
+  let hasPkgFromTypeSpec = false;
   let generateFromTypeSpec = false;
 
-  if (context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
+  if (!context.config.sdkName.includes('net') && context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
     generateFromTypeSpec = true;
   }
   for (const pkg of context.handledPackages) {
@@ -79,8 +80,14 @@ export const generateReport = (context: WorkflowContext) => {
       `hasSuppressions [${hasSuppressions}] ` +
       `hasAbsentSuppressions [${hasAbsentSuppressions}]`
     );
+    hasPkgFromTypeSpec = hasPkgFromTypeSpec || isTypeSpec;
   }
 
+  // only for .NET SDK, use the flag returned from the .NET automation to mark the whole generationFromTypeSpec
+  if (context.config.sdkName.includes('net') && hasPkgFromTypeSpec) {
+    generateFromTypeSpec = true;
+  }
+ 
   if (context.config.pullNumber && markdownContent) {
     try {
       // Write a markdown file to be rendered by the Azure DevOps pipeline

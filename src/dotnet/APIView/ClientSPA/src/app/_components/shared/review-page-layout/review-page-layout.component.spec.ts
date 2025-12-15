@@ -6,7 +6,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ReviewInfoComponent } from '../review-info/review-info.component';
 import { MenubarModule } from 'primeng/menubar';
 import { MenuModule } from 'primeng/menu';
-import { FooterComponent } from '../footer/footer.component';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -23,7 +22,6 @@ describe('ReviewPageLayoutComponent', () => {
         ReviewPageLayoutComponent,
         ReviewInfoComponent,
         NavBarComponent,
-        FooterComponent,
         LanguageNamesPipe
       ],
       imports: [

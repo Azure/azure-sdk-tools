@@ -28,7 +28,7 @@ namespace APIViewWeb
             return $"\"{originalName}\" \"{jsonFilePath}\"";
         }
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
         {
             var tempPath = Path.GetTempPath();
             var randomSegment = Guid.NewGuid().ToString("N");

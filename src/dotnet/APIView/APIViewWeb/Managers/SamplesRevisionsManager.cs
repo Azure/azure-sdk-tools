@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using APIViewWeb.Repositories;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
-using System;
 using System.Linq;
 
 namespace APIViewWeb.Managers

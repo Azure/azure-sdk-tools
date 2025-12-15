@@ -21,7 +21,7 @@ namespace Azure.ClientSdk.Analyzers
             // Count words in the type name
             if (namedTypeSymbol.DeclaredAccessibility == Accessibility.Public &&
                 namedTypeSymbol.ContainingType == null &&
-                (namedTypeSymbol.TypeKind == TypeKind.Class || namedTypeSymbol.TypeKind == TypeKind.Interface) &&
+                (namedTypeSymbol.TypeKind == TypeKind.Class || namedTypeSymbol.TypeKind == TypeKind.Interface || namedTypeSymbol.TypeKind == TypeKind.Struct) &&
                 CountWords(namedTypeSymbol.Name) <= 1)
             {
                 var typeName = namedTypeSymbol.Name;

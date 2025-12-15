@@ -1,0 +1,361 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.49.1",
+    "schemaVersion": 1011,
+    "oldestForwardsCompatibleVersion": 1001,
+    "tsdocConfig": {
+      "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json"
+    }
+  },
+  "kind": "Package",
+  "canonicalReference": "@azure/enum-test",
+  "name": "@azure/enum-test",
+  "preserveMemberOrder": false,
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@azure/enum-test!",
+      "name": "",
+      "preserveMemberOrder": false,
+      "members": [
+        {
+          "kind": "Enum",
+          "canonicalReference": "@azure/enum-test!SimpleEnum:enum",
+          "docComment": "/**\n * A simple enum with members.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum SimpleEnum "
+            }
+          ],
+          "fileUrlPath": "src/models.ts",
+          "releaseTag": "Public",
+          "name": "SimpleEnum",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!SimpleEnum.ValueOne:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ValueOne = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"value1\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "ValueOne"
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!SimpleEnum.ValueTwo:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ValueTwo = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"value2\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "ValueTwo"
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!SimpleEnum.ValueThree:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ValueThree = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"value3\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "ValueThree"
+            }
+          ]
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@azure/enum-test!NumericEnum:enum",
+          "docComment": "/**\n * An enum with numeric values.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum NumericEnum "
+            }
+          ],
+          "fileUrlPath": "src/models.ts",
+          "releaseTag": "Public",
+          "name": "NumericEnum",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!NumericEnum.Zero:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Zero = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "0"
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "Zero"
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!NumericEnum.One:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "One = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "1"
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "One"
+            }
+          ]
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@azure/enum-test!DeprecatedEnum:enum",
+          "docComment": "/**\n * @deprecated Use NewEnum instead.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum DeprecatedEnum "
+            }
+          ],
+          "fileUrlPath": "src/models.ts",
+          "releaseTag": "Public",
+          "name": "DeprecatedEnum",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!DeprecatedEnum.OldValue:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "OldValue = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"old\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "OldValue"
+            }
+          ]
+        },
+        {
+          "kind": "Namespace",
+          "canonicalReference": "@azure/enum-test!MyNamespace:namespace",
+          "docComment": "/**\n * A namespace containing nested enums.\n */\n",
+          "excerptTokens": [],
+          "fileUrlPath": "src/models.ts",
+          "releaseTag": "Public",
+          "name": "MyNamespace",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "Enum",
+              "canonicalReference": "@azure/enum-test!MyNamespace.NestedEnum:enum",
+              "docComment": "/**\n * An enum nested in a namespace.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "export declare enum NestedEnum "
+                }
+              ],
+              "fileUrlPath": "src/models.ts",
+              "releaseTag": "Public",
+              "name": "NestedEnum",
+              "preserveMemberOrder": false,
+              "members": [
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@azure/enum-test!MyNamespace.NestedEnum.First:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "First = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "\"first\""
+                    }
+                  ],
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "releaseTag": "Public",
+                  "name": "First"
+                },
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@azure/enum-test!MyNamespace.NestedEnum.Second:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "Second = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "\"second\""
+                    }
+                  ],
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "releaseTag": "Public",
+                  "name": "Second"
+                }
+              ]
+            },
+            {
+              "kind": "Namespace",
+              "canonicalReference": "@azure/enum-test!MyNamespace.Nested:namespace",
+              "docComment": "/**\n * A nested namespace.\n */\n",
+              "excerptTokens": [],
+              "fileUrlPath": "src/models.ts",
+              "releaseTag": "Public",
+              "name": "Nested",
+              "preserveMemberOrder": false,
+              "members": [
+                {
+                  "kind": "Enum",
+                  "canonicalReference": "@azure/enum-test!MyNamespace.Nested.DeeplyNestedEnum:enum",
+                  "docComment": "/**\n * An enum deeply nested in namespaces.\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "export declare enum DeeplyNestedEnum "
+                    }
+                  ],
+                  "fileUrlPath": "src/models.ts",
+                  "releaseTag": "Public",
+                  "name": "DeeplyNestedEnum",
+                  "preserveMemberOrder": false,
+                  "members": [
+                    {
+                      "kind": "EnumMember",
+                      "canonicalReference": "@azure/enum-test!MyNamespace.Nested.DeeplyNestedEnum.DeepValue:member",
+                      "docComment": "",
+                      "excerptTokens": [
+                        {
+                          "kind": "Content",
+                          "text": "DeepValue = "
+                        },
+                        {
+                          "kind": "Content",
+                          "text": "\"deep\""
+                        }
+                      ],
+                      "initializerTokenRange": {
+                        "startIndex": 1,
+                        "endIndex": 2
+                      },
+                      "releaseTag": "Public",
+                      "name": "DeepValue"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@azure/enum-test!BetaEnum:enum",
+          "docComment": "/**\n * A beta enum.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum BetaEnum "
+            }
+          ],
+          "fileUrlPath": "src/models.ts",
+          "releaseTag": "Beta",
+          "name": "BetaEnum",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@azure/enum-test!BetaEnum.BetaValue:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BetaValue = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"beta\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Beta",
+              "name": "BetaValue"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

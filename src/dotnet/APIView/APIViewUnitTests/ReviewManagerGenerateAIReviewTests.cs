@@ -13,6 +13,7 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
@@ -130,6 +131,7 @@ public class ReviewManagerGenerateAIReviewTests
             mocks.PollingJobQueueManager.Object,
             mocks.NotificationManager.Object,
             mocks.PullRequestsRepository.Object,
+            mocks.CopilotAuth.Object,
             mocks.Logger.Object
         );
         return (reviewManager, mocks);
@@ -172,8 +174,8 @@ public class ReviewManagerGenerateAIReviewTests
         public Mock<IPollingJobQueueManager> PollingJobQueueManager { get; } = new();
         public Mock<INotificationManager> NotificationManager { get; } = new();
         public Mock<ICosmosPullRequestsRepository> PullRequestsRepository { get; } = new();
+        public Mock<ICopilotAuthenticationService> CopilotAuth { get; } = new();
         public Mock<ILogger<ReviewManager>> Logger { get; } = new();
-
         public IEnumerable<LanguageService> LanguageServices { get; } = new List<LanguageService>();
     }
 }

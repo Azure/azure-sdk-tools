@@ -9,13 +9,13 @@ public class FailedTestRunListResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public List<FailedTestRunResponse> Items { get; set; } = [];
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = new StringBuilder();
         foreach (var run in Items)
         {
             output.AppendLine(run.ToString());
         }
-        return ToString(output);
+        return output.ToString();
     }
 }

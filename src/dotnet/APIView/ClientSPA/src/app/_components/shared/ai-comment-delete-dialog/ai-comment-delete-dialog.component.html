@@ -1,0 +1,59 @@
+<p-dialog 
+  [(visible)]="visible" 
+  [modal]="true" 
+  [closable]="true"
+  [resizable]="false"
+  [draggable]="false"
+  [dismissableMask]="false"
+  [header]="dialogTitle"
+  [style]="{width: '500px'}"
+  appendTo="body"
+  (onHide)="onHide()">
+  
+  <div class="dialog-content">
+    <div class="mb-3">
+      <p class="delete-description">
+        {{ dialogDescription }}
+      </p>
+    </div>
+
+    <!-- Deletion Reason -->
+    <div class="deletion-reason mb-3">
+      <label for="deletionReason" class="form-label fw-semibold">
+        Reason for deletion <span class="text-danger">*</span>
+      </label>
+      <textarea 
+        id="deletionReason"
+        class="form-control" 
+        [(ngModel)]="reason"
+        rows="4"
+        placeholder="Explain why this comment is egregiously wrong and must be deleted..."
+        [attr.aria-required]="true">
+      </textarea>
+    </div>
+
+    <!-- Validation Message -->
+    <div *ngIf="!canDelete && reason.length > 0" class="alert alert-warning py-2 px-3 mb-0" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      <small>Please provide a reason for deletion.</small>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2 w-100">
+      <button 
+        type="button" 
+        class="btn btn-outline-secondary" 
+        (click)="onCancel()">
+        Cancel
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-danger" 
+        [disabled]="!canDelete"
+        (click)="onDelete()">
+        OK
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

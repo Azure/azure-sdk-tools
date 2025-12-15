@@ -12,6 +12,7 @@
 .SumoSelect > .CaptionCont {
     border: 1px solid var(--border-color);
     background-color: var(--base-fg-color);
+    opacity: 1 !important;
 }
 
 
@@ -48,6 +49,12 @@
     color: var(--base-text-color);
     background-color: var(--base-fg-color);
 }
+
+/* Dropdown options must appear above other form elements when open */
+.SumoSelect.open > .optWrapper {
+    z-index: 1000;
+}
+
 
 .SumoSelect {
     width: 100%;

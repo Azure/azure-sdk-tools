@@ -1,22 +1,18 @@
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
-using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
 {
     public class UserProfileController : BaseApiController
     {
-        private readonly IUserProfileManager _userProfileManager;
         private readonly UserProfileCache _userProfileCache;
 
-        public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager, UserProfileCache userProfileCache)
+        public UserProfileController(UserProfileCache userProfileCache)
         {
-            _userProfileManager = userProfileManager;
             _userProfileCache = userProfileCache;
         }
 
@@ -24,7 +20,7 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<UserProfileModel>> GetUserPreference([FromQuery]string userName = null)
         {
             userName = userName ?? User.GetGitHubLogin();
-            try 
+            try
             {
                 var userProfile = await _userProfileCache.GetUserProfileAsync(userName, createIfNotExist: false);
                 return new LeanJsonResult(userProfile, StatusCodes.Status200OK);

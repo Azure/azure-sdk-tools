@@ -1,0 +1,19 @@
+{
+  "name": "test-emitter",
+  "version": "1.0.0",
+  "description": "Test emitter package with extra fields",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "author": "Test Author",
+  "license": "MIT",
+  "customField": "customValue",
+  "dependencies": {
+    "@azure-tools/typespec-ts": "0.38.4"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "~0.67.0"
+  }
+}

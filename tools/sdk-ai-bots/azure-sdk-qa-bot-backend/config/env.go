@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/joho/godotenv"
 )
@@ -29,9 +30,12 @@ type Config struct {
 	AOAI_CHAT_CONTEXT_MAX_TOKENS   int
 	AOAI_CHAT_COMPLETIONS_ENDPOINT string
 
-	AI_SEARCH_BASE_URL string
-	AI_SEARCH_INDEX    string
-	AI_SEARCH_AGENT    string
+	AI_SEARCH_BASE_URL           string
+	AI_SEARCH_INDEX              string
+	AI_SEARCH_AGENT              string
+	AI_SEARCH_KNOWLEDGE_BASE     string
+	AI_SEARCH_KNOWLEDGE_SOURCE   string
+	AI_SEARCH_KNOWLEDGE_BASE_API string
 
 	STORAGE_BASE_URL            string
 	STORAGE_KNOWLEDGE_CONTAINER string
@@ -43,6 +47,7 @@ type Config struct {
 
 var BotEnv *BotENV
 var AppConfig *Config
+var Credential azcore.TokenCredential
 
 // LoadEnvFile loads environment variables from .env if it exists
 func LoadEnvFile() {
@@ -89,20 +94,69 @@ func GetBotTenantID() string {
 	return BotEnv.BOT_TENANT_ID
 }
 
-func InitConfiguration() {
-	// Get the endpoint from environment variable
-	endpoint := os.Getenv("AZURE_APPCONFIG_ENDPOINT")
+func initCredential() error {
+	var creds []azcore.TokenCredential
 
-	// Create a credential using DefaultAzureCredential
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	// 1: Workload Identity
+	workloadCred, err := azidentity.NewWorkloadIdentityCredential(nil)
+	if err == nil {
+		creds = append(creds, workloadCred)
+		log.Printf("Workload Identity credential added")
+	} else {
+		log.Printf("Workload Identity credential not available: %v", err)
+	}
+
+	// 2: Managed Identity
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	if len(clientID) > 0 {
+		miOpts := &azidentity.ManagedIdentityCredentialOptions{
+			ID: azidentity.ClientID(clientID),
+		}
+		miCred, miCredErr := azidentity.NewManagedIdentityCredential(miOpts)
+		if miCredErr == nil {
+			creds = append(creds, miCred)
+			log.Printf("Managed Identity credential added")
+		} else {
+			log.Printf("Managed Identity credential not available: %v", miCredErr)
+		}
+	} else {
+		log.Printf("AZURE_CLIENT_ID not set; skipping Managed Identity credential")
+	}
+
+	// 3: Azure CLI
+	azCLI, err := azidentity.NewAzureCLICredential(nil)
+	if err == nil {
+		creds = append(creds, azCLI)
+		log.Printf("Azure CLI credential added")
+	} else {
+		log.Printf("Azure CLI credential not available: %v", err)
+	}
+
+	if len(creds) == 0 {
+		return fmt.Errorf("no valid credentials available")
+	}
+
+	chain, err := azidentity.NewChainedTokenCredential(creds, nil)
 	if err != nil {
+		return err
+	}
+	Credential = chain
+	return nil
+}
+
+func InitConfiguration() {
+	// Initialize the global credential first
+	if err := initCredential(); err != nil {
 		log.Fatalf("Failed to create credential: %v", err)
 	}
+
+	// Get the endpoint from environment variable
+	endpoint := os.Getenv("AZURE_APPCONFIG_ENDPOINT")
 
 	// Set up authentication options
 	authOptions := azureappconfiguration.AuthenticationOptions{
 		Endpoint:   endpoint,
-		Credential: credential,
+		Credential: Credential,
 	}
 
 	// Load configuration from Azure App Configuration

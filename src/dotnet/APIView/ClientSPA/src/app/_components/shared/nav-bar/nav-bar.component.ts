@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { combineLatest, take } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { NotificationsFilter, SiteNotification } from 'src/app/_models/notificationsModel';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { SelectItemModel } from 'src/app/_models/review';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
@@ -17,6 +20,7 @@ import { environment } from 'src/environments/environment';
 export class NavBarComponent implements OnInit {
   userProfile : UserProfile | undefined;
   logoutPageWebAppUrl : string  = this.configService.webAppUrl + "Account/Logout"
+  RequestReviewPageUrl: string = this.configService.webAppUrl + "Assemblies/RequestedReviews"
   assetsPath : string = environment.assetsPath;
   notificationsSidePanel : boolean | undefined = undefined;
   notifications: SiteNotification[] = [];
@@ -27,22 +31,40 @@ export class NavBarComponent implements OnInit {
   notificationsFilter : NotificationsFilter = NotificationsFilter.All;
   isLoggedIn: boolean = false;
   reviewId: string | null = null;
+  isApprover: boolean = false;
+
+  // Theme options
+  themes : SelectItemModel[] = [
+    { label: "Light", data: "light-theme" },
+    { label: "Dark", data: "dark-theme" },
+    { label: "Solarized", data: "dark-solarized-theme" }
+  ];
+  selectedTheme : SelectItemModel = { label: "Light", data: "light-theme" };
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService,
-    private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute
+    private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
-    this.authService.isLoggedIn().subscribe(isLoggedIn => {
-      this.isLoggedIn = isLoggedIn;
-    });
 
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
+    // Use combineLatest to wait for both isLoggedIn and userProfile before checking approver status
+    combineLatest([
+      this.authService.isLoggedIn(),
+      this.userProfileService.getUserProfile()
+    ]).subscribe(([isLoggedIn, userProfile]) => {
+      this.isLoggedIn = isLoggedIn;
+      this.userProfile = userProfile;
+      if (isLoggedIn && userProfile) {
+        this.checkApproverStatus();
+        // Initialize theme selection from user preferences
+        const currentTheme = this.themes.find(t => t.data === userProfile.preferences.theme);
+        if (currentTheme) {
+          this.selectedTheme = currentTheme;
+        }
       }
-    );
+    });
 
     this.notificationsService.notifications$.subscribe(notifications => {
       this.notifications = notifications;
@@ -69,5 +91,42 @@ export class NavBarComponent implements OnInit {
 
   clearAllNotification() {
     this.notificationsService.clearAll();
+  }
+
+  private checkApproverStatus() {
+    if (!this.userProfile?.userName || !this.isLoggedIn) {
+      this.isApprover = false;
+      return;
+    }
+
+    this.http.get<string>(`${this.configService.apiUrl}/Reviews/allowedApprovers`, { withCredentials: true }).subscribe({
+      next: (allowedApprovers) => {
+        if (allowedApprovers) {
+          const approversList = allowedApprovers.split(',').map(username => username.trim());
+          this.isApprover = approversList.includes(this.userProfile?.userName || '');
+        } else {
+          this.isApprover = false;
+        }
+      },
+      error: (error) => {
+        console.error('Failed to fetch allowed approvers:', error);
+        this.isApprover = false;
+      }
+    });
+  }
+
+  changeTheme(theme: SelectItemModel) {
+    this.selectedTheme = theme;
+    if (this.userProfile) {
+      this.userProfile.preferences.theme = theme.data;
+      this.userProfileService.updateUserProfile(this.userProfile).pipe(take(1)).subscribe({
+        next: () => {
+          window.location.reload();
+        },
+        error: (error: any) => {
+          console.error('Failed to update theme:', error);
+        }
+      });
+    }
   }
 }

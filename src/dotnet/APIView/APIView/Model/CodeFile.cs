@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using APIView;
-using APIView.Model.V2;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +9,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using APIView;
+using APIView.Model;
+using APIView.Model.V2;
 
 namespace ApiView
 {
@@ -41,7 +42,9 @@ namespace ApiView
         public string ServiceName { get; set; }
         public string PackageDisplayName { get; set; }
         public string PackageVersion { get; set; }
+        // Deprecated: Use CrossLanguageMetadata.CrossLanguagePackageId instead. Kept for backward compatibility with TypeSpec parsers.
         public string CrossLanguagePackageId { get; set; }
+        public CrossLanguageMetadata CrossLanguageMetadata { get; set; }
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
         // APIForest will be removed once server changes are added to dereference this property
         public List<CodeFileToken[]> LeafSections { get; set; }

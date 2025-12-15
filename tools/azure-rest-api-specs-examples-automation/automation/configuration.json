@@ -8,7 +8,7 @@
       "language": "java",
       "repository": "https://github.com/Azure/azure-sdk-for-java",
       "releaseTag": {
-        "regexMatch": "^(?!azure-resourcemanager.*_.+-hybrid)azure-resourcemanager.*_.+$",
+        "regexMatch": "^(com\\.azure\\.resourcemanager\\+)?(?!azure-resourcemanager.*_.+-hybrid)azure-resourcemanager.*_.+$",
         "packageRegexGroup": "(.*)_.*",
         "versionRegexGroup": ".*_(.*)"
       },

@@ -1,18 +1,18 @@
-<div class="row my-2">
+<div class="row my-1">
     <p-menubar>
         <ng-template pTemplate="start">
             <img *ngIf="review?.language" src="{{assetsPath}}/images/{{ review?.language! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
             <span class="fw-semibold ms-2 me-3">{{ review?.packageName}}</span>
             <i class="fas fa-check-circle text-success me-3" *ngIf="review?.isApproved"></i>
-            <app-revision-options *ngIf="(apiRevisions && apiRevisions.length > 0) || (samplesRevisions && samplesRevisions.length > 0)" [apiRevisions]="apiRevisions" 
-                [activeApiRevisionId]="activeApiRevisionId" 
+            <app-revision-options *ngIf="(apiRevisions && apiRevisions.length > 0) || (samplesRevisions && samplesRevisions.length > 0)" [apiRevisions]="apiRevisions"
+                [activeApiRevisionId]="activeApiRevisionId"
                 [diffApiRevisionId]="diffApiRevisionId"
                 [samplesRevisions]="samplesRevisions"
                 [activeSamplesRevisionId]="activeSamplesRevisionId">
             </app-revision-options>
         </ng-template>
         <ng-template *ngIf="showPageoptionsButton" pTemplate="end">
-            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [(ngModel)]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off">
+            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [(ngModel)]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off" data-clarity-region="toggle-page-options"/>
             <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="page-right-panel"><i class="fa fa-bars"></i></label>
         </ng-template>
     </p-menubar>

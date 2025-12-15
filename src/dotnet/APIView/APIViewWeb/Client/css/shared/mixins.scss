@@ -28,8 +28,8 @@
 }
 
 @mixin review-offcanvas-menu-content {
-    min-height: calc(100vh - 100px);
-    max-height: calc(100vh - 100px);
+    min-height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
     overflow-y: auto;
     margin-top: 85px;
 }
@@ -73,7 +73,7 @@
     padding-top : 0px;
     padding-bottom : 0px;
     border-bottom: 1px solid var(--border-color);
-    z-index: 2;
+    z-index: 1040;
 
     a:hover {
         text-decoration: none;
@@ -90,17 +90,6 @@
 
 @mixin apiview-logo {
     width: 30px;
-}
-
-@mixin app-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    white-space: nowrap;
-    height: 30px;
-    line-height: 30px;
-    z-index: 3;
-    background: var(--base-bg-color);
 }
 
 @mixin base-tags {

@@ -5,8 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
-using Microsoft.VisualStudio.Services.Common.CommandLine;
-using ThirdParty.Json.LitJson;
 
 namespace APIViewWeb
 {
@@ -27,7 +25,7 @@ namespace APIViewWeb
             return versionString != VersionString;
         }
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
         {
             var tempPath = Path.GetTempPath();
             var randomSegment = Guid.NewGuid().ToString("N");

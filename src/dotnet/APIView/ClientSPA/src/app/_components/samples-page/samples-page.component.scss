@@ -1,6 +1,6 @@
 :host ::ng-deep {
     .samples-panel{
-        height: calc(100vh - 130px);
+        height: calc(100vh - 100px);
 
         pre {
             background-color: var(--editor-bg-color);
@@ -72,7 +72,7 @@
     }
 
     .samples-editor-panel {
-        height: calc(100vh - 300px);
+        height: calc(100vh - 270px);
         border-radius: 6px;
         overflow: hidden;
         border: solid 1px var(--border-color);

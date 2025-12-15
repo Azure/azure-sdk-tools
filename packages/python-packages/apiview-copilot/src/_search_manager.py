@@ -23,7 +23,7 @@ from azure.search.documents.models import (
     VectorizableTextQuery,
 )
 from src._credential import get_credential
-from src._database_manager import ContainerNames, get_database_manager
+from src._database_manager import ContainerNames, DatabaseManager
 from src._models import Example, Guideline, Memory
 from src._settings import SettingsManager
 
@@ -395,7 +395,7 @@ class SearchManager:
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
         breadth-first traversal. Ensures the final context contains all linked guidelines, examples, and memories.
         """
-        database = get_database_manager()
+        database = DatabaseManager.get_instance()
 
         # Partition input items by kind using SearchItem attributes
         guidelines = {}

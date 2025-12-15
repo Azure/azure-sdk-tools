@@ -26,7 +26,7 @@ public class ExampleServiceResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, string>? Details { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var sb = new StringBuilder();
 
@@ -54,6 +54,6 @@ public class ExampleServiceResponse : CommandResponse
             }
         }
 
-        return ToString(sb); // Calls base method to include error formatting
+        return sb.ToString();
     }
 }

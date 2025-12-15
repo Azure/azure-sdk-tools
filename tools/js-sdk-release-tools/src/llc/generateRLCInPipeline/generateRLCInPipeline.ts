@@ -51,20 +51,8 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
-        if ( options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
-            let sourcePath = "src";
-            if(await exists(path.join(generatedPackageDir, "generated"))) 
-            {
-                sourcePath = "generated";
-            }else if(await exists(path.join(generatedPackageDir, "src","generated"))) {
-                sourcePath = path.join("src", "generated");
-            }
-            logger.info(`Should only remove ${sourcePath} for RLC generation in ${options.runMode} mode.`)
-            await emptyDir(path.join(generatedPackageDir, sourcePath));
-        } else {
-            logger.info(`Should remove all for RLC generation in ${options.runMode} mode`)
-            await remove(generatedPackageDir);
-        }
+
+        await cleanUpPackageDirectory(generatedPackageDir, options.runMode);
         if (!options.skipGeneration) {
             logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
             // TODO: remove it, since this function is used in pipeline.
@@ -95,7 +83,10 @@ export async function generateRLCInPipeline(options: {
                 if (options.apiVersion) {
                     specifyApiVersionToGenerateSDKByTypeSpec(tspDefDir, options.apiVersion);
                 }
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
+                const tspClientDir = path.join(process.cwd(), 'eng', 'common', 'tsp-client');
+                
+                logger.info(`Using tsp-client from: ${tspClientDir}`);
+                const scriptCommand = ['npm', '--prefix', tspClientDir, 'exec', '--no', '--', 'tsp-client', 'init', '--update-if-exists', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
@@ -286,7 +277,7 @@ export async function generateRLCInPipeline(options: {
                 try {
                     execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
                 } catch (error) {
-                    logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
+                    logger.warn(`Failed to build package due to: ${(error as Error)?.stack ?? error}`);
                     buildStatus = `failed`;
                 }
             } else {

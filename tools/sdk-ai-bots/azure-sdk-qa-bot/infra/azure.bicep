@@ -6,7 +6,7 @@ param azureTableNameForConversation string
 
 // RAG
 @secure()
-param ragApiKey string
+param ragScope string
 
 // Resources
 @maxLength(20)
@@ -23,7 +23,8 @@ param webAppSKU string
 
 // Docker Configuration
 param dockerImageTag string
-param dockerRegistryUrl string = '${resourceBaseName}.azurecr.io'  // Use the ACR we create
+param dockerContainerName string
+param dockerRegistryUrl string = '${dockerContainerName}.azurecr.io'  // Use the ACR we create
 param dockerImageName string = '${dockerRegistryUrl}/azure-sdk-qa-bot:${dockerImageTag}'
 
 // Bot
@@ -31,11 +32,11 @@ param dockerImageName string = '${dockerRegistryUrl}/azure-sdk-qa-bot:${dockerIm
 param botDisplayName string
 
 // Email notification settings (semicolon-separated string from env file)
-param alertEmailAddresses string = 'wanl@microsoft.com'
+param alertEmailAddresses string = 'chunyu@microsoft.com'
 
-// Storage Account for TypeSpec Helper
-param typespecHelperStorageAccountName string = 'typespechelper4storage'
-param typespecHelperStorageResourceGroupName string = 'typespec_helper'
+// Storage Account
+param storageAccountName string = 'azuresdkqabotstorage'
+param storageResourceGroupName string = 'azure-sdk-qa-bot'
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
@@ -133,8 +134,8 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         }
         // RAG
         {
-          name: 'RAG_API_KEY'
-          value: ragApiKey
+          name: 'RAG_SERVICE_SCOPE'
+          value: ragScope
         }
         // Azure Table
         {
@@ -382,9 +383,9 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 // Module to assign storage permissions to Bot Identity on TypeSpec Helper Storage Account
 module typespecStoragePermissions './storagePermissions.bicep' = {
   name: 'typespec-storage-permissions'
-  scope: resourceGroup(typespecHelperStorageResourceGroupName)  // Use specified resource group
+  scope: resourceGroup(storageResourceGroupName)  // Use specified resource group
   params: {
-    storageAccountName: typespecHelperStorageAccountName
+    storageAccountName: storageAccountName
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }

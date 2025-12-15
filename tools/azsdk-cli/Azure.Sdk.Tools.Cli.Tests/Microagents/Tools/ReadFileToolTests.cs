@@ -1,17 +1,17 @@
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Microagents.Tools;
 
 internal class ReadFileToolTests
 {
-    private string baseDir = string.Empty;
+    private TempDirectory? _temp;
+    private string baseDir => _temp!.DirectoryPath;
 
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
-        baseDir = Path.Combine(Path.GetTempPath(), "readfile_" + Guid.NewGuid());
-        Directory.CreateDirectory(baseDir);
-
+        _temp = TempDirectory.Create("readfiletests");
         // Create a sample file with content
         File.WriteAllText(Path.Combine(baseDir, "sample.txt"), "Hello World\nSecond Line");
         Directory.CreateDirectory(Path.Combine(baseDir, "adir"));
@@ -20,10 +20,7 @@ internal class ReadFileToolTests
     [OneTimeTearDown]
     public void OneTimeTearDown()
     {
-        if (!string.IsNullOrEmpty(baseDir) && Directory.Exists(baseDir))
-        {
-            Directory.Delete(baseDir, true);
-        }
+        _temp?.Dispose();
     }
 
     [Test]

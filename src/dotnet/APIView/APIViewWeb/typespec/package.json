@@ -1,0 +1,17 @@
+{
+  "name": "apiview-typespec",
+  "version": "1.0.0",
+  "description": "TypeSpec documentation for APIView external-facing APIs",
+  "scripts": {
+    "build": "tsp compile .",
+    "watch": "tsp compile . --watch"
+  },
+  "keywords": ["typespec", "apiview", "api-documentation"],
+  "author": "Microsoft",
+  "license": "MIT",
+  "devDependencies": {
+    "@typespec/compiler": "^1.5.0",
+    "@typespec/http": "^1.5.0",
+    "@typespec/openapi3": "^1.5.0"
+  }
+}

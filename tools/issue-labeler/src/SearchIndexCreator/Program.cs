@@ -72,10 +72,10 @@ namespace SearchIndexCreator
 
             //  3. Create an Azure Search Index
             var index = new IssueTriageContentIndex(config);
-            var defaultCredential = new DefaultAzureCredential();
-            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
-            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-            var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var credential = new AzureCliCredential();
+            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), credential);
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
+            var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), credential);
             await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
         }
         private static async Task ProcessIssueExamples(IConfigurationSection config)
@@ -118,8 +118,8 @@ namespace SearchIndexCreator
 
         private static async Task ProcessKnowledgeAgent(IConfigurationSection config)
         {
-            var defaultCredential = new DefaultAzureCredential();
-            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var credential = new AzureCliCredential();
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
             await issueKnowledgeAgent.CreateOrUpdateAsync();
         }

@@ -1,0 +1,26 @@
+testcase: different_language_same_guideline_topic
+language: java
+package_name: com.azure.storage
+code: "class StorageClientObject"
+issue_context: |
+  Java naming conventions guideline allows unnecessary suffixes
+  
+  The guideline at https://azure.github.io/azure-sdk/java_design.html#naming-conventions 
+  permits class name suffixes like "Object" which add no value.
+  
+  **Bad code:**
+  ```java
+  class StorageClientObject
+  ```
+existing_issues: |
+  [
+    {
+      "number": 999,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/999",
+      "title": "Update Python naming conventions guideline for class suffixes",
+      "body": "Python guideline at python_design.html#naming-conventions allows 'Object' suffix unnecessarily.\n\n**Package:** azure.widget",
+      "created_at": "2025-10-15T10:00:00Z"
+    }
+  ]
+response:
+  action: create

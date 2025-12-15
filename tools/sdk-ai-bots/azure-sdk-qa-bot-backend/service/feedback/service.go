@@ -7,9 +7,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -68,7 +68,7 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		}
 
 		// Set headers
-		headers := []string{"Timestamp", "TenantID", "Messages", "Reaction", "Comment", "Reasons", "Link"}
+		headers := []string{"Timestamp", "TenantID", "Messages", "Reaction", "Comment", "Reasons", "Link", "ChannelID", "UserName"}
 		for i, header := range headers {
 			cell := fmt.Sprintf("%c1", 'A'+i)
 			if err = f.SetCellValue(sheetName, cell, header); err != nil {
@@ -97,6 +97,8 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		feedback.Comment,
 		string(reasonBytes),
 		feedback.Link,
+		feedback.ChannelID,
+		feedback.UserName,
 	}
 
 	for i, value := range rowData {

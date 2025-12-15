@@ -4,23 +4,28 @@ import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOpti
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import config from '../config/config.js';
-import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGeneratorV2.js';
+import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
+import { AccessToken, ManagedIdentityCredential, TokenCredential } from '@azure/identity';
+import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
   private readonly promptGenerator: PromptGenerator;
   private readonly channelConfigManager: ChannelConfigManager;
+  private readonly credential: TokenCredential;
 
-  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager) {
+  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager, credential: TokenCredential) {
     this.conversationHandler = conversationHandler;
     this.promptGenerator = new PromptGenerator();
     this.channelConfigManager = channelConfigManager;
+    this.credential = credential;
   }
+
 
   public async completePrompt(
     context: TurnContext,
@@ -29,16 +34,17 @@ export class RAGModel implements PromptCompletionModel {
     tokenizer: Tokenizer,
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
+    const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
     const [ ragTenantId, ragEndpoint ] = await Promise.all([
       this.channelConfigManager.getRagTenant(channelId),
       this.channelConfigManager.getRagEndpoint(channelId),
     ]);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}`, { meta });
+    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
-      apiKey: config.ragApiKey,
+      accessToken: token ? token.token : undefined
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
 
@@ -47,7 +53,7 @@ export class RAGModel implements PromptCompletionModel {
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    await thinkingHandler.start(context, conversationMessages);
+    const replyStartTimestamp = await thinkingHandler.start(context, conversationMessages);
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
@@ -65,7 +71,7 @@ export class RAGModel implements PromptCompletionModel {
     }
     // TODO: try merge cancelTimer and stop into one method
     await thinkingHandler.safeCancelTimer();
-    await thinkingHandler.stop(ragReply, currentPrompt);
+    await thinkingHandler.stop(replyStartTimestamp, ragReply, currentPrompt);
 
     return { status: 'success' };
   }

@@ -62,7 +62,7 @@ jobs:
 
       - ${{ if eq(parameters.VerifyChangelog, true) }}:
         - pwsh: |
-            $(Build.SourcesDirectory)/eng/scripts/Verify-Artifact-Changelogs.ps1 -ArtifactsPath "$(Artifacts)" -ForRelease $true
+            $(Build.SourcesDirectory)\azure-sdk-tools\eng\scripts\Verify-Nuget-Artifact-Changelogs.ps1 -ArtifactsPath "$(Artifacts)" -ForRelease $true
           displayName: Verify Changelogs for artifacts
 
       - ${{ if eq(parameters.ShouldSign, true) }}:

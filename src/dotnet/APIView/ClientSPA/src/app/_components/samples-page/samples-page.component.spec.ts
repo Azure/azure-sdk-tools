@@ -7,7 +7,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ReviewPageLayoutComponent } from '../shared/review-page-layout/review-page-layout.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
-import { FooterComponent } from '../shared/footer/footer.component';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
@@ -29,7 +28,6 @@ describe('SamplesPageComponent', () => {
       declarations: [
         SamplesPageComponent,
         NavBarComponent,
-        FooterComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
         PageOptionsSectionComponent,

@@ -1,0 +1,34 @@
+testcase: same_guideline_section_different_aspect
+language: python
+package_name: azure.compute
+code: "def create_resource():"
+issue_context: |
+  Method naming guideline inconsistent with examples
+  
+  The guideline at https://azure.github.io/azure-sdk/python_design.html#naming-conventions
+  provides conflicting guidance on verb prefixes for method names.
+  
+  **Code:**
+  ```python
+  def create_resource():
+  ```
+existing_issues: |
+  [
+    {
+      "number": 789,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/789",
+      "title": "Naming conventions guideline outdated for class names",
+      "body": "The guideline at https://azure.github.io/azure-sdk/python_design.html#naming-conventions allows class name suffixes like 'Object' which should be removed.",
+      "created_at": "2025-10-15T10:00:00Z"
+    },
+    {
+      "number": 234,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/234",
+      "title": "Update async/await best practices",
+      "body": "The async guideline needs examples for common patterns.",
+      "created_at": "2025-10-10T12:00:00Z"
+    }
+  ]
+response:
+  action: no-op
+  issue: 789

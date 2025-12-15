@@ -1,0 +1,79 @@
+.severity-container {
+  display: inline-block;
+}
+
+.severity-edit-container {
+  display: inline-block;
+}
+
+.severity-badge-editable {
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.severity-text {
+  font-weight: 500;
+}
+
+.severity-edit-icon {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.severity-badge {
+  display: inline-block;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+}
+
+// Severity badge colors
+.severity-question {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.severity-suggestion {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.severity-should-fix {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.severity-must-fix {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+// Dark mode support
+:host-context(.dark-mode) {
+  .severity-question {
+    background-color: rgba(33, 150, 243, 0.2);
+    color: #90caf9;
+  }
+
+  .severity-suggestion {
+    background-color: rgba(156, 39, 176, 0.2);
+    color: #ce93d8;
+  }
+
+  .severity-should-fix {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: #ffb74d;
+  }
+
+  .severity-must-fix {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #ef5350;
+  }
+}

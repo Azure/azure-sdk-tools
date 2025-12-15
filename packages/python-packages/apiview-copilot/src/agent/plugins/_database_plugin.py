@@ -16,7 +16,7 @@ from azure.identity import DefaultAzureCredential
 # pylint: disable=no-name-in-module
 from semantic_kernel.agents import AzureAIAgent, RunPollingOptions
 from semantic_kernel.functions import kernel_function
-from src._database_manager import ContainerNames, get_database_manager
+from src._database_manager import ContainerNames, DatabaseManager
 from src._models import Example, Guideline, Memory
 
 
@@ -271,7 +271,7 @@ class DatabaseCreatePlugin:
             "content": content,
             "language": language,
         }
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         return db.guidelines.create(id, data=data)
 
     @kernel_function(description="Create a new Memory in the database.")
@@ -308,7 +308,7 @@ class DatabaseCreatePlugin:
             "is_exception": is_exception,
             "source": source,
         }
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         return db.memories.create(id, data=data)
 
     @kernel_function(description="Create a new Example in the database.")
@@ -345,7 +345,7 @@ class DatabaseCreatePlugin:
             "is_exception": is_exception,
             "example_type": example_type,
         }
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         return db.examples.create(id, data=data)
 
 
@@ -359,7 +359,7 @@ class DatabaseRetrievePlugin:
         Args:
             memory_id (str): The ID of the memory to retrieve.
         """
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         return db.memories.get(memory_id)
 
     @kernel_function(description="Retrieve the Memory schema.")
@@ -376,7 +376,7 @@ class DatabaseRetrievePlugin:
         Args:
             example_id (str): The ID of the example to retrieve.
         """
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         return db.examples.get(example_id)
 
     @kernel_function(description="Retrieve the Example schema.")
@@ -393,7 +393,7 @@ class DatabaseRetrievePlugin:
         Args:
             guideline_id (str): The ID of the guideline to retrieve.
         """
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         return db.guidelines.get(guideline_id)
 
     @kernel_function(description="Retrieve the Guideline schema.")
@@ -431,7 +431,7 @@ class DatabaseLinkUnlinkPlugin:
             target_container (str): The container name of the target items.
             target_field (str): The field in the target items to update.
         """
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         source_c = db.get_container_client(source_container)
         target_c = db.get_container_client(target_container)
 
@@ -504,7 +504,7 @@ class DatabaseLinkUnlinkPlugin:
             target_container (str): The container name of the target items.
             target_field (str): The field in the target item to update.
         """
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         source_c = db.get_container_client(source_container)
 
         # Check source item exists
@@ -560,7 +560,7 @@ class DatabaseDeletePlugin:
     @kernel_function(description="Delete a Guideline from the database by its ID.")
     async def delete_guideline(self, id: str):
         """Delete a guideline from the database by its ID."""
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         try:
             db.guidelines.delete(id)
             return f"Guideline with id '{id}' deleted successfully."
@@ -570,7 +570,7 @@ class DatabaseDeletePlugin:
     @kernel_function(description="Delete a Memory from the database by its ID.")
     async def delete_memory(self, id: str):
         """Delete a memory from the database by its ID."""
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         try:
             db.memories.delete(id)
             return f"Memory with id '{id}' deleted successfully."
@@ -580,7 +580,7 @@ class DatabaseDeletePlugin:
     @kernel_function(description="Delete an Example from the database by its ID.")
     async def delete_example(self, id: str):
         """Delete an example from the database by its ID."""
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         try:
             db.examples.delete(id)
             return f"Example with id '{id}' deleted successfully."
@@ -590,7 +590,7 @@ class DatabaseDeletePlugin:
     @kernel_function(description="Delete a Review Job from the database by its ID.")
     async def delete_review_job(self, id: str):
         """Delete a review job from the database by its ID."""
-        db = get_database_manager()
+        db = DatabaseManager.get_instance()
         try:
             db.review_jobs.delete(id)
             return f"Review Job with id '{id}' deleted successfully."

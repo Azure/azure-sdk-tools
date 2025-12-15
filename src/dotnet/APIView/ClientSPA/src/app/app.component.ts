@@ -9,6 +9,7 @@ import { SiteNotification } from './_models/notificationsModel';
 import { SignalRService } from './_services/signal-r/signal-r.service';
 import { getAIReviewNotifiationInfo } from './_helpers/common-helpers';
 import { NotificationsService } from './_services/notifications/notifications.service';
+import { ThemeHelper } from './_helpers/theme.helper';
 
 @Component({
   selector: 'app-root',
@@ -32,8 +33,8 @@ export class AppComponent  implements OnInit{
   }
 
   setAppTheme() {
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile) => {
+    this.userProfileService.getUserProfile().subscribe({
+      next: (userProfile) => {
         this.userProfile = userProfile;
         const theme = userProfile.preferences.theme;
         switch (userProfile.preferences.scrollBarSize) {
@@ -54,21 +55,13 @@ export class AppComponent  implements OnInit{
           body.classList.remove("light-theme");
           body.classList.add(theme);
         }
-        this.loadHighlightTheme(this.getHighlightTheme(theme));
-      });
-  }
-
-  getHighlightTheme(appTheme: string): string {
-    switch (appTheme) {
-      case 'dark-theme':
-        return 'atom-one-dark';
-      case 'light-theme':
-        return 'atom-one-light';
-      case 'dark-solarized-theme':
-        return 'monokai';
-      default:
-        return 'atom-one-light';
-    }
+        this.loadHighlightTheme(ThemeHelper.getHighlightTheme(theme));
+      },
+      error: () => {
+        // If user profile fails (e.g., 403 Forbidden), use default theme
+        this.configService.setAppTheme('light-theme');
+      }
+    });
   }
 
   // Load the highlight.js theme dynamically

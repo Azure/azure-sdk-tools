@@ -2,13 +2,13 @@
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.Models
 {
     public class PullRequestModel
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
         public string APIRevisionId { get; set; }

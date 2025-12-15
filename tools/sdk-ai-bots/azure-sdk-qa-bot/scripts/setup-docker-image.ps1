@@ -3,14 +3,30 @@
 # TODO: parse the .env file and set environment variables
 param(
     [switch]$Push = $false,
-    [string]$Tag = "env-0.0.0",
-    [string]$AcrName = "azsdkqabotenv",
+
+    [Parameter(Mandatory=$true)]
+    [string]$Tag, # image tag, e.g. dev-0.0.1
+
+    [Parameter(Mandatory=$true)]
+    [string]$AcrName, # azure container registry 
+    
     [string]$ImageName = "azure-sdk-qa-bot"
 )
 
 # prepare node server
+Write-Host "Running npm install..."
 npm install
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "npm install failed with exit code $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
+
+Write-Host "Running npm run build..."
 npm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "npm run build failed with exit code $LASTEXITCODE"
+    exit $LASTEXITCODE
+}
 
 # Copy azsdk-cli source using the dedicated script
 Write-Host "Copying azsdk-cli source..."

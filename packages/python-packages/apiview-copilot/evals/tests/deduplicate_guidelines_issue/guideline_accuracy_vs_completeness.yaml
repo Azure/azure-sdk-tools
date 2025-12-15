@@ -1,0 +1,27 @@
+testcase: guideline_accuracy_vs_completeness
+language: python
+package_name: azure.keyvault
+code: "raise ServiceError()"
+issue_context: |
+  Error handling guideline has incorrect information
+  
+  The guideline at https://azure.github.io/azure-sdk/python_design.html#error-handling
+  states to use ServiceError, but this class doesn't exist in the SDK.
+  
+  **Code:**
+  ```python
+  raise ServiceError()
+  ```
+existing_issues: |
+  [
+    {
+      "number": 888,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/888",
+      "title": "Error handling guideline missing exception hierarchy",
+      "body": "The guideline at python_design.html#error-handling doesn't document the full exception hierarchy.",
+      "created_at": "2025-10-15T10:00:00Z"
+    }
+  ]
+response:
+  action: no-op
+  issue: 888

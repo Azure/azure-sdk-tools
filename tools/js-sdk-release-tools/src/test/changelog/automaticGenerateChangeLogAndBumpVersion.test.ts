@@ -14,7 +14,7 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     beforeEach(async () => {
         // Create a unique temporary directory for each test
         tempTestDir = path.join(__dirname, `tmp/generate-changelog-test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-        packageDir = path.join(tempTestDir, 'test-package');
+        packageDir = path.join(tempTestDir, 'arm-testservice');
 
         await mkdir(packageDir, { recursive: true });
         await mkdir(path.join(packageDir, 'review'), { recursive: true });
@@ -220,7 +220,7 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
         vi.resetModules();
         const { generateChangelogAndBumpVersion } = await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
         
-        const changelog = await generateChangelogAndBumpVersion('test-package', { 
+        const changelog = await generateChangelogAndBumpVersion('arm-testservice', { 
             apiVersion: '2023-05-01-preview', 
             sdkReleaseType: 'beta' 
         });
@@ -312,7 +312,7 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
         vi.resetModules();
         const { generateChangelogAndBumpVersion } = await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
         
-        const changelog = await generateChangelogAndBumpVersion('test-package', { 
+        const changelog = await generateChangelogAndBumpVersion('arm-testservice', { 
             apiVersion: '2023-05-01-preview', 
             sdkReleaseType: 'beta' 
         });
@@ -402,7 +402,7 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
         vi.resetModules();
         const { generateChangelogAndBumpVersion } = await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
         
-        const changelog = await generateChangelogAndBumpVersion('test-package', { 
+        const changelog = await generateChangelogAndBumpVersion('arm-testservice', { 
             apiVersion: undefined, 
             sdkReleaseType: undefined 
         });

@@ -16,127 +16,146 @@ namespace Azure.Tools.GeneratorAgent.Agent
         };
 
         /// <summary>
-        /// Parses the agent's response and extracts the updated client.tsp content from JSON
+        /// Parses the agent's error responses into a list of RuleError objects
         /// </summary>
-        public static AgentTypeSpecResponse ParseResponse(string rawResponse)
+        public static IEnumerable<RuleError> ParseErrors(string rawResponse)
         {
-            ArgumentNullException.ThrowIfNull(rawResponse);
-
             try
             {
-                // Extract JSON from markdown code blocks if present
-                var jsonContent = ExtractJsonFromResponse(rawResponse);
+                var jsonContent = CleanJsonResponse(rawResponse);
 
-                var response = JsonSerializer.Deserialize<AgentTypeSpecResponse>(jsonContent, JsonOptions);
+                var response = JsonSerializer.Deserialize<AgentErrorResponse>(jsonContent, JsonOptions);
 
                 if (response == null)
                 {
                     throw new InvalidOperationException("Failed to deserialize agent response");
                 }
 
-                if (response.Path != "client.tsp")
+                // Return empty collection if no errors found - this is valid behavior
+                if (response.Errors == null || !response.Errors.Any())
                 {
-                    throw new InvalidOperationException($"Expected path 'client.tsp' but got '{response.Path}'");
+                    return Enumerable.Empty<RuleError>();
                 }
 
-                if (string.IsNullOrWhiteSpace(response.Content))
-                {
-                    throw new InvalidOperationException("Agent response contains empty content");
-                }
+                return response.Errors.Select(e => new RuleError(
+                    string.IsNullOrWhiteSpace(e.Type) ? "UnspecifiedError" : e.Type, 
+                    string.IsNullOrWhiteSpace(e.Message) ? "No message provided" : e.Message));
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException("Agent response is not in the expected JSON format", ex);
+            }
+        }
 
+
+        public static PatchRequest ParsePatchRequest(string response)
+        {
+            var cleanPatchJson = CleanJsonResponse(response);
+            return JsonSerializer.Deserialize<PatchRequest>(cleanPatchJson, JsonOptions)!;
+        }
+
+        /// <summary>
+        /// Cleans JSON response by removing markdown code blocks if present or extracting JSON from mixed content
+        /// </summary>
+        private static string CleanJsonResponse(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response))
                 return response;
-            }
-            catch (JsonException ex)
+
+            var trimmedResponse = response.Trim();
+
+            // Find first occurrence of ```json (case insensitive)
+            var jsonStartMarker = "```json";
+            var jsonStartIndex = trimmedResponse.IndexOf(jsonStartMarker, StringComparison.OrdinalIgnoreCase);
+
+            if (jsonStartIndex >= 0)
             {
-                throw new InvalidOperationException("Agent response is not in the expected JSON format", ex);
-            }
-        }
+                // Move past the ```json marker and any newlines
+                var jsonContentStart = jsonStartIndex + jsonStartMarker.Length;
 
-        /// <summary>
-        /// Parses the agent's error responses into a list of RuleError objects
-        /// </summary>
-        public static IEnumerable<RuleError> ParseErrors(string rawResponse)
-        {
-            ArgumentNullException.ThrowIfNull(rawResponse);
-
-            try
-            {
-                // Extract JSON from markdown code blocks if present
-                var jsonContent = ExtractJsonFromResponse(rawResponse);
-
-                // Deserialize using shared static options (avoids allocation per call)
-                var response = JsonSerializer.Deserialize<AgentErrorResponse>(jsonContent, JsonOptions);
-
-                if (response == null || response.Errors == null || !response.Errors.Any())
+                // Skip any whitespace/newlines after ```json
+                while (jsonContentStart < trimmedResponse.Length &&
+                    char.IsWhiteSpace(trimmedResponse[jsonContentStart]))
                 {
-                    throw new InvalidOperationException("No errors found in the agent response");
+                    jsonContentStart++;
                 }
 
-                return response.Errors.Select(e => new RuleError(e.Type, e.Message));
+                // Find the closing ``` marker
+                var jsonEndIndex = trimmedResponse.IndexOf("```", jsonContentStart);
+
+                if (jsonEndIndex > jsonContentStart)
+                {
+                    // Extract just the JSON content
+                    return trimmedResponse.Substring(jsonContentStart, jsonEndIndex - jsonContentStart).Trim();
+                }
+                else
+                {
+                    // No closing marker found, take everything after ```json
+                    return trimmedResponse.Substring(jsonContentStart).Trim();
+                }
             }
-            catch (JsonException ex)
+
+            // Fallback: handle generic code blocks that start with ```
+            if (trimmedResponse.StartsWith("```", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Agent response is not in the expected JSON format", ex);
+                int startIndex = trimmedResponse.IndexOf('\n');
+                if (startIndex != -1)
+                {
+                    startIndex++; // Skip the newline
+                    int endIndex = trimmedResponse.LastIndexOf("```");
+                    if (endIndex > startIndex)
+                    {
+                        return trimmedResponse.Substring(startIndex, endIndex - startIndex).Trim();
+                    }
+                }
             }
+
+            // Look for JSON object in mixed content using progressive deserialization
+            var openBraceIndex = trimmedResponse.IndexOf('{');
+            if (openBraceIndex >= 0)
+            {
+                return ExtractJsonUsingProgressiveDeserialization(trimmedResponse, openBraceIndex);
+            }
+
+            // No JSON found, return original response
+            return trimmedResponse;
         }
 
         /// <summary>
-        /// Extracts JSON content from agent response, handling markdown code blocks if present
+        /// Extracts JSON from mixed content by attempting deserialization on progressively larger substrings
         /// </summary>
-        private static string ExtractJsonFromResponse(string rawResponse)
+        private static string ExtractJsonUsingProgressiveDeserialization(string content, int startIndex)
         {
-            var trimmed = rawResponse.Trim();
-            
-            // Check if response is wrapped in markdown code blocks
-            if (trimmed.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+            // Try progressively larger substrings starting from the first brace
+            for (int endIndex = startIndex + 1; endIndex <= content.Length; endIndex++)
             {
-                return ExtractFromMarkdownBlock(trimmed, "```json");
-            }
-            
-            // Check if response starts with ``` (without json specifier)
-            if (trimmed.StartsWith("```"))
-            {
-                return ExtractFromMarkdownBlock(trimmed, "```");
+                try
+                {
+                    var candidate = content.Substring(startIndex, endIndex - startIndex);
+                    
+                    // Quick check: must end with closing brace to be complete JSON object
+                    if (!candidate.TrimEnd().EndsWith('}'))
+                        continue;
+
+                    // Attempt to parse as JsonDocument to validate structure
+                    using var document = JsonDocument.Parse(candidate, new JsonDocumentOptions 
+                    { 
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip
+                    });
+                    
+                    // If we get here, it's valid JSON - return it
+                    return candidate;
+                }
+                catch (JsonException)
+                {
+                    // Not valid JSON yet, continue trying larger substrings
+                    continue;
+                }
             }
 
-            // Return as-is if no markdown code blocks detected
-            return trimmed;
-        }
-
-        private static string ExtractFromMarkdownBlock(string trimmed, string startMarker)
-        {
-            // Find where the actual JSON content starts after the marker
-            var contentStart = startMarker.Length;
-            
-            // Skip any whitespace (spaces, newlines, tabs) after the start marker
-            while (contentStart < trimmed.Length && char.IsWhiteSpace(trimmed[contentStart]))
-            {
-                contentStart++;
-            }
-            
-            // If we've consumed the entire string, return empty
-            if (contentStart >= trimmed.Length)
-            {
-                return string.Empty;
-            }
-
-            // Find the end of content (before closing ```)
-            var endIndex = trimmed.LastIndexOf("```");
-            
-            // If no closing backticks found or they're at the start, use everything after contentStart
-            if (endIndex == -1 || endIndex <= contentStart)
-            {
-                return trimmed.Substring(contentStart).Trim();
-            }
-
-            // Extract content between contentStart and closing backticks
-            var length = endIndex - contentStart;
-            if (length <= 0)
-            {
-                return trimmed.Substring(contentStart).Trim();
-            }
-
-            return trimmed.Substring(contentStart, length).Trim();
+            // Fallback: if no valid JSON found, return everything from first brace to end
+            return content.Substring(startIndex);
         }
     }
 }

@@ -37,7 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<NotificationManager> _logger;
 
-        private const string ENDPOINT_SETTING = "Endpoint";
+        private const string ENDPOINT_SETTING = "APIVIew-Host-Url";
 
         public NotificationManager(IConfiguration configuration,
             ICosmosReviewRepository reviewRepository, ICosmosAPIRevisionsRepository apiRevisionRepository,
@@ -327,7 +327,7 @@ namespace APIViewWeb.Managers
                 var subject = $"Namespace Review Requested: {review.PackageName}";
 
                 // Build TypeSpec URL
-                var typeSpecUrl = $"{_configuration.GetValue<string>("APIVIew-Host-Url")}/Assemblies/Review/{review.Id}";
+                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
                 
                 // Generate email content using template with actual language review data
                 var emailContent = await _emailTemplateService.GetNamespaceReviewRequestEmailAsync(
@@ -395,49 +395,9 @@ namespace APIViewWeb.Managers
                 var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
                     review.PackageName,
                     typeSpecUrl,
-                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
-                    isAutoApproved: false);
+                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>());
                 
                 var emailToList = string.Join("; ", emailAddresses);
-                
-                await SendEmailAsync(emailToList, subject, emailContent);
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-        }
-
-        public async Task NotifyStakeholdersOfAutoApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)
-        {
-            try
-            {
-                // Get all email recipients (approvers + original requester)
-                var emailAddresses = await GetNamespaceReviewEmailRecipientsAsync(review);
-                
-                if (!emailAddresses.Any())
-                {
-                    return;
-                }
-                
-                var subject = $"Namespace Review Auto-Approved: {review.PackageName}";
-                
-                // Build TypeSpec URL
-                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
-                
-                // Use the unified approval email template for auto-approval
-                var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
-                    review.PackageName,
-                    typeSpecUrl,
-                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
-                    isAutoApproved: true,
-                    originalRequestDate: review.NamespaceApprovalRequestedOn,
-                    autoApprovedDate: DateTime.UtcNow);
-                
-                var emailToList = string.Join("; ", emailAddresses);
-                
-                // Console log for debugging
-                Console.WriteLine($"[DEBUG] Auto-approval email recipients (Review: {review.Id}, Package: {review.PackageName}): [{emailToList}]");
                 
                 await SendEmailAsync(emailToList, subject, emailContent);
             }

@@ -23,14 +23,17 @@
                 <a class="small conversation-group-element-id" (click)="navigateToCommentThreadOnRevisionPage($event)">{{ commentThread!.comments[0].elementId }}</a>
                 <app-comment-thread 
                     [codePanelRowData]="commentThread"
+                    [allComments]="comments"
                     [instanceLocation]='"conversations"'
                     [userProfile]="userProfile"
                     [preferredApprovers]="preferredApprovers"
+                    [reviewId]="review?.id || ''"
                     (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
                     (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
                     (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
                     (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
                     (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+                    (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)"
                 ></app-comment-thread>
             </div>
         </div>

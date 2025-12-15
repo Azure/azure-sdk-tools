@@ -4,7 +4,7 @@ This folder contains the source code for the Azure Key Vault Mock Attestation se
 which is used to run the Secure Key Release live tests for Azure Key Vault.
 
 Secure Key Release requires a signed attestation in order to release the key. In order
-to simluate the attestation we created this mock service that can generate a fake key
+to simulate the attestation we created this mock service that can generate a fake key
 for testing key release as well as provide endpoints for the Managed HSM to call out
 when verifying the attestation token.
 

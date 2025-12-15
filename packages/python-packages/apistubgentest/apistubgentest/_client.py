@@ -1,10 +1,12 @@
 from datetime import datetime
 from azure.core.paging import ItemPaged
 from typing import Optional, Union, List, Any, overload
+from enum import Enum
 
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
 from azure.core import PipelineClient
+from azure.core.tracing.decorator import distributed_trace
 from typing import Optional, Union, overload
 
 
@@ -45,7 +47,7 @@ class DefaultValuesClient:
 
     def with_falsy_optional_defaults_and_docstring(*, string: Optional[str] = "", int: Optional[int] = 0, bool: Optional[bool] = False) -> None:
         """ Adds the docstring, which exposes issues.
-        
+
         :keyword str string: String. Default value is "".
         :keyword int int: Int. Default value is 0.
         :keyword bool bool: Bool. Default value is False.
@@ -143,7 +145,7 @@ class Python2TypeHintClient:
         pass
 
     def with_datetime_typehint(
-        self, 
+        self,
         date # type: datetime
     ):
         # type: (...) -> datetime
@@ -154,7 +156,7 @@ class Python2TypeHintClient:
 class DocstringTypeHintClient:
     def with_simple_typehints(self, name, age):
         """ Simple typehints
-        
+
         :param str name: Name
         :param int age: Age
         :rtype: str
@@ -180,21 +182,21 @@ class DocstringTypeHintClient:
 
     def with_str_list_return_type(self):
         """" String list return
-        
+
         :rtype: List[str]
         """
         pass
 
     def with_list_return_type(self):
         """" String list return
-        
+
         :rtype: List[TestClass]
         """
         pass
 
     def with_list_union_return_type(self):
         """" List union return
-        
+
         :rtype: List[Union[str, int]]
         """
         pass
@@ -276,3 +278,121 @@ class PylintCheckerViolationsClient(PipelineClient):
 
     def without_return_annotation(self, val: str):
         pass
+
+    ### Check that no duplicate pylint errors are added on methods and properties.
+
+    @overload
+    def list_secrets(
+        self,
+        name,  # type: str
+        **kwargs  # type: Any
+    ):
+        # type: (...) -> List[str]
+        ...
+
+    @overload
+    def list_secrets(
+        self,
+        name,  # type: str
+        *,
+        max_results,  # type: int
+        **kwargs  # type: Any
+    ):
+        # type: (...) -> List[str]
+        ...
+
+    @distributed_trace
+    def list_secrets(
+        self,
+        name,  # type: str
+        **kwargs  # type: Any
+    ):
+        # type: (...) -> List[str]
+        """List secrets with legacy type comments.
+
+        This will trigger do-not-use-legacy-typing pylint error.
+
+        Example:
+            .. literalinclude:: ../tests/test_samples_secrets.py
+                :start-after: [START list_secrets]
+                :end-before: [END list_secrets]
+                :language: python
+                :caption: List all secrets
+                :dedent: 8
+        """
+        pass
+
+    @overload
+    def set_secret(
+        self,
+        id,  # type: str
+    ):
+        # type: (...) -> str
+        ...
+
+    @overload
+    def set_secret(
+        self,
+        id,  # type: str
+        *,
+        enabled,  # type: bool
+    ):
+        # type: (...) -> str
+        ...
+
+    @distributed_trace
+    def set_secret(
+        self,
+        id,  # type: str
+    ):
+        # type: (...) -> str
+        """Describe a secret with legacy type comments.
+
+        This will trigger do-not-use-legacy-typing pylint error.
+
+        Example:
+            .. literalinclude:: ../tests/test_samples_secrets.py
+                :start-after: [START set_secret]
+                :end-before: [END set_secret]
+                :language: python
+                :caption: Set a secret's value
+                :dedent: 8
+
+        """
+        pass
+
+    @overload
+    def get_secret(self, name: str, **kwargs) -> str:
+        ...
+
+    @overload
+    def get_secret(self, name: str, *, version: str, **kwargs) -> str:
+        ...
+
+    @distributed_trace
+    def get_secret(self, name: str, *, version: Optional[str] = None, **kwargs) -> str:
+        """Get a secret.
+
+        :param name: The secret name
+        :type name: str
+        :keyword version: The secret version
+        :paramtype version: str
+        :return: The secret value
+        :rtype: str
+
+        Example:
+            .. literalinclude:: ../tests/test_samples_secrets.py
+                :start-after: [START get_secret]
+                :end-before: [END get_secret]
+                :language: python
+                :caption: Get a secret
+                :dedent: 8
+        """
+        pass
+
+
+# Enum that doesn't inherit from CaseInsensitiveEnumMeta
+class PylintViolationEnum(str, Enum):
+    """Enumeration that will trigger enum-must-inherit-case-insensitive-enum-meta."""
+    password = "password"  # Should trigger enum-must-be-uppercase
+    CERTIFICATE = "certificate"

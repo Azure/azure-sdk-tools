@@ -23,7 +23,13 @@ var host = new HostBuilder()
         var isRunningInAzure = functionConfig["IsRunningInAzure"] == "true";
 
         // Use appropriate credential based on environment
-        TokenCredential credential = isRunningInAzure ? new ManagedIdentityCredential() : new DefaultAzureCredential();
+        TokenCredential credential = isRunningInAzure 
+            ? new ManagedIdentityCredential()
+            : new ChainedTokenCredential(
+                new AzureCliCredential(),
+                new VisualStudioCredential(),
+                new VisualStudioCodeCredential()
+            );
 
         var builder = new ConfigurationBuilder();
         builder.AddAzureAppConfiguration(options =>
@@ -71,6 +77,7 @@ var host = new HostBuilder()
             return new SearchIndexClient(searchEndpoint, credential);
         });
 
+        services.AddSingleton<TokenCredential>(credential);
         services.AddSingleton<TriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();

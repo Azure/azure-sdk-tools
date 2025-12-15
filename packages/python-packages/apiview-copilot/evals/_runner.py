@@ -1,349 +1,497 @@
 import json
 import os
-import pathlib
 import sys
-from typing import Any, Set
+import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import yaml
+from azure.ai.evaluation import evaluate
+from azure.identity import AzurePipelinesCredential
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from azure.ai.evaluation import evaluate
-from azure.identity import AzurePipelinesCredential
-from evals._custom import CustomAPIViewEvaluator
-from src._apiview_reviewer import ApiViewReview
+from evals._config_loader import get_evaluator_class
+from evals._discovery import DiscoveryResult, EvaluationTarget
+from evals._util import (
+    save_recordings,
+    load_recordings,
+)
 from src._settings import SettingsManager
-from tabulate import tabulate
 
 DEFAULT_NUM_RUNS: int = 1
 
 
-def _review_apiview(query: str, language: str):
-    """Internal global callable for evals framework."""
-    reviewer = ApiViewReview(target=query, language=language, base=None)
-    review = reviewer.run()
-    reviewer.close()
-    return {"actual": review.model_dump_json()}
+class ExecutionContext:
+    """Shared context for evaluation execution."""
 
-
-class EvalRunner:
-    """Class to run evals for APIView copilot."""
-
-    def __init__(self, *, language: str, test_path: str, num_runs: int = DEFAULT_NUM_RUNS):
-        self.language = language
-        self.test_path = test_path
-        self.num_runs = num_runs
+    def __init__(self):
         self.settings = SettingsManager()
-
-        self._tests_directory = pathlib.Path(__file__).parent / "tests" / self.language
-        self._test_file = pathlib.Path(test_path).name
-        self._weights: dict[str, float] = {
-            "exact_match_weight": 0.7,  # Exact match (rule id and line number)
-            "groundedness_weight": 0.2,  # Staying grounded in guidelines
-            "similarity_weight": 0.1,  # Similarity between expected and actual
-            "false_positive_penalty": 0.3,  # Penalty for false positives
-            "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
+        self._azure_ai_project = {
+            "subscription_id": self.settings.get("EVALS_SUBSCRIPTION"),
+            "resource_group_name": self.settings.get("EVALS_RG"),
+            "project_name": self.settings.get("EVALS_PROJECT_NAME"),
         }
+        self._credential_kwargs = self._create_credential_kwargs()
+        self._temp_files: list[Path] = []
+        self._temp_files_lock = threading.Lock()
 
-    def run(self):
-        """Run the evaluation."""
-        custom_eval = CustomAPIViewEvaluator()
-        guideline_ids = set()
+    def _create_credential_kwargs(self) -> dict[str, Any]:
+        if self.in_ci():
+            service_connection_id = os.environ.get("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
+            client_id = os.environ.get("AZURESUBSCRIPTION_CLIENT_ID")
+            tenant_id = os.environ.get("AZURESUBSCRIPTION_TENANT_ID")
+            system_access_token = os.environ.get("SYSTEM_ACCESSTOKEN")
 
-        all_results = {}
-        for file in self._tests_directory.glob("*.jsonl"):
-            if self._test_file != "all" and file.name != self._test_file:
-                continue
-
-            azure_ai_project = {
-                "subscription_id": self.settings.get("EVALS_SUBSCRIPTION"),
-                "resource_group_name": self.settings.get("EVALS_RG"),
-                "project_name": self.settings.get("EVALS_PROJECT_NAME"),
+            return {
+                "credential": AzurePipelinesCredential(
+                    service_connection_id=service_connection_id,
+                    client_id=client_id,
+                    tenant_id=tenant_id,
+                    system_access_token=system_access_token,
+                )
             }
-            if self.in_ci():
-                service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-                client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-                tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-                system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
-                kwargs = {
-                    "credential": AzurePipelinesCredential(
-                        service_connection_id=service_connection_id,
-                        client_id=client_id,
-                        tenant_id=tenant_id,
-                        system_access_token=system_access_token,
-                    )
-                }
-            else:
-                kwargs = {}
-
-            run_results = []
-            # TODO: Multiple runs are running in series and also in series for multiple files. They could be made to run in parallel to speed processing.
-            for run in range(self.num_runs):
-                print(f"Running evals {run + 1}/{self.num_runs} for {file.name}...")
-                result = evaluate(
-                    data=str(file),
-                    # FIXME: Need to quickly ensure that the metrics submission is pickleable. If not, fail fast
-                    evaluators={
-                        "metrics": custom_eval,
-                    },
-                    # FIXME: Evaluator config should be a property of the custom_eval class
-                    evaluator_config={
-                        "metrics": {
-                            "column_mapping": {
-                                "response": "${data.response}",
-                                "query": "${data.query}",
-                                "language": "${data.language}",
-                                "actual": "${target.actual}",
-                                "testcase": "${data.testcase}",
-                                "context": "${data.context}",
-                            },
-                        },
-                    },
-                    target=_review_apiview,
-                    # FIXME: Should this be True? Probably?
-                    fail_on_evaluator_errors=False,
-                    azure_ai_project=azure_ai_project,
-                    **kwargs,
-                )
-
-                # TODO: Helper object for collecting and processing results?
-                run_result = self.record_run_result(result, guideline_ids)
-                print(
-                    f"Average score for {file.name} run {run + 1}/{self.num_runs}: {run_result[-1]['average_score']:.2f}"
-                )
-                run_results.append(run_result)
-
-            # take the median run based on the average score
-            median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
-            all_results[file.name] = median_result
-
-        if not all_results:
-            raise ValueError(f"No tests found in: {self._test_file}")
-
-        self.show_results(all_results)
-        self.establish_baseline(all_results)
-        self.calculate_coverage(guideline_ids)
+        return {}
 
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
 
-    def record_run_result(self, result: dict[str, Any], guideline_ids: Set[str]) -> list[dict[str, Any]]:
-        run_result = []
-        total_score = 0
+    def _load_test_file(self, test_file: Path) -> dict:
+        """Load test file - supports both JSON and YAML formats."""
+        try:
+            with test_file.open("r", encoding="utf-8") as f:
+                if test_file.suffix == ".json":
+                    return json.load(f)
+                elif test_file.suffix in [".yaml", ".yml"]:
+                    return yaml.safe_load(f)
+                else:
+                    raise ValueError(f"Unsupported file format: {test_file.suffix}")
+        except Exception as e:
+            raise ValueError(f"Failed to read/parse test file {test_file}: {e}") from e
 
-        for row in result["rows"]:
-            score = self.calculate_overall_score(row)
-            total_score += score
-            rules = [rule["guideline_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
-            guideline_ids.update(*rules)
+    def create_temporary_jsonl_file(self, target: EvaluationTarget) -> Path:
+        """
+        Collect all test files with the *.json extension in the given directory
+        and store them as a single JSONL file in a temporary directory.
 
-            run_result.append(
-                {
-                    "testcase": row["inputs.testcase"],
-                    "expected": json.loads(row["inputs.response"]),
-                    "actual": json.loads(row["outputs.actual"]),
-                    "expected_comments": row["outputs.metrics.expected_comments"],
-                    "comments_found": row["outputs.metrics.comments_found"],
-                    "valid_generic_comments": row["outputs.metrics.valid_generic_comments"],
-                    "invalid_generic_comments": row["outputs.metrics.invalid_generic_comments"],
-                    "true_positives": row["outputs.metrics.true_positives"],
-                    "false_positives": row["outputs.metrics.false_positives"],
-                    "false_negatives": row["outputs.metrics.false_negatives"],
-                    "percent_coverage": row["outputs.metrics.percent_coverage"],
-                    "rule_matches_wrong_line": row["outputs.metrics.rule_matches_wrong_line"],
-                    "wrong_line_details": row["outputs.metrics.wrong_line_details"],
-                    "fuzzy_matches": row["outputs.metrics.fuzzy_matches"],
-                    "similarity": row["outputs.metrics.similarity"],
-                    "groundedness": row["outputs.metrics.groundedness"],
-                    "groundedness_reason": row["outputs.metrics.groundedness_reason"],
-                    "overall_score": score,
-                }
-            )
-        average_score = total_score / len(result["rows"])
-        run_result.append({"average_score": average_score, "total_evals": len(result["rows"])})
-        return run_result
+        Each source JSON file is parsed and written as one compact JSON object per line.
+        Returns the Path to the created JSONL file.
+        """
+        tmp_dir = Path(tempfile.mkdtemp(prefix="evals_executor_"))
+        output_name = f"{target.workflow_name}.jsonl"
+        out_path = tmp_dir / output_name
 
-    def show_results(self, all_results: dict[str, Any]) -> None:
-        """Display results in a table format."""
-        for name, test_results in all_results.items():
-            baseline_results = {}
-            baseline_path = pathlib.Path(__file__).parent / "results" / self.language / name[:-1]
+        with out_path.open("w", encoding="utf-8") as out_f:
+            for test_file in target.test_files:
+                obj = self._load_test_file(test_file)
+                out_f.write(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
+                out_f.write("\n")
 
-            if baseline_path.exists():
-                with open(baseline_path, "r", encoding="utf-8") as f:
-                    baseline_data = json.load(f)
-                    for result in baseline_data[:-1]:  # Skip summary
-                        baseline_results[result["testcase"]] = result
-                        try:
-                            baseline_results["average_score"] = baseline_data[-1]["average_score"]
-                        except KeyError:
-                            baseline_results["average_score"] = 0.0
+        with self._temp_files_lock:
+            self._temp_files.append(out_path)
+        return out_path
 
-            self.output_table(baseline_results, test_results, name)
+    def cleanup(self):
+        """Clean up temporary files."""
+        for temp_file in self._temp_files:
+            try:
+                if temp_file.exists():
+                    temp_file.unlink()
+                    # Also try to remove the parent directory if empty
+                    try:
+                        temp_file.parent.rmdir()
+                    except OSError:
+                        pass  # Directory not empty or other issue
+            except Exception:
+                pass
 
-    def establish_baseline(self, all_results: dict[str, Any]) -> None:
-        """Establish the current results as the new baseline."""
 
-        # only ask if we're not in CI
-        if self.in_ci() is False:
-            establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-            if establish_baseline.lower() == "y":
-                for name, result in all_results.items():
-                    output_path = pathlib.Path(__file__).parent / "results" / self.language / name[:-1]
-                    with open(str(output_path), "w", encoding="utf-8") as f:
-                        json.dump(result, indent=4, fp=f)
+class EvaluationResult:
+    """Result of evaluating a single evaluation target."""
 
-        # whether or not we establish a baseline, we want to write results to a temp dir
-        log_path = pathlib.Path(__file__).parent / "results" / self.language / ".log"
-        if not log_path.exists():
-            log_path.mkdir(parents=True, exist_ok=True)
+    def __init__(self, target: EvaluationTarget, raw_results: list[dict], success: bool, error: str | None = None):
+        self.target = target
+        self.raw_results = raw_results
+        self.success = success
+        self.error = error
 
-        for name, result in all_results.items():
-            output_path = log_path / name[:-1]
-            with open(str(output_path), "w", encoding="utf-8") as f:
-                json.dump(result, indent=4, fp=f)
+    @property
+    def workflow_name(self) -> str:
+        return self.target.workflow_name
 
-    def calculate_coverage(self, guideline_ids: set[str]) -> None:
-        """Calculate and output the coverage of tests based on the guideline IDs."""
+    @property
+    def num_test_files(self) -> int:
+        return len(self.target.test_files)
 
-        if self._test_file == "all":
-            # only update coverage if all tests are run
-            output_path = pathlib.Path(__file__).parent / "results" / self.language / "coverage.json"
-            guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / self.language
-            guidelines = []
-            for file in guidelines_path.glob("*.json"):
-                with open(file, "r", encoding="utf-8") as f:
-                    guidelines.extend(json.loads(f.read()))
-            guideline_rule_ids = [rule["id"] for rule in guidelines]
-            difference = set(guideline_rule_ids).difference(guideline_ids)
-            with open(str(output_path), "w+", encoding="utf-8") as f:
-                f.write(
-                    json.dumps(
-                        {
-                            "tested": list(guideline_ids),
-                            "not_tested": list(difference),
-                            "coverage": len(guideline_ids) / len(guideline_rule_ids) * 100,
-                        },
-                        indent=4,
-                    )
-                )
-            print(f"\nTest coverage for {self.language}: {len(guideline_ids) / len(guideline_rule_ids) * 100:.2f}%")
 
-    def calculate_overall_score(self, row: dict[str, Any]) -> float:
-        """Calculate weighted score based on various metrics."""
-        if row["outputs.metrics.expected_comments"] == 0:
-            # tests with no violations are all or nothing
-            # but still give credit if no violations found, but valid generic comments found
-            if (
-                row["outputs.metrics.comments_found"] == 0
-                or row["outputs.metrics.comments_found"] == row["outputs.metrics.valid_generic_comments"]
-            ):
-                # give credit b/c we have no violations to calc groundedness or similarity
-                row["outputs.metrics.groundedness"] = 5
-                row["outputs.metrics.similarity"] = 5
-                return 100.0
-            return 0.0
+class EvaluationRunner:
+    """Executes evaluations targets with shared context"""
 
-        exact_match_score = row["outputs.metrics.true_positives"] / row["outputs.metrics.expected_comments"]
+    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False, verbose: bool = False):
+        self.num_runs = num_runs
+        self._context: ExecutionContext | None = None
+        self._use_recording = use_recording
+        self._verbose = verbose
 
-        remaining_comments = row["outputs.metrics.expected_comments"] - row["outputs.metrics.true_positives"]
-        fuzzy_match_score = (
-            row["outputs.metrics.rule_matches_wrong_line"] / remaining_comments if remaining_comments > 0 else 0.0
-        )
+    def _ensure_context(self):
+        if self._context is None:
+            self._context = ExecutionContext()
 
-        false_positive_rate = (
-            row["outputs.metrics.false_positives"] / row["outputs.metrics.comments_found"]
-            if row["outputs.metrics.comments_found"] > 0
-            else 0.0
-        )
+    def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
+        """Execute all targets in the discovery result.
 
-        groundedness_normalized = (row["outputs.metrics.groundedness"] - 1) / 4
-        similarity_normalized = (row["outputs.metrics.similarity"] - 1) / 4
+        Args:
+            discovery_result: Result from EvaluationDiscovery containing targets to execute.
 
-        score = (
-            self._weights["exact_match_weight"] * exact_match_score
-            + self._weights["groundedness_weight"] * groundedness_normalized
-            + self._weights["similarity_weight"] * similarity_normalized
-            + self._weights["fuzzy_match_bonus"] * fuzzy_match_score
-            - self._weights["false_positive_penalty"] * false_positive_rate
-        )
+        Returns:
+            List of EvaluationResult objects.
+        """
+        try:
+            self._ensure_context()
+            return self._run(discovery_result)
+        finally:
+            self.cleanup()
 
-        normalized_score = max(0, min(100, score * 100))
-        return round(normalized_score)
+    def _run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
+        """Run tests in parallel with progress tracking."""
+        workflow_count = len(discovery_result.targets)
+        cpu_count = os.cpu_count() or 4
+        max_workers = min(cpu_count * 2, workflow_count)
+        results = []
+        total_targets = len(discovery_result.targets)
 
-    def format_terminal_diff(self, new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
-        """Format difference with ANSI colors for terminal output."""
+        # Session header
+        BOLD = "\033[1m"
+        END = "\033[0m"
+        print(f"{'='*60}")
+        print("test session starts")
+        print(f"{'='*60}")
+        print(f"{BOLD}collected {discovery_result.total_test_files}{END} across {BOLD}{workflow_count} workflows {END}")
+        print()
 
-        diff = new - old
-        if diff > 0:
-            if reverse:
-                return f" (\033[31m+{diff:{format_str}}\033[0m)"  # Red
-            return f" (\033[32m+{diff:{format_str}}\033[0m)"  # Green
-        elif diff < 0:
-            if reverse:
-                return f" (\033[32m{diff:{format_str}}\033[0m)"  # Green
-            return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
-        return f" ({diff:{format_str}})"
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_target = {
+                executor.submit(self._execute_target_with_progress, target, i + 1, total_targets): target
+                for i, target in enumerate(discovery_result.targets)
+            }
 
-    def output_table(
-        self, baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str
-    ) -> None:
-        headers = [
-            "Test Case",
-            "Score",
-            "Violations found",
-            "Exact matches (TP)",
-            "Valid generic comments",
-            "Fuzzy matches",
-            "False positives (FP)",
-            "Groundedness",
-            "Similarity",
-        ]
-        terminal_rows = []
+            # Collect results as they complete
+            for future in as_completed(future_to_target):
+                target = future_to_target[future]
 
-        for result in eval_results[:-1]:  # Skip summary object
-            testcase = result["testcase"]
-            score = result["overall_score"]
-            exact = result["true_positives"]
-            rule = result["rule_matches_wrong_line"]
-            fp = result["false_positives"]
-            ground = result["groundedness"]
-            sim = result["similarity"]
-            valid_generic = result["valid_generic_comments"]
-            comments_found = f"{result['comments_found']} / {result['expected_comments']}"
+                try:
+                    result = future.result()
+                    results.append(result)
 
-            terminal_row = [testcase]
-            if testcase in baseline_results:
-                base = baseline_results[testcase]
-                terminal_row.extend(
-                    [
-                        f"{score:.1f}{self.format_terminal_diff(score, base['overall_score'])}",
-                        comments_found,
-                        f"{exact}{self.format_terminal_diff(exact, base['true_positives'], 'd')}",
-                        f"{valid_generic}{self.format_terminal_diff(valid_generic, base['valid_generic_comments'], 'd')}",
-                        f"{rule}{self.format_terminal_diff(rule, base['rule_matches_wrong_line'], 'd')}",
-                        f"{fp}{self.format_terminal_diff(fp, base['false_positives'], 'd', reverse=True)}",
-                        f"{ground:.1f}{self.format_terminal_diff(ground, base['groundedness'])}",
-                        f"{sim:.1f}{self.format_terminal_diff(sim, base['similarity'])}",
-                    ]
-                )
+                except Exception as e:
+
+                    print('\033[91mE\033[0m', end='', flush=True)
+                    results.append(EvaluationResult(target=target, raw_results=[], success=False, error=str(e)))
+
+        # Spacing
+        print()
+
+        # Sort results to match original target order
+        target_order = {target.workflow_name: i for i, target in enumerate(discovery_result.targets)}
+        results.sort(key=lambda r: target_order.get(r.workflow_name, 999))
+
+        return results
+
+    def _execute_target_with_progress(self, target: EvaluationTarget, index: int, total: int) -> EvaluationResult:
+        print(f"[{index}/{total}] Started {target.workflow_name}...")
+        return self._execute_target(target)
+
+    def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
+        try:
+            # Load each test file once and reuse parsed data
+            test_file_to_case = {}
+            testcase_ids = []
+            test_file_paths = []
+
+            for test_file in target.test_files:
+                test_case = self._context._load_test_file(test_file)
+                test_file_to_case[test_file] = test_case
+                testcase_id = test_case.get("testcase")
+                if testcase_id:
+                    testcase_ids.append(testcase_id)
+                    test_file_paths.append(test_file)
+
+            # Resolve cache strategy
+            if self._use_recording:
+                cache_lookup = load_recordings(testcase_ids, test_file_paths)
             else:
-                values = [
-                    f"{score:.1f}",
-                    comments_found,
-                    f"{exact}",
-                    f"{valid_generic}",
-                    str(rule),
-                    str(fp),
-                    f"{ground:.1f}",
-                    f"{sim:.1f}",
-                ]
-                terminal_row.extend(values)
+                cache_lookup = {}
 
-            terminal_rows.append(terminal_row)
+            # Partition test data based on cache
+            cached_azure_rows = []
+            fresh_testcases = []
+            fresh_test_file_paths = []
 
-        print("====================================================")
-        print(f"\n\n✨ {file_name} results:\n")
-        print(tabulate(terminal_rows, headers, tablefmt="simple"))
-        if baseline_results:
-            print(
-                f"\n{file_name} average score: {eval_results[-1]['average_score']} {self.format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n"
+            for test_file in target.test_files:
+                test_case = test_file_to_case[test_file]
+                testcase_id = test_case.get("testcase")
+
+                if testcase_id and testcase_id in cache_lookup:
+                    cached_azure_rows.append(cache_lookup[testcase_id])
+                else:
+                    fresh_testcases.append(test_case)
+                    fresh_test_file_paths.append(test_file)
+
+            # Execute fresh testcases if needed
+            fresh_results = []
+            if fresh_testcases:
+                fresh_results = self._run_azure_evaluation(fresh_testcases, target)
+
+                if self._use_recording:
+                    save_recordings(fresh_test_file_paths, fresh_results)
+
+            # Combine all results
+            cached_rows = [row for row in cached_azure_rows]
+            fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
+            all_cached_rows = cached_rows + fresh_rows
+            combined_result = {"rows": all_cached_rows, "metrics": {}, "studio_url": None}
+
+            all_passed = all(row.get("outputs.metrics.success", False) for row in all_cached_rows)
+
+            return EvaluationResult(
+                target=target,
+                raw_results=[{f"{target.workflow_name}.jsonl": combined_result}],
+                success=all_passed,
             )
+
+        except Exception as e:
+            return EvaluationResult(target=target, raw_results=[], success=False, error=str(e))
+
+    def _run_azure_evaluation(self, testcases: list[dict], target: EvaluationTarget) -> list[dict]:
+        """Run Azure AI evaluation on a list of testcases."""
+        if not testcases:
+            return []
+
+        # Create temporary file for testcases
+        tmp_dir = Path(tempfile.mkdtemp(prefix="evals_fresh_"))
+        fresh_jsonl = tmp_dir / f"fresh_{target.workflow_name}.jsonl"
+
+        with fresh_jsonl.open("w", encoding="utf-8") as f:
+            for test_case in testcases:
+                f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False) + "\n")
+
+        # Execute evaluation
+        evaluator_class = get_evaluator_class(target.config.kind)
+        evaluator = evaluator_class(target.config, jsonl_file=fresh_jsonl)
+
+        results = []
+        for run in range(self.num_runs):
+            if self.num_runs > 1:
+                print(f"  📋 Run {run + 1}/{self.num_runs}...")
+
+            result = evaluate(
+                data=str(fresh_jsonl),
+                evaluators={"metrics": evaluator},
+                evaluator_config={"metrics": evaluator.evaluator_config},
+                target=evaluator.target_function,
+                fail_on_evaluator_errors=False,
+                **self._context._credential_kwargs,
+            )
+            results.append(result)
+
+        # Cleanup
+        try:
+            fresh_jsonl.unlink()
+            tmp_dir.rmdir()
+        except OSError:
+            pass
+
+        return results
+
+    def show_results(self, results: list[EvaluationResult]):
+        """Display detailed evaluation results with colored output showing failures, errors, and summary statistics."""
+        
+        # color codes
+        RED = '\033[91m'
+        GREEN = '\033[92m'
+        YELLOW = '\033[93m'
+        RESET = '\033[0m'
+        BOLD = '\033[1m'
+        
+
+        workflow_stats = []
+        for result in results:
+            if result.error:
+                workflow_stats.append({
+                    'result': result,
+                    'status': 'errored',
+                    'failed_testcases': [],
+                    'passed_testcases': [],
+                    'partial_testcases': [],
+                    'total_testcases': 0
+                })
+            elif result.raw_results:
+                failed_tests = []
+                passed_tests = []
+                partial_tests = []
+                raw = result.raw_results[0]
+                for filename, eval_result in raw.items():
+                    for res in eval_result["rows"]:
+                        testcase = res["inputs.testcase"]
+                        score = res["outputs.metrics.score"]
+                        success = res["outputs.metrics.success"]
+                        
+                        if success:
+                            if score < 100:
+                                partial_tests.append((testcase, score))
+                            else:
+                                passed_tests.append((testcase, score))
+                        else:
+                            failed_tests.append((testcase, score))
+                
+                workflow_stats.append({
+                    'result': result,
+                    'status': 'failed' if failed_tests else 'passed',
+                    'failed_testcases': failed_tests,
+                    'passed_testcases': passed_tests,
+                    'partial_testcases': partial_tests,
+                    'total_testcases': len(failed_tests) + len(passed_tests) + len(partial_tests)
+                })
+        
+
+        errored = [s for s in workflow_stats if s['status'] == 'errored']
+        failed = [s for s in workflow_stats if s['status'] == 'failed']
+
+        has_partial = any(len(s['partial_testcases']) > 0 for s in workflow_stats)
+        
+        # failures section
+        if failed or errored:
+            print(f"{RED}{BOLD}=" * 60)
+            print("FAILURES")
+            print("=" * 60 + RESET)
+            
+            for stat in errored:
+                result = stat['result']
+                print(f"{RED}_________________________ {result.workflow_name} _________________________{RESET}")
+                print(f"{RED}ERROR: {result.error}{RESET}")
+                print()
+            
+            for stat in failed:
+                result = stat['result']
+                print(f"{RED}_________________________ {result.workflow_name} _________________________{RESET}")
+                for testcase, score in stat['failed_testcases']:
+                    print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
+                    print(f"  score: {score}")
+                    print()
+
+        if has_partial:
+            print(f"{YELLOW}{BOLD}{'=' * 60}")
+            print("PARTIAL PASSES")
+            print("=" * 60 + RESET)
+            
+            for stat in workflow_stats:
+                if stat['partial_testcases']:
+                    result = stat['result']
+                    print(f"{YELLOW}_________________________ {result.workflow_name} _________________________{RESET}")
+                    for testcase, score in stat['partial_testcases']:
+                        print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase}")
+                        print(f"  score: {score}")
+                        print()
+
+        if self._verbose and any(len(s['passed_testcases']) > 0 for s in workflow_stats):
+            print(f"{GREEN}{BOLD}{'=' * 60}")
+            print("PASSED")
+            print("=" * 60 + RESET)
+            
+            for stat in workflow_stats:
+                if stat['passed_testcases']:
+                    result = stat['result']
+                    print(f"{GREEN}_________________________ {result.workflow_name} _________________________{RESET}")
+                    for testcase, score in stat['passed_testcases']:
+                        print(f"{GREEN}✓{RESET} {result.workflow_name}::{testcase}")
+                        print(f"  score: {score}")
+                        print()
+        
+        # short test summary info
+        if failed or errored or has_partial:
+            print(f"{YELLOW}{'=' * 60}")
+            print("test summary")
+            print("=" * 60 + RESET)
+            
+            for stat in errored:
+                result = stat['result']
+                print(f"{RED}ERROR{RESET} {result.workflow_name} - {result.error}")
+            
+            for stat in failed:
+                result = stat['result']
+                for testcase, _ in stat['failed_testcases']:
+                    print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
+
+            for stat in workflow_stats:
+                if stat['partial_testcases']:
+                    result = stat['result']
+                    for testcase, score in stat['partial_testcases']:
+                        print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase} - score: {score}")
+
+            print()
+        
+        # final summary with precomputed totals
+        print("=" * 60)
+        parts = []
+        
+        total_failed_testcases = sum(len(s['failed_testcases']) for s in workflow_stats)
+        total_passed_testcases = sum(len(s['passed_testcases']) for s in workflow_stats)
+        total_partial_testcases = sum(len(s['partial_testcases']) for s in workflow_stats)
+        total_testcases = sum(s['total_testcases'] for s in workflow_stats)
+        
+        if errored:
+            parts.append(f"{RED}{len(errored)} errored{RESET}")
+        if total_failed_testcases > 0:
+            parts.append(f"{RED}{total_failed_testcases} failed{RESET}")
+        if total_passed_testcases > 0:
+            parts.append(f"{GREEN}{total_passed_testcases} passed{RESET}")
+        if total_partial_testcases > 0:
+            parts.append(f"{YELLOW}{total_partial_testcases} partial{RESET}")
+        parts.append(f"{total_testcases} total")
+        
+        print(", ".join(parts))
+        print("=" * 60)
+
+    def cleanup(self):
+        """Clean up resources."""
+        if self._context:
+            self._context.cleanup()
+
+    def generate_report(self, results: list[EvaluationResult]) -> list:
+        """Generate a flat list of eval_case dicts per test, matching the required schema."""
+        eval_timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        eval_date = eval_timestamp[:10]
+        cases = []
+        for result in results:
+            workflow_name = result.workflow_name
+            raw_results = list(result.raw_results[0].values())[0]["rows"] if result.raw_results else []
+            for row in raw_results:
+                testcase = row.get("inputs.testcase")
+                status = "pass" if row.get("outputs.metrics.success") == True else "fail"
+                score = row.get("outputs.metrics.score")
+                case_id = f"{eval_timestamp}|{workflow_name}|{testcase}"
+                pk = eval_date.replace("-", "_")
+                cases.append(
+                    {
+                        "type": "eval_case",
+                        "id": case_id,
+                        "pk": pk,
+                        "eval_timestamp": eval_timestamp,
+                        "eval_date": eval_date,
+                        "workflow_name": workflow_name,
+                        "testcase": testcase,
+                        "status": status,
+                        "score": score,
+                    }
+                )
+        return cases
+
+
+__all__ = [
+    "ExecutionContext",
+    "EvaluationResult",
+]

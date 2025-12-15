@@ -10,8 +10,9 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Example;
 
 internal class ExampleToolTests
 {
@@ -47,7 +48,7 @@ internal class ExampleToolTests
         // Set up DevOps service mock
         mockDevOpsService
             .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new PackageResponse { PipelineDefinitionUrl = "https://dev.azure.com/test-pipeline" });
+            .ReturnsAsync(new PackageWorkitemResponse { PipelineDefinitionUrl = "https://dev.azure.com/test-pipeline" });
 
         // Create the tool instance
         tool = new ExampleTool(

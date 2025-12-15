@@ -22,7 +22,6 @@
     string[] Languages = LanguageServiceHelpers.SupportedLanguages;
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     var theme = userPreference.Theme ?? "light-theme";
-    var useBetaIndexPage = userPreference.UseBetaIndexPage;
 }
 <div class="container py-2 mb-5">
     @if(Model.userProfile == null) 
@@ -84,21 +83,6 @@
                                     }
                                 }
                             </select>
-                        </div>
-                    </div>
-                    <hr />
-                    <h6>Experimental Features</h6>
-                    <div class="form-group form-row">
-                        <div class="form-check form-switch">
-                            @if (useBetaIndexPage)
-                            {
-                                <input class="form-check-input" name="UseBetaIndexPage" type="checkbox" id="useBetaIndexPage" value="true" checked>
-                            }
-                            else
-                            {
-                                <input class="form-check-input" name="UseBetaIndexPage" type="checkbox" value="true" id="useBetaIndexPage">
-                            }
-                            <label class="form-check-label" for="useBetaIndexPage">Enable Split Index Page</label>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end align-items-center">

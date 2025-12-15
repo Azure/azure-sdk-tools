@@ -15,7 +15,6 @@ from typing import Any
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from azure.identity import ChainedTokenCredential
 from azure.search.documents.indexes import SearchIndexerClient
 from pydantic import BaseModel
 from src._credential import get_credential
@@ -29,6 +28,8 @@ class ContainerNames(Enum):
     MEMORIES = "memories"
     EXAMPLES = "examples"
     REVIEW_JOBS = "review-jobs"
+    METRICS = "metrics"
+    EVALS = "evals"
 
     @classmethod
     def values(cls) -> list[str]:
@@ -38,13 +39,29 @@ class ContainerNames(Enum):
     @classmethod
     def data_containers(cls) -> list[str]:
         """Return a list of all data container names, omitting containers that are for internal bookkeeping."""
-        return [name.value for name in cls if name != cls.REVIEW_JOBS]
+        return [name.value for name in cls if name not in {cls.REVIEW_JOBS, cls.METRICS}]
 
 
 class DatabaseManager:
     """Manager for Azure Cosmos DB operations."""
 
-    def __init__(self, endpoint: str, db_name: str, credential: ChainedTokenCredential):
+    _instance: "DatabaseManager" = None
+
+    @classmethod
+    def get_instance(cls, force_new: bool = False) -> "DatabaseManager":
+        """
+        Returns a singleton instance of DatabaseManager.
+        """
+        if cls._instance is None or force_new:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        settings = SettingsManager()
+        db_name = settings.get("COSMOS_DB_NAME")
+        endpoint = settings.get("COSMOS_ENDPOINT")
+        credential = get_credential()
+
         self.client = CosmosClient(endpoint, credential=credential)
         self.database = self.client.get_database_client(db_name)
         self.containers = {}
@@ -55,6 +72,10 @@ class DatabaseManager:
         if name not in self.containers:
             if name == ContainerNames.REVIEW_JOBS.value:
                 self.containers[name] = ReviewJobsContainer(self, name)
+            elif name == ContainerNames.METRICS.value:
+                self.containers[name] = MetricsContainer(self, name)
+            elif name == ContainerNames.EVALS.value:
+                self.containers[name] = EvalsContainer(self, name)
             elif name == ContainerNames.GUIDELINES.value:
                 self.containers[name] = GuidelinesContainer(self, name)
             else:
@@ -80,6 +101,16 @@ class DatabaseManager:
     def review_jobs(self):
         """Get the review jobs container client."""
         return self.get_container_client(ContainerNames.REVIEW_JOBS.value)
+
+    @property
+    def metrics(self):
+        """Get the metrics container client."""
+        return self.get_container_client(ContainerNames.METRICS.value)
+
+    @property
+    def evals(self):
+        """Get the evaluations container client."""
+        return self.get_container_client(ContainerNames.EVALS.value)
 
 
 class BasicContainer:
@@ -199,10 +230,23 @@ class ReviewJobsContainer(BasicContainer):
         pass
 
 
+class MetricsContainer(BasicContainer):
+    """Container client for metrics operations."""
+
+    def run_indexer(self):
+        # metrics container does not have an indexer
+        pass
+
+
+class EvalsContainer(BasicContainer):
+    """Container client for evaluations operations."""
+
+    def run_indexer(self):
+        # evaluations container does not have an indexer
+        pass
+
+
 @lru_cache()
 def get_database_manager():
     """Get a singleton instance of the DatabaseManager."""
-    settings = SettingsManager()
-    db_name = settings.get("COSMOS_DB_NAME")
-    endpoint = settings.get("COSMOS_ENDPOINT")
-    return DatabaseManager(endpoint, db_name, get_credential())
+    return DatabaseManager.get_instance()

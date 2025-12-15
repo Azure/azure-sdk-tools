@@ -1,23 +1,31 @@
 # Spell Checking the Azure SDK
 
 > [!NOTE]  
-> If you are working on an Azure REST API spec see SpellCheck instructions here: 
+> If you are working on an Azure REST API spec see SpellCheck instructions here:
 > [https://aka.ms/ci-fix#spell-check](https://aka.ms/ci-fix#spell-check)
 
-
-To keep code quality high we use a code scanner (cspell) to check for spelling errors in source and other files. To keep code quality high we check spelling in CI. These tools can be run locally as well.
+Spell checking (cspell) is used in CI and possibly locally to help maintain high
+quality customer-facing code and assets.
 
 ## Spell Check Locally
 
-Install the [Code Spell Checker vscode extension](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) locally. It will automatically spell check code according to configuration in the `cspell.json` file in the `.vscode` folder in the repo
+Install the [Code Spell Checker vscode extension](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
+locally. It will automatically spell check code according to configuration in
+the `cspell.json` file in the `.vscode` folder in the repo
 
-The cspell tool can also be run on the command line according to [instructions for cspell](https://github.com/streetsidesoftware/cspell/blob/master/packages/cspell/README.md).
+The cspell tool can also be run on the command line according to
+[instructions for cspell](https://github.com/streetsidesoftware/cspell/blob/master/packages/cspell/README.md).
 
 ## Spell Check in CI
 
-We use [`cspell`](https://github.com/streetsidesoftware/cspell) in the CI environment to check for spelling errors. We use the `cspell.json` file in `.vscode` to configure the scan.
+We use [`cspell`](https://github.com/streetsidesoftware/cspell) in the CI
+environment to check for spelling errors. We use the `cspell.json` file in
+`.vscode` to configure the scan.
 
-CI checks only files which are changed. If some files are excluded in the `cspell.json` config those files will not be scanned even if they are changed. All spelling errors in a changed file will be reported, not just portions of the file that were changed for a particular PR.
+CI checks only files which are changed. If some files are excluded in the
+`cspell.json` config those files will not be scanned even if they are changed.
+All spelling errors in a changed file will be reported, not just portions of
+the file that were changed for a particular PR.
 
 This behavior can be replicated locally by running from the root of the repo:
 
@@ -25,50 +33,21 @@ This behavior can be replicated locally by running from the root of the repo:
 ./eng/common/scripts/check-spelling-in-changed-files.ps1
 ```
 
+The EngSys team generally tries to use up-to-date versions of cspell in CI.
+Dictionaries and spell checking logic may change over time so CI results will
+vary over time.
+
 ## Fixing spelling errors
 
-### Requirements
-
-* NodeJS and NPM (installing the LTS version from https://nodejs.org/en/ will work)
-* cspell (`npm install -g cspell`) https://www.npmjs.com/package/cspell
-
-### Procedure
-
-1. From the root of the repo run [`cspell` locally](https://github.com/streetsidesoftware/cspell/blob/master/packages/cspell/README.md) using the command:
-
-```pwsh
-cspell lint --config .vscode/cspell.json --no-summary "<your-path>/**/*"
-```
-
-To spell check only a certain set of files (like the public API surface), alter the expression to match:
-
-```pwsh
-cspell lint --config .vscode/cspell.json --no-summary "sdk/<your-service>/<your-package>/api/*.cs"
-```
-
-2. Observe errors in console output and fix all errors. Re-run command as needed until all spelling errors are corrected. Notice that vscode, with the extension installed properly, will also highlight these errors in open files.
-
-#### Adding changes to files excluded by .gitignore
-
-If you add information to `.vscode/cspell.json` you may need to use a command like
-
-```pwsh
-git add -f .vscode/cspell.json
-```
-
-to add changes in the file to your commit.
-
-***BE CAREFUL CHECKING IN CHANGES TO FILES IN .gitignore*** -- expressions in .gitignore may be there to prevent checking in credentials or information that would alter configurations for other contributors. Make sure you check each change that goes into those files.
-
-#### Performance
-
-If spell checking takes a long time look at performance information in the console output to see if cspell is spending a long time looking at files for whom spelling is not important (e.g. build output binaries, test session recordings, etc.). Add glob expressions of these files to `ignorePaths` to improve performance.
+Look for spelling errors in the CI logs for your PR. Fix spelling errors that
+should be fixed, see [False positives](#false-positives) for instructions on how
+to suppress false positives.
 
 ### Example CI Output
 
 Look for "Unknown word" in the spell check run log to find spelling errors
 
-```
+```text
 ...
 232/372 ./sdk/storage/storage-file-datalake/src/models.internal.ts 12.98ms
 233/372 ./sdk/storage/storage-file-datalake/src/policies -
@@ -98,42 +77,69 @@ Look for "Unknown word" in the spell check run log to find spelling errors
 
 ### False positives
 
-If spell check is showing a false positive for a particular word use the strategies in [cspell documentation](https://github.com/streetsidesoftware/cspell/blob/master/packages/cspell/README.md) to configure cspell to ignore the word.
+If you receive a spelling failure, first try to fix the spelling in source.
 
-Strategies include:
+If there are new words that need to be supported for your service, add the word
+to the override list in the `words` list in the `sdk/<service>/cspell.yaml` file
+for your service. Specific files can also be overridden using the `override`
+field in your service's `cspell.yaml` file (see example below).
 
-* Using [in-document settings](https://github.com/streetsidesoftware/cspell/tree/master/packages/cspell#in-document-settings) to ignore the error -- These settings are scoped to the particular file and are most useful when ignoring an error which appears in a specific file that you may want to highlight in other places
-* Using [cspell.json settings](https://github.com/streetsidesoftware/cspell/blob/master/packages/cspell/README.md#cspelljson-sections)
-  * `words` -- If the word is correct and should be considered correct throughout the codebase (e.g. it is a product name) add the word to this section
-  * `ignorePaths` -- Use this to exclude paths or files that should be ignored. For example, `.dll` files should not be spell checked because they have no interesting human readable content when treated as a text file
-  * `overrides` -- Use this option to apply specific rules to a set of files. Scope the rules appropriately (e.g. to the service) and do not exclude all of a given type of file (e.g. `*.cs` in .NET). An example override to add `xzample` as a word in .cs files for the storage service:
+If the `sdk/<service>/cspell.yaml` file does not exist, create it using the
+example below and set the `words` and `overrides` fields to the words that need
+to be suppressed. The `import` field is *required*.
 
-```json
-    ...
-    "overrides": [
-      {
-        "filename": "sdk/storage/**/*.cs",
-        "words": [
-          "xzample"
-        ]
-      },
-      ...
-    ]...
+For example (note the words list is sorted alphabetically):
+
+```yaml
+import:
+  - ../../.vscode/cspell.json
+words:
+  - aardvark
+  - zoology
+
+# Optional overrides example for words in a specific file
+overrides:
+  - filename: '**/sdk/contosowidgetmanager/somefile.yaml'
+    words:
+      - aardwolf
+      - zoo
 ```
 
-  * `ignoreRegExpList` -- Use this feature carefully to exclude common expressions which might be mistaken for words (e.g. compiler flags that have preceding letters `-Dsome_config`). USING INAPPROPRIATE EXPRESSIONS MAY CHANGE HOW ALL SPELL CHECKING IS HANDLED FOR THE ENTIRE REPO. Please use other approaches if possible because incorrect regular expressions can generate false positives or break spell checking for some or all of the repo.
+Spell checking is generally *case-insensitive* so you only need to add a word
+once in lower-case. Try to keep the word list sorted for easier discovery.
+
+#### Migrating from .vscode/cspell.json to sdk/\<service\>/cspell.yaml
+
+> [!NOTE]
+> In the past, editing `.vscode/cspell.json` was the way to add words to
+> spellcheck configuration. Going forward, each service should use its own
+> `cspell.yaml` file to maintain a list of words specific to that service. This
+> reduces merge conflicts in the `.vscode/cspell.json` file and is easier to
+> read.
+
+If you are adding words for your service, look in `.vscode/cspell.json` for
+paths that include your service directory and migrate them into your
+service-specific `cspell.yaml` file. Remove the entries from
+`.vscode/cspell.json` after migrating them. You may need to use
+`git add -f .vscode/cspell.json` to add changes.
 
 ### Contributors
 
-We sometimes credit external contributors in our `CHANGELOG.md` files. In these cases add the user's alias directly to an override for CHANGELOG.md files. The CHANGELOG files are mostly prose and highly visible to customers, it makes sense to spell check the rest of the file and not ignore it.
+We sometimes credit external contributors in our `CHANGELOG.md` files. In these
+cases add the user's alias directly to an override for CHANGELOG.md files. The
+CHANGELOG files are mostly prose and highly visible to customers, it makes sense
+to spell check the rest of the file and not ignore it.
 
-```json
-{
-  ...
-  "overrides": { 
-    "filename": "**/CHANGELOG.md",
-    "words": ["<external-contributor-alias>", ... ]
-  } 
-...
-}
+```yaml
+import:
+  - ../../.vscode/cspell.json
+
+overrides:
+  - filename: '**/sdk/core/Azure.Core/CHANGELOG.md'
+    words:
+      - <external-contributor-alias>
 ```
+
+### More information
+
+For more information see [cspell configuration](https://cspell.org/configuration/).

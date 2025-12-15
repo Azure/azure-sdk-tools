@@ -5,5 +5,6 @@ namespace Azure.Sdk.Tools.Cli.Commands;
 public record CommandGroup(
     string Verb,
     string Description,
-    List<Option>? Options = null
+    List<Option>? Options = null,
+    IReadOnlyCollection<string>? Aliases = null
 );

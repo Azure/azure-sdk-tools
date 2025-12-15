@@ -10,7 +10,6 @@ import { MessageService } from 'primeng/api';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
 import { MenubarModule } from 'primeng/menubar';
 import { MenuModule } from 'primeng/menu';
-import { FooterComponent } from '../shared/footer/footer.component';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { SidebarModule } from 'primeng/sidebar';
 import { DropdownModule } from 'primeng/dropdown';
@@ -27,7 +26,6 @@ describe('RevisionPageComponent', () => {
       declarations: [
         RevisionPageComponent,
         NavBarComponent,
-        FooterComponent,
         ReviewInfoComponent,
         RevisionsListComponent,
         ReviewPageLayoutComponent,

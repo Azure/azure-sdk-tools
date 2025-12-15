@@ -28,7 +28,7 @@ public final class FaultInjectorHttpClient implements HttpClient {
      */
     public FaultInjectorHttpClient(HttpClient httpClient) {
         this(httpClient, Utils.DEFAULT_HTTP_FAULT_INJECTOR_SCHEME,
-             Util.DEFAULT_HTTP_FAULT_INJECTOR_HOST, Utils.DEFAULT_HTTP_FAULT_INJECTOR_HTTP_PORT);
+             Utils.DEFAULT_HTTP_FAULT_INJECTOR_HOST, Utils.DEFAULT_HTTP_FAULT_INJECTOR_HTTP_PORT);
     }
 
     /**

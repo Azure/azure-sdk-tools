@@ -26,14 +26,14 @@ namespace Azure.Tools.GeneratorAgent.Security
         /// <param name="path">The path to validate</param>
         /// <param name="pathType">Description of the path type for logging</param>
         /// <returns>Result indicating if path is safe</returns>
-        public static Result<string> ValidateDirTraversal(string? path, string pathType = "path")
+        public static string ValidateDirTraversal(string? path, string pathType = "path")
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return Result<string>.Failure(new ArgumentException($"{pathType} cannot be null or empty"));
+                throw new ArgumentException($"{pathType} cannot be null or empty");
             }
 
-            return Result<string>.Success(path);
+            return path;
         }
 
         /// <summary>
@@ -41,210 +41,139 @@ namespace Azure.Tools.GeneratorAgent.Security
         /// </summary>
         /// <param name="path">The TypeSpec path to validate</param>
         /// <param name="isLocalPath">True if this is a local filesystem path, false if it's a relative repository path</param>
-        public static Result<string> ValidateTypeSpecDir(string? path, bool isLocalPath = true)
+        public static string ValidateandNormalizeTypeSpecDir(string? path, bool isLocalPath = true)
         {
             var pathTraversalValidation = ValidateDirTraversal(path, "TypeSpec path");
-            if (pathTraversalValidation.IsFailure)
-            {
-                return pathTraversalValidation;
-            }
 
-            try
+            if (isLocalPath)
             {
-                if (isLocalPath)
+                var fullPath = Path.GetFullPath(pathTraversalValidation);
+                
+                if (!Directory.Exists(fullPath))
                 {
-                    var fullPath = Path.GetFullPath(pathTraversalValidation.Value!);
-                    
-                    if (!Directory.Exists(fullPath))
-                    {
-                        return Result<string>.Failure(new DirectoryNotFoundException($"TypeSpec directory not found: {fullPath}"));
-                    }
-                    
-                    var allFiles = Directory.GetFiles(fullPath, "*.*", SearchOption.TopDirectoryOnly);
-                    var hasTypeSpecFiles = allFiles.Any(file => TypeSpecFileRegex.IsMatch(file));
+                    throw new DirectoryNotFoundException($"TypeSpec directory not found: {fullPath}");
+                }
+                
+                var allFiles = Directory.GetFiles(fullPath, "*.*", SearchOption.TopDirectoryOnly);
+                var hasTypeSpecFiles = allFiles.Any(file => TypeSpecFileRegex.IsMatch(file));
 
-                    if (!hasTypeSpecFiles)
-                    {
-                        return Result<string>.Failure(new InvalidOperationException($"No .tsp or .yaml files found in directory: {fullPath}"));
-                    }
-                    
-                    if (allFiles.Any(file => !TypeSpecFileRegex.IsMatch(file)))
-                    {
-                        var invalidFiles = string.Join(", ", allFiles
-                            .Where(file => !TypeSpecFileRegex.IsMatch(file))
-                            .Select(Path.GetFileName));
-                        return Result<string>.Failure(new InvalidOperationException($"Directory contains non-TypeSpec files: {invalidFiles}. Only .tsp and .yaml files are allowed."));
-                    }
-                    
-                    return Result<string>.Success(fullPath);
-                }
-                else
+                if (!hasTypeSpecFiles)
                 {
-                    var validatedPath = pathTraversalValidation.Value!;
-                    if (validatedPath.StartsWith("/") || validatedPath.StartsWith("\\"))
-                    {
-                        return Result<string>.Failure(new ArgumentException("Repository path cannot start with / or \\"));
-                    }
-                    
-                    if (validatedPath.Contains("//") || validatedPath.Contains("\\\\"))
-                    {
-                        return Result<string>.Failure(new ArgumentException("Repository path contains invalid double separators"));
-                    }
-                    
-                    var normalizedPath = validatedPath.Replace('\\', '/');
-                    return Result<string>.Success(normalizedPath);
+                    throw new InvalidOperationException($"No .tsp or .yaml files found in directory: {fullPath}");
                 }
+                
+                if (allFiles.Any(file => !TypeSpecFileRegex.IsMatch(file)))
+                {
+                    var invalidFiles = string.Join(", ", allFiles
+                        .Where(file => !TypeSpecFileRegex.IsMatch(file))
+                        .Select(Path.GetFileName));
+                    throw new InvalidOperationException($"Directory contains non-TypeSpec files: {invalidFiles}. Only .tsp and .yaml files are allowed.");
+                }
+                
+                return fullPath;
             }
-            catch (Exception ex)
+            else
             {
-                return Result<string>.Failure(new ArgumentException($"Invalid path format: {ex.Message}", ex));
+                var validatedPath = pathTraversalValidation;
+                if (validatedPath.StartsWith("/") || validatedPath.StartsWith("\\"))
+                {
+                    throw new ArgumentException("Repository path cannot start with / or \\");
+                }
+                
+                if (validatedPath.Contains("//") || validatedPath.Contains("\\\\"))
+                {
+                    throw new ArgumentException("Repository path contains invalid double separators");
+                }
+                
+                var normalizedPath = validatedPath.Replace('\\', '/');
+                return normalizedPath;
             }
         }
 
         /// <summary>
         /// Validates a Git commit ID format.
         /// </summary>
-        public static Result<string> ValidateCommitId(string? commitId)
+        public static string ValidateCommitId(string? commitId)
         {
             if (string.IsNullOrWhiteSpace(commitId))
             {
-                return Result<string>.Success(string.Empty);
+                return string.Empty;
             }
 
             if (!CommitIdRegex.IsMatch(commitId))
             {
-                return Result<string>.Failure(new ArgumentException("Commit ID must be 6-40 hexadecimal characters"));
+                throw new ArgumentException("Commit ID must be 6-40 hexadecimal characters");
             }
 
-            return Result<string>.Success(commitId);
+            return commitId;
         }
 
         /// <summary>
         /// Validates a directory path for output operations.
         /// </summary>
-        public static Result<string> ValidateOutputDirectory(string? path)
+        public static string ValidateOutputDirectory(string? path)
         {
             var pathTraversalValidation = ValidateDirTraversal(path, "Output directory path");
-            if (pathTraversalValidation.IsFailure)
+
+            var fullPath = Path.GetFullPath(pathTraversalValidation);
+            
+            var parentDir = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
             {
-                return pathTraversalValidation;
+                throw new DirectoryNotFoundException($"Parent directory does not exist: {parentDir}");
             }
 
-            try
-            {
-                var fullPath = Path.GetFullPath(pathTraversalValidation.Value!);
-                
-                var parentDir = Path.GetDirectoryName(fullPath);
-                if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
-                {
-                    return Result<string>.Failure(new DirectoryNotFoundException($"Parent directory does not exist: {parentDir}"));
-                }
-
-                return Result<string>.Success(fullPath);
-            }
-            catch (Exception ex)
-            {
-                return Result<string>.Failure(new ArgumentException($"Invalid path format: {ex.Message}", ex));
-            }
-        }
-
-        /// <summary>
-        /// Validates a PowerShell script path for security.
-        /// </summary>
-        public static Result<string> ValidatePowerShellScriptPath(string scriptPath, string azureSdkPath)
-        {
-            if (string.IsNullOrWhiteSpace(scriptPath))
-            {
-                return Result<string>.Failure(new ArgumentException("PowerShell script path cannot be null or empty"));
-            }
-
-            if (string.IsNullOrWhiteSpace(azureSdkPath))
-            {
-                return Result<string>.Failure(new ArgumentException("Azure SDK path cannot be null or empty"));
-            }
-
-            // Ensure it's a PowerShell script
-            if (!string.Equals(Path.GetExtension(scriptPath), ".ps1", StringComparison.OrdinalIgnoreCase))
-            {
-                return Result<string>.Failure(new ArgumentException("PowerShell script must have .ps1 extension"));
-            }
-
-            try
-            {
-                var fullScriptPath = Path.Combine(azureSdkPath, scriptPath);
-                
-                if (!File.Exists(fullScriptPath))
-                {
-                    return Result<string>.Failure(new FileNotFoundException($"PowerShell script not found: {fullScriptPath}"));
-                }
-
-                var normalizedPath = Path.GetFullPath(fullScriptPath);
-                var normalizedAzureSdkPath = Path.GetFullPath(azureSdkPath);
-                
-                if (!normalizedPath.StartsWith(normalizedAzureSdkPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Result<string>.Failure(new UnauthorizedAccessException("PowerShell script must be within Azure SDK directory"));
-                }
-
-                return Result<string>.Success(fullScriptPath);
-            }
-            catch (Exception ex)
-            {
-                return Result<string>.Failure(new ArgumentException($"Error validating script path: {ex.Message}", ex));
-            }
+            return fullPath;
         }
 
         /// <summary>
         /// Validates process arguments for security (prevents injection).
         /// </summary>
-        public static Result<string> ValidateProcessArguments(string arguments)
+        public static string ValidateProcessArguments(string arguments)
         {
             if (string.IsNullOrEmpty(arguments))
             {
-                return Result<string>.Success(string.Empty);
+                return string.Empty;
             }
 
             foreach (var separator in BasicCommandSeparators)
             {
                 if (arguments.Contains(separator, StringComparison.OrdinalIgnoreCase))
                 {
-                    return Result<string>.Failure(new ArgumentException($"Arguments contain command separator: {separator}"));
+                    throw new ArgumentException($"Arguments contain command separator: {separator}");
                 }
             }
 
-            return Result<string>.Success(arguments);
+            return arguments;
         }
 
         /// <summary>
         /// Validates a working directory for process execution.
+        /// Throws exceptions if validation fails.
         /// </summary>
-        public static Result<string> ValidateWorkingDirectory(string? workingDirectory)
+        public static string ValidateWorkingDirectory(string? workingDirectory)
         {
             if (string.IsNullOrWhiteSpace(workingDirectory))
             {
-                return Result<string>.Success(Directory.GetCurrentDirectory());
+                return Directory.GetCurrentDirectory();
             }
 
-            var pathTraversalValidation = ValidateDirTraversal(workingDirectory, "Working directory");
-            if (pathTraversalValidation.IsFailure)
-            {
-                return pathTraversalValidation;
-            }
+            var validatedPath = ValidateDirTraversal(workingDirectory, "Working directory");
 
             try
             {
-                var fullPath = Path.GetFullPath(pathTraversalValidation.Value!);
-                
+                var fullPath = Path.GetFullPath(validatedPath);
+
                 if (!Directory.Exists(fullPath))
                 {
-                    return Result<string>.Failure(new DirectoryNotFoundException($"Working directory does not exist: {fullPath}"));
+                    throw new DirectoryNotFoundException($"Working directory does not exist: {fullPath}");
                 }
 
-                return Result<string>.Success(fullPath);
+                return fullPath;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is DirectoryNotFoundException))
             {
-                return Result<string>.Failure(new ArgumentException($"Invalid working directory path: {ex.Message}", ex));
+                throw new ArgumentException($"Invalid working directory path: {ex.Message}", ex);
             }
         }
     }

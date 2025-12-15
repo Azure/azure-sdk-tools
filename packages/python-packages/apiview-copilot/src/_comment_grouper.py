@@ -3,7 +3,6 @@ from typing import Callable
 from uuid import uuid4
 
 from src._prompt_runner import run_prompt
-from src._utils import get_prompt_path
 
 
 class CommentGrouper:
@@ -52,7 +51,8 @@ class CommentGrouper:
         if len(generic_only) > 1:
             prompty_file = "generate_correlation_ids.prompty"
             response = self.run_prompt(
-                prompt_path=get_prompt_path(folder="api_review", filename=prompty_file),
+                folder="api_review",
+                filename=prompty_file,
                 inputs={"content": {i: self.comments[i] for i in generic_only}},
                 settings=self.settings,
                 logger=self.logger,

@@ -713,6 +713,15 @@ namespace APIViewWeb.Managers
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
                     if (apiRevision != null)
                     {
+                        if (codeFile.CrossLanguageMetadata == null)
+                        {
+                            CodeFile existingCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevisionId, apiRevision.Files.Single().FileId);
+                            if (existingCodeFile?.CrossLanguageMetadata != null)
+                            {
+                                codeFile.CrossLanguageMetadata = existingCodeFile.CrossLanguageMetadata;
+                            }
+                        }
+
                         await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, apiRevision.Files.Single().FileId, codeFile);
                         var file = apiRevision.Files.FirstOrDefault();
                         file.VersionString = codeFile.VersionString;
@@ -775,7 +784,16 @@ namespace APIViewWeb.Managers
                         _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
                         continue;
                     }
-                    var codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false);
+
+                    CodeFile existingCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revision.Id, file.FileId);
+                    CrossLanguageMetadata crossLanguageMetadata = existingCodeFile?.CrossLanguageMetadata;
+                    string crossLanguageMetadataJson = null;
+                    if (crossLanguageMetadata != null)
+                    {
+                        crossLanguageMetadataJson = JsonSerializer.Serialize(crossLanguageMetadata);
+                    }
+
+                    CodeFile codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false, crossLanguageMetadataJson);
                     if (!verifyUpgradabilityOnly)
                     {
                         await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
@@ -790,7 +808,7 @@ namespace APIViewWeb.Managers
                     }
                     else
                     {
-                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} can be upgraded using new parser version.");
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} cannot be upgraded using new parser version.");
                     }
                 }
                 catch (Exception ex)

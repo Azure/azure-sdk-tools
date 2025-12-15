@@ -11,8 +11,8 @@
     "azureTableNameForConversation": {
       "value": "${{AZURE_TABLE_NAME_FOR_CONVERSATION}}"
     },
-    "ragApiKey": {
-      "value": "${{SECRET_RAG_API_KEY}}"
+    "ragScope": {
+      "value": "${{RAG_SERVICE_SCOPE}}"
     },
     "webAppSKU": {
       "value": "B3"
@@ -23,14 +23,17 @@
     "alertEmailAddresses": {
       "value": "${{ALERT_EMAIL_ADDRESSES}}"
     },
-    "typespecHelperStorageAccountName": {
-      "value": "${{TYPESPEC_HELPER_STORAGE_ACCOUNT_NAME}}"
+    "storageAccountName": {
+      "value": "${{STORAGE_ACCOUNT_NAME}}"
     },
-    "typespecHelperStorageResourceGroupName": {
-      "value": "${{TYPESPEC_HELPER_STORAGE_RESOURCE_GROUP_NAME}}"
+    "storageResourceGroupName": {
+      "value": "${{STORAGE_RESOURCE_GROUP_NAME}}"
     },
     "dockerImageTag": {
       "value": "${{DOCKER_IMAGE_TAG}}"
+    },
+    "dockerContainerName": {
+      "value": "${{DOCKER_CONTAINER_NAME}}"
     }
   }
 }

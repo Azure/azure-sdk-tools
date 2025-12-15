@@ -31,7 +31,6 @@ export class APIRevision {
   releasedOn: string
   isDeleted: boolean
   approvers: string[]
-  viewedBy: string[]
 
   constructor() {
     this.id = ''
@@ -55,8 +54,7 @@ export class APIRevision {
     this.isReleased = false,
     this.releasedOn = '',
     this.isDeleted = false,
-    this.approvers = [],
-    this.viewedBy = []
+    this.approvers = []
   }
 }
 

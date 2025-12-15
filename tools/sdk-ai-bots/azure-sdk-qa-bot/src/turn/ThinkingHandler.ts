@@ -28,11 +28,13 @@ export class ThinkingHandler {
     this.conversationHandler = conversationHandler;
   }
 
-  public async start(context: TurnContext, conversationMessages: ConversationMessage[]): Promise<void> {
+  public async start(context: TurnContext, conversationMessages: ConversationMessage[]): Promise<Date> {
     await this.trySendContactCard(context, conversationMessages);
     const resource = await context.sendActivity(this.thinkingMessage);
+    const timestamp = new Date();
     this.resourceId = resource.id;
     this.startCore(context, resource.id);
+    return timestamp;
   }
 
   // cancel timer as soon as possible when get reply
@@ -50,7 +52,7 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
+  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
     const answer = this.generateAnswer(reply);
     const updated: Partial<TurnContext> = {
       type: 'message',
@@ -66,6 +68,7 @@ export class ThinkingHandler {
         response.id,
         currentPrompt,
         reply,
+        replyStartTime,
         this.meta
       );
     }
@@ -182,6 +185,7 @@ export class ThinkingHandler {
     replyActivityId: string,
     prompt: Prompt,
     replyPayload: CompletionResponsePayload | RagApiError,
+    replyTimeStamp: Date,
     meta: object
   ) {
     const reply = this.convertPayloadToReply(replyPayload);
@@ -195,7 +199,7 @@ export class ThinkingHandler {
       conversationId,
       activityId: replyActivityId,
       reply,
-      timestamp: prompt.timestamp,
+      timestamp: replyTimeStamp,
     };
     try {
       await Promise.all([

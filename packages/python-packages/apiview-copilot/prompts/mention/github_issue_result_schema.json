@@ -1,0 +1,22 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "github_issue_parsing_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the GitHub issue."
+        },
+        "body": {
+          "type": "string",
+          "description": "Body content of the GitHub issue."
+        }
+      },
+      "required": ["title", "body"],
+      "additionalProperties": false
+    }
+  }
+}

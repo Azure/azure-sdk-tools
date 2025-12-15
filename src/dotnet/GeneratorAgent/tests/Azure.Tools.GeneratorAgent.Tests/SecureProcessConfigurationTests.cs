@@ -1,6 +1,6 @@
-using NUnit.Framework;
-using Azure.Tools.GeneratorAgent.Security;
 using System.Runtime.InteropServices;
+using Azure.Tools.GeneratorAgent.Security;
+using NUnit.Framework;
 
 namespace Azure.Tools.GeneratorAgent.Tests.Security
 {

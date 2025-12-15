@@ -68,7 +68,7 @@
       },
       "paths": [
         {
-          "description": "Wiki documentation for Azure SDK for Python specifications",
+          "description": "Documentation for Azure SDK for Python",
           "path": "doc",
           "folder": "azure_sdk_for_python_docs"
         }
@@ -149,6 +149,20 @@
           "path": "docs",
           "folder": "azure-sdk-guidelines",
           "ignoredPaths": ["redirects"]
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-go.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure SDK for Go",
+          "path": "documentation",
+          "folder": "azure_sdk_for_go_docs"
         }
       ]
     }

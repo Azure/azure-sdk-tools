@@ -20,7 +20,7 @@ public class ObjectCommandResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Result { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var result = new StringBuilder();
         if (!string.IsNullOrEmpty(Message))
@@ -31,6 +31,6 @@ public class ObjectCommandResponse : CommandResponse
         {
             result.AppendLine(JsonSerializer.Serialize(Result, serializerOptions));
         }
-        return ToString(result);
+        return result.ToString();
     }
 }

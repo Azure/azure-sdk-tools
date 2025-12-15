@@ -1,4 +1,4 @@
-import { booleanAttribute, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs';
 import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
@@ -33,7 +33,6 @@ export class ProfilePageComponent {
   selectedTheme : SelectItemModel = { label: "light", data: "light-theme" };
   scrollBarSizes : string[] = ["small", "medium", "large"];
   selectedScrollBarSize : ScrollBarSize = ScrollBarSize.Small;
-  useSplitIndexPage : boolean = false;
   disableSaveButton : boolean = true;
   isLoaded: boolean | undefined = undefined;
 
@@ -52,7 +51,6 @@ export class ProfilePageComponent {
           console.log(userProfile);
           console.log(this.selectedLanguages);
           this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
-          this.useSplitIndexPage = userProfile.preferences.useBetaIndexPage;
           this.selectedScrollBarSize = userProfile.preferences.scrollBarSize;
 
           if (this.userName !== userProfile.userName) {
@@ -86,7 +84,6 @@ export class ProfilePageComponent {
     this.userProfile!.email = this.notificationEmail!;
     this.userProfile!.preferences.approvedLanguages = this.selectedLanguages.map((lang: SelectItemModel) => lang.data);
     this.userProfile!.preferences.theme = this.selectedTheme.data;
-    this.userProfile!.preferences.useBetaIndexPage = this.useSplitIndexPage;
     this.userProfile!.preferences.scrollBarSize = this.selectedScrollBarSize;
     this.userProfileService.updateUserProfile(this.userProfile!).pipe(take(1)).subscribe({
       next: (response: any) => {

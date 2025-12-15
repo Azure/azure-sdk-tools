@@ -208,4 +208,67 @@ describe('CodePanelComponent', () => {
       expect(component.clearSearchMatchHighlights).toHaveBeenCalled();
     });
   });
+
+  describe('draft comment persistence during virtual scrolling', () => {
+    it('should preserve draft comment text when updating items in scroller', async () => {
+      const rowData = new CodePanelRowData();
+      rowData.nodeIdHashed = 'test-hash';
+      rowData.type = CodePanelRowDatatype.CommentThread;
+      rowData.associatedRowPositionInGroup = 0;
+      rowData.showReplyTextBox = true;
+      rowData.draftCommentText = 'User typed this draft';
+      
+      component.codePanelRowData = [rowData];
+      
+      // Simulate an update (e.g., from comment system)
+      const updatedRowData = new CodePanelRowData();
+      updatedRowData.nodeIdHashed = 'test-hash';
+      updatedRowData.type = CodePanelRowDatatype.CommentThread;
+      updatedRowData.associatedRowPositionInGroup = 0;
+      updatedRowData.showReplyTextBox = true;
+      updatedRowData.draftCommentText = 'User typed this draft'; // Should preserve this
+      
+      await component.updateItemInScroller(updatedRowData);
+      
+      // Draft text should still be preserved in the array
+      expect(component.codePanelRowData[0].draftCommentText).toBe('User typed this draft');
+    });
+
+    it('should maintain draft text reference across multiple updates', async () => {
+      const rowData = new CodePanelRowData();
+      rowData.nodeIdHashed = 'test-hash';
+      rowData.type = CodePanelRowDatatype.CommentThread;
+      rowData.associatedRowPositionInGroup = 0;
+      rowData.draftCommentText = 'Initial draft';
+      
+      component.codePanelRowData = [rowData];
+      
+      // First update - different property change
+      const update1 = new CodePanelRowData();
+      update1.nodeIdHashed = 'test-hash';
+      update1.type = CodePanelRowDatatype.CommentThread;
+      update1.associatedRowPositionInGroup = 0;
+      update1.draftCommentText = 'Initial draft';
+      update1.showReplyTextBox = true;
+      
+      await component.updateItemInScroller(update1);
+      expect(component.codePanelRowData[0].draftCommentText).toBe('Initial draft');
+      
+      // User types more
+      component.codePanelRowData[0].draftCommentText = 'Initial draft with more text';
+      
+      // Second update - another property change
+      const update2 = new CodePanelRowData();
+      update2.nodeIdHashed = 'test-hash';
+      update2.type = CodePanelRowDatatype.CommentThread;
+      update2.associatedRowPositionInGroup = 0;
+      update2.draftCommentText = 'Initial draft with more text';
+      update2.showReplyTextBox = true;
+      
+      await component.updateItemInScroller(update2);
+      
+      // Draft should still be there
+      expect(component.codePanelRowData[0].draftCommentText).toBe('Initial draft with more text');
+    });
+  });
 });

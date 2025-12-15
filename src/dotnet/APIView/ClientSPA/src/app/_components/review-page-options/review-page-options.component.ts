@@ -16,7 +16,6 @@ import { FormControl } from '@angular/forms';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
 import { MessageService } from 'primeng/api';
-import { ToastMessageData } from 'src/app/_models/toastMessageModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
@@ -53,7 +52,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() showHiddenAPIEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() disableCodeLinesLazyLoadingEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -75,7 +73,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   showDocumentationSwitch : boolean = true;
   showHiddenAPISwitch : boolean = false;
   showLeftNavigationSwitch : boolean = true;
-  markedAsViewSwitch : boolean = false;
   subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
   disableCodeLinesLazyLoading: boolean = false;
@@ -171,16 +168,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
     if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
       this.setSubscribeSwitch();
-      this.setMarkedAsViewSwitch();
       this.setPageOptionValues();
     }
 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
-      this.setMarkedAsViewSwitch();
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
+      this.setNamespaceReviewStates();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = 'Generating review...';
@@ -197,7 +193,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (changes['review'] && changes['review'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
-      this.setNamespaceReviewStates();
       this.updateDiffStyle();
 
       // Reset loading state when review data is updated (indicating the request completed)
@@ -295,15 +290,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
-  * Callback for markedAsViewSwitch Change
-  * @param event the Filter event
-  */
-  onMarkedAsViewedSwitchChange(event: InputSwitchChangeEvent) {
-    this.markAsViewedEmitter.emit(event.checked);
-  }
-
-  /**
-  * Callback for markedAsViewSwitch Change
+  * Callback for subscribeSwitch Change
   * @param event the Filter event
   */
   onSubscribeSwitchChange(event: InputSwitchChangeEvent) {
@@ -421,9 +408,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setNamespaceReviewStates() {
-    // Only show namespace review request for TypeSpec language AND if feature is enabled
-    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
-    console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
+    // Show namespace review section for TypeSpec language when feature is enabled
+    // and there are associated API revisions (SDK language reviews)
+    // Display different states: approved, requested, or available to request
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
+                                      this.namespaceReviewEnabled &&
+                                      this.pullRequestsOfAssociatedAPIRevisions.length > 0;
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
 
@@ -445,11 +435,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
       this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
+          // Clear the array first to avoid duplicates
+          this.pullRequestsOfAssociatedAPIRevisions = [];
           for (const pr of response) {
             if (pr.reviewId != this.activeAPIRevision?.reviewId) {
               this.pullRequestsOfAssociatedAPIRevisions.push(pr);
             }
           }
+          // Re-evaluate namespace review states after associated reviews are loaded
+          this.setNamespaceReviewStates();
         }
       });
     }
@@ -457,10 +451,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setSubscribeSwitch() {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
-  }
-
-  setMarkedAsViewSwitch() {
-    this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile)? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!): this.markedAsViewSwitch;
   }
 
   copyReviewText(event: Event) {
@@ -511,12 +501,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   clearAutoGeneratedComments() {
     this.commentsService.clearAutoGeneratedComments(this.activeAPIRevision?.id!).pipe(take(1)).subscribe({
-      next: (response) => {
-        const messgaeData : ToastMessageData = {
-          action: 'RefreshPage',
-        };
-        this.messageService.add({ severity: 'success', icon: 'bi bi-check-circle', summary: 'Comments Cleared', detail: 'All auto-generated comments for this APIRevision has been deleted.', data: messgaeData, key: 'bc', life: 60000 });
-      },
       error: (error) => {
         this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Comment Error', detail: 'Failed to clear auto-generated comments.', key: 'bc', life: 3000 });
       }
@@ -704,7 +688,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     const isJavaScript = this.review.language == "JavaScript";
 
     const isTypeSpec = this.review.language === "TypeSpec";
-    
+
     return !(isAzureRestPackage && isJavaScript) && !isTypeSpec;
   }
 }

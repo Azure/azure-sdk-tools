@@ -14,6 +14,7 @@ from ._client import (
     Python2TypeHintClient,
     Python3TypeHintClient,
     SpecialArgsClient,
+    PylintViolationEnum,
     module_func,
     another_func,
 )

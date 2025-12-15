@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { logger } from '../logging/logger.js';
 import { ragApiPaths } from '../config/config.js';
+import { TokenCredential } from '@azure/identity';
 
 export interface RAGOptions {
   endpoint: string;
-  apiKey: string;
+  accessToken?: string;
 }
 
 // Source definitions
@@ -127,12 +128,14 @@ export interface RagApiError {
 
 // Feedback request interface
 export interface FeedbackRequestPayload {
+  channel_id?: string;
   tenant_id: string;
   messages: Message[];
   reaction: Reaction;
   comment?: string;
   reasons?: string[];
   link?: string;
+  user_name?: string;
 }
 
 // TODO: reuse function to post request to RAG backend
@@ -149,12 +152,14 @@ export async function getRAGReply(
   );
   try {
     logger.info('Completion payload:', { payload });
-
-    const response = await axios.post(options.endpoint + ragApiPaths.completion, payload, {
-      headers: {
-        'X-API-Key': options.apiKey,
+    let headers = {
         'Content-Type': 'application/json; charset=utf-8',
-      },
+    };
+    if (options.accessToken) {
+        headers['Authorization'] = `Bearer ${options.accessToken}`
+    }
+    const response = await axios.post(options.endpoint + ragApiPaths.completion, payload, {
+      headers: headers,
     });
     if (response.status !== 200) {
       logger.warn(`Failed to fetch data from RAG backend. Status: ${response.status}`, { meta });
@@ -170,17 +175,20 @@ export async function getRAGReply(
 
 export async function sendFeedback(payload: FeedbackRequestPayload, options: RAGOptions, meta: object): Promise<void> {
   logger.info(
-    `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${
+    `Post feedback to RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${
       payload.tenant_id
-    }`,
+    } from user ${payload.user_name || 'unknown'}`,
     { meta }
   );
   try {
-    const response = await axios.post(options.endpoint + ragApiPaths.feedback, payload, {
-      headers: {
-        'X-API-Key': options.apiKey,
+    let headers = {
         'Content-Type': 'application/json; charset=utf-8',
-      },
+    };
+    if (options.accessToken) {
+        headers['Authorization'] = `Bearer ${options.accessToken}`
+    }
+    const response = await axios.post(options.endpoint + ragApiPaths.feedback, payload, {
+      headers: headers,
     });
     if (response.status !== 200) {
       logger.warn(`Failed to fetch data from feedback backend. Status: ${response.status}`);

@@ -1,0 +1,3 @@
+name: workflow-2
+kind: summarize_prompt
+evaluation_config:

@@ -1,7 +1,7 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType, RunMode } from './types.js';
+import { SDKType, RunMode, ModularSDKType } from './types.js';
 import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
@@ -11,6 +11,8 @@ import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
+import { exists } from 'fs-extra';
+import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -24,6 +26,18 @@ const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
 
 const errorKeywordsInLowercase = new Set<string>(['error', 'err_pnpm_no_matching_version']);
+
+/**
+ * Get current date in YYYY-MM-DD format
+ * @returns Current date string
+ */
+export function getCurrentDate(): string {
+    const todayDate = new Date();
+    const dd = String(todayDate.getDate()).padStart(2, '0');
+    const mm = String(todayDate.getMonth() + 1).padStart(2, '0');
+    const yyyy = todayDate.getFullYear();
+    return yyyy + '-' + mm + '-' + dd;
+}
 
 function removeLastNewline(line: string): string {
     return line.replace(/\n$/, '')
@@ -347,7 +361,7 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
         tspConfig = yamlLoad(tspConfigContent);
     } catch (error) {
         throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
-    }    
+    }
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {
@@ -377,15 +391,15 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpDirectory(
-    directory: string, 
+    directory: string,
     entriesToPreserve: string[] = []
-): Promise<void> {      
+): Promise<void> {
     // Check if directory exists first
     if (!fs.existsSync(directory)) {
         logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
         return;
     }
-    
+
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
@@ -393,13 +407,13 @@ export async function cleanUpDirectory(
         await mkdir(directory, { recursive: true });
         return;
     }
-    
+
     // If we need to preserve some entries, selectively remove others
     logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
-    
+
     // Get all subdirectories and files
     const entries = await readdir(directory);
-    
+
     // Filter entries to exclude those that should be preserved
     const filteredEntries = entries.filter(entry => !entriesToPreserve.includes(entry));
 
@@ -420,23 +434,78 @@ export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
 ): Promise<void> {
-    // Preserve test directory and assets.json file only in Release and Local modes
-    // In SpecPullRequest and Batch modes, remove everything
-    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
+    // Check if directory exists first
+    if (!fs.existsSync(packageDirectory)) {
+        logger.info(`Directory ${packageDirectory} doesn't exist yet, nothing to clean up.`);
+        return;
+    }
 
-    await cleanUpDirectory(packageDirectory, entriesToPreserve);
+    const modularSDKType = getModularSDKType(packageDirectory);
+    const sdkType = getSDKType(packageDirectory);
+    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
+
+    if (sdkType === SDKType.RestLevelClient || modularSDKType === ModularSDKType.DataPlane) {
+        // For RestLevelClient or Data Plane packages
+        const packageType = sdkType === SDKType.RestLevelClient ? 'RestLevelClient' : 'Data Plane';
+        if (pipelineRunMode) {
+            // Perform clean up by the emitter in Release/Local modes (src folder)
+            logger.info(`[${packageType}] Skipping cleanup in ${runMode} mode - emitter handles cleanup for: ${packageDirectory}`);
+            return;
+        } else {
+            // In SpecPullRequest and Batch modes, clean up everything
+            logger.info(`[${packageType}] Performing full cleanup in ${runMode} mode for: ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+        }
+    } else {
+        // For management plane packages
+        // Check if package.json exists before trying to determine SDK type
+        const packageJsonPath = path.join(packageDirectory, 'package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+            logger.info(`package.json not found at ${packageJsonPath}. Skipping cleanup as package hasn't been generated yet.`);
+            return;
+        }
+
+        const managementSDKType = getSDKType(packageDirectory);
+        if (managementSDKType === SDKType.HighLevelClient) {
+            logger.info(`Cleaning up all files for high-level client package: ${packageDirectory}`);
+            await cleanUpDirectory(packageDirectory, []);
+            return;
+        }
+        logger.info(`Skipping cleanup for management plane package (handled by emitter): ${packageDirectory}`);
+    }
+}
+
+/**
+ * Cleans up the samples folder for management plane packages
+ * @param packageDirectory - Package directory to clean up
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanupSamplesFolder(packageDirectory: string): Promise<void> {
+    if (!fs.existsSync(packageDirectory)) {
+        logger.info(`Directory ${packageDirectory} doesn't exist yet, nothing to clean up.`);
+        return;
+    }
+
+    const modularSDKType = getModularSDKType(packageDirectory);
+    if (modularSDKType === ModularSDKType.ManagementPlane) {
+        const samplesPath = path.join(packageDirectory, 'samples');
+        // Check if directory exists first
+        if (fs.existsSync(samplesPath)) {
+            logger.info(`Cleaning up samples folder: ${samplesPath}`);
+            await rm(samplesPath, { recursive: true, force: true });
+        }
+    }
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
-    
+
     // Get from package-details.name which is the actual NPM package name
     if (emitterOptions?.['package-details']?.name) {
         return emitterOptions['package-details'].name;
     }
-    
+
     return undefined;
 }
 

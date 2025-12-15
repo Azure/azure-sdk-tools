@@ -26,6 +26,12 @@ namespace APIViewWeb.Models
         public string Source { get; set; }
         [JsonPropertyName("is_generic")]
         public bool IsGeneric { get; set; }
+        [JsonPropertyName("correlation_id")]
+        public string CorrelationId { get; set; }
+        [JsonPropertyName("severity")]
+        public string Severity { get; set; }
+        [JsonPropertyName("confidence_score")]
+        public float ConfidenceScore { get; set; }
     }
 
     public class AIReviewJobPolledResponseModel

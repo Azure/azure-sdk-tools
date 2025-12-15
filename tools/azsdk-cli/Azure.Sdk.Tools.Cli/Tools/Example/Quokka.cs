@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Reflection;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 // Just a lil easter egg :)
 
@@ -13,14 +14,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example;
 // NOTE: Other tool classes should not inject output helper directly
 public class QuokkaTool(IOutputHelper output) : MCPTool
 {
-    protected override Command GetCommand()
-    {
-        Command command = new("quokka") { IsHidden = true };
-        command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        return command;
-    }
+    protected override Command GetCommand() => new("quokka") { Hidden = true };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var result = GetQuokkaAnsi();
         output.Output(result);

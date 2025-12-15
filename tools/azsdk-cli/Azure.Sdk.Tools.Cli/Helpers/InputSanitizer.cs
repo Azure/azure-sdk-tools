@@ -5,11 +5,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface IInputSanitizer
     {
-        public string SanitizeName(string languageId);
+        public string SanitizeLanguage(string languageId);
     }
     public class InputSanitizer : IInputSanitizer
     {
-        public string SanitizeName(string languageId)
+        public string SanitizeLanguage(string languageId)
         {
             if (string.IsNullOrEmpty(languageId))
             {

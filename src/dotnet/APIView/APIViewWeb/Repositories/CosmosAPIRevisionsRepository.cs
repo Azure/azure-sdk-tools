@@ -19,10 +19,12 @@ namespace APIViewWeb
     public class CosmosAPIRevisionsRepository : ICosmosAPIRevisionsRepository
     {
         private readonly Container _apiRevisionContainer;
+        private readonly ICosmosReviewRepository _reviewsRepository;
 
-        public CosmosAPIRevisionsRepository(IConfiguration configuration, CosmosClient cosmosClient)
+        public CosmosAPIRevisionsRepository(IConfiguration configuration, CosmosClient cosmosClient, ICosmosReviewRepository reviewsRepository)
         {
             _apiRevisionContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "APIRevisions");
+            _reviewsRepository = reviewsRepository;
         }
 
         /// <summary>
@@ -34,6 +36,9 @@ namespace APIViewWeb
         {
             revision.LastUpdatedOn = DateTime.UtcNow;
             await _apiRevisionContainer.UpsertItemAsync(revision, new PartitionKey(revision.ReviewId));
+            
+            // Update the parent review's LastUpdatedOn if this revision is more recent
+            await _reviewsRepository.UpdateReviewLastUpdatedOnAsync(revision.ReviewId, revision.LastUpdatedOn);
         }
 
         /// <summary>
@@ -325,5 +330,6 @@ namespace APIViewWeb
             }
             return reviewIds;
         }
+
     }
 }

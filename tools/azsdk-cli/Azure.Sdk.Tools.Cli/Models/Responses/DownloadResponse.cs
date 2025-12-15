@@ -20,8 +20,8 @@ public class DownloadResponse : CommandResponse
     [JsonPropertyName("total_files")]
     public int TotalFiles { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
-        return ToString(Message);
+        return Message;
     }
 }

@@ -20,6 +20,9 @@ public class ApiViewAgentComment
     public string CommentText { get; set; }
     [JsonPropertyName("isResolved")]
     public bool IsResolved { get; set; }
+
+    [JsonPropertyName("severity")] 
+    public string Severity { get; set; }
 }
 
 public class MentionRequest

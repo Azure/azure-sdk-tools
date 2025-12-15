@@ -12,15 +12,11 @@ import {
   syncCommand,
   updateCommand,
 } from "./commands.js";
-import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
+import { normalizePath, resolvePath } from "@typespec/compiler";
 import PromptSync from "prompt-sync";
-import { readFile } from "fs/promises";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { getPackageJson } from "./utils.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
+const packageJson = await getPackageJson();
 
 /**
  * Prints the command preamble, including the version and banner.
@@ -138,6 +134,11 @@ const parser = yargs(hideBin(process.argv))
         });
     },
     async (argv: any) => {
+      if (argv["output-dir"] !== undefined) {
+        Logger.warn(
+          "'output-dir' option is ignored when 'emitter-output-dir' is specified in emitter options.",
+        );
+      }
       argv["output-dir"] = resolveOutputDir(argv);
       await initCommand(argv);
     },
@@ -222,6 +223,11 @@ const parser = yargs(hideBin(process.argv))
         });
     },
     async (argv: any) => {
+      if (argv["output-dir"] !== undefined) {
+        Logger.warn(
+          "'output-dir' is only used to find directory containing tsp-location.yaml, the value isn't interpolated when 'emitter-output-dir' is specified in emitter options.",
+        );
+      }
       argv["output-dir"] = resolveOutputDir(argv);
       await updateCommand(argv);
     },

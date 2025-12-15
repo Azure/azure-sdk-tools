@@ -108,22 +108,6 @@ export class APIRevisionsService {
     });
   }
 
-  toggleAPIRevisionViewedByForUser(apiRevisionId: string, state: boolean) : Observable<APIRevision> {
-    let params = new HttpParams();
-    params = params.append('state', state.toString());
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });
-   
-    return this.http.post<APIRevision>(this.baseUrl + `/${apiRevisionId}/toggleViewedBy`, {},
-    { 
-      headers: headers,
-      params: params,
-      withCredentials: true
-    });
-  }
-
   toggleAPIRevisionApproval(reviewId: string, apiRevisionId: string, approve: boolean) : Observable<APIRevision> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

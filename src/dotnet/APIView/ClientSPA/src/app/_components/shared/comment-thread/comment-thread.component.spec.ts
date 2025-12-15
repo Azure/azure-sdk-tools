@@ -128,4 +128,120 @@ describe('CommentThreadComponent', () => {
       expect(component.threadResolvedBy).toBe('test user 2');
     });
   });
+
+  describe('batch resolution functionality', () => {
+    beforeEach(() => {
+      component.userProfile = { userName: 'test-user' } as any;
+      component.reviewId = 'test-review-id';
+      
+      const comment1 = new CommentItemModel();
+      comment1.id = 'comment1';
+      comment1.upvotes = [];
+      comment1.downvotes = [];
+      comment1.elementId = 'element1';
+      
+      const comment2 = new CommentItemModel();
+      comment2.id = 'comment2';
+      comment2.upvotes = [];
+      comment2.downvotes = [];
+      comment2.elementId = 'element2';
+      
+      component.relatedComments = [comment1, comment2];
+    });
+
+    it('should emit resolution events for batch resolution', () => {
+      spyOn(component.batchResolutionActionEmitter, 'emit');
+      component.allCodePanelRowData = [
+        { nodeId: 'element1', nodeIdHashed: 'hash1', associatedRowPositionInGroup: 0 } as CodePanelRowData
+      ];
+      
+      const commentIds = ['comment1'];
+      component['emitResolutionEvents'](commentIds);
+      
+      expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          commentId: 'comment1',
+          resolvedBy: 'test-user'
+        })
+      );
+    });
+  });
+
+  describe('AI comment info ordering', () => {
+    it('should display Confidence Score first and Comment ID last in AI info', () => {
+      const aiComment = new CommentItemModel();
+      aiComment.id = 'test-comment-id';
+      aiComment.confidenceScore = 0.85;
+      aiComment.guidelineIds = ['guideline-1', 'guideline-2'];
+      aiComment.memoryIds = ['memory-1'];
+      
+      const aiInfo = component.getAICommentInfoStructured(aiComment);
+      
+      expect(aiInfo.items.length).toBe(4);
+      expect(aiInfo.items[0].label).toBe('Confidence Score');
+      expect(aiInfo.items[0].value).toBe('85%');
+      expect(aiInfo.items[1].label).toBe('Guidelines Referenced');
+      expect(aiInfo.items[2].label).toBe('Memory References');
+      expect(aiInfo.items[3].label).toBe('Id');
+      expect(aiInfo.items[3].value).toBe('test-comment-id');
+    });
+
+    it('should place Comment ID last even when other fields are missing', () => {
+      const aiComment = new CommentItemModel();
+      aiComment.id = 'test-comment-id';
+      
+      const aiInfo = component.getAICommentInfoStructured(aiComment);
+      
+      expect(aiInfo.items.length).toBe(1);
+      expect(aiInfo.items[0].label).toBe('Id');
+      expect(aiInfo.items[0].value).toBe('test-comment-id');
+    });
+
+    it('should maintain correct order with only Confidence Score and ID', () => {
+      const aiComment = new CommentItemModel();
+      aiComment.id = 'test-comment-id';
+      aiComment.confidenceScore = 0.75;
+      
+      const aiInfo = component.getAICommentInfoStructured(aiComment);
+      
+      expect(aiInfo.items.length).toBe(2);
+      expect(aiInfo.items[0].label).toBe('Confidence Score');
+      expect(aiInfo.items[0].value).toBe('75%');
+      expect(aiInfo.items[1].label).toBe('Id');
+      expect(aiInfo.items[1].value).toBe('test-comment-id');
+    });
+  });
+
+  describe('draft comment text persistence', () => {
+    it('should persist draft comment text in codePanelRowData model', () => {
+      component.codePanelRowData!.draftCommentText = 'Test draft text';
+      
+      expect(component.codePanelRowData!.draftCommentText).toBe('Test draft text');
+    });
+
+    it('should initialize draftCommentText as empty string', () => {
+      const newRowData = new CodePanelRowData();
+      
+      expect(newRowData.draftCommentText).toBe('');
+    });
+
+    it('should clear draft text when comment is cancelled', () => {
+      component.codePanelRowData!.showReplyTextBox = true;
+      component.codePanelRowData!.draftCommentText = 'Draft to be cancelled';
+      
+      spyOn(component.cancelCommentActionEmitter, 'emit');
+      
+      const mockEvent = {
+        target: document.createElement('button')
+      } as any;
+      const replyContainer = document.createElement('div');
+      replyContainer.className = 'reply-editor-container';
+      replyContainer.appendChild(mockEvent.target);
+      
+      component.cancelCommentAction(mockEvent);
+      
+      expect(component.codePanelRowData!.draftCommentText).toBe('');
+      expect(component.codePanelRowData!.showReplyTextBox).toBe(false);
+    });
+  });
 });

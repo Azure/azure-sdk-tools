@@ -62,7 +62,6 @@
                     (showCommentsEmitter)="handleShowCommentsEmitter($event)"
                     (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
                     (diffStyleEmitter)="handleDiffStyleEmitter($event)"
-                    (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"
                     (subscribeEmitter)="handleSubscribeEmitter($event)"
                     (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
                     (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
@@ -100,7 +99,8 @@
         [activeApiRevisionId]="activeApiRevisionId"
         [preferredApprovers]="preferredApprovers"
         (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
-        (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)">
+        (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
+        (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
     </app-conversations >
 </p-sidebar>
 <p-sidebar *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar">

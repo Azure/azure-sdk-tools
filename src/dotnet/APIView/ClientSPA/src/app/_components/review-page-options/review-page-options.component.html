@@ -198,11 +198,6 @@
     <app-page-options-section sectionName="API Revision Options">
     <ul class="list-group">
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
-            (onChange)="onMarkedAsViewedSwitchChange($event)" data-clarity-region="toggle-marked-as-viewed" />
-            <label class="ms-2">Mark as viewed</label>
-        </li>
-        <li class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
             <p-multiSelect
                 [options]="preferredApprovers"

@@ -156,7 +156,6 @@ namespace APIViewWeb.LeanModels
         public bool IsDeleted { get; set; }
         public bool IsReleased { get; set; }
         public DateTime ReleasedOn { get; set; }
-        public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
     }
 
 

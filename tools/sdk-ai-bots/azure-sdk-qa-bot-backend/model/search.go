@@ -190,7 +190,15 @@ type Index struct {
 	Header2         string  `json:"header_2"`
 	Header3         string  `json:"header_3"`
 	OrdinalPosition int     `json:"ordinal_position"`
-	ContextID       string  `json:"context_id"`
+	ContextID       Source  `json:"context_id"`
+}
+
+type Knowledge struct {
+	Source   Source `json:"document_source"`
+	FileName string `json:"document_filename"`
+	Title    string `json:"document_title"`
+	Link     string `json:"document_link"`
+	Content  string `json:"content"`
 }
 
 func GetIndexLink(chunk Index) string {

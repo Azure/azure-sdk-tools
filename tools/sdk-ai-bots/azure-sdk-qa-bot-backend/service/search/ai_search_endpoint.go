@@ -12,9 +12,9 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 type SearchClient struct {
@@ -262,12 +262,33 @@ func (s *SearchClient) GetHeader1CompleteContext(chunk model.Index) ([]model.Ind
 	return resp.Value, nil
 }
 
+func (s *SearchClient) GetHeader2CompleteContext(chunk model.Index) ([]model.Index, error) {
+	// Escape single quotes by replacing them with double single quotes (OData filter syntax)
+	escapedHeader1 := strings.ReplaceAll(chunk.Header1, "'", "''")
+	escapedHeader2 := strings.ReplaceAll(chunk.Header2, "'", "''")
+
+	req := &model.QueryIndexRequest{
+		Count:   false,
+		OrderBy: "ordinal_position",
+		Select:  "chunk_id, chunk, title, header_1, header_2, header_3, ordinal_position, context_id",
+		Filter:  fmt.Sprintf("title eq '%s' and context_id eq '%s' and header_1 eq '%s' and header_2 eq '%s'", chunk.Title, chunk.ContextID, escapedHeader1, escapedHeader2),
+	}
+	resp, err := s.QueryIndex(context.Background(), req)
+	if err != nil {
+		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+	}
+	return resp.Value, nil
+}
+
 func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var chunks []model.Index
 	var err error
-	if strings.HasPrefix(chunk.ContextID, "static") {
+	switch chunk.ContextID {
+	case model.Source_TypeSpecQA, model.Source_TypeSpecMigration:
 		chunks, err = s.GetHeader1CompleteContext(chunk)
-	} else {
+	case model.Source_StaticTypeSpecToSwaggerMapping:
+		chunks, err = s.GetHeader2CompleteContext(chunk)
+	default:
 		chunks, err = s.GetCompleteContext(chunk)
 	}
 	if err != nil {

@@ -12,7 +12,7 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Microsoft.VisualStudio.TestPlatform.CoreUtilities.Helpers;
 using Moq;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     internal class ReleasePlanManualTests
     {

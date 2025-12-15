@@ -1,6 +1,16 @@
 # Release History
 
-## 0.4.0 (2025-12-04)
+## 0.5.0 (2025-12-10)
+
+### Features Added
+
+* Filter out invalid reference links in the response
+
+## 0.4.0 (2025-12-09)
+
+### Bugs Fixed
+
+* Fix context completion logic for TypeSpec to Swagger Mapping source chunks
 
 ### Features Added
 

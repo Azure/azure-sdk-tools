@@ -46,20 +46,6 @@
                     </li>
                     <li class="list-group-item">
                         <div class="mb-1">
-                            <label for="themeDropdown" class="form-label fw-semibold">Theme</label>
-                            <div class="card flex justify-content-center">
-                                <p-dropdown
-                                    id="themeDropdown"
-                                    (onChange)="onProfileChange($event)"
-                                    [options]="themes"
-                                    [(ngModel)]="selectedTheme"
-                                    [style]="{'width':'100%'}">
-                                </p-dropdown>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="mb-1">
                             <label for="scrollBarDropdown" class="form-label fw-semibold">Scrollbar size</label>
                             <div class="card flex justify-content-center">
                                 <p-dropdown
@@ -71,10 +57,6 @@
                                 </p-dropdown>
                             </div>
                         </div>
-                    </li>
-                    <li class="list-group-item">
-                        <p-inputSwitch (onChange)="onProfileChange($event)" [(ngModel)]="useSplitIndexPage" />
-                        <label class="ms-2">Use split index page</label>
                     </li>
                 </ul>
                 <div class="mt-4 d-grid gap-2">

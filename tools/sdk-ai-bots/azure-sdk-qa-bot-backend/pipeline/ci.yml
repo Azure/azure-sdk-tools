@@ -117,7 +117,7 @@ extends:
 
               - script: |
                   echo "##[command]Running tests in $(pwd)"
-                  go test -timeout 120s -v -race -coverprofile=coverage.out -covermode=atomic ./...
+                  go test -timeout 5m -v -race -coverprofile=coverage.out -covermode=atomic ./...
                   if [ $? -ne 0 ]; then
                     echo "Tests failed"
                     exit 1

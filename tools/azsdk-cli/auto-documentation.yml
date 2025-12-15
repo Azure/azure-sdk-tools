@@ -19,16 +19,19 @@ jobs:
       displayName: 'Install Azure SDK MCP'
       inputs:
         targetType: 'inline'
-        script: './eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $(System.DefaultWorkingDirectory)'
+        script: >
+          ./eng/common/mcp/azure-sdk-mcp.ps1
+          -InstallDirectory $(Agent.TempDirectory)
         pwsh: true
         workingDirectory: '$(System.DefaultWorkingDirectory)'
-    
+
     - task: PowerShell@2
       displayName: 'Generate MCP tools documentation'
       inputs:
         targetType: 'filePath'
         filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
-        arguments: '-AzsdkExePath $(System.DefaultWorkingDirectory)/azsdk'
+        arguments: >
+          -AzsdkExePath $(Agent.TempDirectory)/azsdk
         pwsh: true
         workingDirectory: '$(System.DefaultWorkingDirectory)'
     

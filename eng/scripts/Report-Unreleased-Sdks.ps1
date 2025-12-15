@@ -21,8 +21,8 @@ param (
 
 Set-StrictMode -Version 3
 
-$AZURE_SDK_APEX_EMAIL = "azsdkapex@microsoft.com"
-$SUBJECT = "Action Required: Missing Tier 1 language in your Azure SDK Release Plan"
+$AzureSdkApexEmail = "azsdkapex@microsoft.com"
+$Subject = "Action Required: Missing Tier 1 language in your Azure SDK Release Plan"
 
 function BuildEmailNotification($releaseOwnerName, $plane, $missingSDKs, $releasePlanLink) {
     $body = @"
@@ -69,7 +69,7 @@ foreach ($releasePlan in $releasePlans) {
         [void][System.Net.Mail.MailAddress]::new($releaseOwnerEmail)
     }
     catch {
-        Write-Host ("Skipped notification for Release Plan ID {0}: invalid email '{1}'" -f $releasePlan.id, $releaseOwnerEmail)
+        Write-Host ("Skipped notification for Release Plan ID {0}: invalid email '{1}'" -f $releasePlan.WorkItemId, $releaseOwnerEmail)
         continue
     }
 
@@ -98,5 +98,5 @@ foreach ($releasePlan in $releasePlans) {
     $missingSDKsString = ($missingSDKs -join ', ')
     $body = BuildEmailNotification -releaseOwnerName $releaseOwnerName -plane $plane -missingSDKs $missingSDKsString -releasePlanLink $releasePlanLink
 
-    & (Join-Path $PSScriptRoot "Send-Email-Notification.ps1") -AzureSDKEmailUri $AzureSDKEmailUri -To $releaseOwnerEmail -CC $AZURE_SDK_APEX_EMAIL -Subject $SUBJECT -Body $body
+    & (Join-Path $PSScriptRoot "Send-Email-Notification.ps1") -AzureSDKEmailUri $AzureSDKEmailUri -To $releaseOwnerEmail -Cc $AzureSdkApexEmail -Subject $Subject -Body $body
 }

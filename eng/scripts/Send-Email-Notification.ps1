@@ -30,7 +30,7 @@ param (
     [string] $To,
 
     [Parameter(Mandatory = $false)]
-    [string] $CC,
+    [string] $Cc,
 
     [Parameter(Mandatory = $true)]
     [string] $Subject,
@@ -42,10 +42,10 @@ param (
 Set-StrictMode -Version 3
 
 try {
-    $requestBody = @{ EmailTo = $To; CC = $CC; Subject = $Subject; Body = $Body} | ConvertTo-Json -Depth 3
-    Write-Host "Sending Email - To: $To`nCC: $CC`nSubject: $Subject`nBody: $Body"
+    $requestBody = @{ EmailTo = $To; CC = $Cc; Subject = $Subject; Body = $Body} | ConvertTo-Json -Depth 3
+    Write-Host "Sending Email - To: $To`nCC: $Cc`nSubject: $Subject`nBody: $Body"
     $response = Invoke-RestMethod -Uri $AzureSDKEmailUri -Method Post -Body $requestBody -ContentType "application/json"
-    Write-Host "Successfully Sent Email - To: $To`nCC: $CC`nSubject: $Subject`nBody: $Body"
+    Write-Host "Successfully Sent Email - To: $To`nCC: $Cc`nSubject: $Subject`nBody: $Body"
 } catch {
-    Write-Error "Failed to send email.`nTo: $To`nCC: $CC`nSubject: $Subject`nBody: $Body`nException message: $($_.Exception.Message)"
+    Write-Error "Failed to send email.`nTo: $To`nCC: $Cc`nSubject: $Subject`nBody: $Body`nException message: $($_.Exception.Message)"
 }

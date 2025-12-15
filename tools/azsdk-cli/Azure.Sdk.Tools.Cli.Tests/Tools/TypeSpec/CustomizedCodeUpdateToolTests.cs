@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools.Typespec;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
 
 [TestFixture]
 public class CustomizedCodeUpdateToolAutoTests

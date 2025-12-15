@@ -6,7 +6,7 @@ using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools.Typespec
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec
 {
     public class TspInitToolTests
     {

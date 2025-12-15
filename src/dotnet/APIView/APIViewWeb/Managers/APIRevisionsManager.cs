@@ -290,6 +290,58 @@ namespace APIViewWeb.Managers
             return (updateReview, apiRevision);
         }
 
+        /// <summary>
+        /// Copy approval status from a source revision to a target revision.
+        /// This is used by automated processes to copy approval from a previously approved revision
+        /// when the API surface is identical. No authorization check is performed since this is
+        /// copying an existing human approval, not creating a new one.
+        /// </summary>
+        /// <param name="targetRevision">The revision to copy approval to</param>
+        /// <param name="sourceRevision">The approved revision to copy from</param>
+        /// <returns>Tuple indicating if review needs update and the updated revision</returns>
+        public async Task<(bool updateReview, APIRevisionListItemModel apiRevision)> CopyApprovalFromAsync(
+            APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
+        {
+            ArgumentNullException.ThrowIfNull(targetRevision);
+            ArgumentNullException.ThrowIfNull(sourceRevision);
+            
+            if (!sourceRevision.IsApproved)
+            {
+                throw new ArgumentException("Source revision must be approved to copy approval from", nameof(sourceRevision));
+            }
+
+            bool updateReview = false;
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(targetRevision.ReviewId);
+
+            // Use the last approver from the source revision
+            string approver = sourceRevision.Approvers.LastOrDefault();
+            if (string.IsNullOrEmpty(approver))
+            {
+                throw new InvalidOperationException("Source revision has no approvers to copy from");
+            }
+
+            string notes = $"Approval copied from revision {sourceRevision.Id}";
+            (List<APIRevisionChangeHistoryModel> ChangeHistory, bool ChangeStatus) changeUpdate =
+                ChangeHistoryHelpers.UpdateBinaryChangeAction(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver, notes);
+            targetRevision.ChangeHistory = changeUpdate.ChangeHistory;
+            targetRevision.IsApproved = changeUpdate.ChangeStatus;
+
+            if (ChangeHistoryHelpers.GetChangeActionStatus(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver))
+            {
+                targetRevision.Approvers.Add(approver);
+            }
+
+            if (!review.IsApproved && targetRevision.IsApproved)
+            {
+                updateReview = true;
+            }
+
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", targetRevision.ReviewId,
+                targetRevision.Id, approver, targetRevision.IsApproved);
+
+            return (updateReview, targetRevision);
+        }
 
         /// <summary>
         /// Create APIRevision from File or FilePAth

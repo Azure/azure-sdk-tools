@@ -308,7 +308,7 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "ProductSku"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Completed"
                 mgmtAttestationStatus = "Completed"
@@ -338,7 +338,7 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "Offering"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Completed"
                 mgmtAttestationStatus = "Not applicable"
@@ -368,7 +368,7 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "Feature"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Completed"
                 mgmtAttestationStatus = "Not applicable"
@@ -394,7 +394,7 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "ProductSku"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Not applicable"
                 mgmtAttestationStatus = "Not applicable"
@@ -423,10 +423,10 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "Feature"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Not applicable"
-                mgmtAttestationStatus = "Not Applicable"
+                mgmtAttestationStatus = "Not applicable"
             }
         },
         @{ 
@@ -456,7 +456,7 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "ProductSku"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Not applicable"
                 mgmtAttestationStatus = "Not applicable"
@@ -481,12 +481,12 @@ Describe 'Parse triages' {
                 kpiIds = @(
                     "dfe9c112-416e-4e0a-8012-4a3a29807782",
                     "ad70777b-a1f5-4d77-8926-5c466d7a214d",
-                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                    "da768dff-8f90-4999-ad3a-adcd790911f3"
                 )
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "Feature"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Not applicable"
                 mgmtAttestationStatus = "Completed"
@@ -514,7 +514,7 @@ Describe 'Parse triages' {
                 productID = "123456789-09876541-23124981234"
                 status = 3
                 productType = "Offering"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
                 dataAttestationStatus = "Not applicable"
                 mgmtAttestationStatus = "Completed"
@@ -559,11 +559,11 @@ Describe 'Parse triages' {
             }
         foreach ($kpiId in $expectation.kpiIds) {
             Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
-                $targetId -eq $expectation.productID
-                $actionItemId -eq $kpiId
-                $status -eq $expectation.status
-                $targetType -eq $expectation.productType -and
-                $url -eq $expectation.url -and 
+                $targetId -eq $expectation.productID -and
+                $actionItemId -eq $kpiId -and
+                $status -eq $expectation.status -and
+                $targetType -ceq $expectation.productType -and
+                $url -ceq $expectation.url -and 
                 $productName -eq $expectation.productName
             }
         }
@@ -571,13 +571,13 @@ Describe 'Parse triages' {
         Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 2
         Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
             $workItemId -eq $triage.id -and
-            $fieldName -eq "Custom.ManagementPlaneAttestationStatus" -and
-            $status -eq $expectation.mgmtAttestationStatus
+            $fieldName -ceq "Custom.ManagementPlaneAttestationStatus" -and
+            $status -ceq $expectation.mgmtAttestationStatus
         }
         Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
             $workItemId -eq $triage.id -and
-            $fieldName -eq "Custom.DataplaneAttestationStatus" -and
-            $status -eq $expectation.dataAttestationStatus
+            $fieldName -ceq "Custom.DataplaneAttestationStatus" -and
+            $status -ceq $expectation.dataAttestationStatus
         }
     }
 }
@@ -603,7 +603,7 @@ Describe 'Parse release plans' {
                 kpiId = "dfe9c112-416e-4e0a-8012-4a3a29807782"
                 status = 1
                 productType = "Feature"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
             }
         },
@@ -617,7 +617,7 @@ Describe 'Parse release plans' {
                     "Custom.ProductType" = "Sku"
                     "Custom.ProductName" = "Product Name"
                 }; 
-                url = "Fake Url";
+                url = "Fake URL";
                 id = "0"
             }; 
             expectation = @{
@@ -625,7 +625,7 @@ Describe 'Parse release plans' {
                 kpiId = "e0504da9-8897-41db-a75f-5027298ba410"
                 status = 1
                 productType = "ProductSku"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
             }
         },
@@ -639,7 +639,7 @@ Describe 'Parse release plans' {
                     "Custom.ProductType" = "Sku"
                     "Custom.ProductName" = "Product Name"
                 }; 
-                url = "Fake Url";
+                url = "Fake URL";
                 id = "0"
             }; 
             expectation = @{
@@ -647,7 +647,7 @@ Describe 'Parse release plans' {
                 kpiId = "ad70777b-a1f5-4d77-8926-5c466d7a214d"
                 status = 1
                 productType = "ProductSku"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
             }
         },
@@ -661,7 +661,7 @@ Describe 'Parse release plans' {
                     "Custom.ProductType" = "Offering"
                     "Custom.ProductName" = "Product Name"
                 }; 
-                url = "Fake Url";
+                url = "Fake URL";
                 id = "0"
             }; 
             expectation = @{
@@ -669,7 +669,7 @@ Describe 'Parse release plans' {
                 kpiId = "84715402-4f3c-4dca-b330-f05206abaec5"
                 status = 1
                 productType = "Offering"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
             }
         },
@@ -683,7 +683,7 @@ Describe 'Parse release plans' {
                     "Custom.ProductType" = "Sku"
                     "Custom.ProductName" = "Product Name"
                 }; 
-                url = "Fake Url";
+                url = "Fake URL";
                 id = "0"
             }; 
             expectation = @{
@@ -691,7 +691,7 @@ Describe 'Parse release plans' {
                 kpiId = "da768dff-8f90-4999-ad3a-adcd790911f3"
                 status = 1
                 productType = "ProductSku"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
             }
         },
@@ -705,7 +705,7 @@ Describe 'Parse release plans' {
                     "Custom.ProductType" = "Feature"
                     "Custom.ProductName" = "Product Name"
                 }; 
-                url = "Fake Url";
+                url = "Fake URL";
                 id = "0"
             }; 
             expectation = @{
@@ -713,7 +713,7 @@ Describe 'Parse release plans' {
                 kpiId = "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
                 status = 1
                 productType = "Feature"
-                url = "Fake Url"
+                url = "Fake URL"
                 productName = "Product Name"
             }
         }
@@ -750,16 +750,16 @@ Describe 'Parse release plans' {
             $targetId -eq $expectation.productID -and
             $actionItemId -eq $expectation.kpiId -and
             $status -eq $expectation.status -and
-            $targetType -eq $expectation.productType -and
-            $url -eq $expectation.url -and 
+            $targetType -ceq $expectation.productType -and
+            $url -ceq $expectation.url -and 
             $productName -eq $expectation.productName
         }
 
         Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1
         Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
             $workItemId -eq $releasePlan.id -and
-            $fieldName -eq "Custom.AttestationStatus" -and
-            $status -eq "Completed"
+            $fieldName -ceq "Custom.AttestationStatus" -and
+            $status -ceq "Completed"
         }
     }
 }

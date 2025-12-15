@@ -10,7 +10,7 @@ import (
 // to prevent hallucination. It removes references with invalid links and logs warnings.
 func FilterInvalidReferenceLinks(references []model.Reference, knowledges []model.Knowledge) []model.Reference {
 	if len(references) == 0 {
-		return nil
+		return references
 	}
 
 	// Extract all links from chunks

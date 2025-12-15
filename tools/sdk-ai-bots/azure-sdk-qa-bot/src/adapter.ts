@@ -7,7 +7,12 @@ import { logger } from './logging/logger.js';
 import { getTurnContextLogMeta } from './logging/utils.js';
 import { isAzureAppService } from './common/shared.js';
 
-const adapter = new TeamsAdapter(config);
+// For Teams App Test Tool, don't require authentication
+const adapterConfig = config.isLocal === 'true' && !config.MicrosoftAppId
+  ? {} // No authentication for test tool
+  : config;
+
+const adapter = new TeamsAdapter(adapterConfig);
 adapter.use(new LogMiddleware());
 
 // Catch-all for errors.

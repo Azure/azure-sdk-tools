@@ -15,6 +15,7 @@ const config = {
   // Azure Table Storage
   azureStorageUrl: process.env.AZURE_STORAGE_URL,
   azureTableNameForConversation: process.env.AZURE_TABLE_NAME_FOR_CONVERSATION,
+  isLocal: process.env.IS_LOCAL
 };
 
 export const ragApiPaths = {

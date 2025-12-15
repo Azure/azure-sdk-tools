@@ -461,22 +461,14 @@ namespace APIViewUnitTests
                     It.IsAny<string>(), It.IsAny<int?>()))
                 .ReturnsAsync(newRevision);
 
-            _mockApiRevisionsManager.Setup(m => m.ToggleAPIRevisionApprovalAsync(
-                    It.IsAny<ClaimsPrincipal>(), It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>()))
+            _mockApiRevisionsManager.Setup(m => m.CopyApprovalFromAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()))
                 .ReturnsAsync((false, newRevision));
 
             await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
-            // Approval should be toggled/copied
-            _mockApiRevisionsManager.Verify(m => m.ToggleAPIRevisionApprovalAsync(
-                _testUser,
-                "review-id",
-                It.IsAny<string>(),
-                newRevision,
-                It.Is<string>(s => s.Contains("approved-revision-id")),
-                "approver1"),
+            // Approval should be /copied
+            _mockApiRevisionsManager.Verify(m => m.CopyApprovalFromAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()),
                 Times.Once);
         }
 

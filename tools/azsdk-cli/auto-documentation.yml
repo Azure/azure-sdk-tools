@@ -1,0 +1,43 @@
+parameters:
+  - name: ToolDirectory
+    type: string
+    default: ''
+
+jobs:
+  - job: UpdateMCPDocumentation
+    displayName: 'Update MCP Tools Documentation'
+    pool:
+      name: $(LINUXPOOL)
+      image: $(LINUXVMIMAGE)
+      os: linux
+    
+    steps:
+    - checkout: self
+      displayName: 'Checkout current branch'
+    
+    - task: PowerShell@2
+      displayName: 'Install Azure SDK MCP'
+      inputs:
+        targetType: 'inline'
+        script: >
+          ./eng/common/mcp/azure-sdk-mcp.ps1
+          -InstallDirectory $(Agent.TempDirectory)
+        pwsh: true
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+    - task: PowerShell@2
+      displayName: 'Generate MCP tools documentation'
+      inputs:
+        targetType: 'filePath'
+        filePath: '$(System.DefaultWorkingDirectory)/tools/azsdk-cli/update-mcp-tools-docs.ps1'
+        arguments: >
+          -AzsdkExePath $(Agent.TempDirectory)/azsdk
+        pwsh: true
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+    
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: azure-sdk-tools
+        PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
+        CommitMsg: "Update MCP tools documentation"
+        WorkingDirectory: $(System.DefaultWorkingDirectory)

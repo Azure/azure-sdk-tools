@@ -8,9 +8,9 @@ def ensure_json_obj(val):
         return json.loads(val)
     return val
 
-def load_cache_lookup(testcase_ids: list[str], test_file_paths: list[Path]) -> dict[str, dict]:
-    """Load cache for multiple testcases and return testcase_id -> result_row dictionary.
-    
+def load_recordings(testcase_ids: list[str], test_file_paths: list[Path]) -> dict[str, dict]:
+    """Load recordings for multiple testcases and return testcase_id -> result_row dictionary.
+
     Args:
         testcase_ids: List of testcase identifiers to load
         test_file_paths: Corresponding list of test file paths
@@ -18,29 +18,29 @@ def load_cache_lookup(testcase_ids: list[str], test_file_paths: list[Path]) -> d
     Returns:
         Dictionary mapping testcase_id to Azure AI result row
     """
-    cache_lookup = {}
+    recordings_lookup = {}
     
     for testcase_id, test_file_path in zip(testcase_ids, test_file_paths):
-        cache_file = get_cache_file_path(testcase_id, test_file_path)
-        
-        if cache_file.exists():
+        recording_file = _get_recording_file_path(testcase_id, test_file_path)
+
+        if recording_file.exists():
             try:
-                with cache_file.open("r", encoding="utf-8") as f:
+                with recording_file.open("r", encoding="utf-8") as f:
                     cached_data = json.load(f)
                     if "row" in cached_data:
-                        cache_lookup[testcase_id] = cached_data["row"]
+                        recordings_lookup[testcase_id] = cached_data["row"]
             except (json.JSONDecodeError, IOError):
                 # Skip corrupted cache files
                 continue
-    
-    return cache_lookup
 
-def append_results_to_cache(test_file_paths: list[Path], azure_results: list[dict]) -> None:
-    """Save fresh evaluation results to individual cache files.
+    return recordings_lookup
+
+def save_recordings(test_file_paths: list[Path], azure_results: list[dict]) -> None:
+    """Save fresh evaluation results to individual recording files.
     
     Args:
         test_file_paths: List of test file paths corresponding to the results
-        azure_results: List of Azure AI evaluation results to cache
+        azure_results: List of Azure AI evaluation results to save
     """
     # Build mapping from testcase_id to test_file_path
     testcase_to_file = {}
@@ -64,13 +64,13 @@ def append_results_to_cache(test_file_paths: list[Path], azure_results: list[dic
     # Save each result to its individual cache file
     for azure_result in azure_results:
         for row in azure_result.get("rows", []):
-            testcase_id = extract_testcase_id(row)
+            testcase_id = _extract_testcase_id(row)
             if testcase_id and testcase_id in testcase_to_file:
                 test_file_path = testcase_to_file[testcase_id]
-                save_result_to_cache(testcase_id, test_file_path, row)
+                _save_result_to_file(testcase_id, test_file_path, row)
 
 
-def extract_testcase_id(row: dict) -> str | None:
+def _extract_testcase_id(row: dict) -> str | None:
     """Extract testcase identifier from Azure AI evaluation result row.
     
     Args:
@@ -88,56 +88,56 @@ def extract_testcase_id(row: dict) -> str | None:
     return None
 
 
-def get_cache_file_path(
-        testcase_id: str, test_file_path: Path | None = None, cache_base_dir: Path | None = None
+def _get_recording_file_path(
+        testcase_id: str, test_file_path: Path | None = None, recording_base_dir: Path | None = None
     ) -> Path:
-    """Get cache file path for a specific testcase, mirroring test structure.
+    """Get recording file path for a specific testcase, mirroring test structure.
     
     Args:
         testcase_id: The test case identifier
         test_file_path: Path to the original test file (to determine structure)
-        cache_base_dir: Base directory for cache files (defaults to evals/cache)
+        recording_base_dir: Base directory for recording files (defaults to evals/recordings)
         
     Returns:
-        Path to the individual JSON cache file for this testcase
+        Path to the individual JSON recording file for this testcase
     """
-    if cache_base_dir is None:
-        cache_base_dir = Path(__file__).parent / "cache"
-    
+    if recording_base_dir is None:
+        recording_base_dir = Path(__file__).parent / "recordings"
+
     # If we have test file path, mirror its structure
     if test_file_path:
         tests_root = Path(__file__).parent / "tests"
         try:
             # Get relative path from tests root to test file's directory
             relative_path = test_file_path.parent.relative_to(tests_root)
-            cache_dir = cache_base_dir / relative_path
+            recording_dir = recording_base_dir / relative_path
         except ValueError:
             # Fallback if test_file_path is not under tests root
-            cache_dir = cache_base_dir / "misc"
+            recording_dir = recording_base_dir / "misc"
     else:
-        cache_dir = cache_base_dir / "legacy"
-    
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    return cache_dir / f"{testcase_id}.json"
+        recording_dir = recording_base_dir / "legacy"
 
-def save_result_to_cache(testcase_id: str, test_file_path: Path, azure_result_row: dict) -> None:
-    """Save a single test result to its individual cache file.
+    recording_dir.mkdir(parents=True, exist_ok=True)
+    return recording_dir / f"{testcase_id}.json"
+
+
+def _save_result_to_file(testcase_id: str, test_file_path: Path, azure_result_row: dict) -> None:
+    """Save a single test result to its individual recording file.
     
     Args:
         testcase_id: The test case identifier
         test_file_path: Path to the original test file
         azure_result_row: Single Azure AI evaluation result row to cache
     """
-    cache_file = get_cache_file_path(testcase_id, test_file_path)
-    
-    cache_data = {
+    recording_file = _get_recording_file_path(testcase_id, test_file_path)
+    recording_data = {
         "testcase": testcase_id,
         "row": azure_result_row
     }
     
     try:
-        with cache_file.open("w", encoding="utf-8") as f:
-            json.dump(cache_data, f, indent=2, ensure_ascii=False)
+        with recording_file.open("w", encoding="utf-8") as f:
+            json.dump(recording_data, f, indent=2, ensure_ascii=False)
     except IOError:
         # Continue without caching if write fails
         pass

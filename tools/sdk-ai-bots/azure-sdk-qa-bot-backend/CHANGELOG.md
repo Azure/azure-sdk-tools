@@ -1,5 +1,22 @@
 # Release History
 
+## 0.5.0 (2025-12-10)
+
+### Features Added
+
+* Filter out invalid reference links in the response
+
+## 0.4.0 (2025-12-09)
+
+### Bugs Fixed
+
+* Fix context completion logic for TypeSpec to Swagger Mapping source chunks
+
+### Features Added
+
+* Migrate Agentic Search to use adopt latest API version
+* Add TypeSpec to Swagger mapping knowledge to help solve TypeSpec migration questions
+
 ## 0.3.0 (2025-11-27)
 
 ### Bugs Fixed

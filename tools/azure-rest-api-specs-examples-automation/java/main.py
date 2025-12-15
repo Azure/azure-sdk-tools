@@ -319,7 +319,7 @@ def create_java_examples(release: Release, sdk_examples_path: str, java_examples
 
 
 def get_package_name(sdk_package: str) -> str:
-    # new release tag would be "com.azure.resourcemanager+azure-sdk-template_1.0.1-beta.1", while older be "azure-sdk-template_1.0.1-beta.1"
+    # new release tag would be "com.azure.resourcemanager+azure-resourcemanager-storage_1.0.1-beta.1", while older be "azure-resourcemanager-storage_1.0.1-beta.1"
     sdk_group_id_prefix = "com.azure.resourcemanager+"
     if sdk_package.startswith(sdk_group_id_prefix):
         # remove groupId "com.azure.resourcemanager+" of management-plane lib

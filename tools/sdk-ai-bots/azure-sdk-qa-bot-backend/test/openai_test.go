@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/stretchr/testify/require"
 )
 

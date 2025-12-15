@@ -108,18 +108,19 @@ func initCredential() error {
 
 	// 2: Managed Identity
 	clientID := os.Getenv("AZURE_CLIENT_ID")
-	var miOpts *azidentity.ManagedIdentityCredentialOptions
 	if len(clientID) > 0 {
-		miOpts = &azidentity.ManagedIdentityCredentialOptions{
+		miOpts := &azidentity.ManagedIdentityCredentialOptions{
 			ID: azidentity.ClientID(clientID),
 		}
-	}
-	miCred, err := azidentity.NewManagedIdentityCredential(miOpts)
-	if err == nil {
-		creds = append(creds, miCred)
-		log.Printf("Managed Identity credential added")
+		miCred, miCredErr := azidentity.NewManagedIdentityCredential(miOpts)
+		if miCredErr == nil {
+			creds = append(creds, miCred)
+			log.Printf("Managed Identity credential added")
+		} else {
+			log.Printf("Managed Identity credential not available: %v", miCredErr)
+		}
 	} else {
-		log.Printf("Managed Identity credential not available: %v", err)
+		log.Printf("AZURE_CLIENT_ID not set; skipping Managed Identity credential")
 	}
 
 	// 3: Azure CLI

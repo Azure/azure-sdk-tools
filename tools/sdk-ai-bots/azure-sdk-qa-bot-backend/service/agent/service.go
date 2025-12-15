@@ -84,18 +84,18 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Check if we need RAG processing
-	var chunks []string
+	var knowledges []model.Knowledge
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
 
 	if intention != nil && !intention.NeedsRagProcessing {
 		// Skip RAG workflow for non-technical messages
 		log.Printf("Skipping RAG workflow - non-technical message detected")
-		chunks = []string{}
+		knowledges = []model.Knowledge{}
 		promptTemplate = "common/non_technical_question.md"
 	} else {
-		// Run agentic search and knowledge search in parallel, then merge results
-		chunks, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+		// Run agentic search and vector search in parallel, then merge results
+		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query)
 		if err != nil {
 			log.Printf("Parallel search failed: %v", err)
 			return nil, model.NewSearchFailureError(err)
@@ -103,7 +103,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err = s.buildPrompt(intention, chunks, promptTemplate)
+	prompt, err = s.buildPrompt(intention, knowledges, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -122,16 +122,19 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 6. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
-		fullContext := strings.Join(chunks, "-------------------------\n")
-		result.FullContext = &fullContext
+		fullContext, _ := json.Marshal(knowledges)
+		result.FullContext = to.Ptr(string(fullContext))
 	}
 	result.Intention = intention
+	result.References = utils.FilterInvalidReferenceLinks(result.References, knowledges)
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
 
 func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
-	promptParser := prompt.IntentionPromptParser{}
+	promptParser := prompt.IntentionPromptParser{
+		DefaultPromptParser: &prompt.DefaultPromptParser{},
+	}
 	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
 	if err != nil {
 		log.Printf("Failed to parse intention prompt: %v", err)
@@ -166,24 +169,34 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 }
 
-func processDocument(result model.Index) string {
-	chunk := fmt.Sprintf("- document_category: %s\n", result.ContextID)
-	chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
-	chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
-	chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
-	chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
-	return chunk
+func processDocument(result model.Index) model.Knowledge {
+	return model.Knowledge{
+		Source:   result.ContextID,
+		FileName: result.Title,
+		Title:    result.Header1,
+		Link:     model.GetIndexLink(result),
+		Content:  result.Chunk,
+	}
 }
 
-func processChunk(result model.Index) string {
-	chunk := fmt.Sprintf("- document_category: %s\n", result.ContextID)
-	chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
-	chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
-	chunk += fmt.Sprintf("- chunk_header_1: %s\n", result.Header1)
-	chunk += fmt.Sprintf("- chunk_header_2: %s\n", result.Header2)
-	chunk += fmt.Sprintf("- chunk_header_3: %s\n", result.Header3)
-	chunk += fmt.Sprintf("- chunk_content: %s\n", result.Chunk)
-	return chunk
+func processChunk(result model.Index) model.Knowledge {
+	chunk := ""
+	if len(result.Header1) > 0 {
+		chunk += "# " + result.Header1 + "\n"
+	}
+	if len(result.Header2) > 0 {
+		chunk += "## " + result.Header2 + "\n"
+	}
+	if len(result.Header3) > 0 {
+		chunk += "### " + result.Header3 + "\n"
+	}
+	chunk += result.Chunk
+	return model.Knowledge{
+		Source:   result.ContextID,
+		FileName: result.Title,
+		Link:     model.GetIndexLink(result),
+		Content:  chunk,
+	}
 }
 
 func processName(name *string) *string {
@@ -396,25 +409,28 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) buildPrompt(intention *model.IntentionResult, chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowledges []model.Knowledge, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
-	for i, chunk := range chunks {
-		if len(chunk) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+	for i, knowledge := range knowledges {
+		if len(knowledge.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AppConfig.AOAI_CHAT_MAX_TOKENS)
-			chunks[i] = chunk[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+			knowledges[i].Content = knowledge.Content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 		}
-		tokenCnt += len(chunks[i])
+		tokenCnt += len(knowledges[i].Content)
 		if tokenCnt > config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS {
 			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS)
-			chunks = chunks[:i+1] // truncate the chunks to the current index
+			knowledges = knowledges[:i+1] // truncate the chunks to the current index
 			break
 		}
 	}
+	knowledgeStr, _ := json.Marshal(knowledges)
 	intentionStr, _ := json.Marshal(intention)
-	promptParser := prompt.DefaultPromptParser{}
+	promptParser := prompt.CompletionPromptParser{
+		DefaultPromptParser: &prompt.DefaultPromptParser{},
+	}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
-		"context":   strings.Join(chunks, "-------------------------\n"),
+		"context":   string(knowledgeStr),
 		"intention": string(intentionStr),
 	}, promptTemplate)
 	if err != nil {
@@ -443,18 +459,20 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 		return nil, err
 	}
 	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
-	promptParser := prompt.DefaultPromptParser{}
-	if len(resp.Choices) > 0 {
-		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
-		if err != nil {
-			respStr, _ := resp.MarshalJSON()
-			log.Printf("ERROR: %s, response:%s", err, respStr)
-			return nil, err
-		}
-		return answer, nil
+	promptParser := prompt.CompletionPromptParser{
+		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	log.Printf("No choices found in response")
-	return nil, fmt.Errorf("no choices found in response")
+	if len(resp.Choices) == 0 {
+		return nil, fmt.Errorf("no choices found in response")
+	}
+	answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
+	if err != nil {
+		respStr, _ := resp.MarshalJSON()
+		log.Printf("ERROR: %s, response:%s", err, respStr)
+		return nil, err
+	}
+	return answer, nil
+
 }
 
 func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {
@@ -501,7 +519,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]string, error) {
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]model.Knowledge, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -553,10 +571,10 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	}
 
 	// Merge and process the results
-	mergedChunks := s.mergeAndProcessSearchResults(req, agenticChunks, knowledgeRes.rawResults)
+	knowledges := s.mergeAndProcessSearchResults(agenticChunks, knowledgeRes.rawResults)
 
 	log.Printf("Parallel search and merge took: %v", time.Since(parallelSearchStart))
-	return mergedChunks, nil
+	return knowledges, nil
 }
 
 // searchKnowledgeBase performs the core knowledge search without dependency on agentic results
@@ -577,7 +595,7 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 
 // mergeAndProcessSearchResults intelligently merges agentic and knowledge search results,
 // prioritizes them based on relevance and source, then processes them
-func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionReq, agenticChunks []model.Index, knowledgeResults []model.Index) []string {
+func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.Index, knowledgeResults []model.Index) []model.Knowledge {
 	mergeStart := time.Now()
 
 	allChunks := make([]model.Index, 0)
@@ -658,48 +676,46 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	searchClient := search.NewSearchClient()
 
 	// Prepare chunks for completion
-	files := make([]model.Index, 0)
+	documents := make([]model.Index, 0)
 	for _, result := range needCompleteFiles {
-		files = append(files, model.Index{
+		documents = append(documents, model.Index{
 			Title:     result.Title,
 			ContextID: result.ContextID,
 			Header1:   result.Header1,
 		})
 	}
-	completedFilesCnt := len(files)
-	files = append(files, needCompleteChunks...)
+	completedDocumentsCnt := len(documents)
+	documents = append(documents, needCompleteChunks...)
 
 	// Complete chunks in parallel
 	var wg sync.WaitGroup
-	wg.Add(len(files))
-	for i := range files {
+	wg.Add(len(documents))
+	for i := range documents {
 		i := i
 		go func() {
 			defer wg.Done()
-			files[i] = searchClient.CompleteChunk(files[i])
+			documents[i] = searchClient.CompleteChunk(documents[i])
 		}()
 	}
 	wg.Wait()
 
 	// Build final result
-	result := make([]string, 0)
+	results := make([]model.Knowledge, 0)
 
 	// Add completed chunks first (avoid duplicates by chunk content)
-	for _, file := range files {
-		chunk := processDocument(file)
-		result = append(result, chunk)
+	for _, file := range documents {
+		results = append(results, processDocument(file))
 		log.Printf("✓ Completed document: %s/%s#%s", file.ContextID, file.Title, file.Header1)
 	}
 
 	// Add remaining ready chunks (avoid duplicates by chunk content)
 	for _, chunk := range allChunks {
-		content := processChunk(chunk)
-		result = append(result, content)
+		results = append(results, processChunk(chunk))
 		log.Printf("- Normal chunks: %s/%s#%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3)
 	}
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d q&a + %d chunks",
-		len(agenticChunks), len(knowledgeResults), completedFilesCnt, len(needCompleteChunks), len(allChunks))
+		len(agenticChunks), len(knowledgeResults), completedDocumentsCnt, len(needCompleteChunks), len(allChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
-	return result
+	return results
 }

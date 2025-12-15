@@ -5,7 +5,7 @@ param(
     [switch]$Push = $false,
     [string]$Tag, # image tag, e.g. dev-0.0.1
     [string]$AcrName, # azure container registry name
-    [string]$ImageName
+    [Parameter(Mandatory=$true)][string]$ImageName
 )
 
 # prepare node server

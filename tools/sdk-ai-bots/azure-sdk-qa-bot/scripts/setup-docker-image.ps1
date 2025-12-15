@@ -3,9 +3,9 @@
 # TODO: parse the .env file and set environment variables
 param(
     [switch]$Push = $false,
-    [string]$Tag = "env-0.0.0",
-    [string]$AcrName = "azsdkqabotenv",
-    [string]$ImageName = "azure-sdk-qa-bot"
+    [string]$Tag, # image tag, e.g. dev-0.0.1
+    [string]$AcrName, # azure container registry name
+    [string]$ImageName
 )
 
 # prepare node server

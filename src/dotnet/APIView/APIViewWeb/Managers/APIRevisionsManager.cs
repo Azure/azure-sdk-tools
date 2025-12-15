@@ -319,6 +319,8 @@ namespace APIViewWeb.Managers
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver, notes);
             targetRevision.ChangeHistory = changeUpdate.ChangeHistory;
             targetRevision.IsApproved = changeUpdate.ChangeStatus;
+            targetRevision.Approvers.Add(approver);
+            
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
         }

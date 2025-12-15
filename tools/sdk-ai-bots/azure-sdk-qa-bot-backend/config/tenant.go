@@ -1,6 +1,6 @@
 package config
 
-import "github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+import "github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 
 type TenantConfig struct {
 	Sources                 []model.Source

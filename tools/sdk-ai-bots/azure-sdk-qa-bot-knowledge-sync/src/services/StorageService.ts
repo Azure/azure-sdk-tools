@@ -7,8 +7,8 @@ import {
 import {
     ChainedTokenCredential,
     ManagedIdentityCredential,
-    EnvironmentCredential,
     AzureCliCredential,
+    WorkloadIdentityCredential,
 } from "@azure/identity";
 import * as crypto from "crypto";
 
@@ -31,8 +31,8 @@ export class BlobService {
         // Use ChainedTokenCredential for better fallback options
         const credential = new ChainedTokenCredential(
             new ManagedIdentityCredential(),
-            new EnvironmentCredential(),
-            new AzureCliCredential()
+            new AzureCliCredential(),
+            new WorkloadIdentityCredential()
         );
 
         const accountUrl = `https://${storageAccountName}.blob.core.windows.net`;

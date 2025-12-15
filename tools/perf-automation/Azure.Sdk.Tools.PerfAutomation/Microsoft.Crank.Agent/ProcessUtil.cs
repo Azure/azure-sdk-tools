@@ -198,7 +198,7 @@ namespace Microsoft.Crank.Agent
                             {
                                 try
                                 {
-                                    if (proc.ProcessName.Contains("python", StringComparison.CurrentCultureIgnoreCase))
+                                    if (proc.ProcessName.Contains("python", StringComparison.OrdinalIgnoreCase))
                                     {
                                         proc.Refresh();
                                         currentCpuTime += proc.TotalProcessorTime;
@@ -221,7 +221,7 @@ namespace Microsoft.Crank.Agent
                             currentMemory = process.WorkingSet64;
                         }
 
-                        if (lastCpuTime.HasValue)
+                        if (lastCpuTime.HasValue && currentCpuTime != TimeSpan.Zero)
                         {
                             double elapsedMs = (currentSampleTime - lastSampleTime).TotalMilliseconds;
                             double cpuMs = (currentCpuTime - lastCpuTime.Value).TotalMilliseconds;

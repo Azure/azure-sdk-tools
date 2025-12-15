@@ -318,6 +318,15 @@ def create_java_examples(release: Release, sdk_examples_path: str, java_examples
         return True, files
 
 
+def get_package_name(sdk_package: str) -> str:
+    # new release tag would be "com.azure.resourcemanager+azure-resourcemanager-storage_1.0.1-beta.1", while older be "azure-resourcemanager-storage_1.0.1-beta.1"
+    sdk_group_id_prefix = "com.azure.resourcemanager+"
+    if sdk_package.startswith(sdk_group_id_prefix):
+        # remove groupId "com.azure.resourcemanager+" of management-plane lib
+        sdk_package = sdk_package.replace(sdk_group_id_prefix, "", 1)
+    return sdk_package
+
+
 def main():
     global script_path
     global tmp_path
@@ -341,11 +350,13 @@ def main():
     sdk_examples_path = config["sdkExamplesPath"]
     tmp_path = config["tempPath"]
 
+    sdk_package = get_package_name(config["release"]["package"])
+
     release = Release(
         config["release"]["tag"],
-        config["release"]["package"],
+        sdk_package,
         config["release"]["version"],
-        get_sdk_name_from_package(config["release"]["package"]),
+        get_sdk_name_from_package(sdk_package),
     )
 
     java_examples_relative_path = path.join("sdk", release.sdk_name, release.package, "src", "samples")

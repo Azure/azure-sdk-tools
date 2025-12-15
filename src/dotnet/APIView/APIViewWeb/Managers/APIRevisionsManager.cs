@@ -298,9 +298,7 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="targetRevision">The revision to copy approval to</param>
         /// <param name="sourceRevision">The approved revision to copy from</param>
-        /// <returns>Tuple indicating if review needs update and the updated revision</returns>
-        public async Task<(bool updateReview, APIRevisionListItemModel apiRevision)> CopyApprovalFromAsync(
-            APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
+        public async Task CopyApprovalFromAsync(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
         {
             ArgumentNullException.ThrowIfNull(targetRevision);
             ArgumentNullException.ThrowIfNull(sourceRevision);
@@ -310,9 +308,6 @@ namespace APIViewWeb.Managers
                 throw new ArgumentException("Source revision must be approved to copy approval from", nameof(sourceRevision));
             }
 
-            bool updateReview = false;
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(targetRevision.ReviewId);
-
             // Use the last approver from the source revision
             string approver = sourceRevision.Approvers.LastOrDefault();
             if (string.IsNullOrEmpty(approver))
@@ -321,8 +316,7 @@ namespace APIViewWeb.Managers
             }
 
             string notes = $"Approval copied from revision {sourceRevision.Id}";
-            (List<APIRevisionChangeHistoryModel> ChangeHistory, bool ChangeStatus) changeUpdate =
-                ChangeHistoryHelpers.UpdateBinaryChangeAction(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver, notes);
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver, notes);
             targetRevision.ChangeHistory = changeUpdate.ChangeHistory;
             targetRevision.IsApproved = changeUpdate.ChangeStatus;
 
@@ -331,16 +325,7 @@ namespace APIViewWeb.Managers
                 targetRevision.Approvers.Add(approver);
             }
 
-            if (!review.IsApproved && targetRevision.IsApproved)
-            {
-                updateReview = true;
-            }
-
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
-            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", targetRevision.ReviewId,
-                targetRevision.Id, approver, targetRevision.IsApproved);
-
-            return (updateReview, targetRevision);
         }
 
         /// <summary>

@@ -462,7 +462,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(newRevision);
 
             _mockApiRevisionsManager.Setup(m => m.CopyApprovalFromAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()))
-                .ReturnsAsync((false, newRevision));
+                .Returns(Task.CompletedTask);
 
             await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);

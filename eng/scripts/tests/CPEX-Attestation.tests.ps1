@@ -285,6 +285,303 @@ Describe "Update-AttestationStatusInWorkItem" {
     }
 }
 
+# --------------------- Parse Triages  ---------------------
+Describe 'Parse triages' {
+    $triages = @(
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "Yes"
+                    "Custom.MgmtScope" = "Yes"
+                    "Custom.ProductLifecycle" = "Private Preview"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Sku"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @()
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "ProductSku"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Completed"
+                mgmtAttestationStatus = "Completed"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "Yes"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ProductLifecycle" = "In Dev"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Offering"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @(
+                    "e0504da9-8897-41db-a75f-5027298ba410",
+                    "84715402-4f3c-4dca-b330-f05206abaec5",
+                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                )
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "Offering"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Completed"
+                mgmtAttestationStatus = "Not applicable"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "Yes"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ProductLifecycle" = "In Dev"
+                    "Custom.DataplaneAttestationStatus" = "Not applicable"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Feature"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @(
+                    "e0504da9-8897-41db-a75f-5027298ba410",
+                    "84715402-4f3c-4dca-b330-f05206abaec5",
+                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                )
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "Feature"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Completed"
+                mgmtAttestationStatus = "Not applicable"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ProductLifecycle" = "GA"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Sku"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @()
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "ProductSku"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Not applicable"
+                mgmtAttestationStatus = "Not applicable"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ProductLifecycle" = "Public Preview"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Feature"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @(
+                    "da768dff-8f90-4999-ad3a-adcd790911f3",
+                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                )
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "Feature"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Not applicable"
+                mgmtAttestationStatus = "Not Applicable"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ProductLifecycle" = "In Dev"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Sku"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @(
+                    "dfe9c112-416e-4e0a-8012-4a3a29807782",
+                    "e0504da9-8897-41db-a75f-5027298ba410",
+                    "ad70777b-a1f5-4d77-8926-5c466d7a214d",
+                    "84715402-4f3c-4dca-b330-f05206abaec5",
+                    "da768dff-8f90-4999-ad3a-adcd790911f3",
+                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                )
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "ProductSku"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Not applicable"
+                mgmtAttestationStatus = "Not applicable"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "Yes"
+                    "Custom.ProductLifecycle" = "In Dev"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Feature"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @(
+                    "dfe9c112-416e-4e0a-8012-4a3a29807782",
+                    "ad70777b-a1f5-4d77-8926-5c466d7a214d",
+                    "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                )
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "Feature"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Not applicable"
+                mgmtAttestationStatus = "Completed"
+            }
+        },
+        @{ 
+            triage = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "Yes"
+                    "Custom.ProductLifecycle" = "Public Preview"
+                    "Custom.DataplaneAttestationStatus" = "Pending"
+                    "Custom.ManagementPlaneAttestationStatus" = "Pending"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Offering"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                kpiIds = @(
+                    "da768dff-8f90-4999-ad3a-adcd790911f3"
+                )
+                productID = "123456789-09876541-23124981234"
+                status = 3
+                productType = "Offering"
+                url = "Fake Url"
+                productName = "Product Name"
+                dataAttestationStatus = "Not applicable"
+                mgmtAttestationStatus = "Completed"
+            }
+        }
+    )
+
+    BeforeAll {
+        . (Join-Path $PSScriptRoot "../../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
+
+        Mock -CommandName Write-Host -MockWith {}
+        Mock -CommandName Write-Error -MockWith {}
+        Mock -CommandName Write-Warning -MockWith {}
+        Mock -CommandName Invoke-RestMethod -MockWith {}
+        Mock -CommandName Get-ReleasePlansForCPEXAttestation -MockWith { @() }
+        Mock -CommandName Update-AttestationStatusInWorkItem -MockWith {} -Verifiable
+
+        function AddAttestationEntry ($targetId, $actionItemId, $status, $targetType, $url, $productName) {}
+
+        function SendEmailNotification {}
+    }
+
+    It 'Successfully parses a triage work item; adds to database; updates work item' -TestCases $triages {
+        param($triage, $expectation)
+
+        Mock -CommandName Get-TriagesForCPEXAttestation -MockWith { $triage } -Verifiable
+        Mock -CommandName AddAttestationEntry -MockWith {} -Verifiable
+        Mock -CommandName SendEmailNotification -MockWith {}
+        
+        & (Join-Path $PSScriptRoot '../Invoke-CPEX-Attestation-Automation.ps1') -AzureSDKEmailUri "FAKE-URI" -TableName "FAKE-TABLE-NAME"
+
+        Should -Invoke -CommandName Get-TriagesForCPEXAttestation -Times 1
+
+        Should -Invoke -CommandName AddAttestationEntry -Times ($expectation.kpiIds.Count + 1)
+        Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
+                $targetId -eq $expectation.productID
+                $actionItemId -eq "ba2c80d5-b8be-465f-8948-283229082fd1"
+                $status -eq 1
+                $targetType -eq $expectation.productType -and
+                $url -eq $expectation.url -and 
+                $productName -eq $expectation.productName
+            }
+        foreach ($kpiId in $expectation.kpiIds) {
+            Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
+                $targetId -eq $expectation.productID
+                $actionItemId -eq $kpiId
+                $status -eq $expectation.status
+                $targetType -eq $expectation.productType -and
+                $url -eq $expectation.url -and 
+                $productName -eq $expectation.productName
+            }
+        }
+
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 2
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
+            $workItemId -eq $triage.id -and
+            $fieldName -eq "Custom.ManagementPlaneAttestationStatus" -and
+            $status -eq $expectation.mgmtAttestationStatus
+        }
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
+            $workItemId -eq $triage.id -and
+            $fieldName -eq "Custom.DataplaneAttestationStatus" -and
+            $status -eq $expectation.dataAttestationStatus
+        }
+    }
+}
+
 # --------------------- Parse Release Plans  ---------------------
 Describe 'Parse release plans' {
     $releasePlans = @(
@@ -432,13 +729,9 @@ Describe 'Parse release plans' {
         Mock -CommandName Get-TriagesForCPEXAttestation -MockWith { @() }
         Mock -CommandName Update-AttestationStatusInWorkItem -MockWith {} -Verifiable
 
-        function AddAttestationEntry {
-            "placeholder function"
-        }
+        function AddAttestationEntry ($targetId, $actionItemId, $status, $targetType, $url, $productName) {}
 
-        function SendEmailNotification {
-            "placeholder function"
-        }
+        function SendEmailNotification {}
     }
 
     It 'Successfully parses a release plan; adds to database; updates work item' -TestCases $releasePlans {
@@ -454,9 +747,9 @@ Describe 'Parse release plans' {
 
         Should -Invoke -CommandName AddAttestationEntry -Times 1
         Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
-            $targetId -eq $expectation.productID
-            $actionItemId -eq $expectation.kpiId
-            $status -eq $expectation.status
+            $targetId -eq $expectation.productID -and
+            $actionItemId -eq $expectation.kpiId -and
+            $status -eq $expectation.status -and
             $targetType -eq $expectation.productType -and
             $url -eq $expectation.url -and 
             $productName -eq $expectation.productName

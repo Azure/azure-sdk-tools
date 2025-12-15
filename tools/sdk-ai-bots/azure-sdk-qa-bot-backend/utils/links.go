@@ -3,7 +3,7 @@ package utils
 import (
 	"log"
 
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 )
 
 // FilterInvalidReferenceLinks checks if links in the LLM response actually appeared in the prompt chunks

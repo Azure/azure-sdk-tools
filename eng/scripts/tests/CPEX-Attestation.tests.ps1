@@ -9,6 +9,8 @@ Describe "Get-TriagesForCPEXAttestation" {
 
         Set-Variable -Name CapturedFields -Scope Script -Value $null
         Set-Variable -Name CapturedWiql   -Scope Script -Value $null
+
+        Mock -CommandName Invoke-RestMethod -MockWith {}
     }
 
     Context 'builds the correct WIQL and field list' {
@@ -120,6 +122,8 @@ Describe "Get-ReleasePlansForCPEXAttestation" {
 
         Set-Variable -Name CapturedFields -Scope Script -Value $null
         Set-Variable -Name CapturedWiql   -Scope Script -Value $null
+
+        Mock -CommandName Invoke-RestMethod -MockWith {}
     }
 
     Context 'builds the correct WIQL and field list' {
@@ -229,6 +233,8 @@ Describe "Update-AttestationStatusInWorkItem" {
 
         Set-Variable -Name CapturedId -Scope Script -Value $null
         Set-Variable -Name CapturedFields -Scope Script -Value $null
+
+        Mock -CommandName Invoke-RestMethod -MockWith {}
     }
 
     BeforeEach {
@@ -279,12 +285,199 @@ Describe "Update-AttestationStatusInWorkItem" {
     }
 }
 
+# --------------------- Parse Release Plans  ---------------------
+Describe 'Parse release plans' {
+    $releasePlans = @(
+        @{ 
+            releasePlan = @{ 
+                fields = @{
+                    "Custom.DataScope" = "Yes"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ReleasePlanType" = "APEX Private Preview"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Feature"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake URL";
+                id = "0"
+            }; 
+            expectation = @{
+                productID = "123456789-09876541-23124981234"
+                kpiId = "dfe9c112-416e-4e0a-8012-4a3a29807782"
+                status = 1
+                productType = "Feature"
+                url = "Fake Url"
+                productName = "Product Name"
+            }
+        },
+        @{ 
+            releasePlan = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "Yes"
+                    "Custom.ReleasePlanType" = "Private Preview"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Sku"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake Url";
+                id = "0"
+            }; 
+            expectation = @{
+                productID = "123456789-09876541-23124981234"
+                kpiId = "e0504da9-8897-41db-a75f-5027298ba410"
+                status = 1
+                productType = "ProductSku"
+                url = "Fake Url"
+                productName = "Product Name"
+            }
+        },
+        @{ 
+            releasePlan = @{ 
+                fields = @{
+                    "Custom.DataScope" = "Yes"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ReleasePlanType" = "APEX Public Preview"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Sku"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake Url";
+                id = "0"
+            }; 
+            expectation = @{
+                productID = "123456789-09876541-23124981234"
+                kpiId = "ad70777b-a1f5-4d77-8926-5c466d7a214d"
+                status = 1
+                productType = "ProductSku"
+                url = "Fake Url"
+                productName = "Product Name"
+            }
+        },
+        @{ 
+            releasePlan = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "Yes"
+                    "Custom.ReleasePlanType" = " Public Preview"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Offering"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake Url";
+                id = "0"
+            }; 
+            expectation = @{
+                productID = "123456789-09876541-23124981234"
+                kpiId = "84715402-4f3c-4dca-b330-f05206abaec5"
+                status = 1
+                productType = "Offering"
+                url = "Fake Url"
+                productName = "Product Name"
+            }
+        },
+        @{ 
+            releasePlan = @{ 
+                fields = @{
+                    "Custom.DataScope" = "Yes"
+                    "Custom.MgmtScope" = "No"
+                    "Custom.ReleasePlanType" = "   GA  "
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Sku"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake Url";
+                id = "0"
+            }; 
+            expectation = @{
+                productID = "123456789-09876541-23124981234"
+                kpiId = "da768dff-8f90-4999-ad3a-adcd790911f3"
+                status = 1
+                productType = "ProductSku"
+                url = "Fake Url"
+                productName = "Product Name"
+            }
+        },
+        @{ 
+            releasePlan = @{ 
+                fields = @{
+                    "Custom.DataScope" = "No"
+                    "Custom.MgmtScope" = "Yes"
+                    "Custom.ReleasePlanType" = "GA"
+                    "Custom.ProductServiceTreeID" = "123456789-09876541-23124981234"
+                    "Custom.ProductType" = "Feature"
+                    "Custom.ProductName" = "Product Name"
+                }; 
+                url = "Fake Url";
+                id = "0"
+            }; 
+            expectation = @{
+                productID = "123456789-09876541-23124981234"
+                kpiId = "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+                status = 1
+                productType = "Feature"
+                url = "Fake Url"
+                productName = "Product Name"
+            }
+        }
+    )
+
+    BeforeAll {
+        . (Join-Path $PSScriptRoot "../../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
+
+        Mock -CommandName Write-Host -MockWith {}
+        Mock -CommandName Write-Error -MockWith {}
+        Mock -CommandName Write-Warning -MockWith {}
+        Mock -CommandName Invoke-RestMethod -MockWith {}
+        Mock -CommandName Get-TriagesForCPEXAttestation -MockWith { @() }
+        Mock -CommandName Update-AttestationStatusInWorkItem -MockWith {} -Verifiable
+
+        function AddAttestationEntry {
+            "placeholder function"
+        }
+
+        function SendEmailNotification {
+            "placeholder function"
+        }
+    }
+
+    It 'Successfully parses a release plan; adds to database; updates work item' -TestCases $releasePlans {
+        param($releasePlan, $expectation)
+
+        Mock -CommandName Get-ReleasePlansForCPEXAttestation -MockWith { $releasePlan } -Verifiable
+        Mock -CommandName AddAttestationEntry -MockWith {} -Verifiable
+        Mock -CommandName SendEmailNotification -MockWith {}
+        
+        & (Join-Path $PSScriptRoot '../Invoke-CPEX-Attestation-Automation.ps1') -AzureSDKEmailUri "FAKE-URI" -TableName "FAKE-TABLE-NAME"
+
+        Should -Invoke -CommandName Get-ReleasePlansForCPEXAttestation -Times 1
+
+        Should -Invoke -CommandName AddAttestationEntry -Times 1
+        Should -Invoke -CommandName AddAttestationEntry -Times 1 -ParameterFilter {
+            $targetId -eq $expectation.productID
+            $actionItemId -eq $expectation.kpiId
+            $status -eq $expectation.status
+            $targetType -eq $expectation.productType -and
+            $url -eq $expectation.url -and 
+            $productName -eq $expectation.productName
+        }
+
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1
+        Should -Invoke -CommandName Update-AttestationStatusInWorkItem -Times 1 -ParameterFilter {
+            $workItemId -eq $releasePlan.id -and
+            $fieldName -eq "Custom.AttestationStatus" -and
+            $status -eq "Completed"
+        }
+    }
+}
+
 # --------------------- Add Attestation Entry to Kusto Database ---------------------
 Describe 'Add Attestation Entry to Kusto Database' {
     It 'posts a valid JSON envelope and CSL when run with required params' {
         Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+        Mock -CommandName Write-Host -MockWith {}
 
-        $tableName    = 'TestKpiEvidenceStream'
+        $tableName    = 'FAKE-TABLE-NAME'
         $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
         $targetId     = '11314123-2343-1232-2133-213412341344'
         $targetType   = 'ProductSku'

@@ -320,11 +320,6 @@ namespace APIViewWeb.Managers
             targetRevision.ChangeHistory = changeUpdate.ChangeHistory;
             targetRevision.IsApproved = changeUpdate.ChangeStatus;
 
-            if (ChangeHistoryHelpers.GetChangeActionStatus(targetRevision.ChangeHistory, APIRevisionChangeAction.Approved, approver))
-            {
-                targetRevision.Approvers.Add(approver);
-            }
-
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
         }
 

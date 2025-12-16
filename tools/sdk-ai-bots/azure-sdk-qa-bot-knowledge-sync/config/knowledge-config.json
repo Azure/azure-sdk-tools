@@ -165,6 +165,34 @@
           "folder": "azure_sdk_for_go_docs"
         }
       ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-js.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure SDK for JavaScript",
+          "path": "documentation",
+          "folder": "azure_sdk_for_js_docs"
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-js.wiki.git",
+        "path": "azure-sdk-for-js.wiki",
+        "branch": "master",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Wiki documentation for Azure SDK for JavaScript",
+          "folder": "azure_sdk_for_js_wiki"
+        }
+      ]
     }
   ]
 }

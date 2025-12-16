@@ -109,7 +109,7 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, User, review);
+            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, User, review);
             return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 
@@ -233,8 +233,33 @@ namespace APIViewWeb.LeanControllers
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
                 IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
-                CodeFile activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
+                Task<CodeFile> activeFileTask = _codeFileRepository.GetCodeFileFromStorageAsync(
+                    revisionId: activeAPIRevision.Id, 
+                    codeFileId: activeAPIRevision.Files[0].FileId);
+
+                Task<CodeFile> diffFileTask = null;
+                if (diffAPIRevision != null)
+                {
+                    diffFileTask = _codeFileRepository.GetCodeFileFromStorageAsync(
+                        revisionId: diffAPIRevision.Id, 
+                        codeFileId: diffAPIRevision.Files[0].FileId);
+                }
+
+                CodeFile activeRevisionReviewCodeFile;
+                CodeFile diffRevisionCodeFile = null;
+                
+                if (diffFileTask != null)
+                {
+                    await Task.WhenAll(activeFileTask, diffFileTask);
+                    activeRevisionReviewCodeFile = activeFileTask.Result;
+                    diffRevisionCodeFile = diffFileTask.Result;
+                }
+                else
+                {
+                    activeRevisionReviewCodeFile = await activeFileTask;
+                }
+                
                 if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
                 {
                     var languageServices = LanguageServiceHelpers.GetLanguageService(activeAPIRevision.Language, _languageServices);
@@ -248,13 +273,12 @@ namespace APIViewWeb.LeanControllers
                     Comments = filteredComments
                 };
 
-                if (diffAPIRevision != null)
+                if (diffRevisionCodeFile != null)
                 {
-                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
+                    codePanelRawData.diffRevisionCodeFile = diffRevisionCodeFile;
                 }
 
-                // Render the code files to generate UI token tree
-                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                CodePanelData result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 

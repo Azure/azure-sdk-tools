@@ -228,7 +228,7 @@ namespace APIViewWeb.Managers
         public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
         {
             ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            if (!IsUserAllowedToChatWithAgent(user, review))
+            if (!await IsUserAllowedToChatWithAgentAsync(user, review))
             {
                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveNotification",
                     new SiteNotificationDto()
@@ -344,18 +344,18 @@ namespace APIViewWeb.Managers
                 });
         }
 
-        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, ReviewListItemModel review)
+        private async Task<bool> IsUserAllowedToChatWithAgentAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            return IsUserLanguageArchitect(user, review);
+            return await IsUserLanguageArchitectAsync(user, review);
         }
 
-        private bool IsUserLanguageArchitect(ClaimsPrincipal user, ReviewListItemModel review)
+        private async Task<bool> IsUserLanguageArchitectAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
             if (user == null || review == null)
                 return false;
 
             string githubUser = user.GetGitHubLogin();
-            HashSet<string> approvers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
+            HashSet<string> approvers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, user, review);
             return approvers.Contains(githubUser);
         }
 

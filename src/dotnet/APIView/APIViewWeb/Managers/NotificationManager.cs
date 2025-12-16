@@ -284,12 +284,12 @@ namespace APIViewWeb.Managers
             
             // Get all preferred approvers (use dummy user if requestingUser is null)
             var userForApprovers = requestingUser ?? new ClaimsPrincipal();
-            var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, userForApprovers, review);
+            var preferredApprovers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, userForApprovers, review);
 
             // Add preferred approvers' emails
             // Create all tasks first (starts them concurrently)
             var emailTasks = preferredApprovers
-                .Select(approverUsername => GetEmailAddress(approverUsername))
+                .Select(GetEmailAddress)
                 .ToArray();
                 
             // Await all tasks at once

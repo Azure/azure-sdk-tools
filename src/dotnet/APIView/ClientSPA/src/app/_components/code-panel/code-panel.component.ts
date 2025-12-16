@@ -1185,6 +1185,38 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  onKeyDown(event: KeyboardEvent) {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) {
+      const viewport = this.elementRef.nativeElement.querySelector('#viewport');
+      if (viewport) {
+        const scrollLineAmount = 40;
+        const scrollPageAmount = viewport.clientHeight;
+
+        if (event.key === 'ArrowUp') {
+          if (event.metaKey) {
+            viewport.scrollTop -= scrollPageAmount;
+          } else {
+            viewport.scrollTop -= scrollLineAmount;
+          }
+          event.preventDefault();
+        } else if (event.key === 'ArrowDown') {
+          if (event.metaKey) {
+            viewport.scrollTop += scrollPageAmount;
+          } else {
+            viewport.scrollTop += scrollLineAmount;
+          }
+          event.preventDefault();
+        } else if (event.key === 'PageUp') {
+          viewport.scrollTop -= scrollPageAmount;
+          event.preventDefault();
+        } else if (event.key === 'PageDown') {
+          viewport.scrollTop += scrollPageAmount;
+          event.preventDefault();
+        }
+      }
+    }
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();

@@ -4,11 +4,11 @@ namespace UtilityLibraries;
 
 public class MissingContentValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
-    public MissingContentValidation(IPlaywright playwright)
+    public MissingContentValidation(IBrowser browser)
     {
-        _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
 
     public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("CommonValidation", "contains");
@@ -19,9 +19,7 @@ public class MissingContentValidation : IValidation
         var res = new TResult();
         var errorList = new List<string>();
 
-        // Create a browser instance.
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
         // Get all td and th elements
@@ -60,7 +58,7 @@ public class MissingContentValidation : IValidation
             res.LocationsOfErrors = formattedList;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
         return res;
     }
 

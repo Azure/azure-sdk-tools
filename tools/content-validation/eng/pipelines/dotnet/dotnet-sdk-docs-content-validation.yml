@@ -19,15 +19,18 @@ parameters:
   type: string
   default: 'packagesList.txt'
 
-- name: rule_EmptyTags
-  type: boolean
-  default: false
-  displayName: "Create issue for rule EmptyTags"
+- name: selectedRule
+  displayName: "Select one validation rule to run test"
+  type: string
+  default: 'EmptyTags'
+  values:
+  - EmptyTags
+  - TableMissingContent
 
-- name: rule_TableMissingContent
+- name: createIssue
+  displayName: Create issue for this run.
   type: boolean
   default: false
-  displayName: "Create issue for rule TableMissingContent"
 
 
 stages:
@@ -44,7 +47,7 @@ stages:
       displayName: 'Install .NET Core SDK'
       inputs:
         packageType: 'sdk'
-        version: '8.0.x'
+        version: '9.0.x'
         installationPath: $(Agent.ToolsDirectory)/dotnet 
 
     - task: DotNetCoreCLI@2
@@ -65,7 +68,7 @@ stages:
       displayName: Build all projects and libraries
       inputs:
         command: 'build'
-        projects: 'content-validation.sln'
+        projects: '$(System.DefaultWorkingDirectory)/tools/content-validation/content-validation.sln'
 
     - task: DotNetCoreCLI@2
       displayName: Run Playwright Install
@@ -81,11 +84,11 @@ stages:
         PackagesListFilePath: ${{ parameters.packagesListFilePath }}
       inputs:
         command: 'run'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/PendingTestingPackagesThisMonth'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/PendingTestingPackagesThisMonth'
       name: runPackagesJob
 
     - pwsh: |
-        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/${{ parameters.packagesListFilePath }}" -Raw
+        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/tools/content-validation/${{ parameters.packagesListFilePath }}" -Raw
         
         if ($packagesJson -notmatch '^\s*\{') {
           $packages = $packagesJson -split ',' | ForEach-Object { $_.Trim() }
@@ -108,6 +111,7 @@ stages:
     displayName: RunTest_All
     condition: eq('${{ parameters.packages }}', 'all')
     dependsOn: FetchLastMonthReleasedPackages
+    timeoutInMinutes: 180
     strategy:
       matrix: $[ dependencies.FetchLastMonthReleasedPackages.outputs['generateMatrix.matrix'] ]
       maxParallel: ${{ parameters.maxParallel }}
@@ -118,21 +122,46 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules EmptyTagsValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
+        runTestCase=""
+        appsettingsSuffix="${{ parameters.selectedRule }}"
+
+        case "${{ parameters.selectedRule }}" in
+          "EmptyTags")
+            runTestCase="TestEmptyTags"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="EmptyTagsValidation"
+            fi
+            ;;
+          "TableMissingContent")
+            runTestCase="TestTableMissingContent"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="MissingContentValidation"
+            fi
+            ;;
+        esac
+
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
+
+        echo "Configured appsettings suffix: $appsettingsSuffix"
+        echo "##vso[task.setvariable variable=AppsettingsSuffix]$appsettingsSuffix"
       name: setRules
 
-    - template: /eng/pipelines/common/content-validation-for-dotnet.yml
+    - template: ../common/content-validation-for-dotnet.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
+        suffix: $(AppsettingsSuffix)
 
   - job: content_validation_matrix_not_all
     displayName: RunTest_Not_All
     condition: ne('${{ parameters.packages }}', 'all')
+    timeoutInMinutes: 180
     strategy:
       matrix:
         ${{ each pkg in split(parameters.packages, ',') }}:
@@ -146,17 +175,40 @@ stages:
     steps:
     - script: |
         rules=""
-        if [ "$(echo ${{ parameters.rule_EmptyTags }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules EmptyTagsValidation"; fi
-        if [ "$(echo ${{ parameters.rule_TableMissingContent }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then rules="$rules MissingContentValidation"; fi
+        runTestCase=""
+        appsettingsSuffix="${{ parameters.selectedRule }}"
+        
+        case "${{ parameters.selectedRule }}" in
+          "EmptyTags")
+            runTestCase="TestEmptyTags"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="EmptyTagsValidation"
+            fi
+            ;;
+          "TableMissingContent")
+            runTestCase="TestTableMissingContent"
+            if [ "$(echo ${{ parameters.createIssue }} | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+              rules="MissingContentValidation"
+            fi
+            ;;
+        esac
 
         echo "Selected rules: $rules"
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
+
+        echo "Selected test case: $runTestCase"
+        echo "##vso[task.setvariable variable=RunTestCase]$runTestCase"
+
+        echo "Configured appsettings suffix: $appsettingsSuffix"
+        echo "##vso[task.setvariable variable=AppsettingsSuffix]$appsettingsSuffix"
       name: setRules
 
-    - template: /eng/pipelines/common/content-validation-for-dotnet.yml
+    - template: ../common/content-validation-for-dotnet.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
+        runTestCase: $(RunTestCase)
+        suffix: $(AppsettingsSuffix)
 
 ## Need to confirm, disabled for now
 # - stage: TotalIssuesSummary

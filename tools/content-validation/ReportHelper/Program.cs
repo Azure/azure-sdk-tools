@@ -115,13 +115,13 @@ namespace ReportHelper
                         oldItem.ErrorInfo == newItem.ErrorInfo &&
                         oldItem.ErrorLink == newItem.ErrorLink
                     );
-                //  new TResult is diffrent
+                //  new TResult is different
                 if (matchedOldItem == null)
                 {
                     differentList.Add(newItem);
                     continue;
                 }
-                // new TResult is same , but locations of error is diffrent
+                // new TResult is same , but locations of error is different
                 List<string> differentLocationsList = CompareOfLocations(matchedOldItem.LocationsOfErrors!, newItem.LocationsOfErrors!);
                 if (differentLocationsList.Count > 0)
                 {

@@ -356,7 +356,7 @@ namespace APIViewWeb.Managers
 
             string githubUser = user.GetGitHubLogin();
             HashSet<string> approvers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, user, review);
-            return approvers.Contains(githubUser);
+            return approvers != null && approvers.Contains(githubUser);
         }
 
         /// <summary>

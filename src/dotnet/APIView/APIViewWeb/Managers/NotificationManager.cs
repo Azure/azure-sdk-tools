@@ -288,7 +288,7 @@ namespace APIViewWeb.Managers
 
             // Add preferred approvers' emails
             // Create all tasks first (starts them concurrently)
-            var emailTasks = preferredApprovers
+            var emailTasks = (preferredApprovers ?? Enumerable.Empty<string>())
                 .Select(GetEmailAddress)
                 .ToArray();
                 

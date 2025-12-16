@@ -425,9 +425,8 @@ namespace APIViewWeb
                 app.UseHsts();
             }
 
-            app.UseResponseCompression();
-
             app.UseHttpsRedirection();
+            app.UseResponseCompression();
             app.UseStaticFiles();
 
             app.UseRouting();

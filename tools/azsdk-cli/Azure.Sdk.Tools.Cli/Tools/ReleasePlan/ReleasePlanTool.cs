@@ -145,7 +145,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<bool> notifyOwnersOpt = new("--notify-owners")
         {
-            Description = "Send email notification to owners of overdue release plans",
+            Description = "Send email notifications to owners of overdue release plans",
             Required = false,
         };
 
@@ -1005,7 +1005,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         public async Task<ReleasePlanListResponse> ListOverdueReleasePlans(bool notifyOwners = false, string emailerUri = "")
         {
             try
-            {   
+            {
                 if (notifyOwners && string.IsNullOrWhiteSpace(emailerUri))
                 {
                     return new ReleasePlanListResponse { ResponseError = "Emailer URI is required when notify owners is enabled." };

@@ -623,7 +623,7 @@ namespace APIViewWeb.Helpers
             string approverConfig = configuration["approvers"];
             if (string.IsNullOrEmpty(approverConfig))
             {
-                return null;
+                return new HashSet<string>();
             }
 
             string[] usernames = approverConfig.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

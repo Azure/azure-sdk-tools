@@ -19,15 +19,8 @@ public class MissingContentValidation : IValidation
         var res = new TResult();
         var errorList = new List<string>();
 
-        // Create a new page from the shared browser instance.
-        Console.WriteLine($"[MissingContentValidation] Creating new page for: {testLink}");
         var page = await _browser.NewPageAsync();
-        Console.WriteLine($"[MissingContentValidation] Page created, navigating to URL...");
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
-        Console.WriteLine($"[MissingContentValidation] Navigation complete");
-        
-        // Keep the page visible for debugging
-        await Task.Delay(3000); // Wait 3 seconds to see the browser
 
         // Get all td and th elements
         var cellElements = await page.Locator("th,td").ElementHandlesAsync();

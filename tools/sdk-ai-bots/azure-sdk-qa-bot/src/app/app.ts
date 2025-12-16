@@ -100,6 +100,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         user_name: context.activity.from?.name,
       };
       await sendFeedback(goodFeedback, ragOptions, meta);
+      await context.sendActivity('Your feedback is received. Thank you!');
       break;
     case 'feedback-dislike':
       const badFeedback: FeedbackRequestPayload = {
@@ -113,11 +114,11 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         user_name: context.activity.from?.name,
       };
       await sendFeedback(badFeedback, ragOptions, meta);
+      await context.sendActivity('Your feedback is received. Thank you!');
       break;
     default:
       break;
   }
-  await context.sendActivity('Your feedback is received. Thank you!');
 });
 
 function generateLink(context: TurnContext, postId: string): string {

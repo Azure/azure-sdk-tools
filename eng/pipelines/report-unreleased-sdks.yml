@@ -1,9 +1,12 @@
 trigger: none
 pr: none 
 
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
 pool:
-  name: azsdk-pool
-  demands: ImageOverride -equals ubuntu-24.04
+  name: $(LINUXPOOL)
+  demands: ImageOverride -equals $(LINUXVMIMAGE)
 
 jobs:
   - job: ReportUnreleasedSdks
@@ -23,7 +26,6 @@ jobs:
         inputs:
           azureSubscription: opensource-api-connection
           scriptType: pscore
-          scriptPath: eng/scripts/Report-Unreleased-Sdks.ps1
-          arguments: >
-            -AzureSDKEmailUri "$(AzureSDKEmailerSasURL)"
-            -AzsdkExePath "$(System.DefaultWorkingDirectory)/azsdk"
+          scriptLocation: inlineScript
+          inlineScript: |
+            & "$(System.DefaultWorkingDirectory)/azsdk" release-plan list-overdue --notify-owners true --emailer-uri "$(AzureSDKEmailerSasURL)"

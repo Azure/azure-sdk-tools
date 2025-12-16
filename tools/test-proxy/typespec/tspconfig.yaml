@@ -9,7 +9,7 @@ options:
     service-dir: "sdk/core"
   "@typespec/http-client-csharp":
     package-name: "Microsoft.ClientModel.TestFramework"
-    emitter-output-dir: "{cwd}"
+    emitter-output-dir: "{cwd}/.."
     license:
       name: "MIT License"
       company: "Microsoft.ClientModel.TestFramework"

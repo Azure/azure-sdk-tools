@@ -376,6 +376,12 @@ To properly tag tool calls in telemetry, tool responses must include the followi
    - **Purpose**: Classifies the package as management plane or data plane
    - **Note**: Package type is known for TypeSpec projects and SDK packages
 
+5. **Tool Operation Status**
+   - **Required when**: Tool operation encounters an error or failure
+   - **How to set**: Set the `ResponseError` property (for a single error) or `ResponseErrors` property (for multiple errors) in any response derived from `CommandResponse`
+   - **Purpose**: Marks a tool operation as failed in telemetry, which will be included in the failed tool call list
+   - **Note**: Setting either `ResponseError` or `ResponseErrors` automatically sets `OperationStatus` to `Status.Failed` and `ExitCode` to `1`
+
 These telemetry fields are marked with the `[Telemetry]` attribute in the base response classes and are automatically captured when set correctly.
 
 

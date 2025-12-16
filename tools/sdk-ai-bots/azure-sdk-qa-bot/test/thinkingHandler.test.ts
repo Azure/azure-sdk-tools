@@ -64,7 +64,7 @@ describe('ThinkingHandler', () => {
       // Access private method using type assertion
       const result = (thinkingHandler as any).generateAnswer(ragError);
 
-      expect(result).toContain(
+      expect(result).toBe(
         "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Request validation failed."
       );
     });
@@ -78,7 +78,7 @@ describe('ThinkingHandler', () => {
 
       const result = (thinkingHandler as any).generateAnswer(ragError);
 
-      expect(result).toContain(
+      expect(result).toBe(
         "🚫Sorry, I'm having some authentication issues right now and can't answer your question. Error: Authentication failed."
       );
     });
@@ -92,7 +92,7 @@ describe('ThinkingHandler', () => {
 
       const result = (thinkingHandler as any).generateAnswer(ragError);
 
-      expect(result).toContain(
+      expect(result).toBe(
         "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM service is temporarily unavailable."
       );
     });
@@ -106,7 +106,7 @@ describe('ThinkingHandler', () => {
 
       const result = (thinkingHandler as any).generateAnswer(ragError);
 
-      expect(result).toContain(
+      expect(result).toBe(
         "🚫Sorry, I'm having some internal issues right now and can't answer your question. Error: An unexpected error occurred."
       );
     });
@@ -131,7 +131,6 @@ describe('ThinkingHandler', () => {
       expect(result).toContain('This is a test answer');
       expect(result).toContain('**References**');
       expect(result).toContain('[Test Reference | Test Source](https://example.com/test)');
-      expect(result).toContain('> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.');
     });
 
     it('should return answer without references when no references provided', () => {
@@ -161,7 +160,7 @@ describe('ThinkingHandler', () => {
 
       expect(result).toEqual({
         answer:
-          "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content is required.\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.",
+          "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content is required.",
         has_result: false,
         references: [],
       });
@@ -178,7 +177,7 @@ describe('ThinkingHandler', () => {
 
       expect(result).toEqual({
         answer:
-          "🚫Sorry, I'm having some authorization issues right now and can't answer your question. Error: Tenant ID is invalid.\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.",
+          "🚫Sorry, I'm having some authorization issues right now and can't answer your question. Error: Tenant ID is invalid.",
         has_result: false,
         references: [],
       });
@@ -195,7 +194,7 @@ describe('ThinkingHandler', () => {
 
       expect(result).toEqual({
         answer:
-          "🚫Sorry, I'm having some dependency issues right now and can't answer your question. Please try again later. Error: Search service is not responding.\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.",
+          "🚫Sorry, I'm having some dependency issues right now and can't answer your question. Please try again later. Error: Search service is not responding.",
         has_result: false,
         references: [],
       });
@@ -212,7 +211,7 @@ describe('ThinkingHandler', () => {
 
       expect(result).toEqual({
         answer:
-          "🚫Sorry, I'm having some rate_limit issues right now and can't answer your question. Error: Service initialization failed.\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.",
+          "🚫Sorry, I'm having some rate_limit issues right now and can't answer your question. Error: Service initialization failed.",
         has_result: false,
         references: [],
       });
@@ -316,7 +315,7 @@ describe('ThinkingHandler', () => {
       expect(mockContext.updateActivity).toHaveBeenCalledWith({
         type: 'message',
         id: undefined, // resourceId is undefined in this test
-        text: "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content cannot be empty.\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.",
+        text: "🚫Sorry, I'm having some validation issues right now and can't answer your question. Error: Message content cannot be empty.",
         conversation: mockContext.activity?.conversation,
       });
     });
@@ -341,7 +340,7 @@ describe('ThinkingHandler', () => {
       expect(mockContext.updateActivity).toHaveBeenCalledWith({
         type: 'message',
         id: undefined,
-        text: "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM model is currently overloaded.\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.",
+        text: "🚫Sorry, I'm having some service issues right now and can't answer your question. Please try again later. Error: LLM model is currently overloaded.",
         conversation: mockContext.activity?.conversation,
       });
     });

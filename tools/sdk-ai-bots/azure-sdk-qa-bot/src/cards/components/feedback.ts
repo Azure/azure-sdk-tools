@@ -24,6 +24,7 @@ function createFeedbackActionCard(submitText: string, reasons: string[], action:
   return {
     type: 'AdaptiveCard',
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+    // Currently Microsoft Teams doesn't fully support version 1.6, use 1.5 to ensure compatibility
     version: '1.5',
     body: [
       {
@@ -64,6 +65,7 @@ export function createFeedbackCard() {
   const feedbackCard = {
     type: 'AdaptiveCard',
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+    // Currently Microsoft Teams doesn't fully support version 1.6, use 1.5 to ensure compatibility
     version: '1.5',
     body: [
       {

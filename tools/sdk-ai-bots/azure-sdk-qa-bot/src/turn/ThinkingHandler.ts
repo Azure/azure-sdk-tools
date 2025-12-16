@@ -79,7 +79,7 @@ export class ThinkingHandler {
       const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
       const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
       const errorReply = `🚫Sorry, I'm having some ${reply.category} issues right now and can't answer your question.${retryMessage} Error: ${reply.message}.`;
-      return this.addEndingText(errorReply);
+      return errorReply;
     }
 
     // received reply successfully
@@ -160,7 +160,7 @@ export class ThinkingHandler {
   }
 
   private addEndingText(answer: string): string {
-    return answer + '\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.';
+    return answer + '\n\n> **NOTE:** If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.';
   }
 
   private async trySendContactCard(context: TurnContext, conversationMessages: ConversationMessage[]) {

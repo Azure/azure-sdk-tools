@@ -1,6 +1,7 @@
 export const supportChannelCard = {
   type: 'AdaptiveCard',
   $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+  // Currently Microsoft Teams doesn't fully support version 1.6, use 1.5 to ensure compatibility
   version: '1.5',
   body: [],
   actions: [

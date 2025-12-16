@@ -367,12 +367,12 @@ To properly tag tool calls in telemetry, tool responses must include the followi
 
 3. **TypeSpec Project Path**
    - **Required when**: TypeSpec path is known to the tool
-   - **How to set**: Set the `TypeSpecProject` property with the relative path to TypeSpec project root in responses derived from `PackageResponseBase` or `TypeSpecBaseResponse`
+   - **How to set**: Set the `TypeSpecProject` property with the relative path to TypeSpec project root in responses derived from `PackageResponseBase`, `TypeSpecBaseResponse`, or `ReleasePlanBaseResponse`
    - **Purpose**: Links the operation to a specific TypeSpec project
 
 4. **Package Type**
    - **Required when**: Tool call is at a package level or TypeSpec project level
-   - **How to set**: Set the `PackageType` property to `SdkType.Management` or `SdkType.Dataplane` in responses derived from `PackageResponseBase` or `TypeSpecBaseResponse`, or use the `SetPackageType()` method
+   - **How to set**: Set the `PackageType` property to `SdkType.Management` or `SdkType.Dataplane` in responses derived from `PackageResponseBase`, `TypeSpecBaseResponse`, or `ReleasePlanBaseResponse`, or use the `SetPackageType()` method
    - **Purpose**: Classifies the package as management plane or data plane
    - **Note**: Package type is known for TypeSpec projects and SDK packages
 

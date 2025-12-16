@@ -490,11 +490,18 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 	// Get the tenant-specific agentic search prompt
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
-	agenticSearchPrompt := ""
+	agenticSearchPromptTemplate := ""
 	if hasConfig {
-		agenticSearchPrompt = tenantConfig.AgenticSearchPrompt
+		agenticSearchPromptTemplate = tenantConfig.AgenticSearchPrompt
 	}
-
+	promptParser := prompt.AgenticSearchPromptParser{
+		DefaultPromptParser: &prompt.DefaultPromptParser{},
+	}
+	agenticSearchPrompt, err := promptParser.ParsePrompt(nil, agenticSearchPromptTemplate)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
 	sourceFilter := map[model.Source]string{}
 	if hasConfig && tenantConfig.SourceFilter != nil {
 		sourceFilter = tenantConfig.SourceFilter

@@ -14,7 +14,7 @@
             {
                 "requirement": "tsp >= 1.0.0",
                 "check": ["tsp", "--version"],
-                "instructions": ["npm install @typespec/compiler@latest"]
+                "instructions": ["npm install -g @typespec/compiler@latest"]
             },
             {
                 "requirement": "Powershell >= 7.0",

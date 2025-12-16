@@ -29,7 +29,6 @@ For Python SDK development and usage questions, follow this structured approach:
 - Provide actionable next steps and reference documents
 - For CI/validation issues, guide customers on permanent resolution rather than suppression methods
 - If there can't access the content of link/image, you **must** add a disclaimer firstly that you can't access the content
-- For the pipeline/ci failure questions, if you have no context with the pipeline/ci error logs, you must add a disclaimer firstly
 
 ## Step 4: Verification and Validation
 - Double-check all technical recommendations against Python SDK standards and Azure guidelines

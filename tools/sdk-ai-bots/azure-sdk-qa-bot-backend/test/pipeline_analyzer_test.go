@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 func TestIsPipelineLink(t *testing.T) {

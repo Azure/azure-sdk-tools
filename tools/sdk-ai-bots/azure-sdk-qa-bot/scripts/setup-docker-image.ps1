@@ -3,8 +3,13 @@
 # TODO: parse the .env file and set environment variables
 param(
     [switch]$Push = $false,
-    [string]$Tag = "env-0.0.0",
-    [string]$AcrName = "azsdkqabotenv",
+
+    [Parameter(Mandatory=$true)]
+    [string]$Tag, # image tag, e.g. dev-0.0.1
+
+    [Parameter(Mandatory=$true)]
+    [string]$AcrName, # azure container registry 
+    
     [string]$ImageName = "azure-sdk-qa-bot"
 )
 

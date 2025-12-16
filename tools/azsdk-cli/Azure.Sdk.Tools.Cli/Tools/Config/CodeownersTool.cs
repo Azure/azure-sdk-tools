@@ -13,8 +13,9 @@ using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
-namespace Azure.Sdk.Tools.Cli.Tools.EngSys
+namespace Azure.Sdk.Tools.Cli.Tools.Config
 {
     [Description("Validate and manipulate GitHub codeowners")]
     [McpServerToolType]

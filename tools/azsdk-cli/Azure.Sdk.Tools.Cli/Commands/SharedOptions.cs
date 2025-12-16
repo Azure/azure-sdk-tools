@@ -11,6 +11,7 @@ using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Tools.Config;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {

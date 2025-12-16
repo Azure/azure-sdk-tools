@@ -252,8 +252,8 @@ namespace APIViewWeb.LeanControllers
                 if (diffFileTask != null)
                 {
                     await Task.WhenAll(activeFileTask, diffFileTask);
-                    activeRevisionReviewCodeFile = activeFileTask.Result;
-                    diffRevisionCodeFile = diffFileTask.Result;
+                    activeRevisionReviewCodeFile = await activeFileTask;
+                    diffRevisionCodeFile = await diffFileTask;
                 }
                 else
                 {

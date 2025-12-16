@@ -79,11 +79,12 @@ export class ThinkingHandler {
       const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
       const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
       const errorReply = `🚫Sorry, I'm having some ${reply.category} issues right now and can't answer your question.${retryMessage} Error: ${reply.message}.`;
-      return errorReply;
+      return this.addEndingText(errorReply);
     }
 
     // received reply successfully
-    return this.addReferencesToReply(reply);
+    const answerWithReferences = this.addReferencesToReply(reply);
+    return this.addEndingText(answerWithReferences);
   }
 
   private async startCore(context: TurnContext, resourceId: string) {
@@ -156,6 +157,10 @@ export class ThinkingHandler {
       });
     });
     return reply;
+  }
+
+  private addEndingText(answer: string): string {
+    return answer + '\n\n> **NOTE:** I will pause here; please feel free to @mention me if you would like to resume our discussion.';
   }
 
   private async trySendContactCard(context: TurnContext, conversationMessages: ConversationMessage[]) {

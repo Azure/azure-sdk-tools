@@ -24,7 +24,7 @@ function createFeedbackActionCard(submitText: string, reasons: string[], action:
   return {
     type: 'AdaptiveCard',
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-    version: '1.6',
+    version: '1.5',
     body: [
       {
         type: 'TextBlock',
@@ -64,7 +64,7 @@ export function createFeedbackCard() {
   const feedbackCard = {
     type: 'AdaptiveCard',
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-    version: '1.6',
+    version: '1.5',
     body: [
       {
         type: 'TextBlock',

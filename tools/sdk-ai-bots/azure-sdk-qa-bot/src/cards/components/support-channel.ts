@@ -1,7 +1,7 @@
 export const supportChannelCard = {
   type: 'AdaptiveCard',
   $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-  version: '1.6',
+  version: '1.5',
   body: [],
   actions: [
     {

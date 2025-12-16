@@ -1,6 +1,6 @@
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -39,7 +39,7 @@ export function initializeApp(configService: ConfigService) {
     AppRoutingModule,
     BadgeModule,
     BrowserModule,
-    BrowserAnimationsModule,
+    NoopAnimationsModule,  // Disabled animations to prevent continuous change detection
     TabMenuModule,
     ToolbarModule,
     ToastModule,

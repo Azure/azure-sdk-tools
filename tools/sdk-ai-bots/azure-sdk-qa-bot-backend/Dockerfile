@@ -27,7 +27,7 @@ RUN go test -v
 RUN CGO_ENABLED=0 go build -o go-backend
 
 # Stage 3: Final runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/runtime:8.0
 
 WORKDIR /app
 

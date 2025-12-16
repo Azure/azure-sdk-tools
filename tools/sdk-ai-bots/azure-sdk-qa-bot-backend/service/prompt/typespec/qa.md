@@ -36,7 +36,7 @@ For TypeSpec questions, follow this structured approach:
 - You should recommend customer to use Azure Template(like Azure.Core, Azure.ResourceManager) instead of primitive TypeSpec code
 - It is not allowed to assume any usage of TypeSpec
 - If there can't access the content of link/image, you **must** add a disclaimer firstly that you can't access the content
-- For the pipeline/ci failure questions, if you have no context with the pipeline/ci error logs. You must add a disclaimer firstly
+- For the pipeline/ci failure questions, if you have no context with the pipeline/ci error logs, you must add a disclaimer firstly
 
 ## Step 4: Code Verification
 - Do not change the structure of the user's TypeSpec code

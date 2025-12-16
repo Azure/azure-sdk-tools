@@ -351,6 +351,33 @@ Tools that may have error cases but no need for a custom type should use `Defaul
 the return type. The `.Result` property takes `object`, but must override `Format()` to serialize/stringify
 the value.
 
+#### Setting Required Telemetry Information in Tool Responses
+
+To properly tag tool calls in telemetry, tool responses must include the following information when applicable:
+
+1. **Package Name**
+   - **Required when**: Tool is triggered/operated at a package level
+   - **How to set**: Set the `PackageName` property in responses derived from `PackageResponseBase`
+   - **Purpose**: Identifies which package the tool operation was performed on
+
+2. **Language**
+   - **Required when**: Tool/command is specifically run for an SDK language
+   - **How to set**: Set the `Language` property in responses derived from `PackageResponseBase` or use the `SetLanguage()` method
+   - **Purpose**: Identifies which SDK language the tool operation was performed for
+
+3. **TypeSpec Project Path**
+   - **Required when**: TypeSpec path is known to the tool
+   - **How to set**: Set the `TypeSpecProject` property with the relative path to TypeSpec project root in responses derived from `PackageResponseBase` or `TypeSpecBaseResponse`
+   - **Purpose**: Links the operation to a specific TypeSpec project
+
+4. **Package Type**
+   - **Required when**: Tool call is at a package level or TypeSpec project level
+   - **How to set**: Set the `PackageType` property to `SdkType.Management` or `SdkType.Dataplane` in responses derived from `PackageResponseBase` or `TypeSpecBaseResponse`, or use the `SetPackageType()` method
+   - **Purpose**: Classifies the package as management plane or data plane
+   - **Note**: Package type is known for TypeSpec projects and SDK packages
+
+These telemetry fields are marked with the `[Telemetry]` attribute in the base response classes and are automatically captured when set correctly.
+
 
 ### Response Class Template
 

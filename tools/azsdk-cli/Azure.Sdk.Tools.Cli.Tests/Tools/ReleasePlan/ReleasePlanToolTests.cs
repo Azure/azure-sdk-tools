@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     internal class ReleasePlanToolTests
     {

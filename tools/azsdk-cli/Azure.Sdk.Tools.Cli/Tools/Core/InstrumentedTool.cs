@@ -7,7 +7,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
 public class InstrumentedTool(
     ITelemetryService telemetryService,

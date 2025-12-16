@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Microsoft.Extensions.Logging;
 
@@ -121,7 +122,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     return (packageName, packageVersion);
 }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         var result = await pythonHelper.Run(new PythonOptions(
                 "pytest",
@@ -131,7 +132,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
             ct
         );
 
-        return result.ExitCode == 0;
+        return new TestRunResponse(result);
     }
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {

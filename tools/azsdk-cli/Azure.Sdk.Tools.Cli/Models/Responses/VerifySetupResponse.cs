@@ -52,4 +52,8 @@ public class RequirementCheckResult
     /// Output from any issues encountered during the requirement check.
     /// </summary>
     public string RequirementStatusDetails { get; set; }
+    /// <summary>
+    /// The reason for the requirement.
+    /// </summary>
+    public string? Reason { get; set; }
 }

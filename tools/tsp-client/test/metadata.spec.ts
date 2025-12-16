@@ -41,7 +41,7 @@ describe.sequential("tsp-client metadata generation", function () {
 
   afterEach(async function () {
     // Clean up test files
-    await removeDirectory(testOutputDir).catch(() => {});
+    await rm(testOutputDir, { recursive: true, force: true });
   });
 
   it("should create tsp-client-metadata.yaml with correct structure", async function () {

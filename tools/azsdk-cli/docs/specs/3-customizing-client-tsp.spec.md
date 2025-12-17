@@ -466,6 +466,296 @@ Assumptions for running the customization tooling in [agentic](#agentic-context)
 - [ ] **Approval Workflow**: Enforce [approval checkpoints](#approval-checkpoint) in both contexts
 - [ ] **Cross-Language**: Support .NET, Java, JavaScript, Python, and Go
 
+### Scenarios
+
+**Example 1: rename .NET generated API**
+
+_Comment from .NET API View_
+
+> Azure.AI.Projects.AIProjectConnectionEntraIDCredential: "ID is cased "Id" in .NET"
+
+_Updated client.tsp_:
+
+```tsp
+import "./main.tsp";
+import "@azure-tools/typespec-client-generator-core";
+
+using Azure.ClientGenerator.Core;
+
+// Rename AIProjectConnectionEntraIDCredential to use "Id" casing for .NET.
+@@clientName(Azure.AI.Projects.EntraIDCredentials, "AIProjectConnectionEntraIdCredential", "csharp");
+```
+
+**Example 2: Hide an operation from Python SDK**
+
+_Service main.tsp snippet_:
+
+```tsp
+/** Operations for managing projects */
+interface Projects {
+  /** Get status of a Project creation */
+  getCreateProjectStatus is Operations.GetResourceOperationStatus<
+    Project,
+    Project
+  >;
+
+  /** List all projects in the account */
+  listProjects is Operations.ResourceList<Project>;
+
+  /** Get a project by name */
+  getProject is Operations.ResourceRead<Project>;
+
+  /** Create a new project (long-running) */
+  @pollingOperation(Projects.getCreateProjectStatus)
+  createProject is Operations.LongRunningResourceCollectionAction<
+    Project,
+    CreateProjectRequest,
+    Project
+  >;
+
+  /** Delete a project */
+  deleteProject is Operations.ResourceDelete<Project>;
+}
+```
+
+_User prompt:_
+
+> Remove get_create_project_status from Python SDK
+
+_Generated client.tsp snippet_:
+
+```tsp
+@@access(Projects.getCreateProjectStatus, Access.internal, "python");
+```
+
+**Example 3: .NET build errors (analyzer) resolved via TypeSpec customizations**
+
+_.NET build error context from azsdk_package_build_code_
+
+```
+Build FAILED.
+
+/azure-sdk-for-net/sdk/cognitivelanguage/Azure.AI.Language.Documents/src/Generated/AbstractiveSummarizationTaskParameters.cs(14,26): error AZC0030: Model name 'AbstractiveSummarizationTaskParameters' ends with 'Parameters'. We suggest renaming it to 'DocumentsAbstractiveSummarizationTaskParametersContent' or 'DocumentsAbstractiveSummarizationTaskParametersPatch' or another name with this suffix.
+
+/azure-sdk-for-net/sdk/cognitivelanguage/Azure.AI.Language.Documents/src/Generated/Tasks.cs(14,26): error AZC0012: Type name 'Tasks' is too generic and has high chance of collision with BCL types or types from other libraries. Consider using a more descriptive multi-word name, such as 'DocumentsTasksClient' or 'DocumentsTasksService'.
+
+/azure-sdk-for-net/sdk/cognitivelanguage/Azure.AI.Language.Documents/src/Generated/Tasks.Serialization.cs(16,26): error AZC0012: Type name 'Tasks' is too generic and has high chance of collision with BCL types or types from other libraries. Consider using a more descriptive multi-word name, such as 'DocumentsTasksClient' or 'DocumentsTasksService'.
+
+  0 Warning(s)
+  3 Error(s)
+```
+
+GitHub Copilot invokes the `CustomizedCodeUpdateTool` with the build error context as the `customizationRequest`. The tool applies TypeSpec customizations to resolve the issues:
+
+_Updated client.tsp_:
+
+```tsp
+import "./main.tsp";
+import "@azure-tools/typespec-client-generator-core";
+
+using Azure.ClientGenerator.Core;
+
+// Rename task parameter models to use the "Content" suffix for inputs.
+@@clientName(Language.AnalyzeDocuments.AbstractiveSummarizationTaskParameters, "DocumentsAbstractiveSummarizationTaskParametersContent", "csharp");
+
+// Rename generic/conflicting models to more specific names for C#.
+@@clientName(Language.AnalyzeDocuments.Tasks, "DocumentsTasksService", "csharp");
+```
+
+**Example 4: Create a subclient for Python SDK**
+
+_Service main.tsp_:
+
+<details open>
+<summary>main.tsp</summary>
+
+```tsp
+import "@typespec/http";
+import "@typespec/rest";
+import "@typespec/versioning";
+import "@azure-tools/typespec-azure-core";
+
+using TypeSpec.Http;
+using TypeSpec.Rest;
+using TypeSpec.Versioning;
+using Azure.Core;
+using Azure.Core.Traits;
+
+@useAuth(AadOauth2Auth<["https://test.azure.com/.default"]>)
+@server(
+  "{endpoint}/document-processing",
+  "Document Processing Service",
+  {
+    /** Service endpoint */
+    endpoint: url,
+  }
+)
+@service(#{ title: "Document Processing" })
+@versioned(DocumentProcessing.Versions)
+namespace DocumentProcessing;
+
+/** Service API versions */
+enum Versions {
+  /** The 2025-12-15 API version */
+  v2025_12_15: "2025-12-15",
+}
+
+/** Service traits for Document Processing operations */
+alias ServiceTraits = NoRepeatableRequests &
+  NoConditionalRequests &
+  NoClientRequestId;
+
+/** Resource operations with service traits */
+alias Operations = Azure.Core.ResourceOperations<ServiceTraits>;
+
+/** Represents a processing project */
+@resource("projects")
+model Project {
+  /** The unique project ID */
+  @key("projectId")
+  @visibility(Lifecycle.Read)
+  id: string;
+
+  /** User-friendly display name */
+  displayName: string;
+}
+
+/** Represents a document within a project */
+@resource("documents")
+@parentResource(Project)
+model Document {
+  /** The unique document ID */
+  @key("documentId")
+  @visibility(Lifecycle.Read)
+  id: string;
+
+  /** Original filename */
+  fileName: string;
+
+  /** Document processing status */
+  status: DocumentStatus;
+}
+
+/** Document processing status */
+union DocumentStatus {
+  string,
+
+  /** Document is pending processing */
+  Pending: "pending",
+
+  /** Document is being processed */
+  Processing: "processing",
+
+  /** Document processing completed */
+  Completed: "completed",
+
+  /** Document processing failed */
+  Failed: "failed",
+}
+
+/** Operations for managing projects */
+interface Projects {
+  /** List all projects in the account */
+  listProjects is Operations.ResourceList<Project>;
+
+  /** Get a project by name */
+  getProject is Operations.ResourceRead<Project>;
+
+  /** Create or replace a project */
+  createOrReplaceProject is Operations.ResourceCreateOrReplace<Project>;
+
+  /** Delete a project */
+  deleteProject is Operations.ResourceDelete<Project>;
+}
+
+/** Document management operations within a project */
+interface Documents {
+  /** List all documents in a project */
+  listDocuments is Operations.ResourceList<Document>;
+
+  /** Get a specific document */
+  getDocument is Operations.ResourceRead<Document>;
+
+  /** Create or replace a document */
+  createOrReplaceDocument is Operations.ResourceCreateOrReplace<Document>;
+
+  /** Delete a document */
+  deleteDocument is Operations.ResourceDelete<Document>;
+}
+```
+
+</details>
+
+_User prompt_:
+
+> Use 2 clients for Python SDK: one main client and one sub-client that specifies the project id.
+
+_Generated client.tsp_:
+
+```tsp
+import "./main.tsp";
+import "@azure-tools/typespec-client-generator-core";
+
+using Azure.ClientGenerator.Core;
+using DocumentProcessing;
+
+namespace ClientCustomizations;
+
+/**
+ * The root client for the Document Processing service.
+ * Use this client for service-level operations like listing projects.
+ *
+ * For project-scoped operations, use ProjectClient instead.
+ */
+@client(
+  {
+    service: DocumentProcessing,
+    name: "DocumentProcessingClient",
+  },
+  "python"
+)
+interface DocumentProcessingClient {
+  listProjects is Projects.listProjects;
+  getProject is Projects.getProject;
+  createOrReplaceProject is Projects.createOrReplaceProject;
+  deleteProject is Projects.deleteProject;
+}
+
+/** Initialization options for the ProjectClient */
+model ProjectClientOptions {
+  /** The project ID to scope operations to */
+  projectId: string;
+}
+
+/**
+ * A project-scoped client for document processing operations.
+ *
+ * This client is initialized with a projectId, which is then used
+ * automatically for all project-scoped operations.
+ */
+@client(
+  {
+    service: DocumentProcessing,
+    name: "ProjectClient",
+  },
+  "python"
+)
+@clientInitialization({ parameters: ProjectClientOptions }, "python")
+namespace ProjectClient {
+  /**
+   * Document management operations.
+   */
+  @operationGroup
+  @clientName("Documents", "python")
+  interface ProjectDocuments {
+    listDocuments is Documents.listDocuments;
+    getDocument is Documents.getDocument;
+    createOrReplaceDocument is Documents.createOrReplaceDocument;
+    deleteDocument is Documents.deleteDocument;
+  }
+}
+```
+
 ## Open Questions
 
 ### Future Feature-Level Customizations

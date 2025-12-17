@@ -97,8 +97,8 @@
     .reply-editor-container .border-bottom { border-bottom: 1px solid transparent !important; }
     .emoji-active { color: orange; }
     .comment-action-btn, .editor-action-btn { border-color: var(--border-color) !important; }
-    
-    .resolution-info { 
+
+    .resolution-info {
         margin-bottom: 2px;
         padding: 3px 8px;
         background-color: var(--base-fg-color);
@@ -106,7 +106,7 @@
         border-radius: 2px;
         width: fit-content;
     }
-    
+
     .resolved-toggler { color: var(--primary-color); font-weight: bolder; cursor: pointer; }
 
     .rendered-comment-content {
@@ -151,13 +151,6 @@
     .severity-should-fix { background-color: #FFF9F5; color: #8A3707; border-color: #FDCFB4; }
     .severity-must-fix { background-color: #FDF3F4; color: #B10E1C; border-color: #EEACB2; }
 
-    :host-context(.dark-theme), :host-context(.dark-solarized-theme) {
-        .severity-question { background-color: #1E3A8A; color: #BFDBFE; border-color: #3B82F6; }
-        .severity-suggestion { background-color: #374151; color: #D1D5DB; border-color: #6B7280; }
-        .severity-should-fix { background-color: #92400E; color: #FED7AA; border-color: #F59E0B; }
-        .severity-must-fix { background-color: #991B1B; color: #FECACA; border-color: #EF4444; }
-    }
-
     .severity-edit-container { display: inline-block; position: relative; }
 
     .comment-thread-header.collapsed .severity-badge-editable {
@@ -167,7 +160,7 @@
         .severity-edit-icon { display: none !important; }
     }
 
-    ::ng-deep p-dropdown .p-dropdown {
+    p-dropdown .p-dropdown {
         border: 1px solid var(--border-color) !important;
         border-radius: 12px !important;
         background: var(--base-fg-color) !important;
@@ -178,6 +171,16 @@
         .p-dropdown-trigger { width: 36px !important; border-left: 1px solid #E1E5E9 !important; background: #F8FAFC !important; border-radius: 0 12px 12px 0 !important; .p-dropdown-trigger-icon { color: #6B7280 !important; font-size: 12px !important; } }
     }
 }
+
+:host-context(.dark-theme), :host-context(.dark-solarized-theme) {
+    ::ng-deep {
+        .severity-question { background-color: #1E3A8A; color: #BFDBFE; border-color: #3B82F6; }
+        .severity-suggestion { background-color: #374151; color: #D1D5DB; border-color: #6B7280; }
+        .severity-should-fix { background-color: #92400E; color: #FED7AA; border-color: #F59E0B; }
+        .severity-must-fix { background-color: #991B1B; color: #FECACA; border-color: #EF4444; }
+    }
+}
+
 
 ::ng-deep .ai-info-overlay {
     &.p-overlaypanel {

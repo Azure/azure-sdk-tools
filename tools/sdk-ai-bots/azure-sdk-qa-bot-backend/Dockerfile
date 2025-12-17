@@ -27,7 +27,7 @@ RUN go test -v
 RUN CGO_ENABLED=0 go build -o go-backend
 
 # Stage 3: Final runtime image
-FROM alpine:latest
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
 
 WORKDIR /app
 

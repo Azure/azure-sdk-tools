@@ -537,33 +537,38 @@ p-contextmenusub {
     border-bottom: 1px solid var(--border-color);
 }
 
-.p-inputswitch {
+.p-inputswitch, .p-toggleswitch {
     width: 2.5rem;
     height: 1.5rem;
 }
 
-.p-inputswitch .p-inputswitch-slider {
+.p-inputswitch .p-inputswitch-slider, .p-toggleswitch .p-toggleswitch-slider {
     border-radius: 30px;
-}
-
-.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider {
-    background: var(--link-active);
-}
-
-.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before {
-    transform: translateX(1rem);
-}
-
-.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
-    background: var(--link-color);
-}
-
-.p-inputswitch .p-inputswitch-slider {
     background: var(--base-bg-color);
-    border: 1px solid var(--border-color)  ;
+    border: 1px solid var(--border-color);
 }
 
-.p-inputswitch .p-inputswitch-slider:before {
+.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
+.p-toggleswitch.p-toggleswitch-checked:not(.p-disabled):hover .p-toggleswitch-slider {
+    background: var(--link-active) !important;
+    border-color: var(--link-active) !important;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before,
+.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider:before {
+    transform: none !important;
+    left: calc(100% - 1.25rem) !important;
+    background: var(--primary-btn-color) !important;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider,
+.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.p-inputswitch .p-inputswitch-slider:before,
+.p-toggleswitch .p-toggleswitch-slider:before {
     background: var(--border-color);
     width: 1rem;
     height: 1rem;
@@ -932,3 +937,4 @@ p-selectbutton {
         }
     }
 }
+

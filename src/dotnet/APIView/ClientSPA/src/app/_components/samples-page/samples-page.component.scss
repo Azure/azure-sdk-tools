@@ -1,6 +1,7 @@
 :host ::ng-deep {
     .samples-panel{
         height: calc(100vh - 100px);
+        background-color: var(--base-fg-color);
 
         pre {
             background-color: var(--editor-bg-color);
@@ -28,7 +29,7 @@
                         &.hide {
                             visibility: invisible;
                         }
-                
+
                         &.show, &.temp-show {
                             color: inherit;
                         }
@@ -41,7 +42,7 @@
             padding: 10px 20px;
             margin: 0 0 20px;
             border-left: 5px solid var(--border-color);
-            background-color: var(base-bg-color);
+            background-color: var(--base-bg-color);
             font-style: italic;
             color: var(--base-text-color);
         }
@@ -50,7 +51,7 @@
             border-collapse: collapse;
             width: 100%;
         }
-          
+
         th, td {
             border: 1px solid var(--border-color);
             padding: 8px;

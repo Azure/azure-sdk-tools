@@ -736,3 +736,50 @@ p-inputswitch .p-hidden-accessible {
     clip: auto !important;
     margin: 0 !important;
 }
+
+.conversation-sidebar {
+    width: 75vw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+
+    .p-sidebar-header, .p-drawer-header {
+        a {
+            color: var(--link-color) !important;
+            text-decoration: none !important;
+
+            &:hover {
+                color: var(--link-active) !important;
+                text-decoration: underline !important;
+            }
+        }
+    }
+}
+
+.revisions-sidebar {
+    width: 75dvw;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.cross-language-revisions-sidebar {
+    width: 45dvw;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.notifications-sidebar {
+    width: min(350px, 25dvw);
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.edit-samples-sidebar {
+    width: 50dvw;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}

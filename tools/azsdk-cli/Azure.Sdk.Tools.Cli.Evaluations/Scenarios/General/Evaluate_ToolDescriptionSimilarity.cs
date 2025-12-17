@@ -34,13 +34,12 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             var evaluator = new ToolDescriptionSimilarityEvaluator(azureOpenAIEndpoint);
 
             var result = await EvaluationHelper.RunScenarioAsync(
+                messages: [],
+                response: new ChatResponse(),
                 scenarioName: this.ScenarioName,
-                scenarioData: scenarioData,
-                chatCompletion: s_chatCompletion!,
                 chatConfig: s_chatConfig!,
                 executionName: s_executionName,
                 reportingPath: ReportingPath,
-                toolNames: s_toolNames!,
                 evaluators: [evaluator],
                 enableResponseCaching: false,
                 additionalContexts: new EvaluationContext[]

@@ -1,6 +1,13 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version .
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.5.9.
+
+<style>
+table td:nth-child(2),
+table th:nth-child(2) {
+  white-space: nowrap;
+}
+</style>
 
 ## Tools list
 

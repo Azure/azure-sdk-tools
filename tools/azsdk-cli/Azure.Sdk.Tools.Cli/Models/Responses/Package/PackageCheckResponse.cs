@@ -28,6 +28,28 @@ public class PackageCheckResponse : PackageResponseBase
         }
     }
 
+    /// <summary>
+    /// Combines multiple <see cref="ProcessResult"/> instances into a single response.
+    /// </summary>
+    /// <param name="processResults">Results to combine.
+    /// <see cref="ExitCode"/> is set to the last result's exit code
+    /// <see cref="CheckStatusDetails"/> is set to the concatenated output from all results.
+    /// </param>
+    public PackageCheckResponse(IEnumerable<ProcessResult> processResults)
+    {
+        var output = new StringBuilder();
+
+        foreach (var pr in processResults)
+        {
+            ExitCode = pr.ExitCode;
+
+            output.AppendLine(pr.Output);
+            output.AppendLine();
+        }
+
+        CheckStatusDetails = output.ToString();
+    }
+
     public PackageCheckResponse(ProcessResult processResult)
     {
         ExitCode = processResult.ExitCode;
@@ -36,7 +58,7 @@ public class PackageCheckResponse : PackageResponseBase
 
     protected override string Format()
     {
-        StringBuilder output = new ();
+        StringBuilder output = new();
         output.Append($"Check status: {CheckStatusDetails}");
         output.Append($"Language: {Language}");
         output.Append($"Package PackageName: {PackageName}");

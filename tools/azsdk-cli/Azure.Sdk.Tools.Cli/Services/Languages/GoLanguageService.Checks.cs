@@ -63,29 +63,49 @@ public partial class GoLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
+        var results = new List<ProcessResult>();
+
         try
         {
-            var goGetArgs = new List<string>(["get", "-u", "all"]);
-            var goModVersion = await GetGoModVersionAsync(Path.Join(packagePath, "go.mod"), ct);
+            // in some modules we have two go.mod files (or multiple). We want to update those as well.
+            var goModFiles = Directory.EnumerateFiles(packagePath, "go.mod", SearchOption.AllDirectories).ToArray();
 
-            if (goModVersion.Major == 1 && goModVersion.Minor == 23)
+            logger.LogInformation("Found go.mod files in project:{goModFiles}", string.Join(",", goModFiles));
+
+            foreach (var goModPath in goModFiles)
             {
-                // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
-                // that are still set at 1.23. See this issue for some context:
-                //   https://github.com/Azure/azure-sdk-for-go/issues/25407
-                goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);
+                var goModDir = Path.GetDirectoryName(goModPath);
+                var goGetArgs = new List<string>(["get", "-u", "all"]);
+                var goModVersion = await GetGoModVersionAsync(goModPath, ct);
+
+                if (goModVersion.Major == 1 && goModVersion.Minor == 23)
+                {
+                    // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
+                    // that are still set at 1.23. See this issue for some context:
+                    //   https://github.com/Azure/azure-sdk-for-go/issues/25407
+                    goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);
+                }
+
+                // Update all dependencies to the latest first
+                var updateResult = await processHelper.Run(new ProcessOptions(goUnix, [.. goGetArgs], goWin, [.. goGetArgs], workingDirectory: goModDir), ct);
+                results.Add(updateResult);
+
+                if (updateResult.ExitCode != 0)
+                {
+                    throw new Exception($"Failed to update go.mod dependencies (go get -u all) with {goModPath}: {updateResult.Output}");
+                }
+
+                // Now tidy, to cleanup any deps that aren't needed
+                var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: goModDir), ct);
+                results.Add(updateResult);
+
+                if (tidyResult.ExitCode != 0)
+                {
+                    throw new Exception($"Failed to update go.sum (go mod tidy) with {goModPath}: {updateResult.Output}");
+                }
             }
 
-            // Update all dependencies to the latest first
-            var updateResult = await processHelper.Run(new ProcessOptions(goUnix, [.. goGetArgs], goWin, [.. goGetArgs], workingDirectory: packagePath), ct);
-            if (updateResult.ExitCode != 0)
-            {
-                return new PackageCheckResponse(updateResult);
-            }
-
-            // Now tidy, to cleanup any deps that aren't needed
-            var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(tidyResult);
+            return new PackageCheckResponse(results);
         }
         catch (Exception ex)
         {
@@ -93,6 +113,7 @@ public partial class GoLanguageService : LanguageService
             return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
         }
     }
+
     public override async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try

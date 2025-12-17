@@ -7,14 +7,15 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     public partial class Scenario
-    {
+    {        
         [Test]
-        public async Task Evaluate_VerifySetup()
+        [Category(RepositoryCategories.AzureRestApiSpecs)]
+        public async Task Evaluate_GenerateSdk()
         {
-            const string prompt = "Verify my setup for Dotnet.";
+            const string prompt = "Generate my SDK for Dotnet. My tspconfig is at: \"C:\\azure-rest-api-specs\\specification\\healthdataaiservices\\HealthDataAIServices.DeidServices\\tspconfig.yaml\", and the repo: \"C:\\azure-sdk-for-net\"";
             string[] expectedTools =
             [
-                "azsdk_verify_setup"
+                "azsdk_verify_setup", "azsdk_package_generate_code"
             ];
 
             // Build scenario data

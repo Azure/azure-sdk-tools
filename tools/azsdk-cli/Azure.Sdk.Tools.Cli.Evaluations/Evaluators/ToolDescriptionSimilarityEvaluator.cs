@@ -1,22 +1,36 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using Azure.Sdk.Tools.Cli.Evaluations.Models;
-using System.Text.RegularExpressions;
+using Azure.AI.OpenAI;
+using Azure;
+using Azure.Identity;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 {
     /// <summary>
     /// Evaluates MCP tool descriptions to identify similar or duplicate descriptions
-    /// that could confuse the AI agent.
+    /// that could confuse the AI agent using Azure OpenAI embeddings and cosine similarity.
     /// </summary>
     public class ToolDescriptionSimilarityEvaluator : IEvaluator
     {
         public const string SimilarityMetricName = "Tool Description Similarity";
-        private const double SimilarityThreshold = 0.8; // 80% similarity threshold
+        private const double SimilarityThreshold = 0.85; // 85% cosine similarity threshold
+        private readonly AzureOpenAIClient _openAIClient;
+        private readonly string _embeddingModelDeployment = "text-embedding-3-large";
         
         public IReadOnlyCollection<string> EvaluationMetricNames => [SimilarityMetricName];
 
-        public ValueTask<EvaluationResult> EvaluateAsync(
+        public ToolDescriptionSimilarityEvaluator(string? azureOpenAIEndpoint = null)
+        {
+            // Use environment variables or defaults
+            var endpoint = azureOpenAIEndpoint ?? 
+                Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? 
+                throw new InvalidOperationException("Azure OpenAI endpoint not configured. Set AZURE_OPENAI_ENDPOINT environment variable.");
+            
+            _openAIClient = new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential());
+        }
+
+        public async ValueTask<EvaluationResult> EvaluateAsync(
             IEnumerable<ChatMessage> messages,
             ChatResponse modelResponse,
             ChatConfiguration? chatConfiguration = null,
@@ -25,99 +39,140 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
         {
             var metric = new BooleanMetric(SimilarityMetricName);
 
-            // Get tools from additional context
-            if (additionalContext?.OfType<ToolDescriptionSimilarityEvaluatorContext>().FirstOrDefault()
-                is not ToolDescriptionSimilarityEvaluatorContext context)
+            try
             {
-                MetricError($"A value of type {nameof(ToolDescriptionSimilarityEvaluatorContext)} was not found in the {nameof(additionalContext)} collection.", metric);
-                return new ValueTask<EvaluationResult>(new EvaluationResult(metric));
-            }
-
-            var tools = context.Tools;
-            var similarityIssues = new List<string>();
-
-            // Compare each tool description with every other tool
-            for (int i = 0; i < tools.Count; i++)
-            {
-                for (int j = i + 1; j < tools.Count; j++)
+                // Get tools from additional context
+                if (additionalContext?.OfType<ToolDescriptionSimilarityEvaluatorContext>().FirstOrDefault()
+                    is not ToolDescriptionSimilarityEvaluatorContext context)
                 {
-                    var tool1 = tools[i];
-                    var tool2 = tools[j];
+                    MetricError($"A value of type {nameof(ToolDescriptionSimilarityEvaluatorContext)} was not found in the {nameof(additionalContext)} collection.", metric);
+                    return new EvaluationResult(metric);
+                }
 
-                    var desc1 = tool1.Description ?? string.Empty;
-                    var desc2 = tool2.Description ?? string.Empty;
+                var tools = context.Tools;
+                var similarityIssues = new List<string>();
 
-                    // Skip empty descriptions
-                    if (string.IsNullOrWhiteSpace(desc1) || string.IsNullOrWhiteSpace(desc2))
+                // Generate embeddings for all tool descriptions
+                var descriptions = tools.Select(t => t.Description ?? string.Empty).ToList();
+                var embeddings = await GenerateEmbeddingsAsync(descriptions, cancellationToken);
+
+                // Compare each tool description with every other tool
+                for (int i = 0; i < tools.Count; i++)
+                {
+                    for (int j = i + 1; j < tools.Count; j++)
                     {
-                        continue;
-                    }
+                        var tool1 = tools[i];
+                        var tool2 = tools[j];
 
-                    var similarity = CalculateSimilarity(desc1, desc2);
+                        var desc1 = tool1.Description ?? string.Empty;
+                        var desc2 = tool2.Description ?? string.Empty;
 
-                    if (similarity >= SimilarityThreshold)
-                    {
-                        var issue = $"Tools '{tool1.Name}' and '{tool2.Name}' have {similarity:P0} similar descriptions:\n" +
-                                  $"  - {tool1.Name}: {desc1}\n" +
-                                  $"  - {tool2.Name}: {desc2}";
-                        similarityIssues.Add(issue);
-                        
-                        metric.AddDiagnostics(EvaluationDiagnostic.Warning(issue));
-                    }
-                    else
-                    {
-                        metric.AddDiagnostics(
-                            EvaluationDiagnostic.Informational(
-                                $"Tools '{tool1.Name}' and '{tool2.Name}' have acceptable description difference ({similarity:P0} similar)"));
+                        // Skip empty descriptions
+                        if (string.IsNullOrWhiteSpace(desc1) || string.IsNullOrWhiteSpace(desc2))
+                        {
+                            continue;
+                        }
+
+                        var similarity = CalculateCosineSimilarity(embeddings[i], embeddings[j]);
+
+                        if (similarity >= SimilarityThreshold)
+                        {
+                            var issue = $"Tools '{tool1.Name}' and '{tool2.Name}' have {similarity:P0} similar descriptions:\n" +
+                                    $"  - {tool1.Name}: {desc1}\n" +
+                                    $"  - {tool2.Name}: {desc2}";
+                            similarityIssues.Add(issue);
+                            
+                            metric.AddDiagnostics(EvaluationDiagnostic.Warning(issue));
+                        }
+                        else
+                        {
+                            metric.AddDiagnostics(
+                                EvaluationDiagnostic.Informational(
+                                    $"Tools '{tool1.Name}' and '{tool2.Name}' have acceptable description difference ({similarity:P0} similar)"));
+                        }
                     }
                 }
-            }
 
-            if (similarityIssues.Any())
-            {
-                metric.Value = false;
-                metric.Reason = $"Found {similarityIssues.Count} pair(s) of tools with overly similar descriptions";
-            }
-            else
-            {
-                metric.Value = true;
-                metric.Reason = $"All {tools.Count} tool descriptions are sufficiently distinct";
-            }
+                if (similarityIssues.Any())
+                {
+                    metric.Value = false;
+                    metric.Reason = $"Found {similarityIssues.Count} pair(s) of tools with overly similar descriptions";
+                }
+                else
+                {
+                    metric.Value = true;
+                    metric.Reason = $"All {tools.Count} tool descriptions are sufficiently distinct";
+                }
 
-            Interpret(metric);
-            return new ValueTask<EvaluationResult>(new EvaluationResult(metric));
+                Interpret(metric);
+                return new EvaluationResult(metric);
+            }
+            catch (Exception ex)
+            {
+                MetricError($"Error during similarity evaluation: {ex.Message}", metric);
+                return new EvaluationResult(metric);
+            }
         }
 
         /// <summary>
-        /// Calculate similarity between two strings using Jaccard similarity on word tokens
+        /// Generate embeddings for a list of texts using Azure OpenAI
         /// </summary>
-        private static double CalculateSimilarity(string text1, string text2)
+        private async Task<List<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(
+            List<string> texts, 
+            CancellationToken cancellationToken)
         {
-            // Normalize: lowercase and extract words
-            var words1 = ExtractWords(text1.ToLowerInvariant());
-            var words2 = ExtractWords(text2.ToLowerInvariant());
+            var embeddingClient = _openAIClient.GetEmbeddingClient(_embeddingModelDeployment);
+            var embeddings = new List<ReadOnlyMemory<float>>();
 
-            if (!words1.Any() || !words2.Any())
+            // Azure OpenAI has a limit on batch size, so process in chunks if needed
+            const int batchSize = 100;
+            for (int i = 0; i < texts.Count; i += batchSize)
+            {
+                var batch = texts.Skip(i).Take(batchSize).ToList();
+                var response = await embeddingClient.GenerateEmbeddingsAsync(batch, cancellationToken: cancellationToken);
+                
+                foreach (var embedding in response.Value)
+                {
+                    embeddings.Add(embedding.ToFloats());
+                }
+            }
+
+            return embeddings;
+        }
+
+        /// <summary>
+        /// Calculate cosine similarity between two embedding vectors
+        /// </summary>
+        private static double CalculateCosineSimilarity(ReadOnlyMemory<float> vector1, ReadOnlyMemory<float> vector2)
+        {
+            var v1 = vector1.Span;
+            var v2 = vector2.Span;
+
+            if (v1.Length != v2.Length)
+            {
+                throw new ArgumentException("Vectors must have the same length");
+            }
+
+            double dotProduct = 0.0;
+            double magnitude1 = 0.0;
+            double magnitude2 = 0.0;
+
+            for (int i = 0; i < v1.Length; i++)
+            {
+                dotProduct += v1[i] * v2[i];
+                magnitude1 += v1[i] * v1[i];
+                magnitude2 += v2[i] * v2[i];
+            }
+
+            magnitude1 = Math.Sqrt(magnitude1);
+            magnitude2 = Math.Sqrt(magnitude2);
+
+            if (magnitude1 == 0.0 || magnitude2 == 0.0)
             {
                 return 0.0;
             }
 
-            // Calculate Jaccard similarity: |intersection| / |union|
-            var intersection = words1.Intersect(words2).Count();
-            var union = words1.Union(words2).Count();
-
-            return union > 0 ? (double)intersection / union : 0.0;
-        }
-
-        private static HashSet<string> ExtractWords(string text)
-        {
-            // Extract words (alphanumeric sequences)
-            var words = Regex.Matches(text, @"\b\w+\b")
-                             .Cast<Match>()
-                             .Select(m => m.Value)
-                             .Where(w => w.Length > 2) // Skip very short words
-                             .ToHashSet();
-            return words;
+            return dotProduct / (magnitude1 * magnitude2);
         }
 
         private static void Interpret(BooleanMetric metric)

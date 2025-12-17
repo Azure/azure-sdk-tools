@@ -47,26 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                     new ToolDescriptionSimilarityEvaluatorContext(tools)
                 });
 
-            // Validate the similarity check
-            var similarityMetric = result.Get<BooleanMetric>(ToolDescriptionSimilarityEvaluator.SimilarityMetricName);
-            
-            // Assert that tool descriptions are distinct
-            Assert.That(similarityMetric.Value, Is.True, 
-                $"Tool descriptions should be sufficiently distinct to avoid agent confusion. {similarityMetric.Reason}");
-            
-            // Log any warnings for review even if test passes
-            var warnings = similarityMetric.Diagnostics?
-                .Where(d => d.Severity == EvaluationDiagnosticSeverity.Warning)
-                .ToList();
-            
-            if (warnings?.Any() == true)
-            {
-                TestContext.WriteLine($"⚠️  Found {warnings.Count} tool description similarity warnings:");
-                foreach (var warning in warnings)
-                {
-                    TestContext.WriteLine($"   {warning.Message}");
-                }
-            }
+            EvaluationHelper.ValidateToolDescriptionSimilarityEvaluator(result);
         }
     }
 }

@@ -10,13 +10,23 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public class EvaluationHelper
     {
-        public static void ValidateToolInputsEvaluator(EvaluationResult result)
+        public static void ValidateBooleanMetricEvaluator(EvaluationResult result, string metricName)
         {
             EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];
-            BooleanMetric expectedToolInput = result.Get<BooleanMetric>(ExpectedToolInputEvaluator.ExpectedToolInputMetricName);
-            expectedToolInput.Interpretation!.Failed.Should().BeFalse(because: expectedToolInput.Interpretation.Reason);
-            expectedToolInput.Interpretation.Rating.Should().BeOneOf(expectedRatings, because: expectedToolInput.Reason);
-            expectedToolInput.ContainsDiagnostics(d => d.Severity >= EvaluationDiagnosticSeverity.Warning).Should().BeFalse();
+            BooleanMetric metric = result.Get<BooleanMetric>(metricName);
+            metric.Interpretation!.Failed.Should().BeFalse(because: metric.Interpretation.Reason);
+            metric.Interpretation.Rating.Should().BeOneOf(expectedRatings, because: metric.Reason);
+            metric.ContainsDiagnostics(d => d.Severity >= EvaluationDiagnosticSeverity.Warning).Should().BeFalse();
+        }
+
+        public static void ValidateToolInputsEvaluator(EvaluationResult result)
+        {
+            ValidateBooleanMetricEvaluator(result, ExpectedToolInputEvaluator.ExpectedToolInputMetricName);
+        }
+
+        public static void ValidateToolDescriptionSimilarityEvaluator(EvaluationResult result)
+        {
+            ValidateBooleanMetricEvaluator(result, ToolDescriptionSimilarityEvaluator.SimilarityMetricName);
         }
 
         public static async Task<EvaluationResult> RunScenarioAsync(

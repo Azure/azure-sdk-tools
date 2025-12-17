@@ -6,50 +6,47 @@ namespace Azure.Sdk.Tools.Cli.Telemetry;
 
 public sealed class TelemetryProcessor : BaseProcessor<Activity>
 {
+    private const string NotApplicable = "N/A";
+    private string[] CustomTelemetryProperties = {
+        // Tool/Command telemetry
+        TelemetryConstants.TagName.Language,
+        TelemetryConstants.TagName.PackageName,
+        TelemetryConstants.TagName.TypeSpecProject,
+        TelemetryConstants.TagName.PackageType,
+        TelemetryConstants.TagName.OperationStatus
+    };
+
+    // TokenUsageHelper telemetry
+    private string[] TokenUsageTelemetryProperties = {
+        TelemetryConstants.TagName.PromptTokens,
+        TelemetryConstants.TagName.CompletionTokens,
+        TelemetryConstants.TagName.TotalTokens,
+        TelemetryConstants.TagName.ModelsUsed
+    };
     public override void OnStart(Activity activity)
     {
     }
 
     public override void OnEnd(Activity activity)
     {
-        // Tool/Command telemetry
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.Language) is string language)
+        foreach (var item in CustomTelemetryProperties)
         {
-            activity.SetTag(TelemetryConstants.TagName.Language, language);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.PackageName) is string packageName)
-        {
-            activity.SetTag(TelemetryConstants.TagName.PackageName, packageName);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.TypeSpecProject) is string typeSpecProject)
-        {
-            activity.SetTag(TelemetryConstants.TagName.TypeSpecProject, typeSpecProject);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.PackageType) is string packageType)
-        {
-            activity.SetTag(TelemetryConstants.TagName.PackageType, packageType);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.OperationStatus) is string operationStatus)
-        {
-            activity.SetTag(TelemetryConstants.TagName.OperationStatus, operationStatus);
+            if (activity.GetCustomProperty(item) is string value)
+            {
+                activity.SetTag(item, value);
+            }
+            else
+            {
+                activity.SetTag(item, NotApplicable);
+            }
         }
 
-        // TokenUsageHelper telemetry
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.PromptTokens) is string promptTokens)
+        foreach (var item in TokenUsageTelemetryProperties)
         {
-            activity.SetTag(TelemetryConstants.TagName.PromptTokens, promptTokens);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.CompletionTokens) is string completionTokens)
-        {
-            activity.SetTag(TelemetryConstants.TagName.CompletionTokens, completionTokens);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.TotalTokens) is string totalTokens)
-        {
-            activity.SetTag(TelemetryConstants.TagName.TotalTokens, totalTokens);
-        }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.ModelsUsed) is string modelsUsed)
-        {
-            activity.SetTag(TelemetryConstants.TagName.ModelsUsed, modelsUsed);
+            if (activity.GetCustomProperty(item) is string value)
+            {
+                activity.SetTag(item, value);
+            }
         }
     }
 }

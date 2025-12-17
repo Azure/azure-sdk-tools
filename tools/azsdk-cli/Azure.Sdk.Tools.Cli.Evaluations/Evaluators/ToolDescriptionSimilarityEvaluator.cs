@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
     public class ToolDescriptionSimilarityEvaluator : IEvaluator
     {
         public const string SimilarityMetricName = "Tool Description Similarity";
-        private const double SimilarityThreshold = 0.2; // 80% similarity threshold
+        private const double SimilarityThreshold = 0.8; // 80% similarity threshold
         
         public IReadOnlyCollection<string> EvaluationMetricNames => [SimilarityMetricName];
 

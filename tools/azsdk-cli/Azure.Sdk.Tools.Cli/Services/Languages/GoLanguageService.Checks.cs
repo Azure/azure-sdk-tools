@@ -92,16 +92,16 @@ public partial class GoLanguageService : LanguageService
 
                 if (updateResult.ExitCode != 0)
                 {
-                    throw new Exception($"Failed to update go.mod dependencies (go get -u all) with {goModPath}: {updateResult.Output}");
+                    break;
                 }
 
                 // Now tidy, to cleanup any deps that aren't needed
                 var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: goModDir), ct);
-                results.Add(updateResult);
+                results.Add(tidyResult);
 
                 if (tidyResult.ExitCode != 0)
                 {
-                    throw new Exception($"Failed to update go.sum (go mod tidy) with {goModPath}: {updateResult.Output}");
+                    break;
                 }
             }
 
@@ -136,7 +136,15 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, ["run"], golangciLintWin, ["run"], workingDirectory: packagePath), ct);
+            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+
+            string[] runArgs = [
+                "run",
+                "--config",
+                Path.Join(repoRoot, "eng", ".golangci.yml")
+            ];
+
+            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, runArgs, golangciLintWin, runArgs, workingDirectory: packagePath), ct);
             return new PackageCheckResponse(result);
         }
         catch (Exception ex)

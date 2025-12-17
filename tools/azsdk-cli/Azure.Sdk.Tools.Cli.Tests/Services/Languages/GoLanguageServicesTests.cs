@@ -98,9 +98,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             resp = await LangService.BuildProject(tempDir.DirectoryPath, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
-
-            resp = await LangService.LintCode(tempDir.DirectoryPath, false, CancellationToken.None);
-            Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
         [Test]
@@ -123,25 +120,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public async Task TestGoLanguageSpecificChecksLintErrors()
+        public async Task TestGoLanguageLinting()
         {
-            await File.WriteAllTextAsync(Path.Combine(tempDir.DirectoryPath, "main.go"), """
-                package main
+            var goRepoRoot = IgnoreTestIfRepoNotConfigured();
+            var resp = await LangService.LintCode(Path.Join(goRepoRoot, "sdk", "template", "aztemplate"));
 
-                import (
-                )
-
-                func unusedFunc() {}
-
-                func main() {
-                }
-                """);
-
-            var resp = await LangService.LintCode(tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.Multiple(() =>
             {
-                Assert.That(resp.ExitCode, Is.EqualTo(1));
-                Assert.That(resp.CheckStatusDetails, Does.Contain("is unused (unused)"));
+                Assert.That(resp.ExitCode, Is.EqualTo(0));
             });
         }
 

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
     public class ToolDescriptionSimilarityEvaluator : IEvaluator
     {
         public const string SimilarityMetricName = "Tool Description Similarity";
-        private const double SimilarityThreshold = 0.85; // 85% cosine similarity threshold
+        private const double SimilarityThreshold = 0.80; // 80% cosine similarity threshold
         private readonly AzureOpenAIClient _openAIClient;
         private readonly string _embeddingModelDeployment = "text-embedding-3-large";
         
@@ -180,14 +180,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
             if (metric.Value == false)
             {
                 metric.Interpretation = new EvaluationMetricInterpretation(
-                    EvaluationRating.Poor,
+                    EvaluationRating.Unacceptable,
                     failed: true,
                     reason: "Similar tool descriptions may confuse the AI agent. " + metric.Reason);
             }
             else
             {
                 metric.Interpretation = new EvaluationMetricInterpretation(
-                    EvaluationRating.Good,
+                    EvaluationRating.Exceptional,
                     reason: "Tool descriptions are sufficiently distinct. " + metric.Reason);
             }
         }

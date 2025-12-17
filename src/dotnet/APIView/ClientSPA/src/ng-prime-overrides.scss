@@ -771,15 +771,164 @@ p-inputswitch .p-hidden-accessible {
 }
 
 .notifications-sidebar {
-    width: min(350px, 25dvw);
+    width: 350px !important;
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
 }
 
+.apiview-toggle-button-group {
+    width: 100% !important;
+    margin-top: 8px;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+
+    // PrimeNG 18 Design Tokens
+    --p-selectbutton-border-radius: 4px;
+
+    // ToggleButton tokens
+    --p-togglebutton-background: transparent;
+    --p-togglebutton-color: var(--link-color);
+    --p-togglebutton-border-color: var(--link-color);
+    --p-togglebutton-padding: 0.25rem 0.5rem;
+
+    --p-togglebutton-checked-background: var(--link-color);
+    --p-togglebutton-checked-color: var(--primary-btn-color);
+    --p-togglebutton-checked-border-color: var(--link-color);
+
+    --p-togglebutton-hover-background: var(--client-type-bg);
+    --p-togglebutton-hover-color: var(--link-color);
+    --p-togglebutton-hover-border-color: var(--link-color);
+
+    .p-button {
+        flex: 1 1 0 !important;
+        width: auto !important;
+        min-width: 0 !important;
+        justify-content: center;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none !important;
+        font-weight: normal !important;
+
+        // Reset some styles that might be coming from p-button global override
+        background: var(--p-togglebutton-background);
+        color: var(--p-togglebutton-color);
+        border: 1px solid var(--p-togglebutton-border-color);
+
+        &:not(:last-child) {
+            border-right: none;
+        }
+
+        &:first-child {
+            border-top-left-radius: var(--p-selectbutton-border-radius);
+            border-bottom-left-radius: var(--p-selectbutton-border-radius);
+        }
+
+        &:last-child {
+            border-top-right-radius: var(--p-selectbutton-border-radius);
+            border-bottom-right-radius: var(--p-selectbutton-border-radius);
+        }
+
+        &.p-highlight {
+            background: var(--p-togglebutton-checked-background);
+            color: var(--p-togglebutton-checked-color);
+            border-color: var(--p-togglebutton-checked-border-color);
+        }
+
+        &:hover:not(.p-highlight):not(.p-disabled) {
+            background: var(--p-togglebutton-hover-background);
+            color: var(--p-togglebutton-hover-color);
+            border-color: var(--p-togglebutton-hover-border-color);
+        }
+
+        .p-button-label {
+            font-weight: normal !important;
+        }
+    }
+
+    .p-button-label {
+        font-size: 0.8rem;
+        font-weight: normal !important;
+    }
+}
+
+// Ensure p-selectbutton host element doesn't constrain width
+p-selectbutton {
+    width: 100%;
+    display: block;
+}
+
+
+.notifications-filter-button {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+
+    // PrimeNG 18 Design Tokens
+    --p-selectbutton-border-radius: 4px;
+
+    // ToggleButton tokens (used by SelectButton items)
+    --p-togglebutton-background: transparent;
+    --p-togglebutton-color: var(--link-color);
+    --p-togglebutton-border-color: var(--link-color);
+    --p-togglebutton-padding: 0.25rem 0.5rem;
+
+    --p-togglebutton-checked-background: var(--link-color);
+    --p-togglebutton-checked-color: var(--primary-btn-color);
+    --p-togglebutton-checked-border-color: var(--link-color);
+
+    --p-togglebutton-hover-background: var(--client-type-bg);
+    --p-togglebutton-hover-color: var(--link-color);
+    --p-togglebutton-hover-border-color: var(--link-color);
+
+    .p-button {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none !important;
+
+        // Handle borders for the group look
+        &:not(:last-child) {
+            border-right: none;
+        }
+
+        // Re-apply border radius to outer corners
+        &:first-child {
+            border-top-left-radius: var(--p-selectbutton-border-radius);
+            border-bottom-left-radius: var(--p-selectbutton-border-radius);
+        }
+
+        &:last-child {
+            border-top-right-radius: var(--p-selectbutton-border-radius);
+            border-bottom-right-radius: var(--p-selectbutton-border-radius);
+        }
+    }
+
+    .p-button-label {
+        font-size: 0.8rem;
+        font-weight: normal;
+    }
+}
+
 .edit-samples-sidebar {
-    width: 50dvw;
+    width: 50vw !important;
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
+
+    .p-inputtext {
+        background-color: var(--base-fg-color) !important;
+        color: var(--base-text-color) !important;
+    }
+
+    .p-float-label {
+        display: block;
+
+        label {
+            color: var(--base-text-color);
+        }
+    }
 }

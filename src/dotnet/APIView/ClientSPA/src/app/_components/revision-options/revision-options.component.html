@@ -23,7 +23,7 @@
                         [(ngModel)]="activeApiRevisionsSearchValue" (keyup)="activeApiRevisionSearchFunction($event)">
                     </div>
                     <p-selectButton
-                    styleClass="api-revision-filter-button"
+                    styleClass="apiview-toggle-button-group"
                     [options]="filterOptions"
                     [(ngModel)]="activeApiRevisionsFilterValue"
                     (onChange)="activeApiRevisionFilterFunction($event)">
@@ -95,7 +95,7 @@
                         [(ngModel)]="diffApiRevisionsSearchValue" (keyup)="diffApiRevisionSearchFunction($event)">
                     </div>
                     <p-selectButton
-                    styleClass="api-revision-filter-button"
+                    styleClass="apiview-toggle-button-group"
                     [options]="filterOptions"
                     [(ngModel)]="diffApiRevisionsFilterValue"
                     (onChange)="diffApiRevisionFilterFunction($event)">

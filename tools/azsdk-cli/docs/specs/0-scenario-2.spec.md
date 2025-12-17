@@ -81,6 +81,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - TypeSpec modifications are **local only**
 - Agent-mode interactions occur in **VS Code, Visual Studio, or IntelliJ with GitHub Copilot** with `azure-rest-api-specs` open
 - Azure subscription permits on-demand resource provisioning and teardown
+- No need for environment variables to be set up
 
 ### In Scope for Scenario 2
 
@@ -90,7 +91,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - TypeSpec-based generation for the Health Deidentification service
 - Both **data plane and management plane** coverage
 - Both **Agent Mode and CLI Mode** validation
-- AI models available through GitHub Copilot:
+- All models available through GitHub Copilot:
   - **Required for testing**: Claude Sonnet 4, Claude Sonnet 4.5, GPT-4o, GPT-5
 - Automated environment remediation (install/upgrade tooling)
 - **[TypeSpec Customizations](#typespec-customizations)** to shape generated surfaces
@@ -104,31 +105,33 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - Outer-loop activities such as committing changes, creating PRs, release management, or package publishing
 - GA releases
 - Architectural review preparation
+  - **Note**: Even though architectural review preparation is out of scope for this scenario, instruction files should still provide guidance on how users can initiate the architectural review process outside of the agent workflow until it can be integrated into future scenarios
+  - **Note**: Similarly, package naming approval is required for [Net-New SDKs](#net-new-sdk), and instruction files should provide guidance on how to initiate the package naming approval process outside of the agent workflow
 - Breaking change reviews
 - Updating changelog/`README.md`/metadata content for data-plane libraries
+  - **Note**: For .NET, metadata update functionality (export-api script) already works for both data-plane and management-plane libraries and is implemented in Scenario 1
 - Error resolution assistance beyond environment setup remediation
 
 ---
 
 ## Workflow
 
-**Legend**: 🆕 = New tool for Scenario 2 | Existing tool from Scenario 1
-
 1. **Environment Setup** → `azsdk_verify_setup`
    - Verify tools and versions (see [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup))
    - Optionally remediate missing or out-of-date tools with `--fix` option
+   - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
 
 2. **Generating** → `azsdk_package_generate_code`
    - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](./0-scenario-1.spec.md#2-generating))
    - **Note**: Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
 
-3. **Customizations** → 🆕 `azsdk_customized_code_update`
+3. **Customizations** → `azsdk_customized_code_update`
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
    - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code)
    - Automatically determines appropriate customization approach based on request
    - Regenerates SDK after TypeSpec changes and validates builds
 
-4. **Testing** → 🆕 `azsdk_package_run_tests`
+4. **Testing** → `azsdk_package_run_tests`
    - Single unified testing tool that handles all test modes (live, live-record, playback)
    - Automatically provisions test resources when running live tests if not already available
    - Calls existing test resource provisioning scripts
@@ -136,6 +139,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 
 5. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
    - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata))
+   - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
 
 6. **Validating** → `azsdk_package_run_check`
    - Run final validation checks across languages and stages (see [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating))
@@ -266,6 +270,7 @@ This stage uses a unified testing tool that handles all test modes and automatic
 **Net-New SDK Considerations:**
 
 - **Creation of bicep files** for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
+- **Note**: Bicep file creation would be handled by a separate tool (`azsdk_package_create_test_resources`) rather than being part of `azsdk_package_run_tests`
 - Service-specific parameters, resource types, and configuration details often require human input and domain knowledge
 - Tool provides templates and guidance but may not fully automate bicep file creation for new services
 
@@ -281,9 +286,18 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata) for complete details.
 
+**Enhancements for [Net-New SDKs](#net-new-sdk):**
+
+- **CI Configuration**: A new tool `azsdk_package_update_ci` will be added to provision and update `ci.yml` files for net-new SDKs
+- **Java Metadata**: The `azsdk_package_update_metadata` tool will be enhanced to support parent-level and root-level `pom.xml` updates for Java libraries
+- **Data Plane Versioning**: The `azsdk_package_update_version` tool will be extended to update versions for data-plane libraries (currently returns no-op for data-plane libraries in Scenario 1)
+
 **Success (additional for Scenario 2):**
 
 - Tooling correctly handles package metadata updates for both [Net-New SDKs](#net-new-sdk) and existing SDKs
+- CI configuration files are provisioned correctly for net-new SDKs
+- Java parent and root `pom.xml` files are updated appropriately
+- Version updates work for both data-plane and management-plane libraries
 
 ### 6. Validating
 
@@ -549,6 +563,8 @@ Use --fix flag to remediate issues automatically.
 
 ### 2. Apply Customizations
 
+**Note**: It is unclear whether a CLI command for customizations should exist, as customizations may not be a good use case for non-interactive CLI execution. See the [Pipeline & CI Usage](#pipeline--ci-usage) section for discussion on whether `azsdk_customized_code_update` should be used in CI at all.
+
 **Command:**
 
 ```bash
@@ -676,8 +692,27 @@ Scenario 2 also needs to consider **how the CLI tools will be used inside CI/CD 
 These are intentionally left for follow-up design (Wes to clarify):
 
 1. Should there be a **single high-level pipeline command** (for example, `azsdk scenario run --id scenario-2`) that orchestrates all stages, or should pipelines explicitly compose lower-level commands?
+   - Current thinking: Likely no super high-level command, but hopefully some bigger build and test commands that can be dropped into pipelines
+   - **Single Package vs. Package Sets**: Current MCP tools/CLI commands work on a single package, but pipelines typically build a set of packages
+     - **Option A**: Enable CLI to accept and process package sets (multiple packages in one invocation)
+     - **Option B**: Pipeline loops to call CLI commands one package at a time
+     - Trade-offs exist for both approaches; need to experiment with a few commands to determine best approach
+   - Decision needed after trying commands in practice to understand performance, logging, error handling, and developer experience implications
 2. How should **secrets and Azure credentials** be passed into `azsdk_test_live` in CI (for example, federated credentials, service principals, managed identities)?
+   - Current thinking: Credentials would be like AzCLI or AzPS logins for the pipeline step running a particular command
+   - Using chained credentials should be sufficient (pipeline environment already has authenticated context)
+   - Commands should leverage existing Azure authentication mechanisms rather than requiring explicit credential parameters
 3. What level of **artifact publishing** is expected from Scenario 2 runs in CI (logs only, or also generated SDK zips, recordings, environment reports)?
+   - Keep existing artifacts that pipelines currently have; tools must produce them in locations the pipeline can pick up
+   - Expected artifacts include:
+     - **Build packages** for the given language (primary artifacts)
+     - **Logs** from tool execution
+     - **Other context-specific artifacts** as needed for the given scenario
+   - **Open Question**: Should there be a dedicated packing/packaging tool?
+     - Packing step is currently missing from the tools
+     - Not needed for local development scenarios
+     - Required for pipeline scenarios to produce distributable artifacts
+     - Decision needed: Add dedicated `azsdk_package_pack` tool or integrate packing into existing tools
 
 ---
 

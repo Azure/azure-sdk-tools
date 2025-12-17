@@ -3,12 +3,25 @@
     .side-menu {
         width: 3.5rem !important;
         min-width: unset !important;
+        background-color: var(--base-fg-color) !important;
+
+        .p-menuitem, .p-menuitem-content {
+            background: transparent !important;
+            transition: none !important;
+            border: none !important;
+
+            &:hover {
+                background: transparent !important;
+            }
+        }
 
         .p-menuitem-link {
             padding: 0.8rem 0.5rem !important;
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--base-fg-color) !important;
+            transition: none !important;
 
             &:hover {
                 background-color: var(--base-bg-color) !important;

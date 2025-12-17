@@ -177,19 +177,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 
         private static void Interpret(BooleanMetric metric)
         {
-            if (metric.Value == false)
-            {
-                metric.Interpretation = new EvaluationMetricInterpretation(
-                    EvaluationRating.Unacceptable,
-                    failed: true,
-                    reason: "Similar tool descriptions may confuse the AI agent. " + metric.Reason);
-            }
-            else
-            {
-                metric.Interpretation = new EvaluationMetricInterpretation(
-                    EvaluationRating.Exceptional,
-                    reason: "Tool descriptions are sufficiently distinct. " + metric.Reason);
-            }
+            metric.Interpretation = metric.Value == false
+            ? new EvaluationMetricInterpretation(
+                EvaluationRating.Unacceptable,
+                failed: true,
+                reason: "Similar tool descriptions may confuse the AI agent. " + metric.Reason)
+            : new EvaluationMetricInterpretation(
+                EvaluationRating.Exceptional,
+                reason: "Tool descriptions are sufficiently distinct. " + metric.Reason);
         }
 
         private static void MetricError(string message, BooleanMetric metric)

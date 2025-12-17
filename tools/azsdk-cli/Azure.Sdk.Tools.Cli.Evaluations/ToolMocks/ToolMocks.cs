@@ -27,6 +27,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                 new CreatePullRequest(),
                 new CreateReleasePlan(),
                 new VerifySetup(),
+                new PackageGenerateCode(),
+                new PackageBuildCode(),
             };
 
             foreach (var mock in mockInstances)

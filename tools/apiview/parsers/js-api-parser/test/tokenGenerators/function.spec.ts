@@ -22,8 +22,8 @@ function createMockFunction(
     kind: ApiItemKind.Function,
     displayName,
     excerptTokens,
-    parameters: parameters || undefined,
-    typeParameters: typeParameters || undefined,
+    parameters: parameters || [],
+    typeParameters: typeParameters || [],
     // Required properties from ApiItem
     canonicalReference: {
       toString: () => `@test!${displayName}:function`,
@@ -147,14 +147,34 @@ describe("functionTokenGenerator", () => {
     });
 
     it("generates correct tokens for a function with parameters", () => {
-      const mockFunction = createMockFunction("addNumbers", [
-        { kind: ExcerptTokenKind.Content, text: "(a: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: ", b: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "addNumbers",
+        [],
+        [
+          {
+            name: "a",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "b",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      // Update return type
+      mockFunction.returnTypeExcerpt = {
+        text: "number",
+        spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+      } as any;
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -165,24 +185,35 @@ describe("functionTokenGenerator", () => {
 
       // Check that parameter tokens are included
       const tokenValues = tokens.map((t) => t.Value).join("");
-      expect(tokenValues).toContain("a:");
+      expect(tokenValues).toContain("a");
+      expect(tokenValues).toContain(": ");
       expect(tokenValues).toContain("number");
-      expect(tokenValues).toContain("b:");
+      expect(tokenValues).toContain("b");
     });
 
     it("generates TypeName tokens with navigation for type references", () => {
-      const mockFunction = createMockFunction("processUser", [
-        { kind: ExcerptTokenKind.Content, text: "(user: " },
-        {
-          kind: ExcerptTokenKind.Reference,
-          text: "User",
-          canonicalReference: {
-            toString: () => "@azure/test!User:interface",
-          },
-        },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "processUser",
+        [],
+        [
+          {
+            name: "user",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "User",
+              spannedTokens: [
+                {
+                  kind: ExcerptTokenKind.Reference,
+                  text: "User",
+                  canonicalReference: {
+                    toString: () => "@azure/test!User:interface",
+                  },
+                } as ExcerptToken,
+              ],
+            } as any,
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -192,18 +223,34 @@ describe("functionTokenGenerator", () => {
     });
 
     it("generates correct tokens for a function with return type reference", () => {
-      const mockFunction = createMockFunction("getUser", [
-        { kind: ExcerptTokenKind.Content, text: "(id: " },
-        { kind: ExcerptTokenKind.Content, text: "string" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        {
-          kind: ExcerptTokenKind.Reference,
-          text: "Promise<User>",
-          canonicalReference: {
-            toString: () => "!Promise:interface",
-          },
-        },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "getUser",
+        [],
+        [
+          {
+            name: "id",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      // Update return type
+      mockFunction.returnTypeExcerpt = {
+        text: "Promise<User>",
+        spannedTokens: [
+          {
+            kind: ExcerptTokenKind.Reference,
+            text: "Promise<User>",
+            canonicalReference: {
+              toString: () => "!Promise:interface",
+            },
+          } as ExcerptToken,
+        ],
+      } as any;
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -276,42 +323,105 @@ describe("functionTokenGenerator", () => {
     });
 
     it("handles functions with optional parameters", () => {
-      const mockFunction = createMockFunction("optionalFunc", [
-        { kind: ExcerptTokenKind.Content, text: "(required: " },
-        { kind: ExcerptTokenKind.Content, text: "string" },
-        { kind: ExcerptTokenKind.Content, text: ", optional?: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "optionalFunc",
+        [],
+        [
+          {
+            name: "required",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "optional",
+            isOptional: true,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
-      const tokenValues = tokens.map((t) => t.Value).join("");
-      expect(tokenValues).toContain("optional?:");
+      const tokenValues = tokens.map((t) => t.Value);
+      expect(tokenValues).toContain("optional");
+      expect(tokenValues).toContain("?");
     });
 
     it("handles functions with generic type parameters", () => {
-      const mockFunction = createMockFunction("genericFunc", [
-        { kind: ExcerptTokenKind.Content, text: "<T>(value: T): T" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "genericFunc",
+        [],
+        [
+          {
+            name: "value",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "T",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "T" }],
+            },
+          } as unknown as Parameter,
+        ],
+        [
+          {
+            name: "T",
+            constraintExcerpt: {
+              text: "",
+              spannedTokens: [],
+            },
+          } as unknown as TypeParameter,
+        ],
+      );
+
+      // Update return type
+      mockFunction.returnTypeExcerpt = {
+        text: "T",
+        spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "T" }],
+      } as any;
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
-      const tokenValues = tokens.map((t) => t.Value).join("");
-      expect(tokenValues).toContain("<T>");
-      expect(tokenValues).toContain("value: T");
+      const tokenValues = tokens.map((t) => t.Value);
+      expect(tokenValues).toContain("<");
+      expect(tokenValues).toContain("T");
+      expect(tokenValues).toContain(">");
+      expect(tokenValues).toContain("value");
     });
 
     it("generates exact token structure for parameters", () => {
-      const mockFunction = createMockFunction("addNumbers", [
-        { kind: ExcerptTokenKind.Content, text: "(a: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: ", b: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "addNumbers",
+        [],
+        [
+          {
+            name: "a",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "b",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      // Update return type
+      mockFunction.returnTypeExcerpt = {
+        text: "number",
+        spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+      } as any;
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -319,35 +429,57 @@ describe("functionTokenGenerator", () => {
       expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
       expect(tokens[1]).toMatchObject({ Kind: TokenKind.Keyword, Value: "function" });
       expect(tokens[2]).toMatchObject({ Kind: TokenKind.MemberName, Value: "addNumbers" });
-      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(a:" });
-      expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
-      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ", b:" });
+      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
+      expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "a" });
+      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
       expect(tokens[6]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
-      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
-      expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: ", " });
+      expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "b" });
+      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[10]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "): " });
+      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
     });
 
     it("generates TypeName tokens for parameter type references", () => {
-      const mockFunction = createMockFunction("processData", [
-        { kind: ExcerptTokenKind.Content, text: "(input: " },
-        {
-          kind: ExcerptTokenKind.Reference,
-          text: "InputData",
-          canonicalReference: {
-            toString: () => "@azure/test!InputData:interface",
-          },
-        },
-        { kind: ExcerptTokenKind.Content, text: ", options?: " },
-        {
-          kind: ExcerptTokenKind.Reference,
-          text: "ProcessOptions",
-          canonicalReference: {
-            toString: () => "@azure/test!ProcessOptions:interface",
-          },
-        },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "processData",
+        [],
+        [
+          {
+            name: "input",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "InputData",
+              spannedTokens: [
+                {
+                  kind: ExcerptTokenKind.Reference,
+                  text: "InputData",
+                  canonicalReference: {
+                    toString: () => "@azure/test!InputData:interface",
+                  },
+                } as ExcerptToken,
+              ],
+            } as any,
+          } as unknown as Parameter,
+          {
+            name: "options",
+            isOptional: true,
+            parameterTypeExcerpt: {
+              text: "ProcessOptions",
+              spannedTokens: [
+                {
+                  kind: ExcerptTokenKind.Reference,
+                  text: "ProcessOptions",
+                  canonicalReference: {
+                    toString: () => "@azure/test!ProcessOptions:interface",
+                  },
+                } as ExcerptToken,
+              ],
+            } as any,
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -364,76 +496,128 @@ describe("functionTokenGenerator", () => {
 
       // Parameter names and punctuation should be Text tokens
       const textTokens = tokens.filter((t) => t.Kind === TokenKind.Text);
-      expect(textTokens.some((t) => t.Value === "(input:")).toBe(true);
-      expect(textTokens.some((t) => t.Value === ", options?:")).toBe(true);
+      expect(textTokens.some((t) => t.Value === "input")).toBe(true);
+      expect(textTokens.some((t) => t.Value === "options")).toBe(true);
     });
 
     it("handles rest parameters correctly", () => {
-      const mockFunction = createMockFunction("concat", [
-        { kind: ExcerptTokenKind.Content, text: "(...items: " },
-        { kind: ExcerptTokenKind.Content, text: "string" },
-        { kind: ExcerptTokenKind.Content, text: "[]): " },
-        { kind: ExcerptTokenKind.Content, text: "string" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "concat",
+        [],
+        [
+          {
+            name: "...items",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string[]",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string[]" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      // Update return type
+      mockFunction.returnTypeExcerpt = {
+        text: "string",
+        spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
+      } as any;
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
-      expect(tokenValues).toContain("(...items:");
-      expect(tokenValues).toContain("string");
-      expect(tokenValues).toContain("[]):");
+      expect(tokenValues).toContain("...items");
+      expect(tokenValues).toContain("string[]");
 
       // All parameter-related tokens should be Text type
-      const restParamToken = tokens.find((t) => t.Value === "(...items:");
+      const restParamToken = tokens.find((t) => t.Value === "...items");
       expect(restParamToken?.Kind).toBe(TokenKind.Text);
     });
 
     it("handles destructured parameters", () => {
-      const mockFunction = createMockFunction("destructure", [
-        { kind: ExcerptTokenKind.Content, text: "({ a, b }: " },
-        { kind: ExcerptTokenKind.Content, text: "{ a: number; b: number }" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "destructure",
+        [],
+        [
+          {
+            name: "{ a, b }",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "{ a: number; b: number }",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "{ a: number; b: number }" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
+
+      // Update return type
+      mockFunction.returnTypeExcerpt = {
+        text: "number",
+        spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+      } as any;
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
-      expect(tokenValues).toContain("({ a, b }:");
+      expect(tokenValues).toContain("{ a, b }");
       expect(tokenValues).toContain("{ a: number; b: number }");
     });
 
     it("handles parameters with default values", () => {
-      const mockFunction = createMockFunction("withDefaults", [
-        { kind: ExcerptTokenKind.Content, text: "(x: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: " = 10, y: " },
-        { kind: ExcerptTokenKind.Content, text: "string" },
-        { kind: ExcerptTokenKind.Content, text: ' = "hello"): ' },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "withDefaults",
+        [],
+        [
+          {
+            name: "x",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "y",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
-      expect(tokenValues).toContain("(x:");
-      expect(tokenValues).toContain("= 10, y:");
-      expect(tokenValues).toContain('= "hello"):');
+      expect(tokenValues).toContain("x");
+      expect(tokenValues).toContain("number");
+      expect(tokenValues).toContain("y");
+      expect(tokenValues).toContain("string");
     });
 
     it("handles complex parameter types with generics", () => {
-      const mockFunction = createMockFunction("complex", [
-        { kind: ExcerptTokenKind.Content, text: "(data: " },
-        {
-          kind: ExcerptTokenKind.Reference,
-          text: "Array<Record<string, unknown>>",
-          canonicalReference: {
-            toString: () => "!Array:interface",
-          },
-        },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "complex",
+        [],
+        [
+          {
+            name: "data",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "Array<Record<string, unknown>>",
+              spannedTokens: [
+                {
+                  kind: ExcerptTokenKind.Reference,
+                  text: "Array<Record<string, unknown>>",
+                  canonicalReference: {
+                    toString: () => "!Array:interface",
+                  },
+                } as ExcerptToken,
+              ],
+            } as any,
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -444,12 +628,22 @@ describe("functionTokenGenerator", () => {
     });
 
     it("handles union type parameters", () => {
-      const mockFunction = createMockFunction("unionParam", [
-        { kind: ExcerptTokenKind.Content, text: "(value: " },
-        { kind: ExcerptTokenKind.Content, text: "string | number | boolean" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "unionParam",
+        [],
+        [
+          {
+            name: "value",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "string | number | boolean",
+              spannedTokens: [
+                { kind: ExcerptTokenKind.Content, text: "string | number | boolean" },
+              ],
+            },
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -459,12 +653,20 @@ describe("functionTokenGenerator", () => {
     });
 
     it("handles function type parameters", () => {
-      const mockFunction = createMockFunction("callback", [
-        { kind: ExcerptTokenKind.Content, text: "(fn: " },
-        { kind: ExcerptTokenKind.Content, text: "(x: number) => string" },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "callback",
+        [],
+        [
+          {
+            name: "fn",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "(x: number) => string",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "(x: number) => string" }],
+            },
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
@@ -474,20 +676,36 @@ describe("functionTokenGenerator", () => {
     });
 
     it("verifies all parameter tokens have correct deprecation flag", () => {
-      const mockFunction = createMockFunction("deprecatedFunc", [
-        { kind: ExcerptTokenKind.Content, text: "(a: " },
-        { kind: ExcerptTokenKind.Content, text: "number" },
-        { kind: ExcerptTokenKind.Content, text: ", b: " },
-        {
-          kind: ExcerptTokenKind.Reference,
-          text: "CustomType",
-          canonicalReference: {
-            toString: () => "@test!CustomType:type",
-          },
-        },
-        { kind: ExcerptTokenKind.Content, text: "): " },
-        { kind: ExcerptTokenKind.Content, text: "void" },
-      ] as ExcerptToken[]);
+      const mockFunction = createMockFunction(
+        "deprecatedFunc",
+        [],
+        [
+          {
+            name: "a",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "number",
+              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
+            },
+          } as unknown as Parameter,
+          {
+            name: "b",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "CustomType",
+              spannedTokens: [
+                {
+                  kind: ExcerptTokenKind.Reference,
+                  text: "CustomType",
+                  canonicalReference: {
+                    toString: () => "@test!CustomType:type",
+                  },
+                } as ExcerptToken,
+              ],
+            } as any,
+          } as unknown as Parameter,
+        ],
+      );
 
       const tokens = functionTokenGenerator.generate(mockFunction, true);
 

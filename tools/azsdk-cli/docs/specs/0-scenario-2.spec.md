@@ -121,27 +121,32 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
    - Optionally remediate missing or out-of-date tools with `--fix` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
 
-2. **Generating** → `azsdk_package_generate_code`
+2. **TypeSpec Authoring** → `azsdk_typespec_authoring`
+   - AI-powered assistance for authoring or modifying TypeSpec API specifications
+   - Leverages Azure SDK knowledge base for guidelines-compliant code
+   - Helps with ARM resources, versioning, routing, and compliance fixes
+
+3. **Generating** → `azsdk_package_generate_code`
    - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](./0-scenario-1.spec.md#2-generating))
    - **Note**: Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
 
-3. **Customizations** → `azsdk_customized_code_update`
+4. **Customizations** → `azsdk_customized_code_update`
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
    - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code)
    - Automatically determines appropriate customization approach based on request
    - Regenerates SDK after TypeSpec changes and validates builds
 
-4. **Testing** → `azsdk_package_run_tests`
+5. **Testing** → `azsdk_package_run_tests`
    - Single unified testing tool that handles all test modes (live, live-record, playback)
    - Automatically provisions test resources when running live tests if not already available
    - Calls existing test resource provisioning scripts
    - **Note**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
 
-5. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
+6. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
    - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata))
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
 
-6. **Validating** → `azsdk_package_run_check`
+7. **Validating** → `azsdk_package_run_check`
    - Run final validation checks across languages and stages (see [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating))
    - **Note**: Some validation issue fixing may fall under other stages (for example, build errors caused by customizations would be addressed in the Customizations stage; generation issues would be addressed in the Generating stage)
 
@@ -185,7 +190,55 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional fix mode** that **of
 - A **single summarized report** is produced (and logged to disk) that `azsdk_verify_setup` and downstream stages can reference.
 - A **defined set of criteria exists** for determining which tools can be auto-installed/auto-upgraded versus which require manual installation with guidance links (see [Open Questions](#open-questions)).
 
-### 2. Generating
+### 2. TypeSpec Authoring (AI-Powered)
+
+Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
+
+**Tool:** `azsdk_typespec_authoring`
+
+**Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
+
+**Capabilities:**
+
+- **Intent-Driven Development**: Users describe their intent in natural language (e.g., "add a new ARM resource named 'Asset' with CRUD operations"), and the AI guides them through the correct TypeSpec implementation
+- **Guidelines Compliance**: Generates TypeSpec code that adheres to Azure guidelines, avoiding common anti-patterns and hallucinated decorators
+- **Contextual References**: Provides links to relevant Azure documentation and best practices for each suggestion
+- **Versioning Support**: Assists with adding new API versions following Azure versioning guidelines (preview vs stable, breaking change policies)
+- **Resource Hierarchy**: Helps define parent-child resource relationships with correct routing using `@parentResource` and `@route` decorators
+- **Common Scenarios**: Handles ARM resource creation, path corrections, versioning changes, and fixing non-compliant code patterns
+
+**Input Parameters:**
+
+- `--request`: The TypeSpec-related request or task description (required)
+- `--additional-information`: Additional context for the request (optional)
+- `--typespec-source-path`: Path to TypeSpec source file or folder (optional, defaults to current directory)
+
+**Workflow:**
+
+1. User describes TypeSpec authoring task in natural language
+2. Tool analyzes existing TypeSpec project structure and current state
+3. Tool queries Azure SDK Knowledge Base with structured request
+4. Knowledge Base returns RAG-powered solution with step-by-step guidance
+5. Tool formats solution with documentation references
+6. Agent applies changes to TypeSpec files and presents results to user
+
+**Examples:**
+
+- Adding ARM resources: "add an ARM resource named 'Asset' with CRUD operations"
+- Updating routes: "change the route for interface Assets to include employees/{employeeName} before assets/{assetName}"
+- Versioning: "add a new preview API version 2025-10-01-preview for service widget"
+- Fixing compliance: "update this TypeSpec to follow Azure ARM guidelines"
+
+**Success:**
+
+- Generated TypeSpec code passes compilation without errors
+- Generated code follows Azure ARM/DP/SDK guidelines (validated by linter/validator)
+- Generated code includes proper decorators and templates (no hallucinated decorators)
+- Solution includes relevant documentation references
+- Responses correctly interpret natural language intent
+- Reduces reviewer comments on TypeSpec standards violations
+
+### 3. Generating
 
 **Tool:** `azsdk_package_generate_code`
 
@@ -201,7 +254,7 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional fix mode** that **of
 - Existing customization layers remain untouched while new files are clearly identified
 - For **[Net-New SDKs](#net-new-sdk)**, all required project scaffolding is created correctly for each target language
 
-### 3. Customizations
+### 4. Customizations
 
 Scenario 2 presents a **unified customization experience**: users describe desired outcomes (rename operations, add helper methods, introduce convenience overloads) without needing to choose mechanism up front. The tooling translates intent into the appropriate implementation path using a two-phase workflow.
 
@@ -242,7 +295,7 @@ Scenario 2 presents a **unified customization experience**: users describe desir
 - Regeneration retains custom code through language-specific layering patterns
 - User receives single, plain-language summary of what changed
 
-### 4. Testing
+### 5. Testing
 
 This stage uses a unified testing tool that handles all test modes and automatically manages test resources.
 
@@ -282,7 +335,7 @@ This stage uses a unified testing tool that handles all test modes and automatic
 - Playback runs succeed with recordings
 - For [Net-New SDKs](#net-new-sdk), test assets are created (with manual input where needed)
 
-### 5. Update Package/Docs/Metadata
+### 6. Update Package/Docs/Metadata
 
 Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata) for complete details.
 
@@ -299,7 +352,7 @@ Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata
 - Java parent and root `pom.xml` files are updated appropriately
 - Version updates work for both data-plane and management-plane libraries
 
-### 6. Validating
+### 7. Validating
 
 Unchanged from Scenario 1. Refer to [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating) for validation steps and success criteria.
 
@@ -507,6 +560,72 @@ Refresh only outdated or failing test recordings for the Health Deidentification
 3. Execute `azsdk_package_run_tests --mode playback --test-filter <pattern>` to validate new recordings.
 4. Summarize which recordings changed and any remaining discrepancies.
 
+### TypeSpec Authoring - Add New API Version
+
+**Prompt:**
+
+```text
+I need to add a new preview API version to the Health Deidentification TypeSpec. Can you help me add version 2025-10-01-preview?
+```
+
+**Expected Agent Activity:**
+
+1. **Agent calls** `azsdk_typespec_authoring` with the request
+2. Tool analyzes current TypeSpec project structure and identifies version enum
+3. Tool queries Azure SDK Knowledge Base for versioning guidelines
+4. Tool generates solution:
+   - Add enum option to version enum following YYYY-MM-DD format
+   - Decorate with `@previewVersion` for preview versions
+   - Add new example folder and copy still-relevant examples
+5. **Agent reports** changes and provides documentation links:
+   - Link to Azure TypeSpec versioning guide
+   - Link to preview version guidelines
+
+### TypeSpec Authoring - Add ARM Resource
+
+**Prompt:**
+
+```text
+I need to add a new ARM resource to the Health Deidentification service TypeSpec with standard CRUD operations.
+```
+
+**Expected Agent Activity:**
+
+1. **Agent calls** `azsdk_typespec_authoring` with the request
+2. Tool analyzes current TypeSpec project to identify namespace and version
+3. Tool queries Azure SDK Knowledge Base for ARM resource patterns
+4. Tool generates solution:
+   - Create tracked resource model with properties
+   - Add resource interface with `@armResourceOperations` decorator
+   - Include standard CRUD operations using ARM templates
+   - Add list operations following ARM patterns
+5. **Agent applies** generated TypeSpec code
+6. **Agent reports** what was created and provides documentation links:
+   - Link to ARM resource type guide
+   - Link to ARM operation templates
+
+### TypeSpec Authoring - Fix Resource Hierarchy
+
+**Prompt:**
+
+```text
+I need to update the Health Deidentification TypeSpec to establish a parent-child resource relationship. Can you help me set up the correct routing?
+```
+
+**Expected Agent Activity:**
+
+1. **Agent calls** `azsdk_typespec_authoring` with the request and current resource definitions
+2. Tool identifies this as a parent-child resource hierarchy scenario
+3. Tool queries Azure SDK Knowledge Base for `@parentResource` pattern
+4. Tool generates solution:
+   - Add `@parentResource` decorator to establish hierarchy
+   - Add required path parameters
+   - Update route to include parent path segment
+5. **Agent applies** changes to TypeSpec files
+6. **Agent reports** changes made and provides documentation links:
+   - Link to child resource guide
+   - Link to `@parentResource` decorator documentation
+
 ---
 
 ## CLI Commands
@@ -561,7 +680,47 @@ Environment verification complete: 4/5 languages ready
 Use --fix flag to remediate issues automatically.
 ```
 
-### 2. Apply Customizations
+### 2. TypeSpec Authoring
+
+**Command:**
+
+```bash
+azsdk typespec authoring --request "add a new preview API version 2025-10-01-preview"
+```
+
+**Options:**
+
+- `--request <string>`: The TypeSpec-related request or task description (required)
+- `--additional-information <string>`: Additional context for the request (optional)
+- `--typespec-source-path <path>`: Path to TypeSpec source file or folder (optional, defaults to current directory)
+
+**Expected Output:**
+
+```text
+**Solution:** To add a new API version '2025-10-01-preview' for your service in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
+
+**Step-by-step guidance:**
+1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format. Since this is a preview version, use the '-preview' suffix and decorate with @previewVersion.
+
+@previewVersion
+v2025_10_01_preview: "2025-10-01-preview"
+
+2. Add an example folder for this version (examples/2025-10-01-preview) and copy any still-relevant examples from the previous version.
+
+**References:**
+- How to define a preview version: https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version
+- Azure TypeSpec versioning guide: https://azure.github.io/typespec-azure/docs/howtos/versioning
+```
+
+**Error Cases:**
+
+```text
+✗ Error: Required argument missing: --request
+
+Usage: azsdk typespec authoring --request <request> [--additional-information <info>] [--typespec-source-path <path>]
+```
+
+### 3. Apply Customizations
 
 **Note**: It is unclear whether a CLI command for customizations should exist, as customizations may not be a good use case for non-interactive CLI execution. See the [Pipeline & CI Usage](#pipeline--ci-usage) section for discussion on whether `azsdk_customized_code_update` should be used in CI at all.
 

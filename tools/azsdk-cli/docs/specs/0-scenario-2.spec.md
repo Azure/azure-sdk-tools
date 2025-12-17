@@ -718,6 +718,7 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 ### Scope Considerations
 
 **Net-New SDKs:**
+
 - Should [Net-New SDK](#net-new-sdk) support be included in Scenario 2, or deferred to a later scenario?
 - Current assessment: Generation and testing stages would require additional work for Net-New SDKs
   - Generation: Project scaffolding and bootstrapping for languages
@@ -727,18 +728,22 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 ### Tool and Process Questions
 
 **Tool Auto-Installation Rules:**
+
 - What are the specific criteria for determining which tools can be auto-installed/auto-upgraded by `azsdk_verify_setup` versus which require manual installation with guidance links?
 
 **Customization Decision Logic:**
+
 - What is the complete set of criteria that `azsdk_customized_code_update` should use to determine whether a customization should be done using TypeSpec (Phase A) versus code (Phase B), or both?
 - Should the decision logic be language-specific or language-agnostic?
 
 **Test Asset Generation:**
+
 - How much automation is feasible for test asset generation for [Net-New SDKs](#net-new-sdk)?
 - What level of manual configuration should be expected versus automated?
 - Should there be templates or wizards to assist with complex service-specific configurations?
 
 **Bicep File Creation for Test Resources:**
+
 - How feasible is it to create a tool that can automatically generate bicep files for test resource provisioning?
 - What are the primary challenges in automating bicep file creation (service-specific parameters, resource types, configuration complexity, security/credential requirements)?
 - Should this be fully automated, semi-automated with templates, or primarily manual with tooling assistance?

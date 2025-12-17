@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 )
 
 type PromptParser interface {

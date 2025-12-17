@@ -3,14 +3,14 @@ package utils
 import (
 	"log"
 
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 )
 
 // FilterInvalidReferenceLinks checks if links in the LLM response actually appeared in the prompt chunks
 // to prevent hallucination. It removes references with invalid links and logs warnings.
 func FilterInvalidReferenceLinks(references []model.Reference, knowledges []model.Knowledge) []model.Reference {
 	if len(references) == 0 {
-		return nil
+		return references
 	}
 
 	// Extract all links from chunks

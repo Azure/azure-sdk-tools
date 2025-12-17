@@ -1,9 +1,8 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using Azure.Sdk.Tools.Cli.Evaluations.Models;
+using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
 using Azure.AI.OpenAI;
-using Azure;
-using Azure.Identity;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 {
@@ -22,12 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 
         public ToolDescriptionSimilarityEvaluator(string? azureOpenAIEndpoint = null)
         {
-            // Use environment variables or defaults
-            var endpoint = azureOpenAIEndpoint ?? 
-                Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? 
-                throw new InvalidOperationException("Azure OpenAI endpoint not configured. Set AZURE_OPENAI_ENDPOINT environment variable.");
-            
-            _openAIClient = new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential());
+            _openAIClient = TestSetup.GetAzureOpenAIClient();
         }
 
         public async ValueTask<EvaluationResult> EvaluateAsync(

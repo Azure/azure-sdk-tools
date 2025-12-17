@@ -17,6 +17,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         public SdkType PackageType { get; set; }
         [JsonPropertyName("language")]
         [Telemetry]
-        public string Language { get; } = "TypeSpec";
+        public virtual string Language { get; set; } = "TypeSpec";
     }
 }

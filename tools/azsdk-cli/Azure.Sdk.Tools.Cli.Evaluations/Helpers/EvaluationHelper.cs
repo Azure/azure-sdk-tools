@@ -20,6 +20,36 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         }
 
         public static async Task<EvaluationResult> RunScenarioAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatResponse response,
+            string scenarioName,
+            ChatConfiguration chatConfig,
+            string executionName,
+            string reportingPath,
+            IEnumerable<IEvaluator> evaluators,
+            bool enableResponseCaching = true,
+            IEnumerable<EvaluationContext>? additionalContexts = null,
+            CancellationToken cancellationToken = default)
+        {
+            var reportingConfiguration = DiskBasedReportingConfiguration.Create(
+                executionName: executionName,
+                storageRootPath: reportingPath,
+                evaluators: evaluators,
+                chatConfiguration: chatConfig,
+                enableResponseCaching: enableResponseCaching);
+
+            await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(scenarioName, cancellationToken: cancellationToken);
+
+            var result = await scenarioRun.EvaluateAsync(
+                messages,
+                response,
+                additionalContext: additionalContexts ?? [],
+                cancellationToken: cancellationToken);
+
+            return result;
+        }
+
+        public static async Task<EvaluationResult> RunToolInputScenarioAsync(
             string scenarioName,
             ScenarioData scenarioData,
             ChatCompletion chatCompletion,
@@ -37,26 +67,21 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, toolNames);
 
-            var reportingConfiguration = DiskBasedReportingConfiguration.Create(
-                executionName: executionName,
-                storageRootPath: reportingPath,
-                evaluators: evaluators,
-                chatConfiguration: chatConfig,
-                enableResponseCaching: enableResponseCaching);
-
-            await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(scenarioName, cancellationToken: cancellationToken);
-
             var response = await chatCompletion.GetChatResponseWithExpectedResponseAsync(
                 fullChat,
                 expectedToolResults);
 
-            var result = await scenarioRun.EvaluateAsync(
+            return await RunScenarioAsync(
                 fullChat,
                 response,
-                additionalContext: additionalContexts ?? [],
-                cancellationToken: cancellationToken);
-
-            return result;
+                scenarioName,
+                chatConfig,
+                executionName,
+                reportingPath,
+                evaluators,
+                enableResponseCaching,
+                additionalContexts,
+                cancellationToken);
         }
     }
 }

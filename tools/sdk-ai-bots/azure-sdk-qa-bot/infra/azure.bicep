@@ -283,7 +283,7 @@ resource serverErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'Global'
   properties: {
     description: 'Alert when server returns 5xx HTTP errors'
-    severity: 3  // Critical - because 5xx errors indicate server failure
+    severity: 3
     enabled: true
     scopes: [
       webApp.id

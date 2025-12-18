@@ -70,7 +70,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         return await GetFailedTestRunDataFromTrx(trxPath);
     }
 
-    [McpServerTool(Name = GetFailedTestCasesToolName), Description("Get titles of failed test cases from a TRX file")]
+    [McpServerTool(Name = GetFailedTestCasesToolName), Description("Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details.")]
     public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath)
     {
         try
@@ -84,7 +84,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
     }
 
-    [McpServerTool(Name = GetFailedTestCaseDataToolName), Description("Get details for a failed test from a TRX file")]
+    [McpServerTool(Name = GetFailedTestCaseDataToolName), Description("Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure.")]
     public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
     {
         try
@@ -110,7 +110,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
     }
 
-    [McpServerTool(Name = GetFailedTestRunDataToolName), Description("Get failed test run data from a TRX file")]
+    [McpServerTool(Name = GetFailedTestRunDataToolName), Description("Get complete details for all failed test cases from a TRX file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis.")]
     public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath)
     {
         try

@@ -8,6 +8,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {
+        // Configurable properties for testing
+        public Build? ConfiguredPipelineRun { get; set; }
+        public ReleasePlanDetails? ConfiguredReleasePlanForWorkItem { get; set; }
+        public string? ConfiguredSDKPullRequest { get; set; }
+        public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
+
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language)
         {
             throw new NotImplementedException();
@@ -87,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<Build> IDevOpsService.GetPipelineRunAsync(int buildId)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(ConfiguredPipelineRun);
         }
 
         Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanAsync(int releasePlanId)
@@ -123,6 +129,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         
         Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
         {
+            if (ConfiguredReleasePlanForWorkItem != null)
+            {
+                return Task.FromResult(ConfiguredReleasePlanForWorkItem);
+            }
+            
             var releasePlan = new ReleasePlanDetails
             {
                 WorkItemId = workItemId,
@@ -137,6 +148,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<string> IDevOpsService.GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId)
         {
+            if (ConfiguredSDKPullRequest != null)
+            {
+                return Task.FromResult(ConfiguredSDKPullRequest);
+            }
+            
             // Simulate fetching a pull request URL based on the build ID and language
             return Task.FromResult($"https://github.com/Azure/azure-sdk-for-{language}/pull/1");
         }
@@ -148,6 +164,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         Task<Build> IDevOpsService.RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch)
         {
+            if (ConfiguredRunSDKGenerationPipeline != null)
+            {
+                return Task.FromResult(ConfiguredRunSDKGenerationPipeline);
+            }
             throw new NotImplementedException();
         }
 

@@ -6,7 +6,8 @@
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
 - [Design Proposal](#design-proposal)
-- [Context Differences](#context-differences)
+- [Usage Scenarios for Testing](#usage-scenarios-for-testing)
+- [Pipeline/CI Considerations](#pipelineci-considerations)
 - [Success Criteria](#success-criteria)
 - [Open Questions](#open-questions)
 - [Alternatives Considered](#alternatives-considered)
@@ -137,6 +138,18 @@ What are we trying to achieve with this design?
 - [ ] Provide a unified approach for handling both TypeSpec and SDK code customizations through a single workflow
 - [ ] Enable AI agents to become experts in both TypeSpec decorators and language-specific code customization patterns
 
+### Limitations
+
+**Phase B (Code Customizations) Scope:**
+
+Phase B focuses initially on **deterministic, mechanical transformations** where fixes are unambiguous:
+
+- ✅ **In Scope**: Duplicate field detection and removal, variable reference updates after renames, simple build fixes (imports, visibility modifiers, reserved keyword renames, type mismatches)
+- ⚠️ **Stretch Goal**: Complex convenience methods, behavioral changes affecting SDK semantics, intricate AST manipulation patterns
+- ❌ **Out of Scope**: Architectural decisions about SDK surface design, complex language-specific idioms requiring deep domain expertise
+
+**Rationale:** The approval checkpoint provides a safety mechanism allowing us to attempt Phase B automation for mechanical fixes while users retain final control. Complex transformations require additional validation and may be deferred to future iterations based on real-world success rates.
+
 ---
 
 ## Design Proposal
@@ -165,12 +178,12 @@ This document will be referenced by [eng/common/instructions/azsdk-tools/typespe
 
 Additionally, it can be referenced by custom prompts or agents when knowledge of how to apply client.tsp customizations is needed.
 
-#### 2. Customized Code Update Tool
+#### 2. Package Customize Code Tool
 
 There is an existing [CustomizedCodeUpdateTool](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/TypeSpec/CustomizedCodeUpdateTool.cs) that supports updating customized SDK code after generating an SDK from TypeSpec. Splitting `client.tsp` customization into its own tool (see alternative 1) will put the burden on our users to know whether TypeSpec or SDK code customizations are required to address feedback or breakages. Applying and verifying `client.tsp` customizations should be merged with this existing tool.
 
-Name (CLI): `azsdk tsp client customized-update`
-Name (MCP): `azsdk_customized_code_update`
+Name (CLI): `azsdk package customize-code`
+Name (MCP): `azsdk_package_customize_code`
 
 #### Current Inputs
 
@@ -220,8 +233,10 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
 2. **Phase B – [Code Customizations](#code-customizations):**
 
    - If Phase A doesn't resolve all issues, apply language-specific code patches
+   - Focus on **deterministic patterns**: duplicate field removal, variable reference updates, simple build fixes
    - Use existing ClientCustomizationCodePatchTool for SDK code modifications
-   - Apply safe patches: imports, visibility modifiers, reserved keyword renames, annotations
+   - Apply mechanical transformations: imports, visibility modifiers, reserved keyword renames, type mismatches
+   - **Note**: Complex convenience methods and behavioral changes are stretch goals requiring additional validation
    - Validate final build and generate consolidated diff
 
 3. **Summary & Approval:**
@@ -248,7 +263,7 @@ flowchart TD
 
     Entry --> Classify
 
-    subgraph Tool [CustomizedCodeUpdateTool]
+    subgraph Tool [CustomizeCodeTool]
         Classify[<b>Classify Request</b><br/>Can TypeSpec changes<br/>address the issues?]
 
         Classify -->|No| PhaseB
@@ -259,7 +274,7 @@ flowchart TD
 
         RegenSDK --> RegenValidate{Does generation pass?}
 
-        RegenValidate -->|No, pass context| ApplyTsp
+        RegenValidate -->|No, pass context<br/>Max 2 iterations| ApplyTsp
 
         RegenValidate -->|Yes| BuildSDK[<b>Build SDK</b><br/>Compile SDK code]
 
@@ -273,9 +288,10 @@ flowchart TD
 
         RemainingIssues -->|No| Success[<b>Success</b><br/>• Generate consolidated diff<br/>• Present approval checkpoint<br/>• Apply approved changes]
 
-        PhaseB --> ValidateB[<b>Final Validation</b><br/>• Compile SDK code<br/>• If build fails → retry AI patching loop max 2x]
+        PhaseB --> ValidateB[<b>Final Validation</b><br/>• Compile SDK code<br/>• If build fails → retry max 2x]
 
-        ValidateB --> Success
+        ValidateB -->|Build passes| Success
+        ValidateB -->|Max retries exceeded| Failure[<b>Failure</b><br/>• Report unresolved errors<br/>• Provide error context to user]
     end
 
     style Entry fill:#fff9c4
@@ -288,6 +304,7 @@ flowchart TD
     style PhaseB fill:#f3e5f5
     style ValidateB fill:#e8f5e9
     style Success fill:#c8e6c9
+    style Failure fill:#ffcdd2
     style Tool fill:none,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
@@ -318,7 +335,7 @@ When operating from within an SDK repo with a local clone of the azure-rest-api-
 
 ```bash
 # Apply specific customization from user prompt
-azsdk package customized-code-update \
+azsdk package customize-code \
   --project-path /path/to/sdk \
   --customization-request "Rename FooClient to BarClient for .NET"
 ```
@@ -327,7 +344,7 @@ azsdk package customized-code-update \
 
 ```bash
 # Apply feedback from API View
-azsdk package customized-code-update \
+azsdk package customize-code \
   --project-path /path/to/sdk \
   --customization-request "API review feedback: Model names should be PascalCase. Change 'fooModel' to 'FooModel'"
 ```
@@ -336,7 +353,7 @@ azsdk package customized-code-update \
 
 ```bash
 # Apply fixes for build errors
-azsdk package customized-code-update \
+azsdk package customize-code \
   --project-path /path/to/sdk \
   --customization-request "Build failed with: error CS0246: The type or namespace name 'FooModel' could not be found"
 ```
@@ -353,7 +370,7 @@ azsdk package customized-code-update \
 
 ```json
 {
-  "tool": "azsdk_customized_code_update",
+  "tool": "azsdk_package_customize_code",
   "arguments": {
     "packagePath": "/path/to/sdk",
     "customizationRequest": "Rename FooClient to BarClient for .NET"
@@ -365,7 +382,7 @@ azsdk package customized-code-update \
 
 ```json
 {
-  "tool": "azsdk_customized_code_update",
+  "tool": "azsdk_package_customize_code",
   "arguments": {
     "packagePath": "/path/to/sdk",
     "typespecProjectPath": "/path/to/specs/Foo/",
@@ -378,7 +395,7 @@ azsdk package customized-code-update \
 
 ```json
 {
-  "tool": "azsdk_customized_code_update",
+  "tool": "azsdk_package_customize_code",
   "arguments": {
     "packagePath": "/path/to/sdk",
     "customizationRequest": "Build failed with: error CS0246: The type or namespace name 'FooModel' could not be found"
@@ -386,75 +403,194 @@ azsdk package customized-code-update \
 }
 ```
 
-### Agent Conversation Examples
+### Pipeline/CI Considerations
 
-**Example 1: Build Failure Entry Point**
+**Primary Usage Mode: Agent-Interactive**
 
-```text
-User: My SDK build failed, can you fix it?
-Agent: Running build now...
-Agent: Build failed with errors: naming collision in client.tsp and missing import in FooClient.java.
-Agent: Applying TypeSpec fixes first (added @friendlyName to client.tsp), regenerating SDK...
-Agent: Build still failing, applying SDK code fix (added missing import in FooClient.java).
-Agent: Build succeeded! Here's the summary:
-- client.tsp: Added @friendlyName("FooServiceClient")
-- FooClient.java: Added import com.azure.core.util.Context
-Approve these changes?
-User: Approve.
-Agent: Changes applied. SDK build passing.
+The `azsdk_package_customize_code` tool is **primarily designed for agent-mode/interactive workflows** where human decision-making is essential:
+
+- **Reviewing diffs**: Users need to inspect proposed changes across TypeSpec and SDK code before approval
+- **Approving changes**: Mandatory approval checkpoint ensures users validate customizations align with intent
+- **Iterative refinement**: Complex customizations often require feedback loops where users guide the tool toward the desired outcome
+- **Ambiguous requests**: Natural language prompts and API review feedback require interpretation and validation
+
+**Limited CLI Mode Usage**
+
+CLI mode is supported for specific scenarios where customization intent is **deterministic and well-defined**:
+
+- **Repeatable fixes**: Applying known customization patterns (e.g., "rename FooClient to BarClient for .NET")
+- **Automation testing**: Validating tool behavior in controlled test environments
+- **Debugging**: Reproducing specific customization scenarios for troubleshooting
+
+CLI mode requires explicit `--auto-approve` flag to skip approval checkpoint:
+
+```bash
+azsdk package customize-code \
+  --project-path /path/to/sdk \
+  --customization-request "<deterministic request>" \
+  --auto-approve
 ```
 
-**Example 2: User Prompt Entry Point**
+**CI/Pipeline Usage: Out of Scope**
 
-```text
-User: I need to rename the FooClient to BarClient for .NET only
-Agent: I'll apply that customization to client.tsp...
-Agent: Added @clientName("BarClient", "csharp") to FooClient in client.tsp
-Agent: Regenerating SDK and validating build...
-Agent: Build succeeded! Changes summary:
-- client.tsp: Added @clientName("BarClient", "csharp") decorator
-Approve these changes?
-User: Approve.
-Agent: Changes applied.
-```
+The tool is **not recommended for CI/pipeline usage** for the following reasons:
 
-**Example 3: API Review Feedback Entry Point**
+1. **Human judgment required**: Customizations involve architectural decisions about SDK surface design that require domain expertise and approval
+2. **Non-deterministic AI behavior**: Phase B (code customizations) uses AI-generated patches that may vary across runs, making CI results unpredictable
+3. **Interactive approval needed**: The approval checkpoint is a critical safety mechanism to prevent unintended changes
+4. **Complex error handling**: Build failures may require multiple iteration cycles and human interpretation to resolve correctly
 
-```text
-User: API review feedback says: "Model names should follow PascalCase convention. Change 'fooModel' to 'FooModel' for Python"
-Agent: Analyzing feedback and determining if TypeSpec changes can address this...
-Agent: This requires a @clientName decorator in client.tsp for Python scope.
-Agent: Applied @clientName("FooModel", "python") to fooModel, regenerating SDK...
-Agent: Build succeeded! Changes summary:
-- client.tsp: Added @clientName("FooModel", "python") to fooModel
-Approve these changes?
-User: Approve.
-Agent: Changes applied. You can now submit this for API review.
-```
+**Recommended CI/Pipeline Workflow**
+
+Instead of running `azsdk_package_customize_code` in CI, follow this pattern:
+
+1. **Local Development**: Developers apply customizations interactively using agent mode or CLI mode
+2. **Commit Changes**: Approved TypeSpec (`client.tsp`) and SDK code customizations are committed to source control
+3. **CI Validation**: CI runs generation + build + test on the committed customizations using standard workflow tools:
+   - `azsdk_package_generate_code` to regenerate SDK from committed TypeSpec
+   - `azsdk_package_build_code` to validate builds
+   - `azsdk_package_run_tests` to execute test suites
 
 ---
 
-## Context Differences
+## Usage Scenarios for Testing
 
-### Assumptions: Agentic vs CLI Contexts
+This section provides concrete test scenarios to validate the two-phase customization workflow. Each scenario demonstrates realistic conditions where both TypeSpec and code customizations may be required.
 
-Assumptions for running the customization tooling in [agentic](#agentic-context) (VS Code, Copilot agent) versus [CLI contexts](#cli-context):
+### Scenario 1: Customization Conflict After Non-Breaking TypeSpec Addition
 
-#### Agentic Context (VS Code + GitHub Copilot)
+**Description:** Service team adds optional property `operationId` to TypeSpec, but Java customization already injects this field manually, causing duplicate field compilation error.
 
-- Enhanced user experience and file access capabilities
-- Natural language interface for requesting fixes
-- Full repository context and intelligent code understanding
-- Approval via UI through agent interaction
+**Entry Point:** Build failure
 
-#### CLI Context
+**Problem:** TypeSpec now generates `operationId`, conflicting with existing `addField("operationId")` in `DocumentIntelligenceCustomizations.java`.
 
-- Suitable for CI/CD integration and automated workflows
-- Direct command execution with specific parameters
-- Patch files and interactive terminal prompts for approval
-- CLI context capabilities may be expanded in future phases
-- Core logic for fixes is consistent across both contexts
-- User experience is tailored to each execution environment
+**Error:**
+```
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile
+/azure-ai-documentintelligence/src/main/java/com/azure/ai/documentintelligence/models/AnalyzeOperationDetails.java:[178,20] variable operationId is already defined in class AnalyzeOperationDetails
+```
+
+**Workflow Execution:**
+
+| Phase | Action | Result |
+|-------|--------|--------|
+| **Phase A: TypeSpec** | Analyze build failure<br/>Determine no TypeSpec changes needed<br/>(property already exists in spec) | No TypeSpec modifications<br/>Forward issue to Phase B |
+| **Phase B: Code Customization** | Detect duplicate field injection<br/>Remove `addField("operationId")` from customization<br/>Rebuild SDK | Build succeeds<br/>Customization simplified |
+
+**Key Learning:** Non-breaking TypeSpec additions can break existing customizations that manually inject the same fields.
+
+---
+
+### Scenario 2: API Review Feedback Requiring Multi-Language Customizations
+
+**Description:** API review requests renaming model `AIProjectConnectionEntraIDCredential` to use "Id" (not "ID") in .NET, requiring scoped TypeSpec changes.
+
+**Entry Point:** API review feedback
+
+**Problem:** Model name doesn't follow .NET casing conventions ("Id" vs "ID").
+
+**Workflow Execution:**
+
+| Phase | Action | Result |
+|-------|--------|--------|
+| **Phase A: TypeSpec** | Analyze feedback requirements<br/>Apply `@clientName` with proper scoping for .NET<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates successfully<br/>Build passes<br/>No Phase B needed |
+
+**Key Learning:** API review naming feedback typically resolved with scoped `@clientName` decorators. Tool validates all affected language builds.
+
+---
+
+### Scenario 3: TypeSpec Rename Causing Customization Drift
+
+**Description:** Service team renames property `displayName` → `name` in TypeSpec. Java customization still references old name `getField("displayName")`, causing "cannot find symbol" error.
+
+**Entry Point:** Build failure after regeneration
+
+**Problem:** Customization references non-existent field after TypeSpec rename.
+
+**Error:**
+```
+cannot find symbol: method getField(String)
+Note: Field 'displayName' no longer exists in generated model
+```
+
+**Workflow Execution:**
+
+| Phase | Action | Result |
+|-------|--------|--------|
+| **Phase A: TypeSpec** | Regenerate SDK with updated TypeSpec<br/>Rename is intentional and correct<br/>No TypeSpec changes needed from SDK developer | SDK regenerated successfully<br/>Generated model now has `name` instead of `displayName`<br/>Build fails due to customization drift |
+| **Phase B: Code Customization** | Detect reference to non-existent field `displayName`<br/>Update customization to reference `name`<br/>Rebuild SDK | Build succeeds<br/>Customization aligned with new property name |
+
+**Key Learning:** Non-breaking TypeSpec renames break customizations referencing old names. Both phases needed to align spec and customization code.
+
+---
+
+### Scenario 4: Hide Operation from Python SDK
+
+**Description:** Hide internal polling operation `getCreateProjectStatus` from Python SDK using language-scoped `@access` decorator.
+
+**Entry Point:** User prompt ("Remove get_create_project_status from Python SDK")
+
+**Workflow Execution:**
+
+| Phase | Action | Result |
+|-------|--------|--------|
+| **Phase A: TypeSpec** | Apply `@access` decorator to mark operation as internal for Python<br/>Regenerate Python SDK<br/>Validate build | SDK regenerates successfully<br/>Operation hidden from public API<br/>Build passes<br/>No Phase B needed |
+
+**Key Learning:** `@access` decorator provides language-scoped visibility control without code customizations.
+
+---
+
+### Scenario 5: .NET Build Errors from Analyzer
+
+**Description:** .NET analyzer errors (AZC0030, AZC0012) for naming violations: model ends with "Parameters", type name "Tasks" too generic.
+
+**Entry Point:** Build failure (.NET analyzer)
+
+**Errors:**
+- `AZC0030`: Model name ends with 'Parameters'
+- `AZC0012`: Type name 'Tasks' too generic
+
+**Workflow Execution:**
+
+| Phase | Action | Result |
+|-------|--------|--------|
+| **Phase A: TypeSpec** | Parse analyzer error messages<br/>Apply `@clientName` decorators for .NET<br/>Rename problematic types<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates with new names<br/>Analyzer errors resolved<br/>Build passes<br/>No Phase B needed |
+
+**Key Learning:** .NET analyzer errors resolved with scoped `@clientName` decorators, no code customizations required.
+
+---
+
+### Scenario 6: Create Python Subclient Architecture
+
+**Description:** Restructure Python SDK with main client (`DocumentProcessingClient`) for service operations and subclient (`ProjectClient`) for project-scoped operations.
+
+**Entry Point:** User prompt ("Use 2 clients for Python SDK: one main client and one sub-client that specifies the project id")
+
+**Workflow Execution:**
+
+| Phase | Action | Result |
+|-------|--------|--------|
+| **Phase A: TypeSpec** | Create `client.tsp` with custom client definitions<br/>Define main client for project operations<br/>Define subclient for document operations<br/>Use `@client` and `@clientInitialization` decorators<br/>Regenerate Python SDK<br/>Validate build | SDK regenerates with two-client architecture<br/>Build passes<br/>No Phase B needed |
+
+**Key Learning:** Complex client architecture achieved with TypeSpec decorators alone, no code customizations required.
+
+---
+
+### Testing Checklist
+
+Use these scenarios to validate the customization workflow implementation:
+
+- [ ] **Scenario 1**: Duplicate field injection detection and removal (Phase B focus)
+- [ ] **Scenario 2**: API review feedback with single or multi-language scoping (Phase A focus)
+- [ ] **Scenario 3**: TypeSpec property rename causing customization drift (Both phases)
+- [ ] **Scenario 4**: Hide operation from Python SDK (Phase A focus)
+- [ ] **Scenario 5**: .NET build errors from analyzer (Phase A focus)
+- [ ] **Scenario 6**: Create Python subclient architecture (Phase A focus)
+- [ ] **Approval workflow**: Both CLI (interactive prompt) and MCP (agent UI) contexts
+- [ ] **Consolidated diff**: Shows changes across TypeSpec and code files
+- [ ] **Max retry limit**: Tool stops after 2 fix cycles to prevent infinite loops
+- [ ] **Rollback capability**: Changes can be reverted if not approved
 
 ---
 
@@ -465,296 +601,6 @@ Assumptions for running the customization tooling in [agentic](#agentic-context)
 - [ ] **Phase B Success**: Successfully apply [Code Customizations](#code-customizations) for common code issues
 - [ ] **Approval Workflow**: Enforce [approval checkpoints](#approval-checkpoint) in both contexts
 - [ ] **Cross-Language**: Support .NET, Java, JavaScript, Python, and Go
-
-### Scenarios
-
-**Example 1: rename .NET generated API**
-
-_Comment from .NET API View_
-
-> Azure.AI.Projects.AIProjectConnectionEntraIDCredential: "ID is cased "Id" in .NET"
-
-_Updated client.tsp_:
-
-```tsp
-import "./main.tsp";
-import "@azure-tools/typespec-client-generator-core";
-
-using Azure.ClientGenerator.Core;
-
-// Rename AIProjectConnectionEntraIDCredential to use "Id" casing for .NET.
-@@clientName(Azure.AI.Projects.EntraIDCredentials, "AIProjectConnectionEntraIdCredential", "csharp");
-```
-
-**Example 2: Hide an operation from Python SDK**
-
-_Service main.tsp snippet_:
-
-```tsp
-/** Operations for managing projects */
-interface Projects {
-  /** Get status of a Project creation */
-  getCreateProjectStatus is Operations.GetResourceOperationStatus<
-    Project,
-    Project
-  >;
-
-  /** List all projects in the account */
-  listProjects is Operations.ResourceList<Project>;
-
-  /** Get a project by name */
-  getProject is Operations.ResourceRead<Project>;
-
-  /** Create a new project (long-running) */
-  @pollingOperation(Projects.getCreateProjectStatus)
-  createProject is Operations.LongRunningResourceCollectionAction<
-    Project,
-    CreateProjectRequest,
-    Project
-  >;
-
-  /** Delete a project */
-  deleteProject is Operations.ResourceDelete<Project>;
-}
-```
-
-_User prompt:_
-
-> Remove get_create_project_status from Python SDK
-
-_Generated client.tsp snippet_:
-
-```tsp
-@@access(Projects.getCreateProjectStatus, Access.internal, "python");
-```
-
-**Example 3: .NET build errors (analyzer) resolved via TypeSpec customizations**
-
-_.NET build error context from azsdk_package_build_code_
-
-```
-Build FAILED.
-
-/azure-sdk-for-net/sdk/cognitivelanguage/Azure.AI.Language.Documents/src/Generated/AbstractiveSummarizationTaskParameters.cs(14,26): error AZC0030: Model name 'AbstractiveSummarizationTaskParameters' ends with 'Parameters'. We suggest renaming it to 'DocumentsAbstractiveSummarizationTaskParametersContent' or 'DocumentsAbstractiveSummarizationTaskParametersPatch' or another name with this suffix.
-
-/azure-sdk-for-net/sdk/cognitivelanguage/Azure.AI.Language.Documents/src/Generated/Tasks.cs(14,26): error AZC0012: Type name 'Tasks' is too generic and has high chance of collision with BCL types or types from other libraries. Consider using a more descriptive multi-word name, such as 'DocumentsTasksClient' or 'DocumentsTasksService'.
-
-/azure-sdk-for-net/sdk/cognitivelanguage/Azure.AI.Language.Documents/src/Generated/Tasks.Serialization.cs(16,26): error AZC0012: Type name 'Tasks' is too generic and has high chance of collision with BCL types or types from other libraries. Consider using a more descriptive multi-word name, such as 'DocumentsTasksClient' or 'DocumentsTasksService'.
-
-  0 Warning(s)
-  3 Error(s)
-```
-
-GitHub Copilot invokes the `CustomizedCodeUpdateTool` with the build error context as the `customizationRequest`. The tool applies TypeSpec customizations to resolve the issues:
-
-_Updated client.tsp_:
-
-```tsp
-import "./main.tsp";
-import "@azure-tools/typespec-client-generator-core";
-
-using Azure.ClientGenerator.Core;
-
-// Rename task parameter models to use the "Content" suffix for inputs.
-@@clientName(Language.AnalyzeDocuments.AbstractiveSummarizationTaskParameters, "DocumentsAbstractiveSummarizationTaskParametersContent", "csharp");
-
-// Rename generic/conflicting models to more specific names for C#.
-@@clientName(Language.AnalyzeDocuments.Tasks, "DocumentsTasksService", "csharp");
-```
-
-**Example 4: Create a subclient for Python SDK**
-
-_Service main.tsp_:
-
-<details open>
-<summary>main.tsp</summary>
-
-```tsp
-import "@typespec/http";
-import "@typespec/rest";
-import "@typespec/versioning";
-import "@azure-tools/typespec-azure-core";
-
-using TypeSpec.Http;
-using TypeSpec.Rest;
-using TypeSpec.Versioning;
-using Azure.Core;
-using Azure.Core.Traits;
-
-@useAuth(AadOauth2Auth<["https://test.azure.com/.default"]>)
-@server(
-  "{endpoint}/document-processing",
-  "Document Processing Service",
-  {
-    /** Service endpoint */
-    endpoint: url,
-  }
-)
-@service(#{ title: "Document Processing" })
-@versioned(DocumentProcessing.Versions)
-namespace DocumentProcessing;
-
-/** Service API versions */
-enum Versions {
-  /** The 2025-12-15 API version */
-  v2025_12_15: "2025-12-15",
-}
-
-/** Service traits for Document Processing operations */
-alias ServiceTraits = NoRepeatableRequests &
-  NoConditionalRequests &
-  NoClientRequestId;
-
-/** Resource operations with service traits */
-alias Operations = Azure.Core.ResourceOperations<ServiceTraits>;
-
-/** Represents a processing project */
-@resource("projects")
-model Project {
-  /** The unique project ID */
-  @key("projectId")
-  @visibility(Lifecycle.Read)
-  id: string;
-
-  /** User-friendly display name */
-  displayName: string;
-}
-
-/** Represents a document within a project */
-@resource("documents")
-@parentResource(Project)
-model Document {
-  /** The unique document ID */
-  @key("documentId")
-  @visibility(Lifecycle.Read)
-  id: string;
-
-  /** Original filename */
-  fileName: string;
-
-  /** Document processing status */
-  status: DocumentStatus;
-}
-
-/** Document processing status */
-union DocumentStatus {
-  string,
-
-  /** Document is pending processing */
-  Pending: "pending",
-
-  /** Document is being processed */
-  Processing: "processing",
-
-  /** Document processing completed */
-  Completed: "completed",
-
-  /** Document processing failed */
-  Failed: "failed",
-}
-
-/** Operations for managing projects */
-interface Projects {
-  /** List all projects in the account */
-  listProjects is Operations.ResourceList<Project>;
-
-  /** Get a project by name */
-  getProject is Operations.ResourceRead<Project>;
-
-  /** Create or replace a project */
-  createOrReplaceProject is Operations.ResourceCreateOrReplace<Project>;
-
-  /** Delete a project */
-  deleteProject is Operations.ResourceDelete<Project>;
-}
-
-/** Document management operations within a project */
-interface Documents {
-  /** List all documents in a project */
-  listDocuments is Operations.ResourceList<Document>;
-
-  /** Get a specific document */
-  getDocument is Operations.ResourceRead<Document>;
-
-  /** Create or replace a document */
-  createOrReplaceDocument is Operations.ResourceCreateOrReplace<Document>;
-
-  /** Delete a document */
-  deleteDocument is Operations.ResourceDelete<Document>;
-}
-```
-
-</details>
-
-_User prompt_:
-
-> Use 2 clients for Python SDK: one main client and one sub-client that specifies the project id.
-
-_Generated client.tsp_:
-
-```tsp
-import "./main.tsp";
-import "@azure-tools/typespec-client-generator-core";
-
-using Azure.ClientGenerator.Core;
-using DocumentProcessing;
-
-namespace ClientCustomizations;
-
-/**
- * The root client for the Document Processing service.
- * Use this client for service-level operations like listing projects.
- *
- * For project-scoped operations, use ProjectClient instead.
- */
-@client(
-  {
-    service: DocumentProcessing,
-    name: "DocumentProcessingClient",
-  },
-  "python"
-)
-interface DocumentProcessingClient {
-  listProjects is Projects.listProjects;
-  getProject is Projects.getProject;
-  createOrReplaceProject is Projects.createOrReplaceProject;
-  deleteProject is Projects.deleteProject;
-}
-
-/** Initialization options for the ProjectClient */
-model ProjectClientOptions {
-  /** The project ID to scope operations to */
-  projectId: string;
-}
-
-/**
- * A project-scoped client for document processing operations.
- *
- * This client is initialized with a projectId, which is then used
- * automatically for all project-scoped operations.
- */
-@client(
-  {
-    service: DocumentProcessing,
-    name: "ProjectClient",
-  },
-  "python"
-)
-@clientInitialization({ parameters: ProjectClientOptions }, "python")
-namespace ProjectClient {
-  /**
-   * Document management operations.
-   */
-  @operationGroup
-  @clientName("Documents", "python")
-  interface ProjectDocuments {
-    listDocuments is Documents.listDocuments;
-    getDocument is Documents.getDocument;
-    createOrReplaceDocument is Documents.createOrReplaceDocument;
-    deleteDocument is Documents.deleteDocument;
-  }
-}
-```
 
 ## Open Questions
 
@@ -773,9 +619,12 @@ namespace ProjectClient {
 - **Concurrent Builds**: How do we handle multiple simultaneous customization workflows?
 - **Resource Management**: What are the performance implications of two-phase fixes?
 
-### CLI mode
+### Phase B Automation Boundaries
 
-- Does this workflow make sense in a CLI mode, or is it primarily useful in an agentic context?
+- **Pattern Recognition**: What criteria determine whether a code customization is "deterministic" vs. "complex"? Should we maintain a catalog of known mechanical patterns?
+- **Success Metrics**: What success rate threshold should we achieve for deterministic patterns before expanding Phase B scope to more complex transformations?
+- **Language-Specific Complexity**: Should Java AST manipulation patterns be treated differently than Python `_patch.py` updates given their brittleness?
+- **Escape Hatches**: When Phase B fails repeatedly, should we surface guidance documents ("read this doc for code customization") rather than continue attempting automation?
 
 ## Alternatives Considered
 
@@ -798,3 +647,5 @@ A CLI command/MCP tool that takes a typespec project path and a package path (em
 **Why not chosen:**
 
 The original design only attempted to address 1 of the 3 areas: providing the infra in azsdk-cli to steer customizations. It relied on each language to provide their own mechanism for both identifying and applying `client.tsp` customizations. It was also completely separate from the existing `CustomizedCodeUpdateTool` MCP tool, meaning it had to perform many of the same steps (e.g. generate/build SDK) while not being clear when it should be invoked.
+
+---

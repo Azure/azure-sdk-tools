@@ -637,7 +637,7 @@ I need to update the Health Deidentification TypeSpec to establish a parent-chil
 **Command:**
 
 ```bash
-azsdk verify setup --languages Dotnet Java JavaScript Python Go --fix
+azsdk verify setup --languages "Dotnet,Java,JavaScript,Python,Go" --fix
 ```
 
 **Options:**

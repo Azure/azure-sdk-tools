@@ -43,6 +43,8 @@ TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec
 
 ### Current State
 
+Users are facing various problems during TypeSpec authoring, where agent like GitHub Copilot with frontier models cannot provide effective help. We categorize these problems into three main types. For more cases, please refer to this [project](https://github.com/haolingdong-msft/innerloop-typespec-authoring-benchmark) to understand more cases that agent cannot provide effective help.
+
 > **Note**: The AI-generated outputs shown in the examples below represent the current state of generic AI assistance (as of the time of writing). AI models continuously evolve, and the specific outputs demonstrated here are for illustrative purposes to highlight the gap between generic AI and domain-specific, Azure-aware AI assistance.
 
 **Problem 1: Writing TypeSpec that follows Azure guidelines and fixing non-compliant code**

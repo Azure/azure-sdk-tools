@@ -15,8 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         private static string LoadInstructions()
         {
             var copilotInstructions = GetCopilotInstructions();
-            var linkRegex = new Regex(@"\[([^\]]+)\]\(([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
-
+            var linkRegex = new Regex(@"\[([^\]]+)\]\((?!https?://|[a-z][a-z0-9+.-]*:)([^)]+\.instructions\.md)\)", RegexOptions.IgnoreCase);
             var matches = linkRegex.Matches(copilotInstructions);
             var instructions = matches
                 .Select(match => GetMentionedInstructions(match.Groups[2].Value));

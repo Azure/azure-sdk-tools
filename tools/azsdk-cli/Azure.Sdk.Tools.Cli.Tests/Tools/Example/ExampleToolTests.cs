@@ -12,7 +12,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Example;
 
 internal class ExampleToolTests
 {

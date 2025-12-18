@@ -193,6 +193,14 @@ type Index struct {
 	ContextID       Source  `json:"context_id"`
 }
 
+type Knowledge struct {
+	Source   Source `json:"document_source"`
+	FileName string `json:"document_filename"`
+	Title    string `json:"document_title"`
+	Link     string `json:"document_link"`
+	Content  string `json:"content"`
+}
+
 func GetIndexLink(chunk Index) string {
 	if strings.HasPrefix(chunk.Title, "version-release-notes-index") {
 		return "Please reference link from document content"

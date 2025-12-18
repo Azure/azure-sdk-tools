@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
@@ -219,7 +220,7 @@ public sealed partial class JavaLanguageService : LanguageService
 
     private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5);
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         logger.LogInformation("Starting test execution for Java project at: {PackagePath}", packagePath);
 
@@ -230,12 +231,12 @@ public sealed partial class JavaLanguageService : LanguageService
         if (result.ExitCode == 0)
         {
             logger.LogInformation("Test execution completed successfully");
-            return true;
+            return new TestRunResponse(result);
         }
         else
         {
             logger.LogWarning("Test execution failed with exit code {ExitCode}", result.ExitCode);
-            return false;
+            return new TestRunResponse(result);
         }
 
     }

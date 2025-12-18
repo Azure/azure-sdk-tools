@@ -1,5 +1,20 @@
 # Release History
 
+## 0.5.11 (Unreleased)
+
+### Features Added
+
+- Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Fixed test failures being reported as a success to the agent.
+- Test result output is now made available to the agent.
+
+### Other Changes
+
 ## 0.5.10 (2025-12-08)
 
 ### Features Added

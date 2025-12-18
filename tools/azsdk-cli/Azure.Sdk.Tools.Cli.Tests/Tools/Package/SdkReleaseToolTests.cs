@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
 {
     internal class SdkReleaseToolTests
     {
@@ -67,12 +67,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 });
             devOpsService = mockDevOpsService.Object;
 
-            var releaseReadinessToolLogger = new TestLogger<ReleaseReadinessTool>();
-
             sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
                 logger,
-                releaseReadinessToolLogger,
                 new InputSanitizer());
         }
 
@@ -105,6 +102,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.That(result.PackageName, Is.EqualTo(packageName));
                 Assert.That(result.Language, Is.EqualTo(SdkLanguage.Unknown));
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Language must be one of the following"));
+            });
+        }
+
+        [Test]
+        public async Task TestRunReleaseWithCheckReady()
+        {
+            var packageName = "azure-template";
+            var language = "Python";
+            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language, "main", checkReady: true);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.PackageName, Is.EqualTo(packageName));
+                Assert.That(result.Language, Is.EqualTo(SdkLanguage.Python));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("Package 'azure-template' is ready for release."));
+                Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo(string.Empty));
+                Assert.That(result.PipelineBuildId, Is.EqualTo(0));
             });
         }
 

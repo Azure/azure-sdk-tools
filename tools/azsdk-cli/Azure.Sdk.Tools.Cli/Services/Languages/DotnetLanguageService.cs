@@ -3,6 +3,7 @@
 using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -208,7 +209,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         }
     }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         var result = await processHelper.Run(new ProcessOptions(
                 command: "dotnet",
@@ -218,7 +219,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             ct
         );
 
-        return result.ExitCode == 0;
+        return new TestRunResponse(result);
     }
 
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)

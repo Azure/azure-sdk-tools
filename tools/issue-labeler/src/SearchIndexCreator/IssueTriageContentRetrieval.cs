@@ -74,7 +74,8 @@ namespace SearchIndexCreator
                     {
                         await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobUploadOptions
                         {
-                            HttpHeaders = blobHttpHeaders
+                            HttpHeaders = blobHttpHeaders,
+                            Conditions = null  // Allow overwrite of existing blobs
                         });
                     }
 
@@ -438,23 +439,30 @@ namespace SearchIndexCreator
             var processedCount = 0;
             foreach (var issue in issues)
             {
+                if (issue.PullRequest != null)
+                {
+                    continue;
+                }
+                
                 processedCount++;
                 if (processedCount % 50 == 0)
                 {
                     Console.WriteLine($"Processing issue {processedCount}/{issues.Count}... (Issue #{issue.Number})");
                 }
                 
-                var (server, tool) = AnalyzeMcpLabels(issue.Labels);
+                var (serverLabel, toolLabel) = AnalyzeMcpLabels(issue.Labels);
 
-                // Use null for missing labels (clearer than empty string for RAG/LLM)
-                var serverLabel = server?.Name;  // null if no server- label
-                var toolLabel = tool?.Name;      // null if no tools- label
-
+                // serverLabel and toolLabel are now comma-separated strings (or null)
                 var labels = new List<string>();
-                if (serverLabel != null) labels.Add(serverLabel);
-                if (toolLabel != null) labels.Add(toolLabel);
+                if (serverLabel != null) labels.AddRange(serverLabel.Split(", "));
+                if (toolLabel != null) labels.AddRange(toolLabel.Split(", "));
 
                 var codeowners = CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).ServiceOwners;
+
+                // Handle empty/null bodies - ensure minimum text for SplitSkill
+                var bodyText = string.IsNullOrWhiteSpace(issue.Body) 
+                    ? $"Title: {issue.Title}\n\n[No description provided]" 
+                    : $"Title: {issue.Title}\n\n{issue.Body}";
 
                 IssueTriageContent searchContent = new IssueTriageContent(
                     $"{repoOwner}/{_repo}/{issue.Number.ToString()}/Issue",
@@ -464,7 +472,7 @@ namespace SearchIndexCreator
                 )
                 {
                     Title = issue.Title,
-                    Body = $"Title: {issue.Title}\n\n{issue.Body}",  // Include title in body for better classification
+                    Body = bodyText,
                     Server = serverLabel,
                     Tool = toolLabel,
                     Author = issue.User.Login,
@@ -474,30 +482,29 @@ namespace SearchIndexCreator
 
                 results.Add(searchContent);
 
-                var issue_comments = await GetIssueCommentsAsync(repoOwner, _repo, issue.Number);
+                // var issue_comments = await GetMcpIssueCommentsAsync(repoOwner, _repo, issue.Number);
 
-                foreach (var comment in issue_comments)
-                {
+                // foreach (var comment in issue_comments)
+                // {
+                //     IssueTriageContent commentContent = new IssueTriageContent(
+                //         $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
+                //         repoOwner + "/" + _repo,
+                //         comment.HtmlUrl,
+                //         DocumentTypes.Comment.ToString()  // Changed from Issue to Comment
+                //     )
+                //     {
+                //         Title = issue.Title,
+                //         Body = $"Title: {issue.Title}\n\n{comment.Body}",  // Include title in body for context
+                //         Server = serverLabel,
+                //         Tool = toolLabel,
+                //         Author = comment.User.Login,
+                //         CreatedAt = comment.CreatedAt,
+                //         CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
+                //     };
 
-                    IssueTriageContent commentContent = new IssueTriageContent(
-                        $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
-                        repoOwner + "/" + _repo,
-                        comment.HtmlUrl,
-                        DocumentTypes.Comment.ToString()  // Changed from Issue to Comment
-                    )
-                    {
-                        Title = issue.Title,
-                        Body = $"Title: {issue.Title}\n\n{comment.Body}",  // Include title in body for context
-                        Server = serverLabel,
-                        Tool = toolLabel,
-                        Author = comment.User.Login,
-                        CreatedAt = comment.CreatedAt,
-                        CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
-                    };
+                //     results.Add(commentContent);
 
-                    results.Add(commentContent);
-
-                }
+                // }
             }
 
             return results;
@@ -511,33 +518,35 @@ namespace SearchIndexCreator
             // string.Equals(label.Color, "ffeb77", StringComparison.InvariantCultureIgnoreCase);
             label.Name.StartsWith("tools-", StringComparison.OrdinalIgnoreCase);
 
-        private (Octokit.Label server, Octokit.Label tool) AnalyzeMcpLabels(IReadOnlyList<Octokit.Label> labels)
+        /// <summary>
+        /// Extract MCP labels from an issue's label list
+        /// Returns comma-separated strings of all server- and tools- labels
+        /// This allows issues to have multiple tool labels (e.g., "tools-Storage, tools-CosmosDb")
+        /// </summary>
+        private (string serverLabels, string toolLabels) AnalyzeMcpLabels(IReadOnlyList<Octokit.Label> labels)
         {
-            Octokit.Label server = null;
-            Octokit.Label tool = null;
+            var serverLabelsList = labels.Where(IsServerLabel).Select(l => l.Name).ToList();
+            var toolLabelsList = labels.Where(IsToolLabel).Select(l => l.Name).ToList();
 
-            foreach (var label in labels)
-            {
-                if (IsServerLabel(label))
-                    server = label;
-                else if (IsToolLabel(label))
-                    tool = label;
-            }
-            return (server, tool);
+            // Return comma-separated strings (null if no labels)
+            var serverLabels = serverLabelsList.Any() ? string.Join(", ", serverLabelsList) : null;
+            var toolLabels = toolLabelsList.Any() ? string.Join(", ", toolLabelsList) : null;
+
+            return (serverLabels, toolLabels);
         }
 
-        // private async Task<List<IssueComment>> GetMcpIssueCommentsAsync(string repoOwner, string repo, int issueNumber)
-        // {
-        //     var issue_comments = await _client.Issue.Comment.GetAllForIssue(repoOwner, repo, issueNumber);
+        private async Task<List<IssueComment>> GetMcpIssueCommentsAsync(string repoOwner, string repo, int issueNumber)
+        {
+            var issue_comments = await _client.Issue.Comment.GetAllForIssue(repoOwner, repo, issueNumber);
 
-        //     return issue_comments
-        //         .Where(c =>
-        //             !c.User.Login.Equals("github-actions[bot]") && // Filter out bot comments
-        //             c.Body.Length > 250 && // Filter out short comments
-        //             !c.User.Login.Equals("ghost") && // Filter out comments from deleted users (mostly because the older bot seems to have been deleted)
-        //             !c.AuthorAssociation.StringValue.Equals("NONE")) // Filter out non member comments
-        //         .ToList();
-        // }
+            return issue_comments
+                .Where(c =>
+                    !c.User.Login.Equals("github-actions[bot]") && 
+                    c.Body.Length > 150 && 
+                    !c.User.Login.Equals("ghost") && 
+                    !c.AuthorAssociation.StringValue.Equals("NONE"))
+                .ToList();
+        }
 
     }
 }

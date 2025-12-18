@@ -199,7 +199,8 @@ namespace IssueLabelerService
             var scoreThreshold = double.Parse(_config.ScoreThreshold, CultureInfo.InvariantCulture);
             var fieldName = _config.IssueIndexFieldName;
 
-            var query = $"{issue.Title} {issue.Body}";
+            // Format query to match indexed document structure for better similarity
+            var query = $"Title: {issue.Title}\n\n{issue.Body ?? string.Empty}";
             _logger.LogInformation(
                 "Searching MCP content index '{IndexName}' with query: {Query}",
                 indexName,
@@ -211,7 +212,9 @@ namespace IssueLabelerService
                 fieldName,
                 query,
                 top,
-                scoreThreshold);
+                scoreThreshold,
+                labels: null,
+                filter: "DocumentType eq 'Issue' and Server ne null and Tool ne null");
 
             if (searchContentResults.Count == 0)
             {
@@ -242,6 +245,27 @@ namespace IssueLabelerService
 
         #endregion
 
+        #region Helper Methods
+
+        /// <summary>
+        /// Extract tags like [ONBOARD], [CONSOLIDATED], [BUG] from issue title
+        /// </summary>
+        private string ExtractTags(string title)
+        {
+            var tags = new List<string>();
+            var tagPattern = new System.Text.RegularExpressions.Regex(@"\[([A-Z]+)\]");
+            var matches = tagPattern.Matches(title);
+            
+            foreach (System.Text.RegularExpressions.Match match in matches)
+            {
+                tags.Add(match.Groups[1].Value);
+            }
+            
+            return tags.Any() ? string.Join(", ", tags) : "None";
+        }
+
+        #endregion
+
         #region Prompt + Schema
 
         private string BuildUserPrompt(
@@ -250,6 +274,17 @@ namespace IssueLabelerService
             string toolLabelList,
             string printableContext)
         {
+            var tags = ExtractTags(issue.Title);
+            var tagHint = tags != "None" ? $@"
+
+⚠️ DETECTED TAGS: {tags}
+Tag-Based Hints:
+- [ONBOARD]: Issue requesting a NEW tool/service → Use the SPECIFIC tool label being requested (not tools-Core)
+- [CONSOLIDATED]: Multiple issues combined → Focus on the PRIMARY failure point
+- [BUG]: Bug in existing functionality → Use the tool where the bug occurs
+- [BUGBASH]: Testing/QA issue → Analyze the actual failure, not the test process
+" : string.Empty;
+
             return $@"
 You are an assistant that classifies GitHub issues for the MCP (Model Context Protocol) repository.
 
@@ -257,7 +292,7 @@ CRITICAL REQUIREMENTS:
 - You MUST provide BOTH a Server label AND a Tool label for EVERY issue.
 - Both labels are mandatory, even if the context shows some issues as ""Unlabeled"".
 - The unlabeled issues in the context are historical data before labeling - ignore their missing labels.
-
+{tagHint}
 Your task:
 1. Choose a single **Server** label for the issue.
    - It MUST be exactly one of the following server labels:
@@ -267,28 +302,112 @@ Your task:
 2. Choose a single **Tool** label for the issue.
    - It MUST be one of the following tool labels:
      {toolLabelList}
-   - If the issue does not clearly relate to any specific tool, use the literal value """"UNKNOWN"""".
-   - Providing Tool = """"UNKNOWN"""" is acceptable when truly uncertain, but prefer selecting a real tool when possible.
+   - If the issue does not clearly relate to any specific tool, use the literal value ""UNKNOWN"".
+   - Providing Tool = ""UNKNOWN"" is acceptable when truly uncertain, but prefer selecting a real tool when possible.
+
+CRITICAL CLASSIFICATION RULES:
+
+**Rule 1: Ignore Tool Names Used as Examples**
+- If an issue says ""like KeyVault"" or ""e.g., Storage changes"", these are EXAMPLES, not the actual component.
+- Focus on what is ACTUALLY broken or being requested, not what is mentioned for illustration.
+- Example: ""Enable MCP to query service updates (e.g., Key Vault changes)"" → tools-Core (new feature), NOT tools-KeyVault
+
+**Rule 2: Understanding tools-Core - The Layer Principle**
+
+Think of the MCP system as having 3 layers:
+1. **Infrastructure Layer** (tools-Core): Server, protocol, routing, packaging
+2. **Tool Layer** (specific tools): Individual tool implementations
+3. **External Layer**: Azure services, user code, network
+
+Use tools-Core when the problem is in **Layer 1** (infrastructure):
+- Server won't start or crashes (before any tool runs)
+- Installation/packaging problems (npx, Docker, extensions, packages)
+- Protocol/transport issues (stdio, handshake, capability negotiation)
+- Configuration/environment affecting ALL tools (env vars, config files, proxy settings)
+- Server-wide settings: namespace mode, consolidated mode configuration
+- Framework issues: telemetry framework, server-wide authentication setup
+
+Use specific tool label when the problem is in **Layer 2** (tool execution):
+- The tool WAS invoked but produced wrong results
+- Tool-specific authentication, permissions, or API errors
+- Tool-specific timeout, data parsing, or business logic errors
+- Tool not being invoked when it SHOULD be (tool's own routing/registration issue)
+
+KEY DISTINCTION - ""Prompt doesn't trigger tool X""
+This is AMBIGUOUS - context matters:
+- If issue mentions """"[CONSOLIDATED]"""" or """"consolidated mode"""" → likely tools-Core (mode configuration)
+- If issue is about ONE specific tool in normal mode → likely that specific tool (tool registration/implementation)
+- If issue says """"prompt triggers WRONG tool"""" or """"uses CLI instead of MCP"""" → tools-Core (server routing)
+- Default: Assume it's the TOOL's issue unless clear evidence of server-level routing problem
+
+**Rule 2a: Scope Test - Infrastructure vs Tool**
+Ask: ""Would this affect MULTIPLE tools or just ONE?""
+- Affects ALL tools → tools-Core (infrastructure scope)
+- Affects ONE tool → specific tool (tool scope)
+- Ambiguous → Check error message: generic system error → Core, specific API/data error → tool
+
+Examples applying the scope test:
+- ""Proxy timeout"" → ALL tools affected → tools-Core
+- ""KeyVault invalid credential"" → ONE tool → tools-KeyVault  
+- ""Environment variable missing"" → ALL tools → tools-Core
+- ""Cosmos query timeout"" → ONE tool → tools-CosmosDb
+
+**Rule 3: Onboarding and Feature Requests**
+For requests to ADD new functionality:
+- If requesting a NEW tool/service → Use the tool label for that service (even if not yet implemented)
+- If requesting infrastructure feature → tools-Core
+- Look for tags: [ONBOARD] usually means new tool → use specific tool label
+
+Reasoning: We label based on WHAT the issue is ABOUT, not where code changes will go.
+An onboarding request for ""Azure SQL"" is ABOUT SQL, so use tools-SQL label.
+
+**Rule 4: When Multiple Tools Mentioned**
+- Identify the PRIMARY failing component or requested feature
+- Ignore tools mentioned as examples, comparisons, or in passing
+- Example: ""Cosmos insert fails after Storage download"" → tools-CosmosDb (where failure occurs)
+
+**CRITICAL EXAMPLES - Study These Carefully:**
+
+Example 1: Authentication failure in a specific tool
+- Issue: ""KeyVault tool authentication fails with DefaultAzureCredential error""
+- WRONG: tools-Auth (too generic)
+- RIGHT: tools-KeyVault (auth failure happens WHEN using KeyVault tool)
+
+Example 2: Telemetry service failure
+- Issue: ""Server crashes due to telemetry initialization error""
+- WRONG: tools-Core (seems like infrastructure)
+- RIGHT: tools-Telemetry (telemetry is a specific tool/service, not Core)
+
+Example 3: Generic startup without specific tool
+- Issue: ""MCP server won't start, TypeScript error in server.ts""
+- WRONG: Any specific tool
+- RIGHT: tools-Core (no specific tool mentioned, generic server issue)
+
+Example 4: All tools affected
+- Issue: ""All tools fail with proxy ETIMEDOUT error""
+- WRONG: Specific tool
+- RIGHT: tools-Core (explicitly states ALL tools affected)
 
 Guidelines:
-- Use the issue Title and Description as the primary signal.
-- Use the retrieved similar issues as supporting evidence for patterns and terminology.
-- If similar issues show ""Unlabeled"" for Server/Tool, ignore that - you must still provide labels.
-- Prefer the most specific label that matches the problem domain.
-- If multiple tools could apply, pick the one most central to the error or feature request.
-- Pay attention to technical terms, error messages, and file paths mentioned in the issue.
+- **Prioritize the retrieved similar issues** - they show real examples of how issues were classified
+- Use the issue Title and Description as the primary signal
+- Apply common sense reasoning about where the problem actually occurs
+- If similar issues show ""Unlabeled"" for Server/Tool, ignore that - you must still provide labels
+- Prefer the most specific label that matches the problem domain
+- If multiple tools could apply, pick the one most central to the error or feature request
+- Look at error messages, stack traces, and file paths - they reveal where the problem is
 
 Confidence Scoring:
 - Set ServerConfidenceScore based on how certain you are about the Server label (0.0 to 1.0).
 - Set ToolConfidenceScore based on how certain you are about the Tool label (0.0 to 1.0).
-- Use """"UNKNOWN"""" for Tool only if confidence would be extremely low (<0.3).
+- Use ""UNKNOWN"" for Tool only if confidence would be extremely low (<0.6).
 
 Return:
 - A JSON object with exactly these fields:
-  - """"Server"""": the chosen server label (string, REQUIRED)
-  - """"Tool"""": the chosen tool label or """"UNKNOWN"""" (string, REQUIRED)
-  - """"ServerConfidenceScore"""": a number between 0 and 1 (REQUIRED)
-  - """"ToolConfidenceScore"""": a number between 0 and 1 (REQUIRED)
+  - ""Server"": the chosen server label (string, REQUIRED)
+  - ""Tool"": the chosen tool label or ""UNKNOWN"" (string, REQUIRED)
+  - ""ServerConfidenceScore"": a number between 0 and 1 (REQUIRED)
+  - ""ToolConfidenceScore"": a number between 0 and 1 (REQUIRED)
 
 Do NOT include any extra fields or text outside of the JSON.
 
@@ -406,23 +525,25 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
             if (!toolIsUnknown && !toolLabels.Contains(tool, StringComparer.OrdinalIgnoreCase))
             {
                 _logger.LogWarning(
-                    "MCP labeler returned invalid Tool '{Tool}' for issue #{IssueNumber} in {Repository}. Valid labels: {ValidLabels}",
+                    "MCP labeler returned invalid Tool '{Tool}' for issue #{IssueNumber} in {Repository}. Valid labels: {ValidLabels}. Server label will still be applied.",
                     tool,
                     issue.IssueNumber,
                     issue.RepositoryName,
                     string.Join(", ", toolLabels.Take(10)) + (toolLabels.Count > 10 ? "..." : ""));
-                return new Dictionary<string, string>();
+                // Treat invalid tool as UNKNOWN - still apply Server label
+                toolIsUnknown = true;
             }
 
             if (!toolIsUnknown && toolScore < confidenceThreshold)
             {
                 _logger.LogInformation(
-                    "MCP labeler ToolConfidenceScore below threshold for issue #{IssueNumber} in {Repository}: {Score:F2} < {Threshold}. Skipping labeling.",
+                    "MCP labeler ToolConfidenceScore below threshold for issue #{IssueNumber} in {Repository}: {Score:F2} < {Threshold}. Server label will still be applied.",
                     issue.IssueNumber,
                     issue.RepositoryName,
                     toolScore,
                     confidenceThreshold);
-                return new Dictionary<string, string>();
+                // Treat low-confidence tool as UNKNOWN - still apply Server label
+                toolIsUnknown = true;
             }
 
             // 3. Build final result - only include Tool if it's not UNKNOWN

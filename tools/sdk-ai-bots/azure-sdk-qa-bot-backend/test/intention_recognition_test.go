@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/agent"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/agent"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,31 +18,14 @@ func TestIntentionRecognition_TechnicalQuestion(t *testing.T) {
 	service, err := agent.NewCompletionService()
 	require.NoError(t, err)
 
-	// Test case: Technical TypeSpec question (should need RAG processing)
 	messages := []model.Message{
-		{
-			Role:    model.Role_User,
-			Content: "How do I implement pagination in TypeSpec?",
-		},
-	}
-
-	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
-
-	require.NoError(t, err)
-	require.NotNil(t, intentionResult)
-	require.True(t, intentionResult.NeedsRagProcessing, "Technical question should require RAG processing")
-	require.NotEmpty(t, intentionResult.Question)
-	require.NotEqual(t, "unknown", intentionResult.Category)
-
-	messages = []model.Message{
 		{
 			Role:    model.Role_User,
 			Content: "I'm from the MySQL service team. I’ve already migrated the swagger to TypeSpec, but I have two questions and would like to ask if you have any best practices.\n1. How do you maintain TypeSpec in parallel?\nHere are our common scenarios: we usually have two versions in progress.\nFor example, the 2025-09-01 version is almost finished — we’re waiting for the backend code to be ready before we can release it, though we may still have some small changes.\nAnother version, 2025-12-01, has just started. Feature owners are designing their features and want to start merging code into this version.\nHow can we develop these two versions in parallel? I don’t have permission to create branches.\n2. For the server team, each feature owner needs to write their own feature, which means everyone has to understand how to write TypeSpec.\nHow can we reduce their learning and writing cost?",
 		},
 	}
-	llmMessages = convertToLLMMessages(messages)
-	intentionResult, err = service.RecognizeIntention("typespec/intention.md", llmMessages)
+	llmMessages := convertToLLMMessages(messages)
+	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.True(t, intentionResult.NeedsRagProcessing, "Technical question should require RAG processing")

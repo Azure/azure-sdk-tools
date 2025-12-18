@@ -429,10 +429,32 @@ namespace APIViewWeb.Helpers
                 }
             }
 
-            if (commentsForRow != null && commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.CommentsObj.Any())
+            if (commentsForRow is { Type: CodePanelRowDatatype.CommentThread } && commentsForRow.CommentsObj.Count != 0)
             {
                 commentsForRow.AssociatedRowPositionInGroup = rowData.RowPositionInGroup;
-                codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                int lineIndex = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count - 1;
+
+                List<IGrouping<string, CommentItemModel>> commentsByThread = commentsForRow.CommentsObj
+                    .GroupBy(c => c.ThreadId)
+                    .OrderByDescending(g => g.Min(c => c.CreatedOn))
+                    .ToList();
+                var threadRows = new List<CodePanelRowData>();
+                foreach (var threadRow in commentsByThread.Select(threadGroup => new CodePanelRowData
+                         {
+                             Type = CodePanelRowDatatype.CommentThread,
+                             NodeIdHashed = nodeIdHashed,
+                             AssociatedRowPositionInGroup = rowData.RowPositionInGroup,
+                             CommentsObj = threadGroup.OrderBy(c => c.CreatedOn).ToList(),
+                             ThreadId = threadGroup.Key, 
+                             IsResolvedCommentThread = threadGroup.Any(c => c.IsResolved),
+                             IsHiddenAPI = commentsForRow.IsHiddenAPI
+                         }))
+                {
+                    threadRow.RowClassesObj.Add("user-comment-thread");
+                    threadRows.Add(threadRow);
+                }
+                
+                codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(lineIndex, threadRows);
             }
         }
 

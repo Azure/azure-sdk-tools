@@ -1,8 +1,12 @@
 # Release
 
+## 2025-12-12 - 0.9.4
+
+- Updated 'generateFromTypeSpec' value to the result returned from the language script for .NET
+
 ## 2025-11-07 - 0.9.3
 
-- Updated SwaggerToSdkConfigSchema by introducing 'updateChangelogContentScript', 'updateCiScript', 'updateMetadataScript', and 'updateVersionScript' properties to the 'packageOptions' property. This is to support the integration with language-specific scripts.
+- Updated SwaggerToSdkConfigSchema by introducing 'updateChangelogContentScript', 'updateCiScript', 'updateMetadataScript', and 'updateVersionScript' properties to the 'packageOptions' property. This is to support the integration with language-specific scripts
 
 ## 2025-09-09 - 0.9.2
 

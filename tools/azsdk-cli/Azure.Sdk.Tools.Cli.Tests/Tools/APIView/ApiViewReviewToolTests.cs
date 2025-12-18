@@ -4,7 +4,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Moq;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.APIView;
 
 [TestFixture]
 public class ApiViewReviewToolTests

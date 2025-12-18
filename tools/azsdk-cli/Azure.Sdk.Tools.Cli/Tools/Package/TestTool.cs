@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -42,39 +43,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = RunPackageTestsToolName), Description("Run tests for the specified SDK package. Provide package path.")]
-        public async Task<DefaultCommandResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
+        public async Task<TestRunResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
         {
             try
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
                 var languageService = GetLanguageService(packagePath);
-                var success = await languageService.RunAllTests(packagePath, ct);
+                var testResponse = await languageService.RunAllTests(packagePath, ct);
 
-                if (success)
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ExitCode = 0,
-                        Result = $"Test run for package at '{packagePath}' completed successfully.",
-                    };
-                }
-                else
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ExitCode = 1,
-                        Result = $"Test run for package at '{packagePath}' was not successful.",
-                        NextSteps = ["Analyze the test output to identify the cause of the failure."],
-                    };
-                }
+                return testResponse;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package tests");
-                return new DefaultCommandResponse
+                return new TestRunResponse(exitCode: 1, testRunOutput: null, error: $"An unexpected error occurred while running package tests: {ex.Message}")
                 {
-                    ExitCode = 1,
-                    ResponseError = $"An unexpected error occurred while running package tests: {ex.Message}"
+                    NextSteps = ["Inspect the error message and attempt to resolve it"],
                 };
             }
         }

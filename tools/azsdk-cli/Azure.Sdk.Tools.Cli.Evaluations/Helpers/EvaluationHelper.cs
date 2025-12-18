@@ -10,16 +10,56 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public class EvaluationHelper
     {
-        public static void ValidateToolInputsEvaluator(EvaluationResult result)
+        public static void ValidateBooleanMetricEvaluator(EvaluationResult result, string metricName)
         {
             EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];
-            BooleanMetric expectedToolInput = result.Get<BooleanMetric>(ExpectedToolInputEvaluator.ExpectedToolInputMetricName);
-            expectedToolInput.Interpretation!.Failed.Should().BeFalse(because: expectedToolInput.Interpretation.Reason);
-            expectedToolInput.Interpretation.Rating.Should().BeOneOf(expectedRatings, because: expectedToolInput.Reason);
-            expectedToolInput.ContainsDiagnostics(d => d.Severity >= EvaluationDiagnosticSeverity.Warning).Should().BeFalse();
+            BooleanMetric metric = result.Get<BooleanMetric>(metricName);
+            metric.Interpretation!.Failed.Should().BeFalse(because: metric.Interpretation.Reason);
+            metric.Interpretation.Rating.Should().BeOneOf(expectedRatings, because: metric.Reason);
+            metric.ContainsDiagnostics(d => d.Severity >= EvaluationDiagnosticSeverity.Warning).Should().BeFalse();
+        }
+
+        public static void ValidateToolInputsEvaluator(EvaluationResult result)
+        {
+            ValidateBooleanMetricEvaluator(result, ExpectedToolInputEvaluator.ExpectedToolInputMetricName);
+        }
+
+        public static void ValidateToolDescriptionSimilarityEvaluator(EvaluationResult result)
+        {
+            ValidateBooleanMetricEvaluator(result, ToolDescriptionSimilarityEvaluator.SimilarityMetricName);
         }
 
         public static async Task<EvaluationResult> RunScenarioAsync(
+            IEnumerable<ChatMessage> messages,
+            ChatResponse response,
+            string scenarioName,
+            ChatConfiguration chatConfig,
+            string executionName,
+            string reportingPath,
+            IEnumerable<IEvaluator> evaluators,
+            bool enableResponseCaching = true,
+            IEnumerable<EvaluationContext>? additionalContexts = null,
+            CancellationToken cancellationToken = default)
+        {
+            var reportingConfiguration = DiskBasedReportingConfiguration.Create(
+                executionName: executionName,
+                storageRootPath: reportingPath,
+                evaluators: evaluators,
+                chatConfiguration: chatConfig,
+                enableResponseCaching: enableResponseCaching);
+
+            await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(scenarioName, cancellationToken: cancellationToken);
+
+            var result = await scenarioRun.EvaluateAsync(
+                messages,
+                response,
+                additionalContext: additionalContexts ?? [],
+                cancellationToken: cancellationToken);
+
+            return result;
+        }
+
+        public static async Task<EvaluationResult> RunToolInputScenarioAsync(
             string scenarioName,
             ScenarioData scenarioData,
             ChatCompletion chatCompletion,
@@ -37,26 +77,21 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, toolNames);
 
-            var reportingConfiguration = DiskBasedReportingConfiguration.Create(
-                executionName: executionName,
-                storageRootPath: reportingPath,
-                evaluators: evaluators,
-                chatConfiguration: chatConfig,
-                enableResponseCaching: enableResponseCaching);
-
-            await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(scenarioName, cancellationToken: cancellationToken);
-
             var response = await chatCompletion.GetChatResponseWithExpectedResponseAsync(
                 fullChat,
                 expectedToolResults);
 
-            var result = await scenarioRun.EvaluateAsync(
+            return await RunScenarioAsync(
                 fullChat,
                 response,
-                additionalContext: additionalContexts ?? [],
-                cancellationToken: cancellationToken);
-
-            return result;
+                scenarioName,
+                chatConfig,
+                executionName,
+                reportingPath,
+                evaluators,
+                enableResponseCaching,
+                additionalContexts,
+                cancellationToken);
         }
     }
 }

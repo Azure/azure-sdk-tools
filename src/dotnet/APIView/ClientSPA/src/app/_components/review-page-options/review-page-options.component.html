@@ -182,16 +182,15 @@
             <label class="ms-2">Disable lazy loading</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
-            <label class="small mx-1 fw-semibold" for="diff-style-select">Diff style :</label>
-            <p-dropdown
+            <label class="small mx-1" for="diff-style-select">Diff style :</label>
+            <p-selectButton
                 (onChange)="onDiffStyleChange($event)"
                 [options]="diffStyleOptions"
                 [(ngModel)]="selectedDiffStyle"
                 [disabled]="!contentHasDiff"
-                inputId="diff-style-select"
                 optionLabel="label"
-                styleClass="full-width-input"
-                data-clarity-region="diff-view-style-dropdown" />
+                styleClass="w-100 apiview-toggle-button-group"
+                data-clarity-region="diff-view-style-selectbutton" />
         </li>
     </ul>
     </app-page-options-section>

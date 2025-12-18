@@ -192,46 +192,66 @@ p-contextmenusub {
     border: 1px solid var(--border-color);
 }
 
-.p-dropdown .p-dropdown-trigger {
-    color: var(--base-text-color);
-    background: var(--base-fg-color);
+.p-dropdown .p-dropdown-trigger, html body .p-dropdown .p-dropdown-trigger {
+    color: var(--base-text-color) !important;
+    background: transparent !important;
 }
 
-.p-dropdown {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
+.p-dropdown, html body .p-dropdown {
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
     transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.p-dropdown .p-dropdown-label, html body .p-dropdown .p-dropdown-label,
+.p-dropdown .p-select-label, html body .p-dropdown .p-select-label,
+.p-dropdown .p-inputtext, html body .p-dropdown .p-inputtext {
+    background: transparent !important;
+    color: var(--base-text-color) !important;
 }
 
 .p-dropdown > .p-inputtext {
     border: 0px;
 }
 
-.p-dropdown-panel, body .p-dropdown-panel {
+.p-dropdown-panel, body .p-dropdown-panel,
+.p-select-overlay, body .p-select-overlay,
+.p-select-list-container, body .p-select-list-container {
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item, body .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item, body .p-dropdown-panel .p-dropdown-items .p-dropdown-item,
+.p-select-option, body .p-select-option {
     color: var(--base-text-color) !important;
 }
 
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
 body .p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
-body .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+body .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
+.p-select-option.p-select-option-selected, body .p-select-option.p-select-option-selected,
+.p-select-option:not(.p-disabled):hover, body .p-select-option:not(.p-disabled):hover,
+.p-select-option.p-focus, body .p-select-option.p-focus {
     color: var(--primary-btn-color) !important;
     background: var(--link-active) !important;
 }
 
-.p-dropdown:not(.p-disabled):hover {
-    border-color: var(--outer-glow);
+.p-dropdown:not(.p-disabled):hover, html body .p-dropdown:not(.p-disabled):hover {
+    border-color: var(--outer-glow) !important;
 }
 
-.p-dropdown:not(.p-disabled).p-focus {
-    box-shadow: var(--shadow-color-primary);
-    border-color: var(--primary-btn-color);
+.p-dropdown.p-disabled, html body .p-dropdown.p-disabled {
+    opacity: 0.6 !important;
+    cursor: default !important;
+    background: var(--base-fg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.p-dropdown:not(.p-disabled).p-focus, html body .p-dropdown:not(.p-disabled).p-focus {
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-btn-color) !important;
 }
 
 .p-dropdown-panel .p-dropdown-header, body .p-dropdown-panel .p-dropdown-header {
@@ -730,7 +750,7 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.
     transition-duration: 0.2s;
 }
 
-.p-message .p-message-wrapper {
+.p-message .p-message-content {
     padding: 0.2rem 0.25rem;
 }
 .p-message {
@@ -936,7 +956,7 @@ p-inputswitch .p-hidden-accessible {
 
 .apiview-toggle-button-group {
     width: 100% !important;
-    margin-top: 8px;
+    margin-top: 2px;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -966,7 +986,7 @@ p-inputswitch .p-hidden-accessible {
         margin: 0;
         border-radius: 0;
         box-shadow: none !important;
-        font-weight: normal !important;
+        font-weight: 400 !important;
 
         // Reset some styles that might be coming from p-button global override
         background: var(--p-togglebutton-background);
@@ -999,14 +1019,13 @@ p-inputswitch .p-hidden-accessible {
             border-color: var(--p-togglebutton-hover-border-color);
         }
 
-        .p-button-label {
-            font-weight: normal !important;
+        .p-button-label, .p-togglebutton-label {
+            font-weight: 400 !important;
         }
     }
 
-    .p-button-label {
-        font-size: 0.8rem;
-        font-weight: normal !important;
+    .p-button-label, .p-togglebutton-label {
+        font-weight: 400 !important;
     }
 }
 

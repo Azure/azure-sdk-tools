@@ -13,20 +13,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     internal class GoLanguageServiceTests
     {
         private TempDirectory tempDir = null!;
+        private string packagePath = "";
+
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
+
         private GoLanguageService LangService { get; set; } = null!;
+
+        private Mock<IGitHelper> GitHelperMock { get; set; }
 
         private readonly Version goMinimumVersion = Version.Parse("1.24");
 
         [SetUp]
         public async Task SetUp()
         {
+            // we'll end up with <tmp>/golang_checks<random>/sdk/template/aztemplate.
             tempDir = TempDirectory.Create("golang_checks");
-            var mockGitHubService = new Mock<IGitHubService>();
-            var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
+            packagePath = Path.Combine(tempDir.DirectoryPath, "sdk", "template", "aztemplate");
+            Directory.CreateDirectory(packagePath);
+
+            GitHelperMock = new Mock<IGitHelper>();
+
             LangService = new GoLanguageService(
                 new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()),
-                gitHelper,
+                GitHelperMock.Object,
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
                 Mock.Of<IFileHelper>());
 
@@ -35,11 +44,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Assert.Ignore("golang tooling dependencies are not installed, can't run GoLanguageSpecificChecksTests");
             }
 
-            var resp = await LangService.CreateEmptyPackage(tempDir.DirectoryPath, "untitleddotloop", CancellationToken.None);
+            var resp = await LangService.CreateEmptyPackage(packagePath, "github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
             // check that our current version of Go is new enough for these tests.
-            var version = await GoLanguageService.GetGoModVersionAsync(Path.Join(tempDir.DirectoryPath, "go.mod"));
+            var version = await GoLanguageService.GetGoModVersionAsync(Path.Join(packagePath, "go.mod"));
 
             if (version.CompareTo(goMinimumVersion) < 0)
             {
@@ -56,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         [Test]
         public async Task TestGoLanguageSpecificChecksBasic()
         {
-            await File.WriteAllTextAsync(Path.Combine(tempDir.DirectoryPath, "main.go"), """
+            await File.WriteAllTextAsync(Path.Combine(packagePath, "main.go"), """
                 package main
 
                 import (
@@ -76,13 +85,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 FileName = GoProgram,
                 ArgumentList = { "get", "github.com/Azure/azure-sdk-for-go/sdk/azidentity@v1.10.0" },
-                WorkingDirectory = tempDir.DirectoryPath
+                WorkingDirectory = packagePath
             })!.WaitForExitAsync();
 
-            var resp = await LangService.AnalyzeDependencies(tempDir.DirectoryPath, false, CancellationToken.None);
-            Assert.That(resp.ExitCode, Is.EqualTo(0));
+            var resp = await LangService.AnalyzeDependencies(packagePath, false, CancellationToken.None);
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp.ExitCode, Is.EqualTo(0));
+                Assert.That(resp.PackageName, Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate"));
+                Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
+            });
 
-            var goModPath = Path.Join(tempDir.DirectoryPath, "go.mod");
+            var goModPath = Path.Join(packagePath, "go.mod");
 
             var identityLine = File.ReadAllLines(goModPath)
                 .Where(line => line.Contains("azidentity"))
@@ -93,17 +107,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var currentVersion = await GoLanguageService.GetGoModVersionAsync(goModPath);
             Assert.That(currentVersion, Is.GreaterThanOrEqualTo(goMinimumVersion));
 
-            resp = await LangService.FormatCode(tempDir.DirectoryPath, false, CancellationToken.None);
+            resp = await LangService.FormatCode(packagePath, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
-            resp = await LangService.BuildProject(tempDir.DirectoryPath, CancellationToken.None);
+            resp = await LangService.BuildProject(packagePath, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
         [Test]
         public async Task TestGoLanguageSpecificChecksCompileErrors()
         {
-            await File.WriteAllTextAsync(Path.Combine(tempDir.DirectoryPath, "main.go"), """
+            await File.WriteAllTextAsync(Path.Combine(packagePath, "main.go"), """
                 package main
 
                 func main() {
@@ -111,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 }
                 """);
 
-            var resp = await LangService.BuildProject(tempDir.DirectoryPath, CancellationToken.None);
+            var resp = await LangService.BuildProject(packagePath, CancellationToken.None);
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));
@@ -135,13 +149,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public async Task TestGetSDKPackageName()
         {
             Assert.That(
-                await LangService.GetSDKPackageName(Path.Combine("/hello", "world", "az") + Path.DirectorySeparatorChar, Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
-                Is.EqualTo(Path.Combine("sdk", "messaging", "azservicebus"))
+                await GoLanguageService.GetSDKPackageName(packagePath),
+                Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate")
             );
-
-            Assert.That(
-                await LangService.GetSDKPackageName(Path.Combine("/hello", "world", "az"), Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
-                Is.EqualTo(Path.Combine("sdk", "messaging", "azservicebus")));
         }
 
         [Test]

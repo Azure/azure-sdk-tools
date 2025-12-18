@@ -64,6 +64,18 @@ public partial class GoLanguageService : LanguageService
     public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var results = new List<ProcessResult>();
+        string packageName;
+
+        try
+        {
+            packageName = await GetSDKPackageName(packagePath, ct);
+        }
+        catch (Exception ex)
+        {
+            // NOTE: packagePath is checked for null/empty already in PackageCheckTool, so it should be safe to use it.
+            logger.LogError(ex, "{MethodName} failed with an exception when trying to get the and repo root/package name for package path {packagePath}", nameof(AnalyzeDependencies), packagePath);
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(AnalyzeDependencies)} failed with an exception when trying to get the and repo root/package name for package path {packagePath}: {ex.Message}");
+        }
 
         try
         {
@@ -105,12 +117,12 @@ public partial class GoLanguageService : LanguageService
                 }
             }
 
-            return new PackageCheckResponse(results);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, results);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependencies));
-            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, 1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -168,18 +180,18 @@ public partial class GoLanguageService : LanguageService
         }
     }
 
-    public async Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
+    public static async Task<string> GetSDKPackageName(string packagePath, CancellationToken cancellationToken = default)
     {
-        if (!repo.EndsWith(Path.DirectorySeparatorChar))
+        var text = await File.ReadAllTextAsync(Path.Join(packagePath, "go.mod"), cancellationToken);
+
+        var m = GoModModuleLineRegex().Match(text);
+
+        if (!m.Success)
         {
-            repo += Path.DirectorySeparatorChar;
+            throw new Exception($"Package {packagePath} has an invalid go.mod file - can't parse `module`");
         }
 
-        // ex: sdk/messaging/azservicebus/
-        var relativePath = packagePath.Replace(repo, "");
-        // Ensure forward slashes for Go package names and remove trailing slash
-        var packageName = relativePath.Replace(Path.DirectorySeparatorChar, '/');
-        return await Task.FromResult(packageName.TrimEnd('/'));
+        return m.Groups[1].Value;
     }
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -189,8 +201,7 @@ public partial class GoLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-        var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
+        var packageName = await GetSDKPackageName(packagePath, cancellationToken);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
@@ -235,5 +246,7 @@ public partial class GoLanguageService : LanguageService
     /// </remarks>
     [GeneratedRegex(@"^go (1\.\d+(?:\.\d+|$))", RegexOptions.Multiline)]
     private static partial Regex GoModVersionRegex();
+    [GeneratedRegex(@"^module\s+(.+)$", RegexOptions.Multiline)]
+    private static partial Regex GoModModuleLineRegex();
 }
 

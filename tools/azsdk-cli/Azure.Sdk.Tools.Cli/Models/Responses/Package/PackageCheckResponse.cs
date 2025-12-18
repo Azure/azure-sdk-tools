@@ -28,15 +28,34 @@ public class PackageCheckResponse : PackageResponseBase
         }
     }
 
+    public PackageCheckResponse(string packageName, SdkLanguage language, int exitCode, string checkStatusDetails, string error = null)
+        : base(packageName, language)
+    {
+        ExitCode = exitCode;
+        CheckStatusDetails = checkStatusDetails;
+        if (!string.IsNullOrEmpty(error))
+        {
+            ResponseError = error;
+        }
+    }
+
     /// <summary>
     /// Combines multiple <see cref="ProcessResult"/> instances into a single response.
     /// </summary>
-    /// <param name="processResults">Results to combine.
-    /// <see cref="ExitCode"/> is set to the last result's exit code
-    /// <see cref="CheckStatusDetails"/> is set to the concatenated output from all results.
-    /// </param>
-    public PackageCheckResponse(IEnumerable<ProcessResult> processResults)
+    /// <param name="packageName">Name of the package being checked.</param>
+    /// <param name="language">The SDK language of the package.</param>
+    /// <param name="processResults">Results to combine. <see cref="ExitCode"/> is set to the last result's exit code and
+    /// <see cref="CheckStatusDetails"/> is set to the concatenated output from all results.</param>
+    public PackageCheckResponse(string packageName, SdkLanguage language, IEnumerable<ProcessResult> processResults)
+        : base(packageName, language)
     {
+        ArgumentNullException.ThrowIfNull(processResults, nameof(processResults));
+
+        if (!processResults.Any())
+        {
+            throw new ArgumentException("processResults cannot be empty or null", nameof(processResults));
+        }
+
         var output = new StringBuilder();
 
         foreach (var pr in processResults)

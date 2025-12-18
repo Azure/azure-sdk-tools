@@ -52,6 +52,7 @@
             <h4 *ngIf="samplesUpdateState == 'edit'">Update usage samples</h4>
         </div>
     </ng-template>
+    <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <span class="p-float-label mt-4 mb-3">
         <input pInputText id="add-edit-samples-title" [(ngModel)]="addEditSamplesTitle" style="width: 100%;"/>
         <label htmlFor="add-edit-samples-title">Title</label>
@@ -118,6 +119,7 @@
             </button>
         </div>
     </ng-container>
+    </div>
 </p-sidebar>
 <p-dialog header="Delete usage sample"
     [modal]="true" [(visible)]="showSamplesDeleteModal"

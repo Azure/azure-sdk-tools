@@ -230,7 +230,7 @@ namespace SearchIndexCreator
                         $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
                         repoOwner + "/" + _repo,
                         comment.HtmlUrl,
-                        DocumentTypes.Issue.ToString()
+                        DocumentTypes.Comment.ToString()  // Changed from Issue to Comment
                     )
                     {
                         Title = issue.Title,
@@ -395,6 +395,149 @@ namespace SearchIndexCreator
             public List<TreeItem> Tree { get; set; }
             public bool Truncated { get; set; }
         }
+
+        public async Task<List<IssueTriageContent>> RetrieveContentForMcp(string repoOwner)
+        {
+            Console.WriteLine($"Retrieving content for {repoOwner}/{_repo} (MCP repository)...");
+            
+            try
+            {
+                var codeownersContents = await _client.Repository.Content.GetAllContents(repoOwner, _repo, ".github/CODEOWNERS");
+                CodeOwnerUtils.codeOwnersFilePathOverride = codeownersContents[0].DownloadUrl;
+                Console.WriteLine("CODEOWNERS file loaded.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not load CODEOWNERS: {ex.Message}");
+            }
+
+            var issues = await RetrieveAllMcpIssuesAsync(repoOwner);
+            var documents = await RetrieveAllDocumentsAsync(repoOwner);
+
+            var results = new List<IssueTriageContent>();
+            results.AddRange(issues);
+            results.AddRange(documents);
+
+            Console.WriteLine($"Total content retrieved: {results.Count} items");
+            return results;
+        }
+
+
+        private async Task<List<IssueTriageContent>> RetrieveAllMcpIssuesAsync(string repoOwner)
+        {
+            List<IssueTriageContent> results = new List<IssueTriageContent>();
+
+            var issueReq = new RepositoryIssueRequest
+            {
+                State = ItemStateFilter.All,
+                Filter = IssueFilter.All,
+            };
+
+            var issues = await _client.Issue.GetAllForRepository(repoOwner, _repo, issueReq);
+            Console.WriteLine($"Found {issues.Count} issues.");
+            var processedCount = 0;
+            foreach (var issue in issues)
+            {
+                processedCount++;
+                if (processedCount % 50 == 0)
+                {
+                    Console.WriteLine($"Processing issue {processedCount}/{issues.Count}... (Issue #{issue.Number})");
+                }
+                
+                var (server, tool) = AnalyzeMcpLabels(issue.Labels);
+
+                // Use null for missing labels (clearer than empty string for RAG/LLM)
+                var serverLabel = server?.Name;  // null if no server- label
+                var toolLabel = tool?.Name;      // null if no tools- label
+
+                var labels = new List<string>();
+                if (serverLabel != null) labels.Add(serverLabel);
+                if (toolLabel != null) labels.Add(toolLabel);
+
+                var codeowners = CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).ServiceOwners;
+
+                IssueTriageContent searchContent = new IssueTriageContent(
+                    $"{repoOwner}/{_repo}/{issue.Number.ToString()}/Issue",
+                    repoOwner + "/" + _repo,
+                    issue.HtmlUrl,
+                    DocumentTypes.Issue.ToString()
+                )
+                {
+                    Title = issue.Title,
+                    Body = $"Title: {issue.Title}\n\n{issue.Body}",  // Include title in body for better classification
+                    Server = serverLabel,
+                    Tool = toolLabel,
+                    Author = issue.User.Login,
+                    CreatedAt = issue.CreatedAt,
+                    CodeOwner = 0
+                };
+
+                results.Add(searchContent);
+
+                var issue_comments = await GetIssueCommentsAsync(repoOwner, _repo, issue.Number);
+
+                foreach (var comment in issue_comments)
+                {
+
+                    IssueTriageContent commentContent = new IssueTriageContent(
+                        $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
+                        repoOwner + "/" + _repo,
+                        comment.HtmlUrl,
+                        DocumentTypes.Comment.ToString()  // Changed from Issue to Comment
+                    )
+                    {
+                        Title = issue.Title,
+                        Body = $"Title: {issue.Title}\n\n{comment.Body}",  // Include title in body for context
+                        Server = serverLabel,
+                        Tool = toolLabel,
+                        Author = comment.User.Login,
+                        CreatedAt = comment.CreatedAt,
+                        CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
+                    };
+
+                    results.Add(commentContent);
+
+                }
+            }
+
+            return results;
+        }
+
+        private static bool IsServerLabel(Octokit.Label label) =>
+            //string.Equals(label.Color, "e99695", StringComparison.InvariantCultureIgnoreCase);
+            label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsToolLabel(Octokit.Label label) =>
+            // string.Equals(label.Color, "ffeb77", StringComparison.InvariantCultureIgnoreCase);
+            label.Name.StartsWith("tools-", StringComparison.OrdinalIgnoreCase);
+
+        private (Octokit.Label server, Octokit.Label tool) AnalyzeMcpLabels(IReadOnlyList<Octokit.Label> labels)
+        {
+            Octokit.Label server = null;
+            Octokit.Label tool = null;
+
+            foreach (var label in labels)
+            {
+                if (IsServerLabel(label))
+                    server = label;
+                else if (IsToolLabel(label))
+                    tool = label;
+            }
+            return (server, tool);
+        }
+
+        // private async Task<List<IssueComment>> GetMcpIssueCommentsAsync(string repoOwner, string repo, int issueNumber)
+        // {
+        //     var issue_comments = await _client.Issue.Comment.GetAllForIssue(repoOwner, repo, issueNumber);
+
+        //     return issue_comments
+        //         .Where(c =>
+        //             !c.User.Login.Equals("github-actions[bot]") && // Filter out bot comments
+        //             c.Body.Length > 250 && // Filter out short comments
+        //             !c.User.Login.Equals("ghost") && // Filter out comments from deleted users (mostly because the older bot seems to have been deleted)
+        //             !c.AuthorAssociation.StringValue.Equals("NONE")) // Filter out non member comments
+        //         .ToList();
+        // }
 
     }
 }

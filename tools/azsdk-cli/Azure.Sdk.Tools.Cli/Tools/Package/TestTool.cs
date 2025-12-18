@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var languageService = GetLanguageService(packagePath);
                 var testResponse = await languageService.RunAllTests(packagePath, ct);
 
+                await AddPackageDetailsInResponse(testResponse, packagePath, ct);
                 return testResponse;
             }
             catch (Exception ex)
@@ -60,6 +61,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     NextSteps = ["Inspect the error message and attempt to resolve it"],
                 };
+            }
+        }
+
+        private async Task AddPackageDetailsInResponse(TestRunResponse response, string packagePath, CancellationToken ct)
+        {
+            try
+            {
+                var languageService = GetLanguageService(packagePath);
+                if (languageService != null)
+                {
+                    var info = await languageService.GetPackageInfo(packagePath, ct);
+                    response.PackageName = info.PackageName;
+                    response.Version = info.PackageVersion;
+                    response.PackageType = info.SdkType;
+                    response.Language = info.Language;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
         }
     }

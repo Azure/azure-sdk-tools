@@ -14,6 +14,7 @@
     "@azure-tools/typespec-ts": "0.38.4"
   },
   "devDependencies": {
-    "@typespec/compiler": "~1.7.0"
+    "@typespec/compiler": "1.6.0",
+    "@typespec/openapi": "1.6.0"
   }
 }

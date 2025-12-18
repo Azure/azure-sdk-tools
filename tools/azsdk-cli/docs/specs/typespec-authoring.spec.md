@@ -417,6 +417,30 @@ Combine llm.txt files for basic context with selective Knowledge Base queries fo
 
 ---
 
+### Alternative 3: Custom agent + AI search (Azure KB) + other AI knowledge technique
+
+**Description:**
+
+Build a custom agent that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
+
+The agent adopts multiple technique to provide knowledge for user request:
+- AI Search (Azure KB) as the primary knowledge source, covering most TypeSpec authoring concepts.
+- Built‑in curated knowledge within the custom agent for smaller but important areas, such as customization scenarios and API version‑evolution patterns.
+
+Based on the request scenario, the agent will invoke an AI search tool or other knowledge services to retrieve the relevant TypeSpec information, then use that knowledge as context to generate the final response.
+
+**Pros:**
+
+- Easy to integrate domain knowledge for different request scenarios locally.
+- Leverages existing AI Search in Azure KB, reducing development cost.
+- Reduces the number of Azure Knowledge Base API calls.
+- Decouples knowledge retrieval from final responses, enabling the custom agent to leverage the VS Code model to generate solutions. The custom agent can also craft tailored prompts to produce responses that are well‑suited for authoring tasks.
+
+**Cons:**
+
+- Increase complexity: need to classify request scenarios and routing them to the appropriate knowledge‑query service.
+- Additional development effort: the custom agent must be tuned to consistently provide accurate and context‑aware solutions.
+  
 ## Success Criteria
 
 This feature/tool is complete when:

@@ -25,7 +25,7 @@
 
 Scenario 2 extends **[Scenario 1](./0-scenario-1.spec.md#overview)** by adding: automated environment remediation, customization (TypeSpec + code), and live / recorded testing. All Scenario 1 stages (environment setup, generation, package metadata & docs updates, validation) remain.
 
-**Tool Automation Strategy**: Scenario 2 rounds out deterministic inner-loop tooling. Future scenarios will layer AI assistance onto judgment-heavy tasks (for example, README authoring and broader doc updates).
+**Tool Automation Strategy**: Scenario 2 rounds out deterministic inner-loop tooling while introducing AI-powered tools and features that assist with authoring tasks such as TypeSpec specification creation and modification. Future scenarios will layer additional AI assistance onto judgment-heavy tasks (for example, README authoring and broader doc updates).
 
 **Unified Customization Experience**: Users describe the change; the customization tool intelligently chooses TypeSpec or code (or both). The tool analyzes the request and automatically determines the appropriate implementation path, hiding mechanism details unless needed.
 
@@ -81,7 +81,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - TypeSpec modifications are **local only**
 - Agent-mode interactions occur in **VS Code, Visual Studio, or IntelliJ with GitHub Copilot** with `azure-rest-api-specs` open
 - Azure subscription permits on-demand resource provisioning and teardown
-- No need for environment variables to be set up
+- No need for users to set environment variables to setup the tool
 
 ### In Scope for Scenario 2
 
@@ -99,6 +99,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - Creation of **[Live Tests](#live-test)**, and new **[Test Recordings](#test-recording)** for [Net-New SDKs](#net-new-sdk)
 - Re-recording tests for existing SDKs
 - Automated handling of Azure resources for live tests
+- TypeSpec Authoring
 
 ### Out of Scope for Scenario 2
 

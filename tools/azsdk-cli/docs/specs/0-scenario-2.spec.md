@@ -660,7 +660,7 @@ Verifying environment for 5 languages...
 ✗ Go not found
 
 ? Install Go 1.25? (Y/n)
-✓ Go 1.21 installed successfully
+✓ Go 1.25 installed successfully
 
 Environment verification complete: 5/5 languages ready
 ```

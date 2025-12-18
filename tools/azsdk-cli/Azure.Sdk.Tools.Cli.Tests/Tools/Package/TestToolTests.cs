@@ -24,6 +24,7 @@ public class TestToolTests
     private List<LanguageService> _languageServices;
     private Mock<ICommonValidationHelpers> _commonValidationHelpers;
     private TestLogger<LanguageService> _languageLogger;
+    private Mock<IFileHelper> _mockFileHelper;
 
     [SetUp]
     public void Setup()
@@ -36,13 +37,14 @@ public class TestToolTests
         _logger = new TestLogger<TestTool>();
         _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
         _languageLogger = new TestLogger<LanguageService>();
+        _mockFileHelper = new Mock<IFileHelper>();
 
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("TestToolTests");
 
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, _mockFileHelper.Object),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, _mockFileHelper.Object)
         ];
 
         // Create the tool instance
@@ -64,8 +66,8 @@ public class TestToolTests
 
         // Create a minimal Python package setup file
         var setupPyPath = Path.Combine(pythonProjectPath, "setup.py");
-        await File.WriteAllTextAsync(setupPyPath, @"
-from setuptools import setup
+        await File.WriteAllTextAsync(setupPyPath, 
+@"from setuptools import setup
 setup(
     name='azure-test-package',
     version='1.0.0',

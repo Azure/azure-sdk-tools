@@ -1,5 +1,9 @@
 # Release
 
+## 2025-12-18 - 0.9.5
+
+- Override 'generateFromTypeSpec' value by the result in 'generateOutput.json' for .NET
+
 ## 2025-12-12 - 0.9.4
 
 - Updated 'generateFromTypeSpec' value to the result returned from the language script for .NET

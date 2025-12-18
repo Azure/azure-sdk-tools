@@ -42,5 +42,7 @@ namespace APIViewWeb.DTOs
         public bool? AllowAnyOneToResolve { get; set; }
         [JsonPropertyName("severity")]
         public CommentSeverity? Severity { get; set; }
+        [JsonPropertyName("threadId")]
+        public string ThreadId { get; set; }
     }
 }

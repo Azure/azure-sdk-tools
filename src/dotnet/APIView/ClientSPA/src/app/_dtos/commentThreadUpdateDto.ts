@@ -25,10 +25,11 @@ export interface CommentUpdatesDto {
     elementId?: string;
     commentText?: string;
     comment?: CommentItemModel;
-    resolvedBy?: string;    
+    resolvedBy?: string;
     associatedRowPositionInGroup?: number;
     allowAnyOneToResolve?: boolean;
     title: string;
     severity?: CommentSeverity | null;
     feedback?: AICommentFeedback;
+    threadId?: string;
 }

@@ -638,7 +638,7 @@ I need to update the Health Deidentification TypeSpec to establish a parent-chil
 **Command:**
 
 ```bash
-azsdk verify setup --languages Dotnet Java JavaScript Python Go --fix
+azsdk verify setup --languages "Dotnet,Java,JavaScript,Python,Go" --fix
 ```
 
 **Options:**
@@ -660,8 +660,8 @@ Verifying environment for 5 languages...
 ✓ Python 3.11 already installed
 ✗ Go not found
 
-? Install Go 1.21? (Y/n)
-✓ Go 1.21 installed successfully
+? Install Go 1.25? (Y/n)
+✓ Go 1.25 installed successfully
 
 Environment verification complete: 5/5 languages ready
 ```
@@ -691,7 +691,7 @@ azsdk typespec authoring --request "add a new preview API version 2025-10-01-pre
 
 **Options:**
 
-- `--request <string>`: The TypeSpec-related request or task description (required)
+- `--prompt<string>`: The TypeSpec-related prompt or task description (required)
 - `--additional-information <string>`: Additional context for the request (optional)
 - `--typespec-source-path <path>`: Path to TypeSpec source file or folder (optional, defaults to current directory)
 

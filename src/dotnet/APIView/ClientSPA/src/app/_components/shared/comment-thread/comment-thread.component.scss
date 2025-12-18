@@ -31,8 +31,6 @@
 
     .comment-thread-container {
         width: 100%;
-        max-width: 1000px;
-        min-width: 600px;
         padding-top: 0 !important;
         margin: 4px 0 !important;
 
@@ -167,13 +165,8 @@
         box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
         transition: all .2s !important;
         min-height: 36px !important;
-<<<<<<< HEAD
-        .p-dropdown-label { padding: 8px 16px !important; font-size: 14px !important; font-weight: 500 !important; color: var(--base-text-color) !important; border-radius: 12px 0 0 12px !important; background: var(--base-fg-color) !important; }
-        .p-dropdown-trigger { width: 36px !important; border-left: 1px solid #E1E5E9 !important; background: #F8FAFC !important; border-radius: 0 12px 12px 0 !important; .p-dropdown-trigger-icon { color: #6B7280 !important; font-size: 12px !important; } }
-=======
         .p-dropdown-label { padding: 8px 16px !important; font-size: 14px !important; font-weight: 500 !important; color: var(--base-text-color) !important; border-radius: 12px 0 0 12px !important; background: var(--base-fg-color) !important; border: none !important; }
         .p-dropdown-trigger { width: 36px !important; border-left: 1px solid var(--border-color) !important; background: var(--base-fg-color) !important; border-radius: 0 12px 12px 0 !important; border: none !important; .p-dropdown-trigger-icon { color: var(--base-text-color) !important; font-size: 12px !important; } }
->>>>>>> db9c583be (Tweak.)
     }
 }
 

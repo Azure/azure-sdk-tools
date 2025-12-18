@@ -57,10 +57,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package tests");
-                return new TestRunResponse(exitCode: 1, testRunOutput: null, error: $"An unexpected error occurred while running package tests: {ex.Message}")
+                var errorResponse = new TestRunResponse(exitCode: 1, testRunOutput: null, error: $"An unexpected error occurred while running package tests: {ex.Message}")
                 {
                     NextSteps = ["Inspect the error message and attempt to resolve it"],
                 };
+                await AddPackageDetailsInResponse(errorResponse, packagePath, ct);
+                return errorResponse;
             }
         }
 

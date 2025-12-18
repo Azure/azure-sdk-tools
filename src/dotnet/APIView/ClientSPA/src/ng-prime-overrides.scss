@@ -187,9 +187,9 @@ p-contextmenusub {
 }
 
 .p-inputtext {
-    color: var(--base-text-color);
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
+    color: var(--base-text-color) !important;
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
 .p-dropdown .p-dropdown-trigger, html body .p-dropdown .p-dropdown-trigger {
@@ -647,18 +647,36 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.
     padding: 0.4rem 0.4rem;
 }
 
-.p-fileupload .p-fileupload-buttonbar {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
-    color: var(--base-text-color);
+.p-fileupload,
+.p-fileupload .p-fileupload-buttonbar,
+.p-fileupload .p-fileupload-header {
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
+}
+
+.p-fileupload .p-fileupload-buttonbar,
+.p-fileupload .p-fileupload-header {
     padding: 0.75rem 0.75rem;
 }
 
 .p-fileupload .p-fileupload-content {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
-    color: var(--base-text-color);
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
     padding: 0.5rem 0.25rem;
+}
+
+.p-fileupload .p-button {
+    background: var(--link-color) !important;
+    border: 1px solid var(--link-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.list-group-item {
+    background-color: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border-color: var(--border-color) !important;
 }
 
 .p-button {
@@ -934,14 +952,21 @@ p-inputswitch .p-hidden-accessible {
 }
 
 .revisions-sidebar {
-    width: 75dvw;
+    width: 75dvw !important;
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
+
+    .p-sidebar-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0 !important;
+    }
 }
 
 .cross-language-revisions-sidebar {
-    width: 45dvw;
+    width: 45dvw !important;
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
@@ -1220,40 +1245,33 @@ p-selectbutton {
     border-color: var(--primary-color) !important;
 }
 
-.compact-dropdown-panel {
-    background: var(--base-bg-color) !important;
+.create-revision-sidebar {
+    width: 30dvw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
-    z-index: 99999 !important;
+}
 
-    .p-select-header {
-        background: var(--base-bg-color) !important;
-        border-bottom: 1px solid var(--border-color) !important;
-        color: var(--base-text-color) !important;
-        padding: 0.5rem !important;
-    }
+.options-sidebar {
+    width: 20dvw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
 
-    .p-select-list {
-        padding: 0 !important;
-        .p-select-option {
-            color: var(--base-text-color) !important;
-            background: transparent !important;
-            padding: 0.5rem !important;
-            margin: 0 !important;
+.card {
+    background-color: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
+}
 
-            &:hover {
-                background: var(--client-type-bg) !important;
-                color: var(--base-text-color) !important;
-            }
-            &.p-select-option-selected {
-                background: var(--client-type-bg) !important;
-                color: var(--base-text-color) !important;
-            }
-        }
-    }
+.form-check-input {
+    background-color: var(--base-bg-color) !important;
+    border-color: var(--border-color) !important;
+}
 
-    .p-select-empty-message {
-            color: var(--base-text-color) !important;
-            background: var(--base-bg-color) !important;
-    }
+.form-check-input:checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
 }
 

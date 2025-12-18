@@ -5,12 +5,13 @@ import { setSdkAutoStatus } from '../utils/runScript';
 import { extractPathFromSpecConfig, mapToObject } from '../utils/utils';
 import { vsoAddAttachment, vsoLogError, vsoLogWarning } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
-import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
+import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { marked } from "marked";
-import { toolError, toolWarning } from '../utils/messageUtils';
+import { externalError, toolError, toolWarning } from '../utils/messageUtils';
 import { FailureType, WorkflowContext } from '../types/Workflow';
 import { setFailureType } from '../utils/workflowUtils';
 import { commentDetailView, renderHandlebarTemplate } from '../utils/reportStatusUtils';
+import { getGenerateOutput } from '../types/GenerateOutput';
 
 export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
@@ -25,10 +26,9 @@ export const generateReport = (context: WorkflowContext) => {
   let markdownContent = '';
   let message = "";
   let isTypeSpec = false;
-  let hasPkgFromTypeSpec = false;
   let generateFromTypeSpec = false;
 
-  if (!context.config.sdkName.includes('net') && context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
+  if (context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
     generateFromTypeSpec = true;
   }
   for (const pkg of context.handledPackages) {
@@ -80,12 +80,20 @@ export const generateReport = (context: WorkflowContext) => {
       `hasSuppressions [${hasSuppressions}] ` +
       `hasAbsentSuppressions [${hasAbsentSuppressions}]`
     );
-    hasPkgFromTypeSpec = hasPkgFromTypeSpec || isTypeSpec;
   }
 
-  // only for .NET SDK, use the flag returned from the .NET automation to mark the whole generationFromTypeSpec
-  if (context.config.sdkName.includes('net') && hasPkgFromTypeSpec) {
-    generateFromTypeSpec = true;
+  // for .NET SDK in spec PR scenario, override generateFromTypeSpec by the value returned from the .NET automation script
+  if (context.config.sdkName.includes('net') && context.config.runMode === 'spec-pull-request') {
+    generateFromTypeSpec = false;
+    const generateOutputJson = readTmpJsonFile(context, 'generateOutput.json');
+    if (generateOutputJson === undefined) {
+      message = externalError('Failed to read generateOutput.json. Please check if the generate script is configured correctly.');
+      throw new Error(message);
+    }
+    const generateOutput = getGenerateOutput(generateOutputJson);
+    if (generateOutput?.packages?.[0]?.typespecProject) {
+      generateFromTypeSpec = true;
+    }
   }
  
   if (context.config.pullNumber && markdownContent) {

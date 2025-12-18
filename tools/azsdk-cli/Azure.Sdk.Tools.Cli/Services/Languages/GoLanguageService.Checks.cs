@@ -45,17 +45,13 @@ public partial class GoLanguageService : LanguageService
         }
     }
 
-    public async Task<PackageCheckResponse> CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
+    public async Task CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
     {
-        try
+        var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
+
+        if (result.ExitCode != 0)
         {
-            var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
-            return new PackageCheckResponse(1, "", $"{nameof(CreateEmptyPackage)} failed with an exception: {ex.Message}");
+            throw new Exception($"Failed to create empty Go package: {result.Output}");
         }
     }
 
@@ -63,36 +59,69 @@ public partial class GoLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
+        var results = new List<ProcessResult>();
+        string packageName;
+
         try
         {
-            var goGetArgs = new List<string>(["get", "-u", "all"]);
-            var goModVersion = await GetGoModVersionAsync(Path.Join(packagePath, "go.mod"), ct);
+            packageName = await GetSDKPackageName(packagePath, ct);
+        }
+        catch (Exception ex)
+        {
+            // NOTE: packagePath is checked for null/empty already in PackageCheckTool, so it should be safe to use it.
+            logger.LogError(ex, "{MethodName} failed with an exception when trying to get the and repo root/package name for package path {packagePath}", nameof(AnalyzeDependencies), packagePath);
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(AnalyzeDependencies)} failed with an exception when trying to get the and repo root/package name for package path {packagePath}: {ex.Message}");
+        }
 
-            if (goModVersion.Major == 1 && goModVersion.Minor == 23)
+        try
+        {
+            // in some modules we have two go.mod files (or multiple). We want to update those as well.
+            var goModFiles = Directory.EnumerateFiles(packagePath, "go.mod", SearchOption.AllDirectories).ToArray();
+
+            logger.LogInformation("Found go.mod files in project:{goModFiles}", string.Join(",", goModFiles));
+
+            foreach (var goModPath in goModFiles)
             {
-                // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
-                // that are still set at 1.23. See this issue for some context:
-                //   https://github.com/Azure/azure-sdk-for-go/issues/25407
-                goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);
+                var goModDir = Path.GetDirectoryName(goModPath);
+                var goGetArgs = new List<string>(["get", "-u", "all"]);
+                var goModVersion = await GetGoModVersionAsync(goModPath, ct);
+
+                if (goModVersion.Major == 1 && goModVersion.Minor == 23)
+                {
+                    // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
+                    // that are still set at 1.23. See this issue for some context:
+                    //   https://github.com/Azure/azure-sdk-for-go/issues/25407
+                    goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);
+                }
+
+                // Update all dependencies to the latest first
+                var updateResult = await processHelper.Run(new ProcessOptions(goUnix, [.. goGetArgs], goWin, [.. goGetArgs], workingDirectory: goModDir), ct);
+                results.Add(updateResult);
+
+                if (updateResult.ExitCode != 0)
+                {
+                    break;
+                }
+
+                // Now tidy, to cleanup any deps that aren't needed
+                var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: goModDir), ct);
+                results.Add(tidyResult);
+
+                if (tidyResult.ExitCode != 0)
+                {
+                    break;
+                }
             }
 
-            // Update all dependencies to the latest first
-            var updateResult = await processHelper.Run(new ProcessOptions(goUnix, [.. goGetArgs], goWin, [.. goGetArgs], workingDirectory: packagePath), ct);
-            if (updateResult.ExitCode != 0)
-            {
-                return new PackageCheckResponse(updateResult);
-            }
-
-            // Now tidy, to cleanup any deps that aren't needed
-            var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(tidyResult);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, results);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependencies));
-            return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, 1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
         }
     }
+
     public override async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
@@ -102,12 +131,14 @@ public partial class GoLanguageService : LanguageService
                 gofmtWin, ["-w", "."],
                 workingDirectory: packagePath
             ), ct);
-            return new PackageCheckResponse(result);
+
+            var packageName = await GetSDKPackageName(packagePath, ct);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCode));
-            return new PackageCheckResponse(1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -115,13 +146,22 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, ["run"], golangciLintWin, ["run"], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
+            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+
+            string[] runArgs = [
+                "run",
+                "--config",
+                Path.Join(repoRoot, "eng", ".golangci.yml")
+            ];
+
+            var packageName = await GetSDKPackageName(packagePath, ct);
+            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, runArgs, golangciLintWin, runArgs, workingDirectory: packagePath), ct);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCode));
-            return new PackageCheckResponse(1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -129,28 +169,29 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
+            var packageName = await GetSDKPackageName(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(goUnix, ["build"], goWin, ["build"], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProject));
-            return new PackageCheckResponse(1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
+    public static async Task<string> GetSDKPackageName(string packagePath, CancellationToken cancellationToken = default)
     {
-        if (!repo.EndsWith(Path.DirectorySeparatorChar))
+        var text = await File.ReadAllTextAsync(Path.Join(packagePath, "go.mod"), cancellationToken);
+
+        var m = GoModModuleLineRegex().Match(text);
+
+        if (!m.Success)
         {
-            repo += Path.DirectorySeparatorChar;
+            throw new Exception($"Package {packagePath} has an invalid go.mod file - can't parse `module`");
         }
 
-        // ex: sdk/messaging/azservicebus/
-        var relativePath = packagePath.Replace(repo, "");
-        // Ensure forward slashes for Go package names and remove trailing slash
-        var packageName = relativePath.Replace(Path.DirectorySeparatorChar, '/');
-        return await Task.FromResult(packageName.TrimEnd('/'));
+        return m.Groups[1].Value;
     }
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -160,8 +201,7 @@ public partial class GoLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-        var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
+        var packageName = await GetSDKPackageName(packagePath, cancellationToken);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
@@ -206,5 +246,7 @@ public partial class GoLanguageService : LanguageService
     /// </remarks>
     [GeneratedRegex(@"^go (1\.\d+(?:\.\d+|$))", RegexOptions.Multiline)]
     private static partial Regex GoModVersionRegex();
+    [GeneratedRegex(@"^module\s+(.+)$", RegexOptions.Multiline)]
+    private static partial Regex GoModModuleLineRegex();
 }
 

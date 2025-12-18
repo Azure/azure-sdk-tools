@@ -174,7 +174,7 @@
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
 </div>
 
-<app-related-comments-dialog
+<app-related-comments-dialog *ngIf="showRelatedCommentsDialog"
   [relatedComments]="relatedComments"
   [selectedCommentId]="selectedCommentId"
   [allCodePanelRowData]="allCodePanelRowData"
@@ -216,7 +216,7 @@
 </p-overlayPanel>
 
 <!-- AI Comment Feedback Dialog (for downvotes) -->
-<app-ai-comment-feedback-dialog
+<app-ai-comment-feedback-dialog *ngIf="showAIFeedbackDialog"
     [(visible)]="showAIFeedbackDialog"
     [commentId]="pendingDownvoteCommentId"
     (feedbackSubmit)="onAIFeedbackSubmit($event)"
@@ -224,7 +224,7 @@
 </app-ai-comment-feedback-dialog>
 
 <!-- AI Comment Delete Dialog (for deletions) -->
-<app-ai-comment-delete-dialog
+<app-ai-comment-delete-dialog *ngIf="showAIDeleteDialog"
     [(visible)]="showAIDeleteDialog"
     [commentId]="pendingDeleteCommentId"
     (deleteConfirm)="onAIDeleteConfirm($event)"

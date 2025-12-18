@@ -883,19 +883,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 var response = new ReleaseWorkflowResponse();
-                // work item Id or release plan Id is required to link SDK pull request to release plan
-                if (workItemId == 0 && releasePlanId == 0)
-                {
-                    response.ResponseError = "Either work item ID or release plan ID is required to link SDK pull request to release plan.";
-                    return response;
-                }
-
                 language = inputSanitizer.SanitizeLanguage(language);
+                response.SetLanguage(language);
 
                 // Verify language and get repo name
                 if (!IsValidLanguage(language))
                 {
                     response.ResponseError = $"Unsupported language to link pull request. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";
+                    return response;
+                }
+                // work item Id or release plan Id is required to link SDK pull request to release plan
+                if (workItemId == 0 && releasePlanId == 0)
+                {
+                    response.ResponseError = "Either work item ID or release plan ID is required to link SDK pull request to release plan.";
                     return response;
                 }
                 // Verify SDK pull request URL
@@ -926,7 +926,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
-                response.SetLanguage(language);
                 if (releasePlan.IsManagementPlane)
                 {
                     response.PackageType = SdkType.Management;

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from azure.identity import DefaultAzureCredential, AzureCliCredential
 from _evals_result import EvalsResult
-from eval import AzureBotEvaluator
+from eval import AzureBotEvaluator, AzureBotReferenceEvaluator
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -122,11 +122,24 @@ if __name__ == "__main__":
             ["bot_evals", "bot_evals_similarity", "bot_evals_response_completeness", "bot_evals_result"],
         )
 
+        reference_evaluator = AzureBotReferenceEvaluator()
+        reference_evaluator_class = EvaluatorClass(
+            "reference_match",
+            reference_evaluator,
+            {
+                "column_mapping": {
+                    "expected_reference_urls": "${data.expected_reference_urls}",
+                    "reference_urls": "${data.reference_urls}"
+                }
+            }
+        )
+
         evaluators = {
             "similarity": similarity_class,
             "groundedness": groundedness_class,
             "response_completeness": response_completion_class,
             "bot_evals": qa_evaluator_class,
+            "reference_match": reference_evaluator_class,
         }
 
         metrics = {}

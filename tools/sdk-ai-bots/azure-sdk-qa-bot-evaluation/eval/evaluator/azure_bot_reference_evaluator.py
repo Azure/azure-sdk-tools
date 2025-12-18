@@ -1,29 +1,11 @@
-import json
-import logging
-from typing import Any, Dict, Set
-from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
-from .constants import QA_BOT_EVALS_WEIGHT, EVALUATION_PASS_FAIL_MAPPING
+from typing import Any, Set
+from .constants import EVALUATION_PASS_FAIL_MAPPING
 
-
-class AzureBotEvaluator:
-    RESULT_KEY = "bot_evals"
-
-    def __init__(
-        self,
-        model_config: dict[Any, Any],
-        *,
-        threshold: int = 3,
-        weight: Dict[str, float] = QA_BOT_EVALS_WEIGHT,
-        higher_is_better: bool = True,
-        credential: Any | None = None,
-        **kwargs: Any,
-    ) -> None:
-        self._similarity = SimilarityEvaluator(model_config=model_config, credential=credential)
-        self._groundedness = GroundednessEvaluator(model_config=model_config, credential=credential)
-        self._response_completion = ResponseCompletenessEvaluator(model_config=model_config, credential=credential)
+class AzureBotReferenceEvaluator:
+    RESULT_KEY = "reference_match"
+    def __init__(self, threshold: float = 1.0, higher_is_better: bool = True):
         self._threshold = threshold
         self._higher_is_better = higher_is_better
-        self._weight = weight
 
     def _normalize_url(self, url: str) -> str:
         """Normalize URL for comparison by removing fragments, anchors, and common variations."""
@@ -90,59 +72,34 @@ class AzureBotEvaluator:
             match_percentage = len(matched_normalized) / len(expected_normalized)
 
         return exact_matches, unexpected_refs, missing_refs, match_percentage
-
-    def __call__(
-        self,
-        *,
-        query: str,
-        response: str,
-        ground_truth: str,
-        reference_urls: list[str],
-        expected_reference_urls: list[str] | None = None,
-    ) -> Dict[str, float]:
-        base_key = f"{AzureBotEvaluator.RESULT_KEY}"
-        result: dict[str, Any] = {}
-        similarity = self._similarity(query=query, response=response, ground_truth=ground_truth)
-        response_completion = self._response_completion(ground_truth=ground_truth, response=response)
-
+    
+    def __call__(self, reference_urls: list[str], expected_reference_urls: list[str] | None = None):
         # Calculate reference matching if expected references are provided
-        # reference_match_score = 1.0  # Default to perfect match if no expected references
+        reference_match_score = 1.0  # Default to perfect match if no expected references
 
-        # result: dict[str, Any] = {}
-        # base_key = f"{AzureBotEvaluator.RESULT_KEY}"
-        # if expected_reference_urls:
-        #     exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_reference_matches(
-        #         expected_reference_urls, reference_urls
-        #     )
-        #     result[f"{base_key}_reference_match"] = match_percentage
-        #     result[f"{base_key}_exact_matches"] = list(exact_matches)
-        #     result[f"{base_key}_unexpected_refs"] = list(unexpected_refs)
-        #     result[f"{base_key}_missing_refs"] = list(missing_refs)
-        # else:
-        #     result[f"{base_key}_reference_match"] = reference_match_score
-
-        # Calculate weighted score including reference matching
-        score_value = (
-            float(similarity["similarity"]) * self._weight["similarity_weight"]
-            + float(response_completion["response_completeness"]) * self._weight["response_completeness_weight"]
-        )
-
-        result[f"{base_key}"] = score_value
-        result[f"{base_key}_similarity"] = similarity["similarity"]
-        result[f"{base_key}_response_completeness"] = response_completion["response_completeness"]
-        result[f"{base_key}_threshold"] = self._threshold
-
+        result: dict[str, Any] = {}
+        base_key = f"{AzureBotReferenceEvaluator.RESULT_KEY}"
+        if expected_reference_urls:
+            exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_reference_matches(
+                expected_reference_urls, reference_urls
+            )
+            reference_match_score = match_percentage
+            result[f"{base_key}"] = match_percentage
+            result[f"{base_key}_exact_matches"] = list(exact_matches)
+            result[f"{base_key}_unexpected_refs"] = list(unexpected_refs)
+            result[f"{base_key}_missing_refs"] = list(missing_refs)
+        else:
+            result[f"{base_key}"] = reference_match_score
+        
         result_key = f"{base_key}_result"
         if self._higher_is_better:
-            if float(score_value) >= self._threshold:
+            if float(reference_match_score) >= self._threshold:
                 result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
             else:
                 result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
         else:
-            if float(score_value) <= self._threshold:
+            if float(reference_match_score) <= self._threshold:
                 result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
             else:
                 result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
-
-        logging.info(f"qa evl result: {json.dumps(result, ensure_ascii=False)}")
         return result

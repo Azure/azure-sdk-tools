@@ -1,23 +1,19 @@
 [
     {
         "testcase": "Python Live Test for async api",
-        "expected": [
-            {
-                "answer": "You're encountering an SSL certificate error when running live tests for async APIs, specifically when connecting to https://localhost:5001. This is the test proxy endpoint, and the error is likely due to certificate verification failing. Although the same code works for another team member, the issue may be caused by environment variables \u2014 either missing or incorrectly set.\nTo run live tests, make sure AZURE_TEST_RUN_LIVE is set to \"true\". If you also want to record, avoid setting AZURE_SKIP_LIVE_RECORDING. As a workaround for the SSL issue, set the environment variable PROXY_URL to http://localhost:5000 instead of using HTTPS. This bypasses certificate validation and resolves the issue.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "You're encountering an SSL certificate verification error when running live tests against an async API, specifically when connecting to the test proxy at `https://localhost:5001`. This error typically occurs because the test proxy uses a self-signed certificate, which is not trusted by default.\n\n**Recommended Solution:**\n1. **Update your branch:** Ensure you have the latest changes from `main`, as the proxy's certificate is occasionally rotated and the latest version may be needed.\n2. **Async-specific environment issue:** Even with the correct certificate, async environments can sometimes fail to recognize it. The certificate is automatically configured during proxy startup, but async tests may still experience this nondeterministic issue.\n3. **Workaround:** If updating does not resolve the issue, unset the `PROXY_URL` environment variable to default to HTTP (`http://localhost:5000`), which does not require certificate verification. If your tests require HTTPS, you may need to contact the Azure SDK team for further assistance.\n\nReference excerpt:\n\"If tests continue to fail, this is likely due to an async-specific environment issue. The certificate is automatically configured during proxy startup, but async environments can still nondeterministically fail. To work around this, unset the PROXY_URL environment variable to default to HTTP, which doesn't require a certificate. If your tests require an HTTPS endpoint, reach out to the Azure SDK team for assistance.\"\n\nSee also the official troubleshooting guide for more details.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md#servicerequesterror-cannot-connect-to-host"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "You're encountering an SSL certificate error when running live tests for async APIs, specifically when connecting to https://localhost:5001. This is the test proxy endpoint, and the error is likely due to certificate verification failing. Although the same code works for another team member, the issue may be caused by environment variables \u2014 either missing or incorrectly set.\nTo run live tests, make sure AZURE_TEST_RUN_LIVE is set to \"true\". If you also want to record, avoid setting AZURE_SKIP_LIVE_RECORDING. As a workaround for the SSL issue, set the environment variable PROXY_URL to http://localhost:5000 instead of using HTTPS. This bypasses certificate validation and resolves the issue.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
+            ]
+        },
+        "actual": {
+            "answer": "You're encountering an SSL certificate verification error when running live tests against an async API, specifically when connecting to the test proxy at `https://localhost:5001`. This error typically occurs because the test proxy uses a self-signed certificate, which is not trusted by default.\n\n**Recommended Solution:**\n1. **Update your branch:** Ensure you have the latest changes from `main`, as the proxy's certificate is occasionally rotated and the latest version may be needed.\n2. **Async-specific environment issue:** Even with the correct certificate, async environments can sometimes fail to recognize it. The certificate is automatically configured during proxy startup, but async tests may still experience this nondeterministic issue.\n3. **Workaround:** If updating does not resolve the issue, unset the `PROXY_URL` environment variable to default to HTTP (`http://localhost:5000`), which does not require certificate verification. If your tests require HTTPS, you may need to contact the Azure SDK team for further assistance.\n\nReference excerpt:\n\"If tests continue to fail, this is likely due to an async-specific environment issue. The certificate is automatically configured during proxy startup, but async environments can still nondeterministically fail. To work around this, unset the PROXY_URL environment variable to default to HTTP, which doesn't require a certificate. If your tests require an HTTPS endpoint, reach out to the Azure SDK team for assistance.\"\n\nSee also the official troubleshooting guide for more details.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md#servicerequesterror-cannot-connect-to-host"
+            ]
+        },
         "similarity": 4.0,
         "gpt_similarity": 4.0,
         "similarity_result": "pass",
@@ -31,27 +27,33 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response is mostly complete, covering the main cause, workaround, and additional troubleshooting, but misses some minor details about environment variable setup for live tests and recording.",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": [
+            "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
+            "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
+        ],
+        "reference_match_unexpected_refs": [
+            "https://eng.ms/docs/products/azure-developer-experience/support/support"
+        ],
+        "reference_match_missing_refs": [],
+        "reference_match_result": "pass",
         "overall_score": 6.0
     },
     {
         "testcase": "release pipeline link for Python SDK `azure-mgmt-resource-bicep`",
-        "expected": [
-            {
-                "answer": "To find the specific release pipeline link for the Python SDK `azure-mgmt-resource-bicep`, you typically need to locate the corresponding pipeline in Azure DevOps under the internal Azure SDK project. The naming convention for the pipeline is usually `python - <servicedir>`, where `<servicedir>` matches the service directory (in this case, likely resource or resource-bicep).\nHere is the general process:\n1. Go to [Azure DevOps - Azure SDK Internal Project](https://dev.azure.com/azure-sdk/internal/_build)\n2. Search for the pipeline named `python - resource` or similar, as the pipeline is named according to the service directory for management SDKs.\n3. The direct link format for a service pipeline is: `https://dev.azure.com/azure-sdk/internal/_build?definitionId=<ID>&_a=summary`\n- You can search for `resource` in the pipelines list to locate the exact one.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "To find the specific release pipeline link for the Python SDK `azure-mgmt-resource-bicep`, you should look for the Azure DevOps pipeline associated with its service directory. The naming convention for release pipelines is `python - <servicedir>`. For `azure-mgmt-resource-bicep`, the service directory is likely `resource` or similar, so the pipeline name would be `python - resource`.\n\nYou can find and queue builds for the pipeline under the Azure DevOps 'internal' project, specifically in the `python` folder. For example, to release any package under the folder `sdk/core`, you would queue a build against [python - core](https://dev.azure.com/azure-sdk/internal/_build?definitionId=983&_a=summary). For your package, locate the corresponding pipeline in Azure DevOps at:\n\nhttps://dev.azure.com/azure-sdk/internal/_build?definitionId=<ID>&_a=summary\n\nReplace `<ID>` with the definition ID for your service directory. If you do not know the exact definition ID, you may need to browse the list of pipelines in the Azure DevOps project and locate `python - resource` or a similarly named pipeline for `azure-mgmt-resource-bicep`.\n\nThe general process and guidance for locating and using release pipelines for Python SDKs is described here:\n\n\"Begin by locating your pipeline on the `internal` project under the `python` folder. Naming convention is `python - <servicedir>`.\"\n\nIf you need help finding the exact pipeline, you can check the [Python SDK Health Status Report](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/repo_health_status.md), which lists the most recent scheduled pipelines and their links for each library.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/repo_health_status.md"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "To find the specific release pipeline link for the Python SDK `azure-mgmt-resource-bicep`, you typically need to locate the corresponding pipeline in Azure DevOps under the internal Azure SDK project. The naming convention for the pipeline is usually `python - <servicedir>`, where `<servicedir>` matches the service directory (in this case, likely resource or resource-bicep).\nHere is the general process:\n1. Go to [Azure DevOps - Azure SDK Internal Project](https://dev.azure.com/azure-sdk/internal/_build)\n2. Search for the pipeline named `python - resource` or similar, as the pipeline is named according to the service directory for management SDKs.\n3. The direct link format for a service pipeline is: `https://dev.azure.com/azure-sdk/internal/_build?definitionId=<ID>&_a=summary`\n- You can search for `resource` in the pipelines list to locate the exact one.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
+            ]
+        },
+        "actual": {
+            "answer": "To find the specific release pipeline link for the Python SDK `azure-mgmt-resource-bicep`, you should look for the Azure DevOps pipeline associated with its service directory. The naming convention for release pipelines is `python - <servicedir>`. For `azure-mgmt-resource-bicep`, the service directory is likely `resource` or similar, so the pipeline name would be `python - resource`.\n\nYou can find and queue builds for the pipeline under the Azure DevOps 'internal' project, specifically in the `python` folder. For example, to release any package under the folder `sdk/core`, you would queue a build against [python - core](https://dev.azure.com/azure-sdk/internal/_build?definitionId=983&_a=summary). For your package, locate the corresponding pipeline in Azure DevOps at:\n\nhttps://dev.azure.com/azure-sdk/internal/_build?definitionId=<ID>&_a=summary\n\nReplace `<ID>` with the definition ID for your service directory. If you do not know the exact definition ID, you may need to browse the list of pipelines in the Azure DevOps project and locate `python - resource` or a similarly named pipeline for `azure-mgmt-resource-bicep`.\n\nThe general process and guidance for locating and using release pipelines for Python SDKs is described here:\n\n\"Begin by locating your pipeline on the `internal` project under the `python` folder. Naming convention is `python - <servicedir>`.\"\n\nIf you need help finding the exact pipeline, you can check the [Python SDK Health Status Report](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/repo_health_status.md), which lists the most recent scheduled pipelines and their links for each library.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/repo_health_status.md"
+            ]
+        },
         "similarity": 4.0,
         "gpt_similarity": 4.0,
         "similarity_result": "pass",
@@ -69,27 +71,23 @@
     },
     {
         "testcase": "Is test recordings working in azure-sdk-for-python-pr repo?",
-        "expected": [
-            {
-                "answer": "Based on the available information, if you are running tests in the azure-sdk-for-python-pr repo with AZURE_TEST_RUN_LIVE=true and AZURE_SKIP_LIVE_RECORDING=false, and no .assets folder is being created (but tests pass), it likely indicates that the recording migration (to out-of-repo assets) has not yet been completed or set up for your package/branch in the azure-sdk-for-python-pr repository.\nThe current Azure SDK test infrastructure expects the following when running live tests:\nIf the package has been migrated to use the test proxy and out-of-repo recordings, running live tests with the correct environment variables should create/update the .assets directory at the root of the repo. This directory contains the local sparse clone of the required recordings.\nIf your package has not been migrated, the recordings may still be expected in the old /tests/recordings folder structure, or the test proxy integration may not be fully configured in the PR branch.\nKey points from the documentation:\n\"If tests were recorded for a new library, there should now be a folder called recordings inside your package's tests directory. Each recording in this folder will be a .json file... The final step in setting up recordings is to move these files out of the azure-sdk-for-python and into the azure-sdk-assets repository.\"\nAfter migration: \"These recording updates will be reflected in a git-excluded .assets folder at the root of the repo.\"\nIf you do not see a .assets folder, it likely means the test proxy migration is not yet in place or fully set up for your topic branch.\nRecommended next steps:\nConfirm if your package in azure-sdk-for-python-pr has been migrated to use the test proxy and out-of-repo recordings. Look for an assets.json file at the package root and .assets at the repo root.\nIf not migrated, refer to the recording migration guide for the migration process.\nIf migrated and still no .assets folder is created, verify that your test environment and variables are set up as required (including git version and credentials), and consult the test proxy troubleshooting guide.\nSummary:Your observation suggests that the recording support via the .assets folder is not yet active for your branch or package in the azure-sdk-for-python-pr repo. This could be due to the migration not being completed, or the package not being configured for out-of-repo recordings yet. Please check the migration status or reach out to the repo maintainers for confirmation.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "Sorry, I can't answer this question directly regarding the status of recording support in the `azure-sdk-for-python-pr` repository, because the provided information does not include specifics about that repo or whether it is configured to support test proxy recordings like the main `azure-sdk-for-python` repo.\n\nHowever, I can provide general guidance:\n\n- In the main `azure-sdk-for-python` repo, when you set `AZURE_TEST_RUN_LIVE=true` and `AZURE_SKIP_LIVE_RECORDING=false`, running tests should create a `.assets` directory with the new test recordings, as described in the official documentation. If this is not happening in your `azure-sdk-for-python-pr` repo, possible reasons include:\n  - The test proxy infrastructure is not set up in that repo.\n  - The initial recording migration to use the out-of-repo `.assets` workflow has not been completed for your package (see migration guide).\n  - The test setup or test runner configuration is different, or missing required scripts/tools.\n\nTo confirm recording support:\n1. Check that your package in `azure-sdk-for-python-pr` has an `assets.json` file at its root. This indicates the migration has been completed and test recordings should be stored in `.assets`.\n2. Ensure the test proxy executable is present and in your `PATH`.\n3. Run tests with the correct environment variables as you did, and inspect for the `.assets` directory after running.\n\nIf `.assets` is not being created, it's likely that the migration has not been performed for your package or the repo is not yet set up for test proxy recording. You may need to follow the initial migration steps described in the recording migration guide, or check with your repo maintainers to confirm the infrastructure status.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md",
-                    "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "Based on the available information, if you are running tests in the azure-sdk-for-python-pr repo with AZURE_TEST_RUN_LIVE=true and AZURE_SKIP_LIVE_RECORDING=false, and no .assets folder is being created (but tests pass), it likely indicates that the recording migration (to out-of-repo assets) has not yet been completed or set up for your package/branch in the azure-sdk-for-python-pr repository.\nThe current Azure SDK test infrastructure expects the following when running live tests:\nIf the package has been migrated to use the test proxy and out-of-repo recordings, running live tests with the correct environment variables should create/update the .assets directory at the root of the repo. This directory contains the local sparse clone of the required recordings.\nIf your package has not been migrated, the recordings may still be expected in the old /tests/recordings folder structure, or the test proxy integration may not be fully configured in the PR branch.\nKey points from the documentation:\n\"If tests were recorded for a new library, there should now be a folder called recordings inside your package's tests directory. Each recording in this folder will be a .json file... The final step in setting up recordings is to move these files out of the azure-sdk-for-python and into the azure-sdk-assets repository.\"\nAfter migration: \"These recording updates will be reflected in a git-excluded .assets folder at the root of the repo.\"\nIf you do not see a .assets folder, it likely means the test proxy migration is not yet in place or fully set up for your topic branch.\nRecommended next steps:\nConfirm if your package in azure-sdk-for-python-pr has been migrated to use the test proxy and out-of-repo recordings. Look for an assets.json file at the package root and .assets at the repo root.\nIf not migrated, refer to the recording migration guide for the migration process.\nIf migrated and still no .assets folder is created, verify that your test environment and variables are set up as required (including git version and credentials), and consult the test proxy troubleshooting guide.\nSummary:Your observation suggests that the recording support via the .assets folder is not yet active for your branch or package in the azure-sdk-for-python-pr repo. This could be due to the migration not being completed, or the package not being configured for out-of-repo recordings yet. Please check the migration status or reach out to the repo maintainers for confirmation.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md"
+            ]
+        },
+        "actual": {
+            "answer": "Sorry, I can't answer this question directly regarding the status of recording support in the `azure-sdk-for-python-pr` repository, because the provided information does not include specifics about that repo or whether it is configured to support test proxy recordings like the main `azure-sdk-for-python` repo.\n\nHowever, I can provide general guidance:\n\n- In the main `azure-sdk-for-python` repo, when you set `AZURE_TEST_RUN_LIVE=true` and `AZURE_SKIP_LIVE_RECORDING=false`, running tests should create a `.assets` directory with the new test recordings, as described in the official documentation. If this is not happening in your `azure-sdk-for-python-pr` repo, possible reasons include:\n  - The test proxy infrastructure is not set up in that repo.\n  - The initial recording migration to use the out-of-repo `.assets` workflow has not been completed for your package (see migration guide).\n  - The test setup or test runner configuration is different, or missing required scripts/tools.\n\nTo confirm recording support:\n1. Check that your package in `azure-sdk-for-python-pr` has an `assets.json` file at its root. This indicates the migration has been completed and test recordings should be stored in `.assets`.\n2. Ensure the test proxy executable is present and in your `PATH`.\n3. Run tests with the correct environment variables as you did, and inspect for the `.assets` directory after running.\n\nIf `.assets` is not being created, it's likely that the migration has not been performed for your package or the repo is not yet set up for test proxy recording. You may need to follow the initial migration steps described in the recording migration guide, or check with your repo maintainers to confirm the infrastructure status.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md",
+                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md"
+            ]
+        },
         "similarity": 4.0,
         "gpt_similarity": 4.0,
         "similarity_result": "pass",
@@ -103,6 +101,17 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response contains almost all relevant information from the ground truth, including the main claims, reasoning, and recommended actions, but omits a minor detail about the old recordings folder.",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": [
+            "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
+            "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md",
+            "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/recording_migration_guide.md"
+        ],
+        "reference_match_unexpected_refs": [
+            "https://eng.ms/docs/products/azure-developer-experience/onboard/access"
+        ],
+        "reference_match_missing_refs": [],
+        "reference_match_result": "pass",
         "overall_score": 5.2
     },
     {

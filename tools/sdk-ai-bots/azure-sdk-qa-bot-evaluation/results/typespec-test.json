@@ -1,22 +1,18 @@
 [
     {
         "testcase": "Brownfield TypeSpec migration",
-        "expected": [
-            {
-                "answer": "Migration to TypeSpec for existing services is not yet mandatory, but it is suggested, and teams should be planning for it in Bromine and Krypton\nServices must wholly switch to TypeSpec, there is no allowed mixing of hand-written and generated swagger\nServicesmust conform to a single, unified api-version for their service, servicesthat currently use different api-versions for parts of their service are going to need to plan for conformance -this either means SDK splitting or version uniformity.  Teams that use this 'different api-versions for different resources in the same sdk' pattern are not good candidates for conversion at the moment\nIn generally, the more compliant your service is to the RPC and best practices, the easier conversion will be\nThere is documentation on converting here: [Getting started | TypeSpec Azure](https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started/)",
-                "reference_urls": [
-                    "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "Currently, there is no mandatory or official timeframe for existing brownfield Azure resource providers (RPs) to migrate from OpenAPI swagger to TypeSpec. Migration is strongly encouraged and teams should be planning for it in upcoming engineering cycles (notably Bromine and Krypton), but enforcement has not yet begun.\n\nRegarding phased migration: Azure services must wholly switch to TypeSpec for their API surface. Mixing TypeSpec-generated OpenAPI with hand-written swagger (for example, migrating one resource type at a time) is not allowed. The migration must be complete and atomic for a given api-version. All resources and operations exposed for an api-version must be defined in TypeSpec once migration occurs. This means you cannot have a service where some resources are defined in TypeSpec and others remain in handwritten swagger within the same api-version. If your service uses different api-versions for different resource types, you will need to plan for uniformity or SDK splitting before migrating, as partial conversions are not supported.\n\nThe more compliant your service is with Azure RPC and best practices, the smoother your migration will be. For guidance and conversion tools, see the official migration documentation.\n\nIf you have specific migration concerns or need help, please reach out to the Azure TypeSpec team.",
-                "reference_urls": [
-                    "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started/"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "Migration to TypeSpec for existing services is not yet mandatory, but it is suggested, and teams should be planning for it in Bromine and Krypton\nServices must wholly switch to TypeSpec, there is no allowed mixing of hand-written and generated swagger\nServicesmust conform to a single, unified api-version for their service, servicesthat currently use different api-versions for parts of their service are going to need to plan for conformance -this either means SDK splitting or version uniformity.  Teams that use this 'different api-versions for different resources in the same sdk' pattern are not good candidates for conversion at the moment\nIn generally, the more compliant your service is to the RPC and best practices, the easier conversion will be\nThere is documentation on converting here: [Getting started | TypeSpec Azure](https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started/)",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started"
+            ]
+        },
+        "actual": {
+            "answer": "Currently, there is no mandatory or official timeframe for existing brownfield Azure resource providers (RPs) to migrate from OpenAPI swagger to TypeSpec. Migration is strongly encouraged and teams should be planning for it in upcoming engineering cycles (notably Bromine and Krypton), but enforcement has not yet begun.\n\nRegarding phased migration: Azure services must wholly switch to TypeSpec for their API surface. Mixing TypeSpec-generated OpenAPI with hand-written swagger (for example, migrating one resource type at a time) is not allowed. The migration must be complete and atomic for a given api-version. All resources and operations exposed for an api-version must be defined in TypeSpec once migration occurs. This means you cannot have a service where some resources are defined in TypeSpec and others remain in handwritten swagger within the same api-version. If your service uses different api-versions for different resource types, you will need to plan for uniformity or SDK splitting before migrating, as partial conversions are not supported.\n\nThe more compliant your service is with Azure RPC and best practices, the smoother your migration will be. For guidance and conversion tools, see the official migration documentation.\n\nIf you have specific migration concerns or need help, please reach out to the Azure TypeSpec team.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started/"
+            ]
+        },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
@@ -30,30 +26,33 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response contains all major information from the ground truth, with only a minor omission (the direct link). It is otherwise thorough and accurate.",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": [
+            "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started"
+        ],
+        "reference_match_unexpected_refs": [],
+        "reference_match_missing_refs": [],
+        "reference_match_result": "pass",
         "overall_score": 6.6
     },
     {
         "testcase": "Missing APIs in default tag error for typespec conversion PR",
-        "expected": [
-            {
-                "answer": "Part of the typespec conversion is replacing the existing swagger with a generated swagger.  The generated swagger is still used for some purposes, and Avocado protects the ability to process it. The generated swagger needs to be equivalent, but not necessarily identical.  Generally these issues reflected in the swagger will also show up in breaking change checks, which will have to be resolved (or suppressed if they are false positives)",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement",
-                    "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions",
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "Yes, you can suppress the missing APIs check for your TypeSpec migration PR if the PR does not introduce any changes to the API surface and only involves conversion to TypeSpec. This is a recognized scenario, as the validation check may report false positives when comparing generated OpenAPI files with those previously published, especially when structural differences (such as adoption of Azure common-types or improved ARM patterns) occur during migration.\n\nThe standard way to suppress this kind of validation is to add an entry to your service's `suppressions.yaml` file. This allows you to selectively suppress checks (such as TypeSpecRequirement, LintDiff, or Avocado rules) for specific API versions or files that are flagged during the migration process. Make sure your suppression reason is clear (e.g., 'TypeSpec migration, no change in API surface').\n\nExample suppression for TypeSpecRequirement:\n\n```\n# specification/widget/resource-manager/Microsoft.Widget/Widget/suppressions.yaml\n- tool: TypeSpecRequirement\n  paths: \n    - stable/2024-01-01/**/*.json\n  reason: TypeSpec migration, no change in API surface\n```\n\nFor Avocado or LintDiff errors, the suppression process is similar. See the linked documentation for more details and additional examples. Remember, it is important to carefully review any violations before suppressing to ensure the migration does not inadvertently change the functional API surface.\n\nIf you encounter persistent CI issues, follow the troubleshooting steps for local validation (merge latest main, run `npx tsv`, and compare results), and escalate via the TypeSpec Discussion channel if necessary.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement",
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff",
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "Part of the typespec conversion is replacing the existing swagger with a generated swagger.  The generated swagger is still used for some purposes, and Avocado protects the ability to process it. The generated swagger needs to be equivalent, but not necessarily identical.  Generally these issues reflected in the swagger will also show up in breaking change checks, which will have to be resolved (or suppressed if they are false positives)",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement",
+                "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
+            ]
+        },
+        "actual": {
+            "answer": "Yes, you can suppress the missing APIs check for your TypeSpec migration PR if the PR does not introduce any changes to the API surface and only involves conversion to TypeSpec. This is a recognized scenario, as the validation check may report false positives when comparing generated OpenAPI files with those previously published, especially when structural differences (such as adoption of Azure common-types or improved ARM patterns) occur during migration.\n\nThe standard way to suppress this kind of validation is to add an entry to your service's `suppressions.yaml` file. This allows you to selectively suppress checks (such as TypeSpecRequirement, LintDiff, or Avocado rules) for specific API versions or files that are flagged during the migration process. Make sure your suppression reason is clear (e.g., 'TypeSpec migration, no change in API surface').\n\nExample suppression for TypeSpecRequirement:\n\n```\n# specification/widget/resource-manager/Microsoft.Widget/Widget/suppressions.yaml\n- tool: TypeSpecRequirement\n  paths: \n    - stable/2024-01-01/**/*.json\n  reason: TypeSpec migration, no change in API surface\n```\n\nFor Avocado or LintDiff errors, the suppression process is similar. See the linked documentation for more details and additional examples. Remember, it is important to carefully review any violations before suppressing to ensure the migration does not inadvertently change the functional API surface.\n\nIf you encounter persistent CI issues, follow the troubleshooting steps for local validation (merge latest main, run `npx tsv`, and compare results), and escalate via the TypeSpec Discussion channel if necessary.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+            ]
+        },
         "similarity": 3.0,
         "gpt_similarity": 3.0,
         "similarity_result": "pass",
@@ -67,29 +66,37 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response covers the suppression process and mentions Avocado, but misses key conceptual details about swagger equivalence and the role of Avocado in processing, as well as the connection to breaking change checks. It contains about half of the necessary information.",
+        "reference_match": 0.6666666666666666,
+        "reference_match_exact_matches": [
+            "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions",
+            "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
+        ],
+        "reference_match_unexpected_refs": [
+            "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#known-issues"
+        ],
+        "reference_match_missing_refs": [
+            "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
+        ],
+        "reference_match_result": "fail",
         "overall_score": 5.0
     },
     {
         "testcase": "is sdk generation required for private preview?",
-        "expected": [
-            {
-                "answer": "As of today how the system is designed, you need to suppress those warning if you do not want to include SDK at this time. See an example:\nhttps://github.com/Azure/azure-rest-api-specs/blob/main/specification/monitor/Monitor.Ingestion/suppressions.yaml:\n```\n- tool: TypeSpecValidation\npaths:\n- tspconfig.yaml\nrules:\n- SdkTspConfigValidation\nsub-rules:\n- options.@azure-tools/typespec-ts.package-dir\n- options.@azure-tools/typespec-ts.package-details.name\nreason: 'See above comments for details'\n```\nWhen you will need SDK, you will be required to remove the file and follow the config validation process.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline",
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "No, SDK generation is NOT required for private preview API approval for ARM (management plane) APIs. According to Azure's versioning guidelines, private preview versions do not have corresponding SDK package versions, and there is no requirement for SDK onboarding at this stage. You are only required to validate and emit the OpenAPI (Swagger) spec for your API in private preview. \n\nFor your `tspconfig.yaml`, you do NOT need to include any SDK emitter configurations (such as typespec-python, typespec-java, etc.) for private preview. You should only include the Autorest emitter (for OpenAPI output) and configure it as needed. Here is a minimal example for ARM spec validation:\n\n```yaml\nemit:\n  - \"@azure-tools/typespec-autorest\"\noptions:\n  \"@azure-tools/typespec-autorest\":\n    azure-resource-provider-folder: \"<your-folder>\"\n    output-file: \"<your-path>/openapi.json\"\nlinter:\n  extends:\n    - \"@azure-tools/typespec-azure-rulesets/resource-manager\"\n```\n\nIf you see validation failures after removing SDK emitters, check that your tspconfig.yaml is correctly structured and only references the required emitters for your scenario. Also ensure any import resolution issues are addressed (see the references for guidance).\n\nYou can onboard SDK generation later when you move to public preview or GA, at which point you will need to add the relevant SDK emitters and options.\n\nSummary: For ARM APIs in private preview, SDK is not required, and tspconfig.yaml should only be set up for OpenAPI validation.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline",
-                    "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/00howtogen",
-                    "https://azure.github.io/typespec-azure/docs/migrate-swagger/checklists/migrate-arm-tips"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "As of today how the system is designed, you need to suppress those warning if you do not want to include SDK at this time. See an example:\nhttps://github.com/Azure/azure-rest-api-specs/blob/main/specification/monitor/Monitor.Ingestion/suppressions.yaml:\n```\n- tool: TypeSpecValidation\npaths:\n- tspconfig.yaml\nrules:\n- SdkTspConfigValidation\nsub-rules:\n- options.@azure-tools/typespec-ts.package-dir\n- options.@azure-tools/typespec-ts.package-details.name\nreason: 'See above comments for details'\n```\nWhen you will need SDK, you will be required to remove the file and follow the config validation process.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+            ]
+        },
+        "actual": {
+            "answer": "No, SDK generation is NOT required for private preview API approval for ARM (management plane) APIs. According to Azure's versioning guidelines, private preview versions do not have corresponding SDK package versions, and there is no requirement for SDK onboarding at this stage. You are only required to validate and emit the OpenAPI (Swagger) spec for your API in private preview. \n\nFor your `tspconfig.yaml`, you do NOT need to include any SDK emitter configurations (such as typespec-python, typespec-java, etc.) for private preview. You should only include the Autorest emitter (for OpenAPI output) and configure it as needed. Here is a minimal example for ARM spec validation:\n\n```yaml\nemit:\n  - \"@azure-tools/typespec-autorest\"\noptions:\n  \"@azure-tools/typespec-autorest\":\n    azure-resource-provider-folder: \"<your-folder>\"\n    output-file: \"<your-path>/openapi.json\"\nlinter:\n  extends:\n    - \"@azure-tools/typespec-azure-rulesets/resource-manager\"\n```\n\nIf you see validation failures after removing SDK emitters, check that your tspconfig.yaml is correctly structured and only references the required emitters for your scenario. Also ensure any import resolution issues are addressed (see the references for guidance).\n\nYou can onboard SDK generation later when you move to public preview or GA, at which point you will need to add the relevant SDK emitters and options.\n\nSummary: For ARM APIs in private preview, SDK is not required, and tspconfig.yaml should only be set up for OpenAPI validation.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline",
+                "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/00howtogen",
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/checklists/migrate-arm-tips"
+            ]
+        },
         "similarity": 4.0,
         "gpt_similarity": 4.0,
         "similarity_result": "pass",
@@ -103,26 +110,32 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response contains most of the relevant information about SDK not being required and tspconfig.yaml setup, but misses the important detail about suppressing warnings and the example, which is a minor but necessary part of the ground truth.",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": [
+            "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation",
+            "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline"
+        ],
+        "reference_match_unexpected_refs": [
+            "https://azure.github.io/typespec-azure/docs/migrate-swagger/checklists/migrate-arm-tips"
+        ],
+        "reference_match_missing_refs": [],
+        "reference_match_result": "pass",
         "overall_score": 6.0
     },
     {
         "testcase": "Typespec Validation Failing on PR due to `typespec-go` configuration missing",
-        "expected": [
-            {
-                "answer": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation#suppressing-sdktspconfigvalidation-rules\nSuppressing go specific rules worked for me. Here's our suppression file:\n```yml\n- tool: TypeSpecValidation\npaths:\n- tspconfig.yaml\nrules:\n- SdkTspConfigValidation\nsub-rules:\n- options.@azure-tools/typespec-go.generate-fakes\n- options.@azure-tools/typespec-go.inject-spans\n- options.@azure-tools/typespec-go.service-dir\n- options.@azure-tools/typespec-go.package-dir\nreason: 'Azure Load Testing does not support a Go SDK currently'\n```",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "You do not need to add Go SDK configuration options to your `tspconfig.yaml` if your service does not plan to support a Go SDK. Instead, you should suppress the validation rules for Go-specific options in your `suppressions.yaml` file. This is the recommended approach documented and validated by others facing the same issue.\n\nHere's an example of what your `suppressions.yaml` file should look like:\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  sub-rules:\n    - options.@azure-tools/typespec-go.generate-fakes\n    - options.@azure-tools/typespec-go.inject-spans\n    - options.@azure-tools/typespec-go.service-dir\n    - options.@azure-tools/typespec-go.package-dir\n  reason: 'Service does not support Go SDK currently'\n```\n\nPlace this file in the root directory of your service specification. This will suppress the Go-specific validation failures in CI and local runs. You do not need to add dummy or placeholder configuration values\u2014suppression is the supported and correct solution for your scenario.\n\nIf you need more details, refer to the TypeSpec validation documentation and previous Q&A examples on handling emitter configuration suppressions.",
-                "reference_urls": [
-                    "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation#suppressing-sdktspconfigvalidation-rules\nSuppressing go specific rules worked for me. Here's our suppression file:\n```yml\n- tool: TypeSpecValidation\npaths:\n- tspconfig.yaml\nrules:\n- SdkTspConfigValidation\nsub-rules:\n- options.@azure-tools/typespec-go.generate-fakes\n- options.@azure-tools/typespec-go.inject-spans\n- options.@azure-tools/typespec-go.service-dir\n- options.@azure-tools/typespec-go.package-dir\nreason: 'Azure Load Testing does not support a Go SDK currently'\n```",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+            ]
+        },
+        "actual": {
+            "answer": "You do not need to add Go SDK configuration options to your `tspconfig.yaml` if your service does not plan to support a Go SDK. Instead, you should suppress the validation rules for Go-specific options in your `suppressions.yaml` file. This is the recommended approach documented and validated by others facing the same issue.\n\nHere's an example of what your `suppressions.yaml` file should look like:\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  sub-rules:\n    - options.@azure-tools/typespec-go.generate-fakes\n    - options.@azure-tools/typespec-go.inject-spans\n    - options.@azure-tools/typespec-go.service-dir\n    - options.@azure-tools/typespec-go.package-dir\n  reason: 'Service does not support Go SDK currently'\n```\n\nPlace this file in the root directory of your service specification. This will suppress the Go-specific validation failures in CI and local runs. You do not need to add dummy or placeholder configuration values\u2014suppression is the supported and correct solution for your scenario.\n\nIf you need more details, refer to the TypeSpec validation documentation and previous Q&A examples on handling emitter configuration suppressions.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+            ]
+        },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
@@ -136,28 +149,31 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with only a minor difference in the reason text, which does not affect completeness. It is fully complete.",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": [
+            "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+        ],
+        "reference_match_unexpected_refs": [],
+        "reference_match_missing_refs": [],
+        "reference_match_result": "pass",
         "overall_score": 7.0
     },
     {
         "testcase": "How to make an interface internal ?",
-        "expected": [
-            {
-                "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted\u2014as long as you remove all previously generated SDK output before regenerating. Or you can use _patch.py to customize the code.",
-                "reference_urls": [
-                    "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators",
-                    "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "Currently, TypeSpec and its client generator (tcgc) do not directly support hiding an entire interface (operation group) from the public SDK surface simply by marking it or its operations as internal or by using the `@access` decorator on the interface. The `@access` decorator works for models, operations, enums, and namespaces\u2014but NOT for interfaces themselves. This means marking all operations as internal or adding `@access` to the interface won't achieve your goal.\n\nTo hide the unwanted interface from the public Python SDK, the recommended approach is:\n\n1. **Redefine your client structure in `client.tsp`** so only the desired operations/groups are exposed. When you do this, TypeSpec will generate only the operations and operation groups that are referenced in your custom client. Default service clients and their `Operations` classes (such as `EvaluationResultsOperations`) will not be emitted if they aren't referenced.\n2. **Clean previously generated SDK code before regenerating** to ensure no leftover unwanted classes are present.\n3. **As a workaround until better TypeSpec features exist**, you can use a `_patch.py` file to rename or hide the generated client members, e.g., rename `client.evaluation_results` to `client._evaluation_results` to indicate it's internal, but this is not a permanent or ideal solution.\n\nSo, the best practice right now is to use a custom `client.tsp` to define exactly which interfaces/operations you want in your public SDK, and regenerate after cleaning old outputs.\n\nIf you need more granular control, keep watching for future TypeSpec updates that may allow hiding interfaces directly.\n\n**Summary:**\n- `@access` does not work on interfaces.\n- Marking operations as internal will hide the operations but not the interface itself if it's referenced in the client.\n- Redefine the client in `client.tsp` for best control.\n- Use patching as a workaround if necessary.\n",
-                "reference_urls": [
-                    "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators",
-                    "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/guideline"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted\u2014as long as you remove all previously generated SDK output before regenerating. Or you can use _patch.py to customize the code.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators",
+                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            ]
+        },
+        "actual": {
+            "answer": "Currently, TypeSpec and its client generator (tcgc) do not directly support hiding an entire interface (operation group) from the public SDK surface simply by marking it or its operations as internal or by using the `@access` decorator on the interface. The `@access` decorator works for models, operations, enums, and namespaces\u2014but NOT for interfaces themselves. This means marking all operations as internal or adding `@access` to the interface won't achieve your goal.\n\nTo hide the unwanted interface from the public Python SDK, the recommended approach is:\n\n1. **Redefine your client structure in `client.tsp`** so only the desired operations/groups are exposed. When you do this, TypeSpec will generate only the operations and operation groups that are referenced in your custom client. Default service clients and their `Operations` classes (such as `EvaluationResultsOperations`) will not be emitted if they aren't referenced.\n2. **Clean previously generated SDK code before regenerating** to ensure no leftover unwanted classes are present.\n3. **As a workaround until better TypeSpec features exist**, you can use a `_patch.py` file to rename or hide the generated client members, e.g., rename `client.evaluation_results` to `client._evaluation_results` to indicate it's internal, but this is not a permanent or ideal solution.\n\nSo, the best practice right now is to use a custom `client.tsp` to define exactly which interfaces/operations you want in your public SDK, and regenerate after cleaning old outputs.\n\nIf you need more granular control, keep watching for future TypeSpec updates that may allow hiding interfaces directly.\n\n**Summary:**\n- `@access` does not work on interfaces.\n- Marking operations as internal will hide the operations but not the interface itself if it's referenced in the client.\n- Redefine the client in `client.tsp` for best control.\n- Use patching as a workaround if necessary.\n",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators",
+                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/guideline"
+            ]
+        },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
@@ -171,26 +187,29 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, with no omissions, and even adds clarifying details.",
+        "reference_match": 0.0,
+        "reference_match_exact_matches": [],
+        "reference_match_unexpected_refs": [],
+        "reference_match_missing_refs": [
+            "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+        ],
+        "reference_match_result": "fail",
         "overall_score": 7.0
     },
     {
         "testcase": "How to restrict importing typespec files in main based off of versions.",
-        "expected": [
-            {
-                "answer": "no, you have to mark the models/types and everything that you want to remove with the @removed decorator using the versioning library\nif you are in preview version I think also the policy is to only have a single preview version in the spec repo at the timme now so you could also just delete it",
-                "reference_urls": [
-                    "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
-                ]
-            }
-        ],
-        "actual": [
-            {
-                "answer": "No, TypeSpec does not support conditional imports in main.tsp based on API version. All imports are static and processed at compile time, so you cannot conditionally include or exclude a resource type file based on the API version. Instead, the recommended and supported way to exclude a resource type from a new API version is to use the versioning decorators provided by the @typespec/versioning library. Specifically, you should mark the types, models, interfaces, or operations that you want to remove with the `@removed(version)` decorator, indicating in which version they are removed. This approach ensures that those types are only present in the versions where they should exist and are excluded from the OpenAPI output for newer versions.\n\nIf you are working with a preview version and the policy is to only have a single preview version in the spec repository, you may also simply delete the resource type if it should not be included at all in the new version.\n\nIn summary, manage version-specific inclusions and removals through decorators, not conditional imports.\n",
-                "reference_urls": [
-                    "https://typespec.io/docs/getting-started/getting-started-rest/06-versioning"
-                ]
-            }
-        ],
+        "expected": {
+            "answer": "no, you have to mark the models/types and everything that you want to remove with the @removed decorator using the versioning library\nif you are in preview version I think also the policy is to only have a single preview version in the spec repo at the timme now so you could also just delete it",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+            ]
+        },
+        "actual": {
+            "answer": "No, TypeSpec does not support conditional imports in main.tsp based on API version. All imports are static and processed at compile time, so you cannot conditionally include or exclude a resource type file based on the API version. Instead, the recommended and supported way to exclude a resource type from a new API version is to use the versioning decorators provided by the @typespec/versioning library. Specifically, you should mark the types, models, interfaces, or operations that you want to remove with the `@removed(version)` decorator, indicating in which version they are removed. This approach ensures that those types are only present in the versions where they should exist and are excluded from the OpenAPI output for newer versions.\n\nIf you are working with a preview version and the policy is to only have a single preview version in the spec repository, you may also simply delete the resource type if it should not be included at all in the new version.\n\nIn summary, manage version-specific inclusions and removals through decorators, not conditional imports.\n",
+            "reference_urls": [
+                "https://typespec.io/docs/getting-started/getting-started-rest/06-versioning"
+            ]
+        },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
@@ -204,22 +223,28 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, accurately reflecting both main points without missing any claims or statements.",
+        "reference_match": 0.0,
+        "reference_match_exact_matches": [],
+        "reference_match_unexpected_refs": [
+            "https://typespec.io/docs/language-basics/imports",
+            "https://typespec.io/docs/getting-started/getting-started-rest/06-versioning"
+        ],
+        "reference_match_missing_refs": [
+            "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+        ],
+        "reference_match_result": "fail",
         "overall_score": 7.0
     },
     {
         "testcase": "Description changes across versions?",
-        "expected": [
-            {
-                "answer": "Honestly, the best thing is to update your docs and take the update in previous versions (which are likely now more accurately described as well). Documentation updates are not breaking changes, and, if changes are limited to documentation, this should be passed easily by the breaking change board.",
-                "reference_urls": []
-            }
-        ],
-        "actual": [
-            {
-                "answer": "For documentation-only changes (like updating a model's description), the best practice is to apply the update across all API versions in your TypeSpec project\u2014even for older versions\u2014since documentation changes are not considered breaking changes and help ensure accuracy throughout your specs. You do not need to restrict your output in tspconfig.yaml to only the current version; it's preferable to regenerate all versions so your documentation remains consistent and correct for consumers of any version.\n\nIf the TypeSpec validation is failing because you haven't applied the description update to older versions, the solution is simply to update those versions as well. This is not considered a breaking change, and most reviewers will approve such updates, as confirmed in expert Q&A. Restricting the output to only the current version is not recommended because it can cause confusion and inconsistencies in your repository.\n\nSummary:\n- Update descriptions in all relevant API versions\n- Regenerate specs for all versions\n- No need to change tspconfig.yaml output path\n- Documentation-only changes are safe and recommended\n\nThis approach keeps your specs accurate and avoids unnecessary suppression or output restrictions.",
-                "reference_urls": []
-            }
-        ],
+        "expected": {
+            "answer": "Honestly, the best thing is to update your docs and take the update in previous versions (which are likely now more accurately described as well). Documentation updates are not breaking changes, and, if changes are limited to documentation, this should be passed easily by the breaking change board.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "For documentation-only changes (like updating a model's description), the best practice is to apply the update across all API versions in your TypeSpec project\u2014even for older versions\u2014since documentation changes are not considered breaking changes and help ensure accuracy throughout your specs. You do not need to restrict your output in tspconfig.yaml to only the current version; it's preferable to regenerate all versions so your documentation remains consistent and correct for consumers of any version.\n\nIf the TypeSpec validation is failing because you haven't applied the description update to older versions, the solution is simply to update those versions as well. This is not considered a breaking change, and most reviewers will approve such updates, as confirmed in expert Q&A. Restricting the output to only the current version is not recommended because it can cause confusion and inconsistencies in your repository.\n\nSummary:\n- Update descriptions in all relevant API versions\n- Regenerate specs for all versions\n- No need to change tspconfig.yaml output path\n- Documentation-only changes are safe and recommended\n\nThis approach keeps your specs accurate and avoids unnecessary suppression or output restrictions.",
+            "reference_urls": []
+        },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
@@ -233,6 +258,11 @@
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
         "response_completeness_reason": "The response fully includes all necessary and relevant information from the ground truth, with no omissions.",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": NaN,
+        "reference_match_unexpected_refs": NaN,
+        "reference_match_missing_refs": NaN,
+        "reference_match_result": "pass",
         "overall_score": 7.0
     },
     {

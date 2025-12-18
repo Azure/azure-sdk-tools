@@ -33,6 +33,8 @@ namespace IssueLabelerService
                     {
                         case "OpenAI":
                             return new OpenAiLabeler(_logger, config, _ragService, _blobClient);
+                        case "McpOpenAI":
+                            return new McpOpenAiLabeler(_logger, config, _ragService, _blobClient);
                         case "Legacy":
                             return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
                         default:

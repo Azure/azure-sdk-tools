@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Azure.Storage.Blobs;
 using System.Text.Json;
 using Azure.Identity;
+using Azure.Storage.Blobs.Models;
 
 namespace SearchIndexCreator
 {
@@ -79,6 +80,80 @@ namespace SearchIndexCreator
                     }
 
                     Console.WriteLine($"Uploaded {repo} to {containerClient.Name} container.");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error uploading labels for: {repo}", ex);
+                }
+            }
+        }
+
+        public async Task CreateOrRefreshMcpLabels(string repoOwner)
+        {
+            var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
+            client.Credentials = _tokenAuth;
+
+            // Retrieve repository names from configuration
+            var repoNamesConfig = _config["McpRepositoryForLabels"];
+            if (string.IsNullOrEmpty(repoNamesConfig))
+            {
+                throw new InvalidOperationException("McpRepositoryForLabels configuration is missing or empty.");
+            }
+
+            var repoNames = repoNamesConfig.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+            // Initialize BlobServiceClient (replace with your connection string)
+            var blobServiceClient = GetBlobServiceClient(_config["IssueStorageName"]);
+            var containerClient = blobServiceClient.GetBlobContainerClient("labels");
+
+            // Ensure the container exists
+            await containerClient.CreateIfNotExistsAsync();
+
+            foreach (var repo in repoNames)
+            {
+                // Fetch labels for the repository
+                var labels = await client.Issue.Labels.GetAllForRepository(repoOwner, repo);
+
+                // Upload JSON to blob storage
+                var blobClient = containerClient.GetBlobClient(repo);
+
+                try
+                {
+                    // Map labels to a custom object with Name and Color
+                    var labelData = labels
+                       .Where(label =>
+                        label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase) ||
+                        label.Name.StartsWith("tools-",  StringComparison.OrdinalIgnoreCase))
+                        .Select(label => new
+                        {
+                            Name = label.Name ,
+                            Type = label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase) ? "Server" : "Tool",                       
+                        })
+                        .OrderBy(label => label.Name);
+
+                    // Serialize the custom object to JSON
+                    var labelsJson = JsonSerializer.Serialize(labelData);
+
+                    var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
+                    {
+                        ContentType = "application/json" // Specify the content type
+                    };
+
+                    using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(labelsJson));
+                    await blobClient.DeleteIfExistsAsync();
+
+                    var uploadOptions = new BlobUploadOptions
+                    {
+                        HttpHeaders = new BlobHttpHeaders
+                        {
+                            ContentType = "application/json"
+                        }
+                    };
+
+                    await blobClient.UploadAsync(stream, uploadOptions);
+
+                    Console.WriteLine($"Uploaded {repo} to {containerClient.Name} container.");
+ 
                 }
                 catch (Exception ex)
                 {

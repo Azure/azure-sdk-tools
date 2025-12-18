@@ -1,0 +1,5 @@
+IssueNumber,Title,ExpectedServer,PredictedServer,ServerCorrect,ExpectedTool,PredictedTool,ToolCorrect,BothCorrect,RagResults,Error
+1,"Blob storage tool returns 404 error when listing containers",server-Azure.Mcp,server-Azure.Mcp,True,tools-Storage,tools-Storage,True,True,0,""
+101,"Server stops shortly after startup due to telemetry initialization failure",server-Fabric.Mcp,server-Fabric.Mcp,True,tools-Telemetry,tools-Telemetry,True,True,0,""
+4,"Cosmos DB tool timeout when querying large collections",server-Azure.Mcp,server-Azure.Mcp,True,tools-CosmosDb,tools-CosmosDB,True,True,0,""
+11,"Error when copying blob to Cosmos DB via MCP tools",server-Azure.Mcp,server-Azure.Mcp,True,tools-CosmosDb,tools-CosmosDB,True,True,0,""

@@ -82,7 +82,7 @@ export const generateReport = (context: WorkflowContext) => {
     );
   }
 
-  // for .NET SDK in spec PR scenario, override generateFromTypeSpec' by the value returned from the .NET automation script
+  // for .NET SDK in spec PR scenario, override generateFromTypeSpec by the value returned from the .NET automation script
   if (context.config.sdkName.includes('net') && context.config.runMode === 'spec-pull-request') {
     generateFromTypeSpec = false;
     const generateOutputJson = readTmpJsonFile(context, 'generateOutput.json');

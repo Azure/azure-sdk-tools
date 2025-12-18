@@ -160,7 +160,8 @@ namespace APIViewWeb.Managers
                     ElementId = comment.ElementId,
                     NodeId = comment.ElementId,
                     CommentText = comment.CommentText,
-                    Comment = comment
+                    Comment = comment,
+                    ThreadId = comment.ThreadId
                 });
         }
 
@@ -198,6 +199,7 @@ namespace APIViewWeb.Managers
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
                     NodeId = comment.ElementId,
+                    ThreadId = comment.ThreadId,
                     CommentText = comment.CommentText,
                     Severity = comment.Severity,
                 });
@@ -325,8 +327,9 @@ namespace APIViewWeb.Managers
                 ResolutionLocked = false,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 CreatedOn = DateTime.UtcNow,
-                CommentType = CommentType.APIRevision,
-                CommentSource = CommentSource.AIGenerated
+                CommentSource = CommentSource.AIGenerated,
+                ThreadId = comment.ThreadId,
+                CommentType = CommentType.APIRevision
             };
 
             await _commentsRepository.UpsertCommentAsync(commentResult);
@@ -340,7 +343,8 @@ namespace APIViewWeb.Managers
                     ReviewId = commentResult.ReviewId,
                     CommentText = commentResult.CommentText,
                     ElementId = commentResult.ElementId,
-                    Comment = commentResult
+                    Comment = commentResult,
+                    ThreadId = commentResult.ThreadId
                 });
         }
 
@@ -421,13 +425,16 @@ namespace APIViewWeb.Managers
                     CommentId = comment.Id,
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
-                    NodeId = comment.ElementId
+                    NodeId = comment.ElementId,
+                    ThreadId = comment.ThreadId
                 });
         }
 
-        public async Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
+        public async Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId, string threadId = null)
         {
-            var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            comments = comments.Where(c => c.ThreadId == threadId);
+            
             foreach (var comment in comments)
             {
                 comment.ChangeHistory.Add(
@@ -450,14 +457,17 @@ namespace APIViewWeb.Managers
                         ReviewId = reviewId,
                         ElementId = lineId,
                         NodeId = lineId,
+                        ThreadId = threadId,
                         ResolvedBy = user.GetGitHubLogin()
                     });
             }
         }
 
-        public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
+        public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId, string threadId = null)
         {
-            var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            comments = comments.Where(c => c.ThreadId == threadId);
+            
             foreach (var comment in comments)
             {
                 comment.ChangeHistory.Add(
@@ -479,12 +489,13 @@ namespace APIViewWeb.Managers
                         CommentThreadUpdateAction = CommentThreadUpdateAction.CommentUnResolved,
                         ReviewId = reviewId,
                         ElementId = lineId,
-                        NodeId = lineId
+                        NodeId = lineId,
+                        ThreadId = threadId
                     });
             }
         }
 
-        public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
+        public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, BatchConversationRequest request)
         {
             var response = new List<CommentItemModel>();
             
@@ -514,6 +525,7 @@ namespace APIViewWeb.Managers
                         CreatedBy = user.GetGitHubLogin(),
                         CreatedOn = DateTime.UtcNow,
                         CommentType = comment.CommentType,
+                        ThreadId = comment.ThreadId,
                         IsResolved = request.Disposition == ConversationDisposition.Resolve
                     };
                     await AddCommentAsync(user, commentUpdate);
@@ -532,7 +544,7 @@ namespace APIViewWeb.Managers
                         await SoftDeleteCommentAsync(user, reviewId, commentId);
                         break;
                     case ConversationDisposition.Resolve:
-                        await ResolveConversation(user, reviewId, comment.ElementId);
+                        await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
                         break;
                     case ConversationDisposition.KeepOpen:
                     default:
@@ -624,7 +636,8 @@ namespace APIViewWeb.Managers
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
                     NodeId = comment.ElementId,
-                    Comment = comment
+                    Comment = comment,
+                    ThreadId = comment.ThreadId
                 });
         }
 

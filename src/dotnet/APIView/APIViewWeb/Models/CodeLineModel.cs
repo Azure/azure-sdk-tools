@@ -18,6 +18,7 @@ namespace APIViewWeb.Models
         {
             CodeLine = codeLine;
             CommentThread = commentThread;
+            CommentThreads = commentThread != null ? [commentThread] : [];
             Diagnostics = diagnostics;
             Kind = kind;
             LineNumber = lineNumber;
@@ -37,6 +38,7 @@ namespace APIViewWeb.Models
         {
             CodeLine = (codeLine.Equals(default(CodeLine))) ? codeLineModel.CodeLine : codeLine;
             CommentThread = commentThread ?? codeLineModel.CommentThread;
+            CommentThreads = commentThread != null ? [commentThread] : codeLineModel.CommentThreads;
             Diagnostics = diagnostics ?? codeLineModel.Diagnostics;
             Kind = (kind == DiffLineKind.Unchanged) ? codeLineModel.Kind : kind;
             LineNumber = (lineNumber == default(int)) ? codeLineModel.LineNumber : lineNumber;
@@ -51,7 +53,8 @@ namespace APIViewWeb.Models
 
         public CodeLine CodeLine { get; }
         public CodeDiagnostic[] Diagnostics { get; }
-        public CommentThreadModel CommentThread { get; }
+        public CommentThreadModel CommentThread { get; } // Legacy backward compatibility
+        public List<CommentThreadModel> CommentThreads { get; }
         public DiffLineKind Kind { get; }
         public int LineNumber { get; }
         public int[] DocumentedByLines { get; }

@@ -20,7 +20,38 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
-            throw new NotImplementedException();
+            var sdkLanguage = SdkLanguageHelpers.GetSdkLanguage(language);
+            var version = string.IsNullOrEmpty(packageVersion) ? "1.0.0" : packageVersion;
+            
+            return Task.FromResult(
+                new PackageWorkitemResponse
+                {
+                    PackageName = packageName,
+                    Language = sdkLanguage,
+                    ResponseError = null,
+                    PipelineDefinitionUrl = "https://dev.azure.com/fake-org/fake-project/_build?definitionId=1",
+                    WorkItemId = 0,
+                    changeLogStatus = "Approved",
+                    APIViewStatus = "Approved",
+                    PackageNameStatus = "Approved",
+                    PackageRepoPath = "template",
+                    LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",
+                    LatestPipelineStatus = "Succeeded",
+                    WorkItemUrl = "https://dev.azure.com/fake-org/fake-project/_workitems/edit/12345",
+                    State = "Active",
+                    PlannedReleaseDate = "06/30/2025",
+                    DisplayName = packageName,
+                    Version = version,
+                    PlannedReleases = new List<SDKReleaseInfo>
+                    {
+                        new() {
+                            Version = version,
+                            ReleaseDate = "06/30/2025",
+                            ReleaseType = "GA"
+                        }
+                    },
+                }
+            );
         }
 
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main")

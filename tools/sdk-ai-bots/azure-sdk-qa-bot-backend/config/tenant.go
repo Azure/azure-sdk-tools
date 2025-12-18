@@ -58,8 +58,11 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "common/agentic_search.md",
 	},
 	model.TenantID_AzureSDKQaBot: {
-		PromptTemplate:          "typespec/qa.md",
-		Sources:                 typespecSources,
+		PromptTemplate: "typespec/qa.md",
+		Sources:        append(typespecSources, model.Source_AzureSDKDocsEng),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
+		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
 	},

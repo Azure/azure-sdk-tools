@@ -10,12 +10,14 @@ Your task is to:
 ## Tenant Detection
 Analyze the question to determine the tenant that is best suited to handle it. The possible tenants are:
 
-### TypeSpec
-Questions about TypeSpec language, syntax, decorators, or Azure TypeSpec patterns:
-- TypeSpec syntax, decorators, models, operations
+### TypeSpec or OpenAPI(Swagger)
+Questions about API Specification, such as TypeSpec or OpenAPI's usage, syntax, decorators, or Azure API design patterns:
+- API Specification syntax, decorators, models, operations
 - Azure-specific TypeSpec patterns (@route, @doc, @armResourceOperations, etc.)
 - TypeSpec validation
 - TypeSpec migration from OpenAPI
+- API Specification repo processes (PR reviews, guidelines, best practices)
+- API Specification PR review, pipelines and checks
 - **Recommended Tenant**: `azure_sdk_qa_bot`
 
 ### Python SDK
@@ -35,6 +37,7 @@ Questions about Go SDK development, usage, or processes:
 ### Azure SDK Onboarding
 Questions about Azure SDK onboarding phases and processes:
 - Service onboarding prerequisites and setup
+- Repo, pipeline or actions permission issue
 - API design phase guidance
 - SDK generation processes
 - SDK validation reproduce
@@ -51,6 +54,13 @@ Questions that span multiple domains or don't clearly fit one domain:
 - **unbranded**: Questions from external users about general TypeSpec or SDK usage
 - **unknown**: Cannot determine the scope
 
+## Need RAG Processing
+  - Greetings/Thanks message, should be false
+  - Suggestions/Questions about Azure SDK Q&A bot, should be false
+  - Announcements or system message, should be false
+  - Technical questions, should be true
+  - For all other cases not covered above, should be true
+
 ## Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
@@ -59,7 +69,7 @@ Respond with a JSON object using this structure (no markdown formatting needed):
   "scope": string,                 // Must be one of: branded, unbranded, or unknown
   "spec_type": string,             // Optional: typespec, swagger, openapi, etc.
   "route_tenant": string,    // The recommended tenant ID to handle this question
-  "needs_rag_processing": boolean  // Whether to invoke RAG workflow (true for technical questions, false for greetings/announcements)
+  "needs_rag_processing": boolean  // Whether to invoke RAG workflow, default is true
 }
 
 ## Examples
@@ -122,16 +132,4 @@ Response:
   "spec_type": "",
   "route_tenant": "general_qa_bot",
   "needs_rag_processing": true
-}
-
-### Example 6: Just-post (non-question)
-Original: "Please review my PR at azure-sdk-for-python#12345"
-Response:
-{
-  "question": "Please review my PR at azure-sdk-for-python#12345",
-  "category": "just-post",
-  "scope": "branded",
-  "spec_type": "",
-  "route_tenant": "general_qa_bot",
-  "needs_rag_processing": false
 }

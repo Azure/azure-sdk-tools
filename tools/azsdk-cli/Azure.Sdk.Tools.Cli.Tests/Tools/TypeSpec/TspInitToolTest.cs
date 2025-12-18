@@ -43,6 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec
             {
                 Assert.That(result.IsSuccessful, Is.False);
                 Assert.That(result.ResponseError, Does.Contain("Invalid --template"));
+                Assert.That(result.Language, Is.EqualTo("TypeSpec"));
             });
 
         }

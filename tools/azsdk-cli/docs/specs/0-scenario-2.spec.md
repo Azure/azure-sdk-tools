@@ -119,7 +119,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 
 1. **Environment Setup** → `azsdk_verify_setup`
    - Verify tools and versions (see [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup))
-   - Optionally remediate missing or out-of-date tools with `--fix` option
+   - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
 
 2. **TypeSpec Authoring** → `azsdk_typespec_authoring`
@@ -161,14 +161,14 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 
 The **environment verification requirements** for this stage are unchanged from Scenario 1. Refer to [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup) for the definition of required tools, checks, and success criteria for verification.
 
-Scenario 2 enhances `azsdk_verify_setup` with an **optional fix mode** that **offers to install or upgrade missing or out-of-date tooling when automation is not complex**.
+Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** that **offers to install or upgrade missing or out-of-date tooling when automation is not complex**.
 
 **Tool:** `azsdk_verify_setup`
 
 **Behavior:**
 
 - **Default mode (verify only)**: Detects and reports on tool presence, versions, and compatibility issues without making changes.
-- **Fix mode (`--fix` flag)**: When enabled, offers to remediate detected issues:
+- **Auto-install mode (`--auto-install` flag)**: When enabled, offers to remediate detected issues:
   - For tools that can be installed/updated with **straightforward automation** (for example, language-specific package managers, small command-line utilities):
     - Performs the installation or upgrade using scripted, repeatable steps.
   - For tools that are **too large or complex** to manage automatically (for example, full IDEs, heavy emulators, system-wide SDK bundles):
@@ -178,10 +178,10 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional fix mode** that **of
 **Limitations & Rules:**
 
 - In verify-only mode (default), tool **only detects and reports** issues without attempting any fixes.
-- In fix mode, tool **MUST NOT** silently install or upgrade tools; user confirmation is always required in Agent Mode.
-- For tools in the "too large/complex" category, fix mode **only verifies** presence/version and **outputs links and instructions** instead of attempting installation. The [Agent](#agent) must clearly communicate why the tool cannot be auto-installed (e.g., "Visual Studio is too large and complex for automatic installation").
-- When possible, fix mode attempts to **align versions** to the recommended baseline (for example, minimum and tested versions for TypeSpec, language toolchains, and `azsdk` itself).
-- In CLI/automation contexts (for example, CI pipelines), fix mode runs in a **non-interactive mode** where installation behavior is controlled via flags (for example, `--auto-install`, `--no-install`, `--allow-upgrade`) to avoid blocking prompts.
+- In auto-install mode, tool **MUST NOT** silently install or upgrade tools; user confirmation is always required in Agent Mode.
+- For tools in the "too large/complex" category, auto-install mode **only verifies** presence/version and **outputs links and instructions** instead of attempting installation. The [Agent](#agent) must clearly communicate why the tool cannot be auto-installed (e.g., "Visual Studio is too large and complex for automatic installation").
+- When possible, auto-install mode attempts to **align versions** to the recommended baseline (for example, minimum and tested versions for TypeSpec, language toolchains, and `azsdk` itself).
+- In CLI/automation contexts (for example, CI pipelines), auto-install mode runs in a **non-interactive mode** where installation behavior is controlled via additional flags (for example, `--no-prompt`, `--allow-upgrade`) to avoid blocking prompts.
 
 **Success:**
 
@@ -376,7 +376,7 @@ Scenario 2 is complete when:
 - Workflow runs entirely on the local machine
 - Testing succeeds in all modes (live, live-record, playback) with automatic resource provisioning and cleanup, test recordings are generated or refreshed correctly, and test filtering works as expected
 - **All Scenario 2 tooling enhancements and additions function correctly** as defined in their respective stage details:
-  - `azsdk_verify_setup` detects issues in verify-only mode and remediates them in fix mode (enhanced from Scenario 1)
+  - `azsdk_verify_setup` detects issues in verify-only mode and remediates them in auto-install mode (enhanced from Scenario 1)
   - `azsdk_customized_code_update` applies both TypeSpec and code customizations through unified two-phase workflow (new)
   - `azsdk_package_run_tests` handles all test modes with automatic resource management (new)
 - **Both [Net-New SDKs](#net-new-sdk) and existing SDKs** are fully supported throughout all stages
@@ -399,9 +399,9 @@ I need to create a new Health Deidentification SDK for all languages.
 2. **Agent asks user** which languages to target (or confirms "all five languages").
 3. Execute `azsdk_verify_setup` for selected languages to check prerequisites.
    - **Agent reports** environment check results (installed tools, missing tools, version mismatches)
-   - **Agent prompts user** asking if they want to fix the detected issues
-   - If user confirms, execute `azsdk_verify_setup --fix` to remediate issues
-   - **Agent prompts user** for confirmation before installing or upgrading any tools in fix mode
+   - **Agent prompts user** asking if they want to auto-install the detected issues
+   - If user confirms, execute `azsdk_verify_setup --auto-install` to remediate issues
+   - **Agent prompts user** for confirmation before installing or upgrading any tools in auto-install mode
 4. Invoke `azsdk_package_generate_code` to generate SDK code, along with tests and samples that can be generated from TypeSpec.
    - **Note**: For net-new SDKs, generation automatically bootstraps the complete language library project scaffolding including directory structure, package metadata files, and `README.md`
    - After generation completes, validation is performed (build and playback tests)
@@ -450,9 +450,9 @@ There are new changes in the Health Deidentification API spec. I need to regener
 2. **Agent asks user** which languages to target (or confirms "all five languages").
 3. Execute `azsdk_verify_setup` for selected languages to check prerequisites.
    - **Agent reports** environment check results (installed tools, missing tools, version mismatches)
-   - **Agent prompts user** asking if they want to fix the detected issues
-   - If user confirms, execute `azsdk_verify_setup --fix` to remediate issues
-   - **Agent prompts user** for confirmation before installing or upgrading any tools in fix mode
+   - **Agent prompts user** asking if they want to auto-install the detected issues
+   - If user confirms, execute `azsdk_verify_setup --auto-install` to remediate issues
+   - **Agent prompts user** for confirmation before installing or upgrading any tools in auto-install mode
 4. Invoke `azsdk_package_generate_code` to regenerate SDK code, along with tests and samples that can be generated from TypeSpec.
    - After generation completes, validation is performed (build and playback tests)
    - **Agent reports** generation results and any validation issues
@@ -638,18 +638,18 @@ I need to update the Health Deidentification TypeSpec to establish a parent-chil
 **Command:**
 
 ```bash
-azsdk verify setup --languages "Dotnet,Java,JavaScript,Python,Go" --fix
+azsdk verify setup --languages "Dotnet,Java,JavaScript,Python,Go" --auto-install
 ```
 
 **Options:**
 
 - `--languages <list>`: Space-separated list of languages to verify (default: language of current repository)
-- `--fix`: Enable fix mode to remediate detected issues (default: verify-only mode)
-- `--auto-install`: Automatically install missing dependencies without prompts (for CI/automation, requires `--fix`)
-- `--allow-upgrade`: Allow upgrading out-of-date tools (requires `--fix`)
+- `--auto-install`: Enable auto-install mode to remediate detected issues (default: verify-only mode)
+- `--no-prompt`: Skip confirmation prompts and install automatically (for CI/automation, requires `--auto-install`)
+- `--allow-upgrade`: Allow upgrading out-of-date tools (requires `--auto-install`)
 - `--verbose`: Show detailed output for each operation
 
-**Expected Output (with --fix):**
+**Expected Output (with --auto-install):**
 
 ```text
 Verifying environment for 5 languages...
@@ -678,7 +678,7 @@ Verifying environment for 5 languages...
 ✗ Go not found - Install from: https://go.dev/doc/install
 
 Environment verification complete: 4/5 languages ready
-Use --fix flag to remediate issues automatically.
+Use --auto-install flag to remediate issues automatically.
 ```
 
 ### 2. TypeSpec Authoring

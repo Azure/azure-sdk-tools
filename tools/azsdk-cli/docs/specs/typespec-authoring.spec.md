@@ -425,7 +425,7 @@ Combine llm.txt files for basic context with selective Knowledge Base queries fo
 
 Build a custom agent that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
 
-The agent adopts multiple technique to provide knowledge for user request:
+The agent adopts multiple techniques to provide knowledge for user request:
 - AI Search (Azure KB) as the primary knowledge source, covering most TypeSpec authoring concepts.
 - Built‑in curated knowledge within the custom agent for smaller but important areas, such as customization scenarios and API version‑evolution patterns.
 

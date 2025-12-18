@@ -364,6 +364,17 @@ body .p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon {
     color: var(--base-text-color) !important;
     background: var(--base-bg-color) !important;
     padding: 0.5rem !important;
+    display: flex;
+    align-items: center;
+}
+
+.p-multiselect-panel .p-multiselect-header .p-multiselect-filter-container,
+html body .p-multiselect-panel .p-multiselect-header .p-multiselect-filter-container,
+.p-multiselect-overlay .p-multiselect-header .p-multiselect-filter-container,
+html body .p-multiselect-overlay .p-multiselect-header .p-multiselect-filter-container {
+    flex: 1 1 auto;
+    width: 1%; /* Force flex item to shrink if needed */
+    min-width: 0;
 }
 
 .p-multiselect-panel, html body .p-multiselect-panel,
@@ -373,27 +384,106 @@ body .p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon {
     border: 1px solid var(--border-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item, html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item,
-.p-multiselect-overlay .p-multiselect-items .p-multiselect-item, html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item {
+/* Base Item Style */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option {
     color: var(--base-text-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight, html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight,
-.p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight, html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight {
+/* Highlight */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight {
     color: var(--primary-btn-color) !important;
-    background: var(--link-color) !important;
+    background-color: var(--link-color) !important;
 }
 
+/* Highlight + Focus */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight.p-focus {
+    color: var(--primary-btn-color) !important;
+    background-color: var(--link-active) !important;
+}
+
+/* Hover (Not Highlight, Not Disabled) */
 .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
 html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
 .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
-html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover {
     color: var(--primary-btn-color) !important;
     background: var(--link-active) !important;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus, html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus,
-.p-multiselect-overlay .p-multiselect-items .p-multiselect-item:focus, html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:focus {
+/* Focus (Box Shadow) */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option:focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item:focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option:focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option:focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item:focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option:focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item:focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option:focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item:focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option:focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item:focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus {
     box-shadow: var(--shadow-color-primary);
 }
 
@@ -415,15 +505,7 @@ html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p
     color: var(--base-text-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-close, html body .p-multiselect-panel .p-multiselect-close,
-.p-multiselect-overlay .p-multiselect-close, html body .p-multiselect-overlay .p-multiselect-close {
-    color: var(--base-text-color) !important;
-}
 
-.p-multiselect-panel .p-multiselect-close:hover, html body .p-multiselect-panel .p-multiselect-close:hover,
-.p-multiselect-overlay .p-multiselect-close:hover, html body .p-multiselect-overlay .p-multiselect-close:hover {
-    background: var(--base-bg-color) !important;
-}
 
 .p-multiselect-items-wrapper, .p-dropdown-items-wrapper {
     ul {
@@ -440,11 +522,25 @@ html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p
     border-color: var(--primary-btn-color);
 }
 
+/* Focus (Not Highlight, Not Disabled) - Background Color Fix */
 .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
 html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
 .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
-html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus {
-    background: var(--base-fg-color);
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus {
+    background-color: var(--link-active) !important;
+    color: var(--primary-btn-color) !important;
 }
 
 .p-datatable .p-sortable-column.p-highlight, .p-datatable .p-sortable-column.p-highlight:hover {

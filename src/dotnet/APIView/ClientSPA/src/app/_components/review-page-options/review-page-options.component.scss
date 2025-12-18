@@ -39,10 +39,20 @@
         overflow: hidden;
     }
 
-    .p-dropdown, .p-multiselect {
+    .full-width-input {
+        width: 100%;
         .p-inputtext {
             padding: 0.25rem 0.5rem;
         }
+    }
+
+    .reviewer-avatar {
+        width: 30px;
+    }
+
+    .review-search-input {
+        width: 100%;
+        box-sizing: border-box;
     }
 
     input[data-clarity-region="review-search-input"] {

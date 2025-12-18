@@ -88,9 +88,9 @@
     <app-page-options-section sectionName="Page Utils">
     <ul class="list-group">
         <li class="list-group-item">
-            <p-iconField iconPosition="left" class="w-full">
+            <p-iconField iconPosition="left" styleClass="w-full">
                 <p-inputIcon styleClass="pi pi-search" />
-                <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" style="width: 100%; box-sizing: border-box;" data-clarity-region="review-search-input"/>
+                <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" class="review-search-input" data-clarity-region="review-search-input"/>
             </p-iconField>
             <div *ngIf="codeLineSearchInfo" class="d-flex justify-content-between">
                 <small class="review-search-info">{{ (codeLineSearchInfo.currentMatch?.index ?? 0) + 1 }} of {{ codeLineSearchInfo.totalMatchCount }}</small>
@@ -190,7 +190,8 @@
                 [disabled]="!contentHasDiff"
                 inputId="diff-style-select"
                 optionLabel="label"
-                [style]="{'width':'100%'}" data-clarity-region="diff-view-style-dropdown" />
+                styleClass="full-width-input"
+                data-clarity-region="diff-view-style-dropdown" />
         </li>
     </ul>
     </app-page-options-section>
@@ -204,8 +205,8 @@
                 [(ngModel)]="selectedApprovers"
                 placeholder="Request Reviewers"
                 [showClear]="true"
-                [style]="{'width':'100%'}"
                 (onPanelHide)="handleAssignedReviewersChange()"
+                styleClass="full-width-input"
                 data-clarity-region="reviewers-multiselect">
                     <ng-template pTemplate="selectedItems">
                         <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
@@ -217,8 +218,7 @@
                         <div class="flex align-items-center gap-2">
                             <img
                                 src="https://github.com/{{ approver }}.png?size=30"
-                                class="me-2 rounded"
-                                style="width: 30px" />
+                                class="me-2 rounded reviewer-avatar" />
                             <span>{{ approver }}</span>
                         </div>
                     </ng-template>

@@ -690,7 +690,7 @@ azsdk typespec authoring --request "add a new preview API version 2025-10-01-pre
 
 **Options:**
 
-- `--request <string>`: The TypeSpec-related request or task description (required)
+- `--prompt<string>`: The TypeSpec-related prompt or task description (required)
 - `--additional-information <string>`: Additional context for the request (optional)
 - `--typespec-source-path <path>`: Path to TypeSpec source file or folder (optional, defaults to current directory)
 

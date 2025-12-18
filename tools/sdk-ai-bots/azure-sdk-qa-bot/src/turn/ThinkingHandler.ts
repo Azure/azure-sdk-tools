@@ -83,7 +83,8 @@ export class ThinkingHandler {
     }
 
     // received reply successfully
-    return this.addReferencesToReply(reply);
+    const answerWithReferences = this.addReferencesToReply(reply);
+    return this.addEndingText(answerWithReferences);
   }
 
   private async startCore(context: TurnContext, resourceId: string) {
@@ -156,6 +157,10 @@ export class ThinkingHandler {
       });
     });
     return reply;
+  }
+
+  private addEndingText(answer: string): string {
+    return answer + '\n\n> **NOTE:** If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.';
   }
 
   private async trySendContactCard(context: TurnContext, conversationMessages: ConversationMessage[]) {

@@ -79,7 +79,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 
 - Windows, macOS, or Linux machine with freshly cloned repositories (`azure-rest-api-specs` plus all five language repositories)
 - TypeSpec modifications are **local only**
-- Agent-mode interactions occur in **VS Code, Visual Studio, or IntelliJ with GitHub Copilot** with `azure-rest-api-specs` open
+- Agent-mode interactions occur in **VS Code, Visual Studio, or IntelliJ with GitHub Copilot** with the `azure-rest-api-specs` repo open OR using the **Copilot CLI** at the root of the `azure-rest-api-specs` repo
 - Azure subscription permits on-demand resource provisioning and teardown
 - No need for users to set environment variables to setup the tool
 
@@ -644,9 +644,8 @@ azsdk verify setup --languages "Dotnet,Java,JavaScript,Python,Go" --auto-install
 **Options:**
 
 - `--languages <list>`: Space-separated list of languages to verify (default: language of current repository)
-- `--auto-install`: Enable auto-install mode to remediate detected issues (default: verify-only mode)
+- `--auto-install`: Enable auto-install mode to install missing tools and upgrade out-of-date tools (default: verify-only mode)
 - `--no-prompt`: Skip confirmation prompts and install automatically (for CI/automation, requires `--auto-install`)
-- `--allow-upgrade`: Allow upgrading out-of-date tools (requires `--auto-install`)
 - `--verbose`: Show detailed output for each operation
 
 **Expected Output (with --auto-install):**
@@ -692,7 +691,6 @@ azsdk typespec authoring --request "add a new preview API version 2025-10-01-pre
 **Options:**
 
 - `--prompt<string>`: The TypeSpec-related prompt or task description (required)
-- `--additional-information <string>`: Additional context for the request (optional)
 - `--typespec-source-path <path>`: Path to TypeSpec source file or folder (optional, defaults to current directory)
 
 **Expected Output:**

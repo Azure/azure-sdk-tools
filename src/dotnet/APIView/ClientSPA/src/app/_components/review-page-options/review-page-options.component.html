@@ -105,9 +105,9 @@
             <label class="small mx-1 fw-semibold">Comment:</label>
             <div class="d-grid gap-2">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)" data-clarity-region="review-comment-prev">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" data-clarity-region="review-comment-prev">
                         <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)" data-clarity-region="review-comment-next">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" data-clarity-region="review-comment-next">
                         <i class="bi bi-arrow-down"></i>Next</button>
                 </div>
             </div>
@@ -116,9 +116,9 @@
             <label class="small mx-1 fw-semibold">Diff:</label>
             <div class="d-grid gap-2">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
                         <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                    <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)">
                         <i class="bi bi-arrow-down"></i>Next</button>
                 </div>
             </div>

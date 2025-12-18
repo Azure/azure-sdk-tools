@@ -626,11 +626,11 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
-  handleCommentThreadNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleCommentThreadNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToCommentThread(direction);
   }
 
-  handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleDiffNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToDiffNode(direction);
   }
 

@@ -63,8 +63,8 @@ export class CodePanelComponent implements OnChanges {
 
   destroy$ = new Subject<void>();
 
-  commentThreadNavaigationPointer: number | undefined = undefined;
-  diffNodeNavaigationPointer: number | undefined = undefined;
+  commentThreadNavigationPointer: number | undefined = undefined;
+  diffNodeNavigationPointer: number | undefined = undefined;
 
   menuItemsLineActions: MenuItem[] = [];
 
@@ -759,8 +759,8 @@ export class CodePanelComponent implements OnChanges {
     });
   }
 
-  handleCommentThreadNavaigationEmitter(event: any) {
-    this.commentThreadNavaigationPointer = Number(event.commentThreadNavaigationPointer);
+  handleCommentThreadNavigationEmitter(event: any) {
+    this.commentThreadNavigationPointer = Number(event.commentThreadNavigationPointer);
     this.navigateToCommentThread(event.direction);
   }
 
@@ -773,13 +773,13 @@ export class CodePanelComponent implements OnChanges {
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow: CodePanelRowData | undefined = undefined;
     if (direction == CodeLineRowNavigationDirection.next) {
-      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ?
-        this.commentThreadNavaigationPointer + 1 : firstVisible;
+      const startIndex = (this.commentThreadNavigationPointer && this.commentThreadNavigationPointer >= firstVisible && this.commentThreadNavigationPointer <= lastVisible) ?
+        this.commentThreadNavigationPointer + 1 : firstVisible;
       navigateToRow = this.findNextCommentThread(startIndex);
     }
     else {
-      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ?
-        this.commentThreadNavaigationPointer - 1 : lastVisible;
+      const startIndex = (this.commentThreadNavigationPointer && this.commentThreadNavigationPointer >= firstVisible && this.commentThreadNavigationPointer <= lastVisible) ?
+        this.commentThreadNavigationPointer - 1 : lastVisible;
       navigateToRow = this.findPrevCommentthread(startIndex);
     }
 
@@ -796,13 +796,13 @@ export class CodePanelComponent implements OnChanges {
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow: CodePanelRowData | undefined = undefined;
     if (direction == CodeLineRowNavigationDirection.next) {
-      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ?
-        this.diffNodeNavaigationPointer : firstVisible;
+      const startIndex = (this.diffNodeNavigationPointer && this.diffNodeNavigationPointer >= firstVisible && this.diffNodeNavigationPointer <= lastVisible) ?
+        this.diffNodeNavigationPointer : firstVisible;
       navigateToRow = this.findNextDiffNode(startIndex);
     }
     else {
-      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ?
-        this.diffNodeNavaigationPointer: lastVisible;
+      const startIndex = (this.diffNodeNavigationPointer && this.diffNodeNavigationPointer >= firstVisible && this.diffNodeNavigationPointer <= lastVisible) ?
+        this.diffNodeNavigationPointer: lastVisible;
       navigateToRow = this.findPrevDiffNode(startIndex);
     }
 
@@ -1070,7 +1070,7 @@ export class CodePanelComponent implements OnChanges {
   private findNextCommentThread(index: number): CodePanelRowData | undefined {
     while (index < this.codePanelRowData.length) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-        this.commentThreadNavaigationPointer = index;
+        this.commentThreadNavigationPointer = index;
         return this.codePanelRowData[index];
       }
       index++;
@@ -1081,7 +1081,7 @@ export class CodePanelComponent implements OnChanges {
   private findPrevCommentthread(index: number): CodePanelRowData | undefined {
     while (index < this.codePanelRowData.length && index >= 0) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-        this.commentThreadNavaigationPointer = index;
+        this.commentThreadNavigationPointer = index;
         return this.codePanelRowData[index];
       }
       index--;
@@ -1096,7 +1096,7 @@ export class CodePanelComponent implements OnChanges {
         checkForDiffNode = true;
       }
       if (checkForDiffNode && isDiffRow(this.codePanelRowData[index])) {
-        this.diffNodeNavaigationPointer = index;
+        this.diffNodeNavigationPointer = index;
         return this.codePanelRowData[index];
       }
       index++;
@@ -1111,7 +1111,7 @@ export class CodePanelComponent implements OnChanges {
         checkForDiffNode = true;
       }
       if (checkForDiffNode && isDiffRow(this.codePanelRowData[index])) {
-        this.diffNodeNavaigationPointer = index;
+        this.diffNodeNavigationPointer = index;
         return this.codePanelRowData[index];
       }
       index--;

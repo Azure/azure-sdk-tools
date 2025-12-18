@@ -116,18 +116,24 @@ describe("functionTokenGenerator", () => {
       expect(tokens[0]).toEqual({
         Kind: TokenKind.Keyword,
         Value: "export",
+        HasPrefixSpace: false,
         HasSuffixSpace: true,
         IsDeprecated: false,
       });
       expect(tokens[1]).toEqual({
         Kind: TokenKind.Keyword,
         Value: "function",
+        HasPrefixSpace: false,
         HasSuffixSpace: true,
+        NavigateToId: undefined,
         IsDeprecated: false,
       });
       expect(tokens[2]).toEqual({
         Kind: TokenKind.MemberName,
         Value: "simpleFunction",
+        HasPrefixSpace: false,
+        HasSuffixSpace: false,
+        NavigateToId: undefined,
         IsDeprecated: false,
       });
     });
@@ -147,29 +153,14 @@ describe("functionTokenGenerator", () => {
     });
 
     it("generates correct tokens for a function with parameters", () => {
-      const mockFunction = createMockFunction(
-        "addNumbers",
-        [],
-        [
-          {
-            name: "a",
-            isOptional: false,
-            parameterTypeExcerpt: {
-              text: "number",
-              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
-            },
-          } as unknown as Parameter,
-          {
-            name: "b",
-            isOptional: false,
-            parameterTypeExcerpt: {
-              text: "number",
-              spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
-            },
-          } as unknown as Parameter,
-        ],
-      );
-
+      const mockFunction = createMockFunction("addNumbers", [
+        { kind: ExcerptTokenKind.Content, text: "(a: " },
+        { kind: ExcerptTokenKind.Content, text: "number" },
+        { kind: ExcerptTokenKind.Content, text: ", b: " },
+        { kind: ExcerptTokenKind.Content, text: "number" },
+        { kind: ExcerptTokenKind.Content, text: "): " },
+        { kind: ExcerptTokenKind.Content, text: "number" },
+      ] as ExcerptToken[]);
       // Update return type
       mockFunction.returnTypeExcerpt = {
         text: "number",
@@ -186,7 +177,7 @@ describe("functionTokenGenerator", () => {
       // Check that parameter tokens are included
       const tokenValues = tokens.map((t) => t.Value).join("");
       expect(tokenValues).toContain("a");
-      expect(tokenValues).toContain(": ");
+      expect(tokenValues).toContain(":");
       expect(tokenValues).toContain("number");
       expect(tokenValues).toContain("b");
     });
@@ -298,7 +289,7 @@ describe("functionTokenGenerator", () => {
 
       expect(tokens[0].HasSuffixSpace).toBe(true); // export
       expect(tokens[1].HasSuffixSpace).toBe(true); // function
-      expect(tokens[2].HasSuffixSpace).toBeUndefined(); // function name
+      expect(tokens[2].HasSuffixSpace).toBe(false); // function name
     });
 
     it("preserves function display name exactly", () => {
@@ -431,13 +422,13 @@ describe("functionTokenGenerator", () => {
       expect(tokens[2]).toMatchObject({ Kind: TokenKind.MemberName, Value: "addNumbers" });
       expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
       expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "a" });
-      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
       expect(tokens[6]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
-      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: ", " });
+      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "," });
       expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "b" });
-      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
       expect(tokens[10]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
-      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "): " });
+      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
       expect(tokens[12]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
     });
 
@@ -745,19 +736,19 @@ describe("functionTokenGenerator", () => {
 
       const tokens = functionTokenGenerator.generate(mockFunction, false);
 
-      // Should have: export, function, name, (, input, :, string, ,, count, :, number, ), :, void
+      // Should have: export, function, name, (, input, :, string, ,, count, :, number, ):, void
       expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
       expect(tokens[1]).toMatchObject({ Kind: TokenKind.Keyword, Value: "function" });
       expect(tokens[2]).toMatchObject({ Kind: TokenKind.MemberName, Value: "structuredFunc" });
       expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
       expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "input" });
-      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
       expect(tokens[6]).toMatchObject({ Kind: TokenKind.Text, Value: "string" });
-      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: ", " });
+      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "," });
       expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "count" });
-      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ": " });
+      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
       expect(tokens[10]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
-      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "): " });
+      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
       expect(tokens[12]).toMatchObject({ Kind: TokenKind.Text, Value: "void" });
     });
 
@@ -863,7 +854,7 @@ describe("functionTokenGenerator", () => {
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("T");
-      expect(tokenValues).toContain(" extends ");
+      expect(tokenValues).toContain("extends");
       expect(tokenValues).toContain("string | number");
     });
 

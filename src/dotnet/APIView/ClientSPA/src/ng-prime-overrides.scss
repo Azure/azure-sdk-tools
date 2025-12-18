@@ -1220,3 +1220,40 @@ p-selectbutton {
     border-color: var(--primary-color) !important;
 }
 
+.compact-dropdown-panel {
+    background: var(--base-bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    z-index: 99999 !important;
+
+    .p-select-header {
+        background: var(--base-bg-color) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        color: var(--base-text-color) !important;
+        padding: 0.5rem !important;
+    }
+
+    .p-select-list {
+        padding: 0 !important;
+        .p-select-option {
+            color: var(--base-text-color) !important;
+            background: transparent !important;
+            padding: 0.5rem !important;
+            margin: 0 !important;
+
+            &:hover {
+                background: var(--client-type-bg) !important;
+                color: var(--base-text-color) !important;
+            }
+            &.p-select-option-selected {
+                background: var(--client-type-bg) !important;
+                color: var(--base-text-color) !important;
+            }
+        }
+    }
+
+    .p-select-empty-message {
+            color: var(--base-text-color) !important;
+            background: var(--base-bg-color) !important;
+    }
+}
+

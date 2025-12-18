@@ -15,6 +15,10 @@
         will-change: scroll-position, contents;
         container-type: inline-size;
         background-color: var(--base-fg-color);
+
+        p-messages.sticky-top {
+            z-index: 1 !important;
+        }
     }
 
     .code-line {

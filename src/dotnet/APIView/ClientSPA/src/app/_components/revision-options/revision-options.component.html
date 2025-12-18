@@ -14,6 +14,7 @@
             scrollHeight="400px"
             styleClass="compact-dropdown"
             panelStyleClass="compact-dropdown-panel"
+            appendTo="body"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="d-flex flex-column gap-1">
@@ -68,7 +69,7 @@
         </p-dropdown>
     </span>
 
-    <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-2">
+    <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-2 d-flex align-items-center">
         <label class="small fw-semibold diff-label" for="diff-api-revision-select">Diff :</label>
         <p-dropdown
             [options]="diffApiRevisionsMenu"
@@ -86,6 +87,7 @@
             placeholder="-"
             styleClass="compact-dropdown"
             panelStyleClass="compact-dropdown-panel"
+            appendTo="body"
             scrollHeight="400px">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="d-flex flex-column gap-1">
@@ -152,6 +154,7 @@
             scrollHeight="400px"
             styleClass="compact-dropdown"
             panelStyleClass="compact-dropdown-panel"
+            appendTo="body"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="d-flex gap-1">
@@ -196,6 +199,7 @@
             scrollHeight="400px"
             styleClass="compact-dropdown"
             panelStyleClass="compact-dropdown-panel"
+            appendTo="body"
             class="me-2">
             <ng-template pTemplate="filter" let-options="options">
                 <div class="d-flex gap-1">

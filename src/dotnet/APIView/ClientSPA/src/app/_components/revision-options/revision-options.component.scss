@@ -15,47 +15,73 @@
     }
 
     .compact-dropdown {
-        border: none !important;
-        padding: 0 !important;
-        min-height: 0 !important;
-        align-items: center;
-        line-height: normal;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 4px;
         background: transparent !important;
+        padding: 0 !important;
+        position: relative !important;
+        margin-right: 20px !important;
+        z-index: 1000 !important;
 
-        .p-dropdown-label, .p-select-label {
-            color: var(--base-text-color) !important;
-            background: transparent !important;
+        &:hover {
+            border-color: var(--outer-glow) !important;
         }
 
-        .p-dropdown-trigger {
+        &.p-focus {
+            border-color: var(--primary-btn-color) !important;
+            box-shadow: var(--shadow-color-primary) !important;
+        }
+
+        .p-dropdown-label, .p-select-label, .p-inputtext {
+            order: -1 !important;
+            flex: 1 1 auto !important;
+            width: auto !important;
+            padding: 0 0.5rem !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
             background: transparent !important;
+            border: none !important;
             color: var(--base-text-color) !important;
-            .p-dropdown-trigger-icon {
+        }
+
+        .p-dropdown-trigger, .p-select-toggle {
+            order: 1 !important;
+            position: static !important;
+            width: 1.5rem !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: transparent !important;
+            flex: 0 0 auto !important;
+            color: var(--base-text-color) !important;
+
+            .p-dropdown-trigger-icon, .p-select-toggle-icon {
+                position: static !important;
+                margin: 0 !important;
                 color: var(--base-text-color) !important;
             }
         }
 
-        .p-inputtext, .p-dropdown-label, .p-select-label, span[role="combobox"] {
-            padding: 0 0.5rem !important;
+        .p-dropdown-clear-icon, .p-select-clear-icon {
+            position: absolute !important;
+            right: -20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 1rem !important;
+            height: 1rem !important;
             margin: 0 !important;
-            display: flex;
-            align-items: center;
-            min-height: 0 !important;
-        }
-
-        .p-dropdown-trigger {
-            width: 1.5rem;
-            padding: 0 !important;
-            margin: 0 !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 0 !important;
-        }
-
-        .p-dropdown-clear-icon {
-            right: -1rem;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             color: var(--base-text-color) !important;
+            z-index: 1;
         }
 
         .p-chip .p-chip-text {
@@ -67,42 +93,6 @@
             background-color: var(--base-fg-color);
             border: 1px solid var(--border-color);
             margin: 1px;
-        }
-    }
-
-    .compact-dropdown-panel {
-        background: var(--base-bg-color) !important;
-        border: 1px solid var(--border-color) !important;
-
-        .p-select-header {
-            background: var(--base-bg-color) !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            color: var(--base-text-color) !important;
-            padding: 0.5rem !important;
-        }
-
-        .p-select-list {
-            padding: 0 !important;
-            .p-select-option {
-                color: var(--base-text-color) !important;
-                background: transparent !important;
-                padding: 0.5rem !important;
-                margin: 0 !important;
-
-                &:hover {
-                    background: var(--client-type-bg) !important;
-                    color: var(--base-text-color) !important;
-                }
-                &.p-select-option-selected {
-                    background: var(--client-type-bg) !important;
-                    color: var(--base-text-color) !important;
-                }
-            }
-        }
-
-        .p-select-empty-message {
-             color: var(--base-text-color) !important;
-             background: var(--base-bg-color) !important;
         }
     }
 

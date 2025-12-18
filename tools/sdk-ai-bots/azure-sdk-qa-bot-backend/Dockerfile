@@ -10,10 +10,10 @@ COPY tools/codeowners-utils ./tools/codeowners-utils
 # Restore and build the CLI tool
 WORKDIR /build/tools/azsdk-cli
 RUN dotnet restore Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
-RUN dotnet publish Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -c Release -o /azsdk-cli/publish --self-contained false
+RUN dotnet publish Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -c Release -o /azsdk-cli/publish --self-contained true
 
 # Stage 2: Build the Go backend
-FROM mcr.microsoft.com/devcontainers/go:1.24
+FROM mcr.microsoft.com/devcontainers/go:1.24 as go-builder
 
 WORKDIR /app
 
@@ -27,12 +27,12 @@ RUN go test -v
 RUN CGO_ENABLED=0 go build -o go-backend
 
 # Stage 3: Final runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
 
 WORKDIR /app
 
 # Copy the Go backend binary and all runtime files
-COPY --from=1 /app /app
+COPY --from=go-builder /app /app
 
 # Copy the .NET CLI tool
 COPY --from=dotnet-builder /azsdk-cli/publish /usr/local/bin/azsdk-cli

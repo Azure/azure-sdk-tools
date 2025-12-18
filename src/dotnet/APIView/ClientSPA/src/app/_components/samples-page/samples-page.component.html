@@ -87,7 +87,7 @@
             <div class="tab-pane pt-2" id="md-file">
                 <p-fileUpload
                     chooseLabel="Select Markdown File" [customUpload]="true"
-                    [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0"
+                    [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0"
                     accept=".md" (onSelect)="onSamplesUploadFileSelect($event)" (onRemove)="samplesUploadFile = undefined">
                     <ng-template pTemplate="content">
                         <div *ngIf="!samplesUploadFile" class="mx-2">or drag and drop files here</div>

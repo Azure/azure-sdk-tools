@@ -528,27 +528,37 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus
 /* Compact Dropdown Panel Overrides (for Revision Options) */
 .compact-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
 .compact-dropdown-panel .p-select-option.p-highlight,
-.compact-dropdown-panel .p-select-option.p-select-option-selected {
+.compact-dropdown-panel .p-select-option.p-select-option-selected,
+.severity-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
+.severity-dropdown-panel .p-select-option.p-highlight,
+.severity-dropdown-panel .p-select-option.p-select-option-selected {
     background: transparent !important;
     color: var(--base-text-color) !important;
 }
 
 .compact-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight:hover,
 .compact-dropdown-panel .p-select-option.p-highlight:hover,
-.compact-dropdown-panel .p-select-option.p-select-option-selected:hover {
+.compact-dropdown-panel .p-select-option.p-select-option-selected:hover,
+.severity-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight:hover,
+.severity-dropdown-panel .p-select-option.p-highlight:hover,
+.severity-dropdown-panel .p-select-option.p-select-option-selected:hover {
     background: var(--link-active) !important;
     color: var(--primary-btn-color) !important;
 }
 
 .compact-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:not(:hover),
-.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover) {
+.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover),
+.severity-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:not(:hover),
+.severity-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover) {
     background: transparent !important;
     color: var(--base-text-color) !important;
     box-shadow: none !important;
 }
 
 .compact-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:hover,
-.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover {
+.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover,
+.severity-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:hover,
+.severity-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover {
     background: var(--link-active) !important;
     color: var(--primary-btn-color) !important;
 }

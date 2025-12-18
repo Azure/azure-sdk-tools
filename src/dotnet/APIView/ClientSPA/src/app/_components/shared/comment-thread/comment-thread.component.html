@@ -29,6 +29,7 @@
                         optionValue="value"
                         [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
                         styleClass="severity-dropdown"
+                        panelStyleClass="severity-dropdown-panel"
                         (click)="$event.stopPropagation()">
                     </p-dropdown>
                 </div>
@@ -138,6 +139,7 @@
                     optionLabel="label"
                     optionValue="value"
                     [style]="{'min-width': '120px'}"
+                    panelStyleClass="severity-dropdown-panel"
                     [showClear]="false">
                 </p-dropdown>
             </div>

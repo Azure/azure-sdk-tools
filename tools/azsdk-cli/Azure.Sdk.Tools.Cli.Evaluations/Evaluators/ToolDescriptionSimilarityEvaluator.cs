@@ -50,6 +50,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                 var descriptions = tools.Select(t => t.Description ?? string.Empty).ToList();
                 var embeddings = await GenerateEmbeddingsAsync(descriptions, cancellationToken);
 
+                // Collect all comparisons with their similarity scores
+                var comparisons = new List<(double similarity, string tool1Name, string tool2Name, string desc1, string desc2)>();
+
                 // Compare each tool description with every other tool
                 for (int i = 0; i < tools.Count; i++)
                 {
@@ -68,22 +71,30 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                         }
 
                         var similarity = CalculateCosineSimilarity(embeddings[i], embeddings[j]);
+                        comparisons.Add((similarity, tool1.Name, tool2.Name, desc1, desc2));
+                    }
+                }
 
-                        if (similarity >= SimilarityThreshold)
-                        {
-                            var issue = $"Tools '{tool1.Name}' and '{tool2.Name}' have {similarity:P0} similar descriptions:\n" +
-                                    $"  - {tool1.Name}: {desc1}\n" +
-                                    $"  - {tool2.Name}: {desc2}";
-                            similarityIssues.Add(issue);
-                            
-                            metric.AddDiagnostics(EvaluationDiagnostic.Warning(issue));
-                        }
-                        else
-                        {
-                            metric.AddDiagnostics(
-                                EvaluationDiagnostic.Informational(
-                                    $"Tools '{tool1.Name}' and '{tool2.Name}' have acceptable description difference ({similarity:P0} similar)"));
-                        }
+                // Sort comparisons by similarity (highest to lowest)
+                var sortedComparisons = comparisons.OrderByDescending(c => c.similarity).ToList();
+
+                // Add diagnostics in sorted order
+                foreach (var (similarity, tool1Name, tool2Name, desc1, desc2) in sortedComparisons)
+                {
+                    if (similarity >= SimilarityThreshold)
+                    {
+                        var issue = $"Tools '{tool1Name}' and '{tool2Name}' have {similarity:P0} similar descriptions:\n" +
+                                $"  - {tool1Name}: {desc1}\n" +
+                                $"  - {tool2Name}: {desc2}";
+                        similarityIssues.Add(issue);
+                        
+                        metric.AddDiagnostics(EvaluationDiagnostic.Warning(issue));
+                    }
+                    else
+                    {
+                        metric.AddDiagnostics(
+                            EvaluationDiagnostic.Informational(
+                                $"Tools '{tool1Name}' and '{tool2Name}' have acceptable description difference ({similarity:P0} similar)"));
                     }
                 }
 

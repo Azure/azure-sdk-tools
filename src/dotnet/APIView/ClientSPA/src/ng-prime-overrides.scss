@@ -525,7 +525,66 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus
     color: var(--base-text-color) !important;
 }
 
+/* Compact Dropdown Panel Overrides (for Revision Options) */
+.compact-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
+.compact-dropdown-panel .p-select-option.p-highlight,
+.compact-dropdown-panel .p-select-option.p-select-option-selected {
+    background: transparent !important;
+    color: var(--base-text-color) !important;
+}
 
+.compact-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight:hover,
+.compact-dropdown-panel .p-select-option.p-highlight:hover,
+.compact-dropdown-panel .p-select-option.p-select-option-selected:hover {
+    background: var(--link-active) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.compact-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:not(:hover),
+.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover) {
+    background: transparent !important;
+    color: var(--base-text-color) !important;
+    box-shadow: none !important;
+}
+
+.compact-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:hover,
+.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover {
+    background: var(--link-active) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+/* Emphasis Badge (Global) */
+.emphasis-badge {
+    border-radius: 5px;
+    padding: 0px 5px 2px 5px;
+    margin: 1px;
+    font-size: smaller;
+    font-weight: bold;
+
+    &.info {
+        background-color: var(--alert-info-bg);
+        color: var(--alert-info-color);
+        border: 1px solid var(--alert-info-border-color);
+    }
+
+    &.warn {
+        background-color: var(--alert-warn-bg);
+        color: var(--alert-warn-color);
+        border: 1px solid var(--alert-warn-border-color);
+    }
+
+    &.success {
+        background-color: var(--alert-success-bg);
+        color: var(--alert-success-color);
+        border: 1px solid var(--alert-success-border-color);
+    }
+
+    &.secondary {
+        background-color: var(--alert-secondary-bg);
+        color: var(--alert-secondary-color);
+        border: 1px solid var(--alert-secondary-border-color);
+    }
+}
 
 .p-multiselect-items-wrapper, .p-dropdown-items-wrapper {
     ul {

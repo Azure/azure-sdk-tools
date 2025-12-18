@@ -75,6 +75,12 @@ public class PackageCheckResponse : PackageResponseBase
         CheckStatusDetails = processResult.Output;
     }
 
+    public PackageCheckResponse(string packageName, SdkLanguage language, ProcessResult processResult) : base(packageName, language)
+    {
+        ExitCode = processResult.ExitCode;
+        CheckStatusDetails = processResult.Output;
+    }
+
     protected override string Format()
     {
         StringBuilder output = new();

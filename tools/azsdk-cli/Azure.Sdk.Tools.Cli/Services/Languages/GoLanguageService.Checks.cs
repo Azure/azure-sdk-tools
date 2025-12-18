@@ -45,17 +45,13 @@ public partial class GoLanguageService : LanguageService
         }
     }
 
-    public async Task<PackageCheckResponse> CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
+    public async void CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
     {
-        try
+        var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
+
+        if (result.ExitCode != 0)
         {
-            var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
-            return new PackageCheckResponse(1, "", $"{nameof(CreateEmptyPackage)} failed with an exception: {ex.Message}");
+            throw new Exception($"Failed to create empty Go package: {result.Output}");
         }
     }
 
@@ -135,12 +131,14 @@ public partial class GoLanguageService : LanguageService
                 gofmtWin, ["-w", "."],
                 workingDirectory: packagePath
             ), ct);
-            return new PackageCheckResponse(result);
+
+            var packageName = await GetSDKPackageName(packagePath, ct);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCode));
-            return new PackageCheckResponse(1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -156,13 +154,14 @@ public partial class GoLanguageService : LanguageService
                 Path.Join(repoRoot, "eng", ".golangci.yml")
             ];
 
+            var packageName = await GetSDKPackageName(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, runArgs, golangciLintWin, runArgs, workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCode));
-            return new PackageCheckResponse(1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -170,13 +169,14 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
+            var packageName = await GetSDKPackageName(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(goUnix, ["build"], goWin, ["build"], workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(result);
+            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProject));
-            return new PackageCheckResponse(1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
+            return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
         }
     }
 

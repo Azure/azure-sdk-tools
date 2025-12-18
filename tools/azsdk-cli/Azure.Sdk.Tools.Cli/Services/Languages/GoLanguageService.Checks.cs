@@ -45,7 +45,7 @@ public partial class GoLanguageService : LanguageService
         }
     }
 
-    public async void CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
+    public async Task CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
     {
         var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
 

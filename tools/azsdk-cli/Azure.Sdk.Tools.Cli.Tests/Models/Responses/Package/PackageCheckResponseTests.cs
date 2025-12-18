@@ -28,7 +28,9 @@ public class PackageCheckResponseTests
 
         // purposefully allowing a null
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse("aztemplate", Models.SdkLanguage.Go, null));
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+        ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse("aztemplate", Models.SdkLanguage.Go, (IEnumerable<ProcessResult>)null));
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         Assert.That(ex.ParamName, Is.EqualTo("processResults"));
     }

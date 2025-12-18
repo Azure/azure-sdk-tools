@@ -44,8 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Assert.Ignore("golang tooling dependencies are not installed, can't run GoLanguageSpecificChecksTests");
             }
 
-            var resp = await LangService.CreateEmptyPackage(packagePath, "github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", CancellationToken.None);
-            Assert.That(resp.ExitCode, Is.EqualTo(0));
+            await LangService.CreateEmptyPackage(packagePath, "github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", CancellationToken.None);
 
             // check that our current version of Go is new enough for these tests.
             var version = await GoLanguageService.GetGoModVersionAsync(Path.Join(packagePath, "go.mod"));

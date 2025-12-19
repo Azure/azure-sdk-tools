@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Category(RepositoryCategories.AzureRestApiSpecs)]
         public async Task Evaluate_GetModifiedTypespecProjects()
         {
-            const string prompt = "List the TypeSpec projects modified in my repo. Path to root: C:\\azure-rest-api-specs. Compare against main.";
+            const string prompt = "List the TypeSpec projects modified in my repo. My setup has already been verified, do not run azsdk_verify_setup. Path to root: C:\\azure-rest-api-specs. Compare against main.";
             string[] expectedTools =
             [
                 "azsdk_get_modified_typespec_projects"

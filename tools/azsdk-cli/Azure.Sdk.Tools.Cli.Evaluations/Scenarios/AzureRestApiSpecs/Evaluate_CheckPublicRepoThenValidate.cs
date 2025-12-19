@@ -9,18 +9,22 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
     public partial class Scenario
     {
         [Test]
-        public async Task Evaluate_CreatePullRequest()
+        [Category(RepositoryCategories.AzureRestApiSpecs)]
+        public async Task Evaluate_CheckPublicRepoThenValidate()
         {
             const string prompt =
-                "Open a draft PR in the azure-rest-api-specs repo for the Contoso Widget Manager spec changes. " +
-                "Use repo path C:\\azure-rest-api-specs. Include a clear title and description; mark as draft.";
+                "Confirm the TypeSpec project is in the public repo, then run TypeSpec validation. " +
+                "Project path: C\\:\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager. " +
+                "My setup has already been verified, do not run azsdk_verify_setup.";
+
             string[] expectedTools =
             [
-                "azsdk_create_pull_request"
+                "azsdk_typespec_check_project_in_public_repo",
+                "azsdk_run_typespec_validation"
             ];
 
             var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-            bool checkInputs = false;
+            bool checkInputs = true;
 
             var result = await EvaluationHelper.RunScenarioAsync(
                 scenarioName: this.ScenarioName,

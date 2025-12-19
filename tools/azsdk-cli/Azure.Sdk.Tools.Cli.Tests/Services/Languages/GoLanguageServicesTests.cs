@@ -19,8 +19,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         private GoLanguageService LangService { get; set; } = null!;
 
-        private Mock<IGitHelper> GitHelperMock { get; set; }
-
         private readonly Version goMinimumVersion = Version.Parse("1.24");
 
         [SetUp]
@@ -28,14 +26,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             // we'll end up with <tmp>/golang_checks<random>/sdk/template/aztemplate.
             tempDir = TempDirectory.Create("golang_checks");
+
+            var processHelper = new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>());
+            var pr = await processHelper.Run(new ProcessOptions("git", "git.exe", ["init", "."], workingDirectory: tempDir.DirectoryPath), CancellationToken.None);
+            Assert.That(pr.ExitCode, Is.EqualTo(0));
+
             packagePath = Path.Combine(tempDir.DirectoryPath, "sdk", "template", "aztemplate");
             Directory.CreateDirectory(packagePath);
 
-            GitHelperMock = new Mock<IGitHelper>();
-
             LangService = new GoLanguageService(
-                new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()),
-                GitHelperMock.Object,
+                processHelper,
+                new PowershellHelper(NullLogger<PowershellHelper>.Instance, Mock.Of<IRawOutputHelper>()),
+                new GitHelper(Mock.Of<IGitHubService>(), NullLogger<GitHelper>.Instance),
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
                 Mock.Of<IFileHelper>());
 
@@ -91,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(0));
-                Assert.That(resp.PackageName, Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate"));
+                Assert.That(resp.PackageName, Is.EqualTo("sdk/template/aztemplate"));
                 Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
             });
 
@@ -136,28 +138,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public async Task TestGoLanguageLinting()
         {
             var goRepoRoot = IgnoreTestIfRepoNotConfigured();
+
             var resp = await LangService.LintCode(Path.Join(goRepoRoot, "sdk", "template", "aztemplate"));
 
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(0));
+                Assert.That(resp.PackageName, Is.EqualTo("sdk/template/aztemplate"));
+                Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
             });
-        }
-
-        [Test]
-        public async Task TestGetSDKPackageName()
-        {
-            Assert.That(
-                await GoLanguageService.GetSDKPackageName(packagePath),
-                Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate")
-            );
         }
 
         [Test]
         public async Task TestGetPackageInfo()
         {
             var actualSdkRepo = IgnoreTestIfRepoNotConfigured();
-            var packageInfo = await LangService.GetPackageInfo(Path.Join(actualSdkRepo, "sdk/messaging/azservicebus"));
+            var fullPackagePath = Path.Join(actualSdkRepo, "sdk/messaging/azservicebus");
+            var packageInfo = await LangService.GetPackageInfo(fullPackagePath);
 
             Assert.Multiple(() =>
             {
@@ -250,6 +247,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             File.WriteAllText(goModPath, "there's no version in here!");
 
             Assert.ThrowsAsync(typeof(Exception), async () => await GoLanguageService.GetGoModVersionAsync(goModPath));
+        }
+
+        [Test]
+        public async Task TestGetSubPath()
+        {
+            var subPath = await LangService.GetSubPath(packagePath);
+            Assert.That(subPath, Is.EqualTo("sdk/template/aztemplate"));
         }
 
         /// <summary>

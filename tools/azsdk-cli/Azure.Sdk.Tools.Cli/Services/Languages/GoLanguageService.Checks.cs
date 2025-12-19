@@ -16,8 +16,8 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var compilerExists = (await processHelper.Run(new ProcessOptions(goUnix, ["version"], goWin, ["version"]), ct)).ExitCode == 0;
-            var linterExists = (await processHelper.Run(new ProcessOptions(golangciLintUnix, ["--version"], golangciLintWin, ["--version"]), ct)).ExitCode == 0;
+            var compilerExists = (await processHelper.Run(new ProcessOptions(goUnix, goWin, ["version"]), ct)).ExitCode == 0;
+            var linterExists = (await processHelper.Run(new ProcessOptions(golangciLintUnix, golangciLintWin, ["--version"]), ct)).ExitCode == 0;
 
             var tempFilePath = Path.GetTempFileName();
             bool formatterExists = false;
@@ -25,10 +25,7 @@ public partial class GoLanguageService : LanguageService
             try
             {
                 await File.WriteAllTextAsync(tempFilePath, "package main", ct);
-                var gofmtOptions = new ProcessOptions(
-                    unixCommand: gofmtUnix, unixArgs: [tempFilePath],
-                    windowsCommand: gofmtWin, windowsArgs: [tempFilePath]
-                );
+                var gofmtOptions = new ProcessOptions(gofmtUnix, gofmtWin, [tempFilePath]);
                 formatterExists = (await processHelper.Run(gofmtOptions, ct)).ExitCode == 0;
             }
             finally
@@ -47,7 +44,7 @@ public partial class GoLanguageService : LanguageService
 
     public async Task CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
     {
-        var result = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "init", moduleName], goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
+        var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
 
         if (result.ExitCode != 0)
         {
@@ -64,7 +61,7 @@ public partial class GoLanguageService : LanguageService
 
         try
         {
-            packageName = await GetSDKPackageName(packagePath, ct);
+            packageName = await GetSubPath(packagePath, ct);
         }
         catch (Exception ex)
         {
@@ -95,7 +92,7 @@ public partial class GoLanguageService : LanguageService
                 }
 
                 // Update all dependencies to the latest first
-                var updateResult = await processHelper.Run(new ProcessOptions(goUnix, [.. goGetArgs], goWin, [.. goGetArgs], workingDirectory: goModDir), ct);
+                var updateResult = await processHelper.Run(new ProcessOptions(goUnix, goWin, [.. goGetArgs], workingDirectory: goModDir), ct);
                 results.Add(updateResult);
 
                 if (updateResult.ExitCode != 0)
@@ -104,7 +101,7 @@ public partial class GoLanguageService : LanguageService
                 }
 
                 // Now tidy, to cleanup any deps that aren't needed
-                var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, ["mod", "tidy"], goWin, ["mod", "tidy"], workingDirectory: goModDir), ct);
+                var tidyResult = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["mod", "tidy"], workingDirectory: goModDir), ct);
                 results.Add(tidyResult);
 
                 if (tidyResult.ExitCode != 0)
@@ -126,13 +123,9 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(
-                gofmtUnix, ["-w", "."],
-                gofmtWin, ["-w", "."],
-                workingDirectory: packagePath
-            ), ct);
+            var result = await processHelper.Run(new ProcessOptions(gofmtUnix, gofmtWin, ["-w", "."], workingDirectory: packagePath), ct);
 
-            var packageName = await GetSDKPackageName(packagePath, ct);
+            var packageName = await GetSubPath(packagePath, ct);
             return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
@@ -146,17 +139,32 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
+            var processResults = new List<ProcessResult>();
+
+            // run the standard golangci-lint
             var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+            var packageName = await GetSubPath(packagePath, ct);
+            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, golangciLintWin, ["run", "--config", Path.Join(repoRoot, "eng", ".golangci.yml")], workingDirectory: packagePath), ct);
+            processResults.Add(result);
 
-            string[] runArgs = [
-                "run",
-                "--config",
-                Path.Join(repoRoot, "eng", ".golangci.yml")
-            ];
+            if (result.ExitCode != 0)
+            {
+                return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, processResults);
+            }
 
-            var packageName = await GetSDKPackageName(packagePath, ct);
-            var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, runArgs, golangciLintWin, runArgs, workingDirectory: packagePath), ct);
-            return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
+            // check for copyright headers
+            var powershellOptions = new PowershellOptions(
+                Path.Join(repoRoot, "eng", "scripts", "copyright-header-check.ps1"),
+                ["-Packages", packagePath]
+            );
+
+            result = await powershellHelper.Run(powershellOptions, ct);
+            processResults.Add(result);
+
+            return new PackageCheckResponse(
+                packageName,
+                Models.SdkLanguage.Go,
+                processResults);
         }
         catch (Exception ex)
         {
@@ -169,8 +177,8 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var packageName = await GetSDKPackageName(packagePath, ct);
-            var result = await processHelper.Run(new ProcessOptions(goUnix, ["build"], goWin, ["build"], workingDirectory: packagePath), ct);
+            var packageName = await GetSubPath(packagePath, ct);
+            var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["build"], workingDirectory: packagePath), ct);
             return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
@@ -180,18 +188,22 @@ public partial class GoLanguageService : LanguageService
         }
     }
 
-    public static async Task<string> GetSDKPackageName(string packagePath, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Gets the sub path, for the package, that most SDK scripts expect for -PackageName.
+    /// </summary>
+    /// <param name="packagePath">The full path to the package</param>
+    /// <returns>The sub-path (ex: sdk/messaging/azservicebus)</returns>
+    public Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
     {
-        var text = await File.ReadAllTextAsync(Path.Join(packagePath, "go.mod"), cancellationToken);
+        var gitRepoPath = gitHelper.DiscoverRepoRoot(packagePath);
 
-        var m = GoModModuleLineRegex().Match(text);
+        // ex: sdk/messaging/azservicebus/
+        var relativePath = Path.GetRelativePath(gitRepoPath, packagePath);
 
-        if (!m.Success)
-        {
-            throw new Exception($"Package {packagePath} has an invalid go.mod file - can't parse `module`");
-        }
+        // Ensure forward slashes for Go package names and remove trailing slash
+        var subPathNormalized = relativePath.Replace(Path.DirectorySeparatorChar, '/');
 
-        return m.Groups[1].Value;
+        return Task.FromResult(subPathNormalized.TrimEnd('/'));
     }
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -201,15 +213,15 @@ public partial class GoLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var packageName = await GetSDKPackageName(packagePath, cancellationToken);
-        return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+        var packageSubPath = await this.GetSubPath(packagePath, cancellationToken);
+        return await commonValidationHelpers.ValidateChangelog(packageSubPath, packagePath, fixCheckErrors, cancellationToken);
     }
 
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(goUnix, ["test", "-v", "-timeout", "1h", "./..."], goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
             return new TestRunResponse(result);
         }
         catch (Exception ex)

@@ -31,7 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                         ToolName,
                         new Dictionary<string, object?>
                         {
-                            { "repoRootPath", "C:\\azure-rest-api-specs" }
+                            { "repoRootPath", "C:\\azure-rest-api-specs" },
+                            { "targetBranch", "main" }
                         }
                     )
                 ]

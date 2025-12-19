@@ -285,7 +285,16 @@ export class CodePanelComponent implements OnChanges {
           case CodePanelRowDatatype.CommentThread:
             updatedCodeLinesData.push(this.codePanelRowData[i]);
             if (nodeData?.commentThread && nodeData?.commentThread.hasOwnProperty(this.codePanelRowData[i].rowPositionInGroup)) {
-              updatedCodeLinesData.push(...nodeData?.commentThread[this.codePanelRowData[i].rowPositionInGroup]);
+              const threadData = nodeData.commentThread[this.codePanelRowData[i].rowPositionInGroup] as any;
+              if (Array.isArray(threadData)) {
+                updatedCodeLinesData.push(...threadData);
+              } else if (threadData && typeof threadData === 'object') {
+                if (threadData.type || threadData.comments) {
+                  updatedCodeLinesData.push(threadData);
+                } else {
+                  updatedCodeLinesData.push(...Object.values(threadData) as CodePanelRowData[]);
+                }
+              }
             }
             break;
           case CodePanelRowDatatype.Diagnostics:

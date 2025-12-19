@@ -1,16 +1,15 @@
 :host ::ng-deep {
     a {
         text-decoration: none;
-        color: var(--base-text-color);
+        color: var(--link-color);
     }
 
     a:hover {
         text-decoration: underline;
-        color: var(--link-color);
+        color: var(--link-active);
     }
 
     img {
-        filter: var(--icon-color-filter);
     }
 
     .p-tree {

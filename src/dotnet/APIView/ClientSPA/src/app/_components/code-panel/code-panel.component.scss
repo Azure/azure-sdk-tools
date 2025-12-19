@@ -168,7 +168,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        
+
         .add-comment-btn {
             opacity: 0;
             visibility: hidden;
@@ -228,6 +228,7 @@
         position: sticky;
         left: 0;
         background-color: var(--base-fg-color);
+        color: var(--base-text-color);
         z-index: 1000;
 
         span:not(:last-child) {

@@ -83,16 +83,16 @@ export const generateReport = (context: WorkflowContext) => {
   }
 
   // for .NET SDK in spec PR scenario, override generateFromTypeSpec by the value returned from the .NET automation script
-  if (context.config.sdkName.includes('net') && context.config.runMode === 'spec-pull-request') {
+  if (context.config.sdkName.includes('net') &&
+      context.config.runMode === 'spec-pull-request' &&
+      fs.existsSync(path.join(context.tmpFolder, 'generateOutput.json'))) {
     generateFromTypeSpec = false;
     const generateOutputJson = readTmpJsonFile(context, 'generateOutput.json');
-    if (generateOutputJson === undefined) {
-      message = externalError('Failed to read generateOutput.json. Please check if the generate script is configured correctly.');
-      throw new Error(message);
-    }
-    const generateOutput = getGenerateOutput(generateOutputJson);
-    if (generateOutput?.packages?.[0]?.typespecProject) {
-      generateFromTypeSpec = true;
+    if (generateOutputJson !== undefined) {
+      const generateOutput = getGenerateOutput(generateOutputJson);
+      if (generateOutput?.packages?.[0]?.typespecProject) {
+        generateFromTypeSpec = true;
+      }
     }
   }
  

@@ -21,12 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 "azsdk_create_pull_request"
             ];
 
-            var variants = new Dictionary<string, string>
-            {
-                { "azsdk_get_pull_request_link_for_current_branch", "NotFound" }
-            };
-
-            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools, variants);
+            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
             bool checkInputs = false;
 
             var result = await EvaluationHelper.RunScenarioAsync(

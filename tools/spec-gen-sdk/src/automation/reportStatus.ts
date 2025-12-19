@@ -7,7 +7,7 @@ import { vsoAddAttachment, vsoLogError, vsoLogWarning } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { marked } from "marked";
-import { externalError, toolError, toolWarning } from '../utils/messageUtils';
+import { toolError, toolWarning } from '../utils/messageUtils';
 import { FailureType, WorkflowContext } from '../types/Workflow';
 import { setFailureType } from '../utils/workflowUtils';
 import { commentDetailView, renderHandlebarTemplate } from '../utils/reportStatusUtils';

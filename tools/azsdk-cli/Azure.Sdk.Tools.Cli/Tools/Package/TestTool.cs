@@ -51,15 +51,38 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var languageService = GetLanguageService(packagePath);
                 var testResponse = await languageService.RunAllTests(packagePath, ct);
 
+                await AddPackageDetailsInResponse(testResponse, packagePath, ct);
                 return testResponse;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package tests");
-                return new TestRunResponse(exitCode: 1, testRunOutput: null, error: $"An unexpected error occurred while running package tests: {ex.Message}")
+                var errorResponse = new TestRunResponse(exitCode: 1, testRunOutput: null, error: $"An unexpected error occurred while running package tests: {ex.Message}")
                 {
                     NextSteps = ["Inspect the error message and attempt to resolve it"],
                 };
+                await AddPackageDetailsInResponse(errorResponse, packagePath, ct);
+                return errorResponse;
+            }
+        }
+
+        private async Task AddPackageDetailsInResponse(TestRunResponse response, string packagePath, CancellationToken ct)
+        {
+            try
+            {
+                var languageService = GetLanguageService(packagePath);
+                if (languageService != null)
+                {
+                    var info = await languageService.GetPackageInfo(packagePath, ct);
+                    response.PackageName = info.PackageName;
+                    response.Version = info.PackageVersion;
+                    response.PackageType = info.SdkType;
+                    response.Language = info.Language;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
         }
     }

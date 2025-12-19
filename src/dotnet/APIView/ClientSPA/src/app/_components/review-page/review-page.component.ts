@@ -407,10 +407,6 @@ export class ReviewPageComponent implements OnInit {
       }
     });
     this.changeDetectorRef.detectChanges();
-
-    if (this.userProfile?.preferences.showComments && this.codePanelComponent) {
-        this.codePanelComponent.insertRowTypeIntoScroller(CodePanelRowDatatype.CommentThread);
-    }
   }
 
   loadLatestSampleRevision(reviewId: string) {

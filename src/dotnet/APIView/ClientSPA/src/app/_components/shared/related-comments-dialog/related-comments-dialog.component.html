@@ -7,6 +7,7 @@
   [dismissableMask]="true"
   header="View related issues"
   [style]="{width: '80vw', height: '85vh'}"
+  styleClass="related-comments-dialog"
   [contentStyle]="{'display': 'flex', 'flex-direction': 'column', 'overflow': 'hidden', 'padding': '0', 'height': '100%'}"
   appendTo="body"
   (onHide)="onHide()">
@@ -170,7 +171,7 @@
         </div>
 
         <!-- Feedback Content - Collapsible -->
-        <div *ngIf="feedbackExpanded" class="p-3 bg-light">
+        <div *ngIf="feedbackExpanded" class="p-3 feedback-body">
           <div class="row g-3">
             <!-- Feedback Reasons - Multi-select Dropdown -->
             <div class="col-12">

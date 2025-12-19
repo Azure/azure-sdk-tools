@@ -8,7 +8,7 @@ import { RevisionsListComponent } from 'src/app/_components/revisions-list/revis
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { TableModule } from 'primeng/table';
 import { ChipModule } from 'primeng/chip';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { MenubarModule } from 'primeng/menubar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -28,9 +28,9 @@ import { environment } from 'src/environments/environment';
 import { InputSwitchModule } from 'primeng/inputswitch';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
-  baseUrl: environment.assetsPath 
+  baseUrl: `${environment.assetsPath}/monaco/min/vs`
 };
- 
+
 
 @NgModule({
   declarations: [
@@ -50,7 +50,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     ContextMenuModule,
     TableModule,
     ChipModule,
-    DropdownModule,
+    SelectModule,
     MenubarModule,
     MessagesModule,
     MultiSelectModule,
@@ -74,7 +74,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     ContextMenuModule,
     TableModule,
     ChipModule,
-    DropdownModule,
+    SelectModule,
     MenubarModule,
     MessagesModule,
     MultiSelectModule,

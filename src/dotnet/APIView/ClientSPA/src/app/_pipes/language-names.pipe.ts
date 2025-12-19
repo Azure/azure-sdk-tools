@@ -19,6 +19,8 @@ export class LanguageNamesPipe implements PipeTransform {
             } else {
               return "rust-light";
             }
+          case "typescript":
+            return "typescript-plain";
           default:
             return language.toLocaleLowerCase();
       }

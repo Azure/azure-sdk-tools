@@ -9,7 +9,10 @@
     }
 
     .p-panel {
-        border: none;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 
     .p-panel .p-panel-header .p-panel-title {

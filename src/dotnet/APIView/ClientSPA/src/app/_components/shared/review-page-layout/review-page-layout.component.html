@@ -1,6 +1,6 @@
 <app-nav-bar></app-nav-bar>
 <div #mainContainer class="container-fluid main-container">
-    <app-review-info 
+    <app-review-info
         [review]="review"
         [apiRevisions]="apiRevisions"
         [samplesRevisions]="samplesRevisions"
@@ -12,11 +12,13 @@
         (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
     <div class="mt-1" style="display: flex;">
         <div>
-            <p-menu [model]="sideMenu" class="side-menu">
+            <p-menu [model]="sideMenu" styleClass="side-menu">
                 <ng-template pTemplate="item" let-item>
-                    <a pRipple class="flex align-items-center p-menuitem-link" pTooltip="{{item.tooltip}}" tooltipPosition="right">
-                        <span [class]="item.icon"></span>
-                        <p-badge *ngIf="item.badge" class="ml-auto" [style]="{'font-size': '0.7rem'}" [value]="item.badge" severity="danger" />
+                    <a pRipple class="p-menuitem-link" pTooltip="{{item.tooltip}}" tooltipPosition="right">
+                        <div class="icon-wrapper">
+                            <span [class]="item.icon" class="menu-icon"></span>
+                            <p-badge *ngIf="item.badge" styleClass="menu-badge" [value]="item.badge" severity="danger" />
+                        </div>
                     </a>
                 </ng-template>
             </p-menu>

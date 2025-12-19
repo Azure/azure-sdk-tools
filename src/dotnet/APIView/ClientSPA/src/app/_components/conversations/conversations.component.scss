@@ -48,5 +48,12 @@
 
     .conversation-group-element-id {
         cursor: pointer;
+        color: var(--link-color);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link-active);
+            text-decoration: underline;
+        }
     }
 }

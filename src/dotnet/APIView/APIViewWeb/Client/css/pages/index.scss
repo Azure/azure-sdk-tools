@@ -41,12 +41,6 @@
 
 #reviews-table-search-box {
     border: 1px solid var(--primary-color);
-
-    &:focus {
-        box-shadow: var(--shadow-color-primary) !important;
-        border-color: var(--primary-color) !important;
-        outline: none !important;
-    }
 }
 
 #index-main-container {

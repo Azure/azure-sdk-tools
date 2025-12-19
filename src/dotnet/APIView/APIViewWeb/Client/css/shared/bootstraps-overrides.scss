@@ -153,8 +153,8 @@
 .form-control:focus {
     color: var(--base-text-color);
     background-color: var(--base-fg-color);
-    border-color: var(--primary-color);
-    box-shadow: var(--shadow-color-primary);
+    border-color: var(--border-color);
+    box-shadow: 0 0 0 0.25rem var(--outer-glow);
 }
 
 .form-control:disabled, .form-control[readonly] {

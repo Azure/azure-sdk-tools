@@ -12,11 +12,10 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Category(RepositoryCategories.AzureRestApiSpecs)]
         public async Task Evaluate_GenerateSdk()
         {
-            const string prompt = "Generate my SDK for Dotnet. My tspconfig is at: \"C:\\azure-rest-api-specs\\specification\\healthdataaiservices\\HealthDataAIServices.DeidServices\\tspconfig.yaml\", and the repo: \"C:\\azure-sdk-for-net\"";
+            const string prompt = "Generate my SDK for Dotnet. Proceed and don't ask me questions. My tspconfig is at: \"C:\\azure-rest-api-specs\\specification\\healthdataaiservices\\HealthDataAIServices.DeidServices\\tspconfig.yaml\", and the repo: \"C:\\azure-sdk-for-net\"";
             string[] expectedTools =
             [
-                "azsdk_verify_setup",
-                "azsdk_package_generate_code",
+                "azsdk_verify_setup", "azsdk_package_generate_code",
             ];
 
             // Build scenario data

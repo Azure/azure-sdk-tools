@@ -53,7 +53,7 @@ The framework automatically generates HTML reports in the `reports/` directory a
 
 The evaluation framework runs automatically in CI/CD pipelines when pull requests modify azsdk cli. Changes to `.github/copilot-instructions.md` or any instruction files in `eng/common/instructions/` would also be triggered but in progress. This ensures instruction or mcp changes don't negatively impact agent behavior before merging. The evaluations run alongside other PR validation tests and must pass for the PR to be merged.
 
-**Pipeline**: [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) - Configuration in `eng/common/pipelines/copilot-instruction-evals.yml`
+**Pipeline**: [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) - Configuration in `eng/common/pipelines/ai-evals-tests.yml`
 
 ## Walkthrough: Release Plan Creation Evaluation
 

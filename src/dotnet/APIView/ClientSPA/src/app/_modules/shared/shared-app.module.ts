@@ -28,7 +28,7 @@ import { environment } from 'src/environments/environment';
 import { InputSwitchModule } from 'primeng/inputswitch';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
-  baseUrl: environment.assetsPath
+  baseUrl: `${environment.assetsPath}/monaco/min/vs`
 };
 
 

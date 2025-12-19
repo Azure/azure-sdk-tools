@@ -220,26 +220,33 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
 - API review feedback (comments from API View or PRs)
 - Breaking changes analysis output
 
-**Two-Phase Workflow:**
+**Two-Phase Workflow with Classifier:**
+
+1. **Context Classifier**
+   The classifier uses an LLM to analyze the customization request and determines which phase to move to. There are 4 possible outcomes:
+
+   - _Proceed to Phase A_: Chosen if TypeSpec customizations can address any of the outstanding points in the customization request
+   - _Proceed to Phase B_: Chosen if changes are needed, and none of them can be addressed via TypeSpec customizations
+   - _Failure_: Stall detection. Chosen if changes are needed and either phase has repeated errors
+   - _Success_: Chosen if no changes further changes are needed
 
 1. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
 
    - Analyze the customization request to determine if TypeSpec decorators can address the issues
    - Apply `client.tsp` adjustments (decorators, naming, grouping, scope configurations)
    - Re-run TypeSpec compilation and regenerate SDK code
-   - Validate build and proceed to Phase B only if issues remain
-   - **Note**: The TypeSpec microagent may identify parts of the request that cannot be handled via `client.tsp` changes and forward those to Phase B
+   - Validate build and proceed to classifier
 
-2. **Phase B – [Code Customizations](#code-customizations):**
+1. **Phase B – [Code Customizations](#code-customizations):**
 
-   - If Phase A doesn't resolve all issues, apply language-specific code patches
+   - Apply language-specific code patches
    - Focus on **deterministic patterns**: duplicate field removal, variable reference updates, simple build fixes
    - Use existing ClientCustomizationCodePatchTool for SDK code modifications
    - Apply mechanical transformations: imports, visibility modifiers, reserved keyword renames, type mismatches
    - **Note**: Complex convenience methods and behavioral changes are stretch goals requiring additional validation
    - Validate final build and generate consolidated diff
 
-3. **Summary & Approval:**
+1. **Summary & Approval:**
    - Generate [consolidated diff](#consolidation-diff) of all changes (spec + SDK code)
    - Enforce approval before commit (CLI: interactive prompt, MCP: agent UI)
    - Maximum of 2 fix cycles to prevent infinite loops
@@ -264,47 +271,32 @@ flowchart TD
     Entry --> Classify
 
     subgraph Tool [CustomizeCodeTool]
-        Classify[<b>Classify Request</b><br/>Can TypeSpec changes<br/>address the issues?]
+        Classify[<b>Classify Context</b><br/>]
+        Classify --> |Remaining issues fixable with TSP<br/>AND has <b>not</b> entered Phase B|PhaseA[<b>Phase A: TypeSpec Customizations</b><br/>• AI updates client.tsp<br/>• Track progress<br/>• Increment Phase A counter]
+        Classify --> |Remaining issues <b>not</b> fixable with TSP<br/>OR has entered Phase B| PhaseB[<b>Phase B: Code Customizations</b><br/>• AI generates patches<br/>• Apply patches with ClientCustomizationCodePatchTool<br/>• Increment Phase B counter]
+        Classify --> |Max iterations exceed<br/>OR stalled progress detected| Failure
+        Classify --> |No changes needed| Success
 
-        Classify -->|No| PhaseB
+        PhaseA --> RegenSDK[<b>Regenerate SDK</b><br/>• Re-run TypeSpec compilation<br/>• Regenerate SDK code<br/>]
+        PhaseB -->RegenSDK
 
-        Classify -->|Yes| ApplyTsp[<b>Apply TypeSpec Customizations</b><br/>Keep track of what changes were made and what issues could not be addressed]
+        RegenSDK --> ValidateRegen{Does generation pass?}
+        ValidateRegen --> |No, pass context| Classify
+        ValidateRegen --> |Yes| BuildSDK[<b>Build SDK</b><br/>Compile SDK code<br/>]
 
-        ApplyTsp --> RegenSDK[<b>Regenerate SDK</b><br/>Regenerate SDK with updated TypeSpec]
+        BuildSDK --> |pass context| Classify
 
-        RegenSDK --> RegenValidate{Does generation pass?}
-
-        RegenValidate -->|No, pass context<br/>Max 2 iterations| ApplyTsp
-
-        RegenValidate -->|Yes| BuildSDK[<b>Build SDK</b><br/>Compile SDK code]
-
-        BuildSDK --> ValidateA{Does build pass?}
-
-        ValidateA -->|No, pass context| PhaseB
-
-        ValidateA -->|Yes| RemainingIssues{<b>Remaining Issues?</b><br/>Are there unresolved<br/>items from the request?}
-
-        RemainingIssues -->|Yes, pass context| PhaseB[<b>Code Customization Phase</b><br/>• Receives unresolved items from Phase A<br/>• AI generates patches from diff + current code<br/>• Apply patches using ClientCustomizationCodePatchTool]
-
-        RemainingIssues -->|No| Success[<b>Success</b><br/>• Generate consolidated diff<br/>• Present approval checkpoint<br/>• Apply approved changes]
-
-        PhaseB --> ValidateB[<b>Final Validation</b><br/>• Compile SDK code<br/>• If build fails → retry max 2x]
-
-        ValidateB -->|Build passes| Success
-        ValidateB -->|Max retries exceeded| Failure[<b>Failure</b><br/>• Report unresolved errors<br/>• Provide error context to user]
     end
 
     style Entry fill:#fff9c4
     style Classify fill:#e1f5fe
-    style ApplyTsp fill:#e1f5fe
-    style RegenSDK fill:#e1f5fe
-    style BuildSDK fill:#e1f5fe
-    style ValidateA fill:#e8f5e9
-    style RemainingIssues fill:#e1f5fe
+    style PhaseA fill:#bbdefb
     style PhaseB fill:#f3e5f5
-    style ValidateB fill:#e8f5e9
     style Success fill:#c8e6c9
     style Failure fill:#ffcdd2
+    style RegenSDK fill:#ffe082
+    style RegenSDK fill:#ffe082
+    style BuildSDK fill:#ffe082
     style Tool fill:none,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
@@ -312,9 +304,64 @@ flowchart TD
 
 - **Single Tool Experience**: Users don't need to know whether TypeSpec or code fixes are needed
 - **Spec-First Approach**: Always attempts TypeSpec solutions before falling back to code patches
-- **Backward Compatibility**: Existing tool behavior preserved when TypeSpec fixes are disabled
-- **Unified Approval**: Single consolidated diff covers both TypeSpec and code changes
 - **Intelligent Routing**: Tool determines the appropriate fix phase based on failure analysis
+
+#### Classifier
+
+The classifier is LLM-based and responsible for analyzing the current context and determining which phase to move to next.
+
+For the 1st milestone, the classifier will work fairly simply:
+Using the client customizations reference doc, it will analyze the current context to determine if any of the outstanding issues can be addressed via TypeSpec customizations.
+
+This approach has shown some promise when filenames contain `customization` or `generated` are included in the context, but further testing is needed to validate its effectiveness.
+
+For future milestones, we can explore more advanced techniques that detect whether the impacted code is generated or handwritten, and use that to inform phase selection.
+
+#### Context Tracking
+
+The customization workflow is iterative and may loop multiple times as it applies fixes and encounters new issues. The classifier needs to know what changes have been tried and what issues remain so that it can determine what phase to move onto.
+
+Consider a scenario where a TypeSpec rename breaks existing code customizations (illustrative):
+
+1. User requests: _"Rename getItems to listItems for Python"_
+2. Phase A applies `@@clientName` decorator successfully
+3. SDK regenerates successfully
+4. Build fails: `_patch.py` references the old `getItems` method name
+5. Loop back to start... but with what context?
+
+**Approach: Simple Context Concatenation**
+
+As changes are made in each phase and validation step, we append to the original context to create the context for the tool's next iteration. This gives the classifier the history of changes and any new issues to consider as a result.
+
+_Example context:_
+
+```
+Iteration 1 context:
+  "Rename getItems to listItems for Python"
+
+Iteration 2 context:
+  "Rename getItems to listItems for Python
+
+   --- TypeSpec Changes Applied ---
+   Added @@clientName(getItems, "listItems", "python") to client.tsp
+   SDK regenerated successfully.
+
+   --- Build Result ---
+   Build failed: _patch.py:42 - NameError: 'getItems' is not defined"
+
+Iteration 3 context:
+  [previous context]
+  +
+  "--- Code Changes Applied ---
+   Updated _patch.py to reference 'listItems' instead of 'getItems'
+
+   --- Build Result ---
+   Build succeeded."
+```
+
+_Considerations:_
+
+Context will grow with each iteration and there is a risk of confusing the LLM evaluating the context. We may consider a more structured approach if stall detection or hallucinations/repetition becomes an issue.
 
 #### 3. Git Patch Support
 
@@ -466,6 +513,7 @@ This section provides concrete test scenarios to validate the two-phase customiz
 **Problem:** TypeSpec now generates `operationId`, conflicting with existing `addField("operationId")` in `DocumentIntelligenceCustomizations.java`.
 
 **Error:**
+
 ```
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile
 /azure-ai-documentintelligence/src/main/java/com/azure/ai/documentintelligence/models/AnalyzeOperationDetails.java:[178,20] variable operationId is already defined in class AnalyzeOperationDetails
@@ -473,10 +521,10 @@ This section provides concrete test scenarios to validate the two-phase customiz
 
 **Workflow Execution:**
 
-| Phase | Action | Result |
-|-------|--------|--------|
-| **Phase A: TypeSpec** | Analyze build failure<br/>Determine no TypeSpec changes needed<br/>(property already exists in spec) | No TypeSpec modifications<br/>Forward issue to Phase B |
-| **Phase B: Code Customization** | Detect duplicate field injection<br/>Remove `addField("operationId")` from customization<br/>Rebuild SDK | Build succeeds<br/>Customization simplified |
+| Phase                           | Action                                                                                                   | Result                                                 |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **Phase A: TypeSpec**           | Analyze build failure<br/>Determine no TypeSpec changes needed<br/>(property already exists in spec)     | No TypeSpec modifications<br/>Forward issue to Phase B |
+| **Phase B: Code Customization** | Detect duplicate field injection<br/>Remove `addField("operationId")` from customization<br/>Rebuild SDK | Build succeeds<br/>Customization simplified            |
 
 **Key Learning:** Non-breaking TypeSpec additions can break existing customizations that manually inject the same fields.
 
@@ -492,8 +540,8 @@ This section provides concrete test scenarios to validate the two-phase customiz
 
 **Workflow Execution:**
 
-| Phase | Action | Result |
-|-------|--------|--------|
+| Phase                 | Action                                                                                                                        | Result                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Analyze feedback requirements<br/>Apply `@clientName` with proper scoping for .NET<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates successfully<br/>Build passes<br/>No Phase B needed |
 
 **Key Learning:** API review naming feedback typically resolved with scoped `@clientName` decorators. Tool validates all affected language builds.
@@ -509,6 +557,7 @@ This section provides concrete test scenarios to validate the two-phase customiz
 **Problem:** Customization references non-existent field after TypeSpec rename.
 
 **Error:**
+
 ```
 cannot find symbol: method getField(String)
 Note: Field 'displayName' no longer exists in generated model
@@ -516,10 +565,10 @@ Note: Field 'displayName' no longer exists in generated model
 
 **Workflow Execution:**
 
-| Phase | Action | Result |
-|-------|--------|--------|
-| **Phase A: TypeSpec** | Regenerate SDK with updated TypeSpec<br/>Rename is intentional and correct<br/>No TypeSpec changes needed from SDK developer | SDK regenerated successfully<br/>Generated model now has `name` instead of `displayName`<br/>Build fails due to customization drift |
-| **Phase B: Code Customization** | Detect reference to non-existent field `displayName`<br/>Update customization to reference `name`<br/>Rebuild SDK | Build succeeds<br/>Customization aligned with new property name |
+| Phase                           | Action                                                                                                                       | Result                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase A: TypeSpec**           | Regenerate SDK with updated TypeSpec<br/>Rename is intentional and correct<br/>No TypeSpec changes needed from SDK developer | SDK regenerated successfully<br/>Generated model now has `name` instead of `displayName`<br/>Build fails due to customization drift |
+| **Phase B: Code Customization** | Detect reference to non-existent field `displayName`<br/>Update customization to reference `name`<br/>Rebuild SDK            | Build succeeds<br/>Customization aligned with new property name                                                                     |
 
 **Key Learning:** Non-breaking TypeSpec renames break customizations referencing old names. Both phases needed to align spec and customization code.
 
@@ -533,8 +582,8 @@ Note: Field 'displayName' no longer exists in generated model
 
 **Workflow Execution:**
 
-| Phase | Action | Result |
-|-------|--------|--------|
+| Phase                 | Action                                                                                                          | Result                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Apply `@access` decorator to mark operation as internal for Python<br/>Regenerate Python SDK<br/>Validate build | SDK regenerates successfully<br/>Operation hidden from public API<br/>Build passes<br/>No Phase B needed |
 
 **Key Learning:** `@access` decorator provides language-scoped visibility control without code customizations.
@@ -548,13 +597,14 @@ Note: Field 'displayName' no longer exists in generated model
 **Entry Point:** Build failure (.NET analyzer)
 
 **Errors:**
+
 - `AZC0030`: Model name ends with 'Parameters'
 - `AZC0012`: Type name 'Tasks' too generic
 
 **Workflow Execution:**
 
-| Phase | Action | Result |
-|-------|--------|--------|
+| Phase                 | Action                                                                                                                                            | Result                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Parse analyzer error messages<br/>Apply `@clientName` decorators for .NET<br/>Rename problematic types<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates with new names<br/>Analyzer errors resolved<br/>Build passes<br/>No Phase B needed |
 
 **Key Learning:** .NET analyzer errors resolved with scoped `@clientName` decorators, no code customizations required.
@@ -569,8 +619,8 @@ Note: Field 'displayName' no longer exists in generated model
 
 **Workflow Execution:**
 
-| Phase | Action | Result |
-|-------|--------|--------|
+| Phase                 | Action                                                                                                                                                                                                                                              | Result                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Create `client.tsp` with custom client definitions<br/>Define main client for project operations<br/>Define subclient for document operations<br/>Use `@client` and `@clientInitialization` decorators<br/>Regenerate Python SDK<br/>Validate build | SDK regenerates with two-client architecture<br/>Build passes<br/>No Phase B needed |
 
 **Key Learning:** Complex client architecture achieved with TypeSpec decorators alone, no code customizations required.

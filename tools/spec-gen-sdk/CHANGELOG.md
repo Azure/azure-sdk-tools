@@ -2,7 +2,7 @@
 
 ## 2025-12-19 - 0.9.6
 
-- Fixed an file accessing issue while the generation configuration is not enabled for .NET
+- Fixed a file accessing issue while the generation configuration is not enabled for .NET
 
 ## 2025-12-18 - 0.9.5
 

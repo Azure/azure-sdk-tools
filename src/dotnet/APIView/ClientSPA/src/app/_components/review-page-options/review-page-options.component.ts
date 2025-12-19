@@ -25,9 +25,10 @@ import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteN
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 
 @Component({
-  selector: 'app-review-page-options',
-  templateUrl: './review-page-options.component.html',
-  styleUrls: ['./review-page-options.component.scss']
+    selector: 'app-review-page-options',
+    templateUrl: './review-page-options.component.html',
+    styleUrls: ['./review-page-options.component.scss'],
+    standalone: false
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';

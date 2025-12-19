@@ -2,9 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { CookieService } from 'ngx-cookie-service';
 
 @Component({
-  selector: 'app-page-options-section',
-  templateUrl: './page-options-section.component.html',
-  styleUrls: ['./page-options-section.component.scss']
+    selector: 'app-page-options-section',
+    templateUrl: './page-options-section.component.html',
+    styleUrls: ['./page-options-section.component.scss'],
+    standalone: false
 })
 export class PageOptionsSectionComponent implements OnInit{
   @Input() sectionName : string = '';

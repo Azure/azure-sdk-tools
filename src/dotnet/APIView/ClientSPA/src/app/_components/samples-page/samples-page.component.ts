@@ -22,9 +22,10 @@ import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Component({
-  selector: 'app-samples-page',
-  templateUrl: './samples-page.component.html',
-  styleUrls: ['./samples-page.component.scss']
+    selector: 'app-samples-page',
+    templateUrl: './samples-page.component.html',
+    styleUrls: ['./samples-page.component.scss'],
+    standalone: false
 })
 export class SamplesPageComponent {
   SAMPLES_CONTENT_PLACEHOLDER = "<!--- Enter Markdown Formated Content --->";

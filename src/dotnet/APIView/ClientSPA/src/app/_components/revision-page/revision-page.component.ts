@@ -10,9 +10,10 @@ import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
-  selector: 'app-revision-page',
-  templateUrl: './revision-page.component.html',
-  styleUrls: ['./revision-page.component.scss']
+    selector: 'app-revision-page',
+    templateUrl: './revision-page.component.html',
+    styleUrls: ['./revision-page.component.scss'],
+    standalone: false
 })
 export class RevisionPageComponent {
   reviewId : string | null = null;

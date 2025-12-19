@@ -2,7 +2,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import TurndownService from 'turndown';
 
 @Pipe({
-  name: 'htmlToMarkdown',
+    name: 'htmlToMarkdown',
+    standalone: false
 })
 export class HtmlToMarkdownPipe implements PipeTransform {
   private turndownService: TurndownService;

@@ -6,12 +6,13 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-cross-lang-view',
-  templateUrl: './cross-lang-view.component.html',
-  styleUrls: ['./cross-lang-view.component.scss'],
-  host: {
-    'class': 'cross-language-view-content'
-  },
+    selector: 'app-cross-lang-view',
+    templateUrl: './cross-lang-view.component.html',
+    styleUrls: ['./cross-lang-view.component.scss'],
+    host: {
+        'class': 'cross-language-view-content'
+    },
+    standalone: false
 })
 export class CrossLangViewComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;

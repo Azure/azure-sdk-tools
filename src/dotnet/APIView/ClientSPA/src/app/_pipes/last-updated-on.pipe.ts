@@ -2,7 +2,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { APIRevision } from '../_models/revision';
 
 @Pipe({
-  name: 'lastUpdatedOn'
+    name: 'lastUpdatedOn',
+    standalone: false
 })
 export class LastUpdatedOnPipe implements PipeTransform {
 

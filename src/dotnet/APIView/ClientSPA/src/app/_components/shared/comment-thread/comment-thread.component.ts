@@ -30,12 +30,13 @@ interface AICommentInfo {
   items: AICommentInfoItem[];
 }
 @Component({
-  selector: 'app-comment-thread',
-  templateUrl: './comment-thread.component.html',
-  styleUrls: ['./comment-thread.component.scss'],
-  host: {
-    'class': 'user-comment-content'
-  },
+    selector: 'app-comment-thread',
+    templateUrl: './comment-thread.component.html',
+    styleUrls: ['./comment-thread.component.scss'],
+    host: {
+        'class': 'user-comment-content'
+    },
+    standalone: false
 })
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;

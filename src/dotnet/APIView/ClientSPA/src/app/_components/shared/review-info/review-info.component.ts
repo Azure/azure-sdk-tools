@@ -9,9 +9,10 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-review-info',
-  templateUrl: './review-info.component.html',
-  styleUrls: ['./review-info.component.scss']
+    selector: 'app-review-info',
+    templateUrl: './review-info.component.html',
+    styleUrls: ['./review-info.component.scss'],
+    standalone: false
 })
 export class ReviewInfoComponent {
   @Input() apiRevisions: APIRevision[] = [];

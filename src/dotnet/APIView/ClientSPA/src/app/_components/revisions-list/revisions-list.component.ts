@@ -14,9 +14,10 @@ import { APIRevisionsService } from 'src/app/_services/revisions/revisions.servi
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-revisions-list',
-  templateUrl: './revisions-list.component.html',
-  styleUrls: ['./revisions-list.component.scss']
+    selector: 'app-revisions-list',
+    templateUrl: './revisions-list.component.html',
+    styleUrls: ['./revisions-list.component.scss'],
+    standalone: false
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;

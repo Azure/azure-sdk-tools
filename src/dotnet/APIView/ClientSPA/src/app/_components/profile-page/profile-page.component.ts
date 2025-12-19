@@ -11,9 +11,10 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-profile-page',
-  templateUrl: './profile-page.component.html',
-  styleUrl: './profile-page.component.scss'
+    selector: 'app-profile-page',
+    templateUrl: './profile-page.component.html',
+    styleUrl: './profile-page.component.scss',
+    standalone: false
 })
 export class ProfilePageComponent {
   assetsPath : string = environment.assetsPath;

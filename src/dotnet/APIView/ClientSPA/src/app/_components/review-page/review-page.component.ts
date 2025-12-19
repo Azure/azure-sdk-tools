@@ -30,9 +30,10 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 
 @Component({
-  selector: 'app-review-page',
-  templateUrl: './review-page.component.html',
-  styleUrls: ['./review-page.component.scss']
+    selector: 'app-review-page',
+    templateUrl: './review-page.component.html',
+    styleUrls: ['./review-page.component.scss'],
+    standalone: false
 })
 export class ReviewPageComponent implements OnInit {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;

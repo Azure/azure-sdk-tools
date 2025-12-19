@@ -15,9 +15,10 @@ import { APIRevisionsService } from 'src/app/_services/revisions/revisions.servi
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 
 @Component({
-  selector: 'app-conversation-page',
-  templateUrl: './conversation-page.component.html',
-  styleUrls: ['./conversation-page.component.scss']
+    selector: 'app-conversation-page',
+    templateUrl: './conversation-page.component.html',
+    styleUrls: ['./conversation-page.component.scss'],
+    standalone: false
 })
 export class ConversationPageComponent {
   reviewId : string | null = null;

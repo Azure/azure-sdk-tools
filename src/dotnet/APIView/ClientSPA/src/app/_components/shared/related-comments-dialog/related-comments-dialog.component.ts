@@ -20,9 +20,10 @@ export interface CommentResolutionData {
 }
 
 @Component({
-  selector: 'app-related-comments-dialog',
-  templateUrl: './related-comments-dialog.component.html',
-  styleUrls: ['./related-comments-dialog.component.scss']
+    selector: 'app-related-comments-dialog',
+    templateUrl: './related-comments-dialog.component.html',
+    styleUrls: ['./related-comments-dialog.component.scss'],
+    standalone: false
 })
 export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() relatedComments: CommentItemModel[] = [];

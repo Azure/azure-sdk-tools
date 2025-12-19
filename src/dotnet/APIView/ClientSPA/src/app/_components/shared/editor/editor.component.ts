@@ -2,9 +2,10 @@ import { Component, ElementRef, EventEmitter, Input, Output } from '@angular/cor
 import { SimplemdeOptions } from 'ngx-simplemde';
 
 @Component({
-  selector: 'app-editor',
-  templateUrl: './editor.component.html',
-  styleUrls: ['./editor.component.scss']
+    selector: 'app-editor',
+    templateUrl: './editor.component.html',
+    styleUrls: ['./editor.component.scss'],
+    standalone: false
 })
 export class EditorComponent {
   @Input() content: string = '';

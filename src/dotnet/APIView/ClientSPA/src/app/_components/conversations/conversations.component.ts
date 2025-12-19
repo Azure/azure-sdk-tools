@@ -11,9 +11,10 @@ import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/comm
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
 @Component({
-  selector: 'app-conversations',
-  templateUrl: './conversations.component.html',
-  styleUrls: ['./conversations.component.scss']
+    selector: 'app-conversations',
+    templateUrl: './conversations.component.html',
+    styleUrls: ['./conversations.component.scss'],
+    standalone: false
 })
 export class ConversationsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];

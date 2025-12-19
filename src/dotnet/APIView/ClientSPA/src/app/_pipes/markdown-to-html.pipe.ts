@@ -11,7 +11,8 @@ import rehypeHighlight from 'rehype-highlight';
 const NON_SPECIAL_CHARACTERS = /^[^a-zA-Z0-9]+$/;
 
 @Pipe({
-  name: 'markdownToHtml'
+    name: 'markdownToHtml',
+    standalone: false
 })
 export class MarkdownToHtmlPipe implements PipeTransform {
   transform(markdown: string, addLineActions: boolean = false): Promise<string> {

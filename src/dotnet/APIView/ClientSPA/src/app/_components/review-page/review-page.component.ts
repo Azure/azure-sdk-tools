@@ -377,16 +377,18 @@ export class ReviewPageComponent implements OnInit {
     if (!this.codePanelData || !this.comments) return;
     Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
       if (nodeData.commentThread) {
-        Object.values(nodeData.commentThread).forEach(commentThreadRow => {
-          if (commentThreadRow.comments) {
-            commentThreadRow.comments.forEach(embeddedComment => {
-              const globalComment = this.comments.find(c => c.id === embeddedComment.id);
-              if (globalComment) {
-                embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
-                embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
-              }
-            });
-          }
+        Object.values(nodeData.commentThread).forEach(commentThreads => {
+          commentThreads.forEach(commentThreadRow => {
+            if (commentThreadRow.comments) {
+              commentThreadRow.comments.forEach(embeddedComment => {
+                const globalComment = this.comments.find(c => c.id === embeddedComment.id);
+                if (globalComment) {
+                  embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
+                  embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
+                }
+              });
+            }
+          });
         });
       }
     });

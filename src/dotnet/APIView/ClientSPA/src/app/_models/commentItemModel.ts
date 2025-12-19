@@ -23,6 +23,7 @@ export class CommentItemModel {
     reviewId: string = '';
     apiRevisionId: string = '';
     elementId: string = '';
+    threadId: string = '';
     sectionClass: string = '';
     commentText: string = '';
     crossLanguageId: string = '';
@@ -40,8 +41,8 @@ export class CommentItemModel {
     lastEditedOn: string | null = null;
     isDeleted: boolean = false;
     isInEditMode: boolean = false;
-    hasRelatedComments: boolean = false; 
-    relatedCommentsCount: number = 0; 
+    hasRelatedComments: boolean = false;
+    relatedCommentsCount: number = 0;
     commentSource: CommentSource | null = null;
     guidelineIds: string[] = [];
     memoryIds: string[] = [];
@@ -52,6 +53,7 @@ export class CommentItemModel {
         this.reviewId = '';
         this.apiRevisionId = '';
         this.elementId = '';
+        this.threadId = '';
         this.sectionClass = '';
         this.commentText = '';
         this.crossLanguageId = '';

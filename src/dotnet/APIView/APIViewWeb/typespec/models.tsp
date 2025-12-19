@@ -209,6 +209,9 @@ model ApiViewAgentComment {
 
     /** Target lines for the comment */
     Lines: string[];
+
+    /** Thread ID for the comment */
+    ThreadId?: string;
 }
 
 

@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Category(RepositoryCategories.AzureRestApiSpecs)]
         public async Task Evaluate_GenerateSdk()
         {
-            const string prompt = "Do every step necessary to generate my SDK for Dotnet. Proceed and don't ask me questions. Stop before running tests on the SDK. I'm in a public repo. My tspconfig is at: \"C:\\azure-rest-api-specs\\specification\\healthdataaiservices\\HealthDataAIServices.DeidServices\\tspconfig.yaml\", and the repo: \"C:\\azure-sdk-for-net\"";
+            const string prompt = "Do every step necessary to generate my SDK for Dotnet, up until testing. Proceed and don't ask me questions. Stop before running tests on the SDK. I'm in a public repo. My tspconfig is at: \"C:\\azure-rest-api-specs\\specification\\healthdataaiservices\\HealthDataAIServices.DeidServices\\tspconfig.yaml\", and the repo: \"C:\\azure-sdk-for-net\"";
             string[] expectedTools =
             [
                 "azsdk_verify_setup", "azsdk_run_typespec_validation", "azsdk_package_generate_code","azsdk_package_build_code"

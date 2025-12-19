@@ -48,13 +48,13 @@
                         <div class="mb-1">
                             <label for="scrollBarDropdown" class="form-label fw-semibold">Scrollbar size</label>
                             <div class="card flex justify-content-center">
-                                <p-dropdown
+                                <p-select
                                     (onChange)="onProfileChange($event)"
                                     id="scrollBarDropdown"
                                     [options]="scrollBarSizes"
                                     [(ngModel)]="selectedScrollBarSize"
                                     [style]="{'width':'100%'}">
-                                </p-dropdown>
+                                </p-select>
                             </div>
                         </div>
                     </li>

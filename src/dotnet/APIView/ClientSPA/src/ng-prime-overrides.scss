@@ -192,29 +192,27 @@ p-contextmenusub {
     border: 1px solid var(--border-color) !important;
 }
 
-.p-dropdown .p-dropdown-trigger, html body .p-dropdown .p-dropdown-trigger {
+.p-select .p-select-dropdown, html body .p-select .p-select-dropdown {
     color: var(--base-text-color) !important;
     background: transparent !important;
 }
 
-.p-dropdown, html body .p-dropdown {
+.p-select, html body .p-select {
     background: var(--base-fg-color) !important;
     border: 1px solid var(--border-color) !important;
     transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-.p-dropdown .p-dropdown-label, html body .p-dropdown .p-dropdown-label,
-.p-dropdown .p-select-label, html body .p-dropdown .p-select-label,
-.p-dropdown .p-inputtext, html body .p-dropdown .p-inputtext {
+.p-select .p-select-label, html body .p-select .p-select-label,
+.p-select .p-inputtext, html body .p-select .p-inputtext {
     background: transparent !important;
     color: var(--base-text-color) !important;
 }
 
-.p-dropdown > .p-inputtext {
+.p-select > .p-inputtext {
     border: 0px;
 }
 
-.p-dropdown-panel, body .p-dropdown-panel,
 .p-select-overlay, body .p-select-overlay,
 .p-select-list-container, body .p-select-list-container {
     background: var(--base-fg-color) !important;
@@ -222,39 +220,38 @@ p-contextmenusub {
     border: 1px solid var(--border-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item, body .p-dropdown-panel .p-dropdown-items .p-dropdown-item,
 .p-select-option, body .p-select-option {
     color: var(--base-text-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
-body .p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
-body .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
-.p-select-option.p-select-option-selected, body .p-select-option.p-select-option-selected,
+.p-select-option.p-select-option-selected, body .p-select-option.p-select-option-selected {
+    color: var(--base-text-color) !important;
+    background: transparent !important;
+}
+
 .p-select-option:not(.p-disabled):hover, body .p-select-option:not(.p-disabled):hover,
 .p-select-option.p-focus, body .p-select-option.p-focus {
     color: var(--primary-btn-color) !important;
     background: var(--link-active) !important;
 }
 
-.p-dropdown:not(.p-disabled):hover, html body .p-dropdown:not(.p-disabled):hover {
+.p-select:not(.p-disabled):hover, html body .p-select:not(.p-disabled):hover {
     border-color: var(--outer-glow) !important;
 }
 
-.p-dropdown.p-disabled, html body .p-dropdown.p-disabled {
+.p-select.p-disabled, html body .p-select.p-disabled {
     opacity: 0.6 !important;
     cursor: default !important;
     background: var(--base-fg-color) !important;
     border-color: var(--border-color) !important;
 }
 
-.p-dropdown:not(.p-disabled).p-focus, html body .p-dropdown:not(.p-disabled).p-focus {
+.p-select:not(.p-disabled).p-focus, html body .p-select:not(.p-disabled).p-focus {
     box-shadow: var(--shadow-color-primary) !important;
-    border-color: var(--primary-btn-color) !important;
+    border-color: var(--primary-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-header, body .p-dropdown-panel .p-dropdown-header {
+.p-select-overlay .p-select-header, body .p-select-overlay .p-select-header {
     padding: 0.5rem 0.5rem;
     border-bottom: 1px solid var(--border-color) !important;
     color: var(--base-text-color) !important;
@@ -263,20 +260,17 @@ body .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(
     border-top-left-radius: 4px;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus,
-body .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus {
-    background: var(--base-fg-color) !important;
-}
 
-.p-dropdown-panel .p-dropdown-filter-container .p-inputtext,
-body .p-dropdown-panel .p-dropdown-filter-container .p-inputtext {
+
+.p-select-overlay .p-select-filter-container .p-inputtext,
+body .p-select-overlay .p-select-filter-container .p-inputtext {
     color: var(--base-text-color) !important;
     background: var(--base-fg-color) !important;
     border: 1px solid var(--border-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon,
-body .p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon {
+.p-select-overlay .p-select-filter-container .p-select-filter-icon,
+body .p-select-overlay .p-select-filter-container .p-select-filter-icon {
     color: var(--base-text-color) !important;
 }
 
@@ -285,8 +279,13 @@ body .p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon {
 }
 
 .p-inputtext:enabled:focus {
-    box-shadow: var(--shadow-color-primary);
-    border-color: var(--primary-btn-color);
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.form-control:focus {
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
 }
 
 .p-menubar {
@@ -526,38 +525,30 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus
 }
 
 /* Compact Dropdown Panel Overrides (for Revision Options) */
-.compact-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
 .compact-dropdown-panel .p-select-option.p-highlight,
 .compact-dropdown-panel .p-select-option.p-select-option-selected,
-.severity-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
 .severity-dropdown-panel .p-select-option.p-highlight,
 .severity-dropdown-panel .p-select-option.p-select-option-selected {
     background: transparent !important;
     color: var(--base-text-color) !important;
 }
 
-.compact-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight:hover,
 .compact-dropdown-panel .p-select-option.p-highlight:hover,
 .compact-dropdown-panel .p-select-option.p-select-option-selected:hover,
-.severity-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight:hover,
 .severity-dropdown-panel .p-select-option.p-highlight:hover,
 .severity-dropdown-panel .p-select-option.p-select-option-selected:hover {
     background: var(--link-active) !important;
     color: var(--primary-btn-color) !important;
 }
 
-.compact-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:not(:hover),
 .compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover),
-.severity-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:not(:hover),
 .severity-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover) {
     background: transparent !important;
     color: var(--base-text-color) !important;
     box-shadow: none !important;
 }
 
-.compact-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:hover,
 .compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover,
-.severity-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus:hover,
 .severity-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover {
     background: var(--link-active) !important;
     color: var(--primary-btn-color) !important;
@@ -596,7 +587,7 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus
     }
 }
 
-.p-multiselect-items-wrapper, .p-dropdown-items-wrapper {
+.p-multiselect-items-wrapper, .p-select-list-container {
     ul {
         padding-left: 0rem;
     }
@@ -607,8 +598,8 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus
 }
 
 .p-multiselect:not(.p-disabled).p-focus {
-    box-shadow: var(--shadow-color-primary);
-    border-color: var(--primary-btn-color);
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
 }
 
 /* Focus (Not Highlight, Not Disabled) - Background Color Fix */

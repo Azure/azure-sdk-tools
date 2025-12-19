@@ -18,7 +18,7 @@
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        border: 1px solid var(--border-color) !important;
+        border: 1px solid transparent !important;
         border-radius: 4px;
         background: transparent !important;
         padding: 0 !important;
@@ -31,11 +31,11 @@
         }
 
         &.p-focus {
-            border-color: var(--primary-btn-color) !important;
+            border-color: var(--primary-color) !important;
             box-shadow: var(--shadow-color-primary) !important;
         }
 
-        .p-dropdown-label, .p-select-label, .p-inputtext {
+        .p-select-label, .p-inputtext {
             order: -1 !important;
             flex: 1 1 auto !important;
             width: auto !important;
@@ -48,7 +48,7 @@
             color: var(--base-text-color) !important;
         }
 
-        .p-dropdown-trigger, .p-select-toggle {
+        .p-select-dropdown {
             order: 1 !important;
             position: static !important;
             width: 1.5rem !important;
@@ -62,14 +62,14 @@
             flex: 0 0 auto !important;
             color: var(--base-text-color) !important;
 
-            .p-dropdown-trigger-icon, .p-select-toggle-icon {
+            .p-select-dropdown-icon {
                 position: static !important;
                 margin: 0 !important;
                 color: var(--base-text-color) !important;
             }
         }
 
-        .p-dropdown-clear-icon, .p-select-clear-icon {
+        .p-select-clear-icon {
             position: absolute !important;
             right: -20px !important;
             top: 50% !important;

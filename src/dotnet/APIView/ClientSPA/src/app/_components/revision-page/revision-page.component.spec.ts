@@ -12,7 +12,7 @@ import { MenubarModule } from 'primeng/menubar';
 import { MenuModule } from 'primeng/menu';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { SidebarModule } from 'primeng/sidebar';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { RippleModule } from 'primeng/ripple';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
@@ -39,7 +39,7 @@ describe('RevisionPageComponent', () => {
         MenubarModule,
         MenuModule,
         ContextMenuModule,
-        DropdownModule,
+        SelectModule,
         SidebarModule,
         TooltipModule,
         RippleModule,

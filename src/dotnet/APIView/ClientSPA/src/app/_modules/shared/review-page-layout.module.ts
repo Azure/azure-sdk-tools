@@ -15,7 +15,7 @@ import { TimelineModule } from 'primeng/timeline';
 import { DividerModule } from 'primeng/divider';
 import { DialogModule } from 'primeng/dialog';
 import { CheckboxModule } from 'primeng/checkbox';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
 import { TooltipModule } from 'primeng/tooltip';
 import { RippleModule } from 'primeng/ripple';
 import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
@@ -61,7 +61,7 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     MenuModule,
     TimelineModule,
     DividerModule,
-    OverlayPanelModule,
+    PopoverModule,
     CheckboxModule,
     TooltipModule,
     RippleModule
@@ -75,7 +75,7 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     DividerModule,
     DialogModule,
     CheckboxModule,
-    OverlayPanelModule,
+    PopoverModule,
     TooltipModule,
     RippleModule
   ]

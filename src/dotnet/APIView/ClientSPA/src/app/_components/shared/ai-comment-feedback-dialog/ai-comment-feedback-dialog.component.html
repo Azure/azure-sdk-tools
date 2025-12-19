@@ -7,6 +7,7 @@
   [dismissableMask]="false"
   [header]="dialogTitle"
   [style]="{width: '500px'}"
+  styleClass="ai-feedback-dialog"
   appendTo="body"
   (onHide)="onHide()">
 
@@ -26,10 +27,11 @@
         <p-checkbox
           [value]="reason.key"
           [(ngModel)]="selectedReasons"
+          [inputId]="reason.key"
           [binary]="false"
           styleClass="reason-checkbox">
-          {{ reason.label }}
         </p-checkbox>
+        <label [for]="reason.key" class="ms-2">{{ reason.label }}</label>
       </div>
     </div>
 

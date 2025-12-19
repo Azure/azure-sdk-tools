@@ -181,7 +181,7 @@
 
 
 ::ng-deep .ai-info-overlay {
-    &.p-overlaypanel {
+    &.p-popover {
         border-radius: 8px;
         box-shadow: none;
         z-index: 9999 !important;
@@ -190,7 +190,7 @@
         background-color: var(--base-bg-color) !important;
         border: 1px solid var(--border-color) !important;
 
-        .p-overlaypanel-content { background-color: var(--base-bg-color) !important; padding: 0 !important; }
+        .p-popover-content { background-color: var(--base-bg-color) !important; padding: 0 !important; }
         &:before { border-bottom-color: var(--border-color) !important; }
         &:after { border-bottom-color: var(--base-bg-color) !important; }
     }

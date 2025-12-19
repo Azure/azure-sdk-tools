@@ -144,24 +144,33 @@ p-contextmenusub {
 }
 
 .p-checkbox .p-checkbox-box {
-    border: 2px solid var(--border-color);
-    background: var(--base-fg-color);
-    color: var(--base-text-color);
+    border: 2px solid var(--border-color) !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
 }
 
 .p-checkbox .p-checkbox-box.p-highlight {
-    border-color: var(--primary-color);
-    background: var(--primary-color);
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color) !important;
 }
 
-.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
-    border-color: var(--primary-color);
-    background: var(--primary-color);
-    color: var(--primary-btn-color);
+.p-checkbox:not(.p-checkbox-disabled):hover .p-checkbox-box.p-highlight {
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.p-checkbox:not(.p-checkbox-disabled):hover .p-checkbox-box:not(.p-highlight) {
+    border-color: var(--primary-color) !important;
+}
+
+.p-checkbox .p-checkbox-box.p-focus {
+    box-shadow: 0 0 0 2px var(--base-bg-color), 0 0 0 4px var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
 }
 
 .p-checkbox .p-checkbox-box .p-checkbox-icon {
-    color: var(--primary-btn-color);
+    color: var(--primary-btn-color) !important;
 }
 
 .p-datatable .p-datatable-tbody > tr:focus {
@@ -1252,13 +1261,13 @@ p-selectbutton {
     color: var(--primary-btn-color) !important;
 }
 
-// OverlayPanel
-.p-overlaypanel {
+// Popover
+.p-popover {
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
 }
-.p-overlaypanel:before, .p-overlaypanel:after {
+.p-popover:before, .p-popover:after {
     border-bottom-color: var(--base-fg-color) !important;
 }
 

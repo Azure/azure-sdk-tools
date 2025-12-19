@@ -187,7 +187,7 @@
 </app-related-comments-dialog>
 
 <!-- AI Information Overlay Panel -->
-<p-overlayPanel #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
+<p-popover #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
     <ng-template pTemplate="content">
         <div class="ai-info-content" *ngIf="currentAIInfoStructured">
             <div class="ai-info-body">
@@ -215,7 +215,7 @@
             </div>
         </div>
     </ng-template>
-</p-overlayPanel>
+</p-popover>
 
 <!-- AI Comment Feedback Dialog (for downvotes) -->
 <app-ai-comment-feedback-dialog *ngIf="showAIFeedbackDialog"

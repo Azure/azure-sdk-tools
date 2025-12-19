@@ -1,7 +1,7 @@
 p-contextmenusub {
     ul {
         padding-left: 0rem;
-    }  
+    }
 }
 
 .p-breadcrumb {
@@ -40,10 +40,10 @@ p-contextmenusub {
     border-color: var(--border-color);
 }
 
-.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead, 
-.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot, 
-.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-scroller-viewport > .p-scroller > 
-.p-datatable-table > .p-datatable-thead, .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > 
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-scroller-viewport > .p-scroller >
+.p-datatable-table > .p-datatable-thead, .p-datatable.p-datatable-scrollable > .p-datatable-wrapper >
 .p-scroller-viewport > .p-scroller > .p-datatable-table > .p-datatable-tfoot {
     background-color: var(--base-fg-color);
 }
@@ -144,24 +144,33 @@ p-contextmenusub {
 }
 
 .p-checkbox .p-checkbox-box {
-    border: 2px solid var(--border-color);
-    background: var(--base-fg-color);
-    color: var(--base-text-color);
+    border: 2px solid var(--border-color) !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
 }
 
 .p-checkbox .p-checkbox-box.p-highlight {
-    border-color: var(--primary-color);
-    background: var(--primary-color);
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color) !important;
 }
 
-.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
-    border-color: var(--primary-color);
-    background: var(--primary-color);
-    color: var(--primary-btn-color);
+.p-checkbox:not(.p-checkbox-disabled):hover .p-checkbox-box.p-highlight {
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.p-checkbox:not(.p-checkbox-disabled):hover .p-checkbox-box:not(.p-highlight) {
+    border-color: var(--primary-color) !important;
+}
+
+.p-checkbox .p-checkbox-box.p-focus {
+    box-shadow: 0 0 0 2px var(--base-bg-color), 0 0 0 4px var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
 }
 
 .p-checkbox .p-checkbox-box .p-checkbox-icon {
-    color: var(--primary-btn-color);
+    color: var(--primary-btn-color) !important;
 }
 
 .p-datatable .p-datatable-tbody > tr:focus {
@@ -187,62 +196,91 @@ p-contextmenusub {
 }
 
 .p-inputtext {
-    color: var(--base-text-color);
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
+    color: var(--base-text-color) !important;
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-.p-dropdown .p-dropdown-trigger {
-    color: var(--base-text-color);
-    background: var(--base-fg-color);
+.p-select .p-select-dropdown, html body .p-select .p-select-dropdown {
+    color: var(--base-text-color) !important;
+    background: transparent !important;
 }
 
-.p-dropdown {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
+.p-select, html body .p-select {
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
     transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-.p-dropdown > .p-inputtext {
+.p-select .p-select-label, html body .p-select .p-select-label,
+.p-select .p-inputtext, html body .p-select .p-inputtext {
+    background: transparent !important;
+    color: var(--base-text-color) !important;
+}
+
+.p-select > .p-inputtext {
     border: 0px;
 }
 
-.p-dropdown-panel {
-    background: var(--base-fg-color);
-    color: var(--base-text-color);
-    border: 1px solid var(--border-color);
+.p-select-overlay, body .p-select-overlay,
+.p-select-list-container, body .p-select-list-container {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
-    color: var(--base-text-color);
+.p-select-option, body .p-select-option {
+    color: var(--base-text-color) !important;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
-    color: var(--base-text-color);
-    background: var(--base-bg-color);
+.p-select-option.p-select-option-selected, body .p-select-option.p-select-option-selected {
+    color: var(--base-text-color) !important;
+    background: transparent !important;
 }
 
-.p-dropdown:not(.p-disabled):hover {
-    border-color: var(--outer-glow);
+.p-select-option:not(.p-disabled):hover, body .p-select-option:not(.p-disabled):hover,
+.p-select-option.p-focus, body .p-select-option.p-focus {
+    color: var(--primary-btn-color) !important;
+    background: var(--link-active) !important;
 }
 
-.p-dropdown:not(.p-disabled).p-focus {
-    box-shadow: var(--shadow-color-primary);
-    border-color: var(--primary-btn-color);
+.p-select:not(.p-disabled):hover, html body .p-select:not(.p-disabled):hover {
+    border-color: var(--outer-glow) !important;
 }
 
-.p-dropdown-panel .p-dropdown-header {
+.p-select.p-disabled, html body .p-select.p-disabled {
+    opacity: 0.6 !important;
+    cursor: default !important;
+    background: var(--base-fg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.p-select:not(.p-disabled).p-focus, html body .p-select:not(.p-disabled).p-focus {
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.p-select-overlay .p-select-header, body .p-select-overlay .p-select-header {
     padding: 0.5rem 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--base-text-color);
-    background: var(--base-fg-color);
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
+    background: var(--base-fg-color) !important;
     border-top-right-radius: 4px;
     border-top-left-radius: 4px;
 }
 
-.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus {
-    background: var(--base-fg-color);
+
+
+.p-select-overlay .p-select-filter-container .p-inputtext,
+body .p-select-overlay .p-select-filter-container .p-inputtext {
+    color: var(--base-text-color) !important;
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.p-select-overlay .p-select-filter-container .p-select-filter-icon,
+body .p-select-overlay .p-select-filter-container .p-select-filter-icon {
+    color: var(--base-text-color) !important;
 }
 
 .p-inputtext:enabled:hover {
@@ -250,8 +288,13 @@ p-contextmenusub {
 }
 
 .p-inputtext:enabled:focus {
-    box-shadow: var(--shadow-color-primary);
-    border-color: var(--primary-btn-color);
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.form-control:focus {
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
 }
 
 .p-menubar {
@@ -292,87 +335,277 @@ p-contextmenusub {
     }
 }
 
-.p-menu .p-menuitem > .p-menuitem-content {
-    color: var(--base-text-color);
-    background: var(--base-fg-color);
+.p-menu .p-menu-item {
+    background: var(--base-fg-color) !important;
+    transition: none !important;
 
-    a {
-        padding: 0.35rem 1rem;
-        text-decoration: none;
-        color: var(--link-color);
+    .p-menuitem-link {
+        padding: 0.25rem 1rem !important;
+        text-decoration: none !important;
+        color: var(--base-text-color) !important;
+        display: flex !important;
+        align-items: center !important;
+        background: var(--base-fg-color) !important;
+        transition: none !important;
+
+        .p-menuitem-text, .p-menuitem-icon {
+            color: var(--base-text-color) !important;
+        }
+
+        &:focus {
+            box-shadow: none !important;
+            background: var(--base-fg-color) !important;
+        }
+    }
+
+    &:not(.p-highlight):not(.p-disabled):hover {
+        background: var(--base-bg-color) !important;
+        .p-menuitem-link {
+            background: var(--base-bg-color) !important;
+        }
     }
 }
 
-.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
-    color: var(--base-text-color);
-    padding: 0.2rem 0.25rem;
-
-    .p-menuitem-text, .p-menuitem-icon {
-        text-decoration: none;
-        color: var(--base-text-color);
-    }
+.p-menu .p-ink {
+    display: none !important;
 }
 
-.p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {
-    color: var(--base-text-color);
-    background: var(--base-bg-color);
-}
-
-.p-menu .p-menuitem-separator {
+.p-menu .p-menu-separator {
     border-top: 1px solid var(--border-color);
 }
 
-.p-menu .p-submenu-header {
+.p-menu .p-menu-submenu-label {
     color: var(--base-text-color);
     background: var(--base-fg-color);
-    padding: 0.35rem 1rem
+    padding: 0.35rem 1rem;
 }
 
-.p-multiselect {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
+.p-multiselect, html body .p-multiselect {
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-.p-multiselect .p-multiselect-trigger {
-    color: var(--base-text-color);
+.p-multiselect .p-multiselect-label-container, html body .p-multiselect .p-multiselect-label-container {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-header {
-    border-bottom: 1px solid var(--border-color);
-    color: var(--base-text-color);
-    background: var(--base-bg-color);
+.p-multiselect .p-multiselect-trigger, html body .p-multiselect .p-multiselect-trigger {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
 }
 
-.p-multiselect-panel {
-    background: var(--base-fg-color);
-    color: var(--base-text-color);
-    border: 1px solid var(--border-color);
+.p-multiselect-panel .p-multiselect-header, html body .p-multiselect-panel .p-multiselect-header,
+.p-multiselect-overlay .p-multiselect-header, html body .p-multiselect-overlay .p-multiselect-header {
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
+    background: var(--base-bg-color) !important;
+    padding: 0.5rem !important;
+    display: flex;
+    align-items: center;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item {
-    color: var(--base-text-color);
+.p-multiselect-panel .p-multiselect-header .p-multiselect-filter-container,
+html body .p-multiselect-panel .p-multiselect-header .p-multiselect-filter-container,
+.p-multiselect-overlay .p-multiselect-header .p-multiselect-filter-container,
+html body .p-multiselect-overlay .p-multiselect-header .p-multiselect-filter-container {
+    flex: 1 1 auto;
+    width: 1%; /* Force flex item to shrink if needed */
+    min-width: 0;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight {
-    color: var(--primary-btn-color);
-    background: var(--link-color);
+.p-multiselect-panel, html body .p-multiselect-panel,
+.p-multiselect-overlay, html body .p-multiselect-overlay {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
-    color: var(--primary-btn-color);
-    background: var(--link-active);
+/* Base Item Style */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option {
+    color: var(--base-text-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus {
+/* Highlight */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight {
+    color: var(--primary-btn-color) !important;
+    background-color: var(--link-color) !important;
+}
+
+/* Highlight + Focus */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item.p-highlight.p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option.p-highlight.p-focus {
+    color: var(--primary-btn-color) !important;
+    background-color: var(--link-active) !important;
+}
+
+/* Hover (Not Highlight, Not Disabled) */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled):hover {
+    color: var(--primary-btn-color) !important;
+    background: var(--link-active) !important;
+}
+
+/* Focus (Box Shadow) */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option:focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item:focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option:focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option:focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item:focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option:focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item:focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option:focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item:focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option:focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item:focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus {
     box-shadow: var(--shadow-color-primary);
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item-group {
-    color: var(--base-text-color);
-    background: var(--base-bg-color);
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item-group, html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item-group,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item-group, html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item-group {
+    color: var(--base-text-color) !important;
+    background: var(--base-bg-color) !important;
 }
 
-.p-multiselect-items-wrapper, .p-dropdown-items-wrapper {
+.p-multiselect-panel .p-multiselect-filter-container .p-inputtext, html body .p-multiselect-panel .p-multiselect-filter-container .p-inputtext,
+.p-multiselect-overlay .p-multiselect-filter-container .p-inputtext, html body .p-multiselect-overlay .p-multiselect-filter-container .p-inputtext {
+    color: var(--base-text-color) !important;
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.p-multiselect-panel .p-multiselect-filter-container .p-multiselect-filter-icon, html body .p-multiselect-panel .p-multiselect-filter-container .p-multiselect-filter-icon,
+.p-multiselect-overlay .p-multiselect-filter-container .p-multiselect-filter-icon, html body .p-multiselect-overlay .p-multiselect-filter-container .p-multiselect-filter-icon {
+    color: var(--base-text-color) !important;
+}
+
+/* Compact Dropdown Panel Overrides (for Revision Options) */
+.compact-dropdown-panel .p-select-option.p-highlight,
+.compact-dropdown-panel .p-select-option.p-select-option-selected,
+.severity-dropdown-panel .p-select-option.p-highlight,
+.severity-dropdown-panel .p-select-option.p-select-option-selected {
+    background: transparent !important;
+    color: var(--base-text-color) !important;
+}
+
+.compact-dropdown-panel .p-select-option.p-highlight:hover,
+.compact-dropdown-panel .p-select-option.p-select-option-selected:hover,
+.severity-dropdown-panel .p-select-option.p-highlight:hover,
+.severity-dropdown-panel .p-select-option.p-select-option-selected:hover {
+    background: var(--link-active) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover),
+.severity-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:not(:hover) {
+    background: transparent !important;
+    color: var(--base-text-color) !important;
+    box-shadow: none !important;
+}
+
+.compact-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover,
+.severity-dropdown-panel .p-select-option:not(.p-select-option-selected):not(.p-disabled).p-focus:hover {
+    background: var(--link-active) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+/* Emphasis Badge (Global) */
+.emphasis-badge {
+    border-radius: 5px;
+    padding: 0px 5px 2px 5px;
+    margin: 1px;
+    font-size: smaller;
+    font-weight: bold;
+
+    &.info {
+        background-color: var(--alert-info-bg);
+        color: var(--alert-info-color);
+        border: 1px solid var(--alert-info-border-color);
+    }
+
+    &.warn {
+        background-color: var(--alert-warn-bg);
+        color: var(--alert-warn-color);
+        border: 1px solid var(--alert-warn-border-color);
+    }
+
+    &.success {
+        background-color: var(--alert-success-bg);
+        color: var(--alert-success-color);
+        border: 1px solid var(--alert-success-border-color);
+    }
+
+    &.secondary {
+        background-color: var(--alert-secondary-bg);
+        color: var(--alert-secondary-color);
+        border: 1px solid var(--alert-secondary-border-color);
+    }
+}
+
+.p-multiselect-items-wrapper, .p-select-list-container {
     ul {
         padding-left: 0rem;
     }
@@ -383,12 +616,29 @@ p-contextmenusub {
 }
 
 .p-multiselect:not(.p-disabled).p-focus {
-    box-shadow: var(--shadow-color-primary);
-    border-color: var(--primary-btn-color);
+    box-shadow: var(--shadow-color-primary) !important;
+    border-color: var(--primary-color) !important;
 }
 
-.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus {
-    background: var(--base-fg-color);
+/* Focus (Not Highlight, Not Disabled) - Background Color Fix */
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-panel .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+.p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-items .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus,
+html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.p-highlight):not(.p-disabled).p-focus {
+    background-color: var(--link-active) !important;
+    color: var(--primary-btn-color) !important;
 }
 
 .p-datatable .p-sortable-column.p-highlight, .p-datatable .p-sortable-column.p-highlight:hover {
@@ -426,8 +676,8 @@ p-contextmenusub {
 }
 
 .p-splitter {
-    border: 0px;
-    background: var(--base-fg-color);
+    border: none !important;
+    background: transparent !important;
     border-radius: 5px;
     color: var(--base-text-color);
 }
@@ -453,20 +703,32 @@ p-contextmenusub {
     color: var(--base-text-color);
 }
 
-.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler {
-    color: var(--base-text-color);
+.p-tree .p-tree-node-toggle-button {
+    color: var(--base-text-color) !important;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 0.2rem;
+    border-radius: 50%;
+    background: transparent !important;
+    transition: none !important;
 }
 
-.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler:enabled:hover {
-    color: var(--base-text-color);
+.p-tree .p-tree-node-toggle-button:hover {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: var(--base-text-color) !important;
 }
 
-.p-tree .p-tree-container .p-treenode .p-treenode-content:focus {
-    box-shadow: inset var(--shadow-color-primary);
+.p-tree .p-tree-node-toggle-button .p-tree-node-toggle-icon {
+    color: var(--base-text-color) !important;
 }
 
-.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler:focus {
-    box-shadow: var(--shadow-color-primary);
+.p-tree .p-tree-node-toggle-button:focus {
+    box-shadow: none !important;
+}
+
+.p-tree .p-tree-node-toggle-button .p-ink {
+    display: none !important;
 }
 
 .p-toolbar {
@@ -475,18 +737,36 @@ p-contextmenusub {
     padding: 0.4rem 0.4rem;
 }
 
-.p-fileupload .p-fileupload-buttonbar {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
-    color: var(--base-text-color);
+.p-fileupload,
+.p-fileupload .p-fileupload-buttonbar,
+.p-fileupload .p-fileupload-header {
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
+}
+
+.p-fileupload .p-fileupload-buttonbar,
+.p-fileupload .p-fileupload-header {
     padding: 0.75rem 0.75rem;
 }
 
 .p-fileupload .p-fileupload-content {
-    background: var(--base-fg-color);
-    border: 1px solid var(--border-color);
-    color: var(--base-text-color);
+    background: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
     padding: 0.5rem 0.25rem;
+}
+
+.p-fileupload .p-button {
+    background: var(--link-color) !important;
+    border: 1px solid var(--link-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.list-group-item {
+    background-color: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border-color: var(--border-color) !important;
 }
 
 .p-button {
@@ -537,33 +817,38 @@ p-contextmenusub {
     border-bottom: 1px solid var(--border-color);
 }
 
-.p-inputswitch {
-    width: 2.5rem;
-    height: 1.5rem;
+p-inputswitch, .p-inputswitch, .p-toggleswitch {
+    width: 40px !important;
+    height: 24px !important;
 }
 
-.p-inputswitch .p-inputswitch-slider {
+.p-inputswitch .p-inputswitch-slider, .p-toggleswitch .p-toggleswitch-slider {
     border-radius: 30px;
-}
-
-.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider {
-    background: var(--link-active);
-}
-
-.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before {
-    transform: translateX(1rem);
-}
-
-.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
-    background: var(--link-color);
-}
-
-.p-inputswitch .p-inputswitch-slider {
     background: var(--base-bg-color);
-    border: 1px solid var(--border-color)  ;
+    border: 1px solid var(--border-color);
 }
 
-.p-inputswitch .p-inputswitch-slider:before {
+.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
+.p-toggleswitch.p-toggleswitch-checked:not(.p-disabled):hover .p-toggleswitch-slider {
+    background: var(--link-active) !important;
+    border-color: var(--link-active) !important;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before,
+.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider:before {
+    transform: none !important;
+    left: calc(100% - 1.25rem) !important;
+    background: var(--primary-btn-color) !important;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider,
+.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.p-inputswitch .p-inputswitch-slider:before,
+.p-toggleswitch .p-toggleswitch-slider:before {
     background: var(--border-color);
     width: 1rem;
     height: 1rem;
@@ -573,7 +858,7 @@ p-contextmenusub {
     transition-duration: 0.2s;
 }
 
-.p-message .p-message-wrapper {
+.p-message .p-message-content {
     padding: 0.2rem 0.25rem;
 }
 .p-message {
@@ -736,3 +1021,354 @@ p-inputswitch .p-hidden-accessible {
     clip: auto !important;
     margin: 0 !important;
 }
+
+.conversation-sidebar {
+    width: 75vw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+
+    .p-sidebar-header, .p-drawer-header {
+        a {
+            color: var(--link-color) !important;
+            text-decoration: none !important;
+
+            &:hover {
+                color: var(--link-active) !important;
+                text-decoration: underline !important;
+            }
+        }
+    }
+}
+
+.revisions-sidebar {
+    width: 75dvw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+
+    .p-sidebar-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0 !important;
+    }
+}
+
+.cross-language-revisions-sidebar {
+    width: 45dvw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.notifications-sidebar {
+    width: 350px !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.apiview-toggle-button-group {
+    width: 100% !important;
+    margin-top: 2px;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+
+    // PrimeNG 18 Design Tokens
+    --p-selectbutton-border-radius: 4px;
+
+    // ToggleButton tokens
+    --p-togglebutton-background: transparent;
+    --p-togglebutton-color: var(--link-color);
+    --p-togglebutton-border-color: var(--link-color);
+    --p-togglebutton-padding: 0.25rem 0.5rem;
+
+    --p-togglebutton-checked-background: var(--link-color);
+    --p-togglebutton-checked-color: var(--primary-btn-color);
+    --p-togglebutton-checked-border-color: var(--link-color);
+
+    --p-togglebutton-hover-background: var(--client-type-bg);
+    --p-togglebutton-hover-color: var(--link-color);
+    --p-togglebutton-hover-border-color: var(--link-color);
+
+    .p-button {
+        flex: 1 1 0 !important;
+        width: auto !important;
+        min-width: 0 !important;
+        justify-content: center;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none !important;
+        font-weight: 400 !important;
+
+        // Reset some styles that might be coming from p-button global override
+        background: var(--p-togglebutton-background);
+        color: var(--p-togglebutton-color);
+        border: 1px solid var(--p-togglebutton-border-color);
+
+        &:not(:last-child) {
+            border-right: none;
+        }
+
+        &:first-child {
+            border-top-left-radius: var(--p-selectbutton-border-radius);
+            border-bottom-left-radius: var(--p-selectbutton-border-radius);
+        }
+
+        &:last-child {
+            border-top-right-radius: var(--p-selectbutton-border-radius);
+            border-bottom-right-radius: var(--p-selectbutton-border-radius);
+        }
+
+        &.p-highlight {
+            background: var(--p-togglebutton-checked-background);
+            color: var(--p-togglebutton-checked-color);
+            border-color: var(--p-togglebutton-checked-border-color);
+        }
+
+        &:hover:not(.p-highlight):not(.p-disabled) {
+            background: var(--p-togglebutton-hover-background);
+            color: var(--p-togglebutton-hover-color);
+            border-color: var(--p-togglebutton-hover-border-color);
+        }
+
+        .p-button-label, .p-togglebutton-label {
+            font-weight: 400 !important;
+        }
+    }
+
+    .p-button-label, .p-togglebutton-label {
+        font-weight: 400 !important;
+    }
+}
+
+// Ensure p-selectbutton host element doesn't constrain width
+p-selectbutton {
+    width: 100%;
+    display: block;
+}
+
+
+.notifications-filter-button {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+
+    // PrimeNG 18 Design Tokens
+    --p-selectbutton-border-radius: 4px;
+
+    // ToggleButton tokens (used by SelectButton items)
+    --p-togglebutton-background: transparent;
+    --p-togglebutton-color: var(--link-color);
+    --p-togglebutton-border-color: var(--link-color);
+    --p-togglebutton-padding: 0.25rem 0.5rem;
+
+    --p-togglebutton-checked-background: var(--link-color);
+    --p-togglebutton-checked-color: var(--primary-btn-color);
+    --p-togglebutton-checked-border-color: var(--link-color);
+
+    --p-togglebutton-hover-background: var(--client-type-bg);
+    --p-togglebutton-hover-color: var(--link-color);
+    --p-togglebutton-hover-border-color: var(--link-color);
+
+    .p-button {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none !important;
+
+        // Handle borders for the group look
+        &:not(:last-child) {
+            border-right: none;
+        }
+
+        // Re-apply border radius to outer corners
+        &:first-child {
+            border-top-left-radius: var(--p-selectbutton-border-radius);
+            border-bottom-left-radius: var(--p-selectbutton-border-radius);
+        }
+
+        &:last-child {
+            border-top-right-radius: var(--p-selectbutton-border-radius);
+            border-bottom-right-radius: var(--p-selectbutton-border-radius);
+        }
+    }
+
+    .p-button-label {
+        font-size: 0.8rem;
+        font-weight: normal;
+    }
+}
+
+.edit-samples-sidebar {
+    width: 50vw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+
+    .p-inputtext {
+        background-color: var(--base-fg-color) !important;
+        color: var(--base-text-color) !important;
+    }
+
+    .p-float-label {
+        display: block;
+
+        label {
+            color: var(--base-text-color);
+        }
+    }
+
+    .samples-editor-panel {
+        height: calc(100vh - 350px);
+        border-radius: 6px;
+        overflow: hidden;
+        border: solid 1px var(--border-color);
+    }
+}
+
+// Calendar
+.p-datepicker {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.p-datepicker .p-datepicker-header {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+.p-datepicker table td > span.p-highlight {
+    background: var(--link-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+.p-datepicker table td > span:not(.p-highlight):not(.p-disabled):hover {
+    background: var(--base-bg-color) !important;
+}
+.p-datepicker table th {
+    color: var(--base-text-color) !important;
+}
+.p-datepicker table td {
+    color: var(--base-text-color) !important;
+}
+
+// Accordion
+.p-accordion .p-accordion-header .p-accordion-header-link {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.p-accordion .p-accordion-content {
+    background: var(--base-bg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+// Paginator
+.p-paginator {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.p-paginator .p-paginator-pages .p-paginator-page {
+    color: var(--base-text-color) !important;
+}
+.p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+    background: var(--link-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+// Popover
+.p-popover {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.p-popover:before, .p-popover:after {
+    border-bottom-color: var(--base-fg-color) !important;
+}
+
+// Card
+.p-card {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    box-shadow: none !important;
+    border: 1px solid var(--border-color) !important;
+}
+.p-card .p-card-title, .p-card .p-card-subtitle {
+    color: var(--base-text-color) !important;
+}
+
+// Listbox
+.p-listbox {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.p-listbox .p-listbox-header {
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+.p-listbox .p-listbox-list .p-listbox-item {
+    color: var(--base-text-color) !important;
+}
+.p-listbox .p-listbox-list .p-listbox-item.p-highlight {
+    background: var(--link-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+.p-listbox .p-listbox-list .p-listbox-item:not(.p-highlight):not(.p-disabled):hover {
+    background: var(--base-bg-color) !important;
+    color: var(--base-text-color) !important;
+}
+
+// RadioButton
+.p-radiobutton .p-radiobutton-box {
+    border: 2px solid var(--border-color) !important;
+    background: var(--base-fg-color) !important;
+}
+.p-radiobutton .p-radiobutton-box.p-highlight {
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color) !important;
+}
+.p-radiobutton .p-radiobutton-box.p-highlight .p-radiobutton-icon {
+    background-color: var(--primary-btn-color) !important;
+}
+.p-radiobutton .p-radiobutton-box:not(.p-disabled):not(.p-highlight):hover {
+    border-color: var(--primary-color) !important;
+}
+
+.create-revision-sidebar {
+    width: 30dvw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.options-sidebar {
+    width: 20dvw !important;
+    background: var(--base-fg-color) !important;
+    color: var(--base-text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.card {
+    background-color: var(--base-fg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--base-text-color) !important;
+}
+
+.form-check-input {
+    background-color: var(--base-bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+

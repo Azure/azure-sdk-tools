@@ -81,11 +81,11 @@
             <div class="me-auto">
                 <div class="fw-medium">First Release Aprroval</div>
                 <p-selectButton
-                    class="first-release-approval-filter-button"
+                    styleClass="apiview-toggle-button-group"
                     [options]="firstReleaseApprovalOptions"
                     [(ngModel)]="firstReleaseApproval"
                     (onChange)="updateFirstReleaseApproval($event)"
-                    optionLabel="label" 
+                    optionLabel="label"
                     optionValue="value"
                     [style]="{'margin-top':'8px'}" />
             </div>

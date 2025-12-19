@@ -48,6 +48,21 @@ public class ProcessOptions : IProcessOptions
         TimeSpan? timeout = null
     ) : this(command, args, command, args, logOutputStream, workingDirectory, timeout) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProcessOptions"/> class that uses the same command-line arguments on both platforms.
+    /// See <see cref="ProcessOptions(string, string[], string, string[], bool, string?, TimeSpan?)"/> to pass different arguments 
+    /// for each platform.
+    /// </summary>
+    public ProcessOptions(
+        string unixCommand,
+        string windowsCommand,
+        string[] args,
+        bool logOutputStream = true,
+        string? workingDirectory = null,
+        TimeSpan? timeout = null)
+        : this(unixCommand, args, windowsCommand, args, logOutputStream, workingDirectory, timeout)
+    { }
+
     public ProcessOptions(
         string unixCommand,
         string[] unixArgs,

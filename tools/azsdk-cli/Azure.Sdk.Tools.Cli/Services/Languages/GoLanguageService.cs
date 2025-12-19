@@ -14,12 +14,14 @@ public partial class GoLanguageService : LanguageService
 {
     public GoLanguageService(
         IProcessHelper processHelper,
+        IPowershellHelper powershellHelper,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper)
     {
         base.processHelper = processHelper;
+        this.powershellHelper = powershellHelper;
         base.gitHelper = gitHelper;
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
@@ -32,14 +34,15 @@ public partial class GoLanguageService : LanguageService
     private readonly string gofmtWin = "gofmt.exe";
     private readonly string golangciLintUnix = "golangci-lint";
     private readonly string golangciLintWin = "golangci-lint.exe";
+    private readonly IPowershellHelper powershellHelper;
 
     public override SdkLanguage Language { get; } = SdkLanguage.Go;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
+        var fullPath = RealPath.GetRealPath(packagePath);
         var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
-        var fullPath = RealPath.GetRealPath(packagePath);
 
         try
         {
@@ -72,8 +75,17 @@ public partial class GoLanguageService : LanguageService
                 throw new Exception($"Failed to extract package properties for {packagePath}: {processResult.Output}");
             }
 
-            var goModuleProperties = JsonSerializer.Deserialize<GoModulePropertiesPowershell>(processResult.Output)
-                ?? throw new Exception($"Failed to deserialize results from Get-GoModuleProperties");
+            GoModulePropertiesPowershell goModuleProperties;
+
+            try
+            {
+                goModuleProperties = JsonSerializer.Deserialize<GoModulePropertiesPowershell>(processResult.Stdout)
+                    ?? throw new Exception($"Failed to deserialize results from Get-GoModuleProperties.");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to deserialized JSON output '{processResult.Stdout}'", ex);
+            }
 
             var sdkType = goModuleProperties.SdkType switch
             {
@@ -100,6 +112,7 @@ public partial class GoLanguageService : LanguageService
         }
         catch (Exception ex)
         {
+            // NOTE: this method, via the LanguageService, cannot throw these exceptions, so we only log it.
             logger.LogDebug(ex, "Exception thrown when trying to get package properties for {Path}", packagePath);
             return new PackageInfo()
             {

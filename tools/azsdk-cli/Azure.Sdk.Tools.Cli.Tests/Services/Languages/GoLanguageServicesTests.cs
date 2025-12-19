@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(0));
-                Assert.That(resp.PackageName, Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate"));
+                Assert.That(resp.PackageName, Is.EqualTo("sdk/template/aztemplate"));
                 Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
             });
 
@@ -144,18 +144,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(0));
-                Assert.That(resp.PackageName, Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate"));
+                Assert.That(resp.PackageName, Is.EqualTo("sdk/template/aztemplate"));
                 Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
             });
-        }
-
-        [Test]
-        public async Task TestGetSDKPackageName()
-        {
-            Assert.That(
-                await GoLanguageService.GetGoModuleName(packagePath),
-                Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate")
-            );
         }
 
         [Test]

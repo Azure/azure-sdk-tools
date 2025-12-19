@@ -27,9 +27,15 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 _language = value;
             }
         }
+
+        /// <summary>
+        /// The package name, within the package ecosystem (ie: azure-core, @azure/core, etc..). 
+        /// Go uses the sub-path as the package name (sdk/azcore, sdk/resourcemanager/msi/armmsi).
+        /// </summary>
         [Telemetry]
         [JsonPropertyName("package_name")]
         public string? PackageName { get; set; }
+
         [JsonPropertyName("package_display_name")]
         public string? DisplayName { get; set; }
         [JsonPropertyName("version")]

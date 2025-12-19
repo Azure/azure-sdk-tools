@@ -61,7 +61,7 @@ public partial class GoLanguageService : LanguageService
 
         try
         {
-            packageName = await GetGoModuleName(packagePath, ct);
+            packageName = await GetSubPath(packagePath, ct);
         }
         catch (Exception ex)
         {
@@ -125,7 +125,7 @@ public partial class GoLanguageService : LanguageService
         {
             var result = await processHelper.Run(new ProcessOptions(gofmtUnix, gofmtWin, ["-w", "."], workingDirectory: packagePath), ct);
 
-            var packageName = await GetGoModuleName(packagePath, ct);
+            var packageName = await GetSubPath(packagePath, ct);
             return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
         catch (Exception ex)
@@ -143,7 +143,7 @@ public partial class GoLanguageService : LanguageService
 
             // run the standard golangci-lint
             var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-            var packageName = await GetGoModuleName(packagePath, ct);
+            var packageName = await GetSubPath(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, golangciLintWin, ["run", "--config", Path.Join(repoRoot, "eng", ".golangci.yml")], workingDirectory: packagePath), ct);
             processResults.Add(result);
 
@@ -177,7 +177,7 @@ public partial class GoLanguageService : LanguageService
     {
         try
         {
-            var packageName = await GetGoModuleName(packagePath, ct);
+            var packageName = await GetSubPath(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["build"], workingDirectory: packagePath), ct);
             return new PackageCheckResponse(packageName, Models.SdkLanguage.Go, result);
         }
@@ -187,26 +187,6 @@ public partial class GoLanguageService : LanguageService
             return new PackageCheckResponse(packagePath, Models.SdkLanguage.Go, 1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Gets the full go module name for a package path, by reading go.mod
-    /// </summary>
-    /// <param name="packagePath">A full path to a package folder (eg: [gitroot]/sdk/messaging/azservicebus)</param>
-    /// <returns>The full go module name (ex: github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus)</returns>
-    public static async Task<string> GetGoModuleName(string packagePath, CancellationToken cancellationToken = default)
-    {
-        var text = await File.ReadAllTextAsync(Path.Join(packagePath, "go.mod"), cancellationToken);
-
-        var m = GoModModuleLineRegex().Match(text);
-
-        if (!m.Success)
-        {
-            throw new Exception($"Package {packagePath} has an invalid go.mod file - can't parse `module`");
-        }
-
-        return m.Groups[1].Value;
-    }
-
 
     /// <summary>
     /// Gets the sub path, for the package, that most SDK scripts expect for -PackageName.
@@ -233,7 +213,7 @@ public partial class GoLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var packageSubPath = await GetSubPath(packagePath, cancellationToken);
+        var packageSubPath = await this.GetSubPath(packagePath, cancellationToken);
         return await commonValidationHelpers.ValidateChangelog(packageSubPath, packagePath, fixCheckErrors, cancellationToken);
     }
 

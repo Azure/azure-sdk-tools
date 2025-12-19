@@ -19,8 +19,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         private GoLanguageService LangService { get; set; } = null!;
 
-        private Mock<IGitHelper> GitHelperMock { get; set; }
-
         private readonly Version goMinimumVersion = Version.Parse("1.24");
 
         [SetUp]
@@ -258,6 +256,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             File.WriteAllText(goModPath, "there's no version in here!");
 
             Assert.ThrowsAsync(typeof(Exception), async () => await GoLanguageService.GetGoModVersionAsync(goModPath));
+        }
+
+        [Test]
+        public async Task TestGetSubPath()
+        {
+            var subPath = await LangService.GetSubPath(packagePath);
+            Assert.That(subPath, Is.EqualTo("sdk/template/aztemplate"));
         }
 
         /// <summary>

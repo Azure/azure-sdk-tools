@@ -158,7 +158,7 @@ public partial class GoLanguageService : LanguageService
                 ["-Packages", packagePath]
             );
 
-            var results = await powershellHelper.Run(powershellOptions, ct);
+            result = await powershellHelper.Run(powershellOptions, ct);
             processResults.Add(result);
 
             return new PackageCheckResponse(
@@ -211,24 +211,19 @@ public partial class GoLanguageService : LanguageService
     /// <summary>
     /// Gets the sub path, for the package, that most SDK scripts expect for -PackageName.
     /// </summary>
-    /// <param name="gitRepoPath">The full path to the git repository</param>
     /// <param name="packagePath">The full path to the package</param>
     /// <returns>The sub-path (ex: sdk/messaging/azservicebus)</returns>
-    public async Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
+    public Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
     {
         var gitRepoPath = gitHelper.DiscoverRepoRoot(packagePath);
 
-        if (!gitRepoPath.EndsWith(Path.DirectorySeparatorChar))
-        {
-            gitRepoPath += Path.DirectorySeparatorChar;
-        }
-
         // ex: sdk/messaging/azservicebus/
-        var relativePath = packagePath.Replace(gitRepoPath, "");
-        // Ensure forward slashes for Go package names and remove trailing slash
-        var packageName = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+        var relativePath = Path.GetRelativePath(gitRepoPath, packagePath);
 
-        return await Task.FromResult(packageName.TrimEnd('/'));
+        // Ensure forward slashes for Go package names and remove trailing slash
+        var subPathNormalized = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+
+        return Task.FromResult(subPathNormalized.TrimEnd('/'));
     }
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)

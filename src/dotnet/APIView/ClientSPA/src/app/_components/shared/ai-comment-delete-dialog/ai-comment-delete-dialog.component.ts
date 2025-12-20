@@ -1,4 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
 
 export interface AICommentDeleteReason {
   commentId: string;
@@ -9,7 +12,12 @@ export interface AICommentDeleteReason {
     selector: 'app-ai-comment-delete-dialog',
     templateUrl: './ai-comment-delete-dialog.component.html',
     styleUrls: ['./ai-comment-delete-dialog.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        DialogModule
+    ]
 })
 export class AICommentDeleteDialogComponent {
   @Input() visible: boolean = false;

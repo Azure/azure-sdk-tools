@@ -33,13 +33,6 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
 
 
 @NgModule({
-  declarations: [
-    NavBarComponent,
-    RevisionsListComponent,
-    LanguageNamesPipe,
-    LastUpdatedOnPipe,
-    ApprovalPipe
-  ],
   exports: [
     NavBarComponent,
     RevisionsListComponent,
@@ -90,7 +83,12 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     InputTextModule,
     TimeagoModule.forRoot(),
     SimplemdeModule.forRoot(),
-    MonacoEditorModule.forRoot(monacoEditorConfig)
+    MonacoEditorModule.forRoot(monacoEditorConfig),
+    NavBarComponent,
+    RevisionsListComponent,
+    LanguageNamesPipe,
+    LastUpdatedOnPipe,
+    ApprovalPipe
   ]
 })
 export class SharedAppModule { }

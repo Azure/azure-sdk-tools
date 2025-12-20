@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
     name: 'languageNames',
-    standalone: false
+    standalone: true
 })
 export class LanguageNamesPipe implements PipeTransform {
 

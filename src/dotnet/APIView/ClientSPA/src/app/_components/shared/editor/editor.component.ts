@@ -1,11 +1,18 @@
 import { Component, ElementRef, EventEmitter, Input, Output } from '@angular/core';
-import { SimplemdeOptions } from 'ngx-simplemde';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
 
 @Component({
     selector: 'app-editor',
     templateUrl: './editor.component.html',
     styleUrls: ['./editor.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        SimplemdeModule
+    ]
 })
 export class EditorComponent {
   @Input() content: string = '';

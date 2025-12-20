@@ -3,7 +3,7 @@ import TurndownService from 'turndown';
 
 @Pipe({
     name: 'htmlToMarkdown',
-    standalone: false
+    standalone: true
 })
 export class HtmlToMarkdownPipe implements PipeTransform {
   private turndownService: TurndownService;

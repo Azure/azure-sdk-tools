@@ -13,12 +13,15 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
+import { ReviewPageLayoutModule } from 'src/app/_modules/shared/review-page-layout.module';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-conversation-page',
     templateUrl: './conversation-page.component.html',
     styleUrls: ['./conversation-page.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [CommonModule, ReviewPageLayoutModule]
 })
 export class ConversationPageComponent {
   reviewId : string | null = null;
@@ -70,7 +73,7 @@ export class ConversationPageComponent {
   }
 
   loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
-    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined,
       undefined, "createdOn", undefined, undefined, undefined, true)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (response: any) => {

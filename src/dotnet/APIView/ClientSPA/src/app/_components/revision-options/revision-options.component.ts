@@ -1,5 +1,11 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TimeagoModule } from 'ngx-timeago';
+import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
@@ -10,7 +16,15 @@ import { SamplesRevision } from 'src/app/_models/samples';
     selector: 'app-revision-options',
     templateUrl: './revision-options.component.html',
     styleUrls: ['./revision-options.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        SelectModule,
+        SelectButtonModule,
+        TimeagoModule,
+        LastUpdatedOnPipe
+    ]
 })
 export class RevisionOptionsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
@@ -35,7 +49,7 @@ export class RevisionOptionsComponent implements OnChanges {
   manualIcon = MANUAL_ICON;
   prIcon = PR_ICON;
   automaticIcon = AUTOMATIC_ICON;
-  
+
   ACTIVE_API_REVISION_SELECT : string = 'active-api';
   ACTIVE_SAMPLES_REVISION_SELECT : string = 'active-samples';
   DIFF_API_REVISION_SELECT : string = 'diff-api';
@@ -174,7 +188,7 @@ export class RevisionOptionsComponent implements OnChanges {
             return true;
         }
       });
-      
+
       filtered = filtered.filter((apiRevision: APIRevision) => {
         return apiRevision.resolvedLabel.toLowerCase().includes(searchValue.toLowerCase());
       });
@@ -268,7 +282,7 @@ export class RevisionOptionsComponent implements OnChanges {
     this.tagLatestGARevision(mappedApiRevisions);
     this.tagLatestApprovedRevision(mappedApiRevisions);
     this.tagCurrentMainRevision(mappedApiRevisions);
-    this.tagLatestReleasedRevision(mappedApiRevisions);   
+    this.tagLatestReleasedRevision(mappedApiRevisions);
   }
 
   tagLatestGARevision(apiRevisions: any[]) {

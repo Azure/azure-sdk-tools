@@ -175,9 +175,9 @@
         &::after {
             content: '';
             display: inline-block;
-            width: 28px; // padding (6px) + icon width (14px) + padding (6px) + margin (6px) + border (2px)
+            width: 28px; // padding (6px) + icon width (14px) + padding (6px) + borders (2px) = 28px
             height: 26px; // matches button height
-            margin-left: 6px;
+            margin-left: 6px; // matches button margin-left
         }
         
         // When the button exists, hide the spacer

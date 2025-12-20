@@ -822,9 +822,21 @@ export class CommentThreadComponent {
 
   private emitCreationEvents(createdComments: CommentItemModel[]): void {
     createdComments.forEach(createdComment => {
-      const commentCodeRow = this.allCodePanelRowData?.find(row => 
-        row.threadId === createdComment.threadId || row.nodeId === createdComment.elementId
-      );
+      const originalComment = this.relatedComments.find(rc => rc.elementId === createdComment.elementId);
+
+      let commentCodeRow: CodePanelRowData | undefined;
+      if (originalComment) {
+        commentCodeRow = this.allCodePanelRowData?.find(row => 
+          row.comments?.some(c => c.id === originalComment.id)
+        );
+      }
+      
+      if (!commentCodeRow) {
+        commentCodeRow = this.allCodePanelRowData?.find(row => 
+          (createdComment.threadId && row.threadId === createdComment.threadId) || 
+          row.nodeId === createdComment.elementId
+        );
+      }
       
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,

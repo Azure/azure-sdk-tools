@@ -8,7 +8,7 @@
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
       <div class="line-actions">
-          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)" class="line-number-container">
+          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)" class="line-number-container" [class.has-comment-btn]="canAddComment(item)">
             <span class="text-decoration-none line-number-text" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
             <button *ngIf="canAddComment(item)" type="button" class="btn btn-sm add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
               <i class="bi bi-plus-lg"></i>

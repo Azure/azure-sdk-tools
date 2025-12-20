@@ -224,9 +224,18 @@ export class CodePanelComponent implements OnChanges {
     const hasNonWhitespaceContent = item.rowOfTokens && 
                                      item.rowOfTokens.some(token => token.value && token.value.trim().length > 0);
     
+    // Handle rowClasses being either a Set or an Array (can happen after JSON deserialization)
+    let isRemoved = false;
+    if (item.rowClasses) {
+      if (item.rowClasses instanceof Set) {
+        isRemoved = item.rowClasses.has('removed');
+      } else if (Array.isArray(item.rowClasses)) {
+        isRemoved = (item.rowClasses as unknown as string[]).includes('removed');
+      }
+    }
+    
     return item.type === CodePanelRowDatatype.CodeLine && 
-           item.rowClasses &&
-           !item.rowClasses.has('removed') &&
+           !isRemoved &&
            this.userProfile !== undefined &&
            hasNonWhitespaceContent;
   }
@@ -471,9 +480,11 @@ export class CodePanelComponent implements OnChanges {
     return new Promise((resolve, reject) => {
       this.codePanelRowSource = new Datasource<CodePanelRowData>({
         get: (index, count, success) => {
-          let data: any = [];
-          if (this.codePanelRowData.length > 0) {
-            data = this.codePanelRowData.slice(index, index + count);
+          const data: CodePanelRowData[] = [];
+          for (let i = index; i <= index + count - 1; i++) {
+            if (this.codePanelRowData[i]) {
+              data.push(this.codePanelRowData[i]);
+            }
           }
           success(data);
         },
@@ -483,7 +494,6 @@ export class CodePanelComponent implements OnChanges {
           itemSize: 21,
           startIndex: 0,
           minIndex: 0,
-          maxIndex: this.codePanelRowData.length - 1,
           sizeStrategy: SizeStrategy.Average
         }
       });
@@ -508,10 +518,10 @@ export class CodePanelComponent implements OnChanges {
       }
       if ((nodeIdHashed && this.codePanelRowData[index].nodeIdHashed === nodeIdHashed) || (nodeId && this.codePanelRowData[index].nodeId === nodeId)) {
         nodeIdHashed = this.codePanelRowData[index].nodeIdHashed;
-        this.codePanelRowData[index].rowClasses = this.codePanelRowData[index].rowClasses || new Set<string>();
+        const rowClasses = this.ensureRowClassesSet(this.codePanelRowData[index]);
 
         if (highlightRow) {
-          this.codePanelRowData[index].rowClasses.add('active');
+          rowClasses.add('active');
         }
 
         indexesHighlighted.push(index);
@@ -546,7 +556,7 @@ export class CodePanelComponent implements OnChanges {
       if (highlightRow) {
         setTimeout(() => {
           indexesHighlighted.forEach((index) => {
-            this.codePanelRowData[index].rowClasses?.delete('active');
+            this.ensureRowClassesSet(this.codePanelRowData[index]).delete('active');
           });
         }, 1550);
       }
@@ -557,6 +567,20 @@ export class CodePanelComponent implements OnChanges {
     if (this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber) {
       document.documentElement.style.setProperty('--max-line-number-width', `${this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber!.toString().length + 1}ch`);
     }
+  }
+
+  /**
+   * Ensures rowClasses is a proper Set. This is needed because when data is 
+   * deserialized from JSON, Sets become plain arrays.
+   */
+  private ensureRowClassesSet(row: CodePanelRowData): Set<string> {
+    if (!row.rowClasses) {
+      row.rowClasses = new Set<string>();
+    } else if (!(row.rowClasses instanceof Set)) {
+      // Convert array to Set if it was deserialized from JSON
+      row.rowClasses = new Set<string>(row.rowClasses as unknown as string[]);
+    }
+    return row.rowClasses;
   }
 
   private isLegacyThreadId(threadId: string | undefined | null): boolean {
@@ -1157,7 +1181,11 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private updateCommentTextInCommentThread(data: CommentUpdatesDto) {
-    const commentThreads = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const nodeMetaData = this.codePanelData?.nodeMetaData[data.nodeIdHashed!];
+    if (!nodeMetaData?.commentThread?.[data.associatedRowPositionInGroup!]) {
+      return;
+    }
+    const commentThreads = nodeMetaData.commentThread[data.associatedRowPositionInGroup!];
     const commentThread = this.findCommentThread(commentThreads, data.threadId);
     if (commentThread) {
       const comment = commentThread.comments.find((c: CommentItemModel) => c.id === data.commentId);
@@ -1180,7 +1208,10 @@ export class CodePanelComponent implements OnChanges {
       return;
     }
 
-    const nodeMetaData = this.codePanelData!.nodeMetaData[nodeIdHashed!];
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[nodeIdHashed!];
+    if (!nodeMetaData) {
+      return;
+    }
     const insertNewThread = () => {
       const row = this.createCommentThreadRow(nodeIdHashed!, undefined, position!, threadId!, [newComment]);
       row.showReplyTextBox = false;
@@ -1235,7 +1266,12 @@ export class CodePanelComponent implements OnChanges {
   private deleteCommentFromCommentThread(commentUpdates: CommentUpdatesDto) {
     const { nodeIdHashed, associatedRowPositionInGroup: position, threadId, commentId } = commentUpdates;
     
-    const threads = this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread[position!];
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[nodeIdHashed!];
+    if (!nodeMetaData?.commentThread?.[position!]) {
+      this.updateHasActiveConversations();
+      return;
+    }
+    const threads = nodeMetaData.commentThread[position!];
     const thread = this.findCommentThread(threads, threadId);
     
     if (!thread) {
@@ -1262,7 +1298,12 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    const commentThreads = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!];
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[commentUpdates.nodeIdHashed!];
+    if (!nodeMetaData?.commentThread?.[commentUpdates.associatedRowPositionInGroup!]) {
+      this.updateHasActiveConversations();
+      return;
+    }
+    const commentThreads = nodeMetaData.commentThread[commentUpdates.associatedRowPositionInGroup!];
     const commentThread = this.findCommentThread(commentThreads, commentUpdates.threadId);
     
     if (commentThread) {
@@ -1282,7 +1323,11 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private toggleCommentUpVote(data: CommentUpdatesDto) {
-    const commentThreads = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[data.nodeIdHashed!];
+    if (!nodeMetaData?.commentThread?.[data.associatedRowPositionInGroup!]) {
+      return;
+    }
+    const commentThreads = nodeMetaData.commentThread[data.associatedRowPositionInGroup!];
     const commentThread = this.findCommentThread(commentThreads, data.threadId);
     
     if (commentThread) {
@@ -1302,7 +1347,11 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private toggleCommentDownVote(data: CommentUpdatesDto) {
-    const commentThreads = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!];
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[data.nodeIdHashed!];
+    if (!nodeMetaData?.commentThread?.[data.associatedRowPositionInGroup!]) {
+      return;
+    }
+    const commentThreads = nodeMetaData.commentThread[data.associatedRowPositionInGroup!];
     const commentThread = this.findCommentThread(commentThreads, data.threadId);
     
     if (commentThread) {

@@ -21,6 +21,7 @@
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
         width: 500% !important;
+        contain: layout style;
 
         &.diagnostics {
             padding-left: calc(var(--max-line-number-width) + 50px);
@@ -151,7 +152,8 @@
 
     .line-number {
         display: inline-block;
-        min-width: var(--max-line-number-width);
+        width: var(--max-line-number-width);
+        text-align: right;
 
         &.has-cross-language {
             color: var(--primary-color);
@@ -162,6 +164,20 @@
         position: relative;
         display: inline-flex;
         align-items: center;
+        
+        // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
+        &::after {
+            content: '';
+            display: inline-block;
+            width: 28px; // padding (6px) + icon width (14px) + padding (6px) + margin (6px) + border (2px)
+            height: 26px; // matches button height
+            margin-left: 6px;
+        }
+        
+        // When the button exists, hide the spacer
+        &.has-comment-btn::after {
+            display: none;
+        }
         
         .add-comment-btn {
             opacity: 0;

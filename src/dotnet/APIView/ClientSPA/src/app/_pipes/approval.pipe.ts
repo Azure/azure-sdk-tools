@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
     name: 'approval',
-    standalone: false
+    standalone: true
 })
 export class ApprovalPipe implements PipeTransform {
 

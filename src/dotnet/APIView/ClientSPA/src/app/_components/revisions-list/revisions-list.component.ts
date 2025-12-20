@@ -1,9 +1,19 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
-import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
-import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
+import { FileSelectEvent, FileUpload, FileUploadModule } from 'primeng/fileupload';
+import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { MenuModule } from 'primeng/menu';
+import { SidebarModule } from 'primeng/sidebar';
+import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ContextMenuModule } from 'primeng/contextmenu';
+import { TimeagoModule } from 'ngx-timeago';
+import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
+import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { Pagination } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
@@ -17,7 +27,24 @@ import { environment } from 'src/environments/environment';
     selector: 'app-revisions-list',
     templateUrl: './revisions-list.component.html',
     styleUrls: ['./revisions-list.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        FormsModule,
+        RouterModule,
+        TableModule,
+        ButtonModule,
+        MenuModule,
+        FileUploadModule,
+        SidebarModule,
+        SelectModule,
+        MultiSelectModule,
+        ContextMenuModule,
+        LanguageNamesPipe,
+        LastUpdatedOnPipe,
+        TimeagoModule
+    ]
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;

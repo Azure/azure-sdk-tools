@@ -12,7 +12,7 @@ const NON_SPECIAL_CHARACTERS = /^[^a-zA-Z0-9]+$/;
 
 @Pipe({
     name: 'markdownToHtml',
-    standalone: false
+    standalone: true
 })
 export class MarkdownToHtmlPipe implements PipeTransform {
   transform(markdown: string, addLineActions: boolean = false): Promise<string> {
@@ -27,8 +27,8 @@ export class MarkdownToHtmlPipe implements PipeTransform {
       if (addLineActions) {
         processor.use(rehypeAddLineActions);
       }
-      
-      processor.use(rehypeStringify) 
+
+      processor.use(rehypeStringify)
         .process(markdown)
         .then((file) => {
           resolve(String(file));

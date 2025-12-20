@@ -3,7 +3,7 @@ import { APIRevision } from '../_models/revision';
 
 @Pipe({
     name: 'lastUpdatedOn',
-    standalone: false
+    standalone: true
 })
 export class LastUpdatedOnPipe implements PipeTransform {
 

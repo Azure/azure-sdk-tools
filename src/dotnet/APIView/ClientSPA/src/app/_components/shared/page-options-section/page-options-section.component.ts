@@ -1,11 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { PanelModule } from 'primeng/panel';
 import { CookieService } from 'ngx-cookie-service';
 
 @Component({
     selector: 'app-page-options-section',
     templateUrl: './page-options-section.component.html',
     styleUrls: ['./page-options-section.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        PanelModule
+    ]
 })
 export class PageOptionsSectionComponent implements OnInit{
   @Input() sectionName : string = '';

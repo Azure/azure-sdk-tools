@@ -1,4 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import { CheckboxModule } from 'primeng/checkbox';
 import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
 
 export interface AICommentFeedback {
@@ -11,7 +15,13 @@ export interface AICommentFeedback {
     selector: 'app-ai-comment-feedback-dialog',
     templateUrl: './ai-comment-feedback-dialog.component.html',
     styleUrls: ['./ai-comment-feedback-dialog.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        DialogModule,
+        CheckboxModule
+    ]
 })
 export class AICommentFeedbackDialogComponent {
   @Input() visible: boolean = false;

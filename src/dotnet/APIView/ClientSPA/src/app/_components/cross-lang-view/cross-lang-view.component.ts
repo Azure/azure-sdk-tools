@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
@@ -12,16 +14,17 @@ import { environment } from 'src/environments/environment';
     host: {
         'class': 'cross-language-view-content'
     },
-    standalone: false
+    standalone: true,
+    imports: [CommonModule, LanguageNamesPipe]
 })
 export class CrossLangViewComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() userProfile: UserProfile | undefined;
-  
+
   assetsPath : string = environment.assetsPath;
   CodePanelRowDatatype = CodePanelRowDatatype;
   activeTabIndex: number = 0;
-  
+
   @Output() closeCrossLanguageViewEmitter : EventEmitter<[string, string]> = new EventEmitter<[string, string]>();
 
   getAvailableLanguages(): string[] {

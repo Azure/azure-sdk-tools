@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SidebarModule } from 'primeng/sidebar';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TimeagoModule } from 'ngx-timeago';
 import { combineLatest, take } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { NotificationsFilter, SiteNotification } from 'src/app/_models/notificationsModel';
@@ -16,7 +21,14 @@ import { environment } from 'src/environments/environment';
     selector: 'app-nav-bar',
     templateUrl: './nav-bar.component.html',
     styleUrls: ['./nav-bar.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        SidebarModule,
+        SelectButtonModule,
+        TimeagoModule
+    ]
 })
 export class NavBarComponent implements OnInit {
   userProfile : UserProfile | undefined;

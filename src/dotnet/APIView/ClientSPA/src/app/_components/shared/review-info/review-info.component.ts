@@ -1,5 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MenubarModule } from 'primeng/menubar';
+import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
+import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { map } from 'rxjs';
 import { REVIEW_PAGE_NAME, SAMPLES_PAGE_NAME } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
@@ -12,7 +17,14 @@ import { environment } from 'src/environments/environment';
     selector: 'app-review-info',
     templateUrl: './review-info.component.html',
     styleUrls: ['./review-info.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        MenubarModule,
+        RevisionOptionsComponent,
+        LanguageNamesPipe
+    ]
 })
 export class ReviewInfoComponent {
   @Input() apiRevisions: APIRevision[] = [];

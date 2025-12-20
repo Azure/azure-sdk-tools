@@ -1,10 +1,22 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
-import { Menu } from 'primeng/menu';
-import { Popover } from 'primeng/popover';
+import { Menu, MenuModule } from 'primeng/menu';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { PanelModule } from 'primeng/panel';
+import { TimelineModule } from 'primeng/timeline';
+import { TooltipModule } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select';
+import { TimeagoModule } from 'ngx-timeago';
 import { take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
+import { RelatedCommentsDialogComponent } from '../related-comments-dialog/related-comments-dialog.component';
+import { AICommentFeedbackDialogComponent } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteDialogComponent } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
+import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
+import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
@@ -30,12 +42,30 @@ interface AICommentInfo {
   items: AICommentInfoItem[];
 }
 @Component({
-  selector: 'app-comment-thread',
-  templateUrl: './comment-thread.component.html',
-  styleUrls: ['./comment-thread.component.scss'],
-  host: {
-    'class': 'user-comment-content'
-  },
+    selector: 'app-comment-thread',
+    templateUrl: './comment-thread.component.html',
+    styleUrls: ['./comment-thread.component.scss'],
+    host: {
+        'class': 'user-comment-content'
+    },
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        MenuModule,
+        PopoverModule,
+        PanelModule,
+        TimelineModule,
+        TooltipModule,
+        SelectModule,
+        TimeagoModule,
+        EditorComponent,
+        RelatedCommentsDialogComponent,
+        AICommentFeedbackDialogComponent,
+        AICommentDeleteDialogComponent,
+        MarkdownToHtmlPipe,
+        LanguageNamesPipe
+    ]
 })
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
@@ -826,18 +856,18 @@ export class CommentThreadComponent {
 
       let commentCodeRow: CodePanelRowData | undefined;
       if (originalComment) {
-        commentCodeRow = this.allCodePanelRowData?.find(row => 
+        commentCodeRow = this.allCodePanelRowData?.find(row =>
           row.comments?.some(c => c.id === originalComment.id)
         );
       }
-      
+
       if (!commentCodeRow) {
-        commentCodeRow = this.allCodePanelRowData?.find(row => 
-          (createdComment.threadId && row.threadId === createdComment.threadId) || 
+        commentCodeRow = this.allCodePanelRowData?.find(row =>
+          (createdComment.threadId && row.threadId === createdComment.threadId) ||
           row.nodeId === createdComment.elementId
         );
       }
-      
+
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
         comment: createdComment,

@@ -30,9 +30,10 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 
 @Component({
-  selector: 'app-review-page',
-  templateUrl: './review-page.component.html',
-  styleUrls: ['./review-page.component.scss']
+    selector: 'app-review-page',
+    templateUrl: './review-page.component.html',
+    styleUrls: ['./review-page.component.scss'],
+    standalone: false
 })
 export class ReviewPageComponent implements OnInit {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
@@ -173,13 +174,17 @@ export class ReviewPageComponent implements OnInit {
         icon: 'bi bi-puzzle',
         tooltip: 'Samples',
         command: () => {
+          const queryParams: any = {};
           if (this.latestSampleRevision) {
-            this.router.navigate(['/samples', this.reviewId],
-              { queryParams: { activeSamplesRevisionId: this.latestSampleRevision?.id } });
+            queryParams['activeSamplesRevisionId'] = this.latestSampleRevision?.id;
           }
-          else {
-            this.router.navigate([`/samples/${this.reviewId}`])
+          if (this.activeApiRevisionId) {
+            queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
           }
+          if (this.diffApiRevisionId) {
+            queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+          }
+          this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
         }
       }
     ]);

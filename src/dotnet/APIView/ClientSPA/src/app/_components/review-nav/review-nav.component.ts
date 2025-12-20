@@ -3,9 +3,10 @@ import { TreeNode } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-review-nav',
-  templateUrl: './review-nav.component.html',
-  styleUrls: ['./review-nav.component.scss']
+    selector: 'app-review-nav',
+    templateUrl: './review-nav.component.html',
+    styleUrls: ['./review-nav.component.scss'],
+    standalone: false
 })
 export class ReviewNavComponent implements OnChanges {
   @Input() reviewPageNavigation: TreeNode[] = [];

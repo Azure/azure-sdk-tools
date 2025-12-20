@@ -13,10 +13,10 @@
                         <i class="bi bi-inbox-fill me-1"></i>Requested Reviews
                     </a>
                 </li>
-                
+
                 <!-- Vertical divider -->
                 <li *ngIf="isLoggedIn" class="nav-divider"></li>
-                
+
                 <!-- Help icon with dropdown menu -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Help menu" data-clarity-region="help-menu">
@@ -31,7 +31,7 @@
                         </a></li>
                     </ul>
                 </li>
-                
+
                 <!-- Notifications icon with badge -->
                 <li *ngIf="isLoggedIn" class="nav-item">
                     <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" aria-label="Notifications" data-clarity-region="notifications-button">
@@ -39,7 +39,7 @@
                         <span *ngIf="notifications.length > 0" class="notification-badge"></span>
                     </a>
                 </li>
-                
+
                 <!-- User profile avatar with dropdown -->
                 <li *ngIf="isLoggedIn" class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">
@@ -59,22 +59,22 @@
                         <li class="theme-row">
                             <span class="theme-label">Theme</span>
                             <div class="theme-buttons">
-                                <button type="button" 
-                                    class="theme-btn" 
+                                <button type="button"
+                                    class="theme-btn"
                                     [class.active]="selectedTheme.data === 'light-theme'"
                                     (click)="changeTheme(themes[0])"
                                     title="Light">
                                     <i class="bi bi-sun"></i>
                                 </button>
-                                <button type="button" 
-                                    class="theme-btn" 
+                                <button type="button"
+                                    class="theme-btn"
                                     [class.active]="selectedTheme.data === 'dark-theme'"
                                     (click)="changeTheme(themes[1])"
                                     title="Dark">
                                     <i class="bi bi-moon"></i>
                                 </button>
-                                <button type="button" 
-                                    class="theme-btn" 
+                                <button type="button"
+                                    class="theme-btn"
                                     [class.active]="selectedTheme.data === 'dark-solarized-theme'"
                                     (click)="changeTheme(themes[2])"
                                     title="Solarized">
@@ -105,7 +105,7 @@
     </ng-template>
     <p-selectButton
         *ngIf="notifications.length > 0 && reviewId"
-        class="notifications-filter-button"
+        styleClass="apiview-toggle-button-group"
         [options]="notificationsFilters"
         [(ngModel)]="notificationsFilter"
         (onChange)="updateNotificationsFilter($event)"

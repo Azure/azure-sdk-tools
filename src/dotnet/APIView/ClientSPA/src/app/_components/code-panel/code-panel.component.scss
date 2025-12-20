@@ -14,6 +14,11 @@
         height: calc(100vh - 102px);
         will-change: scroll-position, contents;
         container-type: inline-size;
+        background-color: var(--base-fg-color);
+
+        p-messages.sticky-top {
+            z-index: 1 !important;
+        }
     }
 
     .code-line {
@@ -60,7 +65,7 @@
                 }
             }
         }
-        
+
         &.user-comment-thread, &.cross-language-view {
             padding-left: calc(var(--max-line-number-width) + 10px);
             border-top: none;
@@ -97,7 +102,7 @@
                 visibility: hidden;
             }
         }
-    
+
         &.removed {
             background-color: rgba(255, 0, 0, 0.25);
             .code-line-content::before {
@@ -114,7 +119,7 @@
         }
 
         &.added .line-actions, &.removed .line-actions {
-            background-color: var(--dark-overlay) 
+            background-color: var(--dark-overlay)
         }
 
         &.active, &.active .line-actions {
@@ -140,14 +145,15 @@
 
         .toggle-user-comments-btn.can-show {
             color: inherit;
-        } 
+        }
     }
-    
+
     .code-line-content {
         max-height: 21px;
         grid-column: 2;
-        position: relative; 
+        position: relative;
         white-space: pre;
+        color: var(--base-text-color);
     }
 
     .line-number {
@@ -238,6 +244,7 @@
         position: sticky;
         left: 0;
         background-color: var(--base-fg-color);
+        color: var(--base-text-color);
         z-index: 1000;
 
         span:not(:last-child) {
@@ -322,7 +329,7 @@
         .enum {
             color: var(--class-color);
         }
-    
+
         .comment {
             color: var(--java-comment-color);
             font-style: italic !important;
@@ -331,7 +338,7 @@
         .fieldName, .enumConstant {
             color: var(--java-field-name-color);
         }
-        
+
         .methodName {
             color: var(--java-method-name-color);
         }

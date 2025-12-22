@@ -138,3 +138,44 @@ python server.py
 # Or test with mcp-cli if installed
 mcp-cli --server "python server.py"
 ```
+
+## Deploying to Azure
+
+The MCP server can be deployed to Azure App Service for production use. See [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) for detailed instructions.
+
+### Quick Deployment
+
+```bash
+# Make the script executable
+chmod +x deploy-azure.sh
+
+# Deploy to dev environment (default)
+./deploy-azure.sh
+
+# Or with custom app name
+./deploy-azure.sh -n my-custom-mcp-server
+```
+
+### Using the Deployed MCP Server
+
+Once deployed to Azure, configure GitHub Copilot in VS Code:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "azure-sdk-code-review": {
+      "type": "sse",
+      "url": "https://azure-sdk-code-review-mcp-dev.azurewebsites.net/sse",
+      "authentication": {
+        "type": "bearer",
+        "token": {
+          "command": "az",
+          "args": ["account", "get-access-token", "--resource", "api://azure-sdk-qa-bot-dev", "--query", "accessToken", "-o", "tsv"]
+        }
+      }
+    }
+  }
+}
+```
+
+The server will automatically authenticate to the backend using Azure Managed Identity.

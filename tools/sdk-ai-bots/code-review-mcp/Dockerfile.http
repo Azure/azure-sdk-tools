@@ -1,0 +1,31 @@
+# Dockerfile for HTTP-based MCP Server deployment to Azure
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt requirements-http.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-http.txt
+
+# Copy application files
+COPY server_http.py ./
+COPY server.py ./
+
+# Expose port
+EXPOSE 8000
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+
+# Run the HTTP server
+CMD ["python", "server_http.py"]

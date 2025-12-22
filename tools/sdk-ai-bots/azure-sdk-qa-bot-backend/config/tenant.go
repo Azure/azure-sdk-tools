@@ -53,9 +53,27 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('golang_*', 'title')",
 		},
-		PromptTemplate:          "common/language_channel.md",
-		IntentionPromptTemplate: "prompt_template/intention.md",
-		AgenticSearchPrompt:     "common/agentic_search.md",
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+	},
+	model.TenantID_JavaChannelQaBot: {
+		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKGuidelines, model.Source_AutorestJava}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('java_*', 'title')",
+		},
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+	},
+	model.TenantID_JavaScriptChannelQaBot: {
+		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKGuidelines}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",
+		},
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_AzureSDKQaBot: {
 		PromptTemplate: "typespec/qa.md",

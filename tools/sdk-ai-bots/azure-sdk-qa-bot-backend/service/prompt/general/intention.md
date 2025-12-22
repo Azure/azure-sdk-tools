@@ -34,6 +34,20 @@ Questions about Go SDK development, usage, or processes:
 - Go SDK release processes or pipeline issues
 - **Recommended Tenant**: `golang_channel_qa_bot`
 
+### Java SDK
+Questions about Java SDK development, usage, or processes:
+- Java SDK code generation from TypeSpec
+- Java SDK custom code, testing, or validation
+- Java SDK release processes or pipeline issues
+- **Recommended Tenant**: `java_channel_qa_bot`
+
+### JavaScript SDK
+Questions about JavaScript SDK development, usage, or processes:
+- JavaScript SDK code generation from TypeSpec
+- JavaScript SDK custom code, testing, or validation
+- JavaScript SDK release processes or pipeline issues
+- **Recommended Tenant**: `javascript_channel_qa_bot`
+
 ### Azure SDK Onboarding
 Questions about Azure SDK onboarding phases and processes:
 - Service onboarding prerequisites and setup

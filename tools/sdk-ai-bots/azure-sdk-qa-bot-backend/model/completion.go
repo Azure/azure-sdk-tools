@@ -3,12 +3,14 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
-	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
-	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
-	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
-	TenantID_GolangChannelQaBot TenantID = "golang_channel_qa_bot"
-	TenantID_GeneralQaBot       TenantID = "general_qa_bot"
+	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
+	TenantID_TypeSpecExtension      TenantID = "typespec_extension"
+	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
+	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"
+	TenantID_GolangChannelQaBot     TenantID = "golang_channel_qa_bot"
+	TenantID_JavaChannelQaBot       TenantID = "java_channel_qa_bot"
+	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
+	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
 )
 
 type Source string
@@ -30,6 +32,11 @@ const (
 	Source_AzureSDKForGo                  Source = "azure_sdk_for_go_docs"
 	Source_StaticAzureDocs                Source = "static_azure_docs"
 	Source_StaticTypeSpecToSwaggerMapping Source = "static_typespec_to_swagger_mapping"
+	Source_AzureSDKForJava                Source = "azure_sdk_for_java_docs"
+	Source_AzureSDKForJavaWiki            Source = "azure_sdk_for_java_wiki"
+	Source_AutorestJava                   Source = "autorest_java_docs"
+	Source_AzureSDKForJavaScript          Source = "azure_sdk_for_js_docs"
+	Source_AzureSDKForJavaScriptWiki      Source = "azure_sdk_for_js_wiki"
 )
 
 type Role string

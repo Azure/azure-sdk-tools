@@ -165,6 +165,89 @@
           "folder": "azure_sdk_for_go_docs"
         }
       ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-java.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure SDK for Java",
+          "path": "doc",
+          "folder": "azure_sdk_for_java_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Resource Manager documentation for Azure SDK for Java",
+          "path": "sdk/resourcemanager/docs",
+          "folder": "azure_sdk_for_java_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Contributing guidelines for Azure SDK for Java",
+          "path": "CONTRIBUTING.md",
+          "relativeByRepoPath": true,
+          "folder": "azure_sdk_for_java_docs"
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-java.wiki.git",
+        "branch": "master",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Wiki documentation for Azure SDK for Java",
+          "folder": "azure_sdk_for_java_wiki"
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/autorest.java.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "AutoRest Java customization documentation",
+          "path": "customization-base/README.md",
+          "folder": "autorest_java_docs",
+          "relativeByRepoPath": true
+        }
+      ]
+    },
+ {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-js.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Documentation for Azure SDK for JavaScript",
+          "path": "documentation",
+          "folder": "azure_sdk_for_js_docs"
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-js.wiki.git",
+        "path": "azure-sdk-for-js.wiki",
+        "branch": "master",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Wiki documentation for Azure SDK for JavaScript",
+          "folder": "azure_sdk_for_js_wiki"
+        }
+      ]
     }
   ]
 }

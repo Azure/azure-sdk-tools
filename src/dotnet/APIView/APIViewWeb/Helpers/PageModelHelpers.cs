@@ -354,7 +354,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.codeLines = codeLines;
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
 
-            HashSet<string> preferredApprovers = GetPreferredApprovers(configuration, userProfileCache, user, review);
+            HashSet<string> preferredApprovers = await GetPreferredApproversAsync(configuration, userProfileCache, user, review);
 
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
@@ -617,29 +617,43 @@ namespace APIViewWeb.Helpers
         /// <param name="user"></param>
         /// <param name="review"></param>
         /// <returns></returns>
-        public static HashSet<string> GetPreferredApprovers(IConfiguration configuration, 
+        public static async Task<HashSet<string>> GetPreferredApproversAsync(IConfiguration configuration,
             UserProfileCache userProfileCache, ClaimsPrincipal user, ReviewListItemModel review)
         {
-            HashSet<string> preferredApprovers = new HashSet<string>();
-            var approverConfig = configuration["approvers"];
-            if (!string.IsNullOrEmpty(approverConfig))
+            string approverConfig = configuration["approvers"];
+            if (string.IsNullOrEmpty(approverConfig))
             {
-                foreach (var username in approverConfig.Split(","))
+                return new HashSet<string>();
+            }
+
+            string[] usernames = approverConfig.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            // Fetch all user profiles in parallel instead of sequentially
+            var profileTasks = usernames.Select(async username =>
+            {
+                try
                 {
-                    try
-                    {
-                        var userProfile = userProfileCache.GetUserProfileAsync(username, createIfNotExist: false).Result;
-                        if (!userProfile.Preferences.ApprovedLanguages.Any() || userProfile.Preferences.ApprovedLanguages.Contains(review.Language))
-                        {
-                            preferredApprovers.Add(username);
-                        }
-                    }
-                    catch 
-                    {
-                        preferredApprovers.Add(username);
-                    }
+                    UserProfileModel userProfile = await userProfileCache.GetUserProfileAsync(username, false);
+                    return (username, userProfile, success: true);
+                }
+                catch
+                {
+                    return (username, userProfile: null, success: false);
+                }
+            });
+
+            var preferredApprovers = new HashSet<string>();
+            var results = await Task.WhenAll(profileTasks);
+            foreach (var (username, userProfile, success) in results)
+            {
+                if (!success || userProfile == null ||
+                    !userProfile.Preferences.ApprovedLanguages.Any() ||
+                    userProfile.Preferences.ApprovedLanguages.Contains(review.Language))
+                {
+                    preferredApprovers.Add(username);
                 }
             }
+
             return preferredApprovers;
         }
     }

@@ -38,6 +38,8 @@ REPOSITORY_NAME=Owner/RepoName
 COPILOT_INSTRUCTIONS_PATH_MCP_EVALS=path/to/.github/copilot-instructions.md
 ```
 
+**Note**: The Azure OpenAI endpoint must have a `text-embedding-3-large` deployment configured. This is required by the `ToolDescriptionSimilarityEvaluator` for embedding-based similarity tests. Without this deployment, the tests will fail.
+
 ### Running Evaluations
 
 ```bash

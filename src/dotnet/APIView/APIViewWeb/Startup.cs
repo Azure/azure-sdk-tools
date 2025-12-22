@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -37,6 +38,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using APIViewWeb.Services;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace APIViewWeb
 {
@@ -71,6 +73,22 @@ namespace APIViewWeb
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
             services.AddAzureAppConfiguration();
+
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+                options.MimeTypes = new[] { "application/json" };
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+            });
+            services.Configure<BrotliCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+            services.Configure<GzipCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -408,6 +426,7 @@ namespace APIViewWeb
             }
 
             app.UseHttpsRedirection();
+            app.UseResponseCompression();
             app.UseStaticFiles();
 
             app.UseRouting();

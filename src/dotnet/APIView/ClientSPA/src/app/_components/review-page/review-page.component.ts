@@ -374,22 +374,39 @@ export class ReviewPageComponent implements OnInit {
   }
 
   private processEmbeddedComments() {
-    if (!this.codePanelData || !this.comments) return;
-    Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
+    if (!this.codePanelData || !this.comments) {
+        return;
+    }
+
+    Object.values(this.codePanelData.nodeMetaData).forEach((nodeData) => {
       if (nodeData.commentThread) {
-        Object.values(nodeData.commentThread).forEach(commentThreadRow => {
-          if (commentThreadRow.comments) {
-            commentThreadRow.comments.forEach(embeddedComment => {
-              const globalComment = this.comments.find(c => c.id === embeddedComment.id);
-              if (globalComment) {
-                embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
-                embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
-              }
-            });
+        Object.values(nodeData.commentThread).forEach((commentThreads: any) => {
+          let rows: any[] = [];
+          if (Array.isArray(commentThreads)) {
+            rows = commentThreads;
+          } else if (commentThreads && typeof commentThreads === 'object') {
+             if (commentThreads.type || commentThreads.comments) {
+                 rows = [commentThreads];
+             } else {
+                 rows = Object.values(commentThreads);
+             }
           }
+
+          rows.forEach((commentThreadRow: any) => {
+            if (commentThreadRow && commentThreadRow.comments) {
+              commentThreadRow.comments.forEach((embeddedComment: any) => {
+                const globalComment = this.comments.find(c => c.id === embeddedComment.id);
+                if (globalComment) {
+                  embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
+                  embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
+                }
+              });
+            }
+          });
         });
       }
     });
+    this.changeDetectorRef.detectChanges();
   }
 
   loadLatestSampleRevision(reviewId: string) {
@@ -624,11 +641,11 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
-  handleCommentThreadNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleCommentThreadNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToCommentThread(direction);
   }
 
-  handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleDiffNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToDiffNode(direction);
   }
 

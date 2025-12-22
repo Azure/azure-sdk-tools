@@ -1,6 +1,6 @@
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -19,6 +19,8 @@ import { HttpErrorInterceptorService } from './_services/http-error-interceptor/
 import { MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { ProfilePageComponent } from './_components/profile-page/profile-page.component';
+import { providePrimeNG } from 'primeng/config';
+import Lara from '@primeuix/themes/lara';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -39,7 +41,7 @@ export function initializeApp(configService: ConfigService) {
     AppRoutingModule,
     BadgeModule,
     BrowserModule,
-    BrowserAnimationsModule,
+    NoopAnimationsModule,  // Disabled animations to prevent continuous change detection
     TabMenuModule,
     ToolbarModule,
     ToastModule,
@@ -59,7 +61,15 @@ export function initializeApp(configService: ConfigService) {
       multi: true
     },
     MessageService,
-    CookieService
+    CookieService,
+    providePrimeNG({
+      theme: {
+        preset: Lara,
+        options: {
+          darkModeSelector: '.dark-theme, .dark-solarized-theme'
+        }
+      }
+    })
   ],
   bootstrap: [AppComponent]
 })

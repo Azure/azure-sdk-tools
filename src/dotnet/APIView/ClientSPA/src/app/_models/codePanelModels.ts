@@ -26,6 +26,7 @@ export class CodePanelRowData {
   diffKind: string;
   toggleDocumentationClasses: string;
   toggleCommentsClasses: string;
+  threadId: string;
   diagnostics: CodeDiagnostic;
   comments: CommentItemModel[];
   crossLanguageLines: Map<string, CrossLanguageRowDto>; // key: language
@@ -48,6 +49,7 @@ export class CodePanelRowData {
     diffKind: string = '',
     toggleDocumentationClasses: string = '',
     toggleCommentsClasses: string = '',
+    threadId: string = '',
     diagnostics: CodeDiagnostic = new CodeDiagnostic(),
     comments: CommentItemModel[] = [],
     crossLanguageLines: Map<string, CrossLanguageRowDto> = new Map<string, CrossLanguageRowDto>(),
@@ -69,6 +71,7 @@ export class CodePanelRowData {
     this.diffKind = diffKind;
     this.toggleDocumentationClasses = toggleDocumentationClasses;
     this.toggleCommentsClasses = toggleCommentsClasses;
+    this.threadId = threadId;
     this.diagnostics = diagnostics;
     this.comments = comments;
     this.crossLanguageLines = crossLanguageLines;
@@ -91,7 +94,7 @@ export class CodePanelNodeMetaData {
   documentation: CodePanelRowData[];
   diagnostics: CodePanelRowData[];
   codeLines: CodePanelRowData[];
-  commentThread: { [key: number]: CodePanelRowData };
+  commentThread: { [key: number]: CodePanelRowData[] };
   navigationTreeNode: NavigationTreeNode;
   parentNodeIdHashed: string;
   childrenNodeIdsInOrder: { [key: number]: string };

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -13,11 +12,11 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
 )
 
@@ -70,9 +69,6 @@ func (s *CodeReviewService) Review(ctx context.Context, req *model.CodeReviewReq
 		log.Printf("[RequestID: %s] Failed to build prompt: %v", requestID, err)
 		return nil, model.NewLLMServiceFailureError(fmt.Errorf("failed to build prompt: %w", err))
 	}
-
-	// debug: write prompt into a file
-	_ = os.WriteFile("debug_prompt.prompty", []byte(promptStr), 0644)
 
 	comments, err := getLLMReviewComments(ctx, promptStr, requestID)
 	if err != nil {
@@ -209,7 +205,7 @@ func formatGuidelineSection(original model.Index) string {
 		}
 	}
 	if len(guidelineParts) == 0 {
-		guidelineParts = append(guidelineParts, firstNonEmpty(original.ContextID, original.ChunkID))
+		guidelineParts = append(guidelineParts, firstNonEmpty(string(original.ContextID), original.ChunkID))
 	}
 	guidelineID := strings.Join(guidelineParts, "#")
 	guidelineLink := model.GetIndexLink(original)

@@ -354,8 +354,14 @@ def format_review_result(result: dict) -> str:
         output.append(f"### Issue {i}")
         output.append("")
         
-        if comment.get("problem"):
-            output.append(f"**Problem:** {comment['problem']}")
+        # Line number if available
+        if comment.get("line_number"):
+            output.append(f"**Line:** {comment['line_number']}")
+            output.append("")
+        
+        # Comment/description of the issue
+        if comment.get("comment"):
+            output.append(f"**Issue:** {comment['comment']}")
             output.append("")
         
         if comment.get("bad_code"):
@@ -372,8 +378,14 @@ def format_review_result(result: dict) -> str:
             output.append("```")
             output.append("")
         
+        # Guideline content if available
+        if comment.get("guideline_content"):
+            output.append(f"**Guideline:** {comment['guideline_content']}")
+            output.append("")
+        
         if comment.get("guideline_link"):
-            output.append(f"**Guideline:** [{comment.get('guideline_id', 'Link')}]({comment['guideline_link']})")
+            guideline_text = comment.get('guideline_id', 'Documentation')
+            output.append(f"**Reference:** [{guideline_text}]({comment['guideline_link']})")
             output.append("")
         
         if i < len(comments):

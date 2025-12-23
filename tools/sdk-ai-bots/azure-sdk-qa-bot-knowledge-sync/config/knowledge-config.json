@@ -182,14 +182,14 @@
         {
           "description": "Resource Manager documentation for Azure SDK for Java",
           "path": "sdk/resourcemanager/docs",
-          "folder": "azure_sdk_for_java_docs",
+          "folder": "azure_sdk_for_java_resourcemanager_docs",
           "relativeByRepoPath": true
         },
         {
           "description": "Contributing guidelines for Azure SDK for Java",
           "path": "CONTRIBUTING.md",
-          "relativeByRepoPath": true,
-          "folder": "azure_sdk_for_java_docs"
+          "folder": "azure_sdk_for_java_contributing",
+          "relativeByRepoPath": true
         }
       ]
     },
@@ -231,7 +231,8 @@
         {
           "description": "Documentation for Azure SDK for JavaScript",
           "path": "documentation",
-          "folder": "azure_sdk_for_js_docs"
+          "folder": "azure_sdk_for_js_docs",
+          "relativeByRepoPath": true
         }
       ]
     },

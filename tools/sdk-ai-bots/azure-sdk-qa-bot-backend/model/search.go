@@ -247,11 +247,23 @@ func GetIndexLink(chunk Index) string {
 		return "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
 	case Source_AzureSDKForGo:
 		return "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/" + path
+	case Source_AzureSDKForJava:
+		return "https://github.com/Azure/azure-sdk-for-java/blob/main/" + path
+	case Source_AzureSDKForJavaWiki:
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/azure-sdk-for-java/wiki/" + path
+	case Source_AutorestJava:
+		return "https://github.com/Azure/autorest.java/blob/main/" + path
 	case Source_StaticAzureDocs:
 		if chunk.Title == "Azure Versioning and Breaking Changes Policy V1.3.2" {
 			return "http://aka.ms/azbreakingchangespolicy"
 		}
 		return ""
+	case Source_AzureSDKForJavaScript:
+		return "https://github.com/Azure/azure-sdk-for-js/blob/main/" + path
+	case Source_AzureSDKForJavaScriptWiki:
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/azure-sdk-for-js/wiki/" + path
 	default:
 		return ""
 	}

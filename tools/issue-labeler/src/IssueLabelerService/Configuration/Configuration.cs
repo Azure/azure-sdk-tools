@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Configuration;
+using IssueLabeler.Shared;
 
 namespace IssueLabelerService
 {
-    public class Configuration
+    public class Configuration : IRepositoryConfigurationProvider
     {
         public IConfiguration _config;
 

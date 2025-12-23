@@ -391,14 +391,11 @@ async function processSourceDirectory(
         }
     };
     
-    // Check if sourceDir points to a single file by checking if basename has an extension
-    const basename = path.basename(sourceDir);
-    const isFile = basename.includes('.') && !basename.startsWith('.');
+    // Check if sourceDir is actually a file on the filesystem
+    const isFile = fs.existsSync(sourceDir) && fs.statSync(sourceDir).isFile();
     
     if (isFile) {
-        if (fs.existsSync(sourceDir)) {
-            processSingleFile(sourceDir, path.dirname(sourceDir));
-        }
+        processSingleFile(sourceDir, path.dirname(sourceDir));
         
         return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, unchangedFiles };
     }

@@ -11,14 +11,14 @@
       },
       "paths": [
         {
-          "path": "website/src/content/docs/docs",
+          "path": "/website/src/content/docs/docs",
           "description": "TypeSpec documentation for API design",
           "folder": "typespec_docs",
           "fileNameLowerCase": true
         },
         {
           "description": "TypeSpec HTTP specification test cases",
-          "path": "packages/http-specs/specs",
+          "path": "/packages/http-specs/specs",
           "folder": "typespec_http_specs",
           "fileNameLowerCase": true,
           "isSpectorTest": true
@@ -33,14 +33,14 @@
       },
       "paths": [
         {
-          "path": "website/src/content/docs/docs",
+          "path": "/website/src/content/docs/docs",
           "description": "TypeSpec Azure-specific documentation",
           "folder": "typespec_azure_docs",
           "fileNameLowerCase": true
         },
         {
           "description": "TypeSpec Azure HTTP specification test cases",
-          "path": "packages/azure-http-specs/specs",
+          "path": "/packages/azure-http-specs/specs",
           "folder": "typespec_azure_http_specs",
           "fileNameLowerCase": true,
           "isSpectorTest": true
@@ -69,7 +69,7 @@
       "paths": [
         {
           "description": "Documentation for Azure SDK for Python",
-          "path": "doc",
+          "path": "/doc",
           "folder": "azure_sdk_for_python_docs"
         }
       ]
@@ -98,7 +98,7 @@
       "paths": [
         {
           "description": "Microsoft API design guidelines for Azure",
-          "path": "azure",
+          "path": "/azure",
           "folder": "azure_api_guidelines",
           "relativeByRepoPath": true
         }
@@ -115,7 +115,7 @@
       "paths": [
         {
           "description": "Azure Resource Manager resource provider contract documentation",
-          "path": "v1.0",
+          "path": "/v1.0",
           "folder": "azure_resource_manager_rpc",
           "relativeByRepoPath": true
         }
@@ -131,7 +131,7 @@
       "paths": [
         {
           "description": "Internal Azure SDK engineering documentation",
-          "path": "docs",
+          "path": "/docs",
           "folder": "azure-sdk-docs-eng",
           "relativeByRepoPath": true
         }
@@ -146,7 +146,7 @@
       "paths": [
         {
           "description": "General Azure SDK guidelines and best practices",
-          "path": "docs",
+          "path": "/docs",
           "folder": "azure-sdk-guidelines",
           "ignoredPaths": ["redirects"]
         }
@@ -161,7 +161,7 @@
       "paths": [
         {
           "description": "Documentation for Azure SDK for Go",
-          "path": "documentation",
+          "path": "/documentation",
           "folder": "azure_sdk_for_go_docs"
         }
       ]
@@ -175,19 +175,19 @@
       "paths": [
         {
           "description": "Documentation for Azure SDK for Java",
-          "path": "doc",
+          "path": "/doc",
           "folder": "azure_sdk_for_java_docs",
           "relativeByRepoPath": true
         },
         {
           "description": "Resource Manager documentation for Azure SDK for Java",
-          "path": "sdk/resourcemanager/docs",
+          "path": "/sdk/resourcemanager/docs",
           "folder": "azure_sdk_for_java_resourcemanager_docs",
           "relativeByRepoPath": true
         },
         {
           "description": "Contributing guidelines for Azure SDK for Java",
-          "path": "CONTRIBUTING.md",
+          "path": "/CONTRIBUTING.md",
           "folder": "azure_sdk_for_java_contributing",
           "relativeByRepoPath": true
         }
@@ -215,7 +215,7 @@
       "paths": [
         {
           "description": "AutoRest Java customization documentation",
-          "path": "customization-base/README.md",
+          "path": "/customization-base/README.md",
           "folder": "autorest_java_docs",
           "relativeByRepoPath": true
         }
@@ -230,7 +230,7 @@
       "paths": [
         {
           "description": "Documentation for Azure SDK for JavaScript",
-          "path": "documentation",
+          "path": "/documentation",
           "folder": "azure_sdk_for_js_docs",
           "relativeByRepoPath": true
         }

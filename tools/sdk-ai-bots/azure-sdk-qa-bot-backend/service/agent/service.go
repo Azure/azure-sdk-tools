@@ -637,13 +637,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 	needCompleteFiles := make([]model.Index, 0)
 	needCompleteChunks := make([]model.Index, 0)
 
-	// Track document frequency in agenticChunks to identify important documents
-	agenticDocFrequency := make(map[string]int)
-	for _, chunk := range agenticChunks {
-		docKey := fmt.Sprintf("%s|%s", chunk.ContextID, chunk.Title)
-		agenticDocFrequency[docKey]++
-	}
-
 	// Add agentic chunks with high priority (they were specifically found by AI reasoning)
 	topK := 10
 	highReleventTopK := 2
@@ -660,18 +653,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			continue
 		}
 		processedChunks[chunkKey] = true
-
-		// Check if this document appears at least twice in agentic results
-		docKey := fmt.Sprintf("%s|%s", chunk.ContextID, chunk.Title)
-		if agenticDocFrequency[docKey] >= 2 && !strings.HasPrefix(string(chunk.ContextID), "static") {
-			// Document appears multiple times, fetch complete content
-			if !processedFiles[chunk.Title] {
-				needCompleteFiles = append(needCompleteFiles, chunk)
-				processedFiles[chunk.Title] = true
-				log.Printf("Document appears %d times in agentic results, fetching complete content: %s/%s", agenticDocFrequency[docKey], chunk.ContextID, chunk.Title)
-			}
-			continue
-		}
 
 		if strings.HasPrefix(string(chunk.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)

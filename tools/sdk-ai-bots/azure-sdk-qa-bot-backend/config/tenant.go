@@ -51,7 +51,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKGuidelines, model.Source_AutorestJava}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKForJavaWiki, model.Source_AzureSDKGuidelines, model.Source_AutorestJava}, typespecSources...),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('java_*', 'title')",
 		},
@@ -60,7 +60,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaScriptChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKGuidelines}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines}, typespecSources...),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",
 		},

@@ -4091,3 +4091,409 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         
         with self.assertNoMessages():
             self.checker.visit_call(future_exception_call)
+
+
+class TestStableSDKPreviewAPIChecker(pylint.testutils.CheckerTestCase):
+    """Test that stable SDKs don't use preview API versions"""
+
+    CHECKER_CLASS = checker.StableSDKPreviewAPIChecker
+
+    @pytest.fixture(scope="class")
+    def setup_stable(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    @pytest.fixture(scope="class")
+    def setup_beta(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_beta.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    @pytest.fixture(scope="class")
+    def setup_alpha(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_alpha.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_stable_sdk_with_preview_api_assignment(self, setup_stable):
+        """Test that stable SDK with preview API in assignment triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the assignment node for _api_version
+        class_node = setup_stable.body[1]  # MyClient class
+        init_method = class_node.body[0]  # __init__ method
+        assignment_node = init_method.body[1]  # self._api_version = "2023-01-01-preview"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=10,
+                node=assignment_node,
+                args=('1.0.0', '2023-01-01-preview'),
+                col_offset=8,
+                end_line=10,
+                end_col_offset=48,
+            )
+        ):
+            self.checker.visit_assign(assignment_node)
+
+    def test_stable_sdk_with_preview_api_default_param(self, setup_stable):
+        """Test that stable SDK with preview API as default parameter triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the function with preview API default
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[1]  # operation_with_preview_default
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=12,
+                node=function_node,
+                args=('1.0.0', '2023-05-01-preview'),
+                col_offset=4,
+                end_line=12,
+                end_col_offset=38,
+            )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_stable_sdk_with_preview_api_call(self, setup_stable):
+        """Test that stable SDK with preview API in method call triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the call node
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[3]  # operation_calling_preview
+        call_node = function_node.body[0].value  # self._some_method(api_version="2023-01-01-preview")
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=23,
+                node=call_node,
+                args=('1.0.0', '2023-01-01-preview'),
+                col_offset=8,
+                end_line=23,
+                end_col_offset=59,
+            )
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_stable_sdk_with_stable_api_default_param(self, setup_stable):
+        """Test that stable SDK with stable API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the function with stable API default
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[2]  # operation_with_stable_default
+        
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+    def test_stable_sdk_with_stable_api_call(self, setup_stable):
+        """Test that stable SDK with stable API in call doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_stable)
+        
+        # Get the call node
+        class_node = setup_stable.body[1]  # MyClient class
+        function_node = class_node.body[4]  # operation_calling_stable
+        call_node = function_node.body[0].value  # self._some_method(api_version="2023-01-01")
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_beta_sdk_with_preview_api_assignment(self, setup_beta):
+        """Test that beta SDK with preview API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_beta)
+        
+        # Get the assignment node
+        class_node = setup_beta.body[1]  # MyClient class
+        init_method = class_node.body[0]  # __init__ method
+        assignment_node = init_method.body[1]  # self._api_version = "2023-01-01-preview"
+        
+        with self.assertNoMessages():
+            self.checker.visit_assign(assignment_node)
+
+    def test_beta_sdk_with_preview_api_default_param(self, setup_beta):
+        """Test that beta SDK with preview API as default doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_beta)
+        
+        # Get the function with preview API default
+        class_node = setup_beta.body[1]  # MyClient class
+        function_node = class_node.body[1]  # operation_with_preview_default
+        
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+    def test_beta_sdk_with_preview_api_call(self, setup_beta):
+        """Test that beta SDK with preview API in call doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_beta)
+        
+        # Get the call node
+        class_node = setup_beta.body[1]  # MyClient class
+        function_node = class_node.body[2]  # operation_calling_preview
+        call_node = function_node.body[0].value  # self._some_method(api_version="2023-01-01-preview")
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_alpha_sdk_with_preview_api_default_param(self, setup_alpha):
+        """Test that alpha SDK with preview API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_alpha)
+        
+        # Get the function with preview API default
+        class_node = setup_alpha.body[1]  # MyClient class
+        function_node = class_node.body[1]  # operation_with_preview_default
+        
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+    @pytest.fixture(scope="class")
+    def setup_enum_stable(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_enum.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    @pytest.fixture(scope="class")
+    def setup_enum_beta(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_enum_beta.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_stable_sdk_with_preview_api_in_enum(self, setup_enum_stable):
+        """Test that stable SDK with preview API in ApiVersion enum triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_enum_stable)
+        
+        # Get the ApiVersion enum class
+        apiversion_class = setup_enum_stable.body[3]  # ApiVersion enum class
+        
+        # The checker will find both preview API enum members
+        preview_member_1 = apiversion_class.body[1]  # V2023_05_01_PREVIEW = "2023-05-01-preview"
+        preview_member_2 = apiversion_class.body[3]  # V2024_06_01_PREVIEW = "2024-06-01-preview"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=11,
+                node=preview_member_1,
+                args=('1.0.0', '2023-05-01-preview'),
+                col_offset=4,
+                end_line=11,
+                end_col_offset=46,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=13,
+                node=preview_member_2,
+                args=('1.0.0', '2024-06-01-preview'),
+                col_offset=4,
+                end_line=13,
+                end_col_offset=46,
+            )
+        ):
+            self.checker.visit_classdef(apiversion_class)
+
+    def test_stable_sdk_with_stable_api_in_enum(self, setup_enum_stable):
+        """Test that stable SDK with stable API in ApiVersion enum doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_enum_stable)
+        
+        # Get the ApiVersion enum class
+        apiversion_class = setup_enum_stable.body[3]  # ApiVersion enum class
+        
+        # The stable enum members should not trigger errors
+        # We test by visiting the class which checks all members
+        # and ensuring we only get messages for the preview ones
+        with self.assertNoMessages():
+            # Visit just the stable member
+            stable_member = apiversion_class.body[0]  # V2023_01_01 = "2023-01-01"
+            self.checker.visit_assign(stable_member)
+
+    def test_beta_sdk_with_preview_api_in_enum(self, setup_enum_beta):
+        """Test that beta SDK with preview API in ApiVersion enum doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_enum_beta)
+        
+        # Get the ApiVersion enum class
+        apiversion_class = setup_enum_beta.body[3]  # ApiVersion enum class
+        
+        # Beta SDK can use preview APIs in enums
+        with self.assertNoMessages():
+            self.checker.visit_classdef(apiversion_class)
+
+    @pytest.fixture(scope="class")
+    def setup_config_pattern(self):
+        """Setup for config object pattern tests (like azure-ai-evaluation)"""
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "stable_sdk_preview_api_config.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_stable_sdk_config_with_direct_preview_api(self, setup_config_pattern):
+        """Test that config class with direct preview API assignment triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get MyClientConfiguration class
+        config_class = setup_config_pattern.body[1]  # MyClientConfiguration
+        init_method = config_class.body[0]  # __init__
+        assignment_node = init_method.body[1]  # self.api_version: str = "2024-01-01-preview"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=14,
+                node=assignment_node,
+                args=('1.0.0', '2024-01-01-preview'),
+                col_offset=8,
+                end_line=14,
+                end_col_offset=52,
+            )
+        ):
+            self.checker.visit_annassign(assignment_node)
+
+    def test_stable_sdk_config_with_kwargs_pop_preview_api(self, setup_config_pattern):
+        """Test that config class with kwargs.pop preview API default triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get MyOtherClientConfiguration class
+        config_class = setup_config_pattern.body[2]  # MyOtherClientConfiguration
+        init_method = config_class.body[0]  # __init__
+        assignment_node = init_method.body[1]  # self.api_version: str = kwargs.pop(...)
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=23,
+                node=assignment_node,
+                args=('1.0.0', '2024-02-01-preview'),
+                col_offset=8,
+                end_line=23,
+                end_col_offset=79,
+            )
+        ):
+            self.checker.visit_annassign(assignment_node)
+
+    def test_stable_sdk_config_class_level_constant_preview(self, setup_config_pattern):
+        """Test that class-level constant with preview API triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get MyThirdClientConfiguration class
+        config_class = setup_config_pattern.body[3]  # MyThirdClientConfiguration
+        constant_assignment = config_class.body[0]  # DEFAULT_API_VERSION = "2024-03-01-preview"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=30,
+                node=constant_assignment,
+                args=('1.0.0', '2024-03-01-preview'),
+                col_offset=4,
+                end_line=30,
+                end_col_offset=46,
+            )
+        ):
+            self.checker.visit_assign(constant_assignment)
+
+    def test_stable_sdk_client_inline_kwargs_pop_preview(self, setup_config_pattern):
+        """Test that client with inline kwargs.pop preview API triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get MyOtherClient class
+        client_class = setup_config_pattern.body[5]  # MyOtherClient
+        init_method = client_class.body[0]  # __init__
+        assignment_node = init_method.body[0]  # api_version = kwargs.pop(...)
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=58,
+                node=assignment_node,
+                args=('1.0.0', '2024-04-01-preview'),
+                col_offset=8,
+                end_line=58,
+                end_col_offset=69,
+            )
+        ):
+            self.checker.visit_assign(assignment_node)
+
+    def test_stable_sdk_client_annotated_kwargs_pop_preview(self, setup_config_pattern):
+        """Test that client with annotated kwargs.pop preview API triggers error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get MyThirdClient class
+        client_class = setup_config_pattern.body[6]  # MyThirdClient
+        init_method = client_class.body[0]  # __init__
+        assignment_node = init_method.body[0]  # self._api_version: str = kwargs.pop(...)
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="stable-sdk-no-preview-api",
+                line=67,
+                node=assignment_node,
+                args=('1.0.0', '2024-05-01-preview'),
+                col_offset=8,
+                end_line=67,
+                end_col_offset=80,
+            )
+        ):
+            self.checker.visit_annassign(assignment_node)
+
+    def test_stable_sdk_config_with_stable_api_no_error(self, setup_config_pattern):
+        """Test that config class with stable API doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get StableConfiguration class
+        config_class = setup_config_pattern.body[7]  # StableConfiguration
+        init_method = config_class.body[0]  # __init__
+        assignment_node = init_method.body[1]  # self.api_version: str = "2024-01-01"
+        
+        with self.assertNoMessages():
+            self.checker.visit_annassign(assignment_node)
+
+    def test_stable_sdk_config_with_stable_api_kwargs_pop_no_error(self, setup_config_pattern):
+        """Test that config class with stable API in kwargs.pop doesn't trigger error"""
+        # Visit module first to get VERSION
+        self.checker.visit_module(setup_config_pattern)
+        
+        # Get StableConfigWithPop class
+        config_class = setup_config_pattern.body[8]  # StableConfigWithPop
+        init_method = config_class.body[0]  # __init__
+        assignment_node = init_method.body[1]  # self.api_version: str = kwargs.pop("api_version", "2024-02-01")
+        
+        with self.assertNoMessages():
+            self.checker.visit_annassign(assignment_node)

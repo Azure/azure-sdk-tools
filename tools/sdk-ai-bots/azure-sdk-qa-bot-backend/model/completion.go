@@ -3,11 +3,12 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
-	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
-	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
-	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
-	TenantID_GolangChannelQaBot TenantID = "golang_channel_qa_bot"
+	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
+	TenantID_TypeSpecExtension      TenantID = "typespec_extension"
+	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
+	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"
+	TenantID_GolangChannelQaBot     TenantID = "golang_channel_qa_bot"
+	TenantID_AzureTypespecAuthoring TenantID = "azure_typespec_authoring"
 )
 
 type Source string
@@ -58,6 +59,7 @@ type AdditionalInfoType string
 const (
 	AdditionalInfoType_Link  AdditionalInfoType = "link"
 	AdditionalInfoType_Image AdditionalInfoType = "image"
+	AdditionalInfoType_Text  AdditionalInfoType = "text"
 )
 
 type AdditionalInfo struct {
@@ -93,6 +95,9 @@ const (
 	QuestionScope_Unknown   QuestionScope = "unknown"
 	QuestionScope_Branded   QuestionScope = "branded"
 	QuestionScope_Unbranded QuestionScope = "unbranded"
+	QuestionScope_MgmtPlane QuestionScope = "resource-management"
+	QuestionScope_DataPlane QuestionScope = "data-plane"
+	QuestionScope_Common    QuestionScope = "common"
 )
 
 type IntentionResult struct {

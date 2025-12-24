@@ -114,3 +114,4 @@ extends:
                   path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
                   artifact: evaluation-results
                   displayName: Publish Evaluation Results Artifact
+                  condition: always()

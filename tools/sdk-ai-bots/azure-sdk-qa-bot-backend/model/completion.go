@@ -3,11 +3,14 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
-	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
-	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
-	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
-	TenantID_GolangChannelQaBot TenantID = "golang_channel_qa_bot"
+	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
+	TenantID_TypeSpecExtension      TenantID = "typespec_extension"
+	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
+	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"
+	TenantID_GolangChannelQaBot     TenantID = "golang_channel_qa_bot"
+	TenantID_JavaChannelQaBot       TenantID = "java_channel_qa_bot"
+	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
+	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
 )
 
 type Source string
@@ -29,6 +32,11 @@ const (
 	Source_AzureSDKForGo                  Source = "azure_sdk_for_go_docs"
 	Source_StaticAzureDocs                Source = "static_azure_docs"
 	Source_StaticTypeSpecToSwaggerMapping Source = "static_typespec_to_swagger_mapping"
+	Source_AzureSDKForJava                Source = "azure_sdk_for_java_docs"
+	Source_AzureSDKForJavaWiki            Source = "azure_sdk_for_java_wiki"
+	Source_AutorestJava                   Source = "autorest_java_docs"
+	Source_AzureSDKForJavaScript          Source = "azure_sdk_for_js_docs"
+	Source_AzureSDKForJavaScriptWiki      Source = "azure_sdk_for_js_wiki"
 )
 
 type Role string
@@ -100,5 +108,6 @@ type IntentionResult struct {
 	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
 	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
 	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	RouteTenant        TenantID      `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID to route this question to (returned by general tenant intention detection)"`
 	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
 }

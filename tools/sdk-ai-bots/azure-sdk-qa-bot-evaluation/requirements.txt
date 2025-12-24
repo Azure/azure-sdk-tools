@@ -5,5 +5,5 @@ tabulate==0.9.0
 openai>=1.78.0
 azure-identity>=1.23.1
 aiohttp==3.12.15
-azure-storage-blob==12.26.0
+azure-storage-blob==12.27.1
 PyYAML==6.0.2

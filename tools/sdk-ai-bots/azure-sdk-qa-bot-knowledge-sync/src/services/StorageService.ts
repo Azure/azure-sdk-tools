@@ -202,6 +202,12 @@ export class BlobService {
             return true;
         }
 
+        // Check if the blob has a deletion flag in metadata
+        if (existing.metadata && existing.metadata.IsDeleted === "true") {
+            console.log(`Blob ${blobPath} has deletion flag, needs re-upload to override`);
+            return true;
+        }
+
         // Convert Uint8Array to base64 string for comparison
         const existingMD5 = Buffer.from(
             existing.properties.contentMD5

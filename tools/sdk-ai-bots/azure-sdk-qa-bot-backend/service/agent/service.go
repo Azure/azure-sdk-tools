@@ -83,7 +83,22 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 2. Build query for search
 	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Check if we need RAG processing
+	// 3. Handle general tenant routing: if intention contains recommended_tenant, route to that tenant
+	if req.TenantID == model.TenantID_GeneralQaBot && intention != nil {
+		routedTenantID := model.TenantID(intention.RouteTenant)
+		if routedConfig, hasConfig := config.GetTenantConfig(routedTenantID); hasConfig && routedTenantID != model.TenantID_GeneralQaBot {
+			log.Printf("General tenant routing: %s → %s", req.TenantID, routedTenantID)
+			// Update tenant ID and config to use the routed tenant for the rest of the flow
+			req.TenantID = routedTenantID
+			tenantConfig = routedConfig
+			req.Sources = tenantConfig.Sources
+			// Re-run intention recognition with the routed tenant's prompt template
+			query, intention = s.buildQueryForSearch(req, reasoningModelMessages)
+		} else {
+			log.Printf("General tenant: Recommended tenant '%s' not found, falling back to general tenant", routedTenantID)
+		}
+	}
+
 	var knowledges []model.Knowledge
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
@@ -109,7 +124,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, err
 	}
 
-	// 5. Get answer from LLM
+	// 6. Get answer from LLM
 	llmMessages = append([]azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
 	}, llmMessages...)
@@ -119,7 +134,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 6. Process the result
+	// 7. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext, _ := json.Marshal(knowledges)
@@ -638,6 +653,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			continue
 		}
 		processedChunks[chunkKey] = true
+
 		if strings.HasPrefix(string(chunk.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)
 			continue

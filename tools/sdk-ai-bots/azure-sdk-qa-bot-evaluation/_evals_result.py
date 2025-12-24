@@ -249,6 +249,9 @@ class EvalsResult:
                 ret = False
         if failed_scenarios:
             logging.info(f"Failed Scenarios: {' '.join(failed_scenarios)}")
+        else:
+            logging.info(f"All scenarios passed without issues.")
+        
         return ret
 
     def establish_baseline(self, all_results: dict[str, Any], is_ci: bool) -> None:

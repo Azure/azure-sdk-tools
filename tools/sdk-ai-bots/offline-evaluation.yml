@@ -108,9 +108,9 @@ extends:
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
-              - task: PublishBuildArtifacts@1
-                inputs:
-                  pathToPublish: '$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache'
-                  artifactName: 'evaluation-results'
-                  publishLocation: 'Container'
-                displayName: 'Publish Evaluation Results Artifact'
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
+                  artifact: evaluation-results
+                  displayName: Publish Evaluation Results Artifact

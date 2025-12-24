@@ -91,7 +91,7 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - script: |
-                  python evals_run.py --evaluation_name_prefix $(Build.BuildId)
+                  python evals_run.py --evaluation_name_prefix $(Build.BuildId) --cache_result full
                 displayName: 'Run Evals'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                 env:
@@ -108,3 +108,9 @@ extends:
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
+              - task: PublishBuildArtifacts@1
+                inputs:
+                  pathToPublish: '$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache'
+                  artifactName: 'evaluation-results'
+                  publishLocation: 'Container'
+                displayName: 'Publish Evaluation Results Artifact'

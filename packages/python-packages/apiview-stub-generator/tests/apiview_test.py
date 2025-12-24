@@ -328,3 +328,52 @@ class TestApiView:
         stub_gen._set_root_namespace(file_path, "namespace")
         # If the file is an extend_ file, the namespace should not be set
         assert (stub_gen.namespace == "") if extends else (stub_gen.namespace == "namespace")
+
+    @mark.parametrize("pkg_path", ALL_PATHS, ids=ALL_PATH_IDS)
+    def test_markdown_generation(self, pkg_path):
+        """Test that markdown generation works and produces valid output"""
+        temp_path = tempfile.mkdtemp()
+        try:
+            stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, md=True, json=False)
+            apiview = stub_gen.generate_tokens()
+            
+            from apistub._markdown_renderer import render_markdown
+            md_content = render_markdown(apiview)
+            
+            # Verify markdown structure
+            assert md_content.startswith("```python")
+            assert md_content.endswith("```")
+            assert "namespace apistubgentest" in md_content
+            
+            # Verify hierarchical indentation exists
+            lines = md_content.split('\n')
+            # Find a class line and verify it has indentation
+            class_lines = [l for l in lines if 'class' in l and 'apistubgentest' in l]
+            assert len(class_lines) > 0
+            # Classes under namespace should have 4 spaces
+            assert any(l.startswith('    class') for l in class_lines)
+        finally:
+            shutil.rmtree(temp_path, ignore_errors=True)
+
+    def test_markdown_flags_and_naming(self):
+        """Test markdown flag and filename format (JSON is always generated)"""
+        temp_path = tempfile.mkdtemp()
+        out_path = tempfile.mkdtemp()
+        try:
+            # Test flag storage: default (no flags) - JSON always generated
+            stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
+            assert stub_gen.md == False
+            
+            # Test --md flag
+            stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, md=True)
+            assert stub_gen.md == True
+            
+            # Test filename format
+            stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, out_path=out_path, md=True)
+            apiview = stub_gen.generate_tokens()
+            expected_filename = "api.md"
+            assert expected_filename == "api.md"
+        finally:
+            shutil.rmtree(temp_path, ignore_errors=True)
+            shutil.rmtree(out_path, ignore_errors=True)
+

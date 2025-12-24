@@ -95,6 +95,12 @@ class StubGenerator:
                 default=False,
                 action="store_true",
             )
+            parser.add_argument(
+                "--md",
+                help=("Generate markdown output in addition to JSON."),
+                default=False,
+                action="store_true",
+            )
             self._args = parser.parse_args()
 
         pkg_path = self._parse_arg("pkg_path")
@@ -105,6 +111,7 @@ class StubGenerator:
         filter_namespace = self._parse_arg("filter_namespace")
         source_url = self._parse_arg("source_url")
         skip_pylint = self._parse_arg("skip_pylint")
+        md = self._parse_arg("md")
 
         if not os.path.exists(pkg_path):
             logging.error("Package path [{}] is invalid".format(pkg_path))
@@ -122,6 +129,7 @@ class StubGenerator:
         self.mapping_path = mapping_path
         self.filter_namespace = filter_namespace or ""
         self.namespace = ""
+        self.md = md if md is not None else False
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -135,13 +143,14 @@ class StubGenerator:
             PylintParser.parse(self.wheel_path or self.pkg_path)
 
     def _parse_arg(self, name):
-        value = self._kwargs.get(name, None)
-        if not value:
-            try:
-                value = getattr(self._args, name, None)
-            except AttributeError:
-                value = None
-        return value
+        # Check if the argument was passed as a kwarg first
+        if name in self._kwargs:
+            return self._kwargs[name]
+        # Otherwise try to get it from parsed command-line arguments
+        try:
+            return getattr(self._args, name, None)
+        except AttributeError:
+            return None
 
     def install_extra_dependencies(self):
         for extra in self.extras_require:

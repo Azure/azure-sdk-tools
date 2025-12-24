@@ -361,7 +361,7 @@ class EvalsRunner:
             result = evaluate(
                 data=output_file,
                 evaluators=evaluators,
-                evaluation_name=evaluation_name
+                evaluation_name=evaluation_name,
                 # column mapping
                 evaluator_config=evaluator_config,
                 # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal

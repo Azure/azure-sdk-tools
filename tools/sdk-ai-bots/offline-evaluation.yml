@@ -108,6 +108,7 @@ extends:
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)
+                  EVALUATE_THRESHOLD: $(EVALUATE_THRESHOLD)
             templateContext:
               outputs:
                 - output: pipelineArtifact

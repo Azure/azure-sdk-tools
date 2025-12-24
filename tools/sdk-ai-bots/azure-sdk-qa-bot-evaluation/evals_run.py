@@ -14,7 +14,7 @@ from _evals_result import EvalsResult
 from eval import AzureBotEvaluator
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s")
     logging.info("🚀 Starting evaluation ...")
 
     parser = argparse.ArgumentParser(description="Run evals for Azure Chat Bot.")

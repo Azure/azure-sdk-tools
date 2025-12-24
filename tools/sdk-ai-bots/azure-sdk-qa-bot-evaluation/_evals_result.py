@@ -180,17 +180,19 @@ class EvalsResult:
         logging.info("====================================================")
         logging.info(f"\n\n✨ {file_name} results:\n")
         metrics = self._metrics.keys()
-        print(self.build_output_table(eval_results, baseline_results))
+        print(self.build_output_table(eval_results, baseline_results), flush=True)
 
         if baseline_results:
             print(
-                f"\n{file_name} average score: {eval_results[-1]['average_score']} {EvalsResult.format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}"
+                f"\n{file_name} average score: {eval_results[-1]['average_score']} {EvalsResult.format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}",
+                flush=True
             )
             for metric in metrics:
                 pass_rate = eval_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in eval_results[-1] else 0
                 fail_rate = eval_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in eval_results[-1] else 0
                 print(
                     f" {metric}: pass({pass_rate}) fail({fail_rate})",
+                    flush=True
                 )
 
     def show_results(self, all_results: dict[str, Any], with_baseline: bool = True) -> None:

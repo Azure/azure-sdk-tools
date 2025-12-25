@@ -1,0 +1,162 @@
+[
+    {
+        "testcase": "Fixing Invalid Type Specifications and SDK Regeneration in Released APIs",
+        "expected": {
+            "answer": "To fix invalid type specifications in previously released APIs and regenerate SDKs, you should follow these steps:\nFix the Spec and Follow Breaking Change Process: If your fix is a breaking change or a bug fix in an already released API version, you must submit a PR against the main branch of the public Azure REST API specs repository. If your PR is labeled with BreakingChangeReviewRequired or VersioningReviewRequired, you must get approval from the Breaking Change Review Board (see aka.ms/brch). For bug fixes, you may be able to apply the BreakingChange-Approved-BugFix label yourself, but the process should be strictly followed.\nARM Review: Once the breaking change review is resolved, request ARM review. Note: You cannot proceed to ARM review until the breaking change process is complete.\nSDK Generation and Release Plan:\nFor TypeSpec-based management plane SDKs (Java, JavaScript, Python, Go):\nUse the release planner to request SDK generation for the fixed API version. This will create a tracking issue in the Azure/sdk-release-request repo.\nThe Shanghai SDK team will generate the SDK and open a PR in the corresponding SDK repository. However, it is the service owner's responsibility to follow up, complete any customizations, and drive the PR through review and merge. You will be notified when the PR is created.\nAfter the SDK is generated, follow the release guidance to publish the package.\nFor .NET: Service owners must generate the SDK manually using the updated TypeSpec, then create and submit a PR to the azure-sdk-for-net repository.\nManual Follow-Up: While the initial SDK PRs for Java, JavaScript, Python, and Go are created automatically after you request generation, you are still responsible for any manual updates, review, and merging of these PRs. For .NET, all steps are manual after generation.\nSummary:\nYou do not need to manually create PRs in each SDK repo for Java, JavaScript, Python, and Go; the release planner and SDK generation pipelines will create draft PRs for you after you request generation.\nYou must still review, customize (if needed), and drive the SDK PRs to completion.\nFor .NET, the process is manual: you generate and submit the PR yourself.\nAlways ensure you have breaking change and ARM approvals before requesting SDK generation.\nFor more details, see the referenced documentation below.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "The recommended process for fixing an invalid type specification in previously released Azure APIs (both preview and stable) and regenerating SDKs is as follows:\n\n1. **Prepare and Review Your API Spec Fix:**\n   - First, create a new branch in the API spec repository (Azure/azure-rest-api-specs) for your fixes. Only finished specs representing services deployed to customers should be merged to `main` ([design#api-specs-pr#api-versions-and-branches.md]).\n   - For breaking changes in released API versions, you must get approval from the ARM API Review Board (for management plane) and the Azure Breaking Changes Board. Breaking changes are not permitted in GAed SDKs unless explicitly approved ([develop#sdk-release#sdk-release.md], [develop#sdk-release#sdk-release-prerequisites.md], [design#specs-pr-guides#pr-brch-deep.md]).\n   - Follow the [CPEX Breaking Changes Review Process](https://eng.ms/docs/cloud-ai-platform/azure-core/azure-core-product/product-lifecycle-management-plm/service-lifecycle-and-actions-team/service-lifecycle-actions-team/cpex/media/overview_breaking_changes).\n\n2. **Get Spec Reviewed and Merged:**\n   - Once you have your fix ready, create a pull request (PR) against `main` for the API spec. Ensure your changes meet Azure REST API versioning requirements and policy ([design#api-specs-pr#api-tutorial#api-tutorial-3-publish.md], [design#api-specs#api-versioning.md]).\n   - Breaking changes require sign-off from the relevant boards before merging.\n\n3. **Create a Release Plan:**\n   - After the spec is reviewed and merged, create a release plan using the Release Planner. This is mandatory for managing SDK generation, review, and release ([develop#sdk-release#sdk-release.md], [plan#upcoming_release_planner_change.md]).\n\n4. **SDK Regeneration (Automated Process):**\n   - For TypeSpec-based management plane SDKs, submit a 'Generate SDK' request in the Release Planner. This triggers automation that:\n     - Creates a tracking issue in the specs repo.\n     - Opens DRAFT PRs for each language SDK repo (Java, .NET, Python, JavaScript/TypeScript, Go, etc.) ([plan#upcoming_release_planner_change.md]).\n     - You do NOT need to manually create PRs for each SDK repo; automation handles this.\n   - Review the generated PRs, address feedback, and mark them as 'Ready for review'. The Azure SDK team will review and approve them. You are responsible for merging these PRs.\n\n5. **Release SDKs:**\n   - After merging the SDK PRs, use the Release Planner to trigger the SDK release pipeline. The pipeline will submit version bump PRs and handle package publication ([develop#sdk-release#sdk-release.md], [plan#upcoming_release_planner_change.md]).\n\n6. **Additional Requirements:**\n   - Ensure your `CHANGELOG.md` files are updated with the release date and summary of changes. The automation usually updates these, but you must verify before starting release pipelines ([develop#sdk-release#sdk-release-prerequisites.md], [develop#sdk-release#sdk-release-mgmt-dotnet.md]).\n   - Breaking changes must be documented, justified, and approved.\n\n**Summary:**\n- You do not need to manually create PRs for SDK repos after fixing the spec; use the Release Planner to trigger SDK generation, review, and release across all languages. Manual intervention is only required for reviewing, updating, and merging the generated PRs.\n- All breaking changes require explicit approval from the ARM API Review Board and the Azure Breaking Changes Board before merging and releasing.\n\nIf you encounter issues with automation or SDK PR generation, check the Release Planner's 'Generate SDK' step for troubleshooting guidance, or reach out to the [SDK Release Support channel](https://teams.microsoft.com/l/channel/19%3A084875bb626242ed95f3ac8dddfaa12a%40thread.skype/SDK%20release%20support?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47).\n",
+            "reference_urls": [
+                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release",
+                "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-brch-deep",
+                "https://eng.ms/docs/products/azure-developer-experience/plan/upcoming_release_planner_change",
+                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites",
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-versions-and-branches",
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-3-publish"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and accurately conveys all essential information from the CONTEXT without introducing unsupported details or omitting critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, accurately reflecting the process and requirements, but misses the explicit detail that .NET SDK generation and PR creation is manual, which is a minor but relevant omission.",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "TypeSpec SDK API Reviews Process for Management Plane Services",
+        "expected": {
+            "answer": "Welcome to the TypeSpec and Azure SDK onboarding process! Since you are working on a new preview API version and have generated the SDKs (autogenerated SDK API reviews), here is how you get these reviewed by the specific SDK teams:\nManagement Plane (ARM) SDKs Do NOT Require Arch Board Review:\nFor management plane (ARM) libraries like Azure Fleet, you do NOT need to schedule an SDK Architecture Board meeting. The review process is handled through the pull request (PR) workflow in the Azure REST API Specs repository.\nSDK Review Process for Your Scenario:\nAfter your REST API spec PR is approved and merged, the next steps are:\nEnsure you have a release plan created in the Azure SDK Release Planner.\nThe SDK generation and release planning will involve tracking the release plan milestones, where you can monitor which language SDKs are being generated and when they are ready for review.\nAssigning Specific SDK Teams as Reviewers:\nSDK teams are automatically assigned as reviewers for their respective language repos using the CODEOWNERS file in each SDK repository. If your service is not already listed in the CODEOWNERS file for a given language SDK repo, you should add your service and the appropriate GitHub users or teams to ensure SDK team visibility and review (see the reference for details).\nYou can also @-mention specific SDK team members in the generated SDK PRs in each language repository if you need urgent attention.\nHow to Track and Request Review:\nAfter the SDK PR is generated (either manually or via automation), monitor the PR in the respective SDK repo. The SDK team responsible for that language will review according to the CODEOWNERS assignment.\nIf you do not see timely review or need to escalate, reach out to the language-specific Teams channel or the SDK repo maintainers directly.\nSummary of Steps:\nConfirm your service is listed in the CODEOWNERS file for each SDK repo.\nCreate/track your release plan in the Azure SDK Release Planner.\nMonitor and follow up on the generated SDK PRs for reviews.\nFor Management Plane, no Arch Board meeting is needed; reviews are handled via the PR process.\nLet me know if you need guidance on updating CODEOWNERS or navigating the release planner!\nReferences below provide detailed steps and process links.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "To get your autogenerated SDK API reviews (from your TypeSpec-based PR) reviewed and approved by the responsible SDK teams for each language, you must use the Azure SDK Release Planner process. Here\u2019s the recommended workflow:\n\n1. Ensure your API spec PR is complete, available in the public repository, and passing CI.\n2. Create a release plan in the Release Planner and submit a request to generate SDKs for your new API version (2025-07-01-preview). This will trigger automation that creates draft PRs for each Tier-1 SDK language (i.e., .NET, Python, Java, JavaScript, and Go if applicable).\n3. Review the generated SDK PRs (linked from the Release Planner) to verify content and correctness.\n4. When a PR is ready for review, open the PR link and click the 'Ready for review' button in GitHub. This action assigns the Azure SDK team (language-specific teams) as reviewers for that PR.\n5. The SDK teams will review and approve the PRs. You should monitor for feedback and address any comments until approval.\n6. After approval, you are responsible for merging the PR and proceeding to the release step in the Release Planner.\n\nThis workflow ensures that each language\u2019s SDK team is automatically notified and assigned for review when you move the PR from draft to 'Ready for review' state. You do NOT need to manually find or tag individual language teams\u2014just use the Release Planner and the GitHub workflow as described.\n\nIf you encounter issues or delays with PR assignment or review, you can escalate in the Azure SDK Onboarding Teams channel or use the language-specific team channels for help.\n\nActionable next steps:\n- Confirm your API spec PR is complete and passing CI.\n- Use the Release Planner to generate SDKs and track PRs.\n- For each SDK PR, click 'Ready for review' when content is validated.\n- Respond to SDK team feedback and merge after approval.\n\nFor further details and troubleshooting, see the references below.",
+            "reference_urls": [
+                "https://eng.ms/docs/products/azure-developer-experience/plan/upcoming_release_planner_change",
+                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-develop",
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-review"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering the main workflow and process, but misses some minor details about CODEOWNERS, Arch Board review exemption, and @-mentioning for urgent attention.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "Reusing Release Plans from Preview to GA",
+        "expected": {
+            "answer": "You cannot simply reuse your public preview release plan for your GA (General Availability) SDK release. Each major milestone (public preview, GA, etc.) requires its own release plan in the Azure SDK Release Planner. The GA release plan will have additional requirements, such as more comprehensive testing, additional samples, and potentially a final architecture review. You should create a new release plan specifically for your GA SDK release to ensure all required steps and validations are tracked and completed. The release planner helps you track your progress and ensures you meet all the prerequisites for a GA release.\nHowever, you can use your public preview release plan as a reference or template to speed up the creation of your GA release plan, but it is important to go through the official process and create a dedicated GA plan.\nIf you have already completed some steps during public preview (such as generating SDKs or completing reviews), those may not need to be repeated, but you must still document and track them in the GA release plan.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You cannot simply reuse the same release plan created for public preview for your GA SDK release. Each release phase\u2014Public Preview and GA\u2014has distinct requirements and milestones that must be tracked and completed in the Azure SDK Release Planner. Specifically, the GA release requires you to complete the API readiness and SDK release milestones as outlined for GA, which are different from those for public preview. The release planner is designed to help you manage each stage of your product lifecycle separately and ensures you meet all Azure SDK requirements for GA. Therefore, you should create a new release plan for your GA SDK release, ensuring all GA-specific tasks are tracked and completed. This process is required for both management plane and data plane services to meet CPEX and Azure SDK onboarding requirements.",
+            "reference_urls": [
+                "https://eng.ms/docs/products/azure-developer-experience/onboard/requirements",
+                "https://eng.ms/docs/products/azure-developer-experience/onboard/request-CPEX-sign-off",
+                "https://eng.ms/docs/products/azure-developer-experience",
+                "https://eng.ms/docs/products/azure-developer-experience/plan/track-progress"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE accurately and completely reflects the requirements and process described in the CONTEXT, without adding unsupported details or missing critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, accurately reflecting the main requirements and process, but misses some minor details about using the previous plan as a template, not repeating steps, and specific GA requirements.",
+        "overall_score": 6.0
+    },
+    {
+        "testcase": "Target Branch Selection for Onboarding New Resource Types",
+        "expected": {
+            "answer": "When onboarding new resource types (especially for ARM/Control Plane APIs), the right target branch depends on the stage of your API and whether your work should be public or private:\nIf your resource types are still under development or in private preview (not ready for public visibility), you should target the RPSaaSMaster branch in the private repo: azure-rest-api-specs-pr.\nOnce your API is ready for public preview or GA, you should target the main branch in the public repo: azure-rest-api-specs.\nYou mentioned getting a branch protection error. This is likely because the main branch in the private repo is read-only and mirrored from the public repo. You cannot merge directly into main in the private repo. For private work, use RPSaaSMaster. For public release, use main in the public repo.\nSummary:\nUse azure-rest-api-specs-pr/RPSaaSMaster for private onboarding and early-stage work.\nUse azure-rest-api-specs/main for public onboarding and final publishing.\nIf you need to update your PR, change the target branch to RPSaaSMaster in the private repo for onboarding new resource types. If your resource is ready for public consumption, move it to a PR against the public repo's main branch.\nLet me know if you need help updating your PR or have questions about the process!",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "Sorry, I can't access the content of your PR link directly. However, I can provide clear guidance based on Azure SDK onboarding standards.\n\nFor onboarding new resource types (especially for Azure Resource Manager/ARM management plane specs), you should target the branch based on your API version lifecycle stage:\n\n- If your resource types are in **private preview**, you should target the `RPSaaSMaster` branch in the private repo (`azure-rest-api-specs-pr`). This is the correct workflow until your API is ready for public preview or GA.\n- If your resource types are ready for **public preview or GA**, you must target the `main` branch in the public repo (`azure-rest-api-specs`). Only public preview and GA specs should be merged to public `main`.\n\nRegarding the **branch protection error** you are seeing on your PR:\n- The `main` branch in the private repo is read-only and is mirrored from the public repo; you cannot merge directly into it. If you attempt to merge into `main` in `azure-rest-api-specs-pr`, you will hit branch protection errors.\n- For `RPSaaSMaster` (private repo), you may encounter branch protection errors if your PR does not meet required checks or branch policies. Make sure you have write access and that all required checks are passing.\n\n**Actionable steps:**\n1. Confirm your API version lifecycle stage (in development, private preview, public preview, GA).\n2. For private preview, retarget your PR to `RPSaaSMaster` in `azure-rest-api-specs-pr`.\n3. For public preview/GA, target `main` in `azure-rest-api-specs`.\n4. Ensure all required checks and reviews are completed as per repo policy before merging.\n\nIf you need to update infrastructure code in a protected branch (such as `release-*`), you can use the helper pipeline described in the docs to update only infrastructure without affecting specs.\n\nReference the onboarding and branching guides below for details. If you need further help with permissions or resolving branch protection errors, ensure your GitHub account is properly linked and you have required repo access.",
+            "reference_urls": [
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-repos",
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-versions-and-branches",
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-versions-and-branches",
+                "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-3-publish"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, accurately representing the onboarding process, branch targeting, and error explanation, with no missing key statements.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "Resolving .NET SDK Breaking Change Detection for Required-to-Optional Parameter Changes",
+        "expected": {
+            "answer": "Making a previously required parameter optional is considered a breaking change, and this can cause .NET SDK generation to fail during pull request validation, as you've observed. This typically triggers the SDK breaking change detection pipeline.\nTo resolve this:\nUnderstand the Error: Check the details of the failing pipeline\u2014the logs should indicate which parameters are affected and why the .NET SDK (or other SDKs) consider this a breaking change.\nSuppress the Breaking Change: If the change is intentional and necessary (and has been approved or is in the process of approval), you should add a suppression for the breaking change:\nDownload the SDK generation artifacts for .NET from the failed pipeline. There will be an HTML report listing the specific breaking changes detected (you can usually find these under Absent SDK breaking changes suppressions).\nCreate or update a sdk-suppressions.yaml file in your service's TypeSpec folder (where your tspconfig.yaml lives).\nCopy the relevant suppression items into this file following the format shown in the docs (see reference below).\nCommit this change to your PR. The validation pipeline will then recognize the suppression and let the PR proceed to review.\nGet Review/Approval: SDK reviewers will verify the suppression. If everything is in order, they will approve it and your PR can move forward.\nConsider Versioning Guidance: For some scenarios (like making a property optional in new API versions only), you may also want to use the @madeOptional decorator in TypeSpec to indicate intentional verisoned behavior (see second reference).\nIf you need more help, reach out in the .NET SDK team's channel or consult your language team as they're the first point of contact for SDK build failures.\nLet me know if you need guidance on preparing the suppression file or interpreting the error log!",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "Changing a required parameter to optional in your OpenAPI spec is considered a breaking change, and the .NET SDK generation pipeline will flag this during pull request validation. Azure's process requires that all breaking changes are reviewed and approved before they can be merged. \n\nHere's how to proceed:\n\n1. Your PR will be blocked by the `BreakingChangeReviewRequired` label due to this breaking change.\n2. You must follow the Azure Breaking Change Review Process (see aka.ms/brch). This involves submitting your change for review by the Breaking Change Review Board. Only after the board approves the change (and applies an appropriate approval label, e.g., `BreakingChange-Approved-Benign`), can you proceed.\n3. Suppression of this failure is NOT possible via simple PR labels or configuration. You must go through the formal review and approval process.\n4. Once the breaking change is approved and the correct label is applied, the validation should pass and you can merge your PR.\n\nMake sure you:\n- Document why this change is needed in your PR description.\n- Follow the guidance at aka.ms/brch for submitting your change for review.\n- Wait for the review board to approve and apply the appropriate label.\n\nDo not attempt to suppress or ignore the failure; permanent resolution is only through approval.\n\nIf you need further help, see the support documentation or reach out in the relevant SDK language team channel.",
+            "reference_urls": [
+                "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-brch-deep",
+                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-prerequisites",
+                "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            ]
+        },
+        "similarity": 3.0,
+        "gpt_similarity": 3.0,
+        "similarity_result": "fail",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 3.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response includes the main points about breaking change, review, and approval, but omits and contradicts the suppression process and technical steps, missing about half the ground truth's key information.",
+        "overall_score": 0.0
+    },
+    {
+        "average_score": 2.52,
+        "total_evals": 5,
+        "similarity_pass_rate": 4,
+        "groundedness_pass_rate": 2,
+        "response_completeness_pass_rate": 5,
+        "similarity_fail_rate": 1,
+        "groundedness_fail_rate": 0,
+        "response_completeness_fail_rate": 0
+    }
+]

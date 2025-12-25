@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 
                     if (!string.Equals(expectedJson, actualJson, StringComparison.OrdinalIgnoreCase))
                     {
-                        MetricError($"Tool call arguments did not match. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}", metric);
+                        MetricError($"Tool call arguments did not match. This was tool call #{countCalls}: {expToolName}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}", metric);
                         return result;
                     }
                 }

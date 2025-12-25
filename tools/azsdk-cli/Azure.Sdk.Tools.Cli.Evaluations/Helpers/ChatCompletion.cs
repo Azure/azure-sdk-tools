@@ -72,6 +72,13 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 response = await _chatClient.GetResponseAsync(conversationMessages, chatOptions);
             }
 
+            // Add the final assistant message (when there are no further tool calls)
+            var finalAssistantMessage = response.Messages.FirstOrDefault();
+            if (finalAssistantMessage != null)
+            {
+                conversationMessages.Add(finalAssistantMessage);
+            }
+
             return new ChatResponse([.. conversationMessages.Skip(chatInitialIndex)]);
         }
 

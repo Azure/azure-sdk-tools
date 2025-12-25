@@ -16,8 +16,6 @@ Questions about API Specification, such as TypeSpec or OpenAPI's usage, syntax, 
 - Azure-specific TypeSpec patterns (@route, @doc, @armResourceOperations, etc.)
 - TypeSpec validation
 - TypeSpec migration from OpenAPI
-- API Specification repo processes (PR reviews, guidelines, best practices)
-- API Specification PR review, pipelines and checks
 - **Recommended Tenant**: `azure_sdk_qa_bot`
 
 ### Python SDK
@@ -51,7 +49,8 @@ Questions about JavaScript SDK development, usage, or processes:
 ### Azure SDK Onboarding
 Questions about Azure SDK onboarding phases and processes:
 - Service onboarding prerequisites and setup
-- Repo, pipeline or actions permission issue
+- Permission Issues
+- API Specification repo pull request review, pipelines, checks or actions
 - API design phase guidance
 - SDK generation processes
 - SDK validation reproduce

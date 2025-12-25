@@ -124,7 +124,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, err
 	}
 
-	// 6. Get answer from LLM
+	// 5. Get answer from LLM
 	llmMessages = append([]azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
 	}, llmMessages...)
@@ -134,7 +134,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 7. Process the result
+	// 6. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext, _ := json.Marshal(knowledges)
@@ -653,7 +653,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			continue
 		}
 		processedChunks[chunkKey] = true
-
 		if strings.HasPrefix(string(chunk.ContextID), "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)
 			continue

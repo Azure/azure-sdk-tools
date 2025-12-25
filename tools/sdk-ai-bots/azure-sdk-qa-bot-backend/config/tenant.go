@@ -69,17 +69,14 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_AzureSDKQaBot: {
-		PromptTemplate: "typespec/qa.md",
-		Sources:        append(typespecSources, model.Source_AzureSDKDocsEng),
-		SourceFilter: map[model.Source]string{
-			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
-		},
+		PromptTemplate:          "typespec/qa.md",
+		Sources:                 append(typespecSources),
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
 	},
 	model.TenantID_AzureSDKOnboarding: {
 		PromptTemplate:          "azure_sdk_onboarding/qa.md",
-		Sources:                 []model.Source{model.Source_AzureSDKDocsEng},
+		Sources:                 []model.Source{model.Source_AzureSDKDocsEng, model.Source_AzureRestAPISpec},
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
 	},

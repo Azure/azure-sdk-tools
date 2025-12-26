@@ -92,23 +92,24 @@
             "reference_urls": []
         },
         "actual": {
-            "answer": "Thank you for reaching out and sharing your experience! We understand how important it is to have visibility into workflow validation details to help you debug and verify your changes early. While I can't grant permissions directly, I recommend contacting your repository administrator or project lead to request workflow visibility for your account. This will help ensure you can view validation errors and streamline your development process. If you have any suggestions on improving this process, please feel free to share your feedback with us. We're always eager to make things better for contributors like you!",
-            "reference_urls": []
+            "answer": "You currently do not have sufficient permissions to view the workflow or error details for your Azure REST API PR. To resolve this, you need to request the necessary access. Please visit https://aka.ms/azsdk/access and follow the instructions to get the required permissions for the azure-rest-api-specs repository. Once your access is granted, you will be able to view the workflow and validation error details before the final review. This is a common process for contributors and ensures you can debug and validate your changes effectively.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+            ]
         },
-        "similarity": 3.0,
-        "gpt_similarity": 3.0,
-        "similarity_result": "fail",
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
         "similarity_threshold": 4,
-        "groundedness": 1.0,
-        "gpt_groundedness": 1.0,
-        "groundedness_reason": "There is no CONTEXT, so the RESPONSE is entirely ungrounded and unrelated to any provided material.",
-        "groundedness_result": "fail",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 4.0,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, accurate, and complete based on the provided context.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 4.0,
+        "response_completeness": 5.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response contains most of the necessary information (the need to get permissions and how to do so), but it misses the specific actionable link and direct reference from the ground truth.",
-        "overall_score": 3.8
+        "response_completeness_threshold": 4,
+        "overall_score": 7.0
     },
     {
         "testcase": "Brownfield TypeSpec migration",

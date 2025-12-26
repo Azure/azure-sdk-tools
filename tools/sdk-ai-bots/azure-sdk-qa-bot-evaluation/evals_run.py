@@ -1,7 +1,9 @@
 import argparse
 from datetime import datetime
+import json
 import logging
 import os
+import pathlib
 import sys
 from typing import Any
 from _evals_runner import EvalsRunner, EvaluatorClass
@@ -12,7 +14,7 @@ from _evals_result import EvalsResult
 from eval import AzureBotEvaluator
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s")
     logging.info("🚀 Starting evaluation ...")
 
     parser = argparse.ArgumentParser(description="Run evals for Azure Chat Bot.")
@@ -27,7 +29,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--baseline_check", type=str, default="True", help="Compare the result with baseline.")
     parser.add_argument("--retrieve_response", type=str, default="True", help="Call bot api to retrieve response.")
-    parser.add_argument("--cache_result", type=str, default="False", help="cache the evaluation result persistently.")
+    parser.add_argument("--cache_result", type=str, default="none", help="cache the evaluation result persistently, none, full, or score.")
     parser.add_argument("--evaluators", type=str, help="choose evaluators to run, string separated by comma")
     args = parser.parse_args()
 
@@ -36,7 +38,6 @@ if __name__ == "__main__":
     args.send_result = args.send_result.lower() in ("true", "1", "yes")
     args.baseline_check = args.baseline_check.lower() in ("true", "1", "yes")
     args.retrieve_response = args.retrieve_response.lower() in ("true", "1", "yes")
-    args.cache_result = args.cache_result.lower() in ("true", "1", "yes")
     args.evaluators = args.evaluators.split(",") if args.evaluators is not None else None
 
     script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -166,7 +167,7 @@ if __name__ == "__main__":
             **kwargs,
         )
 
-        if args.cache_result:
+        if args.cache_result.lower() == "score":
             now = datetime.now()
             result_file_path = os.path.join(script_directory, f"evaluate-result-{now.strftime('%Y-%m-%d-%H-%S')}")
             logging.info(f"all_results:{len(all_results.keys())}")
@@ -176,6 +177,18 @@ if __name__ == "__main__":
                     result_file.write(evals_runner.evals_result.build_output_table(test_results))
                 result_file.flush()
                 result_file.close()
+        elif args.cache_result.lower() == "full":
+            now = datetime.now()
+            cache_result_path = pathlib.Path(__file__).parent / "cache"
+            logging.info(f"cache results under {cache_result_path.absolute()}")
+            if not cache_result_path.exists():
+                cache_result_path.mkdir(parents=True, exist_ok=True)
+
+            for name, result in all_results.items():
+                cache_file_name = f"{name.split('_')[0]}-result-{now.strftime('%Y-%m-%d-%H-%S')}.json"
+                output_path = cache_result_path / cache_file_name
+                with open(str(output_path), "w") as f:
+                    json.dump(result, indent=4, fp=f)
 
         evals_runner.evals_result.show_results(all_results, args.baseline_check)
         if args.baseline_check:

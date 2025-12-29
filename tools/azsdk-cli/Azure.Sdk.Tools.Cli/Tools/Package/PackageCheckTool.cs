@@ -108,6 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var languageChecks = GetLanguageService(packagePath);
             if (languageChecks == null)
             {
+
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
@@ -265,9 +266,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
             }
 
-            return overallSuccess
+            var finalResponse = overallSuccess
                 ? new PackageCheckResponse(0, combinedOutput) { NextSteps = nextSteps }
                 : new PackageCheckResponse(1, combinedOutput, message) { NextSteps = nextSteps };
+
+            await AddPackageDetailsInResponse(finalResponse, packagePath, ct);
+            return finalResponse;
         }
 
         private async Task<PackageCheckResponse> RunChangelogValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)

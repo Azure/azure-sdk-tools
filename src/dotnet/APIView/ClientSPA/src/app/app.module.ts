@@ -7,7 +7,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { IndexPageComponent } from './_components/index-page/index-page.component';
 import { ReviewsListComponent } from './_components/reviews-list/reviews-list.component';
-import { TabMenuModule } from 'primeng/tabmenu';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { BadgeModule } from 'primeng/badge';
@@ -42,7 +41,6 @@ export function initializeApp(configService: ConfigService) {
     BadgeModule,
     BrowserModule,
     NoopAnimationsModule,  // Disabled animations to prevent continuous change detection
-    TabMenuModule,
     ToolbarModule,
     ToastModule,
     HttpClientModule

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TimeagoModule } from 'ngx-timeago';
 import { combineLatest, take } from 'rxjs';
@@ -25,7 +25,7 @@ import { environment } from 'src/environments/environment';
     imports: [
         CommonModule,
         FormsModule,
-        SidebarModule,
+        DrawerModule,
         SelectButtonModule,
         TimeagoModule
     ]

@@ -9,7 +9,7 @@ import { MenuModule } from 'primeng/menu';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 
 describe('ReviewPageLayoutComponent', () => {
   let component: ReviewPageLayoutComponent;
@@ -25,7 +25,7 @@ describe('ReviewPageLayoutComponent', () => {
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenubarModule,
-        SidebarModule,
+        DrawerModule,
         MenuModule
       ],
       providers: [

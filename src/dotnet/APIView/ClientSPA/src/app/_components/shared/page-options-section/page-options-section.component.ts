@@ -36,8 +36,8 @@ export class PageOptionsSectionComponent implements OnInit{
     }
   }
 
-  onCollapseChange(value: boolean) {
-    this.collapsed = value;
+  onCollapseChange(value: boolean | undefined) {
+    this.collapsed = value ?? false;
     this.cookieService.set(this.sectionStateCookieKey!, this.collapsed.toString());
   }
 }

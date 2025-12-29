@@ -21,10 +21,10 @@ describe('ReviewPageOptionsComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [
-        ReviewPageOptionsComponent,
-        PageOptionsSectionComponent
+        ReviewPageOptionsComponent
       ],
       imports: [
+        PageOptionsSectionComponent,
         HttpClientTestingModule,
         HttpClientModule,
         BrowserAnimationsModule,
@@ -169,7 +169,7 @@ describe('ReviewPageOptionsComponent', () => {
         // Setup for unsupported package
         component.review!.packageName = '@azure-rest/test-package';
         component.review!.language = 'JavaScript';
-        
+
         // Trigger ngOnChanges
         component.ngOnChanges({
           activeAPIRevision: {
@@ -232,7 +232,7 @@ describe('ReviewPageOptionsComponent', () => {
         const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
         expect(result).toBe(false);
       });
-      
+
       // Test cases that should return TRUE (approval DISABLED)
       it('should return true when copilot review required but not completed', () => {
         const isReviewByCopilotRequired = true;
@@ -282,12 +282,12 @@ describe('ReviewPageOptionsComponent', () => {
         component.review!.language = 'JavaScript';
         component.activeAPIRevision!.packageVersion = '1.0.0';
         component.activeAPIRevision!.approvers = [];
-        
+
         component.isCopilotReviewSupported = component['isCopilotReviewSupportedForPackage']();
         const isReviewByCopilotRequired = true;
         const isVersionReviewedByCopilot = false;
         const shouldDisable = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
-        
+
         expect(component.isCopilotReviewSupported).toBe(false);
         expect(shouldDisable).toBe(false); // Should not disable because copilot not available
       });
@@ -297,12 +297,12 @@ describe('ReviewPageOptionsComponent', () => {
         component.review!.language = 'JavaScript';
         component.activeAPIRevision!.packageVersion = '1.0.0';
         component.activeAPIRevision!.approvers = [];
-        
+
         component.isCopilotReviewSupported = component['isCopilotReviewSupportedForPackage']();
         const isReviewByCopilotRequired = true;
         const isVersionReviewedByCopilot = false;
         const shouldDisable = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
-        
+
         expect(component.isCopilotReviewSupported).toBe(true);
         expect(shouldDisable).toBe(true); // Should disable because copilot required but not completed
       });
@@ -327,9 +327,9 @@ describe('ReviewPageOptionsComponent', () => {
       it('should not disable approval when copilot review is not supported', () => {
         component.isCopilotReviewSupported = false;
         component.activeAPIRevision!.approvers = [];
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
@@ -337,50 +337,50 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.packageVersion = '1.0.0-beta.1';
         component.activeAPIRevision!.approvers = [];
         spyOn(component as any, 'isPreviewVersion').and.returnValue(true);
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
       it('should not disable approval when user has already approved', () => {
         component.activeAPIRevision!.approvers = ['testuser'];
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
       it('should disable approval when copilot review is required but not completed', () => {
         component.activeAPIRevision!.approvers = [];
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
       });
 
       it('should not disable approval when copilot review is completed', () => {
         component.activeAPIRevision!.approvers = [];
-        
+
         component['updateApprovalStates'](true, true);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
       it('should not disable approval when copilot review is not required', () => {
         component.activeAPIRevision!.approvers = [];
-        
+
         component['updateApprovalStates'](false, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
       it('should handle copilot not supported overriding requirement', () => {
         component.isCopilotReviewSupported = false;
         component.activeAPIRevision!.approvers = [];
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
@@ -388,17 +388,17 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.packageVersion = '2.0.0-alpha.3';
         component.activeAPIRevision!.approvers = [];
         spyOn(component as any, 'isPreviewVersion').and.returnValue(true);
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
       it('should set correct button classes when approval is disabled', () => {
         component.activeAPIRevision!.approvers = [];
-        
+
         component['updateApprovalStates'](true, false);
-        
+
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
         expect(component.apiRevisionApprovalBtnClass).toBe("btn btn-outline-secondary disabled");
         expect(component.apiRevisionApprovalMessage).toBe("To approve the current API revision, it must first be reviewed by Copilot");

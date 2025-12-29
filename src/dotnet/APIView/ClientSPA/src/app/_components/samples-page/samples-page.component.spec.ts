@@ -26,14 +26,14 @@ describe('SamplesPageComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [
-        SamplesPageComponent,
+        SamplesPageComponent
+      ],
+      imports: [
         NavBarComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
         PageOptionsSectionComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         SplitterModule,

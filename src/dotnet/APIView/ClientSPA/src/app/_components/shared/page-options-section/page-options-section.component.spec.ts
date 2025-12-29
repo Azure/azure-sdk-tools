@@ -11,8 +11,8 @@ describe('PageOptionsSectionComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [PageOptionsSectionComponent],
       imports: [
+        PageOptionsSectionComponent,
         PanelModule,
         InputSwitchModule,
         BrowserAnimationsModule

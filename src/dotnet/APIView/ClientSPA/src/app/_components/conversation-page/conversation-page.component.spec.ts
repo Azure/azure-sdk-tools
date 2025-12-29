@@ -21,15 +21,13 @@ describe('ConversationPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         ConversationPageComponent,
         ConversationsComponent,
         NavBarComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenuModule,

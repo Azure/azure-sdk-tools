@@ -17,13 +17,11 @@ describe('ReviewPageLayoutComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         ReviewPageLayoutComponent,
         ReviewInfoComponent,
         NavBarComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenubarModule,

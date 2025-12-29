@@ -9,7 +9,7 @@ const globPatterns = [
 ];
 
 module.exports = {
-  globDirectory: '../APIViewWeb/wwwroot/spa',
+  globDirectory: '../APIViewWeb/wwwroot/spa/browser',
   globPatterns: globPatterns,
   swDest: '../APIViewWeb/wwwroot/spa/sw.js',
   skipWaiting: true,

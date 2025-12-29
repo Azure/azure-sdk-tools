@@ -11,8 +11,8 @@ describe('RevisionListComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RevisionsListComponent],
       imports: [
+        RevisionsListComponent,
         HttpClientTestingModule,
         SharedAppModule,
         AppModule

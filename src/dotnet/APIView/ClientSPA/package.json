@@ -22,7 +22,7 @@
     "@popperjs/core": "^2.11.8",
     "@primeng/themes": "^21.0.1",
     "@primeuix/themes": "^2.0.2",
-    "bootstrap": "^5.3.1",
+    "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.10.5",
     "class-transformer": "^0.5.1",
     "idb": "^8.0.3",

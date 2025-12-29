@@ -31,19 +31,19 @@ describe('ReviewPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ 
+      declarations: [
         ReviewPageComponent,
         ReviewNavComponent,
         ReviewPageOptionsComponent,
+        CodePanelComponent,
+        ReviewsListComponent
+      ],
+      imports: [
         PageOptionsSectionComponent,
         NavBarComponent,
         ReviewInfoComponent,
-        CodePanelComponent,
-        ReviewsListComponent,
         RevisionsListComponent,
-        ApprovalPipe
-      ],
-      imports: [
+        ApprovalPipe,
         HttpClientTestingModule,
         BrowserAnimationsModule,
         SharedAppModule,
@@ -81,12 +81,12 @@ describe('ReviewPageComponent', () => {
       const reviewId = 'test-review-id';
       const activeApiRevisionId = 'test-active-api-revision-id';
       const diffApiRevisionId = 'test-diff-api-revision-id';
-  
+
       spyOn(reviewsService, 'getReviewContent').and.returnValue(
         of(new HttpResponse<ArrayBuffer>({ status: 204 }))
       );
       component.loadReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId);
-  
+
       expect(component.loadFailed).toBeTrue();
       expect(component.loadFailedMessage).toContain('API-Revision Content Not Found. The');
       expect(component.loadFailedMessage).toContain('active and/or diff API-Revision(s) may have been deleted.');
@@ -97,7 +97,7 @@ describe('ReviewPageComponent', () => {
       review.isDeleted = true;
       spyOn(reviewsService, 'getReview').and.returnValue(of(review));
       component.loadReview('testReviewId');
-  
+
       expect(component.loadFailed).toBeTrue();
       expect(component.loadFailedMessage).toContain('Review has been deleted.');
     });

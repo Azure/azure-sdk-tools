@@ -9,11 +9,13 @@ describe('CrossLangViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [CrossLangViewComponent],
-      imports: [HttpClientTestingModule]
+      imports: [
+        CrossLangViewComponent,
+        HttpClientTestingModule
+      ]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(CrossLangViewComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

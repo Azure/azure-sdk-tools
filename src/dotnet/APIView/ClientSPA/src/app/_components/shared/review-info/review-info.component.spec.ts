@@ -15,12 +15,10 @@ describe('ReviewInfoComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         ReviewInfoComponent,
         RevisionOptionsComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BreadcrumbModule,
         MenubarModule,
         SelectModule,

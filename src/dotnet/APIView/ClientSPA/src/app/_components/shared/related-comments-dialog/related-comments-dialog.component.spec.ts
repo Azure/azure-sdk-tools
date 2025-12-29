@@ -13,8 +13,8 @@ describe('RelatedCommentsDialogComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RelatedCommentsDialogComponent],
       imports: [
+        RelatedCommentsDialogComponent,
         SharedAppModule,
         ReviewPageModule,
         NoopAnimationsModule
@@ -37,25 +37,25 @@ describe('RelatedCommentsDialogComponent', () => {
       comment2.id = 'comment2';
       const comment3 = new CommentItemModel();
       comment3.id = 'comment3';
-      
+
       component.relatedComments = [comment1, comment2, comment3];
     });
 
     it('should toggle individual comment selection', () => {
       expect(component.isCommentSelected('comment1')).toBeFalse();
-      
+
       component.toggleCommentSelection('comment1');
       expect(component.isCommentSelected('comment1')).toBeTrue();
-      
+
       component.toggleCommentSelection('comment1');
       expect(component.isCommentSelected('comment1')).toBeFalse();
     });
 
     it('should select all comments when selectAll is checked', () => {
       expect(component.getSelectedCount()).toBe(0);
-      
+
       component.onSelectAllChange({ checked: true });
-      
+
       expect(component.getSelectedCount()).toBe(3);
       expect(component.isCommentSelected('comment1')).toBeTrue();
       expect(component.isCommentSelected('comment2')).toBeTrue();
@@ -66,9 +66,9 @@ describe('RelatedCommentsDialogComponent', () => {
       component.toggleCommentSelection('comment1');
       component.toggleCommentSelection('comment2');
       expect(component.getSelectedCount()).toBe(2);
-      
+
       component.onSelectAllChange({ checked: false });
-      
+
       expect(component.getSelectedCount()).toBe(0);
       expect(component.isCommentSelected('comment1')).toBeFalse();
       expect(component.isCommentSelected('comment2')).toBeFalse();
@@ -89,7 +89,7 @@ describe('RelatedCommentsDialogComponent', () => {
   describe('batch voting', () => {
     it('should toggle batch upvote correctly', () => {
       expect(component.batchVote).toBeNull();
-      
+
       component.toggleBatchVote('up');
       expect(component.batchVote).toBe('up');
       expect(component.hasBatchUpvote()).toBeTrue();
@@ -98,7 +98,7 @@ describe('RelatedCommentsDialogComponent', () => {
 
     it('should toggle batch downvote correctly', () => {
       expect(component.batchVote).toBeNull();
-      
+
       component.toggleBatchVote('down');
       expect(component.batchVote).toBe('down');
       expect(component.hasBatchDownvote()).toBeTrue();
@@ -108,7 +108,7 @@ describe('RelatedCommentsDialogComponent', () => {
     it('should switch from upvote to downvote', () => {
       component.toggleBatchVote('up');
       expect(component.batchVote).toBe('up');
-      
+
       component.toggleBatchVote('down');
       expect(component.batchVote).toBe('down');
       expect(component.hasBatchUpvote()).toBeFalse();
@@ -122,7 +122,7 @@ describe('RelatedCommentsDialogComponent', () => {
       comment1.id = 'comment1';
       const comment2 = new CommentItemModel();
       comment2.id = 'comment2';
-      
+
       component.relatedComments = [comment1, comment2];
       component.toggleCommentSelection('comment1');
       component.toggleCommentSelection('comment2');
@@ -133,9 +133,9 @@ describe('RelatedCommentsDialogComponent', () => {
       component.batchVote = 'up';
       component.resolutionComment = 'Test resolution comment';
       component.selectedDisposition = 'keepOpen';
-      
+
       component.resolveSelected();
-      
+
       expect(component.resolveSelectedComments.emit).toHaveBeenCalledWith({
         commentIds: ['comment1', 'comment2'],
         batchVote: 'up',
@@ -150,17 +150,17 @@ describe('RelatedCommentsDialogComponent', () => {
     it('should not emit resolution data when no comments selected', () => {
       spyOn(component.resolveSelectedComments, 'emit');
       component.selectedCommentIds.clear();
-      
+
       component.resolveSelected();
-      
+
       expect(component.resolveSelectedComments.emit).not.toHaveBeenCalled();
     });
 
     it('should hide dialog after successful resolution', () => {
       spyOn(component, 'onHide');
-      
+
       component.resolveSelected();
-      
+
       expect(component.onHide).toHaveBeenCalled();
     });
   });
@@ -174,7 +174,7 @@ describe('RelatedCommentsDialogComponent', () => {
         new StructuredToken('void '),
         new StructuredToken('methodName()')
       ];
-      
+
       component.allCodePanelRowData = [codeRow];
     });
 
@@ -182,9 +182,9 @@ describe('RelatedCommentsDialogComponent', () => {
       const comment = new CommentItemModel();
       comment.id = 'comment1';
       comment.elementId = 'element1';
-      
+
       const context = component.getCodeContextForComment(comment);
-      
+
       expect(context).toBe('public void methodName()');
     });
 
@@ -192,9 +192,9 @@ describe('RelatedCommentsDialogComponent', () => {
       const comment = new CommentItemModel();
       comment.id = 'comment1';
       comment.elementId = 'nonexistent';
-      
+
       const context = component.getCodeContextForComment(comment);
-      
+
       expect(context).toBe('');
     });
 
@@ -202,12 +202,12 @@ describe('RelatedCommentsDialogComponent', () => {
       const comment = new CommentItemModel();
       comment.id = 'comment1';
       comment.elementId = 'element1';
-      
+
       // First call
       const context1 = component.getCodeContextForComment(comment);
       // Second call should use cache
       const context2 = component.getCodeContextForComment(comment);
-      
+
       expect(context1).toBe(context2);
       expect(context1).toBe('public void methodName()');
     });
@@ -216,7 +216,7 @@ describe('RelatedCommentsDialogComponent', () => {
   describe('triggering comment identification', () => {
     it('should identify triggering comment correctly', () => {
       component.selectedCommentId = 'trigger-comment';
-      
+
       expect(component.isTriggeringComment('trigger-comment')).toBeTrue();
       expect(component.isTriggeringComment('other-comment')).toBeFalse();
     });

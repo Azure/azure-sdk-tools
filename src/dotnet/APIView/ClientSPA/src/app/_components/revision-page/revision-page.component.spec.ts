@@ -25,15 +25,13 @@ describe('RevisionPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         RevisionPageComponent,
         NavBarComponent,
         ReviewInfoComponent,
         RevisionsListComponent,
         ReviewPageLayoutComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenubarModule,

@@ -11,8 +11,8 @@ describe('AICommentFeedbackDialogComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AICommentFeedbackDialogComponent],
       imports: [
+        AICommentFeedbackDialogComponent,
         FormsModule,
         DialogModule,
         CheckboxModule,
@@ -46,9 +46,9 @@ describe('AICommentFeedbackDialogComponent', () => {
     component.commentId = 'test-123';
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
-    
+
     component.onSubmit();
-    
+
     expect(component.feedbackSubmit.emit).toHaveBeenCalledWith({
       commentId: 'test-123',
       reasons: ['This comment is factually incorrect'],
@@ -61,18 +61,18 @@ describe('AICommentFeedbackDialogComponent', () => {
     component.commentId = 'test-123';
     component.selectedReasons = [];
     component.additionalComments = 'Test comment';
-    
+
     component.onSubmit();
-    
+
     expect(component.feedbackSubmit.emit).not.toHaveBeenCalled();
   });
 
   it('should reset form after successful submit', () => {
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
-    
+
     component.onSubmit();
-    
+
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
   });
@@ -81,12 +81,12 @@ describe('AICommentFeedbackDialogComponent', () => {
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
     component.visible = true;
-    
+
     spyOn(component.visibleChange, 'emit');
     spyOn(component.cancel, 'emit');
-    
+
     component.onCancel();
-    
+
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
     expect(component.visible).toBe(false);
@@ -97,11 +97,11 @@ describe('AICommentFeedbackDialogComponent', () => {
   it('should reset form on hide', () => {
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
-    
+
     spyOn(component.cancel, 'emit');
-    
+
     component.onHide();
-    
+
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
     expect(component.cancel.emit).toHaveBeenCalled();

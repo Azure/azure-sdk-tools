@@ -15,8 +15,8 @@ describe('CommentThreadComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [CommentThreadComponent],
       imports: [
+        CommentThreadComponent,
         HttpClientTestingModule,
         ReviewPageModule,
         SharedAppModule,

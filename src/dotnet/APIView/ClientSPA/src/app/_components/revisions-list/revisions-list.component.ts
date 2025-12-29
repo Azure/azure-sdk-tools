@@ -7,7 +7,7 @@ import { FileSelectEvent, FileUpload, FileUploadModule } from 'primeng/fileuploa
 import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ContextMenuModule } from 'primeng/contextmenu';
@@ -37,7 +37,7 @@ import { environment } from 'src/environments/environment';
         ButtonModule,
         MenuModule,
         FileUploadModule,
-        SidebarModule,
+        DrawerModule,
         SelectModule,
         MultiSelectModule,
         ContextMenuModule,

@@ -63,7 +63,7 @@ extends:
           - name: WebProjectPath
             value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
           - name: NodeVersion
-            value: '18.x'
+            value: '22.x'
           - name: BuildConfiguration
             value: 'Release'
           - name: GoParserPackagePath

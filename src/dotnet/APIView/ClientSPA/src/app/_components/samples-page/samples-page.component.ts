@@ -99,7 +99,7 @@ export class SamplesPageComponent {
     this.loadLatestAPIRevision(this.reviewId!);
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const navigationState = this.router.getCurrentNavigation()?.extras.state;
+      const navigationState = this.router.currentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
         this.updateStateBasedOnQueryParams(params);
       }

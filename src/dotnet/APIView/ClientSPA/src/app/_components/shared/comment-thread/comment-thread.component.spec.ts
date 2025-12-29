@@ -47,7 +47,7 @@ describe('CommentThreadComponent', () => {
       component.codePanelRowData!.comments = [azureSdkComment];
       fixture.detectChanges();
 
-      const copilotIcon = fixture.nativeElement.querySelector('img[src="/spa/assets/icons/copilot.svg"]');
+      const copilotIcon = fixture.nativeElement.querySelector('img[src="assets/icons/copilot.svg"]');
       expect(copilotIcon).toBeTruthy();
       expect(copilotIcon?.alt).toBe('Azure SDK Copilot');
     });

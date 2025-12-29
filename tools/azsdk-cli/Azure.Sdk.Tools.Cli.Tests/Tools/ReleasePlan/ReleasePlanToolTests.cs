@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private IEnvironmentHelper environmentHelper;
         private ReleasePlanTool releasePlanTool;
         private IInputSanitizer inputSanitizer;
+        private HttpClient httpClient;
 
         [SetUp]
         public void Setup()
@@ -29,6 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService = new MockDevOpsService();
             gitHubService = new MockGitHubService();
             inputSanitizer = new InputSanitizer();
+            httpClient = new Mock<HttpClient>().Object;
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
             typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
@@ -54,7 +56,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 userHelper,
                 gitHubService,
                 environmentHelper,
-                inputSanitizer);
+                inputSanitizer,
+                httpClient);
         }
 
         [Test]
@@ -149,7 +152,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 userHelper,
                 gitHubService,
                 environmentHelperMock.Object,
-                inputSanitizer);
+                inputSanitizer,
+                httpClient);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -190,7 +194,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 userHelper,
                 gitHubService,
                 environmentHelperMock.Object,
-                inputSanitizer);
+                inputSanitizer,
+                httpClient);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 

@@ -79,7 +79,7 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar" appendTo="body">
+<p-drawer *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar" appendTo="body">
     <div (click)="$event.stopPropagation()" style="height: 100%">
         <app-revisions-list *ngIf="review"
             [review]="review"
@@ -87,11 +87,11 @@
             [revisionSidePanel]="revisionSidePanel!">
         </app-revisions-list>
     </div>
-</p-sidebar>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="conversation-sidebar" appendTo="body">
+</p-drawer>
+<p-drawer *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="conversation-sidebar" appendTo="body">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2" (click)="$event.stopPropagation()">
-            <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
+            <a [routerLink]="['/conversation', reviewId]" class="h4">Conversations</a>
         </div>
     </ng-template>
     <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
@@ -107,8 +107,8 @@
             (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
         </app-conversations>
     </div>
-</p-sidebar>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar" appendTo="body">
+</p-drawer>
+<p-drawer *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar" appendTo="body">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2" (click)="$event.stopPropagation()">
             <h4>Cross Language Revisions</h4>
@@ -124,4 +124,4 @@
             </span>
         </div>
     </div>
-</p-sidebar>
+</p-drawer>

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { InputSwitchChangeEvent } from 'primeng/inputswitch';
+import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
@@ -25,9 +25,10 @@ import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteN
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 
 @Component({
-  selector: 'app-review-page-options',
-  templateUrl: './review-page-options.component.html',
-  styleUrls: ['./review-page-options.component.scss']
+    selector: 'app-review-page-options',
+    templateUrl: './review-page-options.component.html',
+    styleUrls: ['./review-page-options.component.scss'],
+    standalone: false
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
@@ -224,7 +225,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
  * Callback for commentSwitch Change
  * @param event the Filter event
  */
-  onCommentsSwitchChange(event: InputSwitchChangeEvent) {
+  onCommentsSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showCommentsEmitter.emit(event.checked);
   }
@@ -233,7 +234,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for systemCommentSwitch Change
   * @param event the Filter event
   */
-  onShowSystemCommentsSwitchChange(event: InputSwitchChangeEvent) {
+  onShowSystemCommentsSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showSystemCommentsEmitter.emit(event.checked);
   }
@@ -242,7 +243,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for showDocumentationSwitch Change
   * @param event the Filter event
   */
-  onShowDocumentationSwitchChange(event: InputSwitchChangeEvent) {
+  onShowDocumentationSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showDocumentationEmitter.emit(event.checked);
   }
@@ -251,7 +252,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for showLeftnavigationSwitch Change
   * @param event the Filter event
   */
-  onShowLeftNavigationSwitchChange(event: InputSwitchChangeEvent) {
+  onShowLeftNavigationSwitchChange(event: ToggleSwitchChangeEvent) {
     this.showLeftNavigationEmitter.emit(event.checked);
   }
 
@@ -259,7 +260,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Disable Lazy Loading
    * @param event the Filter event
    */
-  onDisableLazyLoadingSwitchChange(event: InputSwitchChangeEvent) {
+  onDisableLazyLoadingSwitchChange(event: ToggleSwitchChangeEvent) {
     if (event.checked) {
       this.showDisableCodeLinesLazyLoadingModal = true;
     } else {
@@ -293,7 +294,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for subscribeSwitch Change
   * @param event the Filter event
   */
-  onSubscribeSwitchChange(event: InputSwitchChangeEvent) {
+  onSubscribeSwitchChange(event: ToggleSwitchChangeEvent) {
     this.subscribeEmitter.emit(event.checked);
   }
 
@@ -301,7 +302,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Callback for showLineNumbersSwitch Change
    * @param event the Filter event
    */
-  onShowLineNumbersSwitchChange(event: InputSwitchChangeEvent) {
+  onShowLineNumbersSwitchChange(event: ToggleSwitchChangeEvent) {
     this.showLineNumbersEmitter.emit(event.checked);
   }
 
@@ -309,7 +310,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Callback for showHiddenAPISwitch Change
    * @param event the Filter event
    */
-  onShowHiddenAPISwitchChange(event: InputSwitchChangeEvent) {
+  onShowHiddenAPISwitchChange(event: ToggleSwitchChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
   }
 

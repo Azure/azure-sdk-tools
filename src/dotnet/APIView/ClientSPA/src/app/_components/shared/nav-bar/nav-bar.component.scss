@@ -1,5 +1,5 @@
-@import "../../../../../../APIViewWeb/Client/css/shared/mixins.scss";
-@import "../../../../../../APIViewWeb/Client/css/shared/navbar-shared";
+@use "../../../../../../APIViewWeb/Client/css/shared/mixins.scss" as *;
+@use "../../../../../../APIViewWeb/Client/css/shared/navbar-shared" as *;
 
 #apiview-logo {
     @include apiview-logo;

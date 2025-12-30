@@ -1,13 +1,13 @@
 
-@import "../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+@use "../../../../../APIViewWeb/Client/css/shared/mixins.scss" as *;
 
 :host ::ng-deep {
-    @include glow;
-
     font-family: Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;
     display: block;
+
+    @include glow;
 
     #viewport {
         overflow: auto;

@@ -63,7 +63,7 @@ function updateCODEOWNERS(packagePath: string) {
         "###########\n# Config\n###########",
     );
     if (configSectionIndex !== -1) {
-        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${packagePath}/ @qiaozha @MaryGao\n`;
+        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${packagePath}/ @qiaozha @MaryGao @JialinHuang803\n`;
         if (!content.includes(newContentBeforeConfig)) {
             content =
                 content.slice(0, configSectionIndex) +

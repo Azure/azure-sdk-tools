@@ -52,16 +52,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (languageService == null)
                 {
                     logger.LogError("No language service found for package at: {packagePath}", packagePath);
-                    var unsupportedResponse = new TestRunResponse(
+                    return new TestRunResponse(
                         exitCode: 1,
                         testRunOutput: null,
                         error: $"Unsupported language or invalid package path: {packagePath}")
                     {
                         NextSteps = ["Verify the package path is correct and that the language is supported"],
                     };
-
-                    await AddPackageDetailsInResponse(unsupportedResponse, packagePath, ct);
-                    return unsupportedResponse;
                 }
                 var testResponse = await languageService.RunAllTests(packagePath, ct);
 

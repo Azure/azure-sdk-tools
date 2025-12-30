@@ -125,6 +125,19 @@ class TestMetrics:
 
     @patch("src._metrics.get_active_reviews")
     @patch("src._metrics.get_comments_in_date_range")
+    def test_metrics_report_missing_element_id(self, mock_get_comments, mock_get_reviews):
+        """Metrics report should not fail when comment dicts omit ElementId."""
+        mock_get_reviews.return_value = self._make_active_reviews()
+        comments = self._make_comments()
+        # Simulate Cosmos query results where the property doesn't exist and is omitted.
+        comments[0].pop("ElementId", None)
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2025-08-15", "2025-09-12", environment="test")
+        assert report["metrics"]["overall"]["comment_quality"]["ai_comment_count"] == 2
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
     def test_metrics_report_language_split(self, mock_get_comments, mock_get_reviews):
         """Test metrics report with multiple languages."""
         reviews = [

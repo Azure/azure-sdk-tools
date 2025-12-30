@@ -240,29 +240,43 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
-            var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
+            
+            // Create concise output - only show details for failed checks
+            var outputParts = new List<string>();
+            if (successfulChecks.Any())
+            {
+                outputParts.Add($"✓ Passed ({successfulChecks.Count}): {string.Join(", ", successfulChecks)}");
+            }
+            if (failedChecks.Any())
+            {
+                outputParts.Add($"✗ Failed ({failedChecks.Count}): {string.Join(", ", failedChecks)}");
+                // Only include error details for failed checks
+                var failedResults = results.Where(r => r.ExitCode != 0 && !string.IsNullOrWhiteSpace(r.Error)).ToList();
+                if (failedResults.Any())
+                {
+                    outputParts.Add("\nErrors:");
+                    foreach (var result in failedResults.Take(3)) // Limit to first 3 errors to avoid verbosity
+                    {
+                        outputParts.Add($"• {result.Error}");
+                    }
+                    if (failedResults.Count > 3)
+                    {
+                        outputParts.Add($"... and {failedResults.Count - 3} more error(s)");
+                    }
+                }
+            }
+            var combinedOutput = string.Join("\n", outputParts);
 
-            // Generate comprehensive next steps for all checks
+            // Generate concise next steps
             var nextSteps = new List<string>();
             if (overallSuccess)
             {
-                nextSteps.Add("All package validation checks passed! Your package is ready for the next steps in the development process.");
-                nextSteps.Add("Consider running package release readiness checks if preparing for release.");
+                nextSteps.Add("All validation checks passed - package is ready for next steps.");
             }
             else
             {
-                if (failedChecks.Any())
-                {
-                    nextSteps.Add($"Failed checks: {string.Join(", ", failedChecks)}");
-                    nextSteps.Add("Address the issues identified above before proceeding with package release.");
-                    nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
-                }
-
-                // Add specific guidance from individual check failures
-                foreach (var result in results.Where(r => r.ExitCode != 0 && r.NextSteps?.Any() == true))
-                {
-                    nextSteps.AddRange(result.NextSteps);
-                }
+                nextSteps.Add($"Fix {failedChecks.Count} failed check(s): {string.Join(", ", failedChecks)}");
+                nextSteps.Add("Re-run validation after fixes are applied.");
             }
 
             return overallSuccess
@@ -284,21 +298,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             if (result.ExitCode != 0)
             {
-                result.NextSteps = new List<string>
-                {
-                    "Review and update the CHANGELOG.md file to ensure it follows the proper format",
-                    "Verify that unreleased changes are properly documented",
-                    "Check that version numbers and release dates are correctly formatted",
-                    "Refer to the Azure SDK changelog guidelines for proper formatting"
-                };
+                result.NextSteps = new List<string> { "Update CHANGELOG.md to follow Azure SDK format guidelines" };
                 return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
-            }
-            else if (result.CheckStatusDetails != "noop")
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Changelog validation passed - no action needed"
-                };
             }
 
             return result;
@@ -318,20 +319,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             if (result.ExitCode != 0)
             {
-                result.NextSteps = new List<string>
-                {
-                    "Review and update package dependencies to resolve conflicts",
-                    "Ensure all dependencies meet Azure SDK guidelines",
-                    "Check for outdated or vulnerable dependencies",
-                    "Run language-specific dependency update commands (e.g., pip upgrade, npm update)"
-                };
-            }
-            else if (result.CheckStatusDetails != "noop")
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Dependency check passed - all dependencies are properly configured"
-                };
+                result.NextSteps = new List<string> { "Update dependencies to resolve conflicts and meet Azure SDK guidelines" };
             }
 
             return result;
@@ -351,20 +339,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             if (result.ExitCode != 0)
             {
-                result.NextSteps = new List<string>
-                {
-                    "Create or update the README.md file to include required sections",
-                    "Ensure the README follows Azure SDK documentation standards",
-                    "Include proper installation instructions, usage examples, and API documentation links",
-                    "Verify that all code samples in the README are working and up-to-date"
-                };
-            }
-            else if (result.CheckStatusDetails != "noop")
-            {
-                result.NextSteps = new List<string>
-                {
-                    "README validation passed - documentation is properly formatted"
-                };
+                result.NextSteps = new List<string> { "Update README.md to meet Azure SDK documentation standards" };
             }
 
             return result;

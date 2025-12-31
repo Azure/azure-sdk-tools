@@ -35,19 +35,25 @@ namespace SearchIndexCreator
                 //Create a data source
                 Console.WriteLine("Creating/Updating the data source...");
                 var dataSource = GetDataSource();
-                indexerClient.CreateOrUpdateDataSourceConnection(dataSource);
+                await indexerClient.CreateOrUpdateDataSourceConnectionAsync(dataSource);
                 Console.WriteLine("Data Source Created/Updated!");
 
                 //Create a skillset
                 Console.WriteLine("Creating/Updating the skillset...");
-                var skillset = GetSkillset();
+                
+                // Use MCP-optimized skillset for MCP repository, otherwise use default Azure SDK skillset
+                var repo = _config["repo"];
+                var isMcpRepo = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true;
+                var skillset = isMcpRepo ? GetSkillsetForMcp() : GetSkillset();
+                
+                Console.WriteLine($"Using {(isMcpRepo ? "MCP-optimized" : "Azure SDK")} skillset...");
                 await indexerClient.CreateOrUpdateSkillsetAsync(skillset).ConfigureAwait(false);
                 Console.WriteLine("Skillset Created/Updated!");
 
                 // Create or update the indexer
                 Console.WriteLine("Creating/Updating the indexer...");
                 var indexer = GetSearchIndexer(dataSource, skillset);
-                indexerClient.CreateOrUpdateIndexer(indexer);
+                await indexerClient.CreateOrUpdateIndexerAsync(indexer);
                 Console.WriteLine("Indexer Created/Updated!");
             }
             catch (Exception ex)
@@ -146,7 +152,7 @@ namespace SearchIndexCreator
         private IList<SearchField> CreateFields()
         {
 
-            const int modelDimensions = 1536;
+            const int modelDimensions = 3072;  // text-embedding-3-large produces 3072-dimensional vectors
             const string vectorSearchHnswProfile = "issue-vector-profile";
 
             return new List<SearchField>
@@ -182,6 +188,14 @@ namespace SearchIndexCreator
                         IsFilterable = true
                     },
                     new SearchableField("Category")
+                    {
+                        IsFilterable = true
+                    },
+                    new SearchableField("Server")  // MCP: server-* label
+                    {
+                        IsFilterable = true
+                    },
+                    new SearchableField("Tool")    // MCP: tools-* label
                     {
                         IsFilterable = true
                     },
@@ -230,7 +244,9 @@ namespace SearchIndexCreator
             )
             {
                 DataChangeDetectionPolicy = new HighWaterMarkChangeDetectionPolicy("metadata_storage_last_modified"),
-                DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy()
+                DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy(),
+                IndexerPermissionOptions = new List<IndexerPermissionOption>()
+
             };
         }
 
@@ -330,6 +346,87 @@ namespace SearchIndexCreator
                             Source = "/document/MetadataStorageLastModified"
                         }
                     })
+                })
+                {
+                    Parameters = new SearchIndexerIndexProjectionsParameters
+                    {
+                        ProjectionMode = IndexProjectionMode.SkipIndexingParentDocuments
+                    }
+                }
+            };
+        }
+
+        private SearchIndexerSkillset GetSkillsetForMcp()
+        {
+            return new SearchIndexerSkillset(
+                $"{_config["ContainerName"]}-skillset",
+                new List<SearchIndexerSkill>
+                {
+                    //
+                    // 1️⃣ Split Title + Body separately, then combine chunks
+                    //    (Simpler than MergeSkill - avoids type mismatch issues)
+                    //
+                    new SplitSkill(
+                        inputs: new List<InputFieldMappingEntry>
+                        {
+                            new InputFieldMappingEntry("text") { Source = "/document/Body" }
+                        },
+                        outputs: new List<OutputFieldMappingEntry>
+                        {
+                            new OutputFieldMappingEntry("textItems") { TargetName = "pages" }
+                        }
+                    )
+                    {
+                        Context = "/document",
+                        // MCP-optimized chunking strategy
+                        TextSplitMode = TextSplitMode.Pages,
+                        MaximumPageLength = 2200,    // Chunk ≈ 400–600 tokens
+                        PageOverlapLength = 250      // Preserves continuity
+                    },
+
+                    //
+                    // 3️⃣ Embed each chunk using Azure OpenAI
+                    //
+                    new AzureOpenAIEmbeddingSkill(
+                        inputs: new List<InputFieldMappingEntry>
+                        {
+                            new InputFieldMappingEntry("text") { Source = "/document/pages/*" }
+                        },
+                        outputs: new List<OutputFieldMappingEntry>
+                        {
+                            new OutputFieldMappingEntry("embedding") { TargetName = "TextVector" }
+                        }
+                    )
+                    {
+                        Context = "/document/pages/*",
+                        ResourceUri = new Uri(_config["OpenAIEndpoint"]),
+                        ModelName = _config["EmbeddingModelName"],
+                        DeploymentName = _config["EmbeddingModelName"]
+                    }
+                })
+            {
+                IndexProjection = new SearchIndexerIndexProjection(new[]
+                {
+                    new SearchIndexerIndexProjectionSelector(
+                        targetIndexName: _config["IndexName"],
+                        parentKeyFieldName: "ParentId",
+                        sourceContext: "/document/pages/*",  // Must match SplitSkill output context
+                        mappings: new[]
+                        {
+                            new InputFieldMappingEntry("TextVector") { Source = "/document/pages/*/TextVector" },
+                            new InputFieldMappingEntry("Chunk") { Source = "/document/pages/*" },
+                            new InputFieldMappingEntry("Id") { Source = "/document/Id" },
+                            new InputFieldMappingEntry("Title") { Source = "/document/Title" },
+                            new InputFieldMappingEntry("Server") { Source = "/document/Server" },
+                            new InputFieldMappingEntry("Tool") { Source = "/document/Tool" },
+                            new InputFieldMappingEntry("Author") { Source = "/document/Author" },
+                            new InputFieldMappingEntry("Repository") { Source = "/document/Repository" },
+                            new InputFieldMappingEntry("CreatedAt") { Source = "/document/CreatedAt" },
+                            new InputFieldMappingEntry("Url") { Source = "/document/Url" },
+                            new InputFieldMappingEntry("CodeOwner") { Source = "/document/CodeOwner" },
+                            new InputFieldMappingEntry("DocumentType") { Source = "/document/DocumentType" },
+                            new InputFieldMappingEntry("MetadataStorageLastModified") { Source = "/document/MetadataStorageLastModified" }
+                        })
                 })
                 {
                     Parameters = new SearchIndexerIndexProjectionsParameters

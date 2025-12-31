@@ -33,7 +33,8 @@ namespace IssueLabelerService
             string query,
             int count,
             double scoreThreshold,
-            Dictionary<string, string> labels = null)
+            Dictionary<string, string> labels = null,
+            string filter = null)
         {
 
             var searchResults = await AzureSearchQueryAsync<IndexContent>(
@@ -41,7 +42,8 @@ namespace IssueLabelerService
                 semanticConfigName,
                 field,
                 query,
-                count
+                count,
+                filter
             );
 
             var filteredIssues = new List<IndexContent>();
@@ -82,7 +84,7 @@ namespace IssueLabelerService
                     new VectorizableTextQuery(text: query)
                     {
                         KNearestNeighborsCount = 50,
-                        Fields = { field }
+                        Fields = { field }  // Vector field, not the text field
                     }
                 }
             };

@@ -251,13 +251,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 outputParts.Add($"✗ Failed ({failedChecks.Count}): {string.Join(", ", failedChecks)}");
                 // Only include error details for failed checks
-                var failedResults = results.Where(r => r.ExitCode != 0 && !string.IsNullOrWhiteSpace(r.Error)).ToList();
+                var failedResults = results.Where(r => r.ExitCode != 0 && !string.IsNullOrWhiteSpace(r.ResponseError)).ToList();
                 if (failedResults.Any())
                 {
                     outputParts.Add("\nErrors:");
                     foreach (var result in failedResults.Take(3)) // Limit to first 3 errors to avoid verbosity
                     {
-                        outputParts.Add($"• {result.Error}");
+                        outputParts.Add($"• {result.ResponseError}");
                     }
                     if (failedResults.Count > 3)
                     {

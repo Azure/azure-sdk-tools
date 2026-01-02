@@ -79,8 +79,8 @@ async def invoke_agent(
 
 
 @contextmanager
-def get_main_agent():
-    """Create and yield the main APIView Copilot agent."""
+def get_readwrite_agent():
+    """Create and yield the read-write APIView Copilot agent."""
     settings = SettingsManager()
     endpoint = settings.get("FOUNDRY_ENDPOINT")
     model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
@@ -106,8 +106,50 @@ an appropriate error message to the user.
     toolset.add(FunctionTool(tools))
 
     agent = client.create_agent(
-        name="APIView Copilot Main Agent",
-        description="An agent that processes requests and passes work to other agents.",
+        name="APIView Copilot Readwrite Agent",
+        description="A read-write agent that can perform searches and trigger allowed actions.",
+        model=model_deployment_name,
+        instructions=ai_instructions,
+        toolset=toolset,
+    )
+    # enable all tools by default
+    client.enable_auto_function_calls(tools=toolset)
+
+    try:
+        yield client, agent.id
+    finally:
+        client.delete_agent(agent.id)
+
+
+@contextmanager
+def get_readonly_agent():
+    """Create and yield a read-only APIView Copilot agent (no mutating tools)."""
+    settings = SettingsManager()
+    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+
+    ai_instructions = """
+You are a READ-ONLY assistant.
+- You may retrieve, search, and summarize information.
+- You MUST NOT perform any operation that mutates data or triggers reindexing/admin actions.
+- If asked to update/create/delete/link data or run indexers, refuse and explain alternatives.
+"""
+
+    credential = get_credential()
+    client = AgentsClient(endpoint=endpoint, credential=credential)
+
+    toolset = ToolSet()
+
+    # Exclude tools that can mutate state or trigger background operations.
+    safe_search_tools = [
+        t for t in SearchTools().all_tools() if getattr(t, "__name__", "") not in ("run_indexer", "run_all_indexers")
+    ]
+    tools = safe_search_tools + ApiReviewTools().all_tools() + UtilityTools().all_tools()
+    toolset.add(FunctionTool(tools))
+
+    agent = client.create_agent(
+        name="APIView Copilot Readonly Agent",
+        description="A read-only agent for search/retrieve/summarize without side effects.",
         model=model_deployment_name,
         instructions=ai_instructions,
         toolset=toolset,

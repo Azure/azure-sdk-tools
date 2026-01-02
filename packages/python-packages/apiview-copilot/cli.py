@@ -48,7 +48,7 @@ from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, run_prompty
-from src.agent._agent import get_main_agent, invoke_agent
+from src.agent._agent import get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
 
@@ -180,7 +180,13 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False, style: str = "compact"):
+def run_evals(
+    test_paths: list[str] = None,
+    num_runs: int = 1,
+    save: bool = False,
+    use_recording: bool = False,
+    style: str = "compact",
+):
     """
     Runs the specified test case(s).
     """
@@ -514,7 +520,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     print(f"Error: {e}")
         else:
             # Local mode: use async agent as before
-            with get_main_agent() as (client, agent_id):
+            with get_readwrite_agent() as (client, agent_id):
                 while True:
                     try:
                         user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")

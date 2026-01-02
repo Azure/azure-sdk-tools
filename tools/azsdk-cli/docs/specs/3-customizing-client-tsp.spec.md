@@ -306,30 +306,30 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
 
 ```mermaid
 flowchart TD
-    Entry[<b>1. Entry Point</b><br/>• Build failures provide error messages<br/>• User prompts provide natural language requests<br/>• API review provides feedback comments<br/>• Breaking changes analysis provides change details]
-
+    Entry[<b>Entry Point</b><br/>Build failures, user prompts, API review, or breaking changes]
     Entry --> Classify
 
-    subgraph Tool [CustomizeCodeTool]
-        Classify[<b>Classify Context</b><br/>NEVER routes directly to Phase B]
-        Classify --> |Remaining issues fixable with TSP|PhaseA[<b>Phase A: TypeSpec Customizations</b><br/>• AI updates client.tsp<br/>• Track progress<br/>• Increment Phase A counter]
-        Classify --> |Max iterations exceed<br/>OR stalled progress detected<br/>OR requires complex code customizations| Failure[<b>Failure</b><br/>Return guidance for manual implementation]
-        Classify --> |No changes needed| Success
+    Classify[<b>Classify Context</b><br/>Analyze request and determine next action]
+    Classify -->|Issues fixable with TypeSpec| PhaseA
+    Classify -->|Max iterations or stalled or complex| Failure
+    Classify -->|No changes needed| Success
 
-        PhaseA --> RegenSDK[<b>Regenerate SDK</b><br/>• Re-run TypeSpec compilation<br/>• Regenerate SDK code<br/>]
+    PhaseA[<b>Phase A: TypeSpec Customizations</b><br/>Update client.tsp with decorators]
+    PhaseA --> Regen[<b>Regenerate SDK</b><br/>Run TypeSpec compilation]
 
-        RegenSDK --> ValidateRegen{Does generation pass?}
-        ValidateRegen --> |No, pass context| Classify
-        ValidateRegen --> |Yes| BuildSDK[<b>Build SDK</b><br/>Compile SDK code<br/>]
+    Regen --> RegenOK{Generation<br/>Success?}
+    RegenOK -->|No| Classify
+    RegenOK -->|Yes| Build[<b>Build SDK</b><br/>Compile generated code]
 
-        BuildSDK --> BuildSuccess{Build Success?}
-        BuildSuccess --> |Yes| Classify
-        BuildSuccess --> |No| CheckPhaseB{Error-driven Phase B?<br/>Customization files exist?}
-        CheckPhaseB --> |No| Classify
-        CheckPhaseB --> |Yes| PhaseB[<b>Phase B: Code Repair</b><br/>• Detect customization files<br/>• AI analyzes error patterns<br/>• Apply patches with ClientCustomizationCodePatchTool<br/>• Increment Phase B counter]
-        PhaseB --> RegenSDK
+    Build --> BuildOK{Build<br/>Success?}
+    BuildOK -->|Yes| Classify
+    BuildOK -->|No| CheckB{Customization<br/>files exist?}
+    CheckB -->|No| Classify
+    CheckB -->|Yes| PhaseB[<b>Phase B: Code Repair</b><br/>Apply patches to customization files]
+    PhaseB --> Regen
 
-    end
+    Success[<b>Success</b><br/>Return change summary]
+    Failure[<b>Failure</b><br/>Return manual guidance]
 
     style Entry fill:#fff9c4
     style Classify fill:#e1f5fe
@@ -337,10 +337,8 @@ flowchart TD
     style PhaseB fill:#ffccbc
     style Success fill:#c8e6c9
     style Failure fill:#ffcdd2
-    style RegenSDK fill:#ffe082
-    style RegenSDK fill:#ffe082
-    style BuildSDK fill:#ffe082
-    style Tool fill:none,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
+    style Regen fill:#ffe082
+    style Build fill:#ffe082
 ```
 
 **Benefits:**

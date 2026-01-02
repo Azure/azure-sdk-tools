@@ -48,7 +48,7 @@ from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, run_prompty
-from src.agent._agent import get_readwrite_agent, invoke_agent
+from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
 
@@ -519,8 +519,15 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                 except Exception as e:
                     print(f"Error: {e}")
         else:
-            # Local mode: use async agent as before
-            with get_readwrite_agent() as (client, agent_id):
+            # Local mode: select read-only vs read-write based on the caller's AAD token roles
+            token = _try_get_access_token()
+            claims = _get_unverified_token_claims(token) if token else {}
+            agent_cm = get_readwrite_agent if _claims_is_writer(claims) else get_readonly_agent
+
+            mode = "readwrite" if agent_cm is get_readwrite_agent else "readonly"
+            print(f"{BOLD}Local agent mode:{RESET} {mode}\n")
+
+            with agent_cm() as (client, agent_id):
                 while True:
                     try:
                         user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -1009,6 +1016,44 @@ def _build_auth_header():
         print("\nERROR: You are not logged in to Azure. Please run 'az login' and try again.\n")
         sys.exit(1)
     return {"Authorization": f"Bearer {token.token}"}
+
+
+def _try_get_access_token() -> Optional[str]:
+    """Best-effort token acquisition; returns None if not logged in."""
+    from src._credential import get_credential
+
+    credential = get_credential()
+    settings = SettingsManager()
+    app_id = settings.get("APP_ID")
+    scope = f"api://{app_id}/.default"
+    try:
+        token = credential.get_token(scope)
+    except ClientAuthenticationError:
+        return None
+    return token.token
+
+
+def _get_unverified_token_claims(token: str) -> dict:
+    """Decode JWT claims without verifying signature (used only for role selection UX)."""
+    if not token:
+        return {}
+    import jwt
+
+    try:
+        return jwt.decode(
+            token,
+            options={"verify_signature": False, "verify_aud": False, "verify_iss": False, "verify_exp": False},
+        )
+    except Exception:
+        return {}
+
+
+def _claims_is_writer(claims: dict) -> bool:
+    roles = claims.get("roles", [])
+    if isinstance(roles, str):
+        roles = roles.split()
+    token_roles = set(roles)
+    return ("Write" in token_roles) or ("App.Write" in token_roles)
 
 
 class CliCommandsLoader(CLICommandsLoader):

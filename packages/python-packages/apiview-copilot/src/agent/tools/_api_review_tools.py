@@ -11,7 +11,6 @@ Tools for performing API reviews using the ApiViewReview class.
 import asyncio
 import json
 
-from semantic_kernel.functions import kernel_function
 from src._apiview import ApiViewClient
 from src._apiview_reviewer import ApiViewReview
 from src.agent.tools._base import Tool

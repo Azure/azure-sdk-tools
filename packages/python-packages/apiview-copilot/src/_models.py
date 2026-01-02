@@ -47,20 +47,24 @@ class APIViewComment(BaseModel):
     Represents a comment in the APIView.
     """
 
-    id: Optional[str] = Field(description="Unique identifier for the comment.")
+    id: Optional[str] = Field(default=None, description="Unique identifier for the comment.")
     review_id: Optional[str] = Field(
-        description="Unique identifier for the review this comment belongs to.", alias="ReviewId"
+        default=None, description="Unique identifier for the review this comment belongs to.", alias="ReviewId"
     )
     api_revision_id: Optional[str] = Field(
-        description="Unique identifier for the API revision this comment belongs to.", alias="APIRevisionId"
+        default=None,
+        description="Unique identifier for the API revision this comment belongs to.",
+        alias="APIRevisionId",
     )
     element_id: Optional[str] = Field(
+        default=None,
         description="Unique identifier for the element this comment belongs to, such as a function or class.",
         alias="ElementId",
     )
-    comment_text: Optional[str] = Field(description="The contents of the comment.", alias="CommentText")
-    created_by: Optional[str] = Field(description="The author of the comment.", alias="CreatedBy")
+    comment_text: Optional[str] = Field(default=None, description="The contents of the comment.", alias="CommentText")
+    created_by: Optional[str] = Field(default=None, description="The author of the comment.", alias="CreatedBy")
     created_on: Optional[datetime] = Field(
+        default=None,
         description="The datetime the comment was created, in ISO 8601 format (e.g., '2023-10-01T12:00:00Z').",
         alias="CreatedOn",
     )
@@ -78,6 +82,7 @@ class APIViewComment(BaseModel):
         alias="Downvotes",
     )
     comment_type: Optional[str] = Field(
+        default=None,
         description="The type of comment",
         alias="CommentType",
     )

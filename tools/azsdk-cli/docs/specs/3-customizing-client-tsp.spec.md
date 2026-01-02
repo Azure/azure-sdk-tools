@@ -240,29 +240,45 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
 
    - **Important**: Build errors occur in generated code files (e.g., `/models/AnalyzeResult.java:178`). Phase B activates based on the **presence of customization files**, not by matching file paths in error messages.
 
-   - **Conflict Detection**: The Phase B microagent analyzes build error patterns dynamically (e.g., "already defined", "cannot find symbol", "type mismatch") combined with customization file content to determine if the conflict can be resolved within scope.
+   - **Design Philosophy**: Phase B operates under **narrow scope with safety boundaries** to prioritize correctness over coverage. The microagent analyzes build errors and customization files to assess whether conflicts fall within safe automation boundaries, returning structured manual guidance when uncertain rather than risking incorrect fixes.
 
-   - **Scope Boundaries** (v1.0):
-     - **MUST be ALL of**:
+   - **Scope Boundaries** (v1.0 - Intentionally Conservative):
+     - **All criteria MUST be true** for automated fix attempt:
        - Triggered by build error after Phase A (never proactive)
        - Fix is removing/updating code (not adding new logic)
        - <20 lines changed across <5 files
        - TypeSpec cannot address it (or already attempted in Phase A)
-     - **Examples**:
+       - Conflict pattern is deterministic and unambiguous
+     - **Within Scope** (mechanical fixes only):
        - ✅ Remove duplicate fields after TypeSpec addition
        - ✅ Update references after TypeSpec rename
        - ✅ Add missing import statements
        - ✅ Rename reserved keyword conflicts
+     - **Out of Scope** (return manual guidance):
        - ❌ Add convenience methods
        - ❌ Restructure client architecture
        - ❌ Change method visibility (use TypeSpec `@access`)
        - ❌ Add error handling
+       - ❌ Complex logic transformations
+       - ❌ Uncertain or ambiguous conflicts
 
-   - **Phase B Workflow**:
-     - Use existing ClientCustomizationCodePatchTool for SDK code modifications
-     - Apply mechanical transformations: imports, visibility modifiers, reserved keyword renames, type mismatches
-     - Validate final build
-     - Maximum 2 attempts within Phase B
+   - **Phase B Workflow** (Safety-First Execution):
+     1. **Analyze**: Examine build errors + customization file content + TypeSpec changes
+     2. **Assess Feasibility**:
+        - **If uncertain about fix**: Return structured manual guidance
+        - **If exceeds scope** (>20 lines, >5 files): Return guidance
+        - **If conflict is complex**: Return guidance
+        - **If deterministic and within scope**: Proceed to step 3
+     3. **Apply Patches**: Use ClientCustomizationCodePatchTool for mechanical string replacements
+     4. **Validate**: Rebuild SDK to confirm fix
+     5. **Iterate**: Maximum 2 attempts (return guidance if still failing)
+
+   - **Manual Guidance Format** (when automation is skipped):
+     - Detected issue description
+     - Affected files with line numbers
+     - Suggested approach for manual fix
+     - Reason for manual intervention (uncertainty, complexity, or scope exceeded)
+     - **Core Principle**: Better to provide clear guidance than risk incorrect automated fixes that may introduce subtle bugs or breaking changes
 
 1. **Summary & Approval:**
    - Tool returns `CustomizedCodeUpdateResponse` with detailed change summary including:
@@ -349,7 +365,13 @@ THEN
 END IF
 ```
 
-**Design Rationale**: Phase B NEVER activates proactively from the initial request. Even when users explicitly mention code files or code-level issues, the workflow starts with Phase A to respect the spec-first principle. Phase B only activates after Phase A build failures when customization files are detected.
+**Design Rationale**: Phase B operates under three core principles:
+
+1. **Spec-First Always**: NEVER activates proactively. Even when users explicitly mention code files, the workflow starts with Phase A. Phase B only activates after Phase A build failures when customization files exist.
+
+2. **Narrow Scope, Safety Boundaries**: Limited to mechanical fixes only. When uncertain, complex, or exceeding limits → return structured manual guidance instead of attempting fixes. **Correctness over coverage.**
+
+3. **Safety Net, Not Primary Solution**: Phase B is the rare exception (estimated 10% of workflows), handling conflicts between TypeSpec changes and existing customizations. Phase A (TypeSpec) solves 80% of issues.
 
 **Customization File Detection**:
 - Java: Check for `/customization/` directory OR `*Customization.java` files

@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.AiCompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
@@ -136,6 +137,80 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<ContextSearchResponse> SendContextSearchRequestAsync(
+            CompletionRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(_options.Endpoint))
+            {
+                throw new ArgumentException($"AI completion API endpoint has not been configured. Please set environment variable {AiCompletionOptions.EndpointEnvironmentVariable}.");
+            }
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            if (!ValidateRequest(request))
+            {
+                throw new ArgumentException("Request validation failed", nameof(request));
+            }
+
+            try
+            {
+                var requestUri = new Uri(new Uri(_options.Endpoint), "/search");
+
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
+
+                var authResult = await RetrieveAiCompletionAccessTokenAsync(cancellationToken);
+                if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
+                {
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
+                }
+
+                httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+                if (_options.EnableDebugLogging)
+                {
+                    var requestJson = JsonSerializer.Serialize(request, _jsonOptions);
+                    _logger.LogDebug("Sending AI completion request to {Endpoint}: {Request}",
+                        requestUri, requestJson);
+                }
+                else
+                {
+                    _logger.LogInformation("Sending AI completion request to {Endpoint} with question length: {Length}",
+                        requestUri, request.Message.Content.Length);
+                }
+
+                var response = await _httpClient.SendAsync(httpRequest, cancellationToken)
+                    .ConfigureAwait(false);
+
+                return await HandleSearchHttpResponse(response, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("AI completion request was cancelled");
+                throw;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP error calling AI completion endpoint");
+                throw new InvalidOperationException($"Failed to call AI completion endpoint: {ex.Message}", ex);
+            }
+            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogError(ex, "Request to AI completion endpoint timed out");
+                throw new InvalidOperationException("Request to AI completion endpoint timed out", ex);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize AI completion response");
+                throw new InvalidOperationException($"Invalid response format from AI completion endpoint: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error calling AI completion endpoint");
+                throw new InvalidOperationException($"Unexpected error calling AI completion endpoint: {ex.Message}", ex);
+            }
+        }
         public bool ValidateRequest(CompletionRequest request)
         {
             if (request == null)
@@ -257,6 +332,40 @@ namespace Azure.Sdk.Tools.Cli.Services
             throw new InvalidOperationException($"Unexpected response status: {response.StatusCode}");
         }
 
+        private async Task<ContextSearchResponse> HandleSearchHttpResponse(
+            HttpResponseMessage response,
+            CancellationToken cancellationToken)
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadFromJsonAsync<ContextSearchResponse>(
+                    _jsonOptions, cancellationToken).ConfigureAwait(false);
+
+                if (responseContent == null)
+                {
+                    throw new InvalidOperationException("Received null response from AI completion endpoint");
+                }
+
+                if (_options.EnableDebugLogging)
+                {
+                    _logger.LogDebug("Received AI search response, HasResult: {HasResult}, knowledge count: {Count}",
+                        responseContent.HasResult, responseContent.Knowledges != null ? responseContent.Knowledges.Count : 0);
+                }
+                else
+                {
+                    _logger.LogInformation("Received AI search response, HasResult: {HasResult}",
+                        responseContent.HasResult);
+                }
+
+                return responseContent;
+            }
+
+            // Handle error responses
+            await HandleErrorResponse(response, cancellationToken).ConfigureAwait(false);
+
+            // This should never be reached due to exception throwing above
+            throw new InvalidOperationException($"Unexpected response status: {response.StatusCode}");
+        }
         private async Task HandleErrorResponse(HttpResponseMessage response, CancellationToken cancellationToken)
         {
             var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);

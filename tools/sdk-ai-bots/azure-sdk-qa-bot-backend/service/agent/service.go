@@ -58,6 +58,57 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	return nil
 }
 
+func (s *CompletionService) SearchContext(ctx context.Context, req *model.CompletionReq) (*model.ContextSearchResp, error) {
+	requestID := uuid.New().String()
+	log.SetPrefix(fmt.Sprintf("[RequestID: %s] ", requestID))
+
+	jsonReq, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Failed to marshal request: %v\n", err)
+	} else {
+		log.Printf("Request: %s", utils.SanitizeForLog(string(jsonReq)))
+	}
+
+	if err = s.CheckArgs(req); err != nil {
+		log.Printf("Request validation failed: %v", err)
+		return nil, err
+	}
+
+	// 1. Build messages from the openai request
+	_, reasoningModelMessages := s.buildMessages(req)
+
+	// 2. Build query for search
+	query, _ := s.buildQueryForSearch(req, reasoningModelMessages)
+
+	// 3. Check if we need RAG processing
+	var knowledges []model.Knowledge
+	knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+	if err != nil {
+		log.Printf("Parallel search failed: %v", err)
+		return nil, model.NewSearchFailureError(err)
+	}
+
+	// make sure the tokens of chunks limited in 100000 tokens
+	tokenCnt := 0
+	for i, knowledge := range knowledges {
+		if len(knowledge.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+			knowledges[i].Content = knowledge.Content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+		}
+		tokenCnt += len(knowledges[i].Content)
+		if tokenCnt > config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS {
+			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS)
+			knowledges = knowledges[:i+1] // truncate the chunks to the current index
+			break
+		}
+	}
+
+	return &model.ContextSearchResp{
+		HasResult:  true,
+		Knowledges: knowledges,
+	}, nil
+}
+
 func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.CompletionReq) (*model.CompletionResp, error) {
 	startTime := time.Now()
 	requestID := uuid.New().String()

@@ -18,6 +18,7 @@ func setupRouter() *gin.Engine {
 	})
 
 	// Protected endpoints
+	r.POST("/search", handler.SearchHandler)
 	r.POST("/completion", handler.CompletionHandler)
 	r.POST("/feedback", handler.FeedBackHandler)
 	r.POST("/record_answer", handler.AnswerRecordHandler)

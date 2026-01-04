@@ -1,8 +1,11 @@
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AiCompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -89,6 +92,88 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
+        [McpServerTool(Name = "azsdk_typespec_retrieve_context")]
+        [Description(@"retrieves relevant Azure SDK documentation and TypeSpec examples to assist with authoring, editing, and versioning TypeSpec projects for Azure services.
+Pass in a `request` to get an context documents.
+Returns an documents with references and snippets
+")]
+        public async Task<TypsSpecContextSearchResponse> RetriveContextDocuments(
+            [Description("The request to ask the AI agent")]
+            string request,
+            [Description("Additional information to consider for the TypeSpec project")]
+            string additionalInformation = null,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                // Validate inputs
+                if (string.IsNullOrWhiteSpace(request))
+                {
+                    return new TypsSpecContextSearchResponse
+                    {
+                        ResponseError = "Request cannot be empty"
+                    };
+                }
+
+                _logger.LogInformation("Authoring with request: {Request}", request);
+
+                // Build request
+                var completionRequest = new CompletionRequest
+                {
+                    TenantId = TenantId.AzureTypespecAuthoring,
+                    Message = new Message
+                    {
+                        Role = Role.User,
+                        Content = request,
+                    }
+                };
+
+                if (!string.IsNullOrWhiteSpace(additionalInformation))
+                {
+                    completionRequest.AdditionalInfos.Add(new AdditionalInfo
+                    {
+                        Type = AdditionalInfoType.Text,
+                        Content = additionalInformation
+                    });
+                }
+
+                // Call the service
+                var response = await _aiCompletionService.SendContextSearchRequestAsync(
+                    completionRequest, ct);
+
+                _logger.LogInformation("Received response, HasResult: {HasResult}",
+                    response.HasResult);
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                };
+                var context = response.Knowledges != null ? string.Join("\n\n", response.Knowledges.Select(k => JsonSerializer.Serialize(k, jsonOptions))) : string.Empty;
+                //var context = response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges, jsonOptions) : string.Empty;
+                return new TypsSpecContextSearchResponse
+                {
+                    IsSuccessful = response.HasResult,
+                    //Contexts = response.Knowledges ?? new List<Knowledge>(),
+                    Context = context,
+                };
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                _logger.LogWarning("AI query was cancelled");
+                return new TypsSpecContextSearchResponse
+                {
+                    ResponseError = "Query was cancelled"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error querying AI agent");
+                return new TypsSpecContextSearchResponse
+                {
+                    ResponseError = $"Failed to query AI agent: {ex.Message}"
+                };
+            }
+        }
 
         [McpServerTool(Name = "azsdk_typespec_authoring")]
         [Description(@"

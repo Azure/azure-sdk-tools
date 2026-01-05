@@ -90,27 +90,24 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             }
 
             // Filter out any optional tool calls and their corresponding tool results
-            var filtered = FilterOptionalToolResponses(conversationMessages.Skip(chatInitialIndex), optionalCallIds);
+            var conversation = conversationMessages.Skip(chatInitialIndex);
+            if (optionalCallIds.Count == 0)
+            {
+                return new ChatResponse([.. conversation]);
+            }
+
+            var filtered = FilterOptionalToolResponses(conversation, optionalCallIds);
             return new ChatResponse([.. filtered]);
         }
 
         private IEnumerable<ChatMessage> FilterOptionalToolResponses(IEnumerable<ChatMessage> messages, HashSet<string> optionalCallIds)
         {
-            // No optional calls to filter. 
-            if(optionalCallIds.Count == 0)
-            {
-                return messages;
-            }
-
             foreach (var message in messages)
             {
-                var functionCalls = message.Contents.OfType<FunctionCallContent>();
-                var functionResults = message.Contents.OfType<FunctionResultContent>();
-
                 // Remove optional tool calls and results.
                 message.Contents = [.. message.Contents.Where(content =>
-                    !(content is FunctionCallContent fc && optionalCallIds.Contains(fc.CallId)) &&
-                    !(content is FunctionResultContent fr && optionalCallIds.Contains(fr.CallId))
+                    !(content is FunctionCallContent fc && !string.IsNullOrEmpty(fc.CallId) && optionalCallIds.Contains(fc.CallId)) &&
+                    !(content is FunctionResultContent fr && !string.IsNullOrEmpty(fr.CallId) && optionalCallIds.Contains(fr.CallId))
                 )];
 
                 if (message.Contents.Any())

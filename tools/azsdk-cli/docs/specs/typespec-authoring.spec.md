@@ -550,14 +550,44 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 
 **Expected Agent Activity:**
 
-1. Add a enum option v2025_10_01_preview in version enum for this new API version and decorate with @previewVersion
+1. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
 1. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-1. Ask for features to add to this version. e.g. add an ARM resource, add/update an operation(CRUD, list), add/update a model
+1. Ask for features to add to this version. e.g.
+    - Add new resources
+    - Add new operations to an existing resource
+    - Add new models, unions, or enums
+    - Deprecate resources
+    - Deprecate operations
+    - Deprecate models, unions, or enums
 1. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
 1. Update code, by default the features will only be added to this new version
 1. Summarize all the actions taken and display the reference docs
 
-### Scenario 2: Update TypeSpec to follow Azure guidelines
+### Scenario 2: Add a new stable API version
+
+**Prompt:**
+
+```text
+add a new stable API version 2025-10-01 for service widget resource management
+```
+
+**Expected Agent Activity:**
+
+1. Add a enum option `v2025_10_01` in version enum for this new API version
+1. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
+1. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
+1. Ask for features to add to this version. e.g.
+    - Add new resources
+    - Add new operations to an existing resource
+    - Add new models, unions, or enums
+    - Deprecate resources
+    - Deprecate operations
+    - Deprecate models, unions, or enums
+1. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+1. Update code, by default the features will only be added to this new version
+1. Summarize all the actions taken and display the reference docs
+
+### Scenario 3: Update TypeSpec to follow Azure guidelines
 
 **Prompt:**
 

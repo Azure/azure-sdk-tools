@@ -775,6 +775,31 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
 
         /// <summary>
+        /// Helper method to filter out bot assignees from an IssueUpdate.
+        /// GitHub API doesn't allow re-assigning bot accounts (like "Copilot") via the API,
+        /// so we need to filter them out to avoid ApiValidationException.
+        /// </summary>
+        /// <param name="issueUpdate">IssueUpdate to filter</param>
+        /// <param name="issue">Original Issue object to get assignee information from</param>
+        private void FilterBotAssignees(IssueUpdate issueUpdate, Issue issue)
+        {
+            if (issue.Assignees != null && issue.Assignees.Count > 0)
+            {
+                // Clear all assignees first
+                issueUpdate.ClearAssignees();
+                
+                // Re-add only non-bot assignees
+                foreach (var assignee in issue.Assignees)
+                {
+                    if (assignee.Type != AccountType.Bot)
+                    {
+                        issueUpdate.AddAssignee(assignee.Login);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Overloaded convenience function that'll return the IssueUpdate. Actions all make changes to
         /// the same, shared, IssueUpdate because they're processing on the same event. For scheduled 
         /// event processing, there will be multiple, unique IssueUpdates and there won't be a shared one.
@@ -809,6 +834,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             else
             {
                 tempIssueUpdate = issue.ToUpdate();
+                // Filter out bot assignees to avoid ApiValidationException when updating via GitHub API
+                FilterBotAssignees(tempIssueUpdate, issue);
             }
 
             if (isProcessingAction)
@@ -873,9 +900,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 ? new int?()
                 : pullRequest.Milestone.Number;
 
+            // Filter out bot assignees to avoid ApiValidationException when updating via GitHub API
             var assignees = pullRequest.Assignees == null
                 ? null
-                : pullRequest.Assignees.Select(x => x.Login);
+                : pullRequest.Assignees
+                    .Where(x => x.Type != AccountType.Bot)
+                    .Select(x => x.Login);
 
             var labels = pullRequest.Labels == null
             ? null

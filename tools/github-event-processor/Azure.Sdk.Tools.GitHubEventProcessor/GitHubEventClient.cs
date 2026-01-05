@@ -785,15 +785,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         {
             if (issue.Assignees != null && issue.Assignees.Count > 0)
             {
-                // Clear all assignees first
-                issueUpdate.ClearAssignees();
-                
-                // Re-add only non-bot assignees
-                foreach (var assignee in issue.Assignees)
+                // Check if there are any bot assignees
+                if (issue.Assignees.Any(a => a.Type == AccountType.Bot))
                 {
-                    if (assignee.Type != AccountType.Bot)
+                    // Clear all assignees first
+                    issueUpdate.ClearAssignees();
+                    
+                    // Re-add only non-bot assignees
+                    foreach (var assignee in issue.Assignees)
                     {
-                        issueUpdate.AddAssignee(assignee.Login);
+                        if (assignee.Type != AccountType.Bot)
+                        {
+                            issueUpdate.AddAssignee(assignee.Login);
+                        }
                     }
                 }
             }

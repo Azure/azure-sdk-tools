@@ -2,89 +2,15 @@ import {
   ApiFunction,
   ApiItem,
   ApiItemKind,
-  ExcerptToken,
-  ExcerptTokenKind,
   Parameter,
   TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { TokenKind } from "../models";
 import { TokenGenerator } from "./index";
+import { createToken, processExcerptTokens } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiFunction {
   return item.kind === ApiItemKind.Function;
-}
-
-/** Helper to create a token with common properties */
-function createToken(
-  kind: TokenKind,
-  value: string,
-  options?: {
-    hasSuffixSpace?: boolean;
-    hasPrefixSpace?: boolean;
-    navigateToId?: string;
-    deprecated?: boolean;
-  },
-): ReviewToken {
-  return {
-    Kind: kind,
-    Value: value,
-    HasSuffixSpace: options?.hasSuffixSpace ?? false,
-    HasPrefixSpace: options?.hasPrefixSpace ?? false,
-    NavigateToId: options?.navigateToId,
-    IsDeprecated: options?.deprecated,
-  };
-}
-
-/**
- * Determines if a token needs a leading space based on its value
- * @param value The token value
- * @returns true if the token needs a leading space
- */
-function needsLeadingSpace(value: string): boolean {
-  return value === "|" || value === "&" || value === "is";
-}
-
-/**
- * Determines if a token needs a trailing space based on its value
- * @param value The token value
- * @returns true if the token needs a trailing space
- */
-function needsTrailingSpace(value: string): boolean {
-  return value === "|" || value === "&" || value === "is";
-}
-
-/** Process excerpt tokens and add them to the tokens array */
-function processExcerptTokens(
-  excerptTokens: readonly ExcerptToken[],
-  tokens: ReviewToken[],
-  deprecated?: boolean,
-): void {
-  for (const excerpt of excerptTokens) {
-    const trimmedText = excerpt.text.trim();
-    if (!trimmedText) continue;
-
-    const hasPrefixSpace = needsLeadingSpace(trimmedText);
-    const hasSuffixSpace = needsTrailingSpace(trimmedText);
-
-    if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-      tokens.push(
-        createToken(TokenKind.TypeName, trimmedText, {
-          navigateToId: excerpt.canonicalReference.toString(),
-          hasPrefixSpace,
-          hasSuffixSpace,
-          deprecated,
-        }),
-      );
-    } else {
-      tokens.push(
-        createToken(TokenKind.Text, trimmedText, {
-          hasPrefixSpace,
-          hasSuffixSpace,
-          deprecated,
-        }),
-      );
-    }
-  }
 }
 
 function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {

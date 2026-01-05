@@ -496,12 +496,11 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. Add a enum option v2025_10_01_preview in version enum for this new API version and decorate with @previewVersion
-2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-3. Summarize all the actions taken and display the reference docs
-4. Ask for features to add to this version. e.g. add an ARM resource, add/update an operation(CRUD, list), add/update a model
-5. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-6. Update code, by default the features will only be added to this new version
-7. List the referenced documents
+1. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
+1. Ask for features to add to this version. e.g. add an ARM resource, add/update an operation(CRUD, list), add/update a model
+1. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+1. Update code, by default the features will only be added to this new version
+1. Summarize all the actions taken and display the reference docs
 
 ### Scenario 2: Update TypeSpec to follow Azure guidelines
 
@@ -514,9 +513,9 @@ update the TypeSpec code to follow Azure guidelines for service widget resource 
 **Expected Agent Activity:**
 
 1. Validate the TypeSpec code and display a list of code snippets that violates Azure guidelines, and the suggested fix
-2. Let user confirm which one to fix
-3. Apply the code fix
-4. Compile the fixed TypeSpec code and let user validate the output
+1. Let user confirm which one to fix
+1. Apply the code fix
+1. Compile the fixed TypeSpec code and let user validate the output
 
 ---
 

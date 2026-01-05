@@ -416,16 +416,71 @@ Combine llm.txt files for basic context with selective Knowledge Base queries fo
 - Unclear boundaries between "simple" and "complex" scenarios
 - May still result in hallucinations for medium-complexity cases that rely only on llm.txt
 
-
 ---
 
-### Alternative 3: Custom agent + AI search (Azure KB) + other AI knowledge technique
+### Alternative 3: Custom agent + Azure KB
+
+**Description:**
+
+Build a custom agent that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
+
+The agent adopts Azure KB to provide solution for user request:
+
+Based on the request, the agent will invoke an Azure KB tool to retrieve the solution for user request and then apply the solution to edit typespec files.
+
+```code
+┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
+│ User │          │ custom agent│          │ azsdk     │          │ Knowledge │
+│      │          │ Copilot     │          │ MCP       │          │ base      │
+└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘
+   │                     │                       │                      │
+   │ "Add new preview    │                       │                      │
+   │  version 2025-12-09 │                       │                      │
+   │  to my project"     │                       │                      │
+   │────────────────────>│                       │                      │
+   │                     │────┐                  │                      │
+   │                     │    │ retrieve required│                      │
+   │                     │<───┘ information      │                      │
+   │                     │                       │                      │
+   │                     │ Request versioning    │                      │
+   │                     │ info                  │                      │
+   │                     │──────────────────────>│                      │
+   │                     │                       │                      │
+   │                     │                       │ Search request       │
+   │                     │                       │─────────────────────>│
+   │                     │                       │                      │
+   │                     │                       │ Versioning solution  │
+   │                     │                       │<─────────────────────│
+   │                     │                       │                      │
+   │                     │ Versioning solution   │                      │
+   │                     │<──────────────────────│                      │
+   │                     │────┐                  │                      │
+   │                     │    │ Make edits       │                      │
+   │                     │<───┘                  │                      │
+   │                     │                       │                      │
+   │ "Changes made"      │                       │                      │
+   │<────────────────────│                       │                      │
+   │                     │                       │                      │
+```
+
+**Pros:**
+
+- Leverages the existing Azure Knowledge Base to provide solutions, reducing development and maintenance costs.
+- Users can choose whether to use the authoring agent; TypeSpec requests are not always proxied to the Azure Knowledge Base. Reduces the number of Azure Knowledge Base API calls.
+- The custom agent can be easily extended with additional skills or tools as needed.
+
+**Cons:**
+
+- Deep couple with Azure knowledge Base. Need to integrate knowledges to azure knowledge base.
+
+### Alternative 4: Custom agent + AI search (Azure KB) + other AI knowledge technique
 
 **Description:**
 
 Build a custom agent that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
 
 The agent adopts multiple techniques to provide knowledge for user request:
+
 - AI Search (Azure KB) as the primary knowledge source, covering most TypeSpec authoring concepts.
 - Built‑in curated knowledge within the custom agent for smaller but important areas, such as customization scenarios and API version‑evolution patterns.
 

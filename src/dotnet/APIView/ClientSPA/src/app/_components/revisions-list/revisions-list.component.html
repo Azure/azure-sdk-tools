@@ -10,7 +10,7 @@
 </div>
 <div *ngIf="review != null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
     <div class="text-center">
-        <h6>There are no {{apiRevisionsListDetail}} {{review.packageName}}</h6>        
+        <h6>There are no {{apiRevisionsListDetail}} {{review.packageName}}</h6>
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
             <button *ngIf="!showDeletedAPIRevisions" type="button" (click)="toggleShowDeletedAPIRevisions()" class="btn btn-outline-primary">View Deleted APIRevisions</button>
             <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
@@ -24,8 +24,7 @@
     [value]="revisions"
     dataKey="id"
     [scrollable]="true"
-    scrollHeight="flex"
-    responsiveLayout="stack"
+    scrollHeight="calc(100vh - 135px)"
     [lazy]="true"
     [lazyLoadOnInit]="false"
     [virtualScroll]="true"
@@ -65,7 +64,7 @@
             <th style="width:15%">Details</th>
             <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="createdOn" style="width:15%">Created<p-sortIcon class="ms-2" field="createdOn"></p-sortIcon></th>
             <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdatedOn"></p-sortIcon></th>
-            <th *ngIf="showAPIRevisionsAssignedToMe" style="width:15%">RequestedOn</th>            
+            <th *ngIf="showAPIRevisionsAssignedToMe" style="width:15%">RequestedOn</th>
             <th *ngIf="showAPIRevisionsAssignedToMe"  style="width:15%">RequestedBy</th>
         </tr>
         <tr>
@@ -110,7 +109,7 @@
             <td>
                 <i class="{{ badgeClass.get(revision.isApproved.toString()) }} me-2"></i>
                 <i class="{{ badgeClass.get(revision.apiRevisionType) }} me-2"></i>
-            </td> 
+            </td>
             <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.createdOn !== null) ? (revision.createdOn | timeago) : "" }}</td>
             <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.lastUpdatedOn !== null) ? (revision | lastUpdatedOn | timeago) : "" }}</td>
             <td *ngIf="showAPIRevisionsAssignedToMe">{{ (revision.assignedReviewers[0].assingedOn !== null) ? (revision.assignedReviewers[0].assingedOn | timeago) : "" }}</td>
@@ -127,10 +126,11 @@
     </ng-template>
 </p-table>
 <p-sidebar [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [showCloseIcon]="false" styleClass="create-revision-sidebar">
+    <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <h4>Create Revision</h4>
     <p *ngIf="!createRevisionForm.get('selectedCRLanguage')!.value">Select a Language Below to view instructions for creating a Review.</p>
     <form [formGroup]="createRevisionForm" (ngSubmit)="createRevision()">
-        <p-dropdown formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
+        <p-select formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
             <ng-template pTemplate="selectedItem">
                 <div class="flex align-items-center gap-2" *ngIf="createRevisionForm.get('selectedCRLanguage')!.value">
                   <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames }}-original.svg" style="width: 25px"/>
@@ -143,7 +143,7 @@
                     <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
                 </div>
             </ng-template>
-        </p-dropdown>
+        </p-select>
         <div *ngIf="createRevisionInstruction && createRevisionInstruction!.length > 0" class="card mt-2">
             <div class="card-body">
               <h5 class="card-title">What to Upload</h5>
@@ -182,7 +182,7 @@
                 #revisionCreationFileUpload name="selectedFile"
                 *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
                 chooseLabel="Select File" [customUpload]="true"
-                [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0" 
+                [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0"
                 accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)" (onRemove)="createRevisionForm.get('selectedFile')?.reset()">
                 <ng-template pTemplate="content">
                     <div *ngIf="createRevisionForm.get('selectedFile')!.value == null" class="mx-2">or drag and drop files here</div>
@@ -204,8 +204,10 @@
             </button>
         </div>
     </form>
+    </div>
 </p-sidebar>
 <p-sidebar [(visible)]="optionsSidebarVisible" position="right" [showCloseIcon]="false" styleClass="options-sidebar">
+    <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <h4>Filter APIRevisions</h4>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">
@@ -221,4 +223,5 @@
             </div>
         </li>
     </ul>
+    </div>
 </p-sidebar>

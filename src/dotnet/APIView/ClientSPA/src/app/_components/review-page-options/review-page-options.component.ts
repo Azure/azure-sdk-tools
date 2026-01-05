@@ -57,8 +57,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() commentThreadNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() diffNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
@@ -508,7 +508,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   navigateCommentThread(direction: CodeLineRowNavigationDirection) {
-    this.commentThreadNavaigationEmitter.emit(direction);
+    this.commentThreadNavigationEmitter.emit(direction);
   }
 
   /**

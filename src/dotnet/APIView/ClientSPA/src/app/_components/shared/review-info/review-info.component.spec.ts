@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MenubarModule } from 'primeng/menubar';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { RevisionOptionsComponent } from '../../revision-options/revision-options.component';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('ReviewInfoComponent', () => {
@@ -23,7 +23,7 @@ describe('ReviewInfoComponent', () => {
       imports: [
         BreadcrumbModule,
         MenubarModule,
-        DropdownModule,
+        SelectModule,
         ReactiveFormsModule,
         FormsModule
       ],

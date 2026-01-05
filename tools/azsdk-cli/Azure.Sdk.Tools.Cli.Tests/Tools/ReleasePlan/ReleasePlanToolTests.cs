@@ -338,7 +338,46 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
                 Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
+                Assert.That(response.Language, Is.Not.EqualTo(Models.SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
             }
+        }
+
+        [Test]
+        public async Task Test_link_sdk_pull_request_with_missing_work_item_and_release_plan()
+        {
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345", 0, 0);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Either work item ID or release plan ID is required"));
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Python));
+        }
+
+        [Test]
+        public async Task Test_link_sdk_pull_request_with_invalid_language()
+        {
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan("InvalidLanguage", "https://github.com/Azure/azure-sdk-for-python/pull/12345", 1, 0);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Unsupported language"));
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Unknown));
+        }
+
+        [Test]
+        public async Task Test_link_sdk_pull_request_with_empty_pull_request_url()
+        {
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan("Python", "", 1, 0);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("SDK pull request URL is required"));
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Python));
+        }
+
+        [Test]
+        public async Task Test_link_sdk_pull_request_with_mismatched_language_and_repo()
+        {
+            // Trying to link a Java repo PR with Python language
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan("Python", "https://github.com/Azure/azure-sdk-for-java/pull/12345", 1, 0);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Invalid pull request link"));
+            Assert.That(response.ResponseError, Does.Contain("azure-sdk-for-python"));
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Python));
         }
     }
 }

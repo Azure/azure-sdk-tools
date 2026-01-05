@@ -5,7 +5,7 @@
 ### Features Added
 
 - Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
-- Removed `azsdk pkg release-readiness` and replace it with `azsdk pgk release --check-ready`
+- Removed `azsdk pkg release-readiness` and replace it with `azsdk pkg release --check-ready`
 
 ### Breaking Changes
 

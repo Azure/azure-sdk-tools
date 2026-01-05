@@ -1,5 +1,6 @@
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
+using OpenAI.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
@@ -14,7 +15,10 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             _mcpClient = mcpClient;
         }
 
-        public async Task<ChatResponse> GetChatResponseWithExpectedResponseAsync(IEnumerable<ChatMessage> chat, Dictionary<string, ChatMessage> expectedToolResults)
+        public async Task<ChatResponse> GetChatResponseWithExpectedResponseAsync(
+            IEnumerable<ChatMessage> chat, 
+            Dictionary<string, ChatMessage> expectedToolResults,
+            IEnumerable<string> optionalToolNames)
         {
             var tools = await _mcpClient.ListToolsAsync();
             var conversationMessages = chat.ToList();
@@ -25,6 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             };
             var response = await _chatClient.GetResponseAsync(chat, chatOptions);
             var chatInitialIndex = conversationMessages.Count;
+            var optionalCallIds = new HashSet<string>();
 
             while (response.FinishReason == ChatFinishReason.ToolCalls)
             {
@@ -67,6 +72,11 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
                         conversationMessages.Add(errorResponseMessage);
                     }
+
+                    if(optionalToolNames.Contains(functionCall.Name))
+                    {
+                        optionalCallIds.Add(functionCall.CallId);
+                    }
                 }
 
                 response = await _chatClient.GetResponseAsync(conversationMessages, chatOptions);
@@ -79,7 +89,35 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 conversationMessages.Add(finalAssistantMessage);
             }
 
-            return new ChatResponse([.. conversationMessages.Skip(chatInitialIndex)]);
+            // Filter out any optional tool calls and their corresponding tool results
+            var filtered = FilterOptionalToolResponses(conversationMessages.Skip(chatInitialIndex), optionalCallIds);
+            return new ChatResponse([.. filtered]);
+        }
+
+        private IEnumerable<ChatMessage> FilterOptionalToolResponses(IEnumerable<ChatMessage> messages, HashSet<string> optionalCallIds)
+        {
+            // No optional calls to filter. 
+            if(optionalCallIds.Count == 0)
+            {
+                return messages;
+            }
+
+            foreach (var message in messages)
+            {
+                var functionCalls = message.Contents.OfType<FunctionCallContent>();
+                var functionResults = message.Contents.OfType<FunctionResultContent>();
+
+                // Remove optional tool calls and results.
+                message.Contents = [.. message.Contents.Where(content =>
+                    !(content is FunctionCallContent fc && optionalCallIds.Contains(fc.CallId)) &&
+                    !(content is FunctionResultContent fr && optionalCallIds.Contains(fr.CallId))
+                )];
+
+                if (message.Contents.Any())
+                {
+                    yield return message;
+                }
+            }
         }
 
         public async Task<ChatResponse> GetChatResponseAsync(IEnumerable<ChatMessage> chat)

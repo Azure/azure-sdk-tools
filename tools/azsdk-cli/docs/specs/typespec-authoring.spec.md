@@ -490,7 +490,7 @@ This feature/tool is complete when:
 **Prompt:**
 
 ```text
-add a new preview API version 2025-10-01-preview for service widget
+add a new preview API version 2025-10-01-preview for service widget resource management
 ```
 
 **Expected Agent Activity:**
@@ -498,19 +498,25 @@ add a new preview API version 2025-10-01-preview for service widget
 1. Add a enum option v2025_10_01_preview in version enum for this new API version and decorate with @previewVersion
 2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
 3. Summarize all the actions taken and display the reference docs
+4. Ask for features to add to this version. e.g. add an ARM resource, add/update an operation(CRUD, list), add/update a model
+5. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+6. Update code, by default the features will only be added to this new version
+7. List the referenced documents
 
 ### Scenario 2: Update TypeSpec to follow Azure guidelines
 
 **Prompt:**
 
 ```text
-add an azure resource named asset for the api version 2025-10-01-preview
+update the TypeSpec code to follow Azure guidelines for service widget resource management
 ```
 
 **Expected Agent Activity:**
 
-1. Generate azure trackedResource model Asset and resource interface Assets using azure mgmt templates. Decorated @added(Versions.v2025_10_01_preview) 
-2. summarize all the actions taken and display the reference docs
+1. Validate the TypeSpec code and display a list of code snippets that violates Azure guidelines, and the suggested fix
+2. Let user confirm which one to fix
+3. Apply the code fix
+4. Compile the fixed TypeSpec code and let user validate the output
 
 ---
 

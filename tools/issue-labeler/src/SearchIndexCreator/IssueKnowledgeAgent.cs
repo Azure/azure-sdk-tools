@@ -31,9 +31,14 @@ namespace SearchIndexCreator
                 ModelName = _config["KnowledgeAgentModelName"]
             };
             var agentModel = new KnowledgeAgentAzureOpenAIModel(azureOpenAIParameters: openAiParameters);
+            
+            // Read threshold from config, default to 1.0f for backward compatibility
+            var rerankerThreshold = float.TryParse(_config["RerankerThreshold"], out var threshold) 
+                ? threshold : 1.0f;
+            
             var targetIndex = new KnowledgeAgentTargetIndex(IndexName)
             {
-                DefaultRerankerThreshold = 0.7f
+                DefaultRerankerThreshold = rerankerThreshold
             };
 
             var agent = new KnowledgeAgent(

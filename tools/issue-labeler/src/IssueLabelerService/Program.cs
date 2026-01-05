@@ -74,6 +74,7 @@ var host = new HostBuilder()
         });
 
         services.AddSingleton<TriageRag>();
+        services.AddSingleton<McpTriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();

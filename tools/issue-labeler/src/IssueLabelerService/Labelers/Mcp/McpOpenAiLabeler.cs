@@ -9,30 +9,25 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using IssueLabeler.Shared;
+using IssueLabelerService;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace IssueLabelerService
 {
-    /// <summary>
-    /// MCP-specific RAG + few-shot based labeler.
-    /// Predicts:
-    ///   - Service (server-*)
-    ///   - Tool   (tools-* or UNKNOWN)
-    /// using Azure Search + Azure OpenAI with JSON schema-constrained output.
-    /// </summary>
+
     public class McpOpenAiLabeler : ILabeler
     {
         private readonly ILogger<LabelerFactory> _logger;
         private readonly RepositoryConfiguration _config;
-        private readonly TriageRag _ragService;
+        private readonly McpTriageRag _ragService;
         private readonly BlobServiceClient _blobClient;
 
         public McpOpenAiLabeler(
             ILogger<LabelerFactory> logger,
             RepositoryConfiguration config,
-            TriageRag ragService,
+            McpTriageRag ragService,
             BlobServiceClient blobClient)
         {
             _logger = logger;
@@ -41,19 +36,12 @@ namespace IssueLabelerService
             _blobClient = blobClient;
         }
 
-        /// <summary>
-        /// Predicts labels for an MCP issue:
-        ///   - Service  (one of the server-* labels)
-        ///   - Tool     (one of the tools-* labels or UNKNOWN)
-        /// </summary>
         public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
             var modelName = _config.LabelModelName;
 
-            // 1. Retrieve grounding context from the MCP search index
             var searchContentResults = await GetSearchContentResults(issue);
 
-            // 2. Load MCP labels (Server + Tool) from blob
             var allLabels = (await GetMcpLabelsAsync(issue.RepositoryName)).ToList();
             var serverLabels = allLabels
                 .Where(l => string.Equals(l.Type, "Server", StringComparison.OrdinalIgnoreCase))
@@ -83,7 +71,6 @@ namespace IssueLabelerService
                 return new Dictionary<string, string>();
             }
 
-            // 3. Build prompt content
             string printableContext = BuildPrintableContext(searchContentResults);
             string serverLabelList = string.Join(", ", serverLabels);
             string toolLabelList = string.Join(", ", toolLabels);
@@ -94,7 +81,6 @@ namespace IssueLabelerService
                 toolLabelList,
                 printableContext);
 
-            // 4. Build JSON schema for structured output
             var jsonSchema = BuildJsonSchema();
 
             // 5. Call OpenAI via TriageRag
@@ -159,7 +145,7 @@ namespace IssueLabelerService
         private class McpLabel
         {
             public string Name { get; set; }
-            public string Type { get; set; } // "Server" or "Tool"
+            public string Type { get; set; }
         }
 
         #endregion
@@ -199,22 +185,22 @@ namespace IssueLabelerService
             var scoreThreshold = double.Parse(_config.ScoreThreshold, CultureInfo.InvariantCulture);
             var fieldName = _config.IssueIndexFieldName;
 
-            // Format query to match indexed document structure for better similarity
             var query = $"Title: {issue.Title}\n\n{issue.Body ?? string.Empty}";
             _logger.LogInformation(
                 "Searching MCP content index '{IndexName}' with query: {Query}",
                 indexName,
                 query);
 
-            var searchContentResults = await _ragService.IssueTriageContentIndexAsync(
+            var searchContentResults = await _ragService.SearchMcpIssuesAsync(
                 indexName,
                 semanticName,
                 fieldName,
                 query,
-                top,
-                scoreThreshold,
-                labels: null,
-                filter: "DocumentType eq 'Issue' and Server ne null and Tool ne null");
+                topK: top,
+                scoreThreshold: scoreThreshold,
+                cleanQuery: true,           
+                onlyLabeledIssues: true,
+                excludeIssueId: issue.IssueNumber.ToString()); 
 
             if (searchContentResults.Count == 0)
             {
@@ -277,7 +263,7 @@ namespace IssueLabelerService
             var tags = ExtractTags(issue.Title);
             var tagHint = tags != "None" ? $@"
 
-⚠️ DETECTED TAGS: {tags}
+DETECTED TAGS: {tags}
 Tag-Based Hints:
 - [ONBOARD]: Issue requesting a NEW tool/service → Use the SPECIFIC tool label being requested (not tools-Core)
 - [CONSOLIDATED]: Multiple issues combined → Focus on the PRIMARY failure point
@@ -289,9 +275,11 @@ Tag-Based Hints:
 You are an assistant that classifies GitHub issues for the MCP (Model Context Protocol) repository.
 
 CRITICAL REQUIREMENTS:
-- You MUST provide BOTH a Server label AND a Tool label for EVERY issue.
-- Both labels are mandatory, even if the context shows some issues as ""Unlabeled"".
-- The unlabeled issues in the context are historical data before labeling - ignore their missing labels.
+- You MUST provide a Server label for EVERY issue.
+- Tool label requirements depend on which server:
+  * For server-Azure.Mcp: You MUST also provide a Tool label (mandatory)
+  * For other servers (Fabric, PowerBI, Template): Tool label is OPTIONAL
+- If the context shows some issues as ""Unlabeled"", ignore that - those are historical data before labeling.
 {tagHint}
 Your task:
 1. Choose a single **Server** label for the issue.
@@ -299,11 +287,30 @@ Your task:
      {serverLabelList}
    - This is MANDATORY. Every issue requires a Server label.
 
-2. Choose a single **Tool** label for the issue.
-   - It MUST be one of the following tool labels:
+2. Choose a **Tool** label for the issue (requirements vary by server):
+   - Available tool labels:
      {toolLabelList}
-   - If the issue does not clearly relate to any specific tool, use the literal value ""UNKNOWN"".
-   - Providing Tool = ""UNKNOWN"" is acceptable when truly uncertain, but prefer selecting a real tool when possible.
+   
+   For server-Azure.Mcp issues:
+   - Tool label is MANDATORY
+   - Secondary label rules for server-azure-mcp:
+    - Use a tools-* label ONLY when the issue is about a specific MCP tool
+    (e.g. Storage, CosmosDB, EventGrid).
+    - Use remote-mcp label when the issue is about:
+    - remote MCP routing
+    - proxying
+    - topology
+    - remote clusters
+    - authentication or networking specific to remote MCP
+    - remote-mcp is NOT a tool. It replaces the tool label when applicable.
+   - If the issue does not clearly relate to any specific tool, use the literal value ""UNKNOWN""
+   - Providing Tool = ""UNKNOWN"" is acceptable when truly uncertain, but prefer selecting a real tool when possible
+   
+   **For other servers (Fabric, PowerBI, Template):**
+   - Tool label is OPTIONAL and typically should be OMITTED
+   - These servers currently have no tool taxonomy defined
+   - Only provide a Tool label if the issue explicitly involves an Azure tool (rare edge case)
+   - In most cases, set Tool to null or omit it from the response
 
 CRITICAL CLASSIFICATION RULES:
 
@@ -350,7 +357,7 @@ Examples applying the scope test:
 - ""Proxy timeout"" → ALL tools affected → tools-Core
 - ""KeyVault invalid credential"" → ONE tool → tools-KeyVault  
 - ""Environment variable missing"" → ALL tools → tools-Core
-- ""Cosmos query timeout"" → ONE tool → tools-CosmosDb
+- ""Kusto timeout"" → ONE tool → tools-Kusto
 
 **Rule 3: Onboarding and Feature Requests**
 For requests to ADD new functionality:
@@ -366,27 +373,81 @@ An onboarding request for ""Azure SQL"" is ABOUT SQL, so use tools-SQL label.
 - Ignore tools mentioned as examples, comparisons, or in passing
 - Example: ""Cosmos insert fails after Storage download"" → tools-CosmosDb (where failure occurs)
 
-**CRITICAL EXAMPLES - Study These Carefully:**
+**AUTHORITATIVE CLASSIFICATION ANCHORS (FEW-SHOT):**
 
-Example 1: Authentication failure in a specific tool
-- Issue: ""KeyVault tool authentication fails with DefaultAzureCredential error""
+These examples illustrate boundary cases. Do NOT assume new issues match them unless the same reasoning applies.
+
+Example A:
+Title: ""[CONSOLIDATED] Some get_azure_best_practices prompts do not trigger the corresponding tool""
+Description: ""The prompt resolves, but the expected tool is not invoked.""
+
+Output:
+{{
+  ""Server"": ""server-Azure.Mcp"",
+  ""Tool"": ""tools-Core"",
+  ""ServerConfidenceScore"": 0.95,
+  ""ToolConfidenceScore"": 0.9
+}}
+
+Example B:
+Title: ""Azure MCP on Claude Desktop: Unable to get list of VMs from the Azure Tenant""
+Description: ""The request relies on Azure CLI authentication and az commands.""
+
+Output:
+{{
+  ""Server"": ""server-Azure.Mcp"",
+  ""Tool"": ""tools-AzCLI"",
+  ""ServerConfidenceScore"": 0.95,
+  ""ToolConfidenceScore"": 0.9
+}}
+
+Example C:
+Title: ""subscription list tools generate responses that are too large""
+Description: ""Issue occurs while listing subscription inventory.""
+
+Output:
+{{
+  ""Server"": ""server-Azure.Mcp"",
+  ""Tool"": ""tools-ARM"",
+  ""ServerConfidenceScore"": 0.9,
+  ""ToolConfidenceScore"": 0.85
+}}
+
+**CONCEPTUAL EXAMPLES (FOR UNDERSTANDING ONLY — NOT EXHAUSTIVE):**
+
+The following examples are illustrative abstractions and do not correspond to any specific real issue.
+
+Example 1: Authentication failure scoped to a single tool
+- Issue: ""A specific resource-oriented tool fails authentication when invoking cloud credentials.""
 - WRONG: tools-Auth (too generic)
-- RIGHT: tools-KeyVault (auth failure happens WHEN using KeyVault tool)
+- RIGHT: The specific tool involved (authentication failed during that tool’s execution)
 
-Example 2: Telemetry service failure
-- Issue: ""Server crashes due to telemetry initialization error""
-- WRONG: tools-Core (seems like infrastructure)
-- RIGHT: tools-Telemetry (telemetry is a specific tool/service, not Core)
+Principle:
+Authentication errors belong to the tool if they occur after the tool is invoked, even if shared credentials are used.
 
-Example 3: Generic startup without specific tool
-- Issue: ""MCP server won't start, TypeScript error in server.ts""
+Example 2: Failure in a named internal service used by the server
+- Issue: ""The server terminates during startup due to an initialization failure in an internal service.""
+- WRONG: tools-Core (appears infrastructural at first glance)
+- RIGHT: The internal service’s tool label
+
+Principle:
+If a failure originates in a specific internal service or subsystem, label that service rather than Core.
+
+Example 3: Server startup failure with no tool involvement
+- Issue: ""The server fails to start due to a runtime or configuration error before any tools are invoked.""
 - WRONG: Any specific tool
-- RIGHT: tools-Core (no specific tool mentioned, generic server issue)
+- RIGHT: tools-Core
 
-Example 4: All tools affected
-- Issue: ""All tools fail with proxy ETIMEDOUT error""
-- WRONG: Specific tool
-- RIGHT: tools-Core (explicitly states ALL tools affected)
+Principle:
+When no tool execution occurs, the issue belongs to infrastructure (Core).
+
+Example 4: Cross-cutting failure affecting all tools
+- Issue: ""Every tool invocation fails due to a shared environmental or connectivity issue.""
+- WRONG: Any single tool
+- RIGHT: tools-Core
+
+Principle:
+Failures that impact multiple or all tools simultaneously indicate an infrastructure-level problem.
 
 Guidelines:
 - **Prioritize the retrieved similar issues** - they show real examples of how issues were classified
@@ -405,9 +466,13 @@ Confidence Scoring:
 Return:
 - A JSON object with exactly these fields:
   - ""Server"": the chosen server label (string, REQUIRED)
-  - ""Tool"": the chosen tool label or ""UNKNOWN"" (string, REQUIRED)
+  - ""Tool"": the chosen tool label or ""UNKNOWN"" (string, REQUIRED for Azure MCP, OPTIONAL for others)
   - ""ServerConfidenceScore"": a number between 0 and 1 (REQUIRED)
-  - ""ToolConfidenceScore"": a number between 0 and 1 (REQUIRED)
+  - ""ToolConfidenceScore"": a number between 0 and 1 (REQUIRED if Tool is provided, otherwise optional)
+
+Notes:
+- For Azure MCP issues, always include Tool (even if ""UNKNOWN"")
+- For other servers, you may omit Tool or set it to null if not applicable
 
 Do NOT include any extra fields or text outside of the JSON.
 
@@ -425,13 +490,6 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
 
         private static BinaryData BuildJsonSchema()
         {
-            // Schema for:
-            // {
-            //   "Server": "server-Azure.Mcp",
-            //   "Tool": "tools-kusto",
-            //   "ServerConfidenceScore": 0.93,
-            //   "ToolConfidenceScore": 0.82
-            // }
             var schemaJson = @"
 {
   ""type"": ""object"",
@@ -440,13 +498,13 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
       ""type"": ""string""
     },
     ""Tool"": {
-      ""type"": ""string""
+      ""type"": [""string"", ""null""]
     },
     ""ServerConfidenceScore"": {
       ""type"": ""number""
     },
     ""ToolConfidenceScore"": {
-      ""type"": ""number""
+      ""type"": [""number"", ""null""]
     }
   },
   ""required"": [ ""Server"", ""Tool"" ],
@@ -511,13 +569,27 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
             }
 
             // 2. Validate Tool
+            bool isAzureMcp = server.Equals("server-Azure.Mcp", StringComparison.OrdinalIgnoreCase);
+            
             if (string.IsNullOrEmpty(tool))
             {
-                _logger.LogWarning(
-                    "MCP labeler returned empty Tool for issue #{IssueNumber} in {Repository}.",
-                    issue.IssueNumber,
-                    issue.RepositoryName);
-                return new Dictionary<string, string>();
+                // if (isAzureMcp)
+                // {
+                //     _logger.LogWarning(
+                //         "MCP labeler returned empty Tool for Azure MCP issue #{IssueNumber} in {Repository}. Tool is required for Azure MCP.",
+                //         issue.IssueNumber,
+                //         issue.RepositoryName);
+                //     return new Dictionary<string, string>();
+                // }
+                // else
+                // {
+                    _logger.LogInformation(
+                        "MCP labeler returned no Tool for issue #{IssueNumber} in {Repository}. This is acceptable for non-Azure MCP servers. Applying Server label only.",
+                        issue.IssueNumber,
+                        issue.RepositoryName);
+                    result["Server"] = server;
+                    return result;
+                //}
             }
 
             bool toolIsUnknown = string.Equals(tool, "UNKNOWN", StringComparison.OrdinalIgnoreCase);

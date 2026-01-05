@@ -33,7 +33,6 @@ namespace IssueLabelerService
             string query,
             int count,
             double scoreThreshold,
-            Dictionary<string, string> labels = null,
             string filter = null)
         {
 
@@ -84,7 +83,7 @@ namespace IssueLabelerService
                     new VectorizableTextQuery(text: query)
                     {
                         KNearestNeighborsCount = 50,
-                        Fields = { field }  // Vector field, not the text field
+                        Fields = { field }
                     }
                 }
             };

@@ -231,7 +231,7 @@ namespace SearchIndexCreator
                         $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
                         repoOwner + "/" + _repo,
                         comment.HtmlUrl,
-                        DocumentTypes.Comment.ToString()  // Changed from Issue to Comment
+                        DocumentTypes.Issue.ToString()
                     )
                     {
                         Title = issue.Title,
@@ -452,14 +452,12 @@ namespace SearchIndexCreator
                 
                 var (serverLabel, toolLabel) = AnalyzeMcpLabels(issue.Labels);
 
-                // serverLabel and toolLabel are now comma-separated strings (or null)
                 var labels = new List<string>();
                 if (serverLabel != null) labels.AddRange(serverLabel.Split(", "));
                 if (toolLabel != null) labels.AddRange(toolLabel.Split(", "));
 
                 var codeowners = CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).ServiceOwners;
 
-                // Handle empty/null bodies - ensure minimum text for SplitSkill
                 var bodyText = string.IsNullOrWhiteSpace(issue.Body) 
                     ? $"Title: {issue.Title}\n\n[No description provided]" 
                     : $"Title: {issue.Title}\n\n{issue.Body}";
@@ -490,7 +488,7 @@ namespace SearchIndexCreator
                 //         $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
                 //         repoOwner + "/" + _repo,
                 //         comment.HtmlUrl,
-                //         DocumentTypes.Comment.ToString()  // Changed from Issue to Comment
+                //         DocumentTypes.Comment.ToString() 
                 //     )
                 //     {
                 //         Title = issue.Title,
@@ -511,24 +509,23 @@ namespace SearchIndexCreator
         }
 
         private static bool IsServerLabel(Octokit.Label label) =>
-            //string.Equals(label.Color, "e99695", StringComparison.InvariantCultureIgnoreCase);
             label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsToolLabel(Octokit.Label label) =>
-            // string.Equals(label.Color, "ffeb77", StringComparison.InvariantCultureIgnoreCase);
-            label.Name.StartsWith("tools-", StringComparison.OrdinalIgnoreCase);
+            label.Name.StartsWith("tools-", StringComparison.OrdinalIgnoreCase) ||
+            label.Name.Equals("remote-mcp", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Extract MCP labels from an issue's label list
-        /// Returns comma-separated strings of all server- and tools- labels
+        /// Returns comma-separated strings of all server- and tools-/remote-mcp labels
         /// This allows issues to have multiple tool labels (e.g., "tools-Storage, tools-CosmosDb")
+        /// remote-mcp is treated as a tool-like label for Azure MCP server
         /// </summary>
         private (string serverLabels, string toolLabels) AnalyzeMcpLabels(IReadOnlyList<Octokit.Label> labels)
         {
             var serverLabelsList = labels.Where(IsServerLabel).Select(l => l.Name).ToList();
             var toolLabelsList = labels.Where(IsToolLabel).Select(l => l.Name).ToList();
 
-            // Return comma-separated strings (null if no labels)
             var serverLabels = serverLabelsList.Any() ? string.Join(", ", serverLabelsList) : null;
             var toolLabels = toolLabelsList.Any() ? string.Join(", ", toolLabelsList) : null;
 

@@ -93,7 +93,6 @@ namespace SearchIndexCreator
             var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
             client.Credentials = _tokenAuth;
 
-            // Retrieve repository names from configuration
             var repoNamesConfig = _config["McpRepositoryForLabels"];
             if (string.IsNullOrEmpty(repoNamesConfig))
             {
@@ -102,28 +101,24 @@ namespace SearchIndexCreator
 
             var repoNames = repoNamesConfig.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-            // Initialize BlobServiceClient (replace with your connection string)
             var blobServiceClient = GetBlobServiceClient(_config["IssueStorageName"]);
             var containerClient = blobServiceClient.GetBlobContainerClient("labels");
 
-            // Ensure the container exists
             await containerClient.CreateIfNotExistsAsync();
 
             foreach (var repo in repoNames)
             {
-                // Fetch labels for the repository
                 var labels = await client.Issue.Labels.GetAllForRepository(repoOwner, repo);
 
-                // Upload JSON to blob storage
                 var blobClient = containerClient.GetBlobClient(repo);
 
                 try
                 {
-                    // Map labels to a custom object with Name and Color
                     var labelData = labels
                        .Where(label =>
                         label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase) ||
-                        label.Name.StartsWith("tools-",  StringComparison.OrdinalIgnoreCase))
+                        label.Name.StartsWith("tools-",  StringComparison.OrdinalIgnoreCase) ||
+                        label.Name.Equals("remote-mcp", StringComparison.OrdinalIgnoreCase))
                         .Select(label => new
                         {
                             Name = label.Name ,
@@ -131,12 +126,11 @@ namespace SearchIndexCreator
                         })
                         .OrderBy(label => label.Name);
 
-                    // Serialize the custom object to JSON
                     var labelsJson = JsonSerializer.Serialize(labelData);
 
                     var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
                     {
-                        ContentType = "application/json" // Specify the content type
+                        ContentType = "application/json"
                     };
 
                     using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(labelsJson));

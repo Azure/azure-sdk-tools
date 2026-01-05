@@ -98,7 +98,7 @@ namespace SearchIndexCreator
         {
             // Retrieve examples of issues for testing from a repository
             var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
-            var issues = await issueTriageContentRetrieval.RetrieveIssueExamples("Azure", config["repo"], 300);
+            var issues = await issueTriageContentRetrieval.RetrieveIssueExamples("Azure", config["repo"], 7);
             string jsonString = JsonSerializer.Serialize(issues);
             File.WriteAllText("issues.json", jsonString);
         }

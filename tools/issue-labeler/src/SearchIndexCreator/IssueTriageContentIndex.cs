@@ -10,10 +10,16 @@ namespace SearchIndexCreator
     public class IssueTriageContentIndex
     {
         private readonly IConfiguration _config;
+        private readonly string _embeddingModelName;
+        private readonly int _vectorDimensions;
 
         public IssueTriageContentIndex(IConfiguration config)
         {
             _config = config;
+            _embeddingModelName = _config["EmbeddingModelName"];
+            _vectorDimensions = _embeddingModelName?.Equals("text-embedding-3-large", StringComparison.OrdinalIgnoreCase) == true
+                ? 3072
+                : 1536;
         }
         
         /// <summary>
@@ -41,7 +47,6 @@ namespace SearchIndexCreator
                 //Create a skillset
                 Console.WriteLine("Creating/Updating the skillset...");
                 
-                // Use MCP-optimized skillset for MCP repository, otherwise use default Azure SDK skillset
                 var repo = _config["repo"];
                 var isMcpRepo = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true;
                 var skillset = isMcpRepo ? GetSkillsetForMcp() : GetSkillset();
@@ -112,8 +117,8 @@ namespace SearchIndexCreator
                             Parameters = new AzureOpenAIVectorizerParameters()
                             {
                                 ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                                DeploymentName = _config["EmbeddingModelName"],
-                                ModelName = _config["EmbeddingModelName"]
+                                DeploymentName = _embeddingModelName,
+                                ModelName = _embeddingModelName
                             }
                         }
                     },
@@ -151,8 +156,6 @@ namespace SearchIndexCreator
 
         private IList<SearchField> CreateFields()
         {
-
-            const int modelDimensions = 3072;  // text-embedding-3-large produces 3072-dimensional vectors
             const string vectorSearchHnswProfile = "issue-vector-profile";
 
             return new List<SearchField>
@@ -175,7 +178,7 @@ namespace SearchIndexCreator
                     new SearchField("TextVector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                     {
                         IsSearchable = true,
-                        VectorSearchDimensions = modelDimensions,
+                        VectorSearchDimensions = _vectorDimensions,
                         VectorSearchProfileName = vectorSearchHnswProfile
                     },
                     new SearchField("Id", SearchFieldDataType.String)
@@ -191,11 +194,11 @@ namespace SearchIndexCreator
                     {
                         IsFilterable = true
                     },
-                    new SearchableField("Server")  // MCP: server-* label
+                    new SearchableField("Server")
                     {
                         IsFilterable = true
                     },
-                    new SearchableField("Tool")    // MCP: tools-* label
+                    new SearchableField("Tool")
                     {
                         IsFilterable = true
                     },
@@ -283,8 +286,8 @@ namespace SearchIndexCreator
                 {
                     Context = "/document/pages/*",
                     ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                    ModelName = _config["EmbeddingModelName"],
-                    DeploymentName = _config["EmbeddingModelName"]
+                    ModelName = _embeddingModelName,
+                    DeploymentName = _embeddingModelName
                 }
             })
             {
@@ -362,10 +365,6 @@ namespace SearchIndexCreator
                 $"{_config["ContainerName"]}-skillset",
                 new List<SearchIndexerSkill>
                 {
-                    //
-                    // 1️⃣ Split Title + Body separately, then combine chunks
-                    //    (Simpler than MergeSkill - avoids type mismatch issues)
-                    //
                     new SplitSkill(
                         inputs: new List<InputFieldMappingEntry>
                         {
@@ -378,15 +377,11 @@ namespace SearchIndexCreator
                     )
                     {
                         Context = "/document",
-                        // MCP-optimized chunking strategy
                         TextSplitMode = TextSplitMode.Pages,
-                        MaximumPageLength = 2200,    // Chunk ≈ 400–600 tokens
-                        PageOverlapLength = 250      // Preserves continuity
+                        MaximumPageLength = 2200,
+                        PageOverlapLength = 250
                     },
 
-                    //
-                    // 3️⃣ Embed each chunk using Azure OpenAI
-                    //
                     new AzureOpenAIEmbeddingSkill(
                         inputs: new List<InputFieldMappingEntry>
                         {
@@ -400,8 +395,8 @@ namespace SearchIndexCreator
                     {
                         Context = "/document/pages/*",
                         ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                        ModelName = _config["EmbeddingModelName"],
-                        DeploymentName = _config["EmbeddingModelName"]
+                        ModelName = _embeddingModelName,
+                        DeploymentName = _embeddingModelName
                     }
                 })
             {
@@ -410,7 +405,7 @@ namespace SearchIndexCreator
                     new SearchIndexerIndexProjectionSelector(
                         targetIndexName: _config["IndexName"],
                         parentKeyFieldName: "ParentId",
-                        sourceContext: "/document/pages/*",  // Must match SplitSkill output context
+                        sourceContext: "/document/pages/*",
                         mappings: new[]
                         {
                             new InputFieldMappingEntry("TextVector") { Source = "/document/pages/*/TextVector" },

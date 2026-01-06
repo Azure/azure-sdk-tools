@@ -144,10 +144,10 @@
         .severity-edit-icon { font-size: .7rem; opacity: .7; transition: all .2s; }
     }
 
-    .severity-question { background-color: #F0F7FF; color: #1E40AF; border-color: #B3D4FF; }
-    .severity-suggestion { background-color: #F0F0F0; color: #616161; border-color: #E0E0E0; }
-    .severity-should-fix { background-color: #FFF9F5; color: #8A3707; border-color: #FDCFB4; }
-    .severity-must-fix { background-color: #FDF3F4; color: #B10E1C; border-color: #EEACB2; }
+    .severity-question { background-color: var(--severity-question-bg); color: var(--severity-question-text); border-color: var(--severity-question-border); }
+    .severity-suggestion { background-color: var(--severity-suggestion-bg); color: var(--severity-suggestion-text); border-color: var(--severity-suggestion-border); }
+    .severity-should-fix { background-color: var(--severity-should-fix-bg); color: var(--severity-should-fix-text); border-color: var(--severity-should-fix-border); }
+    .severity-must-fix { background-color: var(--severity-must-fix-bg); color: var(--severity-must-fix-text); border-color: var(--severity-must-fix-border); }
 
     .severity-edit-container { display: inline-block; position: relative; }
 
@@ -156,15 +156,6 @@
         pointer-events: none !important;
         &:hover { transform: none !important; box-shadow: none !important; }
         .severity-edit-icon { display: none !important; }
-    }
-}
-
-:host-context(.dark-theme), :host-context(.dark-solarized-theme) {
-    ::ng-deep {
-        .severity-question { background-color: #1E3A8A; color: #BFDBFE; border-color: #3B82F6; }
-        .severity-suggestion { background-color: #374151; color: #D1D5DB; border-color: #6B7280; }
-        .severity-should-fix { background-color: #92400E; color: #FED7AA; border-color: #F59E0B; }
-        .severity-must-fix { background-color: #991B1B; color: #FECACA; border-color: #EF4444; }
     }
 }
 

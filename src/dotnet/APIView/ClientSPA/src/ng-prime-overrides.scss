@@ -912,7 +912,7 @@ p-inputswitch, .p-inputswitch, .p-toggleswitch {
 }
 
 .p-toggleswitch-handle {
-    background: #6c757d !important;
+    background: var(--toggle-switch-off) !important;
     width: 16px !important;
     height: 16px !important;
     left: 2px !important;
@@ -925,7 +925,7 @@ p-inputswitch, .p-inputswitch, .p-toggleswitch {
 
 .p-toggleswitch-checked .p-toggleswitch-handle {
     left: 20px !important;
-    background: #ffffff !important;
+    background: var(--toggle-switch-on) !important;
 }
 
 .p-inputswitch .p-inputswitch-slider:before,

@@ -26,7 +26,7 @@
     /*----Diagnostic Details Link------------------------------------*/
     --details-link-color: #{bootstrap.$primary};
     --details-link-active-hover: #00CBEB;
-    --link-visited: #{bootstrap.shade-color(bootstrap.$primary, 40%)};
+    --details-link-visited: #{bootstrap.shade-color(bootstrap.$primary, 40%)};
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{bootstrap.tint-color(bootstrap.$primary, 80%)};
     --shadow-color: rgba(#{bootstrap.$black}, .15);
@@ -86,6 +86,22 @@
     --code-delta: #fdefc6;
     --dark-overlay: rgba(0, 0, 0, 0.1);
     --client-type-bg: rgba(13, 110, 253, 0.08);
+    /*----Severity Badges----------------------------------------*/
+    --severity-question-bg: #F0F7FF;
+    --severity-question-text: #1E40AF;
+    --severity-question-border: #B3D4FF;
+    --severity-suggestion-bg: #F0F0F0;
+    --severity-suggestion-text: #616161;
+    --severity-suggestion-border: #E0E0E0;
+    --severity-should-fix-bg: #FFF9F5;
+    --severity-should-fix-text: #8A3707;
+    --severity-should-fix-border: #FDCFB4;
+    --severity-must-fix-bg: #FDF3F4;
+    --severity-must-fix-text: #B10E1C;
+    --severity-must-fix-border: #EEACB2;
+    /*----Toggle Switch------------------------------------------*/
+    --toggle-switch-off: #6c757d;
+    --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
@@ -180,6 +196,22 @@
     --code-delta: #4c401a;
     --dark-overlay: rgba(0, 0, 0, 0.3);
     --client-type-bg: rgba(0, 132, 255, 0.25);
+    /*----Severity Badges----------------------------------------*/
+    --severity-question-bg: #1E3A8A;
+    --severity-question-text: #BFDBFE;
+    --severity-question-border: #3B82F6;
+    --severity-suggestion-bg: #374151;
+    --severity-suggestion-text: #D1D5DB;
+    --severity-suggestion-border: #6B7280;
+    --severity-should-fix-bg: #92400E;
+    --severity-should-fix-text: #FED7AA;
+    --severity-should-fix-border: #F59E0B;
+    --severity-must-fix-bg: #991B1B;
+    --severity-must-fix-text: #FECACA;
+    --severity-must-fix-border: #EF4444;
+    /*----Toggle Switch------------------------------------------*/
+    --toggle-switch-off: #6c757d;
+    --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
@@ -276,6 +308,22 @@
     --code-delta: #695b32;
     --dark-overlay: rgba(0, 0, 0, 0.3);
     --client-type-bg: rgba(255, 189, 0, 0.15);
+    /*----Severity Badges----------------------------------------*/
+    --severity-question-bg: #1E3A8A;
+    --severity-question-text: #BFDBFE;
+    --severity-question-border: #3B82F6;
+    --severity-suggestion-bg: #374151;
+    --severity-suggestion-text: #D1D5DB;
+    --severity-suggestion-border: #6B7280;
+    --severity-should-fix-bg: #92400E;
+    --severity-should-fix-text: #FED7AA;
+    --severity-should-fix-border: #F59E0B;
+    --severity-must-fix-bg: #991B1B;
+    --severity-must-fix-text: #FECACA;
+    --severity-must-fix-border: #EF4444;
+    /*----Toggle Switch------------------------------------------*/
+    --toggle-switch-off: #6c757d;
+    --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");

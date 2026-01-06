@@ -353,7 +353,7 @@ extends:
                 inputs:
                   folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                   fileType: json
-                  targetFiles: wwwroot/spa/assets/config.json
+                  targetFiles: wwwroot/spa/browser/assets/config.json
 
               - task: AzureRmWebAppDeployment@4
                 displayName: 'Deploy Azure App Service'
@@ -415,7 +415,7 @@ extends:
                       inputs:
                         folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                         fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
 
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Azure App Service Deploy: apiviewuat'
@@ -475,7 +475,7 @@ extends:
                       inputs:
                         folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                         fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
 
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Deploy Azure App Service'

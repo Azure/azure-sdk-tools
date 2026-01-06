@@ -18,6 +18,7 @@
     --border-color: #{bootstrap.shade-color($base-bg-color, 20%)};
     --border-color-transparent: #{bootstrap.shade-color($base-bg-color, 2%)};
     --primary-btn-color: #fff;
+    --checkbox-icon-color: #{bootstrap.$primary};
     /*----Links------------------------------------------------------*/
     --link-color: #{bootstrap.$primary};
     --link-active: #{bootstrap.shade-color(bootstrap.$primary, 20%)};
@@ -86,7 +87,7 @@
     --dark-overlay: rgba(0, 0, 0, 0.1);
     --client-type-bg: rgba(13, 110, 253, 0.08);
     /*----SVG-------------------------------------------------*/
-    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
 
@@ -111,6 +112,7 @@
     --border-color: #{bootstrap.tint-color($base-bg-color, 20%)};
     --border-color-transparent: #{bootstrap.tint-color($base-bg-color, 7%)};
     --primary-btn-color: #fff;
+    --checkbox-icon-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
     --link-active: #{bootstrap.tint-color($primary-color, 20%)};
@@ -205,7 +207,8 @@
     --danger-color: #{$danger-color};
     --border-color: #{bootstrap.tint-color($base-bg-color, 20%)};
     --border-color-transparent: #{bootstrap.tint-color($base-bg-color, 7%)};
-    --primary-btn-color: #{$base-bg-color};
+    --primary-btn-color: #fff;
+    --checkbox-icon-color: #{$primary-color};
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
     --link-active: #{bootstrap.tint-color($primary-color, 10%)};
@@ -274,6 +277,6 @@
     --dark-overlay: rgba(0, 0, 0, 0.3);
     --client-type-bg: rgba(255, 189, 0, 0.15);
     /*----SVG-------------------------------------------------*/
-    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='dimgray' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
-    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='dimgray'/%3e%3c/svg%3e");
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }

@@ -154,6 +154,27 @@
     },
     {
       "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-net.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": ".NET Azure SDK documentation",
+          "path": "/doc",
+          "folder": "azure_sdk_for_net_docs",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": ".NET Azure Resource Manager SDK documentation",
+          "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
+          "folder": "azure_sdk_for_net_mgmt_docs",
+          "relativeByRepoPath": true
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-go.git",
         "branch": "main",
         "authType": "public"

@@ -30,7 +30,7 @@ namespace AutoReviewLegacy {
         @query packageVersion?: string
     ): {
         @statusCode statusCode: 200 | 201 | 202;
-    } | NotFoundErrorResponse | UnauthorizedErrorResponse | InternalServerErrorResponse;
+    } | NotFoundErrorResponse | InternalServerErrorResponse;
 }
 
 /**

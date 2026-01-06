@@ -129,7 +129,7 @@ The compiled OpenAPI specification (`tsp-output/openapi.yaml`) can be:
 
 ```bash
 curl -X POST "https://apiview.dev/autoreview/upload?label=v1.0.0" \
-  -H "ApiKey: your-api-key-here" \
+  -H "Authorization: Bearer your-token-here" \
   -F "file=@path/to/api-review-file.json"
 ```
 

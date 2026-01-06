@@ -4,6 +4,33 @@ import (
 	"strings"
 )
 
+// ExpansionType defines how a chunk should be expanded
+type ExpansionType int
+
+const (
+	ExpansionNone         ExpansionType = iota // No expansion needed - use chunk as-is
+	ExpansionFullFile                          // Expand entire file using CompleteChunk
+	ExpansionHierarchical                      // Expand based on header hierarchy
+	ExpansionQA                                // Expand based on Q&A pairs
+	ExpansionMapping                           // Expand based on TypeSpec to Swagger mapping
+)
+
+// ChunkWithExpansion wraps a chunk with its expansion strategy
+type ChunkWithExpansion struct {
+	Chunk     Index
+	Expansion ExpansionType
+}
+
+// ChunkHierarchy represents the header level of a chunk
+type ChunkHierarchy int
+
+const (
+	HierarchyHeader3 ChunkHierarchy = iota // Full chunk with header3 (most specific)
+	HierarchyHeader2                       // Chunk with header1 and header2
+	HierarchyHeader1                       // Chunk with only header1
+	HierarchyUnknown                       // Unknown or no headers
+)
+
 type AgenticSearchRequest struct {
 	Messages                 []KnowledgeAgentMessage   `json:"messages"`
 	KnowledgeSourceParams    []KnowledgeSourceParams   `json:"knowledgeSourceParams,omitempty"`
@@ -264,6 +291,8 @@ func GetIndexLink(chunk Index) string {
 	case Source_AzureSDKForJavaScriptWiki:
 		path = TrimFileFormat(path)
 		return "https://github.com/Azure/azure-sdk-for-js/wiki/" + path
+	case Source_AzureSDKForNetDocs:
+		return "https://github.com/Azure/azure-sdk-for-net/blob/main/" + path
 	default:
 		return ""
 	}

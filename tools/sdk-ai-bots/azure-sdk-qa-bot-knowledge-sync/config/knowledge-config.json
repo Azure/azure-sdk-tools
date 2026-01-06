@@ -168,7 +168,7 @@
         {
           "description": ".NET Azure Resource Manager SDK documentation",
           "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
-          "folder": "azure_sdk_for_net_mgmt_docs",
+          "folder": "azure_sdk_for_net_docs",
           "relativeByRepoPath": true
         }
       ]

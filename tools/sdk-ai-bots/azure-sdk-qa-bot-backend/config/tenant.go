@@ -42,7 +42,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "language_python/agentic_search.md",
 	},
 	model.TenantID_DotnetChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForNetDocs, model.Source_AzureSDKForNetMgmtDocs, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForNetDocs, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('dotnet_*', 'title')",
 		},

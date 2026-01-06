@@ -228,7 +228,7 @@ test.describe('CodeLine Section State Management', () => {
 async function addAutoReview(fileName: string, fileDirectory: string, language: string, testReviewIds: {}) {
     const swaggerTokenContent = fs.readFileSync(path.resolve(path.join(fileDirectory, fileName)), "utf8");
     const label = `${fileName} Review Label`;
-    const autoUplloadUrl = `${baseURL}/AutoReview/UploadAutoReview?label=${label}`;
+    const autoUplloadUrl = `${baseURL}/autoreview/upload?label=${label}`;
 
     const formData = new FormData();
     const file = new File([swaggerTokenContent], fileName);

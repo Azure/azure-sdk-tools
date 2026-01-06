@@ -6,39 +6,11 @@ using TypeSpec.Http;
 namespace APIView;
 
 /**
- * Automatic API Review endpoints
- * These endpoints require API Key authentication via the 'ApiKey' header.
+ * Automatic API Review endpoints (Legacy)
+ * These endpoints do not require authentication.
  */
 @route("/AutoReview")
-@useAuth(ApiKeyAuth<ApiKeyLocation.header, "ApiKey">)
-namespace AutoReview {
-    /**
-     * Upload an automatic API review file
-     * @param file The API review file to upload
-     * @param label Label for the revision
-     * @param compareAllRevisions Whether to compare against all revisions
-     * @param packageVersion Version of the package
-     * @param setReleaseTag Whether to set release tag
-     * @param packageType Type of the package
-     * @returns URL of the created/updated review
-     */
-    @post
-    @route("/UploadAutoReview")
-    op UploadAutoReview(
-        @header contentType: "multipart/form-data",
-        @multipartBody body: {
-            file: HttpPart<bytes>;
-        },
-        @query label: string,
-        @query compareAllRevisions?: boolean = false,
-        @query packageVersion?: string,
-        @query setReleaseTag?: boolean = false,
-        @query packageType?: string
-    ): {
-        @statusCode statusCode: 200 | 201 | 202;
-        @body reviewUrl: string;
-    } | UnauthorizedErrorResponse | InternalServerErrorResponse;
-
+namespace AutoReviewLegacy {
     /**
      * Get the approval status of an API review revision
      * @param language Language of the package
@@ -59,6 +31,41 @@ namespace AutoReview {
     ): {
         @statusCode statusCode: 200 | 201 | 202;
     } | NotFoundErrorResponse | UnauthorizedErrorResponse | InternalServerErrorResponse;
+}
+
+/**
+ * Automatic API Review endpoints
+ * These endpoints require Azure AD Token or GitHub Token authentication via the 'Authorization: Bearer' header.
+ */
+@route("/autoreview")
+@useAuth(BearerAuth)
+namespace AutoReview {
+    /**
+     * Upload an automatic API review file
+     * @param file The API review file to upload
+     * @param label Label for the revision
+     * @param compareAllRevisions Whether to compare against all revisions
+     * @param packageVersion Version of the package
+     * @param setReleaseTag Whether to set release tag
+     * @param packageType Type of the package
+     * @returns URL of the created/updated review
+     */
+    @post
+    @route("/upload")
+    op UploadAutoReview(
+        @header contentType: "multipart/form-data",
+        @multipartBody body: {
+            file: HttpPart<bytes>;
+        },
+        @query label: string,
+        @query compareAllRevisions?: boolean = false,
+        @query packageVersion?: string,
+        @query setReleaseTag?: boolean = false,
+        @query packageType?: string
+    ): {
+        @statusCode statusCode: 200 | 201 | 202;
+        @body reviewUrl: string;
+    } | UnauthorizedErrorResponse | InternalServerErrorResponse;
 
     /**
      * Create an API review from Azure DevOps pipeline artifacts
@@ -76,8 +83,8 @@ namespace AutoReview {
      * @param packageType Type of the package
      * @returns URL of the created/updated review
      */
-    @get
-    @route("/CreateApiReview")
+    @post
+    @route("/create")
     op CreateApiReview(
         @query buildId: string,
         @query artifactName: string,

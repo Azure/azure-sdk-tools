@@ -148,8 +148,8 @@ Returns an documents with references and snippets
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 };
-                var context = response.Knowledges != null ? string.Join("\n\n", response.Knowledges.Select(k => JsonSerializer.Serialize(k, jsonOptions))) : string.Empty;
-                //var context = response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges, jsonOptions) : string.Empty;
+                //var context = response.Knowledges != null ? string.Join("\n\n", response.Knowledges.Select(k => JsonSerializer.Serialize(k, jsonOptions))) : string.Empty;
+                var context = response.Knowledges != null ? JsonSerializer.Serialize(response.Knowledges, jsonOptions) : string.Empty;
                 return new TypsSpecContextSearchResponse
                 {
                     IsSuccessful = response.HasResult,

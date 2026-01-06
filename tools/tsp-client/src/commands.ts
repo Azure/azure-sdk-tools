@@ -378,7 +378,18 @@ export async function syncCommand(argv: any) {
       await addSpecFiles(cloneDir, dir);
     }
     await checkoutCommit(cloneDir, tspLocation.commit);
-    await cp(joinPaths(cloneDir, tspLocation.directory), srcDir, { recursive: true });
+    const clonedTspProject = joinPaths(cloneDir, tspLocation.directory);
+    try {
+      // Check if the cloned TypeSpec project exists
+      await stat(clonedTspProject);
+    } catch (err) {
+      Logger.error(
+        `Unexpected error reading the TypeSpec project directory after cloning the repository: '${clonedTspProject}'. Please verify that the TypeSpec directory path is correct and that it exists at the specified commit: '${tspLocation.commit}'.\n${err}`,
+      );
+      await removeDirectory(cloneDir);
+      process.exit(1);
+    }
+    await cp(clonedTspProject, srcDir, { recursive: true });
     for (const dir of tspLocation.additionalDirectories!) {
       Logger.info(`Syncing additional directory: ${dir}`);
       await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {

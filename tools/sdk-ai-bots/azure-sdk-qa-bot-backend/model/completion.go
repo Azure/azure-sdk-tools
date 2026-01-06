@@ -6,6 +6,7 @@ const (
 	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
 	TenantID_TypeSpecExtension      TenantID = "typespec_extension"
 	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
+	TenantID_DotnetChannelQaBot     TenantID = "dotnet_channel_qa_bot"
 	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"
 	TenantID_GolangChannelQaBot     TenantID = "golang_channel_qa_bot"
 	TenantID_JavaChannelQaBot       TenantID = "java_channel_qa_bot"
@@ -37,6 +38,7 @@ const (
 	Source_AutorestJava                   Source = "autorest_java_docs"
 	Source_AzureSDKForJavaScript          Source = "azure_sdk_for_js_docs"
 	Source_AzureSDKForJavaScriptWiki      Source = "azure_sdk_for_js_wiki"
+	Source_AzureSDKForNetDocs             Source = "azure_sdk_for_net_docs"
 )
 
 type Role string

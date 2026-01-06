@@ -80,13 +80,15 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
 
             // Default optional tools to empty when not provided
-            optionalToolNames ??= Enumerable.Empty<string>();
+            optionalToolNames ??= [];
 
-            // Get expected tool names from the scenario data
+            // Get expected tool names from the scenario data and optional tool names
             var expectedToolNames = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, toolNames).Keys;
+            var filteredOptionalToolNames = GetOptionalToolNames(optionalToolNames, expectedToolNames);
 
-            optionalToolNames = optionalToolNames.Append(verifySetupToolName);
-            var optionalTools = GetOptionalTools(optionalToolNames, expectedToolNames);
+            // We can use LoadScenarioPrompt with empty prompt to get optional tools
+            // in the proper format. 
+            var optionalTools = ChatMessageHelper.LoadScenarioFromPrompt("", filteredOptionalToolNames).ExpectedOutcome;
 
             // Include the optional tools along side the expected. 
             // Later we will then filter them out from the response.
@@ -96,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var response = await chatCompletion.GetChatResponseWithExpectedResponseAsync(
                 fullChat,
                 toolResults,
-                optionalToolNames);
+                filteredOptionalToolNames);
 
             return await RunScenarioAsync(
                 fullChat,
@@ -111,19 +113,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 cancellationToken);
         }
 
-        private static IEnumerable<ChatMessage> GetOptionalTools(
+        private static IEnumerable<string> GetOptionalToolNames(
             IEnumerable<string> optionalToolNames,
             IEnumerable<string> expectedToolNames)
         {
             // Build optional list excluding any names that are expected
             // also make sure to always include verify setup
             var combinedOptional = optionalToolNames.Append(verifySetupToolName);
-            var filteredOptional = combinedOptional.Except(expectedToolNames);
-
-            // We can use LoadScenarioPrompt with empty prompt to get optional tools
-            // in the proper format. 
-            var optionalTools = ChatMessageHelper.LoadScenarioFromPrompt("", filteredOptional).ExpectedOutcome;
-            return optionalTools;
+            return combinedOptional.Except(expectedToolNames);
         }
     }
 }

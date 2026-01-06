@@ -33,18 +33,41 @@ namespace APIViewWeb.HostedServices
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (_pollingJobQueueManager.TryDequeue(out AIReviewJobInfoModel jobInfo))
+                try
                 {
-                    var task = Task.Run(async () =>
+                    if (_pollingJobQueueManager.TryDequeue(out AIReviewJobInfoModel jobInfo))
                     {
-                        await _jobProcessor.ProcessJobAsync(jobInfo, stoppingToken);
-                    }, stoppingToken);
+                        var task = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _jobProcessor.ProcessJobAsync(jobInfo, stoppingToken);
+                            }
+                            catch (Exception ex) when (!(ex is OperationCanceledException))
+                            {
+                                _logger.LogError(ex, "Error processing Copilot job {JobId} for revision {RevisionId}", jobInfo?.JobId, jobInfo?.APIRevision?.Id);
+                            }
+                        }, stoppingToken);
+                        
+                        runningTasks.Add(task);
+                    }
                     
-                    runningTasks.Add(task);
+                    runningTasks.RemoveAll(t => t.IsCompleted);
+                    await Task.Delay(1000, stoppingToken);
                 }
-                
-                runningTasks.RemoveAll(t => t.IsCompleted);
-                await Task.Delay(1000, stoppingToken);
+                catch (Exception ex) when (!(ex is OperationCanceledException))
+                {
+                    _logger.LogError(ex, "Error in CopilotPollingBackgroundHostedService main loop");
+                    // Brief delay to avoid tight loop on persistent errors
+                    try
+                    {
+                        await Task.Delay(5000, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                }
             }
 
             try

@@ -72,14 +72,27 @@ namespace APIViewWeb.HostedServices
         {
             if (!_isDisabled)
             {
-                try
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
-                    await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
+                    try
+                    {
+                        await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
+                        await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                        break; // Exit the loop after successful completion
+                    }
+                    catch (Exception ex) when (!(ex is OperationCanceledException))
+                    {
+                        _telemetryClient.TrackException(ex);
+                        // Wait before retrying to avoid tight loop on persistent errors
+                        try
+                        {
+                            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
         }

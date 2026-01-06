@@ -39,34 +39,47 @@ namespace APIViewWeb.HostedServices
         {
             if (!_isDisabled)
             {
-                var requestTelemetry = new RequestTelemetry { Name = "Computing Line Number of Sections with Diff" };
-                var operation = _telemetryClient.StartOperation(requestTelemetry);
-                try
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    var reviews = await _reviewManager.GetReviewsAsync(language: ApiViewConstants.SwaggerLanguage);
-                    reviews = reviews.OrderBy(r => r.CreatedOn).Reverse();
-                    int index = 1;
-                    int total = reviews.Count();
-                    foreach (var review in reviews)
+                    var requestTelemetry = new RequestTelemetry { Name = "Computing Line Number of Sections with Diff" };
+                    var operation = _telemetryClient.StartOperation(requestTelemetry);
+                    try
                     {
-                        _telemetryClient.TrackTrace($"Computing Line Number of Sections with Diff for Review {review.Id}, processing {index}/{total}.");
-                        var apiRevisions = await _apiRevisionManager.GetAPIRevisionsAsync(reviewId: review.Id);
-                        var processedRevisions = new HashSet<string>();
-                        foreach (var apiRevision in apiRevisions)
+                        var reviews = await _reviewManager.GetReviewsAsync(language: ApiViewConstants.SwaggerLanguage);
+                        reviews = reviews.OrderBy(r => r.CreatedOn).Reverse();
+                        int index = 1;
+                        int total = reviews.Count();
+                        foreach (var review in reviews)
                         {
-                            processedRevisions.Add(apiRevision.Id);
-                            await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision, apiRevisions: apiRevisions.Where(r => !processedRevisions.Contains(r.Id)));                            
+                            _telemetryClient.TrackTrace($"Computing Line Number of Sections with Diff for Review {review.Id}, processing {index}/{total}.");
+                            var apiRevisions = await _apiRevisionManager.GetAPIRevisionsAsync(reviewId: review.Id);
+                            var processedRevisions = new HashSet<string>();
+                            foreach (var apiRevision in apiRevisions)
+                            {
+                                processedRevisions.Add(apiRevision.Id);
+                                await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision, apiRevisions: apiRevisions.Where(r => !processedRevisions.Contains(r.Id)));                            
+                            }
+                            index++;
                         }
-                        index++;
+                        break; // Exit the loop after successful completion
                     }
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
-                }
-                finally
-                {
-                    _telemetryClient.StopOperation(operation);
+                    catch (Exception ex) when (!(ex is OperationCanceledException))
+                    {
+                        _telemetryClient.TrackException(ex);
+                        // Wait before retrying to avoid tight loop on persistent errors
+                        try
+                        {
+                            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+                    }
+                    finally
+                    {
+                        _telemetryClient.StopOperation(operation);
+                    }
                 }
             }
         }

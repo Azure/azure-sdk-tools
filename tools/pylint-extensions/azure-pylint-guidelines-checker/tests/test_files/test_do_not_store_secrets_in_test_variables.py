@@ -1,5 +1,65 @@
 # Test file for DoNotStoreSecretsInTestVariables checker
 
+# Mock objects for testing
+class MockClient:
+    @property
+    def secret(self):
+        return "mock_secret"
+    
+    def get_data(self):
+        return "mock_data"
+    
+    @property 
+    def secret_config(self):
+        return "mock_config"
+
+class MockAuth:
+    @property
+    def secret(self):
+        return "mock_auth_secret"
+
+class MockService:
+    @property
+    def secret(self):
+        return "mock_service_secret"
+
+class MockItem:
+    @property
+    def secret(self):
+        return "mock_item_secret"
+
+class MockConfig:
+    def __init__(self):
+        self.auth = MockAuth()
+
+# Mock variables
+my_client = MockClient()
+client = MockClient()
+auth = MockAuth()
+config = MockConfig()
+service = MockService()
+condition = True
+items = [MockItem(), MockItem()]
+
+# Mock functions
+def some_function(arg):
+    pass
+
+def other_function(param=None):
+    pass
+
+def function_call(arg1, arg2):
+    pass
+
+def another_call(param=None):
+    pass
+
+def process(arg):
+    pass
+
+def handle(arg):
+    pass
+
 # This should trigger the rule
 def test_bad_secret_usage():
     # This assigns a secret to a variable (should be flagged)

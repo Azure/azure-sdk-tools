@@ -27,12 +27,14 @@ import (
 )
 
 type CompletionService struct {
-	model string
+	model        string
+	searchClient *search.SearchClient
 }
 
 func NewCompletionService() (*CompletionService, error) {
 	return &CompletionService{
-		model: config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL,
+		model:        config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL,
+		searchClient: search.NewSearchClient(),
 	}, nil
 }
 
@@ -184,26 +186,20 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 }
 
-func processDocument(result model.Index) model.Knowledge {
-	return model.Knowledge{
-		Source:   result.ContextID,
-		FileName: result.Title,
-		Title:    result.Header1,
-		Link:     model.GetIndexLink(result),
-		Content:  result.Chunk,
-	}
-}
-
 func processChunk(result model.Index) model.Knowledge {
 	chunk := ""
+	title := ""
 	if len(result.Header1) > 0 {
 		chunk += "# " + result.Header1 + "\n"
+		title = result.Header1
 	}
 	if len(result.Header2) > 0 {
 		chunk += "## " + result.Header2 + "\n"
+		title = result.Header2
 	}
 	if len(result.Header3) > 0 {
 		chunk += "### " + result.Header3 + "\n"
+		title = result.Header3
 	}
 	chunk += result.Chunk
 	return model.Knowledge{
@@ -211,6 +207,7 @@ func processChunk(result model.Index) model.Knowledge {
 		FileName: result.Title,
 		Link:     model.GetIndexLink(result),
 		Content:  chunk,
+		Title:    title,
 	}
 }
 
@@ -501,7 +498,6 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 
 func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {
 	agenticSearchStart := time.Now()
-	searchClient := search.NewSearchClient()
 
 	// Get the tenant-specific agentic search prompt
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
@@ -522,7 +518,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt)
+	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -539,7 +535,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	for _, reference := range resp.References {
 		docKeys = append(docKeys, reference.DocKey)
 	}
-	chunks, err := searchClient.BatchGetChunks(ctx, docKeys)
+	chunks, err := s.searchClient.BatchGetChunks(ctx, docKeys)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -611,12 +607,11 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 // searchKnowledgeBase performs the core knowledge search without dependency on agentic results
 func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string) ([]model.Index, error) {
 	searchStart := time.Now()
-	searchClient := search.NewSearchClient()
 	sourceFilter := map[model.Source]string{}
 	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {
 		sourceFilter = tenantConfig.SourceFilter
 	}
-	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter)
+	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}
@@ -629,38 +624,46 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.Index, knowledgeResults []model.Index) []model.Knowledge {
 	mergeStart := time.Now()
 
-	allChunks := make([]model.Index, 0)
-	processedChunks := make(map[string]bool) // track processed chunk content to avoid duplicates
-	processedFiles := make(map[string]bool)  // track processed file titles to avoid duplicates
-
-	// Separate chunks that need completion vs those that can be used as-is
-	needCompleteFiles := make([]model.Index, 0)
-	needCompleteChunks := make([]model.Index, 0)
+	allChunks := make([]model.ChunkWithExpansion, 0)
 
 	// Add agentic chunks with high priority (they were specifically found by AI reasoning)
 	topK := 10
-	highReleventTopK := 2
 	if len(agenticChunks) > topK {
 		agenticChunks = agenticChunks[:topK] // Limit to TopK results
 	}
 	for _, chunk := range agenticChunks {
-		// Skip if we've already seen this chunk content
-		chunkKey := fmt.Sprintf("%s|%s", chunk.Title, chunk.Chunk)
-		if processedChunks[chunkKey] {
+		// Static chunks specific expansion rules
+		if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     chunk,
+				Expansion: model.ExpansionQA,
+			})
 			continue
 		}
-		if processedFiles[chunk.Title] {
+		if chunk.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     chunk,
+				Expansion: model.ExpansionMapping,
+			})
 			continue
 		}
-		processedChunks[chunkKey] = true
-		if strings.HasPrefix(string(chunk.ContextID), "static") {
-			needCompleteChunks = append(needCompleteChunks, chunk)
+
+		// Check if needs hierarchical expansion
+		Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
+		if Hierarchy == model.HierarchyHeader1 || Hierarchy == model.HierarchyHeader2 {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     chunk,
+				Expansion: model.ExpansionHierarchical,
+			})
+			log.Printf("Agentic chunk needs hierarchical expansion: %s/%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
 			continue
 		}
 		log.Printf("Agentic searched chunk: %+v", chunk)
-		allChunks = append(allChunks, chunk)
+		allChunks = append(allChunks, model.ChunkWithExpansion{
+			Chunk:     chunk,
+			Expansion: model.ExpansionNone,
+		})
 	}
-	completeFileMaxCnt := 5
 
 	// Add knowledge search results with scoring based on relevance
 	for i, result := range knowledgeResults {
@@ -670,83 +673,111 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			continue
 		}
 
-		// Skip if we've already seen this chunk content
-		chunkKey := fmt.Sprintf("%s|%s", result.Title, result.Chunk)
-		if processedChunks[chunkKey] {
-			continue
-		}
-		if processedFiles[result.Title] {
-			continue
-		}
-		processedChunks[chunkKey] = true
-
 		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
 
-		if strings.HasPrefix(string(result.ContextID), "static") {
-			needCompleteChunks = append(needCompleteChunks, result)
+		// Static chunks specific expansion rules
+		if result.ContextID == model.Source_TypeSpecQA || result.ContextID == model.Source_TypeSpecMigration {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     result,
+				Expansion: model.ExpansionQA,
+			})
 			continue
 		}
-		if len(needCompleteFiles) < completeFileMaxCnt && result.RerankScore >= model.RerankScoreRelevanceThreshold {
-			needCompleteFiles = append(needCompleteFiles, result)
-			processedFiles[result.Title] = true
+		if result.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     result,
+				Expansion: model.ExpansionMapping,
+			})
 			continue
 		}
-		if len(needCompleteFiles) < completeFileMaxCnt && i < highReleventTopK {
-			needCompleteFiles = append(needCompleteFiles, result)
-			processedFiles[result.Title] = true
-			continue
-		}
-		if len(needCompleteFiles) < completeFileMaxCnt && i > 0 && knowledgeResults[i-1].ContextID != knowledgeResults[i].ContextID {
-			needCompleteFiles = append(needCompleteFiles, result)
-			processedFiles[result.Title] = true
-			continue
-		}
-		allChunks = append(allChunks, result)
-	}
 
-	searchClient := search.NewSearchClient()
+		// High relevance results: expand the full file
+		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     result,
+				Expansion: model.ExpansionFullFile,
+			})
+			continue
+		}
+		if i > 0 && knowledgeResults[i-1].ContextID != knowledgeResults[i].ContextID {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     result,
+				Expansion: model.ExpansionFullFile,
+			})
+			continue
+		}
 
-	// Prepare chunks for completion
-	documents := make([]model.Index, 0)
-	for _, result := range needCompleteFiles {
-		documents = append(documents, model.Index{
-			Title:     result.Title,
-			ContextID: result.ContextID,
-			Header1:   result.Header1,
+		// Other chunks: check if needs hierarchical expansion
+		Hierarchy := s.searchClient.DetectChunkHierarchy(result)
+		if Hierarchy == model.HierarchyHeader1 || Hierarchy == model.HierarchyHeader2 {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     result,
+				Expansion: model.ExpansionHierarchical,
+			})
+			log.Printf("Vector chunk needs hierarchical expansion: %s/%s#%s#%s", result.ContextID, result.Title, result.Header1, result.Header2)
+			continue
+		}
+
+		// No expansion needed
+		allChunks = append(allChunks, model.ChunkWithExpansion{
+			Chunk:     result,
+			Expansion: model.ExpansionNone,
 		})
 	}
-	completedDocumentsCnt := len(documents)
-	documents = append(documents, needCompleteChunks...)
 
-	// Complete chunks in parallel
+	allChunks = s.searchClient.DeduplicateExpansions(allChunks)
+
+	// Process all chunks in parallel
 	var wg sync.WaitGroup
-	wg.Add(len(documents))
-	for i := range documents {
+	finalChunks := make([]model.Index, len(allChunks))
+	wg.Add(len(allChunks))
+	for i := range allChunks {
 		i := i
 		go func() {
 			defer wg.Done()
-			documents[i] = searchClient.CompleteChunk(documents[i])
+			cwe := allChunks[i]
+			chunk := cwe.Chunk
+
+			switch cwe.Expansion {
+			case model.ExpansionFullFile:
+				// Expand full file using CompleteChunk
+				chunks, _ := s.searchClient.GetCompleteContext(chunk)
+				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, chunks)
+				log.Printf("✓ Expanded full file: %s/%s", chunk.ContextID, chunk.Title)
+			case model.ExpansionQA:
+				// Expand complete QA chunk
+				subChunks, _ := s.searchClient.GetHeader1CompleteContext(chunk)
+				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
+				log.Printf("✓ Expanded complete QA chunk: %s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1)
+			case model.ExpansionMapping:
+				// Expand complete Mapping chunk
+				subChunks, _ := s.searchClient.GetHeader2CompleteContext(chunk)
+				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
+				log.Printf("✓ Expanded complete code mapping chunk: %s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
+			case model.ExpansionHierarchical:
+				// Process by hierarchy Hierarchy
+				Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
+				// Expand all chunks under header1
+				subChunks := s.searchClient.FetchHierarchicalSubChunks(chunk, Hierarchy)
+				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
+
+			default:
+				// Unknown expansion type - keep original
+				finalChunks[i] = chunk
+				log.Printf("✓ Kept original chunk: %s/%s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3)
+			}
 		}()
 	}
 	wg.Wait()
 
 	// Build final result
 	results := make([]model.Knowledge, 0)
-
-	// Add completed chunks first (avoid duplicates by chunk content)
-	for _, file := range documents {
-		results = append(results, processDocument(file))
-		log.Printf("✓ Completed document: %s/%s#%s", file.ContextID, file.Title, file.Header1)
-	}
-
-	// Add remaining ready chunks (avoid duplicates by chunk content)
-	for _, chunk := range allChunks {
+	for _, chunk := range finalChunks {
 		results = append(results, processChunk(chunk))
-		log.Printf("- Normal chunks: %s/%s#%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3)
 	}
 
-	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d q&a + %d chunks",
-		len(agenticChunks), len(knowledgeResults), completedDocumentsCnt, len(needCompleteChunks), len(allChunks))
+	log.Printf("Search merge summary: %d agentic + %d knowledge → %d total chunks",
+		len(agenticChunks), len(knowledgeResults), len(finalChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return results
 }

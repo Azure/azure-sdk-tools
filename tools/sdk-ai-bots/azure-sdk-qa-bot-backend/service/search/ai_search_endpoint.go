@@ -298,24 +298,43 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 		return chunk
 	}
 
+	// Use MergeChunksWithHeaders to avoid code duplication
+	return s.MergeChunksWithHeaders(chunk, chunks)
+}
+
+// DetectChunkHierarchy determines what level of header hierarchy a chunk represents
+func (s *SearchClient) DetectChunkHierarchy(chunk model.Index) model.ChunkHierarchy {
+	hasHeader1 := len(chunk.Header1) > 0
+	hasHeader2 := len(chunk.Header2) > 0
+	hasHeader3 := len(chunk.Header3) > 0
+
+	if hasHeader3 {
+		return model.HierarchyHeader3
+	}
+	if hasHeader2 && hasHeader1 {
+		return model.HierarchyHeader2
+	}
+	if hasHeader1 {
+		return model.HierarchyHeader1
+	}
+	return model.HierarchyUnknown
+}
+
+// MergeChunksWithHeaders merges multiple chunks with proper header formatting
+// Reuses the same merging logic as CompleteChunk to maintain consistency
+func (s *SearchClient) MergeChunksWithHeaders(parentChunk model.Index, subChunks []model.Index) model.Index {
+	if len(subChunks) == 0 {
+		return parentChunk
+	}
+
 	var contents []string
-	// var tocEntries []string
-	totalLength := 0
+	contents = append(contents, fmt.Sprintf("# %s", parentChunk.Title))
 
-	// Get the first chunk for header information
-	firstChunk := chunks[0]
-	chunk.Header1 = firstChunk.Header1
-
-	// Add document title at the beginning
-	contents = append(contents, fmt.Sprintf("# %s", chunk.Title))
-
-	// Set headers based on hierarchy and collect TOC entries in single pass
 	var currentHeader1, currentHeader2, currentHeader3 string
-	for _, c := range chunks {
-		// Add headers to content and TOC when they change
+	for _, c := range subChunks {
 		if c.Header1 != currentHeader1 {
 			currentHeader1 = c.Header1
-			currentHeader2 = "" // Reset lower level headers
+			currentHeader2 = ""
 			currentHeader3 = ""
 			if currentHeader1 != "" {
 				contents = append(contents, fmt.Sprintf("# %s", currentHeader1))
@@ -323,7 +342,7 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 		}
 		if c.Header2 != currentHeader2 {
 			currentHeader2 = c.Header2
-			currentHeader3 = "" // Reset lower level header
+			currentHeader3 = ""
 			if currentHeader2 != "" {
 				contents = append(contents, fmt.Sprintf("## %s", currentHeader2))
 			}
@@ -334,14 +353,52 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 				contents = append(contents, fmt.Sprintf("### %s", currentHeader3))
 			}
 		}
-
-		totalLength += len(c.Chunk)
 		contents = append(contents, c.Chunk)
 	}
 
-	chunk.Chunk = strings.Join(contents, "\n\n") // Add extra newline between sections
+	mergedChunk := parentChunk
+	mergedChunk.Chunk = strings.Join(contents, "\n\n")
+	if len(subChunks) > 0 {
+		mergedChunk.Header1 = subChunks[0].Header1
+	}
 
-	return chunk
+	return mergedChunk
+}
+
+// FetchHierarchicalSubChunks fetches all sub-chunks under a given header hierarchy
+func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, Hierarchy model.ChunkHierarchy) []model.Index {
+	var subChunks []model.Index
+	var err error
+
+	switch Hierarchy {
+	case model.HierarchyHeader1:
+		// Fetch all chunks under this header1
+		subChunks, err = s.GetHeader1CompleteContext(chunk)
+		if err != nil {
+			log.Printf("Failed to fetch header1 sub-chunks for %s/%s#%s: %v", chunk.ContextID, chunk.Title, chunk.Header1, err)
+			return []model.Index{chunk} // Fall back to original chunk
+		}
+		log.Printf("Expanded header1 '%s/%s/%s' → %d sub-chunks", chunk.ContextID, chunk.Title, chunk.Header1, len(subChunks))
+
+	case model.HierarchyHeader2:
+		// Fetch all chunks under this header1+header2
+		subChunks, err = s.GetHeader2CompleteContext(chunk)
+		if err != nil {
+			log.Printf("Failed to fetch header2 sub-chunks for %s/%s#%s#%s: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, err)
+			return []model.Index{chunk} // Fall back to original chunk
+		}
+		log.Printf("Expanded header2 '%s/%s/%s/%s' → %d sub-chunks", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, len(subChunks))
+
+	default:
+		// No expansion needed for header3 or unknown Hierarchy
+		return []model.Index{chunk}
+	}
+
+	if len(subChunks) == 0 {
+		return []model.Index{chunk}
+	}
+
+	return subChunks
 }
 
 func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
@@ -429,4 +486,85 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 	return httpResp, nil
+}
+
+// deduplicateExpansions removes duplicate chunk expansions considering hierarchy:
+// - If a header1 is being expanded, remove any header2/header3 under it
+// - If a header2 is being expanded, remove any header3 under it
+// - If a full file is being expanded, remove any other chunks from the same file
+func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansion) []model.ChunkWithExpansion {
+	result := make([]model.ChunkWithExpansion, 0)
+	processedChunks := make(map[string]bool)
+
+	// Track what hierarchies are being expanded
+	expandedHeader1 := make(map[string]bool) // contextID|title|header1
+	expandedHeader2 := make(map[string]bool) // contextID|title|header1|header2
+	expandedFiles := make(map[string]bool)   // contextID|title
+
+	// First pass: identify what's being expanded
+	for _, cwe := range expansions {
+		c := cwe.Chunk
+		fileKey := fmt.Sprintf("%s|%s", c.ContextID, c.Title)
+
+		if cwe.Expansion == model.ExpansionFullFile {
+			expandedFiles[fileKey] = true
+		} else if cwe.Expansion == model.ExpansionHierarchical {
+			Hierarchy := s.DetectChunkHierarchy(c)
+			if Hierarchy == model.HierarchyHeader1 {
+				h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
+				expandedHeader1[h1Key] = true
+			} else if Hierarchy == model.HierarchyHeader2 {
+				h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
+				expandedHeader2[h2Key] = true
+			}
+		}
+	}
+
+	// Second pass: filter out redundant expansions
+	for _, cwe := range expansions {
+		c := cwe.Chunk
+		fileKey := fmt.Sprintf("%s|%s", c.ContextID, c.Title)
+
+		// Check if already processed (exact duplicate)
+		chunkKey := fmt.Sprintf("%s|%s", c.Title, c.Chunk)
+		if processedChunks[chunkKey] {
+			continue
+		}
+
+		// If this file is already being fully expanded, skip other chunks from it
+		if expandedFiles[fileKey] && cwe.Expansion != model.ExpansionFullFile {
+			log.Printf("Skipping chunk (file already expanded): %s/%s", c.ContextID, c.Title)
+			continue
+		}
+
+		// If this is a header2/header3 chunk under an expanded header1, skip it
+		if c.Header1 != "" {
+			h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
+			if expandedHeader1[h1Key] {
+				Hierarchy := s.DetectChunkHierarchy(c)
+				if Hierarchy == model.HierarchyHeader2 || Hierarchy == model.HierarchyHeader3 {
+					log.Printf("Skipping chunk (header1 already expanded): %s/%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2)
+					continue
+				}
+			}
+		}
+
+		// If this is a header3 chunk under an expanded header2, skip it
+		if c.Header1 != "" && c.Header2 != "" {
+			h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
+			if expandedHeader2[h2Key] {
+				Hierarchy := s.DetectChunkHierarchy(c)
+				if Hierarchy == model.HierarchyHeader3 {
+					log.Printf("Skipping chunk (header2 already expanded): %s/%s#%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2, c.Header3)
+					continue
+				}
+			}
+		}
+
+		// Not redundant, keep it
+		processedChunks[chunkKey] = true
+		result = append(result, cwe)
+	}
+
+	return result
 }

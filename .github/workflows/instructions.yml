@@ -21,7 +21,7 @@ jobs:
     name: Verify MCP Tool References
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: azsdk-cli verify
         shell: pwsh
         run: |

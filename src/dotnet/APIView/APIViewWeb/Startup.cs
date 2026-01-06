@@ -70,6 +70,13 @@ namespace APIViewWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Configure host options to prevent background service exceptions from crashing the app
+            services.Configure<HostOptions>(options =>
+            {
+                options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
+                options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+            });
+
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
             services.AddAzureAppConfiguration();

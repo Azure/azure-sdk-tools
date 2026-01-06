@@ -1,0 +1,52 @@
+{
+  "name": "typespec-metadata",
+  "version": "0.1.0",
+  "description": "TypeSpec emitter that produces structured metadata snapshots for APIView and other tooling.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Azure SDK Tools",
+  "keywords": [
+    "typespec",
+    "emitter",
+    "metadata",
+    "apiview"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure/azure-sdk-tools",
+    "directory": "tools/apiview/emitters/typespec-metadata"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "lint": "tsc --noEmit --pretty",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@typespec/emitter-framework": "^0.14.0",
+    "yaml": "^2.8.2"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": "^1.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@typespec/compiler": "^1.7.1",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3"
+  }
+}

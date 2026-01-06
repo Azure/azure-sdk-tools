@@ -26,9 +26,7 @@ _Terms used throughout this spec with precise meanings:_
 
 - **API View**: A web-based tool for reviewing SDK APIs. It allows language architects and SDK team members to provide feedback on just the SDK APIs without needing to understand the underlying implementation.
 
-- **<a id="customization-workflow"></a>Customization Workflow**: The end-to-end AI-assisted interactive process triggered by various entry points (build failures, API view feedback, PR comments, user prompts, etc.) that applies fixes and customizations to ensure SDK functionality. Requires mandatory user approval before applying changes.
-
-- **<a id="approval-checkpoint"></a>Approval Checkpoint**: A mandatory user confirmation step before committing changes. The tool returns a structured response containing a summary of changes made (TypeSpec decorators applied, code patches applied, files modified). The calling agent (GitHub Copilot) presents this summary to the user through the chat interface and handles the approval/rejection workflow. The tool itself does not implement approval UI - it delegates this responsibility to the agent orchestration layer.
+- **<a id="customization-workflow"></a>Customization Workflow**: The end-to-end AI-assisted interactive process triggered by various entry points (build failures, API view feedback, PR comments, user prompts, etc.) that applies fixes and customizations to ensure SDK functionality. Tool applies changes (uncommitted), returns summary, and users decide whether to commit.
 
 - **<a id="entry-points"></a>Entry Points**: Various triggers that initiate the customization workflow including build failures, API view comments, PR feedback, user prompts, and linting/typing checks.
 
@@ -140,7 +138,7 @@ Phase B focuses initially on **deterministic, mechanical transformations** where
 - ⚠️ **Stretch Goal**: Complex convenience methods, behavioral changes affecting SDK semantics, intricate AST manipulation patterns
 - ❌ **Out of Scope**: Architectural decisions about SDK surface design, complex language-specific idioms requiring deep domain expertise
 
-**Rationale:** The approval checkpoint provides a safety mechanism allowing us to attempt Phase B automation for mechanical fixes while users retain final control. Complex transformations require additional validation and may be deferred to future iterations based on real-world success rates.
+**Rationale:** Error-driven Phase B provides deterministic automation for the critical ~10% of cases where TypeSpec changes break existing customizations. TypeSpec (Phase A) handles ~80% of feature requests through decorators, Phase B handles ~10% through mechanical repairs when builds fail, and the remaining ~10% niche cases receive manual guidance. This v1 approach prioritizes measurable outcomes (build passes = success) with concrete error messages as natural boundaries, establishing proven safety for potential v2 expansion to pattern-based feature integration.
 
 ---
 
@@ -207,90 +205,39 @@ The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase 
 The tool accepts customization requests from multiple [entry points](#entry-points) through the `customizationRequest` parameter. This unified text input allows the tool to handle:
 
 - Build failures (compilation errors, linting, typing checks)
-- User prompts (natural language requests from agents)
+- User prompts (natural language feature requests like "rename FooClient to BarClient" or "hide internal operations")
 - API review feedback (comments from API View or PRs)
 - Breaking changes analysis output
+
+**Request Routing Philosophy**: All requests first route to Phase A (TypeSpec), which handles ~80% of feature requests. Phase B only activates automatically when Phase A builds fail and customization files exist, handling the ~10% of mechanical repairs. Remaining ~10% niche cases receive manual guidance.
 
 **Two-Phase Workflow with Classifier:**
 
 1. **Context Classifier**
-   The classifier uses an LLM to analyze the customization request and determines which phase to move to. There are 3 possible outcomes:
-
-   - _Proceed to Phase A_: Chosen if TypeSpec customizations can address any of the outstanding points in the customization request
-   - _Failure_: Stall detection OR request requires complex code customizations that cannot be automated. Returns guidance for manual implementation.
-   - _Success_: Chosen if no further changes are needed
-
-   **Important**: The classifier NEVER routes directly to Phase B. The workflow ALWAYS starts with Phase A to respect the spec-first principle. Phase B only activates after Phase A build failures when customization files are detected (error-driven repair mode).
+   Analyzes requests and routes to: Phase A (TypeSpec can help), Success (done), or Failure (too complex/stalled). Phase B is not a classifier decision—it activates automatically on Phase A build failures when customization files exist.
 
 1. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
+   Apply `client.tsp` decorators, regenerate SDK, validate build, return to classifier
 
-   - Analyze the customization request to determine if TypeSpec decorators can address the issues
-   - Apply `client.tsp` adjustments (decorators, naming, grouping, scope configurations)
-   - Re-run TypeSpec compilation and regenerate SDK code
-   - Validate build and proceed to classifier
+1. **Phase B – [Code Customizations](#code-customizations):**
 
-1. **Phase B – [Code Customizations](#code-customizations) (Repair Mode Only):**
+   - **Activation**: Phase A build fails AND customization files exist (Java: `/customization/` or `*Customization.java`, Python: `*_patch.py`, .NET: partial classes)
 
-   - **Activation Criteria** (ALL must be true):
-     - Phase A build failed with compilation errors
-     - Customization files exist in the package:
-       - Java: `/customization/` directory OR `*Customization.java` files
-       - Python: `*_patch.py` files  
-       - .NET: Partial class files matching generated types
+   - **Design Rationale**: Phase B operates under three principles:
+     1. **Spec-First Always**: Only activates after Phase A build failures when customization files exist
+     2. **Narrow Scope**: Mechanical transformations only; uncertain/complex cases get manual guidance. v2 may add pattern-based features while keeping error-driven activation
+     3. **Safety Net**: Handles ~10% (build errors TypeSpec cannot solve); Phase A solves ~80%, remaining ~10% get manual guidance
 
-   - **Important**: Build errors occur in generated code files (e.g., `/models/AnalyzeResult.java:178`). Phase B activates based on the **presence of customization files**, not by matching file paths in error messages.
+   - **Scope** (<20 lines, <5 files, deterministic only):
+     - ✅ **In**: Remove duplicates, update references, add imports, rename keywords, update type annotations
+     - ❌ **Out**: Convenience methods, architecture changes, visibility (use `@access`), error handling, complex logic
 
-   - **Design Philosophy**: Phase B operates under **narrow scope with safety boundaries** to prioritize correctness over coverage. The microagent analyzes build errors and customization files to assess whether conflicts fall within safe automation boundaries, returning structured manual guidance when uncertain rather than risking incorrect fixes.
+   - **Workflow**: Analyze errors → Assess feasibility → Apply patches (if deterministic) OR return manual guidance → Validate → Iterate (max 2 attempts)
 
-   - **Scope Boundaries** (v1.0 - Intentionally Conservative):
-     - **All criteria MUST be true** for automated fix attempt:
-       - Triggered by build error after Phase A (never proactive)
-       - Fix is removing/updating code (not adding new logic)
-       - <20 lines changed across <5 files
-       - TypeSpec cannot address it (or already attempted in Phase A)
-       - Conflict pattern is deterministic and unambiguous
-     - **Within Scope** (mechanical fixes only):
-       - ✅ Remove duplicate fields after TypeSpec addition
-       - ✅ Update references after TypeSpec rename
-       - ✅ Add missing import statements
-       - ✅ Rename reserved keyword conflicts
-     - **Out of Scope** (return manual guidance):
-       - ❌ Add convenience methods
-       - ❌ Restructure client architecture
-       - ❌ Change method visibility (use TypeSpec `@access`)
-       - ❌ Add error handling
-       - ❌ Complex logic transformations
-       - ❌ Uncertain or ambiguous conflicts
-
-   - **Phase B Workflow** (Safety-First Execution):
-     1. **Analyze**: Examine build errors + customization file content + TypeSpec changes
-     2. **Assess Feasibility**:
-        - **If uncertain about fix**: Return structured manual guidance
-        - **If exceeds scope** (>20 lines, >5 files): Return guidance
-        - **If conflict is complex**: Return guidance
-        - **If deterministic and within scope**: Proceed to step 3
-     3. **Apply Patches**: Use ClientCustomizationCodePatchTool for mechanical string replacements
-     4. **Validate**: Rebuild SDK to confirm fix
-     5. **Iterate**: Maximum 2 attempts (return guidance if still failing)
-
-   - **Manual Guidance Format** (when automation is skipped):
-     - Detected issue description
-     - Affected files with line numbers
-     - Suggested approach for manual fix
-     - Reason for manual intervention (uncertainty, complexity, or scope exceeded)
-     - **Core Principle**: Better to provide clear guidance than risk incorrect automated fixes that may introduce subtle bugs or breaking changes
-
-1. **Summary & Approval:**
-   - Tool returns `CustomizedCodeUpdateResponse` with detailed change summary including:
-     - TypeSpec decorators applied (file path, decorator names, scope)
-     - Code patches applied (file paths, old content, new content)
-     - Build results (success/failure, error messages if any)
-     - Files modified in both TypeSpec and SDK repositories
-   - **Agent Orchestration**: The calling agent (GitHub Copilot) receives the response and presents the summary to the user through the chat interface
-   - **User Interaction**: User reviews changes and approves/rejects through conversational prompts in the agent UI
-   - **Tool does not implement approval logic** - it returns summary data for agent to handle
-   - Maximum of 2 fix attempts per phase (Phase A: 2 attempts, Phase B: 2 attempts, total: 4 iterations)
-   - Provide next step instructions for users based on outcome
+1. **Summary Response:**
+   - Returns `CustomizedCodeUpdateResponse` with changes, build results, and modified files
+   - User reviews uncommitted changes and decides to commit or discard
+   - Maximum 2 attempts per phase (4 total iterations)
 
 #### New inputs
 
@@ -321,11 +268,10 @@ flowchart TD
     RegenOK -->|No| Classify
     RegenOK -->|Yes| Build[<b>Build SDK</b><br/>Compile generated code]
 
-    Build --> BuildOK{Build<br/>Success?}
-    BuildOK -->|Yes| Classify
-    BuildOK -->|No| CheckB{Customization<br/>files exist?}
-    CheckB -->|No| Classify
-    CheckB -->|Yes| PhaseB[<b>Phase B: Code Repair</b><br/>Apply patches to customization files]
+    Build --> BuildCheck{Build Success?<br/>Customization files exist?}
+    BuildCheck -->|Success| Classify
+    BuildCheck -->|Failed + No files| Classify
+    BuildCheck -->|Failed + Files exist| PhaseB[<b>Phase B: Code Repair</b><br/>Apply patches to customization files]
     PhaseB --> Regen
 
     Success[<b>Success</b><br/>Return change summary]
@@ -345,45 +291,17 @@ flowchart TD
 
 - **Single Tool Experience**: Users don't need to know whether TypeSpec or code fixes are needed
 - **Spec-First Approach**: Always attempts TypeSpec solutions before falling back to code patches
-- **Intelligent Routing**: Tool determines the appropriate fix phase based on failure analysis
+- **Error-Driven Repair**: Phase B activates automatically when builds fail and customization files exist
 
 #### Classifier
 
-The classifier is LLM-based and responsible for analyzing the current context and determining which phase to move to next.
+The classifier analyzes context and routes to Phase A (TypeSpec can help), Success (done), or Failure (stalled/complex). Phase B activates automatically when Phase A fails and customization files exist.
 
-**Phase Determination Logic**:
-
-```text
-ALWAYS start with Phase A (spec-first principle)
-
-IF Phase A build fails
-   AND customization files exist in package
-THEN
-   Activate Phase B
-END IF
-```
-
-**Design Rationale**: Phase B operates under three core principles:
-
-1. **Spec-First Always**: NEVER activates proactively. Even when users explicitly mention code files, the workflow starts with Phase A. Phase B only activates after Phase A build failures when customization files exist.
-
-2. **Narrow Scope, Safety Boundaries**: Limited to mechanical fixes only. When uncertain, complex, or exceeding limits → return structured manual guidance instead of attempting fixes. **Correctness over coverage.**
-
-3. **Safety Net, Not Primary Solution**: Phase B is the rare exception (estimated 10% of workflows), handling conflicts between TypeSpec changes and existing customizations. Phase A (TypeSpec) solves 80% of issues.
-
-**Customization File Detection**:
-- Java: Check for `/customization/` directory OR `*Customization.java` files
-- Python: Check for `*_patch.py` files
-- .NET: Check for partial class files matching generated types
-
-For the 1st milestone, the classifier will work fairly simply:
-Using the client customizations reference doc, it will analyze the current context to determine if any of the outstanding issues can be addressed via TypeSpec customizations.
-
-For future milestones, we can explore more advanced techniques for Phase B conflict analysis and feasibility assessment.
+**Implementation**: Uses client customizations reference doc to determine if TypeSpec can address issues.
 
 #### Context Tracking
 
-The customization workflow is iterative and may loop multiple times as it applies fixes and encounters new issues. The classifier needs to know what changes have been tried and what issues remain so that it can determine what phase to move onto.
+The customization workflow is iterative and may loop multiple times as it applies fixes and encounters new issues. The classifier needs to know what changes have been tried and what issues remain to determine its next action (Phase A, Success, or Failure). Additionally, the accumulated context is used by Phase B's automatic activation check and by the Phase B microagent when analyzing repair feasibility.
 
 Consider a scenario where a TypeSpec rename breaks existing code customizations (illustrative):
 
@@ -404,48 +322,52 @@ As changes are made in each phase and validation step, we append to the original
 - **Exclude**: Full generated code directory (context overflow risk)
 - Error patterns detected dynamically by LLM (no pre-defined catalog needed)
 
-_Example context:_
+_Example:_
 
 ```
-Iteration 1 context:
-  "Rename getItems to listItems for Python"
+Iteration 1: "Rename getItems to listItems for Python"
 
-Iteration 2 context:
-  "Rename getItems to listItems for Python
+Iteration 2: "Rename getItems to listItems for Python
+--- TypeSpec Changes Applied ---
+Added @@clientName(getItems, "listItems", "python") to client.tsp
+SDK regenerated successfully.
+--- Build Result ---
+Build failed: _patch.py:42 - NameError: 'getItems' is not defined"
 
-   --- TypeSpec Changes Applied ---
-   Added @@clientName(getItems, "listItems", "python") to client.tsp
-   SDK regenerated successfully.
-
-   --- Build Result ---
-   Build failed: _patch.py:42 - NameError: 'getItems' is not defined"
-
-Iteration 3 context:
-  [previous context]
-  +
-  "--- Code Changes Applied ---
-   Updated _patch.py to reference 'listItems' instead of 'getItems'
-
-   --- Build Result ---
-   Build succeeded."
+Iteration 3: "Rename getItems to listItems for Python
+--- TypeSpec Changes Applied ---
+Added @@clientName(getItems, "listItems", "python") to client.tsp
+SDK regenerated successfully.
+--- Build Result ---
+Build failed: _patch.py:42 - NameError: 'getItems' is not defined
+--- Code Changes Applied ---
+Updated _patch.py to reference 'listItems' instead of 'getItems'
+--- Build Result ---
+Build succeeded."
 ```
 
-_Considerations:_
+_Note:_ Context grows with each iteration; may require summarization if stall detection or hallucinations become an issue.
 
-Context will grow with each iteration and there is a risk of confusing the LLM evaluating the context. We may consider a more structured approach if stall detection or hallucinations/repetition becomes an issue.
+#### 3. Cross-Repository Change Management
 
-#### 3. Git Patch Support
+The tool modifies files across two repositories but **does not commit changes** - it applies edits to the working directory and leaves them uncommitted for user review.
 
-There are at least 2 scenarios where we want to commit `client.tsp` changes back to the azure-rest-api-specs repo:
+**Repository Requirements**:
+- Both azure-rest-api-specs and azure-sdk-for-* repos must be cloned locally
+- Tool derives TypeSpec project path from `tsp-location.yaml` in SDK package directory
+- All file modifications remain uncommitted in local working directories
 
-- When locally building and testing changes to `client.tsp` before submitting a PR.
-- When CI can detect and suggest `client.tsp` changes automatically.
+**Modified Files by Phase**:
+- **Phase A**: Updates `client.tsp` in azure-rest-api-specs repo, regenerates SDK code in azure-sdk-for-* repo
+- **Phase B**: Updates customization files (e.g., `*Customization.java`, `*_patch.py`, partial classes) in azure-sdk-for-* repo
 
-This spec only attempts to address the first scenario where a service team is working locally. Applying changes automatically in CI is out of scope for this spec but can be considered in the future.
 
-**Operating from azure-sdk-for-\* repo with azure-rest-api-specs clone**
+**User Workflow After Tool Completion**:
+1. **Review Changes**: Inspect uncommitted changes across both repositories using git status/diff
+2. **Commit or Discard**: Commit changes to appropriate branches when satisfied, or discard if not
+3. **Submit PR**: Follow standard PR process for both repositories
 
-When operating from within an SDK repo with a local clone of the azure-rest-api-specs repo, we can directly apply the changes to the local repo clones. No special work is needed. Having all repos available locally is a requirement for this spec.
+**Out of Scope**: Automatic commits, branch management, or CI/pipeline integration. The tool is designed for interactive local development only.
 
 ### MCP Usage Examples
 
@@ -492,8 +414,7 @@ When operating from within an SDK repo with a local clone of the azure-rest-api-
 
 The `azsdk_package_customize_code` tool is **primarily designed for agent-mode/interactive workflows** where human decision-making is essential:
 
-- **Reviewing diffs**: Users need to inspect proposed changes across TypeSpec and SDK code before approval
-- **Approving changes**: Mandatory approval checkpoint ensures users validate customizations align with intent
+- **Review and approval required**: Users inspect uncommitted changes before deciding to commit
 - **Iterative refinement**: Complex customizations often require feedback loops where users guide the tool toward the desired outcome
 - **Ambiguous requests**: Natural language prompts and API review feedback require interpretation and validation
 
@@ -501,10 +422,9 @@ The `azsdk_package_customize_code` tool is **primarily designed for agent-mode/i
 
 The tool is **not recommended for CI/pipeline usage** for the following reasons:
 
-1. **Human judgment required**: Customizations involve architectural decisions about SDK surface design that require domain expertise and approval
+1. **Review and approval required**: Customizations involve architectural decisions about SDK surface design that require domain expertise and user review before committing
 2. **Non-deterministic AI behavior**: Phase B (code customizations) uses AI-generated patches that may vary across runs, making CI results unpredictable
-3. **Interactive approval needed**: The approval checkpoint is a critical safety mechanism to prevent unintended changes
-4. **Complex error handling**: Build failures may require multiple iteration cycles and human interpretation to resolve correctly
+3. **Complex error handling**: Build failures may require multiple iteration cycles and human interpretation to resolve correctly
 
 **Recommended CI/Pipeline Workflow**
 
@@ -693,7 +613,7 @@ Use these scenarios to validate the customization workflow implementation:
 - [ ] **Scenario 4**: Hide operation from Python SDK (Phase A focus)
 - [ ] **Scenario 5**: .NET build errors from analyzer (Phase A focus)
 - [ ] **Scenario 6**: Create Python subclient architecture (Phase A focus)
-- [ ] **Approval workflow**: Tool returns change summary; agent presents to user for approval
+- [ ] **Summary response**: Tool returns change summary with all modifications
 - [ ] **Change summary**: Tool returns structured response with all changes (TypeSpec decorators, code patches, files modified)
 - [ ] **Max retry limit**: Tool stops after 2 attempts per phase (Phase A: 2, Phase B: 2, total: 4 iterations)
 - [ ] **Stall detection**: Tool detects when same error appears twice consecutively
@@ -705,37 +625,26 @@ Use these scenarios to validate the customization workflow implementation:
 ## Success Criteria
 
 - [ ] **Automated Detection**: Correctly identify build failure types across all supported languages
-- [ ] **Phase A Success**: Successfully apply [TypeSpec Customizations](#typespec-customizations) for 80%+ of common specification issues
-- [ ] **Phase B Success**: Successfully apply [Code Customizations](#code-customizations) for 50-70%+ of mechanical fixes within defined scope
+- [ ] **Phase A Success (80% Coverage)**: Successfully apply [TypeSpec Customizations](#typespec-customizations) for 80%+ of feature requests and specification issues
+  - Measured by: SDK regenerates successfully + build passes + no Phase B needed
+  - Examples: Model renaming, operation hiding, client restructuring, visibility changes
+- [ ] **Phase B Success (10% Coverage)**: Successfully apply [Code Customizations](#code-customizations) for 50-70%+ of mechanical repairs when Phase A builds fail
   - Success measured by: build passes after Phase B, changes are within scope boundaries (<20 lines, <5 files)
-  - Phase B is rare but critical safety net (estimated 10% of workflows)
+  - Phase B is error-driven safety net for TypeSpec-induced customization conflicts
+  - Examples: Duplicate field removal, reference updates, import fixes
+- [ ] **Manual Guidance (10% Coverage)**: Remaining niche cases receive structured guidance for manual implementation
 - [ ] **Efficiency**: Reduce manual effort in SDK regeneration workflows by 60%+
-- [ ] **Approval Workflow**: Enforce [approval checkpoints](#approval-checkpoint) in both contexts
+- [ ] **Interactive Workflow**: Tool applies changes (uncommitted) and returns summary for user review
 - [ ] **Cross-Language**: Support .NET, Java, JavaScript, Python, and Go
 
 ## Open Questions
 
-### Future Feature-Level Customizations
+### v1 Implementation
 
-- **Scope Definition**: How do we define boundaries for feature-level vs. fix-level customizations?
-- **Approval Strategy**: Should feature-level changes require additional approval layers?
-
-### Cross-Language Standardization
-
-- **Fix Patterns**: How do we maintain consistency while respecting language-specific idioms?
-- **Error Detection**: Should error categorization be language-agnostic or language-specific?
-
-### Performance and Scale
-
-- **Concurrent Builds**: How do we handle multiple simultaneous customization workflows?
-- **Resource Management**: What are the performance implications of two-phase fixes?
-
-### Phase B Automation Boundaries
-
-- **Pattern Recognition**: What criteria determine whether a code customization is "deterministic" vs. "complex"? Should we maintain a catalog of known mechanical patterns?
-- **Success Metrics**: What success rate threshold should we achieve for deterministic patterns before expanding Phase B scope to more complex transformations?
-- **Language-Specific Complexity**: Should Java AST manipulation patterns be treated differently than Python `_patch.py` updates given their brittleness?
-- **Escape Hatches**: When Phase B fails repeatedly, should we surface guidance documents ("read this doc for code customization") rather than continue attempting automation?
+- **Error Message Parsing**: Best approach for extracting file paths and line numbers from different language build systems (.NET, Java Maven, Python mypy, etc.)?
+- **Python "Build" Definition**: What constitutes a "build failure" for Python (mypy/flake8 failures, import errors, or both)?
+- **Java AST Complexity**: Should v1 focus on in-place editing only, deferring AST manipulation to v2?
+- **Context Growth**: At what point should we implement context summarization to avoid LLM processing limits?
 
 ## Alternatives Considered
 

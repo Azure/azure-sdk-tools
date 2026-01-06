@@ -5,7 +5,7 @@ import {
   Parameter,
   TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { TokenKind } from "../models";
+import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 

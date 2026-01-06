@@ -16,9 +16,7 @@ function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
   }
 
   // Extract structured properties
-  const typeParameters = (
-    item as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> }
-  ).typeParameters;
+  const typeParameters = item.typeParameters;
 
   // Add export and interface keywords
   tokens.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));

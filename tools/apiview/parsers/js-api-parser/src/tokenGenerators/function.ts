@@ -22,11 +22,8 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
   }
 
   // Extract structured properties
-  const parameters = (item as unknown as { readonly parameters: ReadonlyArray<Parameter> })
-    .parameters;
-  const typeParameters = (
-    item as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> }
-  ).typeParameters;
+  const parameters = item.parameters;
+  const typeParameters = item.typeParameters;
 
   // Add export and function keywords
   tokens.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));

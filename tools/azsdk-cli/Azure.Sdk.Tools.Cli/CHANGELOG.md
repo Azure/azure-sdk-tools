@@ -6,6 +6,9 @@
 
 - Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
 - Removed `azsdk pkg release-readiness` and replace it with `azsdk pkg release --check-ready`
+- Fixed an APIView approval failure bug in `azsdk_release_sdk` tool for management plane packages
+- Fixed issue in `azsdk_link_sdk_pull_request_to_release_plan` and `azsdk_get_sdk_pull_request_link` tools where language was set as unknown in response.
+- Aligned namespaces in `Tools` directory to match folder structure
 
 ### Bugs Fixed
 

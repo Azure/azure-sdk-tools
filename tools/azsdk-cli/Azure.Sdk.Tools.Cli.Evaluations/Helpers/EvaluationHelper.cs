@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
     public class EvaluationHelper
     {
         private const string verifySetupToolName = "azsdk_verify_setup";
-        
+
         public static void ValidateBooleanMetricEvaluator(EvaluationResult result, string metricName)
         {
             EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];
@@ -41,26 +41,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             IEnumerable<IEvaluator> evaluators,
             bool enableResponseCaching = true,
             IEnumerable<EvaluationContext>? additionalContexts = null,
-            CancellationToken cancellationToken = default,
-            IEnumerable<string>? optionalToolNames = null)
+            CancellationToken cancellationToken = default)
         {
-            evaluators ??= [new ExpectedToolInputEvaluator()];
-
-            var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
-
-            // Default optional tools to empty when not provided
-            optionalToolNames ??= Enumerable.Empty<string>();
-
-            // We can use LoadScenarioPrompt with empty prompt to get optional tools
-            // in the proper format. 
-            optionalToolNames = optionalToolNames.Append(verifySetupToolName);
-            var optionalTools = ChatMessageHelper.LoadScenarioFromPrompt("", optionalToolNames).ExpectedOutcome;
-
-            // Include the optional tools along side the expected. 
-            // Later we will then filter them out from the response.
-            var toolChatMessages = optionalTools.Concat(scenarioData.ExpectedOutcome);
-            var toolResults = ChatMessageHelper.GetExpectedToolsByName(toolChatMessages, toolNames);
-
             var reportingConfiguration = DiskBasedReportingConfiguration.Create(
                 executionName: executionName,
                 storageRootPath: reportingPath,
@@ -69,11 +51,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 enableResponseCaching: enableResponseCaching);
 
             await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(scenarioName, cancellationToken: cancellationToken);
-
-            var response = await chatCompletion.GetChatResponseWithExpectedResponseAsync(
-                fullChat,
-                toolResults,
-                optionalToolNames);
 
             var result = await scenarioRun.EvaluateAsync(
                 messages,
@@ -84,19 +61,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             return result;
         }
 
-        private static IEnumerable<ChatMessage> GetOptionalTools(
-            IEnumerable<string> optionalToolNames,
-            IEnumerable<string> expectedToolNames)
-        {
-            // Build optional list excluding any names that are expected
-            // also make sure to always include verify setup
-            var combinedOptional = optionalToolNames.Append(verifySetupToolName);
-            var filteredOptional = combinedOptional.Except(expectedToolNames);
-
-            var optionalTools = ChatMessageHelper.LoadScenarioFromPrompt("", filteredOptional).ExpectedOutcome;
-            return optionalTools;
-        }
-      
         public static async Task<EvaluationResult> RunToolInputScenarioAsync(
             string scenarioName,
             ScenarioData scenarioData,
@@ -108,16 +72,31 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             IEnumerable<IEvaluator>? evaluators = null,
             bool enableResponseCaching = true,
             IEnumerable<EvaluationContext>? additionalContexts = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            IEnumerable<string>? optionalToolNames = null)
         {
             evaluators ??= [new ExpectedToolInputEvaluator()];
 
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
-            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, toolNames);
+
+            // Default optional tools to empty when not provided
+            optionalToolNames ??= Enumerable.Empty<string>();
+
+            // Get expected tool names from the scenario data
+            var expectedToolNames = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, toolNames).Keys;
+
+            optionalToolNames = optionalToolNames.Append(verifySetupToolName);
+            var optionalTools = GetOptionalTools(optionalToolNames, expectedToolNames);
+
+            // Include the optional tools along side the expected. 
+            // Later we will then filter them out from the response.
+            var toolChatMessages = optionalTools.Concat(scenarioData.ExpectedOutcome);
+            var toolResults = ChatMessageHelper.GetExpectedToolsByName(toolChatMessages, toolNames);
 
             var response = await chatCompletion.GetChatResponseWithExpectedResponseAsync(
                 fullChat,
-                expectedToolResults);
+                toolResults,
+                optionalToolNames);
 
             return await RunScenarioAsync(
                 fullChat,
@@ -130,6 +109,21 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 enableResponseCaching,
                 additionalContexts,
                 cancellationToken);
+        }
+
+        private static IEnumerable<ChatMessage> GetOptionalTools(
+            IEnumerable<string> optionalToolNames,
+            IEnumerable<string> expectedToolNames)
+        {
+            // Build optional list excluding any names that are expected
+            // also make sure to always include verify setup
+            var combinedOptional = optionalToolNames.Append(verifySetupToolName);
+            var filteredOptional = combinedOptional.Except(expectedToolNames);
+
+            // We can use LoadScenarioPrompt with empty prompt to get optional tools
+            // in the proper format. 
+            var optionalTools = ChatMessageHelper.LoadScenarioFromPrompt("", filteredOptional).ExpectedOutcome;
+            return optionalTools;
         }
     }
 }

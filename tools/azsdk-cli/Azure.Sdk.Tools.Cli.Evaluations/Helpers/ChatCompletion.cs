@@ -6,9 +6,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
     public class ChatCompletion
     {
         private IChatClient _chatClient;
-        private IMcpClient _mcpClient;
+        private McpClient _mcpClient;
 
-        public ChatCompletion(IChatClient chatClient, IMcpClient mcpClient)
+        public ChatCompletion(IChatClient chatClient, McpClient mcpClient)
         {
             _chatClient = chatClient;
             _mcpClient = mcpClient;

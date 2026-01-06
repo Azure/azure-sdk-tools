@@ -10,41 +10,54 @@ Your task is to:
 ## Tenant Detection
 Analyze the question to determine the tenant that is best suited to handle it. The possible tenants are:
 
-### TypeSpec or OpenAPI(Swagger)
+### TypeSpec or OpenAPI(Swagger) API Specification and SDK details
 Questions about API Specification, such as TypeSpec or OpenAPI's usage, syntax, decorators, or Azure API design patterns:
 - API Specification syntax, decorators, models, operations
 - Azure-specific TypeSpec patterns (@route, @doc, @armResourceOperations, etc.)
 - TypeSpec validation
 - TypeSpec migration from OpenAPI
+- SDK details like SDK folder structure, features, configuration, generation, or customization
 - **Recommended Tenant**: `azure_sdk_qa_bot`
 
 ### Python SDK
 Questions about Python SDK development, usage, or processes:
-- Python SDK code generation from TypeSpec
+- Python SDK generation from TypeSpec
 - Python SDK custom code, testing, or validation
 - Python SDK release processes or pipeline issues
+- Python SDK pipeline and CI/CD issues
 - **Recommended Tenant**: `python_channel_qa_bot`
 
 ### Go SDK
 Questions about Go SDK development, usage, or processes:
-- Go SDK code generation from TypeSpec
+- Go SDK generation from TypeSpec
 - Go SDK custom code, testing, or validation
 - Go SDK release processes or pipeline issues
+- Go SDK pipeline and CI/CD issues
 - **Recommended Tenant**: `golang_channel_qa_bot`
 
 ### Java SDK
 Questions about Java SDK development, usage, or processes:
-- Java SDK code generation from TypeSpec
+- Java SDK generation from TypeSpec
 - Java SDK custom code, testing, or validation
 - Java SDK release processes or pipeline issues
+- Java SDK pipeline and CI/CD issues
 - **Recommended Tenant**: `java_channel_qa_bot`
 
 ### JavaScript SDK
 Questions about JavaScript SDK development, usage, or processes:
-- JavaScript SDK code generation from TypeSpec
+- JavaScript SDK generation from TypeSpec
 - JavaScript SDK custom code, testing, or validation
 - JavaScript SDK release processes or pipeline issues
+- JavaScript SDK pipeline and CI/CD issues
 - **Recommended Tenant**: `javascript_channel_qa_bot`
+
+### .NET SDK
+Questions about .NET SDK development, usage, or processes:
+- .NET SDK generation from TypeSpec
+- .NET SDK custom code, testing, or validation
+- .NET SDK release processes or pipeline issues
+- .NET SDK pipeline and CI/CD issues
+- **Recommended Tenant**: `dotnet_channel_qa_bot`
 
 ### Azure SDK Onboarding
 Questions about Azure SDK onboarding phases and processes:
@@ -52,10 +65,10 @@ Questions about Azure SDK onboarding phases and processes:
 - Permission Issues
 - API Specification repo pull request review, pipelines, checks or actions
 - API design phase guidance
-- SDK generation processes
-- SDK validation reproduce
-- SDK development phase processes
-- SDK release planning and criteria
+- SDK generation process
+- SDK validation process
+- SDK development best practices
+- SDK publishing and release process
 - **Recommended Tenant**: `azure_sdk_onboarding`
 
 ### General/Unknown

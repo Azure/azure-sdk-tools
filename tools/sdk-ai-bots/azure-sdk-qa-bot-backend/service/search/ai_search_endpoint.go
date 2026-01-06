@@ -531,6 +531,15 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 			continue
 		}
 
+		// For full file expansions, check if we've already processed this file
+		if cwe.Expansion == model.ExpansionFullFile {
+			if processedChunks[fileKey] {
+				log.Printf("Skipping duplicate full file expansion: %s/%s", c.ContextID, c.Title)
+				continue
+			}
+			processedChunks[fileKey] = true
+		}
+
 		// If this file is already being fully expanded, skip other chunks from it
 		if expandedFiles[fileKey] && cwe.Expansion != model.ExpansionFullFile {
 			log.Printf("Skipping chunk (file already expanded): %s/%s", c.ContextID, c.Title)

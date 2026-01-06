@@ -10,9 +10,9 @@ Your task is to:
 ## Tenant Detection
 Analyze the question to determine the tenant that is best suited to handle it. The possible tenants are:
 
-### TypeSpec or OpenAPI(Swagger) API Specification and SDK details
+### TypeSpec or OpenAPI(Swagger) and SDK details
 Questions about API Specification, such as TypeSpec or OpenAPI's usage, syntax, decorators, or Azure API design patterns:
-- API Specification syntax, decorators, models, operations
+- Specification Syntax, decorators, models, operations
 - Azure-specific TypeSpec patterns (@route, @doc, @armResourceOperations, etc.)
 - TypeSpec validation
 - TypeSpec migration from OpenAPI
@@ -62,8 +62,8 @@ Questions about .NET SDK development, usage, or processes:
 ### Azure SDK Onboarding
 Questions about Azure SDK onboarding phases and processes:
 - Service onboarding prerequisites and setup
-- Permission Issues
-- API Specification repo pull request review, pipelines, checks or actions
+- Repo, pipeline permission Issues
+- Repo pull request review, pipelines, checks or actions
 - API design phase guidance
 - SDK generation process
 - SDK validation process

@@ -24,6 +24,7 @@ The question must be classified into one of these categories:
     - API specification creation (TypeSpec vs OpenAPI/Swagger)
     - Resource modeling and endpoint design
     - API versioning and backward compatibility
+    - API specification repo, PR issues
 
 - **sdk-develop**: Questions about multi-language SDK development, such as:
     - SDK regenerate issues

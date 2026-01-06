@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Telemetry;
@@ -45,12 +46,30 @@ public class Program
             options.ValidateOnBuild = true;
         });
 
-        builder.Logging.AddConsole(consoleLogOptions =>
+        // In MCP server mode skip console output except for fatal server errors (which may happen
+        // before the MCP logging transport is initialized).
+        // All other logs will be redirected via the mcp logger over json-rpc to the mcp client only
+        if (!isCommandLine)
         {
-            // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
-            var logErrorThreshold = isCommandLine ? LogLevel.Error : LogLevel.Debug;
-            consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
-        });
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole(consoleLogOptions =>
+            {
+                consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
+            });
+            builder.Logging.AddFilter<Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>((category, level) =>
+                level >= LogLevel.Error
+                && category != null
+                && (category.StartsWith("Microsoft.Hosting", StringComparison.Ordinal)
+                    || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal)
+                    || category.StartsWith("Microsoft.Extensions.Hosting", StringComparison.Ordinal)));
+        }
+        else
+        {
+            builder.Logging.AddConsole(consoleLogOptions =>
+            {
+                consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
+            });
+        }
 
         // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
@@ -65,7 +84,10 @@ public class Program
         // add the console logger
         builder.Services.AddLogging(l =>
         {
-            l.AddConsole();
+            if (isCommandLine)
+            {
+                l.AddConsole();
+            }
             l.SetMinimumLevel(logLevel);
         });
 
@@ -86,6 +108,8 @@ public class Program
         {
             return builder;
         }
+
+        builder.Services.ConfigureMcpLogging();
 
         TelemetryService.RegisterServerTelemetry(builder.Services, debug);
 

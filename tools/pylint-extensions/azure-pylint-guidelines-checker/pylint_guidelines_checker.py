@@ -3305,9 +3305,6 @@ class DoNotStoreSecretsInTestVariables(BaseChecker):
         try:
             if hasattr(node, 'attrname') and node.attrname == 'secret':
                 return True
-            # Handle chained attribute access like foo.bar.secret
-            if hasattr(node, 'attr') and node.attr == 'secret':
-                return True
         except:
             logging.info("Failed to determine if node accesses a secret attribute.")
         return False

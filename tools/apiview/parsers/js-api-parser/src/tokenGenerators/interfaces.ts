@@ -53,6 +53,17 @@ function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
         processExcerptTokens(tp.constraintExcerpt.spannedTokens, tokens, deprecated);
       }
 
+      if (tp.defaultTypeExcerpt?.text.trim()) {
+        tokens.push(
+          createToken(TokenKind.Text, "=", {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        processExcerptTokens(tp.defaultTypeExcerpt.spannedTokens, tokens, deprecated);
+      }
+
       if (index < typeParameters.length - 1) {
         tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
       }

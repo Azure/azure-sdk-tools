@@ -7,6 +7,7 @@
 - Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
 - Removed `azsdk pkg release-readiness` and replace it with `azsdk pkg release --check-ready`
 - Add MCP Tool `azsdk_update_api_spec_pull_request_in_release_plan` & CLI command to update the TypeSpec pull request link in release plan
+- Improved error message when GitHub CLI is not installed to include installation and authentication instructions
 
 ### Bugs Fixed
 

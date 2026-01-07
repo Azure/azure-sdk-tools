@@ -1,4 +1,4 @@
-import { ApiInterface, ApiItem, ApiItemKind, TypeParameter } from "@microsoft/api-extractor-model";
+import { ApiInterface, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
@@ -50,7 +50,9 @@ function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
             deprecated,
           }),
         );
-        processExcerptTokens(tp.constraintExcerpt.spannedTokens, tokens, deprecated);
+        tokens.push(
+          createToken(TokenKind.Text, tp.constraintExcerpt.text.trim(), { deprecated }),
+        );
       }
 
       if (tp.defaultTypeExcerpt?.text.trim()) {

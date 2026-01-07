@@ -95,7 +95,7 @@ public async Task Evaluate_YourScenarioName()
     string[] optionalTools = 
     [
         "azsdk_verify_setup"
-    ]
+    ];
 
     // Build scenario data from prompt
     var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);

@@ -12,9 +12,14 @@ jobs:
     displayName: Sync public repos
 
     steps:
-    - pwsh: |
-        ./eng/common/scripts/LoginToGH.ps1
+    - task: AzurePowershell@5
       displayName: "Set GH_TOKEN"
+      inputs:
+        azureSubscription: 'AzureSDKEngKeyVault Secrets'
+        ScriptType: FilePath
+        ScriptPath: eng/common/scripts/LoginToGH.ps1
+        azurePowerShellVersion: LatestVersion
+        pwsh: true
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

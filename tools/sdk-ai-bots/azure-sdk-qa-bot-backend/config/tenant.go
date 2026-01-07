@@ -80,7 +80,10 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		ChannelLink:             "https://teams.microsoft.com/l/channel/19%3A5e673e41085f4a7eaaf20823b85b2b53%40thread.skype/Language%20-%20Java?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47",
 	},
 	model.TenantID_JavaScriptChannelQaBot: {
-		Sources:                 append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",
+		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",

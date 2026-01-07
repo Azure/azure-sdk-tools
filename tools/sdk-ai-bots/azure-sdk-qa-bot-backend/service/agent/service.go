@@ -191,15 +191,21 @@ func processChunk(result model.Index) model.Knowledge {
 	title := ""
 	if len(result.Header1) > 0 {
 		chunk += "# " + result.Header1 + "\n"
-		title = result.Header1
+		if title == "" {
+			title = result.Header1
+		}
 	}
 	if len(result.Header2) > 0 {
 		chunk += "## " + result.Header2 + "\n"
-		title = result.Header2
+		if title == "" {
+			title = result.Header2
+		}
 	}
 	if len(result.Header3) > 0 {
 		chunk += "### " + result.Header3 + "\n"
-		title = result.Header3
+		if title == "" {
+			title = result.Header3
+		}
 	}
 	chunk += result.Chunk
 	return model.Knowledge{
@@ -626,7 +632,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
-	// First, add vector search results prioritized by relevance score (high to low)
+	//  Add knowledge search results with scoring based on relevance
 	for i, result := range knowledgeResults {
 		// Skip low relevance results
 		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {

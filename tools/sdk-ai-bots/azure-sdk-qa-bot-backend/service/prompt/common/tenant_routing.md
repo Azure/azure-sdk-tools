@@ -20,7 +20,7 @@ Questions about Azure API/SDK onboarding, SDK develop lifecycle, Azure MCP and r
 ### API Spec Review
 Questions about Azure REST API specifications review in GitHub repositories:
 - Specification PR review process in azure-rest-api-spec and azure-rest-api-spec-pr repositories
-- Specification PR pipeline errors, check failures or CI failures(excludes SDK generation errors)
+- Specification PR pipeline errors, check failures or CI failures(excludes SDK generation/validation errors)
 - Specification high-level design guidelines, tooling
 - SDK generation configuration of specifications
 - **Recommended Tenant**: `api_spec_review_bot`

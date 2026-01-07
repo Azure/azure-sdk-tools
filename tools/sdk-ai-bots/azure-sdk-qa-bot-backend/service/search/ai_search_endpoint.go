@@ -506,14 +506,16 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 		c := cwe.Chunk
 		fileKey := fmt.Sprintf("%s|%s", c.ContextID, c.Title)
 
-		if cwe.Expansion == model.ExpansionFullFile {
+		switch cwe.Expansion {
+		case model.ExpansionFullFile:
 			expandedFiles[fileKey] = true
-		} else if cwe.Expansion == model.ExpansionHierarchical {
+		case model.ExpansionHierarchical:
 			Hierarchy := s.DetectChunkHierarchy(c)
-			if Hierarchy == model.HierarchyHeader1 {
+			switch Hierarchy {
+			case model.HierarchyHeader1:
 				h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
 				expandedHeader1[h1Key] = true
-			} else if Hierarchy == model.HierarchyHeader2 {
+			case model.HierarchyHeader2:
 				h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
 				expandedHeader2[h2Key] = true
 			}
@@ -551,7 +553,8 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 			h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
 			if expandedHeader1[h1Key] {
 				Hierarchy := s.DetectChunkHierarchy(c)
-				if Hierarchy == model.HierarchyHeader2 || Hierarchy == model.HierarchyHeader3 {
+				switch Hierarchy {
+				case model.HierarchyHeader2, model.HierarchyHeader3:
 					log.Printf("Skipping chunk (header1 already expanded): %s/%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2)
 					continue
 				}
@@ -563,7 +566,8 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 			h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
 			if expandedHeader2[h2Key] {
 				Hierarchy := s.DetectChunkHierarchy(c)
-				if Hierarchy == model.HierarchyHeader3 {
+				switch Hierarchy {
+				case model.HierarchyHeader3:
 					log.Printf("Skipping chunk (header2 already expanded): %s/%s#%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2, c.Header3)
 					continue
 				}

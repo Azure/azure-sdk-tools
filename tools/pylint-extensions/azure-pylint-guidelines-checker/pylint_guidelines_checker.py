@@ -6,7 +6,7 @@
 """
 Pylint custom checkers for SDK guidelines: C4717 - C4773
 """
-
+import os
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -3292,7 +3292,6 @@ class DoNotStoreSecretsInTestVariables(BaseChecker):
                 return False
             
             # Get just the basename (filename without path) for testing
-            import os
             basename = os.path.basename(filename).lower()
             
             # Check if it's a test file - specifically files that start with test_
@@ -3309,8 +3308,8 @@ class DoNotStoreSecretsInTestVariables(BaseChecker):
             # Handle chained attribute access like foo.bar.secret
             if hasattr(node, 'attr') and node.attr == 'secret':
                 return True
-        except AttributeError:
-            pass
+        except:
+            logging.info("Failed to determine if node accesses a secret attribute.")
         return False
 
     def visit_assign(self, node):
@@ -3331,8 +3330,8 @@ class DoNotStoreSecretsInTestVariables(BaseChecker):
                             node=node,
                             confidence=None,
                         )
-        except AttributeError:
-            pass
+        except:
+            logging.info("Failed to check for secret variable assignment.")
 
     def visit_call(self, node):
         """Check for usage of secret variables in function calls."""
@@ -3358,7 +3357,7 @@ class DoNotStoreSecretsInTestVariables(BaseChecker):
                         confidence=None,
                     )
         except AttributeError:
-            pass
+            logging.info("Failed to check for secret variable usage in function.")
 
     def leave_module(self, node):
         """Reset secret variables when leaving a module."""

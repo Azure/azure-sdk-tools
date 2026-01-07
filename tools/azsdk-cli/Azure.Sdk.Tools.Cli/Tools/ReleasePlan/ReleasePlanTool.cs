@@ -39,6 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string checkApiReadinessCommandName = "check-api-readiness";
         private const string linkSdkPrCommandName = "link-sdk-pr";
         private const string listOverdueReleasePlansCommandName = "list-overdue";
+        private const string updateApiSpecPullRequestCommandName = "update-spec-pr";
 
         // MCP Tool Names
         private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
@@ -49,6 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string UpdateLanguageExclusionToolName = "azsdk_update_language_exclusion_justification";
         private const string CheckApiSpecReadyToolName = "azsdk_check_api_spec_ready_for_sdk";
         private const string LinkSdkPullRequestToolName = "azsdk_link_sdk_pull_request_to_release_plan";
+        private const string UpdateApiSpecPullRequestToolName = "azsdk_update_api_spec_pull_request_in_release_plan";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -194,7 +196,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
-            new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline")
+            new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline"),
+            new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, }
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -243,6 +246,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 case listOverdueReleasePlansCommandName:
                     return await ListOverdueReleasePlans();
+                
+                case updateApiSpecPullRequestCommandName:
+                    return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -300,7 +306,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         {
             if (string.IsNullOrEmpty(specPullRequestUrl))
             {
-                throw new Exception("API spec pull request URL is required to create a release plan.");
+                throw new Exception("API spec pull request URL is required for this release plan operation.");
             }
 
             var match = PullRequestUrlRegex().Match(specPullRequestUrl);
@@ -309,7 +315,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}'. It should be a valid GitHub pull request to azure-rest-api-specs repo.");
             }
-
         }
 
         private void ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
@@ -999,6 +1004,66 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Error retrieving overdue release plans");
                 return new ReleasePlanListResponse { ResponseError = $"An error occurred while retrieving overdue release plans: {ex.Message}" };
+            }
+        }
+
+        [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Update TypeSpec pull request URL in a release plan using work item id or release plan id.")]
+        public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId = 0, int releasePlanId = 0)
+        {
+            try
+            {
+                if (workItemId == 0 && releasePlanId == 0)
+                {
+                    return new ReleaseWorkflowResponse { ResponseError = "Either work item ID or release plan ID must be provided." };
+                }
+                ValidatePullRequestUrl(specPullRequestUrl);
+
+                // Get work item ID from release plan ID if needed
+                if (workItemId == 0)
+                {
+                    var releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId);
+                    if (releasePlan == null)
+                    {
+                        return new ReleaseWorkflowResponse 
+                        { 
+                            ResponseError = $"Release plan with ID {releasePlanId} not found." 
+                        };
+                    }
+                    workItemId = releasePlan.WorkItemId;
+                }
+
+                // Update the spec pull request in the release plan
+                var updated = await devOpsService.UpdateSpecPullRequestAsync(workItemId, specPullRequestUrl);
+                
+                if (!updated)
+                {
+                    return new ReleaseWorkflowResponse 
+                    { 
+                        ResponseError = "Failed to update TypeSpec pull request URL in release plan." 
+                    };
+                }
+
+                return new ReleaseWorkflowResponse
+                {
+                    Status = "Success",
+                    Details = 
+                    [
+                        $"Successfully updated spec pull request URL to {specPullRequestUrl} in release plan."
+                    ],
+                    NextSteps = 
+                    [
+                        "SDK generation should be triggered to regenerate SDK using the new spec pull request.",
+                        "Generate SDK for each language listed in the release plan."
+                    ]
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update TypeSpec pull request URL in release plan.");
+                return new ReleaseWorkflowResponse
+                {
+                    ResponseError = $"Failed to update TypeSpec pull request URL in release plan: {ex.Message}",
+                };
             }
         }
     }

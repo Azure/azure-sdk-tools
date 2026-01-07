@@ -384,5 +384,53 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ResponseError, Does.Contain("azure-sdk-for-python"));
             Assert.That(response.Language, Is.EqualTo(SdkLanguage.Python));
         }
+
+        [Test]
+        public async Task Test_update_spec_pull_request_with_work_item_id()
+        {
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345", workItemId: 100);
+            Assert.IsNotNull(response);
+            Assert.That(response.Status, Is.EqualTo("Success"));
+            Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
+            Assert.That(response.NextSteps, Has.Some.Contains("SDK generation should be triggered"));
+        }
+
+        [Test]
+        public async Task Test_update_spec_pull_request_with_release_plan_id()
+        {
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345", releasePlanId: 1);
+            Assert.IsNotNull(response);
+            Assert.That(response.Status, Is.EqualTo("Success"));
+            Assert.That(response.Details, Has.Some.Contains("Successfully updated spec pull request URL"));
+            Assert.That(response.NextSteps, Has.Some.Contains("SDK generation should be triggered"));
+        }
+
+        [Test]
+        public async Task Test_update_spec_pull_request_with_no_identifiers()
+        {
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-rest-api-specs/pull/12345");
+            Assert.IsNotNull(response);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Either work item ID or release plan ID must be provided"));
+        }
+
+        [Test]
+        public async Task Test_update_spec_pull_request_with_invalid_url()
+        {
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("invalid-url", workItemId: 100);
+            Assert.IsNotNull(response);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Invalid spec pull request URL"));
+        }
+
+        [Test]
+        public async Task Test_update_spec_pull_request_with_non_specs_repo()
+        {
+            var response = await releasePlanTool.UpdateSpecPullRequestInReleasePlan("https://github.com/Azure/azure-sdk-for-python/pull/12345", workItemId: 100);
+            Assert.IsNotNull(response);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Invalid spec pull request URL"));
+            Assert.That(response.ResponseError, Does.Contain("azure-rest-api-specs"));
+        }
     }
 }

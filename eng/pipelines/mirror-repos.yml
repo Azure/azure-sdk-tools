@@ -12,9 +12,13 @@ jobs:
     displayName: Sync public repos
 
     steps:
+    - pwsh: |
+        ./eng/common/scripts/LoginToGH.ps1
+      displayName: "Set GH_TOKEN"
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
+        GH_TOKEN: $(GH_TOKEN)
         Repos:
 
           Azure/azure-rest-api-specs:
@@ -28,7 +32,7 @@ jobs:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
+        GH_TOKEN: $(GH_TOKEN)
         Repos:
 
           Azure/azure-rest-api-specs-pr:
@@ -62,7 +66,7 @@ jobs:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
+        GH_TOKEN: $(GH_TOKEN)
         Repos:
 
           Azure/azure-sdk-for-cpp:

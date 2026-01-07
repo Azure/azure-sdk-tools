@@ -1,5 +1,5 @@
 parameters:
-  # Provde a list of repos
+  # Provide a list of repos
   # Example:
   #   Azure/azure-rest-api-specs:
   #     Branch: main

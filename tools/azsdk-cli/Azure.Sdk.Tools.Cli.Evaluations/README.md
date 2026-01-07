@@ -32,28 +32,46 @@ Configure the following environment variables for the evaluation framework:
 #### Required Variables
 
 ```bash
-AZURE_OPENAI_ENDPOINT=https://your-openai-resource.openai.azure.com/
-AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=your-deployment-name
+AZURE_OPENAI_ENDPOINT=https://openai-shared.openai.azure.com/
+AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=gpt-5
 REPOSITORY_NAME=Owner/RepoName 
-COPILOT_INSTRUCTIONS_PATH_MCP_EVALS=path/to/.github/copilot-instructions.md
+COPILOT_INSTRUCTIONS_PATH_MCP_EVALS=local/path/to/.github/copilot-instructions.md
 ```
 
-**Note**: The Azure OpenAI endpoint must have a `text-embedding-3-large` deployment configured. This is required by the `ToolDescriptionSimilarityEvaluator` for embedding-based similarity tests. Without this deployment, the tests will fail.
+#### Note
+- The Azure OpenAI endpoint must have a `text-embedding-3-large` deployment configured. This is required by the `ToolDescriptionSimilarityEvaluator` for embedding-based similarity tests. Without this deployment, the tests will fail.
+- Must have RBAC to the Azure OpenAI resource.
 
 ### Running Evaluations
 
+#### Using command line
 ```bash
-# Run all evaluation scenarios
+cd local/path/to/Azure.Sdk.Tools.Cli.Evaluations
 dotnet test
 ```
 
-The framework automatically generates HTML reports in the `reports/` directory after test execution.
+#### Using Test Explorer (Preferred)
+
+- Visual Studio (Test Explorer):
+  1. Open this repository in Visual Studio.
+  2. Go to `Test > Test Explorer`.
+  3. Expand `Azure.Sdk.Tools.Cli.Evaluations` and click `Run All`, or right‑click a test/class to run/debug just that scope.
 
 ### Pipeline Integration
 
-The evaluation framework runs automatically in CI/CD pipelines when pull requests modify azsdk cli. Changes to `.github/copilot-instructions.md` or any instruction files in `eng/common/instructions/` would also be triggered but in progress. This ensures instruction or mcp changes don't negatively impact agent behavior before merging. The evaluations run alongside other PR validation tests and must pass for the PR to be merged.
+The evaluation framework runs automatically in CI/CD pipelines when pull requests modify azsdk cli, changes to `.github/copilot-instructions.md`, or any instruction files in `eng/common/instructions/`. This ensures instruction or mcp changes don't negatively impact agent behavior. Configuration can be found at [eng\common\pipelines\ai-evals-tests.yml](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/pipelines/ai-evals-tests.yml).
 
-**Pipeline**: [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) - Configuration in `eng/common/pipelines/copilot-instruction-evals.yml`
+| Copilot Instruction Repository | Pipeline Link |
+|-------------------------------|---------------|
+| Release Pipeline              | https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684 |
+| azure-rest-api-specs          | https://dev.azure.com/azure-sdk/internal/_build?definitionId=7985 |
+| azure-sdk-for-js              | https://dev.azure.com/azure-sdk/internal/_build?definitionId=8011 |
+| azure-sdk-for-go              | https://dev.azure.com/azure-sdk/internal/_build?definitionId=8010 |
+| azure-sdk-for-java            | https://dev.azure.com/azure-sdk/internal/_build?definitionId=8008 |
+| azure-sdk-for-net             | https://dev.azure.com/azure-sdk/internal/_build?definitionId=8009 |
+| azure-sdk-for-python          | https://dev.azure.com/azure-sdk/internal/_build?definitionId=8007 |
+
+> Note: In the release pipeline, evaluations run as one job under the `BuildTestAndPackage` stage.
 
 ## Walkthrough: Release Plan Creation Evaluation
 

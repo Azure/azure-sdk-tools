@@ -71,10 +71,11 @@ public class GitConnection
                 process.StartInfo = processStartInfo;
                 process.Start();
                 string output = process.StandardOutput.ReadToEnd();
+                string errorOutput = process.StandardError.ReadToEnd();
                 process.WaitForExit();
                 if (process.ExitCode != 0)
                 {
-                    throw new InvalidOperationException($"Failed to get GitHub auth token. Error: {process.StandardError.ReadToEnd()}");
+                    throw new InvalidOperationException($"Failed to get GitHub auth token. Error:{Environment.NewLine}{errorOutput}{Environment.NewLine}{Environment.NewLine}Please make sure GitHub CLI is installed and make sure to login using `gh auth login` to connect to GitHub.");
                 }
                 return output.Trim();
             }

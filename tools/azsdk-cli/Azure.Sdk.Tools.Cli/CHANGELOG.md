@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
+
 ### Breaking Changes
 
 ### Bugs Fixed

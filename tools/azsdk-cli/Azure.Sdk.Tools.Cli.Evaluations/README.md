@@ -1,5 +1,21 @@
 # Azure SDK MCP Agent Evaluation Framework
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture Overview](#architecture-overview)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Environment Variables](#environment-variables)
+  - [Running Evaluations](#running-evaluations)
+  - [Pipeline Integration](#pipeline-integration)
+- [Walkthrough: Release Plan Creation Evaluation](#walkthrough-release-plan-creation-evaluation)
+  - [The User Scenario](#the-user-scenario)
+  - [Expected Behavior](#expected-behavior)
+- [Contributing](#contributing)
+- [Best Practices](#best-practices)
+- [Related Documentation](#related-documentation)
+
 ## Overview
 
 The Azure SDK MCP (Model Context Protocol) Agent Evaluation Framework is a comprehensive testing and evaluation system designed to assess the performance and reliability of our MCP agent. This framework enables automated evaluation of agent behavior by simulating real copilot interactions and validating expected outcomes.
@@ -120,6 +136,12 @@ Want to add new evaluation scenarios or improve existing ones? See our detailed 
 - Best practices for tool mock development
 - Framework architecture details
 - Testing and debugging guidelines
+
+## Best Practices
+
+To ensure evaluations reflect the intended Copilot behavior:
+- Release any azsdk-cli tool changes that impact Copilot Instructions before updating the instructions.
+- Significant tool updates or newly added tools must be released for their behavior to appear in Copilot Instructions and be validated by evaluations.
 
 ## Related Documentation
 

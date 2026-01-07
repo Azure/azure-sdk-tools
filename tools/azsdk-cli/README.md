@@ -200,6 +200,8 @@ This tool is published to [github releases](https://github.com/Azure/azure-sdk-t
 
 The [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) can be run off main to sign and publish a new release. The release stage requires manual approval from an azure sdk team member.
 
+Release any required tool changes before updating Copilot Instructions to ensure the expected behavior.
+
 ## Project Structure and Information
 
 This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/dotnet/standard/commandline/) app and an MCP server using the [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
@@ -218,6 +220,7 @@ This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/do
 - *Azure.Sdk.Tools.Cli.Analyzer* - Compilation addons to enforce conventions
     - Enforce all tools handled by try/catch
     - Enforce tool inclusion in service registration for dependency injector
+- *Azure.Sdk.Tools.Cli.Evaluations* - Evaluations Porject
 
 ### Architecture Diagram
 

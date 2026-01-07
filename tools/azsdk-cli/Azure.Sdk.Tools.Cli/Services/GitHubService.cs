@@ -75,7 +75,7 @@ public class GitConnection
                 process.WaitForExit();
                 if (process.ExitCode != 0)
                 {
-                    throw new InvalidOperationException($"Failed to get GitHub auth token. Error: {errorOutput}\n\nPlease make sure GitHub CLI is installed and make sure to login using `gh auth login` to connect to GitHub.");
+                    throw new InvalidOperationException($"Failed to get GitHub auth token. Error:{Environment.NewLine}{errorOutput}{Environment.NewLine}{Environment.NewLine}Please make sure GitHub CLI is installed and make sure to login using `gh auth login` to connect to GitHub.");
                 }
                 return output.Trim();
             }

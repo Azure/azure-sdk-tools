@@ -50,7 +50,9 @@ function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
             deprecated,
           }),
         );
-        processExcerptTokens(tp.constraintExcerpt.spannedTokens, tokens, deprecated);
+        tokens.push(
+          createToken(TokenKind.Text, tp.constraintExcerpt.text.trim(), { deprecated }),
+        );
       }
 
       if (index < typeParameters.length - 1) {

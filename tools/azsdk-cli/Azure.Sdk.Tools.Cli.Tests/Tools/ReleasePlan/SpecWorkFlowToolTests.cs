@@ -195,6 +195,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 workItemId: 456
             );
 
+            Assert.That(result.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
@@ -376,11 +377,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService.ConfiguredSDKPullRequest = "https://github.com/Azure/azure-sdk-for-python/pull/789";
 
             var result = await specWorkflowTool.GetSDKPullRequestDetails("Python", workItemId: 0, buildId: 456);
-            
+
             Assert.IsNull(result.ResponseError);
             Assert.That(result.Details, Has.Some.Contains("SDK pull request details"));
             Assert.That(result.Details, Has.Some.Contains("https://github.com/Azure/azure-sdk-for-python/pull/789"));
             Assert.That(result.Language, Is.EqualTo(SdkLanguage.Python));
+        }
+
+        [Test]
+        public async Task GenerateSdk_With_Invalid_TypeSpec_Path()
+        {
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "InvalidPath/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java"
+            );
+            Assert.That(result.TypeSpecProject, Is.EqualTo(""));
+            Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));
+            Assert.That(result.ResponseErrors, Does.Contain("Invalid TypeSpec project root path [InvalidPath/specification/testcontoso/Contoso.Management]."));
         }
     }
 }

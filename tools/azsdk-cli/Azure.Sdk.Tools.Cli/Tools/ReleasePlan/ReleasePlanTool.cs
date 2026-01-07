@@ -1029,7 +1029,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         return new ReleaseWorkflowResponse 
                         { 
-                            ResponseError = $"Release plan not found for release plan ID {releasePlanId}." 
+                            ResponseError = $"Release plan with ID {releasePlanId} not found." 
                         };
                     }
                     workItemId = releasePlan.WorkItemId;

@@ -526,7 +526,7 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 		fileKey := fmt.Sprintf("%s|%s", c.ContextID, c.Title)
 
 		// Check if already processed (exact duplicate)
-		chunkKey := fmt.Sprintf("%s|%s", c.Title, c.Chunk)
+		chunkKey := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Chunk)
 		if processedChunks[chunkKey] {
 			continue
 		}

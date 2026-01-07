@@ -12,6 +12,7 @@ const (
 	TenantID_JavaChannelQaBot       TenantID = "java_channel_qa_bot"
 	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
 	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
+	TenantID_APISpecReviewBot       TenantID = "api_spec_review_bot"
 )
 
 type Source string
@@ -110,6 +111,9 @@ type IntentionResult struct {
 	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
 	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
 	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
-	RouteTenant        TenantID      `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID to route this question to (returned by general tenant intention detection)"`
 	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
+}
+
+type TenantRoutingResult struct {
+	RouteTenant TenantID `json:"route_tenant" jsonschema:"required,description=The tenant ID to route the question to"`
 }

@@ -154,30 +154,6 @@ func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
 	require.False(t, intentionResult.NeedsRagProcessing, "Suggestion message should NOT require RAG processing")
 }
 
-func TestIntentionRecognition_FromGeneralTenant(t *testing.T) {
-	config.LoadEnvFile()
-	config.InitConfiguration()
-	config.InitSecrets()
-	config.InitOpenAIClient()
-
-	service, err := agent.NewCompletionService()
-	require.NoError(t, err)
-
-	messages := []model.Message{
-		{
-			Role:    model.Role_User,
-			Content: "I have couple of prs failing with sdk validation.\n Is there a way to reproduce these errors in local?",
-		},
-	}
-
-	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("general/intention.md", llmMessages)
-
-	require.NoError(t, err)
-	require.NotNil(t, intentionResult)
-	require.Equal(t, model.TenantID_AzureSDKOnboarding, intentionResult.RouteTenant)
-}
-
 // Helper function to convert model.Message to LLM message format
 func convertToLLMMessages(messages []model.Message) []azopenai.ChatRequestMessageClassification {
 	llmMessages := make([]azopenai.ChatRequestMessageClassification, 0, len(messages))

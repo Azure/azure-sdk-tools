@@ -63,6 +63,9 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.CompletionReq) (*model.CompletionResp, error) {
 	startTime := time.Now()
 	requestID := uuid.New().String()
+	var routed bool
+	var routedTenantID model.TenantID
+
 	log.SetPrefix(fmt.Sprintf("[RequestID: %s] ", requestID))
 
 	jsonReq, err := json.Marshal(req)
@@ -82,24 +85,18 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 1. Build messages from the openai request
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
-	// 2. Build query for search
-	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
-
-	// 3. Handle general tenant routing: if intention contains recommended_tenant, route to that tenant
-	if req.TenantID == model.TenantID_GeneralQaBot && intention != nil {
-		routedTenantID := model.TenantID(intention.RouteTenant)
-		if routedConfig, hasConfig := config.GetTenantConfig(routedTenantID); hasConfig && routedTenantID != model.TenantID_GeneralQaBot {
-			log.Printf("General tenant routing: %s → %s", req.TenantID, routedTenantID)
-			// Update tenant ID and config to use the routed tenant for the rest of the flow
-			req.TenantID = routedTenantID
-			tenantConfig = routedConfig
+	// 2. Handle tenant routing if enabled
+	if tenantConfig.EnableRouting {
+		routedTenantID, routed = s.RouteTenant(req.TenantID, reasoningModelMessages)
+		if routed {
+			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
 			req.Sources = tenantConfig.Sources
-			// Re-run intention recognition with the routed tenant's prompt template
-			query, intention = s.buildQueryForSearch(req, reasoningModelMessages)
-		} else {
-			log.Printf("General tenant: Recommended tenant '%s' not found, falling back to general tenant", routedTenantID)
+			req.TenantID = routedTenantID
 		}
 	}
+
+	// 3. Build query for search
+	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	var knowledges []model.Knowledge
 	var prompt string
@@ -134,6 +131,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
+	}
+	if routed {
+		result.Answer += fmt.Sprintf("\n\n*For follow up questions, it's better to contact [%s](%s)*", tenantConfig.ChannelName, tenantConfig.ChannelLink)
 	}
 
 	// 6. Process the result
@@ -626,46 +626,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
-	// Add agentic chunks with high priority (they were specifically found by AI reasoning)
-	topK := 10
-	if len(agenticChunks) > topK {
-		agenticChunks = agenticChunks[:topK] // Limit to TopK results
-	}
-	for _, chunk := range agenticChunks {
-		// Static chunks specific expansion rules
-		if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionQA,
-			})
-			continue
-		}
-		if chunk.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionMapping,
-			})
-			continue
-		}
-
-		// Check if needs hierarchical expansion
-		Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
-		if Hierarchy == model.HierarchyHeader1 || Hierarchy == model.HierarchyHeader2 {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionHierarchical,
-			})
-			log.Printf("Agentic chunk needs hierarchical expansion: %s/%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
-			continue
-		}
-		log.Printf("Agentic searched chunk: %+v", chunk)
-		allChunks = append(allChunks, model.ChunkWithExpansion{
-			Chunk:     chunk,
-			Expansion: model.ExpansionNone,
-		})
-	}
-
-	// Add knowledge search results with scoring based on relevance
+	// First, add vector search results prioritized by relevance score (high to low)
 	for i, result := range knowledgeResults {
 		// Skip low relevance results
 		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
@@ -708,8 +669,8 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 		}
 
 		// Other chunks: check if needs hierarchical expansion
-		Hierarchy := s.searchClient.DetectChunkHierarchy(result)
-		if Hierarchy == model.HierarchyHeader1 || Hierarchy == model.HierarchyHeader2 {
+		hierarchy := s.searchClient.DetectChunkHierarchy(result)
+		if hierarchy == model.HierarchyHeader1 || hierarchy == model.HierarchyHeader2 {
 			allChunks = append(allChunks, model.ChunkWithExpansion{
 				Chunk:     result,
 				Expansion: model.ExpansionHierarchical,
@@ -721,6 +682,45 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 		// No expansion needed
 		allChunks = append(allChunks, model.ChunkWithExpansion{
 			Chunk:     result,
+			Expansion: model.ExpansionNone,
+		})
+	}
+
+	// Then, add agentic search results after vector search results
+	topK := 10
+	if len(agenticChunks) > topK {
+		agenticChunks = agenticChunks[:topK] // Limit to TopK results
+	}
+	for _, chunk := range agenticChunks {
+		// Static chunks specific expansion rules
+		if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     chunk,
+				Expansion: model.ExpansionQA,
+			})
+			continue
+		}
+		if chunk.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     chunk,
+				Expansion: model.ExpansionMapping,
+			})
+			continue
+		}
+
+		// Check if needs hierarchical expansion
+		hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
+		if hierarchy == model.HierarchyHeader1 || hierarchy == model.HierarchyHeader2 {
+			allChunks = append(allChunks, model.ChunkWithExpansion{
+				Chunk:     chunk,
+				Expansion: model.ExpansionHierarchical,
+			})
+			log.Printf("Agentic chunk needs hierarchical expansion: %s/%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
+			continue
+		}
+		log.Printf("Agentic searched chunk: %+v", chunk)
+		allChunks = append(allChunks, model.ChunkWithExpansion{
+			Chunk:     chunk,
 			Expansion: model.ExpansionNone,
 		})
 	}
@@ -780,4 +780,69 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 		len(agenticChunks), len(knowledgeResults), len(finalChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return results
+}
+
+// RouteTenant attempts to route the request to a specialized tenant based on the question content.
+// Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
+func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
+	routingStart := time.Now()
+	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
+
+	// Use the common tenant routing prompt
+	promptParser := prompt.RoutingTenantPromptParser{
+		DefaultPromptParser: &prompt.DefaultPromptParser{},
+	}
+	promptStr, err := promptParser.ParsePrompt(nil, "common/tenant_routing.md")
+	if err != nil {
+		log.Printf("Failed to parse tenant routing prompt: %v", err)
+		return originalTenantID, false
+	}
+
+	// Build messages for routing detection
+	routingMessages := append([]azopenai.ChatRequestMessageClassification{
+		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
+	}, messages...)
+
+	// Call LLM for tenant routing
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+		Messages:       routingMessages,
+		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+	}, nil)
+
+	if err != nil {
+		log.Printf("LLM tenant routing failed: %v", err)
+		return originalTenantID, false
+	}
+
+	if len(resp.Choices) == 0 {
+		log.Printf("No routing response received from LLM")
+		return originalTenantID, false
+	}
+
+	// Parse the routing result
+	result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "common/tenant_routing.md")
+	if err != nil {
+		log.Printf("Failed to parse routing response: %v", err)
+		return originalTenantID, false
+	}
+
+	routedTenantID := model.TenantID(result.RouteTenant)
+	log.Printf("Tenant routing recommendation: %s", routedTenantID)
+
+	// Validate and apply routing
+	if routedTenantID == "" || routedTenantID == originalTenantID {
+		log.Printf("No routing needed, staying with current tenant: %s", originalTenantID)
+		return originalTenantID, false
+	}
+
+	_, hasConfig := config.GetTenantConfig(routedTenantID)
+	if !hasConfig {
+		log.Printf("Routed tenant '%s' not found, staying with current tenant", routedTenantID)
+		return originalTenantID, false
+	}
+
+	// Apply routing
+	log.Printf("Routing: %s → %s (took %v)", originalTenantID, routedTenantID, time.Since(routingStart))
+	return routedTenantID, true
 }

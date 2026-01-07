@@ -56,7 +56,7 @@ COPILOT_INSTRUCTIONS_PATH_MCP_EVALS=local/path/to/.github/copilot-instructions.m
 
 #### Note
 - The Azure OpenAI endpoint must have a `text-embedding-3-large` deployment configured. This is required by the `ToolDescriptionSimilarityEvaluator` for embedding-based similarity tests. Without this deployment, the tests will fail.
-- Must have RBAC to the Azure OpenAI resource.
+- Must have `Azure AI User` role to access the Azure OpenAI resource.
 
 ### Running Evaluations
 

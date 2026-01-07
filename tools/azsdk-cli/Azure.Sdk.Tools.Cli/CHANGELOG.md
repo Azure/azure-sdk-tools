@@ -12,6 +12,8 @@
 - Fixed test failures being reported as a success to the agent.
 - Test result output is now made available to the agent.
 
+- `noop` for methods where fixCheckErrors isn't fully supported if set to True for clarity
+
 ## 0.5.10 (2025-12-08)
 
 ### Features Added

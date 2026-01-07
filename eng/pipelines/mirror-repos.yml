@@ -1,4 +1,4 @@
-# Mirror the default branch for each repo folder to all subscribed langauge repos.
+# Mirror the default branch for each repo folder to all subscribed language repos.
 
 trigger: none
 pr: none
@@ -12,14 +12,13 @@ jobs:
     displayName: Sync public repos
 
     steps:
-    - task: AzurePowershell@5
+    - task: AzureCLI@2
       displayName: "Set GH_TOKEN"
       inputs:
         azureSubscription: 'AzureSDKEngKeyVault Secrets'
-        ScriptType: FilePath
-        ScriptPath: eng/common/scripts/LoginToGH.ps1
-        azurePowerShellVersion: LatestVersion
-        pwsh: true
+        scriptType: pscore
+        scriptLocation: scriptPath
+        scriptPath: eng/common/scripts/LoginToGH.ps1
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

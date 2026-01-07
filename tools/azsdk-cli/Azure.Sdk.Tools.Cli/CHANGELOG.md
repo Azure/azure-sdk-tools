@@ -11,6 +11,8 @@
 
 - Fixed test failures being reported as a success to the agent.
 - Test result output is now made available to the agent.
+- Fixed an APIView approval failure bug in `azsdk_release_sdk` tool for management plane packages.
+- Fixed issue in `azsdk_link_sdk_pull_request_to_release_plan` and `azsdk_get_sdk_pull_request_link` tools where language was set as unknown in response.
 
 ## 0.5.10 (2025-12-08)
 

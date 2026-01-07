@@ -66,7 +66,11 @@ function createDefaultExportExcerptTokens(interfaceName: string): ExcerptToken[]
 }
 
 // Helper to create a mock TypeParameter
-function createMockTypeParameter(name: string, constraintText?: string): TypeParameter {
+function createMockTypeParameter(
+  name: string,
+  constraintText?: string,
+  defaultTypeText?: string,
+): TypeParameter {
   const constraint = constraintText
     ? {
         text: constraintText,
@@ -74,10 +78,17 @@ function createMockTypeParameter(name: string, constraintText?: string): TypePar
       }
     : { text: "", spannedTokens: [] };
 
+  const defaultType = defaultTypeText
+    ? {
+        text: defaultTypeText,
+        spannedTokens: [{ kind: ExcerptTokenKind.Content, text: defaultTypeText }],
+      }
+    : { text: "", spannedTokens: [] };
+
   return {
     name,
     constraintExcerpt: constraint,
-    defaultTypeExcerpt: { text: "", spannedTokens: [] },
+    defaultTypeExcerpt: defaultType,
   } as unknown as TypeParameter;
 }
 
@@ -500,6 +511,45 @@ describe("interfaceTokenGenerator", () => {
       );
 
       expect(extendsKeywords).toHaveLength(0);
+    });
+
+    it("generates correct tokens for type parameters with default types", () => {
+      const typeParams = [
+        createMockTypeParameter("TElement"),
+        createMockTypeParameter("TPage", undefined, "TElement[]"),
+        createMockTypeParameter("TPageSettings", undefined, "PageSettings"),
+      ];
+      const mockInterface = createMockInterface(
+        "PagedAsyncIterableIterator",
+        createBasicExcerptTokens("PagedAsyncIterableIterator"),
+        typeParams,
+      );
+
+      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+
+      // export interface PagedAsyncIterableIterator<TElement, TPage = TElement[], TPageSettings = PageSettings>
+      const lessThanIndex = tokens.findIndex((t) => t.Value === "<");
+      const greaterThanIndex = tokens.findIndex((t) => t.Value === ">");
+
+      expect(lessThanIndex).toBeGreaterThan(-1);
+      expect(greaterThanIndex).toBeGreaterThan(lessThanIndex);
+
+      // Check for default type assignments
+      const paramSection = tokens.slice(lessThanIndex + 1, greaterThanIndex);
+      const equalsSigns = paramSection.filter((t) => t.Value === "=");
+
+      // Should have two equals signs (for TPage and TPageSettings defaults)
+      expect(equalsSigns).toHaveLength(2);
+
+      // Verify the structure: TPage = TElement[]
+      const tPageIndex = paramSection.findIndex((t) => t.Value === "TPage");
+      expect(tPageIndex).toBeGreaterThan(-1);
+
+      const firstEqualsIndex = paramSection.findIndex((t) => t.Value === "=");
+      expect(firstEqualsIndex).toBeGreaterThan(tPageIndex);
+
+      // Check that default value follows the equals sign
+      expect(paramSection[firstEqualsIndex + 1].Value).toBe("TElement[]");
     });
 
     it("handles default export with deprecated interface", () => {

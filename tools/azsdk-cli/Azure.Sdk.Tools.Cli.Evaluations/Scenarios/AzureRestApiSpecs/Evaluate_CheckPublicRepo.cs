@@ -10,25 +10,16 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
     {
         [Test]
         [Category(RepositoryCategories.AzureRestApiSpecs)]
-        public async Task Evaluate_ValidateTypespec()
+        public async Task Evaluate_CheckPublicRepo()
         {
-            const string prompt = "Validate my typespec project. It is already confirmed we are in a public repository. The path to my typespec is C:\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
+            const string prompt = "Check if my TypeSpec project is in the public repo. My setup has already been verified, do not run azsdk_verify_setup. Project root: C:\\\\azure-rest-api-specs\\\\specification\\\\contosowidgetmanager\\\\Contoso.WidgetManager.";
             string[] expectedTools =
-            [
-                "azsdk_verify_setup",
-                "azsdk_run_typespec_validation",
-            ];
-
-            string [] optionalTools =
             [
                 "azsdk_typespec_check_project_in_public_repo"
             ];
 
-            // Build scenario data from prompt
             var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
-
-            // External contexts (no deep input checking for this one)
-            bool checkInputs = false;
+            bool checkInputs = true;
 
             var result = await EvaluationHelper.RunToolInputScenarioAsync(
                 scenarioName: this.ScenarioName,
@@ -43,8 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 additionalContexts: new EvaluationContext[]
                 {
                     new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-                },
-                optionalToolNames: optionalTools);
+                });
 
             EvaluationHelper.ValidateToolInputsEvaluator(result);
         }

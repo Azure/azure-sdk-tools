@@ -2,11 +2,11 @@ using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
 {
-    public class GetModifiedTypespecProjects : IToolMock
+    public class LinkNamespaceApprovalIssue : IToolMock
     {
-        public string ToolName => "azsdk_get_modified_typespec_projects";
-        public string CallId => "tooluse_l1vP7lx3RwCftg6B33Gcbw";
-        private string ToolResult => """{"result": []}""";
+        public string ToolName => "azsdk_link_namespace_approval_issue";
+        public string CallId => "tooluse_link_namespace_001";
+        private string toolResult => """{"result":"Linked namespace approval issue"}""";
 
         public ChatMessage GetMockResponse(string callid)
         {
@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                 [
                     new FunctionResultContent(
                         callid,
-                        ToolResult
+                        toolResult
                     )
                 ]
             );
@@ -31,8 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                         ToolName,
                         new Dictionary<string, object?>
                         {
-                            { "repoRootPath", "C:\\azure-rest-api-specs" },
-                            { "targetBranch", "main" }
+                            { "releasePlanWorkItemId", 12345 },
+                            { "namespaceApprovalIssue", "https://github.com/Azure/azure-sdk/issues/1234" }
                         }
                     )
                 ]

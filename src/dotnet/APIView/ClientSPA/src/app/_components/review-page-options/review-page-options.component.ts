@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotificationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -577,7 +577,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
             this.aiReviewGenerationState = 'Failed';
             this.generateAIReviewButtonText = 'Failed to generate copilot review';
           }
-          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
+          const notificationInfo = getAIReviewNotificationInfo(aiReviewUpdate, window.location.origin);
           if (notificationInfo) {
             if (aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
               this.messageService.add(notificationInfo[1]);
@@ -642,7 +642,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
+    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
+    return `${window.location.protocol}//${window.location.host}${basePath}review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

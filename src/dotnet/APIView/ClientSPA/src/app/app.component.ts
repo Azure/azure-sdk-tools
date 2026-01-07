@@ -7,7 +7,7 @@ import { AIReviewJobCompletedDto } from './_dtos/aiReviewJobCompletedDto';
 import { UserProfile } from './_models/userProfile';
 import { SiteNotification } from './_models/notificationsModel';
 import { SignalRService } from './_services/signal-r/signal-r.service';
-import { getAIReviewNotifiationInfo } from './_helpers/common-helpers';
+import { getAIReviewNotificationInfo } from './_helpers/common-helpers';
 import { NotificationsService } from './_services/notifications/notifications.service';
 import { ThemeHelper } from './_helpers/theme.helper';
 
@@ -24,8 +24,8 @@ export class AppComponent  implements OnInit{
   userProfile: UserProfile | undefined = undefined;
 
   private destroy$ = new Subject<void>();
-  
-  constructor(private userProfileService: UserProfileService, private configService: ConfigService, 
+
+  constructor(private userProfileService: UserProfileService, private configService: ConfigService,
     private notificationsService: NotificationsService, private signalRService: SignalRService) { }
 
   ngOnInit(): void {
@@ -50,7 +50,7 @@ export class AppComponent  implements OnInit{
         }
 
         this.configService.setAppTheme(theme);
-        
+
         const body = document.body;
         if (theme !== "light-theme") {
           body.classList.remove("light-theme");
@@ -86,7 +86,7 @@ export class AppComponent  implements OnInit{
     this.signalRService.onAIReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (aiReviewUpdate: AIReviewJobCompletedDto) => {
         if (aiReviewUpdate.createdBy == this.userProfile?.userName) {
-          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
+          const notificationInfo = getAIReviewNotificationInfo(aiReviewUpdate, window.location.origin);
           if (notificationInfo) {
             this.notificationsService.addNotification(notificationInfo[0]);
           }

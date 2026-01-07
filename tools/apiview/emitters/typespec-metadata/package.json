@@ -35,6 +35,9 @@
     "watch": "tsc -p tsconfig.json --watch",
     "clean": "rimraf dist",
     "lint": "tsc --noEmit --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "prepare": "npm run build"
   },
   "dependencies": {
@@ -46,7 +49,9 @@
   "devDependencies": {
     "@types/node": "^25.0.3",
     "@typespec/compiler": "1.4.0",
+    "@vitest/ui": "^4.0.16",
     "rimraf": "^6.1.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }

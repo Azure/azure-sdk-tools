@@ -1,0 +1,41 @@
+emitterVersion: 0.1.0
+generatedAt: 2026-01-07T19:14:29.169Z
+spec:
+  namespaces:
+    - name: KeyVault
+      documentation: The key vault client performs cryptographic key operations and vault operations against the Key Vault service.
+languages:
+  python:
+    emitterName: "@azure-tools/typespec-python"
+    packageName: azure-keyvault-secrets
+    namespace: azure.keyvault.secrets
+    outputDir: "{output-dir}/sdk/keyvault/azure-keyvault-secrets"
+    flavor: azure
+    serviceDir: sdk/keyvault
+  java:
+    emitterName: "@azure-tools/typespec-java"
+    packageName: azure-security-keyvault-secrets
+    namespace: com.azure.security.keyvault.secrets
+    outputDir: "{output-dir}/sdk/keyvault/azure-security-keyvault-secrets"
+    flavor: azure
+    serviceDir: sdk/keyvault
+  typescript:
+    emitterName: "@azure-tools/typespec-ts"
+    packageName: "@azure/keyvault-secrets"
+    namespace: "@azure/keyvault-secrets"
+    outputDir: "{output-dir}/sdk/keyvault/keyvault-secrets"
+    flavor: azure
+    serviceDir: sdk/keyvault
+  go:
+    emitterName: "@azure-tools/typespec-go"
+    packageName: sdk/security/keyvault/azsecrets
+    namespace: sdk/security/keyvault/azsecrets
+    outputDir: "{output-dir}/sdk/security/keyvault/azsecrets"
+    serviceDir: sdk/security/keyvault
+  rust:
+    emitterName: "@azure-tools/typespec-rust"
+    packageName: azure_security_keyvault_secrets
+    namespace: azure_security_keyvault_secrets
+    outputDir: "{output-dir}/sdk/keyvault/azure_security_keyvault_secrets"
+    serviceDir: sdk/keyvault
+sourceConfigPath: C:/repos/azure-rest-api-specs/specification/keyvault/Security.KeyVault.Secrets/tspconfig.yaml

@@ -20,8 +20,8 @@ export interface NormalizedMetadataEmitterOptions {
 
 const DEFAULT_FORMAT: MetadataOutputFormat = "yaml";
 const FALLBACK_FILENAMES: Record<MetadataOutputFormat, string> = {
-  json: "metadata.json",
-  yaml: "metadata.yaml",
+  json: "typespec-metadata.json",
+  yaml: "typespec-metadata.yaml",
 };
 
 export const metadataEmitterOptionsSchema: JSONSchemaType<MetadataEmitterOptions> = {

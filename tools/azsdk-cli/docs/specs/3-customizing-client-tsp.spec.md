@@ -26,9 +26,9 @@ _Terms used throughout this spec with precise meanings:_
 
 - **API View**: A web-based tool for reviewing SDK APIs. It allows language architects and SDK team members to provide feedback on just the SDK APIs without needing to understand the underlying implementation.
 
-- **<a id="customization-workflow"></a>Customization Workflow**: The end-to-end AI-assisted interactive process triggered by various entry points (build failures, API view feedback, PR comments, user prompts, etc.) that applies fixes and customizations to ensure SDK functionality. Requires mandatory user approval before applying changes.
+- **<a id="customization-workflow"></a>Customization Workflow**: The end-to-end AI-assisted interactive process triggered by various entry points (build failures, API view feedback, PR comments, user prompts, etc.) that applies fixes and customizations to ensure SDK functionality. Tool applies changes (uncommitted), returns summary, and users decide whether to commit.
 
-- **<a id="approval-checkpoint"></a>Approval Checkpoint**: A mandatory user confirmation step before applying changes, implemented through the agent UI in MCP contexts.
+- **<a id="approval-checkpoint"></a>Approval Checkpoint**: A mandatory user confirmation step before committing changes. The tool returns a structured response containing a summary of changes made (TypeSpec decorators applied, code patches applied, files modified). The calling agent (GitHub Copilot) presents this summary to the user through the chat interface and handles the approval/rejection workflow. The tool itself does not implement approval UI - it delegates this responsibility to the agent orchestration layer.
 
 - **<a id="entry-points"></a>Entry Points**: Various triggers that initiate the customization workflow including build failures, API view comments, PR feedback, user prompts, and linting/typing checks.
 
@@ -36,93 +36,44 @@ _Terms used throughout this spec with precise meanings:_
 
 ## Background / Problem Statement
 
-Service teams spend significant manual effort updating customized code when regenerating SDKs from updated TypeSpec specifications, leading to compilation failures and time-consuming manual fixes that can take months of back-and-forth communication. TypeSpec specs are written to describe service APIs, however our team supports generating SDKs in no less than 7 languages, each differing in their idioms. There are two primary types of customizations that users can apply, each with distinct challenges:
+Service teams spend significant manual effort maintaining SDK customizations when TypeSpec specifications change, leading to compilation failures and time-consuming fixes. TypeSpec describes service APIs, but we generate SDKs for 7+ languages with different idioms, requiring two types of customizations:
 
-**[TypeSpec Customizations](#typespec-customizations)** face several problems: service teams cannot be expected to understand SDK API patterns and best practices on their own, AI agents make mistakes when applying customizations even with existing documentation, particularly when `scope` is required or customizations span multiple languages, and there's no shared process across language teams for identifying when TypeSpec customizations are needed.
+**[TypeSpec Customizations](#typespec-customizations)** (`client.tsp` decorators) control SDK generation but face challenges: service teams lack SDK expertise, AI agents make scoping mistakes across languages, and no shared process exists for identifying when decorators are needed.
 
-**[Code Customizations](#code-customizations)** face several challenges: different languages support various preservation mechanisms that need individual maintenance, manual effort required to update customized code when TypeSpec specifications change, and compilation failures when customizations don't match new generated code.
+**[Code Customizations](#code-customizations)** (language-specific preservation mechanisms) break when TypeSpec changes, requiring manual updates to `_patch.py` files, customization classes, and partial classes across different languages.
 
-### Current State
+### Key Problems
 
-Currently, feedback and triggers for applying both TypeSpec and SDK code customizations can come from various sources:
+**Customization Entry Points:**
+- API View feedback and PR comments
+- Build failures (compilation, analyzers, linting)
+- Breaking changes analysis
+- Manual user prompts
 
-1. **From reviews**: API View feedback, PR comments requesting naming changes or SDK restructuring
-2. **From automated processes**:
-   - **Build failures**: Compilation errors, syntax issues, import problems
-   - **Code analyzers**: .NET API compat tool, linting violations (mypy, flake8)
-   - **Typing checks**: Python mypy validation, other language-specific type checking
-3. **From manually triggered processes**: Breaking changes analysis, changelog review, manual user prompts through conversational interfaces
+**Language-Specific Workflows:**
+- **.NET**: Analyzers identify issues (e.g., naming violations) → manual `client.tsp` fixes after build failures
+- **Go**: Breaking changes detection maps changelog patterns to `client.tsp` customizations
+- **Python**: Breaking changes checks exist but no automation for applying `client.tsp` fixes
+- **Java**: Uses `partial-update` config and customization classes ([23+ services](https://github.com/search?q=repo%3AAzure%2Fazure-rest-api-specs%20partial-update%3A%20true&type=code) use partial-update, [12+ services](https://github.com/search?q=repo%3AAzure%2Fazure-rest-api-specs+customization-class%3A&type=code) use customization classes)
 
-#### TypeSpec Customization Workflows by Language
+**AI Agent Challenges:**
+Despite [existing documentation](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/09renaming/), AI agents struggle with multi-language scoping and consistent decorator application.
 
-**.NET**:
-The .NET SDK has code analyzers and an [API compat](https://learn.microsoft.com/en-us/dotnet/fundamentals/apicompat/overview) tool that run during their SDK build (`dotnet build`) that identifies problematic code (e.g. class names that don't follow .NET naming conventions) and suggests fixes.
-Many of these fixes are handled by adding customizations to `client.tsp` for .NET, such as renaming models with `@clientName`. Currently these fixes are manually applied after SDK builds fail.
-_.NET has a clear flow for identifying and applying `client.tsp` customizations via: Emit SDK -> Build SDK -> Apply fixes -> Repeat._
+**Root Gaps:**
+- **No AI agent expertise**: Agents make `client.tsp` mistakes despite documentation, lack guidance on when to suggest decorators
+- **No shared process**: Each language team has separate workflows for identifying/applying customizations
+- **Manual maintenance burden**: TypeSpec changes break code customizations, requiring manual updates to `_patch.py`, customization classes, partial classes
+- **No conflict detection**: No automated way to detect when customizations break after TypeSpec regeneration
 
-**Go**:
-The Go SDK has a [breaking changes](https://github.com/Azure/azure-sdk-for-go/blob/instruction/.github/prompts/go-sdk-breaking-changes-review.prompts.md) prompt that analyzes the generated SDK's changelog for specific patterns and maps those to `client.tsp` customizations where possible.
-_We don't currently have a clear step in our process for identifying breaking changes, but the flow for Go is: Emit SDK -> Analyze changelog & apply fixes -> Repeat._
+### Impact
 
-**Python**:
-The Python SDK has [breaking changes](https://github.com/Azure/azure-sdk-for-python/tree/main/scripts/breaking_changes_checker) checks that may be resolvable via `client.tsp` customizations, but there is no automated process for identifying or applying these client.tsp customizations today.
-
-**Java**:
-Java SDKs use TypeSpec configuration to control code customization behavior:
-
-- **Partial Update Configuration (`partial-update: true`)**: Configured in TypeSpec to enable developers to edit generated code directly, with the emitter preserving manual changes during regeneration. Used by [23+ services](https://github.com/search?q=repo%3AAzure%2Fazure-rest-api-specs%20partial-update%3A%20true&type=code). This TypeSpec setting enables the emitter to preserve customizations during code generation.
-
-#### SDK Code Customization Workflows by Language
-
-**Java**:
-SDKs handle code customizations through:
-
-- **Customization Classes (`customization-class`)**: Separate Java classes that modify generated code using AST manipulation. Used by [12+ services](https://github.com/search?q=repo%3AAzure%2Fazure-rest-api-specs+customization-class%3A&type=code). Handles complex transformations like method visibility changes and reserved keyword conflicts.
-
-**Python**:
-Python SDKs handle code customizations through:
-
-- **`_patch.py` Files**: The primary mechanism for Python SDK customizations, where developers create `_patch.py` files that modify generated code through function replacement. This allows for adding convenience methods, modifying class behavior, and implementing Python-specific patterns while preserving changes during regeneration.
-
-#### Cross-Language Challenges
-
-**All Languages**:
-All language SDKs have their APIs reviewed in API View. Common feedback includes renaming models per language, or changing operations that appear in a client. We have documentation for customizing SDKs such as [renaming types](https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/09renaming/), but recent (10/14/2025) testing shows that even with the current documentation, AI agents have difficulty applying these customizations correctly in a consistent manner: particularly when `scope` is required or customizations are spread over multiple languages/sessions. For example, when creating custom clients using `@client` with different naming for different languages, many times the agent would properly create the custom client for the first language prompted, but then incorrectly use a `@clientName` for the next language prompted.
-
-#### Gaps
-
-The current state exposes gaps in both TypeSpec customization and code customization workflows:
-
-**TypeSpec Customization Gaps:**
-
-- **AI agents are not experts on client customizations.** They make mistakes when applying customizations to `client.tsp`, even with access to the existing documentation.
-- **AI agents don't know when to suggest client customizations.** There is no mechanism in azsdk-cli today to steer AI agents to focus on applying `client.tsp` customizations.
-- **Nothing shared across languages.** Each language team has their own process for identifying and applying `client.tsp` customizations.
-- **Difficult to apply changes from outside the inner loop.** We lack a process for updating `client.tsp` from outside the azure-rest-api-specs repo.
-
-**Code Customization Workflow Gaps:**
-
-- **Manual maintenance burden.** Service teams must manually update partial-update files, `_patch.py` files, and customization classes when TypeSpec specifications change, often leading to compilation failures.
-- **Outdated customization logic.** Customization classes and AST manipulation logic become outdated when generated code structure changes, requiring manual updates.
-- **No automated conflict detection.** There's no automated way to detect when code customizations conflict with new generated code patterns.
-- **Cross-language inconsistency.** Each language has different approaches for applying and maintaining code customizations, with no shared tooling or processes.
-- **Preservation complexity.** Different preservation mechanisms (partial-update, `_patch.py`, customization classes, partial classes) require language-specific knowledge and maintenance.
-
-### Why This Matters
-
-We should minimize the amount of time service teams spend on customizing client SDKs. Let them focus on what they are experts on - the service API - instead of figuring out the right way to apply SDK customizations.
-
-We can reduce the time spent in the outer loop by detecting and handling common client customization scenarios automatically while devs are still in the inner loop. When service teams still have feedback to address from the outer loop, we should make it both easy to apply and to verify those changes are correct.
-
-SDK teams also shouldn't each be responsible for teaching AI agents how to apply `client.tsp` customizations. This should be a shared responsibility that the azsdk-cli can help facilitate.
+Service teams should focus on service APIs, not SDK customization mechanics. Automating common scenarios in the inner loop and simplifying outer loop feedback will reduce months-long cycles. Shared AI agent knowledge through azsdk-cli prevents each SDK team from teaching agents independently.
 
 ---
 
 ## Goals and Exceptions/Limitations
 
 ### Goals
-
-What are we trying to achieve with this design?
 
 - [ ] Improve the service team experience for authoring `client.tsp` customizations
 - [ ] Simplify the process of _how_ to apply `client.tsp` customizations for language teams
@@ -132,15 +83,15 @@ What are we trying to achieve with this design?
 
 ### Limitations
 
-**Phase B (Code Customizations) Scope:**
+**Code Customization Scope:**
 
-Phase B focuses initially on **deterministic, mechanical transformations** where fixes are unambiguous:
+The tool focuses initially on **deterministic, mechanical transformations** where fixes are unambiguous:
 
 - ✅ **In Scope**: Duplicate field detection and removal, variable reference updates after renames, simple build fixes (imports, visibility modifiers, reserved keyword renames, type mismatches)
 - ⚠️ **Stretch Goal**: Complex convenience methods, behavioral changes affecting SDK semantics, intricate AST manipulation patterns
 - ❌ **Out of Scope**: Architectural decisions about SDK surface design, complex language-specific idioms requiring deep domain expertise
 
-**Rationale:** The approval checkpoint provides a safety mechanism allowing us to attempt Phase B automation for mechanical fixes while users retain final control. Complex transformations require additional validation and may be deferred to future iterations based on real-world success rates.
+**Rationale:** The two-phase workflow prioritizes spec-first solutions (TypeSpec decorators handle ~80% of feature requests) with error-driven code repairs as a safety net (~10% mechanical fixes when builds fail). The remaining ~10% niche cases receive manual guidance. This v1 approach prioritizes measurable outcomes (build passes = success) with concrete error messages as natural boundaries, establishing proven safety for potential v2 expansion to pattern-based feature integration.
 
 ---
 
@@ -148,11 +99,11 @@ Phase B focuses initially on **deterministic, mechanical transformations** where
 
 ### Overview
 
-The design will address the identified gaps by implementing a unified two-phase customization workflow that:
+The design addresses identified gaps through three components:
 
-1. **Creates AI agent expertise** through a shareable TypeSpec client customizations reference document that teaches agents how to apply `Azure.ClientGenerator.Core` decorators effectively.
-2. **Enhances the existing CustomizedCodeUpdateTool** to implement intelligent Phase A (TypeSpec customizations) and Phase B (code customizations) remediation, providing a spec-first approach to build failure resolution.
-3. **Enables cross-repository workflow** through git patch support, allowing `client.tsp` customizations to be applied from SDK repositories back to azure-rest-api-specs.
+1. **TypeSpec Client Customizations Reference Document**: Shareable knowledge base teaching AI agents how to apply `Azure.ClientGenerator.Core` decorators effectively
+2. **Enhanced CustomizedCodeUpdateTool**: Implements two-phase workflow (TypeSpec decorators → error-driven code repairs) with spec-first approach prioritizing `client.tsp` solutions
+3. **Cross-Repository Support**: Tool modifies files in both azure-rest-api-specs and azure-sdk-for-* repos, leaving changes uncommitted for user review
 
 ### Detailed Design
 
@@ -172,75 +123,43 @@ Additionally, it can be referenced by custom prompts or agents when knowledge of
 
 #### 2. Package Customize Code Tool
 
-There is an existing [CustomizedCodeUpdateTool](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/TypeSpec/CustomizedCodeUpdateTool.cs) that supports updating customized SDK code after generating an SDK from TypeSpec. Splitting `client.tsp` customization into its own tool (see alternative 1) will put the burden on our users to know whether TypeSpec or SDK code customizations are required to address feedback or breakages. Applying and verifying `client.tsp` customizations should be merged with this existing tool.
+The existing [CustomizedCodeUpdateTool](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/TypeSpec/CustomizedCodeUpdateTool.cs) currently handles updating customized SDK code after TypeSpec regeneration. This tool will be enhanced to also handle `client.tsp` customizations, creating a unified workflow where users don't need to know whether TypeSpec decorators or code patches are needed—the tool determines the appropriate fix automatically.
+
+**Rationale for single tool**: Users shouldn't need to choose between separate TypeSpec and code customization tools. A unified tool analyzes the issue, applies TypeSpec decorators when possible (Phase A), and falls back to code repairs only when builds fail (Phase B).
 
 Name (MCP): `azsdk_package_customize_code`
 
-#### Current Inputs
+#### Enhanced Tool Design
 
-- `--package-path`/`packagePath`: The path to the package (SDK) directory to check. Lives in one of the `azure-sdk-for-*` repos.
-- `--update-commit-sha`/`commitSha`: The SHA of the commit in `azure-rest-api-specs` to use when regenerating the SDK.
+The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase customization workflow that accepts requests from multiple [entry points](#entry-points) and automatically routes to the appropriate fix strategy.
 
-#### Current behavior
-
-The tool currently works primarily in an `azure-sdk-for-*` repo.
-
-```mermaid
-flowchart TD
-    Gen[<b>1. SDK Code Generation</B><br/>• Generate SDK code using updated sha<br/>]
-
-    Gen --> Patch[<b>2. Code Customization Updates</b><br/>• AI generates patches from diff + current code<br/>• Apply patches using ClientCustomizationCodePatchTool<br/>]
-
-    Patch --> Validate[<b>3. Validation and Iteration</b><br/>• Compile SDK code<br/>• If build fails → retry AI patching loop max 2x<br/>]
-
-    style Gen fill:#fff9c4
-    style Patch fill:#f3e5f5
-    style Validate fill:#e8f5e9
-```
-
-### Proposed Changes
-
-The existing CustomizedCodeUpdateTool will be enhanced to implement a two-phase customization workflow:
-
-**Enhanced Tool Behavior:**
-
-The tool accepts customization requests from multiple [entry points](#entry-points) through the `customizationRequest` parameter. This unified text input allows the tool to handle:
-
-- Build failures (compilation errors, linting, typing checks)
-- User prompts (natural language requests from agents)
-- API review feedback (comments from API View or PRs)
-- Breaking changes analysis output
-
-**Two-Phase Workflow with Classifier:**
+**Two-Phase Workflow:**
 
 1. **Context Classifier**
-   The classifier uses an LLM to analyze the customization request and determines which phase to move to. There are 4 possible outcomes:
-
-   - _Proceed to Phase A_: Chosen if TypeSpec customizations can address any of the outstanding points in the customization request
-   - _Proceed to Phase B_: Chosen if changes are needed, and none of them can be addressed via TypeSpec customizations
-   - _Failure_: Stall detection. Chosen if changes are needed and either phase has repeated errors
-   - _Success_: Chosen if no changes further changes are needed
+   Analyzes requests and routes to: Phase A (TypeSpec can help), Success (done), or Failure (too complex/stalled). Phase B is not a classifier decision—it activates automatically on Phase A build failures when customization files exist.
 
 1. **Phase A – [TypeSpec Customizations](#typespec-customizations):**
-
-   - Analyze the customization request to determine if TypeSpec decorators can address the issues
-   - Apply `client.tsp` adjustments (decorators, naming, grouping, scope configurations)
-   - Re-run TypeSpec compilation and regenerate SDK code
-   - Validate build and proceed to classifier
+   Apply `client.tsp` decorators, regenerate SDK, validate build, return to classifier
 
 1. **Phase B – [Code Customizations](#code-customizations):**
 
-   - Apply language-specific code patches
-   - Focus on **deterministic patterns**: duplicate field removal, variable reference updates, simple build fixes
-   - Use existing ClientCustomizationCodePatchTool for SDK code modifications
-   - Apply mechanical transformations: imports, visibility modifiers, reserved keyword renames, type mismatches
-   - **Note**: Complex convenience methods and behavioral changes are stretch goals requiring additional validation
-   - Validate final build
+   - **Activation**: Phase A build fails AND customization files exist (Java: `/customization/` or `*Customization.java`, Python: `*_patch.py`, .NET: partial classes)
 
-1. **Summary & Approval:**
+   - **Design Rationale**: Phase B operates under three principles:
+     1. **Spec-First Always**: Only activates after Phase A build failures when customization files exist
+     2. **Narrow Scope**: Mechanical transformations only; uncertain/complex cases get manual guidance. v2 may add pattern-based features while keeping error-driven activation
+     3. **Safety Net**: Handles ~10% (build errors TypeSpec cannot solve); Phase A solves ~80%, remaining ~10% get manual guidance
+
+   - **Scope** (<20 lines, <5 files, deterministic only):
+     - ✅ **In**: Remove duplicates, update references, add imports, rename keywords, update type annotations
+     - ❌ **Out**: Convenience methods, architecture changes, visibility (use `@access`), error handling, complex logic
+
+   - **Workflow**: Analyze errors → Assess feasibility → Apply patches (if deterministic) OR return manual guidance → Validate → Iterate (max 2 attempts)
+
+1. **Summary Response:**
    - Present summary of changes made to local repository files (TypeSpec and SDK code)
-   - Enforce approval before commit through agent UI
-   - Maximum of 2 fix cycles to prevent infinite loops
+   - User reviews uncommitted changes and decides to commit or discard
+   - Maximum 2 attempts per phase (4 total iterations)
    - Provide next step instructions for users
 
 #### New inputs
@@ -253,119 +172,116 @@ The tool accepts customization requests from multiple [entry points](#entry-poin
   - **Breaking changes**: Output from breaking changes analysis tools
 - [optional] `--typespec-project-path`/`typespecProjectPath`: The path to the TypeSpec project directory containing `tspconfig.yaml`. Used when operating from the azure-rest-api-specs repository to specify which TypeSpec project to work with.
 
-**Workflow:**
+#### Workflow
 
 ```mermaid
 flowchart TD
-    Entry[<b>1. Entry Point</b><br/>• Build failures provide error messages<br/>• User prompts provide natural language requests<br/>• API review provides feedback comments<br/>• Breaking changes analysis provides change details]
-
+    Entry[<b>Entry Point</b><br/>Customization request from any source]
     Entry --> Classify
 
-    subgraph Tool [CustomizeCodeTool]
-        Classify[<b>Classify Context</b><br/>]
-        Classify --> |Remaining issues fixable with TSP<br/>AND has <b>not</b> entered Phase B|PhaseA[<b>Phase A: TypeSpec Customizations</b><br/>• AI updates client.tsp<br/>• Track progress<br/>• Increment Phase A counter]
-        Classify --> |Remaining issues <b>not</b> fixable with TSP<br/>OR has entered Phase B| PhaseB[<b>Phase B: Code Customizations</b><br/>• AI generates patches<br/>• Apply patches with ClientCustomizationCodePatchTool<br/>• Increment Phase B counter]
-        Classify --> |Max iterations exceed<br/>OR stalled progress detected| Failure
-        Classify --> |No changes needed| Success
+    Classify[<b>Classifier</b><br/>Analyze request & route to next action<br/><i>Max 2 iterations per phase</i>]
+    Classify -->|TypeSpec can help| PhaseA
+    Classify -->|Stalled/complex| Failure
+    Classify -->|Complete| Success
 
-        PhaseA --> RegenSDK[<b>Regenerate SDK</b><br/>• Re-run TypeSpec compilation<br/>• Regenerate SDK code<br/>]
-        PhaseB -->RegenSDK
+    PhaseA[<b>Phase A: TypeSpec</b><br/>Apply client.tsp decorators]
+    PhaseA --> Regen[Regenerate SDK]
 
-        RegenSDK --> ValidateRegen{Does generation pass?}
-        ValidateRegen --> |No, pass context| Classify
-        ValidateRegen --> |Yes| BuildSDK[<b>Build SDK</b><br/>Compile SDK code<br/>]
+    Regen --> RegenOK{Generation<br/>Success?}
+    RegenOK -->|No| Classify
+    RegenOK -->|Yes| Build[Build SDK]
 
-        BuildSDK --> |pass context| Classify
+    Build --> BuildOK{Build<br/>Success?}
+    BuildOK -->|Yes| Classify
+    BuildOK -->|No + has files| PhaseB[<b>Phase B: Code Repair</b><br/>Patch customization files]
+    BuildOK -->|No, no files| Classify
+    PhaseB --> Regen
 
-    end
+    Success[<b>Success</b><br/>Return change summary]
+    Failure[<b>Failure</b><br/>Return manual guidance]
 
     style Entry fill:#fff9c4
     style Classify fill:#e1f5fe
     style PhaseA fill:#bbdefb
-    style PhaseB fill:#f3e5f5
+    style PhaseB fill:#ffccbc
     style Success fill:#c8e6c9
     style Failure fill:#ffcdd2
-    style RegenSDK fill:#ffe082
-    style RegenSDK fill:#ffe082
-    style BuildSDK fill:#ffe082
-    style Tool fill:none,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
+    style Regen fill:#ffe082
+    style Build fill:#ffe082
 ```
 
 **Benefits:**
 
 - **Single Tool Experience**: Users don't need to know whether TypeSpec or code fixes are needed
 - **Spec-First Approach**: Always attempts TypeSpec solutions before falling back to code patches
-- **Intelligent Routing**: Tool determines the appropriate fix phase based on failure analysis
+- **Error-Driven Repair**: Phase B activates automatically when builds fail and customization files exist
 
 #### Classifier
 
-The classifier is LLM-based and responsible for analyzing the current context and determining which phase to move to next.
+The classifier analyzes context and routes to Phase A (TypeSpec can help), Success (done), or Failure (stalled/complex). Phase B activates automatically when Phase A fails and customization files exist.
 
-For the 1st milestone, the classifier will work fairly simply:
-Using the client customizations reference doc, it will analyze the current context to determine if any of the outstanding issues can be addressed via TypeSpec customizations.
-
-This approach has shown some promise when filenames contain `customization` or `generated` are included in the context, but further testing is needed to validate its effectiveness.
-
-For future milestones, we can explore more advanced techniques that detect whether the impacted code is generated or handwritten, and use that to inform phase selection.
+**Implementation**: Uses client customizations reference doc to determine if TypeSpec can address issues.
 
 #### Context Tracking
 
-The customization workflow is iterative and may loop multiple times as it applies fixes and encounters new issues. The classifier needs to know what changes have been tried and what issues remain so that it can determine what phase to move onto.
+The workflow loops through multiple iterations as it applies fixes. The classifier tracks what changes were tried and what issues remain to route correctly (Phase A, Success, or Failure).
 
-Consider a scenario where a TypeSpec rename breaks existing code customizations (illustrative):
+**Example scenario:**
 
 1. User requests: _"Rename getItems to listItems for Python"_
 2. Phase A applies `@@clientName` decorator successfully
 3. SDK regenerates successfully
 4. Build fails: `_patch.py` references the old `getItems` method name
-5. Loop back to start... but with what context?
+5. Loop back to classifier... with what context?
 
-**Approach: Simple Context Concatenation**
+**Approach: Context Concatenation**
 
-As changes are made in each phase and validation step, we append to the original context to create the context for the tool's next iteration. This gives the classifier the history of changes and any new issues to consider as a result.
+Append results from each phase and validation step to the original request, giving the classifier full history of changes and new issues.
 
-_Example context:_
+**Context format example:**
 
 ```
-Iteration 1 context:
-  "Rename getItems to listItems for Python"
+Iteration 1: "Rename getItems to listItems for Python"
 
-Iteration 2 context:
-  "Rename getItems to listItems for Python
+Iteration 2: "Rename getItems to listItems for Python
+--- TypeSpec Changes Applied ---
+Added @@clientName(getItems, "listItems", "python") to client.tsp
+SDK regenerated successfully.
+--- Build Result ---
+Build failed: _patch.py:42 - NameError: 'getItems' is not defined"
 
-   --- TypeSpec Changes Applied ---
-   Added @@clientName(getItems, "listItems", "python") to client.tsp
-   SDK regenerated successfully.
-
-   --- Build Result ---
-   Build failed: _patch.py:42 - NameError: 'getItems' is not defined"
-
-Iteration 3 context:
-  [previous context]
-  +
-  "--- Code Changes Applied ---
-   Updated _patch.py to reference 'listItems' instead of 'getItems'
-
-   --- Build Result ---
-   Build succeeded."
+Iteration 3: "Rename getItems to listItems for Python
+--- TypeSpec Changes Applied ---
+Added @@clientName(getItems, "listItems", "python") to client.tsp
+SDK regenerated successfully.
+--- Build Result ---
+Build failed: _patch.py:42 - NameError: 'getItems' is not defined
+--- Code Changes Applied ---
+Updated _patch.py to reference 'listItems' instead of 'getItems'
+--- Build Result ---
+Build succeeded."
 ```
 
-_Considerations:_
+#### 3. Cross-Repository Change Management
 
-Context will grow with each iteration and there is a risk of confusing the LLM evaluating the context. We may consider a more structured approach if stall detection or hallucinations/repetition becomes an issue.
+The tool modifies files across two repositories but **does not commit changes** - it applies edits to the working directory and leaves them uncommitted for user review.
 
-#### 3. Git Patch Support
+**Repository Requirements**:
+- Both azure-rest-api-specs and azure-sdk-for-* repos must be cloned locally
+- Tool derives TypeSpec project path from `tsp-location.yaml` in SDK package directory
+- All file modifications remain uncommitted in local working directories
 
-There are at least 2 scenarios where we want to commit `client.tsp` changes back to the azure-rest-api-specs repo:
+**Modified Files by Phase**:
+- **Phase A**: Updates `client.tsp` in azure-rest-api-specs repo, regenerates SDK code in azure-sdk-for-* repo
+- **Phase B**: Updates customization files (e.g., `*Customization.java`, `*_patch.py`, partial classes) in azure-sdk-for-* repo
 
-- When locally building and testing changes to `client.tsp` before submitting a PR.
-- When CI can detect and suggest `client.tsp` changes automatically.
 
-This spec only attempts to address the first scenario where a service team is working locally. Applying changes automatically in CI is out of scope for this spec but can be considered in the future.
+**User Workflow After Tool Completion**:
+1. **Review Changes**: Inspect uncommitted changes across both repositories using git status/diff
+2. **Commit or Discard**: Commit changes to appropriate branches when satisfied, or discard if not
+3. **Submit PR**: Follow standard PR process for both repositories
 
-**Operating from azure-sdk-for-\* repo with azure-rest-api-specs clone**
-
-When operating from within an SDK repo with a local clone of the azure-rest-api-specs repo, we can directly apply the changes to the local repo clones. No special work is needed. Having all repos available locally is a requirement for this spec.
+**Out of Scope**: Automatic commits, branch management, or CI/pipeline integration. The tool is designed for interactive local development only.
 
 ### MCP Usage Examples
 
@@ -410,21 +326,15 @@ When operating from within an SDK repo with a local clone of the azure-rest-api-
 
 **Primary Usage Mode: Agent-Interactive**
 
-The `azsdk_package_customize_code` tool is **primarily designed for agent-mode/interactive workflows** where human decision-making is essential:
-
-- **Reviewing diffs**: Users need to inspect proposed changes across TypeSpec and SDK code before approval
-- **Approving changes**: Mandatory approval checkpoint ensures users validate customizations align with intent
-- **Iterative refinement**: Complex customizations often require feedback loops where users guide the tool toward the desired outcome
-- **Ambiguous requests**: Natural language prompts and API review feedback require interpretation and validation
+The `azsdk_package_customize_code` tool is **primarily designed for agent-mode/interactive workflows** where users review uncommitted changes, provide iterative feedback, and make architectural decisions about SDK customizations.
 
 **CI/Pipeline Usage: Out of Scope**
 
-The tool is **not recommended for CI/pipeline usage** for the following reasons:
+The tool is **not recommended for CI/pipeline usage** because:
 
-1. **Human judgment required**: Customizations involve architectural decisions about SDK surface design that require domain expertise and approval
-2. **Non-deterministic AI behavior**: Phase B (code customizations) uses AI-generated patches that may vary across runs, making CI results unpredictable
-3. **Interactive approval needed**: The approval checkpoint is a critical safety mechanism to prevent unintended changes
-4. **Complex error handling**: Build failures may require multiple iteration cycles and human interpretation to resolve correctly
+1. **Human review required**: Customizations involve architectural decisions requiring domain expertise and approval
+2. **Non-deterministic AI behavior**: AI-generated patches may vary across runs, making CI results unpredictable
+3. **Iterative resolution**: Build failures may require multiple feedback cycles and human interpretation
 
 **Recommended CI/Pipeline Workflow**
 
@@ -465,6 +375,12 @@ This section provides concrete test scenarios to validate the two-phase customiz
 | **Phase A: TypeSpec**           | Analyze build failure<br/>Determine no TypeSpec changes needed<br/>(property already exists in spec)     | No TypeSpec modifications<br/>Forward issue to Phase B |
 | **Phase B: Code Customization** | Detect duplicate field injection<br/>Remove `addField("operationId")` from customization<br/>Rebuild SDK | Build succeeds<br/>Customization simplified            |
 
+**Acceptance Criteria:**
+- Build completes with no errors (warnings are acceptable)
+- Duplicate field `addField("operationId")` is removed from customization class
+- Generated code contains the `operationId` property from TypeSpec
+- SDK functionality is preserved (property accessible and works as expected)
+
 **Key Learning:** Non-breaking TypeSpec additions can break existing customizations that manually inject the same fields.
 
 ---
@@ -482,6 +398,12 @@ This section provides concrete test scenarios to validate the two-phase customiz
 | Phase                 | Action                                                                                                                        | Result                                                              |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Analyze feedback requirements<br/>Apply `@clientName` with proper scoping for .NET<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates successfully<br/>Build passes<br/>No Phase B needed |
+
+**Acceptance Criteria:**
+- `@@clientName` decorator applied with correct scope (e.g., `"csharp"`)
+- Model renamed only in .NET SDK (other languages unchanged)
+- SDK regenerates successfully
+- Build completes with no errors
 
 **Key Learning:** API review naming feedback typically resolved with scoped `@clientName` decorators. Tool validates all affected language builds.
 
@@ -509,6 +431,12 @@ Note: Field 'displayName' no longer exists in generated model
 | **Phase A: TypeSpec**           | Regenerate SDK with updated TypeSpec<br/>Rename is intentional and correct<br/>No TypeSpec changes needed from SDK developer | SDK regenerated successfully<br/>Generated model now has `name` instead of `displayName`<br/>Build fails due to customization drift |
 | **Phase B: Code Customization** | Detect reference to non-existent field `displayName`<br/>Update customization to reference `name`<br/>Rebuild SDK            | Build succeeds<br/>Customization aligned with new property name                                                                     |
 
+**Acceptance Criteria:**
+- TypeSpec regeneration completes successfully
+- All references to old property name `displayName` updated to `name` in customization files (validated in all locations)
+- Build completes with no errors
+- SDK functionality is preserved (property accessible with new name)
+
 **Key Learning:** Non-breaking TypeSpec renames break customizations referencing old names. Both phases needed to align spec and customization code.
 
 ---
@@ -524,6 +452,12 @@ Note: Field 'displayName' no longer exists in generated model
 | Phase                 | Action                                                                                                          | Result                                                                                                   |
 | --------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Apply `@access` decorator to mark operation as internal for Python<br/>Regenerate Python SDK<br/>Validate build | SDK regenerates successfully<br/>Operation hidden from public API<br/>Build passes<br/>No Phase B needed |
+
+**Acceptance Criteria:**
+- `@@access` decorator applied with correct scope (e.g., `"python"`)
+- Operation `getCreateProjectStatus` hidden from public API in Python SDK only
+- SDK regenerates successfully
+- Build completes with no errors
 
 **Key Learning:** `@access` decorator provides language-scoped visibility control without code customizations.
 
@@ -546,6 +480,12 @@ Note: Field 'displayName' no longer exists in generated model
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Parse analyzer error messages<br/>Apply `@clientName` decorators for .NET<br/>Rename problematic types<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates with new names<br/>Analyzer errors resolved<br/>Build passes<br/>No Phase B needed |
 
+**Acceptance Criteria:**
+- `@@clientName` decorators applied for all analyzer violations (AZC0030, AZC0012, etc.)
+- All .NET analyzer errors resolved
+- Build completes with no errors
+- Renamed types follow .NET naming conventions
+
 **Key Learning:** .NET analyzer errors resolved with scoped `@clientName` decorators, no code customizations required.
 
 ---
@@ -562,6 +502,13 @@ Note: Field 'displayName' no longer exists in generated model
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | **Phase A: TypeSpec** | Create `client.tsp` with custom client definitions<br/>Define main client for project operations<br/>Define subclient for document operations<br/>Use `@client` and `@clientInitialization` decorators<br/>Regenerate Python SDK<br/>Validate build | SDK regenerates with two-client architecture<br/>Build passes<br/>No Phase B needed |
 
+**Acceptance Criteria:**
+- `@client` decorator creates correct two-client structure (main client + subclient)
+- `@clientInitialization` decorator applied if needed for project ID parameter
+- SDK regenerates successfully with new architecture
+- Build completes with no errors
+- Client architecture matches requirements (operations correctly distributed)
+
 **Key Learning:** Complex client architecture achieved with TypeSpec decorators alone, no code customizations required.
 
 ---
@@ -576,44 +523,38 @@ Use these scenarios to validate the customization workflow implementation:
 - [ ] **Scenario 4**: Hide operation from Python SDK (Phase A focus)
 - [ ] **Scenario 5**: .NET build errors from analyzer (Phase A focus)
 - [ ] **Scenario 6**: Create Python subclient architecture (Phase A focus)
-- [ ] **Approval workflow**: Agent UI approval checkpoint
-- [ ] **Change summary**: Tool summarizes changes made to local TypeSpec and SDK files
-- [ ] **Max retry limit**: Tool stops after 2 fix cycles to prevent infinite loops
-- [ ] **Rollback capability**: Changes can be reverted if not approved
+- [ ] **Summary response**: Tool returns change summary with all modifications
+- [ ] **Change summary**: Tool returns structured response with all changes (TypeSpec decorators, code patches, files modified)
+- [ ] **Max retry limit**: Tool stops after 2 attempts per phase (Phase A: 2, Phase B: 2, total: 4 iterations)
+- [ ] **Stall detection**: Tool detects when same error appears twice consecutively
+- [ ] **Context limit**: Tool monitors context size and fails gracefully when exceeding ~50K characters
+- [ ] **Build validation**: All scenarios complete with no build errors (warnings acceptable)
 
 ---
 
 ## Success Criteria
 
 - [ ] **Automated Detection**: Correctly identify build failure types across all supported languages
-- [ ] **Phase A Success**: Successfully apply [TypeSpec Customizations](#typespec-customizations) for common specification issues
-- [ ] **Phase B Success**: Successfully apply [Code Customizations](#code-customizations) for common code issues
-- [ ] **Approval Workflow**: Enforce [approval checkpoints](#approval-checkpoint) in both contexts
+- [ ] **Phase A Success (80% Coverage)**: Successfully apply [TypeSpec Customizations](#typespec-customizations) for 80%+ of feature requests and specification issues
+  - Measured by: SDK regenerates successfully + build passes + no Phase B needed
+  - Examples: Model renaming, operation hiding, client restructuring, visibility changes
+- [ ] **Phase B Success (10% Coverage)**: Successfully apply [Code Customizations](#code-customizations) for 50-70%+ of mechanical repairs when Phase A builds fail
+  - Success measured by: build passes after Phase B, changes are within scope boundaries (<20 lines, <5 files)
+  - Phase B is error-driven safety net for TypeSpec-induced customization conflicts
+  - Examples: Duplicate field removal, reference updates, import fixes
+- [ ] **Manual Guidance (10% Coverage)**: Remaining niche cases receive structured guidance for manual implementation
+- [ ] **Efficiency**: Reduce manual effort in SDK regeneration workflows by 60%+
+- [ ] **Interactive Workflow**: Tool applies changes (uncommitted) and returns summary for user review
 - [ ] **Cross-Language**: Support .NET, Java, JavaScript, Python, and Go
 
 ## Open Questions
 
-### Future Feature-Level Customizations
+### v1 Implementation
 
-- **Scope Definition**: How do we define boundaries for feature-level vs. fix-level customizations?
-- **Approval Strategy**: Should feature-level changes require additional approval layers?
-
-### Cross-Language Standardization
-
-- **Fix Patterns**: How do we maintain consistency while respecting language-specific idioms?
-- **Error Detection**: Should error categorization be language-agnostic or language-specific?
-
-### Performance and Scale
-
-- **Concurrent Builds**: How do we handle multiple simultaneous customization workflows?
-- **Resource Management**: What are the performance implications of two-phase fixes?
-
-### Phase B Automation Boundaries
-
-- **Pattern Recognition**: What criteria determine whether a code customization is "deterministic" vs. "complex"? Should we maintain a catalog of known mechanical patterns?
-- **Success Metrics**: What success rate threshold should we achieve for deterministic patterns before expanding Phase B scope to more complex transformations?
-- **Language-Specific Complexity**: Should Java AST manipulation patterns be treated differently than Python `_patch.py` updates given their brittleness?
-- **Escape Hatches**: When Phase B fails repeatedly, should we surface guidance documents ("read this doc for code customization") rather than continue attempting automation?
+- **Error Message Parsing**: Best approach for extracting file paths and line numbers from different language build systems (.NET, Java Maven, Python mypy, etc.)?
+- **Python "Build" Definition**: What constitutes a "build failure" for Python (mypy/flake8 failures, import errors, or both)?
+- **Java AST Complexity**: Should v1 focus on in-place editing only, deferring AST manipulation to v2?
+- **Context Growth**: At what point should we implement context summarization to avoid LLM processing limits?
 
 ## Alternatives Considered
 

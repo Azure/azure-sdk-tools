@@ -100,6 +100,8 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - Re-recording tests for existing SDKs
 - Automated handling of Azure resources for live tests
 - TypeSpec Authoring
+- AI-powered sample generation from natural language descriptions
+- Sample translation between programming languages
 
 ### Out of Scope for Scenario 2
 
@@ -143,11 +145,16 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
    - Calls existing test resource provisioning scripts
    - **Note**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
 
-6. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
+6. **Sample Generation** → `azsdk_package_samples_generate`, `azsdk_package_samples_translate`
+   - AI-powered sample generation from natural language descriptions
+   - Translate existing samples between programming languages
+   - Create language-appropriate samples following SDK patterns and conventions
+
+7. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
    - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata))
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
 
-7. **Validating** → `azsdk_package_run_check`
+8. **Validating** → `azsdk_package_run_check`
    - Run final validation checks across languages and stages (see [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating))
    - **Note**: Some validation issue fixing may fall under other stages (for example, build errors caused by customizations would be addressed in the Customizations stage; generation issues would be addressed in the Generating stage)
 
@@ -259,6 +266,12 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 Scenario 2 presents a **unified customization experience**: users describe desired outcomes (rename operations, add helper methods, introduce convenience overloads) without needing to choose mechanism up front. The tooling translates intent into the appropriate implementation path using a two-phase workflow.
 
+Customization requests can come from multiple sources:
+
+- **Direct user input**: Natural language descriptions in Copilot chat
+- **API View feedback**: Comments and suggestions from API reviewers
+- **Build logs**: Compilation errors, warnings, or validation failures that require code adjustments
+
 **Tool:** `azsdk_customized_code_update`
 
 **Two-Phase Workflow:**
@@ -323,8 +336,8 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 **Net-New SDK Considerations:**
 
-- **Creation of bicep files** for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
-- **Note**: Bicep file creation would be handled by a separate tool (`azsdk_package_create_test_resources`) rather than being part of `azsdk_package_run_tests`
+- **Creation and updating of bicep files** for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
+- **Note**: Bicep file creation and updating would be handled by a separate tool (`azsdk_package_create_test_resources`) rather than being part of `azsdk_package_run_tests`
 - Service-specific parameters, resource types, and configuration details often require human input and domain knowledge
 - Tool provides templates and guidance but may not fully automate bicep file creation for new services
 
@@ -336,7 +349,32 @@ This stage uses a unified testing tool that handles all test modes and automatic
 - Playback runs succeed with recordings
 - For [Net-New SDKs](#net-new-sdk), test assets are created (with manual input where needed)
 
-### 6. Update Package/Docs/Metadata
+### 6. Sample Generation
+
+**Tools:** `azsdk_package_samples_generate`, `azsdk_package_samples_translate`
+
+**Sample Generation:**
+
+- Generate language-specific code samples from natural language descriptions
+- Support multiple samples from single description with multiple scenarios
+- Follow language-specific SDK patterns, conventions, and best practices
+- Include proper error handling and authentication patterns
+- Requires active Azure authentication and Azure OpenAI access
+
+**Sample Translation:**
+
+- Translate existing samples between programming languages
+- Automatically detect source and target languages from package structure
+- Preserve directory structure and adapt to target language idioms
+- Follow Azure SDK guidelines for target language
+
+**Success:**
+
+- Generated/translated samples compile and run successfully
+- Samples follow language-specific SDK patterns and conventions
+- Samples saved to correct language-specific directories
+
+### 7. Update Package/Docs/Metadata
 
 Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata) for complete details.
 
@@ -353,7 +391,7 @@ Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata
 - Java parent and root `pom.xml` files are updated appropriately
 - Version updates work for both data-plane and management-plane libraries
 
-### 7. Validating
+### 8. Validating
 
 Unchanged from Scenario 1. Refer to [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating) for validation steps and success criteria.
 
@@ -627,6 +665,87 @@ I need to update the Health Deidentification TypeSpec to establish a parent-chil
    - Link to child resource guide
    - Link to `@parentResource` decorator documentation
 
+### Sample Generation
+
+**Prompt:**
+
+```text
+I need to generate code samples for the Health Deidentification SDK showing common usage scenarios.
+```
+
+**Expected Agent Activity:**
+
+1. **Agent asks user** which language(s) to generate samples for.
+2. **Agent asks user** to describe the specific scenarios or operations to demonstrate.
+3. **Agent calls** `azsdk_package_samples_generate` with the package path and prompt.
+4. Tool analyzes the package and generates samples using Azure OpenAI.
+5. **Agent reports** the generated sample files and their locations.
+6. **Agent suggests** running the samples to verify they work correctly.
+
+**Prompt:**
+
+```text
+Generate samples for the Python Health Deidentification SDK demonstrating: 1) Basic deidentification, 2) Batch processing, 3) Custom redaction rules.
+```
+
+**Expected Agent Activity:**
+
+1. **Agent calls** `azsdk_package_samples_generate` with:
+   - Package path for Python Health Deidentification SDK
+   - Prompt with three specific scenarios
+2. Tool generates three separate sample files.
+3. **Agent reports** the three generated samples:
+   - `basic_deidentification.py`
+   - `batch_processing.py`
+   - `custom_redaction_rules.py`
+4. **Agent confirms** samples follow Python SDK patterns and include error handling.
+
+### Sample Translation
+
+**Prompt:**
+
+```text
+I have Python samples for Health Deidentification. Can you translate them to TypeScript?
+```
+
+**Expected Agent Activity:**
+
+1. **Agent asks user** to confirm the source package path (Python SDK).
+2. **Agent asks user** to confirm the target package path (TypeScript SDK).
+3. **Agent calls** `azsdk_package_samples_translate` with:
+   - `--from` pointing to Python package
+   - `--to` pointing to TypeScript package
+4. Tool automatically:
+   - Detects Python as source language
+   - Discovers Python samples directory
+   - Filters to only `.py` files
+   - Detects TypeScript as target language
+   - Translates each Python sample to TypeScript
+   - Preserves directory structure
+5. **Agent reports** translation results:
+   - Number of samples translated
+   - Location of translated samples
+   - Any issues encountered
+6. **Agent suggests** building and testing the TypeScript samples.
+
+**Prompt:**
+
+```text
+Translate all Java samples for Health Deidentification to .NET.
+```
+
+**Expected Agent Activity:**
+
+1. **Agent calls** `azsdk_package_samples_translate` with:
+   - `--from` pointing to Java package directory
+   - `--to` pointing to .NET package directory
+2. Tool translates all `.java` files from samples directory to C#.
+3. **Agent reports** translation summary:
+   - Number of Java samples found
+   - Number of C# samples generated
+   - Sample locations in .NET package
+4. **Agent confirms** translated samples follow .NET SDK conventions.
+
 ---
 
 ## CLI Commands
@@ -757,63 +876,179 @@ Consolidated Changes:
 Approve these changes? (Y/n)
 ```
 
-### 3. Run Tests
+### 4. Run Tests
 
 **Command:**
 
 ```bash
-azsdk package run-tests --package-path <path_to_sdk_package> --mode live-record
+azsdk package samples translate --from <source_package_path> --to <target_package_path>
 ```
 
 **Options:**
 
-- `--package-path <path>`: Path to the specific SDK package directory (required)
-- `--mode <live|live-record|playback>`: Test execution mode (default: playback)
-- `--test-filter <pattern>`: Run only tests matching pattern
-- `--cleanup`: Tear down test resources after completion (only for live/live-record modes)
-- `--resource-group <name>`: Override default resource group name
-- `--subscription <id>`: Target specific Azure subscription
-- `--location <region>`: Azure region for resource deployment (default: westus2)
+- `--from <path>`: Path to the source package directory (required)
+- `--to <path>`: Path to the target package directory (required)
+- `--overwrite`: Overwrite existing files without prompting
+- `--model <name>`: Azure OpenAI deployment name to use (default: uses configured model)
 
-**Expected Output:**
-
-```text
-Running tests in live-record mode...
-
-✓ Checking test resources...
-✓ Resources not found, provisioning...
-✓ Resource group azsdk-healthdataaiservices-tests created
-✓ Test resources deployed
-
-✓ Running tests...
-✓ 15/15 tests passed
-✓ Test recordings captured
-
-Test resources remain available for future runs.
-Use --cleanup flag to tear down resources.
-```
-
-- `--parallel`: Run tests in parallel (when supported)
-- `--verbose`: Show detailed test output
-
-**Expected Output:**
-
-```text
-Running tests for Health Deidentification SDK...
-
-✓ Python tests passed (12 recordings captured)
-✓ .NET tests passed (10 recordings captured)
-
-Test execution complete. Recordings saved to language-specific directories.
-```
-
-**Note:** Teardown is handled automatically by the `--cleanup` flag on the test command. To manually tear down resources:
+**Examples:**
 
 ```bash
-azsdk package run-tests --package-path <path_to_sdk_package> --mode live --cleanup
+# Translate Python samples to TypeScript
+azsdk package samples translate \
+  --from ~/azure-sdk-for-python/sdk/ai/azure-ai-projects \
+  --to ~/azure-sdk-for-js/sdk/ai/ai-projects \
+  --overwrite
+
+# Translate Java samples to .NET
+azsdk package samples translate \
+  --from ~/azure-sdk-for-java/sdk/ai/azure-ai-projects \
+  --to ~/azure-sdk-for-net/sdk/ai/Azure.AI.Projects
+
+# Translate with specific model
+azsdk package samples translate \
+  --from ~/azure-sdk-for-net/sdk/ai/Azure.AI.Projects \
+  --to ~/azure-sdk-for-python/sdk/ai/azure-ai-projects \
+  --model gpt-4o
 ```
 
-Or use the cleanup flag separately after tests have completed.
+**Expected Output:**
+
+```text
+Translating samples from Python to TypeScript...
+
+✓ Source language detected: Python
+✓ Target language detected: TypeScript
+✓ Discovered 5 Python sample files
+✓ Translating basic_usage.py → basic_usage.ts
+✓ Translating chat_completions.py → chat_completions.ts
+✓ Translating embeddings.py → embeddings.ts
+✓ Translating file_operations.py → file_operations.ts
+✓ Translating streaming.py → streaming.ts
+✓ Validating translated samples
+
+Translation complete:
+  5 samples translated successfully
+  Samples location: samples/
+  Directory structure preserved
+```
+
+### 5. Generate Samples
+
+**Command:**
+
+```bash
+azsdk package samples generate --package-path <path_to_package> --prompt "<description>"
+```
+
+**Options:**
+
+- `--package-path <path>`: Path to the SDK package directory (required)
+- `--prompt <text|path>`: Natural language description of the sample or path to markdown file with requirements (required)
+- `--overwrite`: Overwrite existing sample files without prompting
+- `--model <name>`: Azure OpenAI deployment name to use (default: uses configured model)
+- `--extra-context <path>`: Additional files/folders for context (can be specified multiple times)
+
+**Examples:**
+
+```bash
+# Generate a basic sample
+azsdk package samples generate \
+  --package-path ./azure-sdk-for-net/sdk/ai/Azure.AI.Projects \
+  --prompt "Create a sample that gets chat completions from Azure OpenAI"
+
+# Generate multiple samples
+azsdk package samples generate \
+  --package-path ./azure-sdk-for-python/sdk/ai/azure-ai-projects \
+  --prompt "Create samples for: 1) Create embeddings, 2) Upload a file, 3) Process results"
+
+# Use markdown file with detailed requirements
+azsdk package samples generate \
+  --package-path ./azure-sdk-for-js/sdk/ai/ai-projects \
+  --prompt ./sample-requirements.md \
+  --extra-context ./docs/authentication.md \
+  --overwrite
+
+# Use specific model
+azsdk package samples generate \
+  --package-path ./azure-sdk-for-java/sdk/ai/azure-ai-projects \
+  --prompt "Generate samples for AI operations" \
+  --model gpt-4o
+```
+
+**Expected Output:**
+
+```text
+Generating samples for Azure.AI.Projects...
+
+✓ Analyzing package structure
+✓ Generating sample: chat_completions_basic.cs
+✓ Generating sample: create_embeddings.cs
+✓ Validating generated samples
+
+Samples generated successfully:
+  - samples/chat_completions_basic.cs
+  - samples/create_embeddings.cs
+
+All samples follow .NET SDK patterns and include error handling.
+```
+
+### 6. Translate Samples
+
+**Command:**
+
+```bash
+azsdk package samples translate --from <source_package_path> --to <target_package_path>
+```
+
+**Options:**
+
+- `--from <path>`: Path to the source package directory (required)
+- `--to <path>`: Path to the target package directory (required)
+- `--overwrite`: Overwrite existing files without prompting
+- `--model <name>`: Azure OpenAI deployment name to use (default: uses configured model)
+
+**Examples:**
+
+```bash
+# Translate Python samples to TypeScript
+azsdk package samples translate \
+  --from ~/azure-sdk-for-python/sdk/ai/azure-ai-projects \
+  --to ~/azure-sdk-for-js/sdk/ai/ai-projects \
+  --overwrite
+
+# Translate Java samples to .NET
+azsdk package samples translate \
+  --from ~/azure-sdk-for-java/sdk/ai/azure-ai-projects \
+  --to ~/azure-sdk-for-net/sdk/ai/Azure.AI.Projects
+
+# Translate with specific model
+azsdk package samples translate \
+  --from ~/azure-sdk-for-net/sdk/ai/Azure.AI.Projects \
+  --to ~/azure-sdk-for-python/sdk/ai/azure-ai-projects \
+  --model gpt-4o
+```
+
+**Expected Output:**
+
+```text
+Translating samples from Python to TypeScript...
+
+✓ Source language detected: Python
+✓ Target language detected: TypeScript
+✓ Discovered 5 Python sample files
+✓ Translating basic_usage.py → basic_usage.ts
+✓ Translating chat_completions.py → chat_completions.ts
+✓ Translating embeddings.py → embeddings.ts
+✓ Translating file_operations.py → file_operations.ts
+✓ Translating streaming.py → streaming.ts
+✓ Validating translated samples
+
+Translation complete:
+  5 samples translated successfully
+  Samples location: samples/
+  Directory structure preserved
+```
 
 ---
 

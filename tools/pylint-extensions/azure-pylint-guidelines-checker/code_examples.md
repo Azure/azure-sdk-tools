@@ -1182,3 +1182,75 @@ try:
 except Exception as e:
     logger.debug("An error occurred", exc_info=e)  # Using logger.debug with exc_info
 ```
+
+## stable-sdk-no-preview-api
+❌ **Incorrect**:
+```python
+# In _version.py
+VERSION = "1.0.0"  # Stable version (no 'a' or 'b' suffix)
+
+# In client code
+class MyClient:
+    def __init__(self, endpoint, credential, **kwargs):
+        # Using preview API version in stable SDK
+        self._api_version = "2023-01-01-preview"  # Error: stable SDK using preview API
+    
+    def operation(self, api_version="2023-05-01-preview", **kwargs):  # Error: preview API default
+        """Operation with preview API version"""
+        pass
+    
+    def call_service(self):
+        # Calling with preview API
+        self._send_request(api_version="2023-01-01-preview")  # Error: preview API in call
+
+# ApiVersion enum with preview API values
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
+
+class ApiVersion(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """API versions for the service"""
+    V2023_01_01 = "2023-01-01"
+    V2023_05_01_PREVIEW = "2023-05-01-preview"  # Error: preview API in stable SDK enum
+    V2024_01_01 = "2024-01-01"
+```
+
+✅ **Correct**:
+```python
+# Option 1: Use stable API version in stable SDK
+# In _version.py
+VERSION = "1.0.0"  # Stable version
+
+# In client code
+class MyClient:
+    def __init__(self, endpoint, credential, **kwargs):
+        self._api_version = "2023-01-01"  # Using stable API version
+    
+    def operation(self, api_version="2023-05-01", **kwargs):
+        """Operation with stable API version"""
+        pass
+
+# ApiVersion enum with only stable API values
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
+
+class ApiVersion(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """API versions for the service"""
+    V2023_01_01 = "2023-01-01"  # Stable API only
+    V2024_01_01 = "2024-01-01"
+
+# Option 2: Use beta/alpha SDK version if you need preview API
+# In _version.py
+VERSION = "1.0.0b1"  # Beta version (can use preview API)
+
+# In client code
+class MyClient:
+    def __init__(self, endpoint, credential, **kwargs):
+        # Beta SDK can use preview API
+        self._api_version = "2023-01-01-preview"  # OK: beta SDK can use preview API
+
+# ApiVersion enum can include preview API in beta SDK
+class ApiVersion(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """API versions for the service"""
+    V2023_01_01 = "2023-01-01"
+    V2023_05_01_PREVIEW = "2023-05-01-preview"  # OK: beta SDK can use preview API
+```

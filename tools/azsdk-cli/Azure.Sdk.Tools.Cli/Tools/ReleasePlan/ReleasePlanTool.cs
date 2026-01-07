@@ -254,22 +254,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [McpServerTool(Name = GetReleasePlanForSpecPrToolName), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<ReleaseWorkflowResponse> GetReleasePlanForPullRequest(string pullRequestLink)
         {
-            var response = new ReleaseWorkflowResponse();
-
             try
             {
                 ValidatePullRequestUrl(pullRequestLink);
                 var releasePlan = await devOpsService.GetReleasePlanAsync(pullRequestLink) ?? throw new Exception("No release plan associated with pull request link");
-                response.Status = "Success";
-                response.Details.Add($"Release Plan: {JsonSerializer.Serialize(releasePlan)}");
-                return response;
+                return new ReleaseWorkflowResponse
+                {
+                    Details = [$"Release Plan: {JsonSerializer.Serialize(releasePlan)}"]
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get release plan details");
-                response.Status = "Failed";
-                response.Details.Add($"Failed to get release plan details: {ex.Message}");
-                return response;
+                return new ReleaseWorkflowResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
             }
         }
 

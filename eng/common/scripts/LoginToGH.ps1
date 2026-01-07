@@ -27,8 +27,8 @@ param(
   [string] $KeyVaultName = "azuresdkengkeyvault",
   [string] $KeyName = "azure-sdk-automation",
   [string] $GitHubAppId = '1086291',
-  [string] $InstallationTokenOwner = "Azure",
-  [string] $PipelineVariableName = "GH_TOKEN"
+  [string[]] $InstallationTokenOwners = @("Azure"),
+  [string] $VariableNamePrefix = "GH_TOKEN"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -130,28 +130,43 @@ function New-GitHubInstallationToken {
 Write-Host "Generating GitHub App JWT by signing via Azure Key Vault (no key export)..."
 $jwt = New-GitHubAppJwt -VaultName $KeyVaultName -KeyName $KeyName -AppId $GitHubAppId
 
-Write-Host "Fetching installation ID for $InstallationTokenOwner ..."
-$installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase $GitHubApiBaseUrl -ApiVersion $GitHubApiVersion -InstallationTokenOwner $InstallationTokenOwner
+foreach ($InstallationTokenOwner in $InstallationTokenOwners) 
+{
+  Write-Host "Fetching installation ID for $InstallationTokenOwner ..."
+  $installationId = Get-GitHubInstallationId -Jwt $jwt -ApiBase $GitHubApiBaseUrl -ApiVersion $GitHubApiVersion -InstallationTokenOwner $InstallationTokenOwner
 
-Write-Host "Installation ID resolved: $installationId"
+  Write-Host "Installation ID resolved: $installationId"
 
-Write-Host "Exchanging JWT for installation access token..."
-$installationToken = New-GitHubInstallationToken -Jwt $jwt -InstallationId $installationId -ApiBase $GitHubApiBaseUrl -ApiVersion $GitHubApiVersion
+  Write-Host "Exchanging JWT for installation access token..."
+  $installationToken = New-GitHubInstallationToken -Jwt $jwt -InstallationId $installationId -ApiBase $GitHubApiBaseUrl -ApiVersion $GitHubApiVersion
 
-# Export for gh CLI & git
-$env:GH_TOKEN = $installationToken
-Write-Host "GH_TOKEN has been set in the current process."
+  $variableName = $VariableNamePrefix
+  if ($InstallationTokenOwners.Count -gt 1)
+  {
+    $variableName = $VariableNamePrefix + "_" + $InstallationTokenOwner
+  }
 
-# Optionally set an Azure DevOps secret variable (so later tasks can reuse it)
-if ($PipelineVariableName) {
-  Write-Host "##vso[task.setvariable variable=$PipelineVariableName;issecret=true]$installationToken"
-  Write-Host "Azure DevOps variable '$PipelineVariableName' has been set (secret)."
-}
+  Set-Item -Path Env:$variableName -Value $installationToken
 
-try {
-  Write-Host "`n--- gh auth status ---"
-  & gh auth status
-}
-catch {
-  Write-Warning "gh CLI not found or auth status failed: $($_.Exception.Message)"
+  # Export for gh CLI & git
+  Write-Host "$variableName has been set in the current process."
+
+  # Optionally set an Azure DevOps secret variable (so later tasks can reuse it)
+  if ($null -ne $env:SYSTEM_TEAMPROJECTID) {
+    Write-Host "##vso[task.setvariable variable=$variableName;issecret=true]$installationToken"
+    Write-Host "Azure DevOps variable '$variableName' has been set (secret)."
+  }
+
+  try {
+    Write-Host "`n--- gh auth status ---"
+    $gh_token_value_before = $env:GH_TOKEN
+    $env:GH_TOKEN = $installationToken
+    & gh auth status
+  }
+  catch {
+    Write-Warning "gh CLI not found or auth status failed: $($_.Exception.Message)"
+  }
+  finally{
+    $env:GH_TOKEN = $gh_token_value_before
+  }
 }

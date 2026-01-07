@@ -14,8 +14,6 @@ parameters:
   #       Azure/azure-sdk-for-go-pr:
   - name: Repos
     type: object
-  - name: GH_TOKEN
-    type: string
   - name: ScriptDirectory
     type: string
     default: eng/scripts
@@ -40,4 +38,3 @@ steps:
           -TargetRepo '${{ target.key }}'
           -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
           -Rebase '${{ target.value.Rebase }}'
-          -AuthToken '${{ parameters.GH_TOKEN }}'

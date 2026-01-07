@@ -3274,9 +3274,9 @@ class DoNotStoreSecretsInTestVariables(BaseChecker):
     priority = -1
     msgs = {
         "C4773": (
-            "Do not assign secrets to variables in test files. Use the secret directly in the function call instead.",
+            "Do not assign secrets to local variables in test files. They will be exposed if the test fails. Use the secret directly in the function call instead i.e foo(credential=bar.secret).",
             "do-not-store-secrets-in-test-variables",
-            "Do not assign secrets to variables in test files. Use the secret directly in the function call instead.",
+            "Do not assign secrets to local variables in test files. They will be exposed if the test fails. Use the secret directly in the function call instead i.e foo(credential=bar.secret).",
         ),
     }
 

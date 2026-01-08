@@ -7,7 +7,7 @@ This is a simplified guide for deploying the Code Review MCP Server to Azure for
 ✅ Azure CLI installed and logged in  
 ✅ Docker installed  
 ✅ Access to the `azure-sdk-qa-bot-dev` resource group  
-✅ Backend service already running at: https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net
+✅ Backend service already running at: https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net
 
 ## One-Command Deployment
 
@@ -29,7 +29,7 @@ That's it! The script will:
 - **App Service**: `azure-sdk-code-review-mcp-dev`
 - **Location**: West US 2
 - **Resource Group**: `azure-sdk-qa-bot-dev`
-- **Backend**: `https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net/code_review`
+- **Backend**: `https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net/code_review`
 
 ## After Deployment
 
@@ -137,7 +137,7 @@ az webapp config appsettings list \
 ### Backend Connection Issues
 ```bash
 # Test backend directly
-curl https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net/code_review \
+curl https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net/code_review \
   -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $(az account get-access-token --resource api://azure-sdk-qa-bot-dev --query accessToken -o tsv)" \

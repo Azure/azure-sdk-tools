@@ -102,7 +102,7 @@ SUBSCRIPTION_NAME=$(az account show --query name -o tsv)
 print_info "Using subscription: $SUBSCRIPTION_NAME"
 
 # Set backend URL for dev environment
-BACKEND_URL="https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net"
+BACKEND_URL="https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net"
 BACKEND_CLIENT_ID="api://azure-sdk-qa-bot-dev"
 
 print_info "Backend URL: $BACKEND_URL/code_review"

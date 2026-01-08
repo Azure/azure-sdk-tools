@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # Configuration from environment
 CODE_REVIEW_API_URL = os.getenv(
     "CODE_REVIEW_API_URL",
-    "https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net/code_review"
+    "https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net/code_review"
 )
 BACKEND_CLIENT_ID = os.getenv("BACKEND_CLIENT_ID", "api://azure-sdk-qa-bot-dev")
 AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID")  # User-assigned managed identity client ID

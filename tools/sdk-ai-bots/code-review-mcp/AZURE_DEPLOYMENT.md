@@ -52,7 +52,7 @@ LOCATION="westus2"
 APP_SERVICE_PLAN="azuresdkqabot-dev-plan"
 APP_NAME="azure-sdk-code-review-mcp-dev"
 ACR_NAME="azuresdkqabotdevcontainer"
-BACKEND_URL="https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net"
+BACKEND_URL="https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net"
 
 # Create App Service (if using new plan)
 az appservice plan create \

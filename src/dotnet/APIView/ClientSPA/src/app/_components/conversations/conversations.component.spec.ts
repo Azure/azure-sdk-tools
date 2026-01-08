@@ -15,8 +15,8 @@ describe('ConversationComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ConversationsComponent],
       imports: [
+        ConversationsComponent,
         HttpClientTestingModule,
         ReviewPageModule,
         SharedAppModule

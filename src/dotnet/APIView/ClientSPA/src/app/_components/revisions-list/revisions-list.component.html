@@ -125,7 +125,7 @@
         </div>
     </ng-template>
 </p-table>
-<p-sidebar [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [showCloseIcon]="false" styleClass="create-revision-sidebar">
+<p-drawer [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [showCloseIcon]="false" styleClass="create-revision-sidebar">
     <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <h4>Create Revision</h4>
     <p *ngIf="!createRevisionForm.get('selectedCRLanguage')!.value">Select a Language Below to view instructions for creating a Review.</p>
@@ -205,8 +205,8 @@
         </div>
     </form>
     </div>
-</p-sidebar>
-<p-sidebar [(visible)]="optionsSidebarVisible" position="right" [showCloseIcon]="false" styleClass="options-sidebar">
+</p-drawer>
+<p-drawer [(visible)]="optionsSidebarVisible" position="right" [showCloseIcon]="false" styleClass="options-sidebar">
     <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <h4>Filter APIRevisions</h4>
     <ul class="list-group list-group-flush">
@@ -224,4 +224,4 @@
         </li>
     </ul>
     </div>
-</p-sidebar>
+</p-drawer>

@@ -1,4 +1,4 @@
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
@@ -7,7 +7,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { IndexPageComponent } from './_components/index-page/index-page.component';
 import { ReviewsListComponent } from './_components/reviews-list/reviews-list.component';
-import { TabMenuModule } from 'primeng/tabmenu';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { BadgeModule } from 'primeng/badge';
@@ -17,7 +16,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
 import { HttpErrorInterceptorService } from './_services/http-error-interceptor/http-error-interceptor.service';
 import { MessageService } from 'primeng/api';
-import { CommonModule } from '@angular/common';
+import { APP_BASE_HREF, CommonModule } from '@angular/common';
 import { ProfilePageComponent } from './_components/profile-page/profile-page.component';
 import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeuix/themes/lara';
@@ -42,24 +41,22 @@ export function initializeApp(configService: ConfigService) {
     BadgeModule,
     BrowserModule,
     NoopAnimationsModule,  // Disabled animations to prevent continuous change detection
-    TabMenuModule,
     ToolbarModule,
     ToastModule,
     HttpClientModule
   ],
   providers: [
     ConfigService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      deps: [ConfigService],
-      multi: true
-    },
+    provideAppInitializer(() => {
+        const initializerFn = (initializeApp)(inject(ConfigService));
+        return initializerFn();
+      }),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpErrorInterceptorService,
       multi: true
     },
+    { provide: APP_BASE_HREF, useValue: '/' },
     MessageService,
     CookieService,
     providePrimeNG({

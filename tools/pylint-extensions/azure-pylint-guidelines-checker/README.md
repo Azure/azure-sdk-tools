@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package contains custom pylint checkers for Azure SDK guidelines. The custom checkers have message codes in the range C4717 - C4772.
+This package contains custom pylint checkers for Azure SDK guidelines. The custom checkers have message codes in the range C4717 - C4773.
 You can identify a custom checker by the link to the guidelines included in its message.
 
 
@@ -65,7 +65,7 @@ You can identify a custom checker by the link to the guidelines included in its 
 | C4770 | missing-logging-policy | You should include a LoggingPolicy in your HTTP pipeline. | # pylint:disable=missing-logging-policy | [Network operations](https://azure.github.io/azure-sdk/python_implementation.html#network-operations) | [Example](code_examples.md#missing-logging-policy) |
 | C4771 | missing-retry-policy | You should include a RetryPolicy in your HTTP pipeline. | # pylint:disable=missing-retry-policy | [Network operations](https://azure.github.io/azure-sdk/python_implementation.html#network-operations) | [Example](code_examples.md#missing-retry-policy) |
 | C4772 | missing-distributed-tracing-policy | You should include a DistributedTracingPolicy in your HTTP pipeline. | # pylint:disable=missing-distributed-tracing-policy | [Network operations](https://azure.github.io/azure-sdk/python_implementation.html#network-operations) | [Example](code_examples.md#missing-distributed-tracing-policy) |
-| C4773 | do-not-use-logging-exception | Do not use Exception level logging, this is an error log and may leak sensitive information. Use another logging level instead. | # pylint:disable=do-not-use-logging-exception | No Link. | [Example](code_examples.md#do-not-use-logging-exception) |
+| C4773 | do-not-store-secrets-in-test-variables | Do not assign secrets to local variables in test files. They will be exposed if the test fails. Use the secret directly in the function call instead i.e foo(credential=bar.secret). | # pylint:disable=do-not-store-secrets-in-test-variables | [Security](https://azure.github.io/azure-sdk/python_implementation.html#security) | [Example](code_examples.md#do-not-store-secrets-in-test-variables) |
 
 ## How to disable a pylint error (do not do this without permission from an azure sdk team member)
 

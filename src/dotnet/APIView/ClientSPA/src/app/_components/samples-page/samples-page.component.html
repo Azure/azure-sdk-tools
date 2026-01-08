@@ -34,8 +34,8 @@
                                 <span *ngIf="activeSamplesRevision" class="small text-muted">
                                     Created By: <a href="{{webAppUrl}}Assemblies/Profile/{{activeSamplesRevision.createdBy}}">{{activeSamplesRevision.createdBy}}</a>
                                 </span>
-                                <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
-                                <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
+                                <button *ngIf="samplesContent && userProfile && userProfile.userName && activeSamplesRevision?.createdBy === userProfile.userName" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
+                                <button *ngIf="samplesContent && userProfile && userProfile.userName && activeSamplesRevision?.createdBy === userProfile.userName" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
                                 <button class="btn btn-primary" (click)="showAddSamplesPanel()" type="button">Add sample</button>
                             </div>
                         </li>
@@ -45,7 +45,7 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
+<p-drawer [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
             <h4 *ngIf="samplesUpdateState == 'add'">Add usage samples</h4>
@@ -120,7 +120,7 @@
         </div>
     </ng-container>
     </div>
-</p-sidebar>
+</p-drawer>
 <p-dialog header="Delete usage sample"
     [modal]="true" [(visible)]="showSamplesDeleteModal"
     [style]="{ width: '20dvw' }">

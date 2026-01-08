@@ -6,6 +6,7 @@ parameters:
 jobs:
   - job: UpdateMCPDocumentation
     displayName: 'Update MCP Tools Documentation'
+    dependsOn: PostPackagePublish
     pool:
       name: $(LINUXPOOL)
       image: $(LINUXVMIMAGE)

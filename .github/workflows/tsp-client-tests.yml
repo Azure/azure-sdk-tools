@@ -31,14 +31,14 @@ jobs:
         run: git config --global core.longpaths true
         shell: pwsh
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github/workflows
             tools/tsp-client
 
       - name: Use Node ${{ matrix.node-version }}.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}.x
 

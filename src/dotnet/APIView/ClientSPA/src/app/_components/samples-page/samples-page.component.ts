@@ -4,7 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { MenuItem, MessageService } from 'primeng/api';
 import { FileSelectEvent } from 'primeng/fileupload';
 import { Subject, take, takeUntil } from 'rxjs';
-import { ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
+import { ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { PaginatedResult } from 'src/app/_models/pagination';
@@ -22,9 +22,10 @@ import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Component({
-  selector: 'app-samples-page',
-  templateUrl: './samples-page.component.html',
-  styleUrls: ['./samples-page.component.scss']
+    selector: 'app-samples-page',
+    templateUrl: './samples-page.component.html',
+    styleUrls: ['./samples-page.component.scss'],
+    standalone: false
 })
 export class SamplesPageComponent {
   SAMPLES_CONTENT_PLACEHOLDER = "<!--- Enter Markdown Formated Content --->";
@@ -33,6 +34,8 @@ export class SamplesPageComponent {
 
   reviewId : string | null = null;
   activeSamplesRevisionId : string | null = null;
+  activeApiRevisionId: string | null = null;
+  diffApiRevisionId: string | null = null;
   activeSamplesRevision: SamplesRevision | undefined = undefined;
   review : Review | undefined = undefined;
   sideMenu: MenuItem[] | undefined;
@@ -56,7 +59,7 @@ export class SamplesPageComponent {
 
   samplesUpdateSidePanel = false
   samplesUpdateState: "add" | "edit" | undefined = undefined;
-  
+
   addEditSamplesTitle : string = "";
   addEditSamplesContent : string = "";
   samplesUploadFile : File | undefined = undefined;
@@ -73,15 +76,15 @@ export class SamplesPageComponent {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private configService: ConfigService, 
-    private apiRevisionsService: APIRevisionsService, private samplesRevisionService: SamplesRevisionService, 
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private configService: ConfigService,
+    private apiRevisionsService: APIRevisionsService, private samplesRevisionService: SamplesRevisionService,
     private router: Router, private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef,
     private messageService: MessageService, private commentsService: CommentsService, private renderer: Renderer2, private el: ElementRef,
     private injector: Injector, private viewContainerRef: ViewContainerRef, private titleService: Title) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
- 
+
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
@@ -96,7 +99,7 @@ export class SamplesPageComponent {
     this.loadLatestAPIRevision(this.reviewId!);
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const navigationState = this.router.getCurrentNavigation()?.extras.state;
+      const navigationState = this.router.currentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
         this.updateStateBasedOnQueryParams(params);
       }
@@ -130,6 +133,8 @@ export class SamplesPageComponent {
     this.samplesContent = undefined;
     this.changeDetectorRef.detectChanges();
     this.activeSamplesRevisionId = params[ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM];
+    this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM];
+    this.diffApiRevisionId = params[DIFF_API_REVISION_ID_QUERY_PARAM];
     this.loadComments();
     this.loadSamplesRevisions(0, this.samplesRevisionsPageSize);
   }
@@ -151,7 +156,7 @@ export class SamplesPageComponent {
           this.comments = comments;
           const groupedComments = comments.reduce((acc, comment) => {
             if (!acc[comment.elementId]) {
-              acc[comment.elementId] = [comment];              
+              acc[comment.elementId] = [comment];
             } else {
               acc[comment.elementId].push(comment);
             }
@@ -227,7 +232,15 @@ export class SamplesPageComponent {
   }
 
   openLatestAPIReivisonForReview() {
-    this.apiRevisionsService.openAPIRevisionPage(this.latestApiRevision!, this.route);
+    if (this.activeApiRevisionId) {
+      const queryParams: any = { activeApiRevisionId: this.activeApiRevisionId };
+      if (this.diffApiRevisionId) {
+        queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+      }
+      this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+    } else {
+      this.apiRevisionsService.openAPIRevisionPage(this.latestApiRevision!, this.route);
+    }
   }
 
   showAddSamplesPanel() {
@@ -266,8 +279,13 @@ export class SamplesPageComponent {
           this.isCreatingSamples = false;
           this.createSamplesButton = "Save";
           this.uploadSamplesButton = "Upload";
+
+          const queryParams: any = { activeSamplesRevisionId: samplesRevision.id };
+          if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+          if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+
           this.router.navigate(['/samples', this.reviewId],
-           { queryParams: { activeSamplesRevisionId: samplesRevision.id } });
+           { queryParams: queryParams });
         },
         error: (error: any) => {
           this.isCreatingSamples = false;
@@ -311,10 +329,15 @@ export class SamplesPageComponent {
           this.showSamplesDeleteModal = false;
           this.isDeletingSamples = false;
           this.deleteSamplesButton = "Delete";
+
+          const queryParams: any = {};
+          if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+          if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+
           if (this.router.url === `/samples/${this.reviewId}`) {
             this.reloadRoute();
           } else {
-            this.router.navigate([`/samples/${this.reviewId}`]);
+            this.router.navigate([`/samples/${this.reviewId}`], { queryParams: queryParams });
           }
         },
         error: (error: any) => {
@@ -345,8 +368,12 @@ export class SamplesPageComponent {
 
   reloadRoute() {
     this.router.navigateByUrl('/temporary-route', { skipLocationChange: true }).then(() => {
+      const queryParams: any = { activeSamplesRevisionId: this.activeSamplesRevisionId };
+      if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+      if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+
       this.router.navigate(['/samples', this.reviewId], {
-        queryParams: { activeSamplesRevisionId: this.activeSamplesRevisionId }
+        queryParams: queryParams
       });
     });
   }
@@ -417,7 +444,7 @@ export class SamplesPageComponent {
       sampleSection.forEach((element: HTMLElement) => {
         const rect = element.getBoundingClientRect();
         const commentIcon = element.querySelector('.icon.bi.bi-chat-right-text');
-        
+
         if (mouseY >= rect.top && mouseY <= rect.bottom) {
           if (commentIcon && commentIcon.classList.contains('toggle-user-comments-btn') && commentIcon.classList.contains('can-show')) {
             this.renderer.addClass(commentIcon, 'temp-show');
@@ -456,7 +483,7 @@ export class SamplesPageComponent {
     this.renderer.addClass(commentThreadContainer, 'py-2');
 
     const componentRef = this.viewContainerRef.createComponent(CommentThreadComponent, { injector: this.injector });
-    
+
     if (commentThread) {
       componentRef.instance.codePanelRowData = commentThread;
     } else {

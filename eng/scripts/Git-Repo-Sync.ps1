@@ -54,7 +54,7 @@ function Get-RepoUrl([string]$Repo)
   }
 
   if ($token) {
-    return "https://x-access-token:$(token.Value)@github.com/${Repo}.git"
+    return "https://x-access-token:$($token.Value)@github.com/${Repo}.git"
   }
 
   return "https://github.com/${Repo}.git"

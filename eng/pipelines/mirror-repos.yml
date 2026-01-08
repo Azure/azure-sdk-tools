@@ -19,12 +19,15 @@ jobs:
         scriptType: pscore
         scriptLocation: scriptPath
         scriptPath: eng/common/scripts/LoginToGH.ps1
-        arguments: -InstallationTokenOwners @("Azure", "azure-sdk", "MicrosoftDocs")
+        arguments: -InstallationTokenOwners @("Azure", "azure-sdk", "microsoft", "MicrosoftDocs")
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
-        Repos:
+        EnvVars:
+          GH_TOKEN_Azure: $(GH_TOKEN_Azure)
+          GH_TOKEN_azure-sdk: $(GH_TOKEN_azure-sdk)
 
+        Repos:
           Azure/azure-rest-api-specs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
@@ -70,8 +73,13 @@ jobs:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
-        Repos:
+        EnvVars:
+          GH_TOKEN_Azure: $(GH_TOKEN_Azure)
+          GH_TOKEN_azure-sdk: $(GH_TOKEN_azure-sdk)
+          GH_TOKEN_MicrosoftDocs: $(GH_TOKEN_MicrosoftDocs)
+          GH_TOKEN_microsoft: $(GH_TOKEN_microsoft)
 
+        Repos:
           Azure/azure-sdk-for-cpp:
             TargetRepos:
               Azure/azure-sdk-for-cpp-pr:

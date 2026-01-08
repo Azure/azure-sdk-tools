@@ -179,8 +179,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
         public string DiscoverRepoRoot(string pathInRepo)
         {
+            // Normalize the path to handle case insensitivity on Windows (e.g., "C:\" vs "c:\")
+            var normalizedPath = Path.GetFullPath(pathInRepo);
+            
             // Discover the repo root for this path
-            var repoPath = Repository.Discover(pathInRepo);
+            var repoPath = Repository.Discover(normalizedPath);
             if (string.IsNullOrEmpty(repoPath))
             {
                 throw new InvalidOperationException($"No git repository found at or above the path: {pathInRepo}");

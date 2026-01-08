@@ -150,10 +150,12 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
-            // Normalize package path for Scan Paths
+            // TODO: investigate doc-warden code, this normalizes package path for Scan Paths
             var normalizedPackagePath = Path.GetFullPath(packagePath);
-            // Ensure drive letter is uppercase on Windows
-            if (Path.IsPathRooted(normalizedPackagePath) && normalizedPackagePath.Length >= 2 && normalizedPackagePath[1] == ':')
+            // Ensure drive letter is uppercase on Windows for consistency
+            if (OperatingSystem.IsWindows() && 
+                Path.IsPathRooted(normalizedPackagePath) && 
+                normalizedPackagePath.Length >= 2)
             {
                 normalizedPackagePath = char.ToUpperInvariant(normalizedPackagePath[0]) + normalizedPackagePath.Substring(1);
             }

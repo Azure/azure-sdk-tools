@@ -147,34 +147,6 @@
         "overall_score": 6.6
     },
     {
-        "testcase": "Ubunty 2303 pypy39 specific failure",
-        "expected": {
-            "answer": "You have a dependency that doesn't ship a pypy39 dep. That's all. You could swap that with pypy311 in your matrix if you wanted to give it a shot.",
-            "reference_urls": []
-        },
-        "actual": {
-            "answer": "The error message in your pipeline\u2014\"the configured PyPy interpreter version (3.9) is lower than PyO3's minimum supported version (3.11)\"\u2014means that PyO3 (a Rust/Python interop library) now requires PyPy version 3.11 or higher, but your CI environment is using PyPy 3.9.\n\nTo resolve this, you need to update your CI configuration to use PyPy 3.11 or newer instead of PyPy 3.9. Python SDKs must support Python 3.8+ (see guidelines), but toolchains and dependencies like PyO3 may raise their minimum version requirements independently. The recommended action is:\n\n1. **Update your CI configuration**: Change the Python interpreter to PyPy 3.11 (or newer) where the build is running.\n2. **Verify your local and pipeline environment**: Make sure any references to PyPy 3.9 are updated in scripts, Dockerfiles, or pipeline YAML files to PyPy 3.11.\n3. **Check compatibility of your SDK code**: Most Azure Python SDKs are tested on CPython, but if you explicitly need PyPy, ensure your code and dependencies support the newer PyPy version.\n\nYou do not need to change PyO3 requirements (unless you want to fork/patch the dependency, which is not recommended). Instead, upgrading your interpreter is the best approach.\n\nIf your pipeline template installs PyPy using system packages or a version manager, update those steps accordingly. For more on supported Python versions for Azure SDK, see the guidelines below.",
-            "reference_urls": [
-                "https://azure.github.io/azure-sdk/python_design.html",
-                "https://github.com/Azure/azure-sdk-for-python/wiki/Azure-SDKs-Python-version-support-policy"
-            ]
-        },
-        "similarity": 4.0,
-        "gpt_similarity": 4.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": NaN,
-        "gpt_groundedness": NaN,
-        "groundedness_reason": NaN,
-        "groundedness_result": NaN,
-        "groundedness_threshold": NaN,
-        "response_completeness": 4.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response contains all major recommendations and explanations from the ground truth, with only a minor omission of the explicit dependency statement. It is thorough and actionable.",
-        "overall_score": 0.0
-    },
-    {
         "testcase": "Python emitter issue with bulleted list TypeSpec doc string, and other",
         "expected": {
             "answer": "The Sphinx docstring errors you're seeing in the generated Python SDK (unexpected indentation, block quote ends without a blank line, duplicate explicit target names, bullet/definition list issues) are caused by how TypeSpec documentation comments are emitted into Python docstrings, especially when those comments use Markdown or formatting that doesn't map cleanly to reStructuredText (reST), which Sphinx expects.\nTo resolve these errors, there are two possible solutions:\n1. You need to ensure that the TypeSpec doc comments for the Response model and ServiceTier union are written in a way that avoids problematic Markdown constructs and closely follows what Sphinx/reST expects.\nHere are practical steps:\n- **Bullet/Definition List Formatting:** - Avoid using Markdown bullet lists (`*`, `-`, or `+`) or definition lists in your TypeSpec doc comments. Instead, use plain sentences, or, if you need a list, format it as numbered items with clear line breaks between each item. - If you must use a list, add a blank line before and after the list, and ensure each item starts on a new line. Do not nest lists or use complex indentation.\n- **Inline Strong/Emphasis Markup:** - If you use `**bold**` or `*italic*` in TypeSpec comments, Sphinx may misinterpret these if not balanced. Prefer using plain text or ensure that every start marker has a matching end marker.\n- **Explicit Targets (Links):** - If you use `[Learn more](url)` in doc comments, emitting these into Python docstrings can result in duplicate explicit target names. Use plain URLs or avoid repeating the same anchor text multiple times.\n- **Block Quotes:** - Avoid using Markdown block quotes (`>`) in TypeSpec doc comments. If you need to highlight something, use plain sentences.\n- **Unexpected Indentation:** - Ensure all TypeSpec doc comments are left-aligned, with no leading spaces or tabs before the text, unless you are deliberately creating a code block. For code blocks, use triple backticks and add blank lines before and after the block.\n- **General Style:** - Write documentation in simple paragraphs. Do not mix Markdown with reST, and avoid complex formatting. - Example of a safe docstring for a model property: ```tsp /** * The list of available service tiers. Possible values include: * 1. Basic - Entry-level tier. * 2. Standard - Recommended for most workloads. * 3. Premium - Advanced tier for high throughput. */ ``` - Avoid: ```tsp /** * - Basic * - Standard * - Premium */ ``` **Actionable Steps:** - Go to your TypeSpec definitions for Response and ServiceTier, and revise any doc comments containing bullet lists, definition lists, block quotes, repeated anchor text, or excessive indentation. Replace with simple sentences or numbered lists as above. - After making these changes, regenerate the Python SDK and run the Sphinx build again. The warnings/errors should be resolved. - For reference on Python docstring formatting and Sphinx compatibility, see the Azure Python SDK [docstring guidelines](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/docstring.md). If you need a specific example for ServiceTier: ```tsp /** * Service tier for deployment. Possible values: * 1. Basic: Entry-level tier. * 2. Standard: Recommended tier. * 3. Premium: Advanced tier for large workloads. */ union ServiceTier { ... } ``` And for Response model, ensure any lists or references are in plain sentences and do not use block quotes or repeated links.\n2. Or you can disable the sphinx environment within the pyproject.toml for the problematic package. By that way you won't hit these sphinx failures.\n```\n[tool.azure-sdk-build]\nsphinx = false\n```",

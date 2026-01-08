@@ -108,7 +108,7 @@ Response:
   "route_tenant": "api_spec_review_bot"
 }
 
-Question: "How to change the sdk foloder structure of JavaScript, python, go SDK?"
+Question: "How to change the sdk folder structure of JavaScript, python, go SDK?"
 Response:
 {
   "route_tenant": "general_qa_bot"

@@ -191,9 +191,7 @@ func processChunk(result model.Index) model.Knowledge {
 	title := ""
 	if len(result.Header1) > 0 {
 		chunk += "# " + result.Header1 + "\n"
-		if title == "" {
-			title = result.Header1
-		}
+		title = result.Header1
 	}
 	if len(result.Header2) > 0 {
 		chunk += "## " + result.Header2 + "\n"
@@ -761,7 +759,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete code mapping chunk: %s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
 			case model.ExpansionHierarchical:
-				// Process by hierarchy Hierarchy
+				// Process by hierarchy level
 				Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
 				// Expand all chunks under header1
 				subChunks := s.searchClient.FetchHierarchicalSubChunks(chunk, Hierarchy)

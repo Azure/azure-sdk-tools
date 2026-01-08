@@ -63,7 +63,7 @@ For Azure SDK onboarding and development questions, follow this structured appro
 
 ## SDK develop
 - **sdk generate**: The SDK generation pipelines will not be trigger when spec merged, you should reference the knowledge.
-- **sdk validation**: You should guide user to check the error details and introduce how to repoduce in local by using 'azsdk-tools-mcp', 'AzSDK agent'. NOTICE: TypeSpec validation and SDK validation are different concepts, you should distinguish them clearly.
+- **sdk validation**: You should guide user to check the error details and introduce how to reproduce in local by using 'azsdk-tools-mcp', 'AzSDK agent'. NOTICE: TypeSpec validation and SDK validation are different concepts, you should distinguish them clearly.
 - **sdk(api) review**: You should guide user to create a release plan and get the SDK PR link to request the review.
 
 ## SDK release

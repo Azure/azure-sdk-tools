@@ -366,11 +366,11 @@ func (s *SearchClient) MergeChunksWithHeaders(parentChunk model.Index, subChunks
 }
 
 // FetchHierarchicalSubChunks fetches all sub-chunks under a given header hierarchy
-func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, Hierarchy model.ChunkHierarchy) []model.Index {
+func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, hierarchy model.ChunkHierarchy) []model.Index {
 	var subChunks []model.Index
 	var err error
 
-	switch Hierarchy {
+	switch hierarchy {
 	case model.HierarchyHeader1:
 		// Fetch all chunks under this header1
 		subChunks, err = s.GetHeader1CompleteContext(chunk)

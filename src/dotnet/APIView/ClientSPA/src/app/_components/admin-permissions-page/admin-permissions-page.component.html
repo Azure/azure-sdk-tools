@@ -1,0 +1,373 @@
+<div class="admin-permissions-container">
+    <!-- Hero Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="pi pi-shield"></i>
+            </div>
+            <div class="header-text">
+                <h1>Permission Groups</h1>
+                <p class="subtitle">Manage user groups, roles, and access permissions</p>
+            </div>
+        </div>
+        <div class="header-stats" *ngIf="!isLoading && isAdmin">
+            <div class="stat-card">
+                <span class="stat-value">{{ groups.length }}</span>
+                <span class="stat-label">Groups</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ getTotalMembers() }}</span>
+                <span class="stat-label">Total Members</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner">
+            <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        <p>Loading permissions data...</p>
+    </div>
+
+    <!-- Access Denied -->
+    <div *ngIf="!isLoading && !isAdmin" class="access-denied">
+        <div class="denied-icon">
+            <i class="pi pi-lock"></i>
+        </div>
+        <h2>Access Restricted</h2>
+        <p>You need Administrator permissions to manage groups.</p>
+        <p class="hint">Contact your system administrator for access.</p>
+    </div>
+
+    <!-- Main Content (Admin Only) -->
+    <div *ngIf="!isLoading && isAdmin" class="main-content">
+        <!-- Groups Panel -->
+        <div class="groups-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="pi pi-users"></i>
+                    <h2>Groups</h2>
+                </div>
+                <button pButton label="New Group" icon="pi pi-plus" 
+                    class="p-button-sm p-button-rounded" (click)="openCreateGroupDialog()"></button>
+            </div>
+
+            <div class="groups-list" *ngIf="groups.length > 0">
+                <div *ngFor="let group of groups; let i = index" 
+                    class="group-card" 
+                    [class.selected]="selectedGroup?.groupId === group.groupId"
+                    [style.animation-delay]="i * 50 + 'ms'"
+                    (click)="selectGroup(group)">
+                    
+                    <div class="group-avatar" [style.background]="getGroupColor(i)">
+                        {{ group.groupName.charAt(0).toUpperCase() }}
+                    </div>
+                    
+                    <div class="group-info">
+                        <h3>{{ group.groupName }}</h3>
+                        <span class="group-id">{{ group.groupId }}</span>
+                        <div class="group-badges">
+                            <span class="badge members-badge">
+                                <i class="pi pi-users"></i> {{ group.members.length }}
+                            </span>
+                            <span class="badge roles-badge">
+                                <i class="pi pi-key"></i> {{ group.roles.length }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="group-actions">
+                        <button pButton icon="pi pi-pencil" 
+                            class="p-button-rounded p-button-text p-button-sm action-btn"
+                            pTooltip="Edit group" tooltipPosition="top"
+                            (click)="openEditGroupDialog(group); $event.stopPropagation()"></button>
+                        <button pButton icon="pi pi-trash" 
+                            class="p-button-rounded p-button-text p-button-danger p-button-sm action-btn"
+                            pTooltip="Delete group" tooltipPosition="top"
+                            (click)="deleteGroup(group); $event.stopPropagation()"></button>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="groups.length === 0" class="empty-state">
+                <div class="empty-illustration">
+                    <i class="pi pi-inbox"></i>
+                </div>
+                <h3>No groups yet</h3>
+                <p>Create your first permission group to get started</p>
+                <button pButton label="Create Group" icon="pi pi-plus" 
+                    class="p-button-outlined" (click)="openCreateGroupDialog()"></button>
+            </div>
+        </div>
+
+        <!-- Group Details Panel -->
+        <div class="details-panel" *ngIf="selectedGroup">
+            <!-- Detail Header -->
+            <div class="detail-header">
+                <div class="detail-title-row">
+                    <div class="detail-avatar" [style.background]="getGroupColor(groups.indexOf(selectedGroup))">
+                        {{ selectedGroup.groupName.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="detail-title">
+                        <h2>{{ selectedGroup.groupName }}</h2>
+                        <code class="group-id-code">{{ selectedGroup.groupId }}</code>
+                    </div>
+                </div>
+                <div class="detail-meta">
+                    <span class="meta-item">
+                        <i class="pi pi-clock"></i>
+                        Updated {{ formatDate(selectedGroup.lastUpdatedOn) }}
+                    </span>
+                    <span class="meta-item">
+                        <i class="pi pi-user"></i>
+                        by {{ selectedGroup.lastUpdatedBy }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Roles Section -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="pi pi-key"></i>
+                        <h3>Assigned Roles</h3>
+                    </div>
+                    <span class="section-count">{{ selectedGroup.roles.length }} roles</span>
+                </div>
+                <div class="roles-grid">
+                    <div *ngFor="let role of selectedGroup.roles" 
+                        class="role-card" 
+                        [class.global-role]="role.kind === 'global'"
+                        [class.scoped-role]="role.kind === 'scoped'">
+                        <div class="role-icon">
+                            <i [class]="role.kind === 'global' ? 'pi pi-globe' : 'pi pi-code'"></i>
+                        </div>
+                        <div class="role-info">
+                            <span class="role-name">{{ formatRoleName(role.role) }}</span>
+                            <span class="role-scope" *ngIf="role.kind === 'scoped'">{{ role.language }}</span>
+                            <span class="role-scope" *ngIf="role.kind === 'global'">Global Access</span>
+                        </div>
+                    </div>
+                    <div *ngIf="selectedGroup.roles.length === 0" class="empty-roles">
+                        <i class="pi pi-info-circle"></i>
+                        <span>No roles assigned to this group</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members Section -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="pi pi-users"></i>
+                        <h3>Members</h3>
+                    </div>
+                    <button pButton label="Add Member" icon="pi pi-user-plus" 
+                        class="p-button-sm p-button-outlined p-button-rounded" 
+                        (click)="openAddMemberDialog()"></button>
+                </div>
+                <div class="members-grid">
+                    <div *ngFor="let member of selectedGroup.members" class="member-card">
+                        <div class="member-avatar">
+                            {{ member.charAt(0).toUpperCase() }}
+                        </div>
+                        <span class="member-name">{{ member }}</span>
+                        <button pButton icon="pi pi-times" 
+                            class="p-button-rounded p-button-text p-button-danger p-button-sm remove-btn"
+                            pTooltip="Remove member" tooltipPosition="top"
+                            (click)="removeMember(member)"></button>
+                    </div>
+                    <div *ngIf="selectedGroup.members.length === 0" class="empty-members">
+                        <i class="pi pi-user-plus"></i>
+                        <span>No members in this group</span>
+                        <button pButton label="Add First Member" icon="pi pi-plus" 
+                            class="p-button-text p-button-sm" (click)="openAddMemberDialog()"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Section -->
+            <div class="detail-section" *ngIf="selectedGroup.serviceNames && selectedGroup.serviceNames.length > 0">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="pi pi-box"></i>
+                        <h3>Associated Services</h3>
+                    </div>
+                </div>
+                <div class="services-grid">
+                    <span *ngFor="let service of selectedGroup.serviceNames" class="service-tag">
+                        {{ service }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Group Selected State -->
+        <div class="details-panel empty-details" *ngIf="!selectedGroup && groups.length > 0">
+            <div class="empty-details-content">
+                <div class="empty-illustration large">
+                    <i class="pi pi-arrow-left"></i>
+                </div>
+                <h3>Select a Group</h3>
+                <p>Choose a group from the list to view and manage its details</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Group Dialog -->
+<p-dialog [(visible)]="showGroupDialog" 
+    [header]="isEditMode ? '✏️ Edit Group' : '✨ Create New Group'" 
+    [modal]="true" 
+    [draggable]="false"
+    [style]="{ width: '550px' }"
+    styleClass="custom-dialog">
+    
+    <div class="dialog-content">
+        <!-- Group ID (only for create) -->
+        <div class="form-field" *ngIf="!isEditMode">
+            <label for="groupId">
+                <i class="pi pi-hashtag"></i> Group ID
+            </label>
+            <input pInputText id="groupId" [(ngModel)]="groupForm.groupId" 
+                placeholder="e.g., python-architects" class="w-full input-enhanced" />
+            <small class="field-hint">
+                <i class="pi pi-info-circle"></i>
+                Unique identifier - cannot be changed after creation
+            </small>
+        </div>
+
+        <!-- Group Name -->
+        <div class="form-field">
+            <label for="groupName">
+                <i class="pi pi-tag"></i> Display Name
+            </label>
+            <input pInputText id="groupName" [(ngModel)]="groupForm.groupName" 
+                placeholder="e.g., Python Architects Team" class="w-full input-enhanced" />
+        </div>
+
+        <!-- Roles Section -->
+        <div class="form-field roles-field">
+            <label>
+                <i class="pi pi-key"></i> Roles
+            </label>
+            
+            <!-- Role Type Toggle -->
+            <div class="role-type-toggle">
+                <p-selectButton [options]="[{label: '🌐 Global Role', value: 'global'}, {label: '🔤 Language Role', value: 'scoped'}]" 
+                    [(ngModel)]="newRoleKind" optionLabel="label" optionValue="value"></p-selectButton>
+            </div>
+            
+            <!-- Add Role Form -->
+            <div class="add-role-form">
+                <div class="role-selectors">
+                    <!-- Global Role Selector -->
+                    <p-select *ngIf="newRoleKind === 'global'" 
+                        [(ngModel)]="newGlobalRole" 
+                        [options]="globalRoleOptions"
+                        optionLabel="label" 
+                        optionValue="value"
+                        placeholder="Select Role"
+                        appendTo="body"
+                        class="role-select flex-grow">
+                    </p-select>
+
+                    <!-- Scoped Role Selectors -->
+                    <ng-container *ngIf="newRoleKind === 'scoped'">
+                        <p-select [(ngModel)]="newScopedRole" 
+                            [options]="languageScopedRoleOptions"
+                            optionLabel="label" 
+                            optionValue="value"
+                            placeholder="Select Role"
+                            appendTo="body"
+                            class="role-select">
+                        </p-select>
+                        <p-select [(ngModel)]="newRoleLanguage" 
+                            [options]="languageOptions"
+                            optionLabel="label" 
+                            optionValue="value"
+                            placeholder="Language"
+                            appendTo="body"
+                            class="language-select">
+                        </p-select>
+                    </ng-container>
+
+                    <button pButton icon="pi pi-plus" label="Add" 
+                        class="p-button-sm p-button-outlined add-role-btn" 
+                        (click)="addRoleToForm()"></button>
+                </div>
+            </div>
+
+            <!-- Current Roles -->
+            <div class="current-roles" *ngIf="groupForm.roles.length > 0">
+                <div *ngFor="let role of groupForm.roles; let i = index" 
+                    class="role-chip"
+                    [class.global]="role.kind === 'global'"
+                    [class.scoped]="role.kind === 'scoped'">
+                    <i [class]="role.kind === 'global' ? 'pi pi-globe' : 'pi pi-code'"></i>
+                    <span>{{ getRoleDisplayName(role) }}</span>
+                    <button pButton icon="pi pi-times" 
+                        class="p-button-rounded p-button-text p-button-sm chip-remove" 
+                        (click)="removeRoleFromForm(i)"></button>
+                </div>
+            </div>
+            <div class="no-roles-hint" *ngIf="groupForm.roles.length === 0">
+                <i class="pi pi-info-circle"></i>
+                <span>Add at least one role to this group</span>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer">
+            <button pButton label="Cancel" icon="pi pi-times" 
+                class="p-button-text p-button-secondary" 
+                (click)="showGroupDialog = false"></button>
+            <button pButton [label]="isEditMode ? 'Save Changes' : 'Create Group'" 
+                [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+                class="p-button-rounded"
+                (click)="saveGroup()"
+                [disabled]="!groupForm.groupId || !groupForm.groupName"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Add Member Dialog -->
+<p-dialog [(visible)]="showAddMemberDialog" 
+    header="👤 Add Team Member" 
+    [modal]="true" 
+    [draggable]="false"
+    [style]="{ width: '420px' }"
+    styleClass="custom-dialog">
+    
+    <div class="dialog-content">
+        <div class="member-dialog-header">
+            <p>Add a new member to <strong>{{ selectedGroup?.groupName }}</strong></p>
+        </div>
+        <div class="form-field">
+            <label for="memberUsername">
+                <i class="pi pi-github"></i> GitHub Username
+            </label>
+            <input pInputText id="memberUsername" [(ngModel)]="newMemberUsername" 
+                placeholder="e.g., octocat" class="w-full input-enhanced" 
+                (keyup.enter)="addMember()" />
+            <small class="field-hint">
+                <i class="pi pi-info-circle"></i>
+                Enter the exact GitHub username
+            </small>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer">
+            <button pButton label="Cancel" icon="pi pi-times" 
+                class="p-button-text p-button-secondary" 
+                (click)="showAddMemberDialog = false"></button>
+            <button pButton label="Add Member" icon="pi pi-user-plus" 
+                class="p-button-rounded"
+                (click)="addMember()" 
+                [disabled]="!newMemberUsername.trim()"></button>
+        </div>
+    </ng-template>
+</p-dialog>

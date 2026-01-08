@@ -118,7 +118,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, "", processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.");
             }
 
             return new PackageCheckResponse(processResult);
@@ -179,7 +179,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, "", processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.");
             }
 
             return new PackageCheckResponse(processResult);
@@ -244,7 +244,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, "", processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.");
             }
 
             return new PackageCheckResponse(processResult);

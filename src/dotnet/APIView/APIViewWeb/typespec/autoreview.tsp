@@ -18,7 +18,7 @@ namespace AutoReviewLegacy {
      * @param reviewId Optional review ID
      * @param firstReleaseStatusOnly Whether to check first release status only
      * @param packageVersion Optional package version
-     * @returns Status code indicating approval state: 200 (approved), 201 (package approved), 202 (not approved)
+     * @returns Status code indicating approval state: 200 (APIs approved), 201 (package name approved), 202 (package name not approved)
      */
     @get
     @route("/GetReviewStatus")

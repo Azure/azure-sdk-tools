@@ -116,9 +116,9 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (processResult.ExitCode != 0)
             {
-                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}, Error: {Error}",
-                    processResult.ExitCode, processResult.Output, processResult.Error);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, processResult.Error);
+                _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, "", processResult.Output);
             }
 
             return new PackageCheckResponse(processResult);
@@ -177,9 +177,9 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (processResult.ExitCode != 0)
             {
-                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}, Error: {Error}",
-                    processResult.ExitCode, processResult.Output, processResult.Error);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, processResult.Error);
+                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, "", processResult.Output);
             }
 
             return new PackageCheckResponse(processResult);
@@ -242,9 +242,9 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (processResult.ExitCode != 0)
             {
-                _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}, Error: {Error}",
-                    processResult.ExitCode, processResult.Output, processResult.Error);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, processResult.Error);
+                _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, "", processResult.Output);
             }
 
             return new PackageCheckResponse(processResult);

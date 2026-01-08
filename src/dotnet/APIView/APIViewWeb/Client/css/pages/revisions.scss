@@ -1,4 +1,4 @@
-@import "../shared/mixins.scss";
+@use "../shared/mixins.scss" as *;
 
 #revisions-main-container {
     @include main-content-container;

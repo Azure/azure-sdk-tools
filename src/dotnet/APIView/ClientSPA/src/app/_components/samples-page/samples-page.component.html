@@ -34,8 +34,8 @@
                                 <span *ngIf="activeSamplesRevision" class="small text-muted">
                                     Created By: <a href="{{webAppUrl}}Assemblies/Profile/{{activeSamplesRevision.createdBy}}">{{activeSamplesRevision.createdBy}}</a>
                                 </span>
-                                <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
-                                <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
+                                <button *ngIf="samplesContent && userProfile && userProfile.userName && activeSamplesRevision?.createdBy === userProfile.userName" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
+                                <button *ngIf="samplesContent && userProfile && userProfile.userName && activeSamplesRevision?.createdBy === userProfile.userName" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
                                 <button class="btn btn-primary" (click)="showAddSamplesPanel()" type="button">Add sample</button>
                             </div>
                         </li>
@@ -45,13 +45,14 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
+<p-drawer [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
             <h4 *ngIf="samplesUpdateState == 'add'">Add usage samples</h4>
             <h4 *ngIf="samplesUpdateState == 'edit'">Update usage samples</h4>
         </div>
     </ng-template>
+    <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <span class="p-float-label mt-4 mb-3">
         <input pInputText id="add-edit-samples-title" [(ngModel)]="addEditSamplesTitle" style="width: 100%;"/>
         <label htmlFor="add-edit-samples-title">Title</label>
@@ -64,11 +65,11 @@
             <li class="nav-item">
                 <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#md-file">Upload markdown file</a>
             </li>
-        </ul>    
+        </ul>
         <div class="tab-content">
             <div class="tab-pane active" id="md-text">
                 <div class="samples-editor-panel mb-3">
-                    <app-code-editor 
+                    <app-code-editor
                         [content]="addEditSamplesContent"
                         language="markdown"
                         (contentValueChange)="handleContentValueChange($event)">
@@ -81,12 +82,12 @@
                         (click)="createUsageSample()">{{ createSamplesButton }}
                         <span *ngIf="isCreatingSamples" class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
                     </button>
-                </div> 
+                </div>
             </div>
             <div class="tab-pane pt-2" id="md-file">
                 <p-fileUpload
                     chooseLabel="Select Markdown File" [customUpload]="true"
-                    [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0" 
+                    [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0"
                     accept=".md" (onSelect)="onSamplesUploadFileSelect($event)" (onRemove)="samplesUploadFile = undefined">
                     <ng-template pTemplate="content">
                         <div *ngIf="!samplesUploadFile" class="mx-2">or drag and drop files here</div>
@@ -99,13 +100,13 @@
                         (click)="createUsageSample()">{{ uploadSamplesButton }}
                         <span *ngIf="isCreatingSamples" class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
                     </button>
-                </div> 
+                </div>
             </div>
         </div>
     </ng-container>
     <ng-container  *ngIf="samplesUpdateState == 'edit'">
         <div class="samples-editor-panel mb-3">
-            <app-code-editor 
+            <app-code-editor
                 [content]="addEditSamplesContent"
                 language="markdown"
                 (contentValueChange)="handleContentValueChange($event)">
@@ -116,10 +117,11 @@
                 type="button" (click)="updateUsageSample()"> {{ updateSamplesButton }}
                 <span *ngIf="isUpdatingSamples" class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
             </button>
-        </div> 
+        </div>
     </ng-container>
-</p-sidebar>
-<p-dialog header="Delete usage sample" 
+    </div>
+</p-drawer>
+<p-dialog header="Delete usage sample"
     [modal]="true" [(visible)]="showSamplesDeleteModal"
     [style]="{ width: '20dvw' }">
     <p>Are you sure you want to delete the usage sample?</p>

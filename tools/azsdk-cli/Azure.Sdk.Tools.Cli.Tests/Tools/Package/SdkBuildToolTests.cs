@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tools.Package;
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 
@@ -61,7 +61,7 @@ public class SdkBuildToolTests
             new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
             new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new GoLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
             new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
         ];
 
@@ -109,15 +109,15 @@ public class SdkBuildToolTests
         // Arrange - create a test directory structure
         var projectDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "project");
         Directory.CreateDirectory(projectDir);
-        
+
         // Save the current directory
         var originalDir = Directory.GetCurrentDirectory();
-        
+
         try
         {
             // Change to the temp directory
             Directory.SetCurrentDirectory(_tempDirectory.DirectoryPath);
-            
+
             // Mock GitHelper for the resolved path
             _mockGitHelper
                 .Setup(x => x.DiscoverRepoRoot(projectDir))

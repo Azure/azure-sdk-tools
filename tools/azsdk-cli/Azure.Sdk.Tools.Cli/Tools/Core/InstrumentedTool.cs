@@ -9,16 +9,28 @@ using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
-public class InstrumentedTool(
-    ITelemetryService telemetryService,
-    ILogger logger,
-    McpServerTool innerTool
-) : DelegatingMcpServerTool(innerTool)
+public class InstrumentedTool : DelegatingMcpServerTool
 {
+    private readonly ITelemetryService telemetryService;
+    private readonly ILogger logger;
+    private readonly McpServerTool innerTool;
     private readonly JsonSerializerOptions serializerOptions = new()
     {
         WriteIndented = false,
     };
+
+    public InstrumentedTool(
+        ITelemetryService telemetryService,
+        ILogger logger,
+        McpServerTool innerTool
+    ) : base(innerTool)
+    {
+        this.telemetryService = telemetryService;
+        this.logger = logger;
+        this.innerTool = innerTool;
+    }
+
+    public override IReadOnlyList<object> Metadata => innerTool.Metadata;
 
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {

@@ -1,6 +1,15 @@
 :host ::ng-deep {
-    .a {
+    a {
         text-decoration: none;
+        color: var(--link-color);
+    }
+
+    a:hover {
+        text-decoration: underline;
+        color: var(--link-active);
+    }
+
+    img {
     }
 
     .p-tree {
@@ -12,30 +21,40 @@
         width: 100%;
         overflow-y: scroll;
         overflow-x: hidden;
+        background: var(--base-fg-color);
+        color: var(--base-text-color);
     }
 
-    .p-treenode-label {
+    .p-tree-node-label {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .p-tree .p-tree-container .p-treenode .p-treenode-content {
-        padding: 0rem;
+    .p-tree-node-content {
+        padding: 0 !important;
+        margin: 0 !important;
         border: 0px;
         cursor: pointer;
+        display: flex;
+        align-items: center;
 
-        .p-tree-toggler {
+        .p-tree-node-toggle-button {
             height: 1rem;
+            width: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     }
 
-    .p-tree .p-tree-container .p-treenode {
-        padding: 0rem;
+    .p-tree-node {
+        padding: 0 !important;
+        margin: 0 !important;
         outline: 0 none;
     }
 
-    p-treenode ul {
+    .p-tree-node ul {
         padding-left: 1rem;
     }
 
@@ -48,6 +67,6 @@
         color: var(--primary-color) !important;
         background-color: var(--client-type-bg);
         padding: 2px 6px;
-        border-radius: 3px;
+        border-radius: 5px;
     }
 }

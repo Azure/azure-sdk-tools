@@ -172,3 +172,7 @@ func processIncludes(prompt string, templatePath string) (string, error) {
 
 	return prompt, nil
 }
+
+type AgenticSearchPromptParser struct {
+	*DefaultPromptParser
+}

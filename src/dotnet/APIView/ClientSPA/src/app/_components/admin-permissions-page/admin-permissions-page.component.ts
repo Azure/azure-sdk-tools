@@ -26,7 +26,8 @@ interface GroupFormData {
 @Component({
     selector: 'app-admin-permissions-page',
     templateUrl: './admin-permissions-page.component.html',
-    styleUrls: ['./admin-permissions-page.component.scss']
+    styleUrls: ['./admin-permissions-page.component.scss'],
+    standalone: false
 })
 export class AdminPermissionsPageComponent implements OnInit {
     currentUserPermissions: EffectivePermissions | null = null;

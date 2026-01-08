@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +26,7 @@ import { environment } from 'src/environments/environment';
     imports: [
         CommonModule,
         FormsModule,
+        RouterModule,
         DrawerModule,
         SelectButtonModule,
         TimeagoModule

@@ -134,7 +134,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
    - Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
    - Both pipeline-based generation (`azsdk_run_generate_sdk`) and local generation (`azsdk_package_generate_code`) workflows are fully supported and should work seamlessly
 
-4. **Customizations** → `azsdk_customized_code_update`
+4. **Customizations** → `azsdk_pacakge_customize_code`
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
    - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code)
    - Automatically determines appropriate customization approach based on request
@@ -293,7 +293,7 @@ Customization requests can come from multiple sources:
 - **API View feedback**: Comments and suggestions from API reviewers
 - **Build logs**: Compilation errors, warnings, or validation failures that require code adjustments
 
-**Tool:** `azsdk_customized_code_update`
+**Tool:** `azsdk_pacakge_customize_code`
 
 **Two-Phase Workflow:**
 
@@ -436,7 +436,7 @@ Scenario 2 is complete when:
 - Testing succeeds in all modes (live, live-record, playback) with automatic resource provisioning and cleanup, test recordings are generated or refreshed correctly, and test filtering works as expected
 - **All Scenario 2 tooling enhancements and additions function correctly** as defined in their respective stage details:
   - `azsdk_verify_setup` detects issues in verify-only mode and remediates them in auto-install mode (enhanced from Scenario 1)
-  - `azsdk_customized_code_update` applies both TypeSpec and code customizations through unified two-phase workflow (new)
+  - `azsdk_pacakge_customize_code` applies both TypeSpec and code customizations through unified two-phase workflow (new)
   - `azsdk_package_run_tests` handles all test modes with automatic resource management (new)
 - **Both [Net-New SDKs](#net-new-sdk) and existing SDKs** are fully supported throughout all stages
 
@@ -466,7 +466,7 @@ I need to create a new Health Deidentification SDK for all languages.
    - After generation completes, validation is performed (build and playback tests)
    - **Agent reports** generation results and any validation issues
 5. **Agent asks user** if any customizations are needed (TypeSpec or code level).
-   - If yes, apply `azsdk_customized_code_update` to handle both TypeSpec and code customizations:
+   - If yes, apply `azsdk_pacakge_customize_code` to handle both TypeSpec and code customizations:
      - Phase A: Apply TypeSpec customizations to `client.tsp`, regenerate SDK, validate build
      - Phase B: Apply code customizations if needed (helper APIs, convenience methods), validate final build
      - Present consolidated diff and **obtain user approval** before applying changes
@@ -517,7 +517,7 @@ There are new changes in the Health Deidentification API spec. I need to regener
    - **Agent reports** generation results and any validation issues
 5. **Agent asks user** if any customizations are needed (TypeSpec or code level).
    - In this example, user indicates no customizations needed; agent proceeds to next step
-   - If customizations were needed, agent would apply `azsdk_customized_code_update` as in net-new SDK workflow
+   - If customizations were needed, agent would apply `azsdk_pacakge_customize_code` as in net-new SDK workflow
 6. Execute tests with `azsdk_package_run_tests --mode playback` to validate the generated code.
    - **Agent reports** playback test results
 7. If applicable for management plane, run `azsdk_package_update_metadata`, `azsdk_package_update_version`, and `azsdk_package_update_changelog_content`.
@@ -542,7 +542,7 @@ I need to adjust the client surface for the Health Deidentification SDK. Can you
 **Expected Agent Activity:**
 
 1. **Agent asks user** for specific details about the desired changes.
-2. Call `azsdk_customized_code_update` with the customization request.
+2. Call `azsdk_pacakge_customize_code` with the customization request.
 3. Tool executes Phase A (TypeSpec Customizations):
    - Analyzes request and determines TypeSpec changes are appropriate (operation renames, parameter grouping, etc.)
    - Opens the `client.tsp` file and applies edits aligned with the request
@@ -562,7 +562,7 @@ I need to add some convenience methods to the Health Deidentification SDK to mak
 **Expected Agent Activity:**
 
 1. **Agent asks user** for specific details about the convenience methods needed.
-2. Call `azsdk_customized_code_update` with the customization request.
+2. Call `azsdk_pacakge_customize_code` with the customization request.
 3. Tool executes Phase A (TypeSpec) - determines TypeSpec cannot address this request (convenience methods require handwritten code).
 4. Tool executes Phase B (Code Customizations):
    - Identifies customization directories for each language
@@ -861,7 +861,7 @@ Usage: azsdk typespec authoring --request <request> [--additional-information <i
 
 ### 3. Apply Customizations
 
-**Note**: It is unclear whether a CLI command for customizations should exist, as customizations may not be a good use case for non-interactive CLI execution. See the [Pipeline & CI Usage](#pipeline--ci-usage) section for discussion on whether `azsdk_customized_code_update` should be used in CI at all.
+**Note**: It is unclear whether a CLI command for customizations should exist, as customizations may not be a good use case for non-interactive CLI execution. See the [Pipeline & CI Usage](#pipeline--ci-usage) section for discussion on whether `azsdk_pacakge_customize_code` should be used in CI at all.
 
 **Command:**
 
@@ -1090,7 +1090,7 @@ Scenario 2 also needs to consider **how the CLI tools will be used inside CI/CD 
   - Should be configurable via flags or environment variables in CI (for example, default verify-only mode vs. `--fix` mode with `--auto-install`) to avoid surprise installations on shared agents.
   - In CI, verify-only mode (default) should be safe to run always; fix mode should be opt-in.
 - Customization and generation:
-  - **Open Question**: Should `azsdk_customized_code_update` be used in CI at all, or is it primarily an agent-mode/interactive tool?
+  - **Open Question**: Should `azsdk_pacakge_customize_code` be used in CI at all, or is it primarily an agent-mode/interactive tool?
     - **Agent Mode Argument**: Customizations typically require human decision-making (reviewing diffs, approving changes, iterative refinement), making them better suited for interactive agent workflows where developers can provide feedback and guidance.
     - **CI Argument**: Some customizations (like applying consistent API review feedback patterns or automated fixes) might be deterministic enough to run in CI with `--auto-approve` flag.
     - **Hybrid Approach**: Customizations are performed locally in agent mode, committed to source control, and CI only runs generation + build + test on the committed customizations.
@@ -1136,7 +1136,7 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 
 1. Author detailed tool specs for new Scenario 2 tools:
    - Enhanced `azsdk_verify_setup` (with optional fix mode for remediation)
-   - Enhanced `azsdk_customized_code_update` (unified two-phase customization workflow)
+   - Enhanced `azsdk_pacakge_customize_code` (unified two-phase customization workflow)
    - Enhanced `azsdk_package_run_tests` (unified testing with automatic resource management)
 2. Confirm integration points with existing tools (`azsdk_package_generate_code`, `azsdk_package_build_code`).
 3. Define telemetry events (start, success, failure) and common correlation identifiers across all tools.
@@ -1179,10 +1179,11 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 **Tool Auto-Installation Rules:**
 
 - What are the specific criteria for determining which tools can be auto-installed/auto-upgraded by `azsdk_verify_setup` versus which require manual installation with guidance links?
+  - Proposed guideline: Anything requiring system-level or administrator permissions should be considered out of scope, as the agent shouldn't have admin permissions. For example, installing Python, .NET SDK, or Java JDK (system-level installations) would be out of scope, while installing `tsp-client` or similar user-level packages (npm packages, pip packages for current user) would be in scope for auto-installation.
 
 **Customization Decision Logic:**
 
-- What is the complete set of criteria that `azsdk_customized_code_update` should use to determine whether a customization should be done using TypeSpec (Phase A) versus code (Phase B), or both?
+- What is the complete set of criteria that `azsdk_pacakge_customize_code` should use to determine whether a customization should be done using TypeSpec (Phase A) versus code (Phase B), or both?
 - Should the decision logic be language-specific or language-agnostic?
 
 **Test Asset Generation:**
@@ -1198,6 +1199,7 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 - Should this be fully automated, semi-automated with templates, or primarily manual with tooling assistance?
 - What level of service-specific domain knowledge is required, and how can the tool accommodate varying levels of complexity across different Azure services?
 - Should there be a fallback mechanism or clear guidance when automatic bicep generation is not possible?
+- We should consult with the GHCP4A team.
 
 ---
 

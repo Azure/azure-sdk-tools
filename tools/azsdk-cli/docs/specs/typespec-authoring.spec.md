@@ -234,76 +234,71 @@ enum Versions {
 
 ## Design Proposal
 
-Leverage the existing APIs for Azure SDK knowledge base to deliver solutions aligned with Azure guidelines and best practices. Implement a TypeSpec authoring MCP tool that consults the Azure SDK RAG service to generate these solutions.
+Build a custom agent `typespec-author-agent` that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
+The agent adopts Azure KB to provide solution for user request:
+
+Based on the request, the agent will invoke an Azure KB tool to retrieve the solution for user request and then apply the solution to edit TypeSpec files.
+
+- Leverage the existing APIs for Azure SDK knowledge base to deliver solutions aligned with Azure guidelines and best practices. 
+- Implement a TypeSpec solution MCP tool that consults the Azure SDK RAG service to generate these solutions.
 
 ### Overview
 
-
-```
-         ┌──────┐
-         │ USER │
-         └───┬──┘
-             │
-             │ (1) Prompt: "add ARM resource Asset"
-             ▼
-    ┌────────────────┐
-    │ GitHub Copilot │
-    └───────┬────────┘
-            │
-            │ (2) Invoke azsdk_typespec_authoring
-            │     (--request, --additional-info)
-            ▼
-    ┌────────────────────────┐
-    │ TypeSpec Authoring     │──────(3) Analyze────▶ ┌──────────────┐
-    │ Tool (MCP)             │                        │  TypeSpec    │
-    │                        │◀─────Current state──── │    Files     │
-    │ • Parse Input          │                        └──────────────┘
-    │ • Query KB             │
-    │ • Process Response     │
-    └───────┬────────────────┘
-            │
-            │ (4) Query
-            ▼
-    ┌────────────────────────┐
-    │  Azure SDK KB (RAG)    │
-    │  • Azure docs          │
-    │  • Guidelines          │
-    │  • Best practices      │
-    └───────┬────────────────┘
-            │
-            │ (5) Solution + References
-            ▼
-    ┌────────────────┐
-    │ GitHub Copilot │
-    └───────┬────────┘
-            │
-            │ (6) Update files & present to user
-            ▼
-         ┌──────┐
-         │ USER │
-         └──────┘
+```code
+┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
+│ User │          │ custom agent│          │ azsdk     │          │ Knowledge │
+│      │          │ Copilot     │          │ MCP       │          │ base      │
+└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘
+   │                     │                       │                      │
+   │ "Add new preview    │                       │                      │
+   │  version 2025-12-09 │                       │                      │
+   │  to project widget" │                       │                      │
+   │────────────────────>│                       │                      │
+   │                     │────┐                  │                      │
+   │                     │    │ retrieve required│                      │
+   │                     │<───┘ information      │                      │
+   │                     │                       │                      │
+   │                     │ Request versioning    │                      │
+   │                     │ info                  │                      │
+   │                     │──────────────────────>│                      │
+   │                     │                       │                      │
+   │                     │                       │ Search request       │
+   │                     │                       │─────────────────────>│
+   │                     │                       │                      │
+   │                     │                       │ Versioning solution  │
+   │                     │                       │<─────────────────────│
+   │                     │                       │                      │
+   │                     │ Versioning solution   │                      │
+   │                     │<──────────────────────│                      │
+   │                     │────┐                  │                      │
+   │                     │    │ Make edits       │                      │
+   │                     │<───┘                  │                      │
+   │                     │                       │                      │
+   │ "Changes made"      │                       │                      │
+   │<────────────────────│                       │                      │
+   │                     │                       │                      │
 ```
 
 ### Detailed Design
 
-The TypeSpec authoring workflow follows a streamlined process where the user interacts with GitHub Copilot using natural language, and Copilot leverages the TypeSpec Authoring Tool (MCP) to generate standards-compliant solutions. The architecture diagram above illustrates this end-to-end flow:
+The TypeSpec authoring workflow follows a streamlined process where the user interacts with Custom agent `azure-typespec-author-agent` using natural language, and agent leverages the TypeSpec Solution Tool (MCP) to generate standards-compliant solutions. The architecture diagram above illustrates this end-to-end flow:
 
-1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "add ARM resource Asset with CRUD operations")
-2. **GitHub Copilot invokes the TypeSpec Authoring Tool** (MCP: `azsdk_typespec_authoring`) with the user's request and any additional context
-3. **The Tool analyzes existing TypeSpec files** to understand the current project structure and state
-4. **The Tool queries the Azure SDK Knowledge Base** with a structured request containing the user's intent and project context
-5. **The Knowledge Base returns a RAG-powered solution** with step-by-step guidance and documentation references
-6. **GitHub Copilot applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
+1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
+2. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
+3. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_retrieve_solution`) with the user's request and any additional context
+4. The `azsdk_typespec_retrieve_solution` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
+5. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
+6. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
 
 This design ensures that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices by grounding every solution in authoritative Azure documentation.
 
-#### Component 1: TypeSpec Authoring Tool
+#### Component 1: TypeSpec Solution Tool
 
-**Name (CLI)**: `azsdk typespec authoring`
+**Name (CLI)**: `azsdk typespec retrieve-solution`
 
-**Name (MCP)**: `azsdk_typespec_authoring`
+**Name (MCP)**: `azsdk_typespec_retrieve_solution`
 
-**Purpose**: Help the user to define or edit TypeSpec API specifications and resolve TypeSpec-related tasks.
+**Purpose**: Provide a solution to define or edit TypeSpec API specifications for TypeSpec-related tasks.
 
 **Input Parameters**:
 
@@ -367,136 +362,86 @@ TypeSpec authoring is language-agnostic. The generated SDKs target specific lang
 
 ---
 
-## Alternatives
+### Future enhancement
 
-### Alternative 1: Use llm.txt for AI Context
-
-**Description:**
-
-Instead of building a dedicated TypeSpec authoring tool with RAG integration, provide a comprehensive `llm.txt` file in TypeSpec repositories that contains all Azure TypeSpec guidelines, ARM patterns, and best practices. AI assistants like GitHub Copilot would automatically read this file to improve their context when helping with TypeSpec authoring.
-
-**Pros:**
-
-- Simpler implementation - no backend service or MCP tool needed
-- Standard approach that works with any AI assistant that supports llm.txt
-- Easier to maintain - guidelines are in plain text files that can be updated by documentation teams
-- No authentication or API dependencies
-- Works offline once the file is in the repository
-
-**Cons:**
-
-- Limited context window - llm.txt files must be small enough to fit in AI context, limiting the depth of guidance
-- No dynamic retrieval - all content must be loaded upfront, can't retrieve specific relevant sections based on user request
-- No tracking of documentation references or versioning
-- Context lost in the middle - when llm.txt content is large, AI models may miss critical information in the middle of the context window (the "lost in the middle" phenomenon)
-- Distraction from irrelevant content - loading all llm.txt content upfront can distract the AI from the specific task, potentially causing incorrect document retrieval or pattern matching
-- Performance degradation with longer contexts - larger llm.txt files lead to slower AI response times and reduced accuracy
-- Computational and cost challenges - processing large static context files on every request increases token usage and API costs
-
----
-
-### Alternative 2: Hybrid Approach - llm.txt + Knowledge Base
+#### Multiple Skills
 
 **Description:**
 
-Combine llm.txt files for basic context with selective Knowledge Base queries for complex scenarios. The llm.txt would contain high-level guidelines and common patterns, while the TypeSpec authoring tool would query the Knowledge Base only for advanced scenarios requiring deep domain expertise.
-
-**Pros:**
-
-- Best of both worlds - basic guidance available immediately via llm.txt
-- Reduced Knowledge Base API calls for simple scenarios (cost savings)
-- Better offline support with llm.txt as baseline
-- Knowledge Base can focus on complex edge cases
-
-**Cons:**
-
-- Increased complexity - need to determine when to use llm.txt vs KB, requires decision logic to route requests appropriately
-- Potential inconsistency between llm.txt content and KB responses
-- Maintenance burden - must keep both llm.txt and KB in sync
-- Unclear boundaries between "simple" and "complex" scenarios
-- May still result in hallucinations for medium-complexity cases that rely only on llm.txt
-
----
-
-### Alternative 3: Custom agent + Azure KB
-
-**Description:**
-
-Build a custom agent that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
-
-The agent adopts Azure KB to provide solution for user request:
-
-Based on the request, the agent will invoke an Azure KB tool to retrieve the solution for user request and then apply the solution to edit typespec files.
+Enhance Custom agent `typespec-author-agent` capability with multiple Skills. Agent will choose skill according to the request scenario.
 
 ```code
-┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
-│ User │          │ custom agent│          │ azsdk     │          │ Knowledge │
-│      │          │ Copilot     │          │ MCP       │          │ base      │
-└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘
-   │                     │                       │                      │
-   │ "Add new preview    │                       │                      │
-   │  version 2025-12-09 │                       │                      │
-   │  to my project"     │                       │                      │
-   │────────────────────>│                       │                      │
+┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐          ┌────────────────┐
+│ User │          │ custom agent│          │ azsdk     │          │ Knowledge │          │ llms.txt       │ 
+│      │          │ Copilot     │          │ MCP       │          │ base (bot)│          │ web fetch tool │
+└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘          └──────┬─────────┘
+   │                     │                       │                      │                        │
+   │ "Add new preview    │                       │                      │                        │
+   │  version 2025-12-09 │                       │                      │                        │
+   │  to my project"     │                       │                      │                        │
+   │────────────────────>│                       │                      │                        │
    │                     │────┐                  │                      │
    │                     │    │ retrieve required│                      │
    │                     │<───┘ information      │                      │
-   │                     │                       │                      │
-   │                     │ Request versioning    │                      │
-   │                     │ info                  │                      │
-   │                     │──────────────────────>│                      │
-   │                     │                       │                      │
-   │                     │                       │ Search request       │
-   │                     │                       │─────────────────────>│
-   │                     │                       │                      │
-   │                     │                       │ Versioning solution  │
-   │                     │                       │<─────────────────────│
-   │                     │                       │                      │
-   │                     │ Versioning solution   │                      │
-   │                     │<──────────────────────│                      │
+   │                     │                       │                      │                        │
+   │                     │────┐                  │                      │                        │
+   │                     │    │ detect scenario  │                      │                        │
+   │                     │<───┘                  │                      │                        │
+   │                     │                       │                      │                        │
+   │                     │ (if: normal authoring)│                      │                        │
+   │                     │ Request versioning    │                      │                        │
+   │                     │ info                  │                      │                        │
+   │                     │──────────────────────>│                      │                        │
+   │                     │                       │                      │                        │
+   │                     │                       │ Search request       │                        │
+   │                     │                       │─────────────────────>│                        │
+   │                     │                       │                      │                        │
+   │                     │                       │ Versioning solution  │                        │
+   │                     │                       │<─────────────────────│                        │
+   │                     │                       │                      │                        │
+   │                     │ Versioning solution   │                      │                        │
+   │                     │<──────────────────────│                      │                        │
+   │                     │────┐                  │                      │                        │
+   │                     │    │ Make edits       │                      │                        │
+   │                     │<───┘                  │                      │                        │
+   │                     │                       │                      │                        │
+   │ "Changes made"      │                       │                      │                        │
+   │<────────────────────│                       │                      │                        │
+   │                     │                       │                      │                        │
+   │                     │                       │                      │                        │
+   │ "rename model name  │                       │                      │                        │
+   │  for dotnet sdk"    │                       │                      │                        │
+   │────────────────────>│                       │                      │                        │
+   │                     │                       │                      │                        │
    │                     │────┐                  │                      │
-   │                     │    │ Make edits       │                      │
-   │                     │<───┘                  │                      │
-   │                     │                       │                      │
-   │ "Changes made"      │                       │                      │
-   │<────────────────────│                       │                      │
-   │                     │                       │                      │
+   │                     │    │ retrieve required│                      │
+   │                     │<───┘ information      │                      │
+   │                     │────┐                  │                      │                        │
+   │                     │    │ detect scenario  │                      │                        │
+   │                     │<───┘                  │                      │                        │
+   │                     │                       │                      │                        │
+   │                     │ (if: customization)   │                      │                        │
+   │                     │ Request customization │                      │                        │
+   │                     │ request               │                      │                        │
+   │                     │───────────────────────│──────────────────────│───────────────────────>│
+   │                     │                       │                      │                        │
+   │                     │ customization context │                      │                        │
+   │                     │<──────────────────────│──────────────────────│────────────────────────│
+   │                     │                       │                      │                        │
+   │                     │────┐                  │                      │                        │
+   │                     │    │generate solution │                      │                        │
+   │                     │<───┘  (llm call)      │                      │                        │
+   │                     │────┐                  │                      │                        │
+   │                     │    │ Make edits       │                      │                        │
+   │                     │<───┘                  │                      │                        │
+
 ```
 
-**Pros:**
+#### Call AI Search instead of Azure Knowledge Base
 
-- Leverages the existing Azure Knowledge Base to provide solutions, reducing development and maintenance costs.
-- Users can choose whether to use the authoring agent; TypeSpec requests are not always proxied to the Azure Knowledge Base. Reduces the number of Azure Knowledge Base API calls.
-- The custom agent can be easily extended with additional skills or tools as needed.
+The custom agent will invoke an AI search to retrieve the relevant TypeSpec information, then use that knowledge as context to generate the final response.
 
-**Cons:**
-
-- Deep couple with Azure knowledge Base. Need to integrate knowledges to azure knowledge base.
-
-### Alternative 4: Custom agent + AI search (Azure KB) + other AI knowledge technique
-
-**Description:**
-
-Build a custom agent that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
-
-The agent adopts multiple techniques to provide knowledge for user request:
-
-- AI Search (Azure KB) as the primary knowledge source, covering most TypeSpec authoring concepts.
-- Built‑in curated knowledge within the custom agent for smaller but important areas, such as customization scenarios and API version‑evolution patterns.
-
-Based on the request scenario, the agent will invoke an AI search tool or other knowledge services to retrieve the relevant TypeSpec information, then use that knowledge as context to generate the final response.
-
-**Pros:**
-
-- Easy to integrate domain knowledge for different request scenarios locally.
-- Leverages existing AI Search in Azure KB, reducing development cost.
-- Reduces the number of Azure Knowledge Base API calls.
-- Decouples knowledge retrieval from final responses, enabling the custom agent to leverage the VS Code model to generate solutions. The custom agent can also craft tailored prompts to produce responses that are well‑suited for authoring tasks.
-
-**Cons:**
-
-- Increase complexity: need to classify request scenarios and routing them to the appropriate knowledge‑query service.
-- Additional development effort: the custom agent must be tuned to consistently provide accurate and context‑aware solutions.
+This approach cleanly decouples knowledge retrieval from final responses, enabling the custom agent to leverage the VS Code model to generate solutions. The custom agent can also craft tailored prompts to produce responses that are well‑suited for authoring tasks.
   
 ## Success Criteria
 
@@ -550,18 +495,20 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 
 **Expected Agent Activity:**
 
-1. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
-1. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-1. Ask for features to add to this version. e.g.
+1. analyzes current TypeSpec project to identify namespace and version
+2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
+4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
+5. Ask for features to add to this version. e.g.
     - Add new resources
     - Add new operations to an existing resource
     - Add new models, unions, or enums
     - Deprecate resources
     - Deprecate operations
     - Deprecate models, unions, or enums
-1. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-1. Update code, by default the features will only be added to this new version
-1. Summarize all the actions taken and display the reference docs
+6. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+7. Update code, by default the features will only be added to this new version
+8. Summarize all the actions taken and display the reference docs
 
 ### Scenario 2: Add a new stable API version
 
@@ -573,19 +520,21 @@ add a new stable API version 2025-10-01 for service widget resource management
 
 **Expected Agent Activity:**
 
-1. Add a enum option `v2025_10_01` in version enum for this new API version
-1. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
-1. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
-1. Ask for features to add to this version. e.g.
+1. analyzes current TypeSpec project to identify namespace and version
+2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+3. Add a enum option `v2025_10_01` in version enum for this new API version
+4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
+5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
+6. Ask for features to add to this version. e.g.
     - Add new resources
     - Add new operations to an existing resource
     - Add new models, unions, or enums
     - Deprecate resources
     - Deprecate operations
     - Deprecate models, unions, or enums
-1. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-1. Update code, by default the features will only be added to this new version
-1. Summarize all the actions taken and display the reference docs
+7. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+8. Update code, by default the features will only be added to this new version
+9. Summarize all the actions taken and display the reference docs
 
 ### Scenario 3: Update TypeSpec to follow Azure guidelines
 
@@ -606,12 +555,12 @@ update the TypeSpec code to follow Azure guidelines for service widget resource 
 
 ## CLI Commands
 
-### typespec authoring
+### typespec retrieve solution
 
 **Command:**
 
 ```bash
-azsdk typespec authoring --request <typespec-request> --additional-information <additional context>
+azsdk typespec retrieve-solution --request <typespec-request> --additional-information <additional context>
 ```
 
 **Options:**
@@ -634,7 +583,7 @@ azsdk typespec authoring --request <typespec-request> --additional-information <
 
 ✗ Error: Required argument missing for command: 'authoring'
   
-Usage: azsdk typespec authoring
+Usage: azsdk typespec retrieve-solution
 ```
 
 ---

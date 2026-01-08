@@ -2,11 +2,15 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AdminPermissionsPageComponent } from './admin-permissions-page.component';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { 
     EffectivePermissions, 
     GlobalRole, 
@@ -97,13 +101,20 @@ describe('AdminPermissionsPageComponent', () => {
 
         await TestBed.configureTestingModule({
             declarations: [AdminPermissionsPageComponent],
-            imports: [HttpClientTestingModule, FormsModule],
+            imports: [
+                HttpClientTestingModule, 
+                FormsModule,
+                BrowserAnimationsModule,
+                SelectModule,
+                SelectButtonModule
+            ],
             providers: [
                 { provide: PermissionsService, useValue: permissionsSpy },
                 { provide: UserProfileService, useValue: userProfileSpy },
                 { provide: MessageService, useValue: messageSpy },
                 { provide: ConfirmationService, useValue: confirmationSpy }
-            ]
+            ],
+            schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();
 
         fixture = TestBed.createComponent(AdminPermissionsPageComponent);
@@ -323,6 +334,7 @@ describe('AdminPermissionsPageComponent', () => {
         it('should delete group after confirmation', fakeAsync(() => {
             confirmationServiceSpy.confirm.and.callFake((config: any) => {
                 config.accept();
+                return confirmationServiceSpy;
             });
             permissionsServiceSpy.deleteGroup.and.returnValue(of(void 0));
             
@@ -335,6 +347,7 @@ describe('AdminPermissionsPageComponent', () => {
         it('should not delete group when confirmation is cancelled', () => {
             confirmationServiceSpy.confirm.and.callFake((config: any) => {
                 // Do nothing - simulates user clicking cancel
+                return confirmationServiceSpy;
             });
             
             component.deleteGroup(mockGroups[0]);
@@ -385,6 +398,7 @@ describe('AdminPermissionsPageComponent', () => {
         it('should remove member after confirmation', fakeAsync(() => {
             confirmationServiceSpy.confirm.and.callFake((config: any) => {
                 config.accept();
+                return confirmationServiceSpy;
             });
             permissionsServiceSpy.removeMemberFromGroup.and.returnValue(of(void 0));
             permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));

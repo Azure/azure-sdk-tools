@@ -1,31 +1,24 @@
-import {
-  ApiFunction,
-  ApiItem,
-  ApiItemKind,
-  Parameter,
-  TypeParameter,
-} from "@microsoft/api-extractor-model";
+import { ApiInterface, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
-function isValid(item: ApiItem): item is ApiFunction {
-  return item.kind === ApiItemKind.Function;
+function isValid(item: ApiItem): item is ApiInterface {
+  return item.kind === ApiItemKind.Interface;
 }
 
-function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
+function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
   const tokens: ReviewToken[] = [];
-  if (item.kind !== ApiItemKind.Function) {
+  if (item.kind !== ApiItemKind.Interface) {
     throw new Error(
-      `Invalid item ${item.displayName} of kind ${item.kind} for Function token generator.`,
+      `Invalid item ${item.displayName} of kind ${item.kind} for Interface token generator.`,
     );
   }
 
   // Extract structured properties
-  const parameters = item.parameters;
   const typeParameters = item.typeParameters;
 
-  // Add export and function keywords
+  // Add export and interface keywords
   tokens.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
 
   // Check for default export
@@ -34,8 +27,14 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
     tokens.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   }
 
-  tokens.push(createToken(TokenKind.Keyword, "function", { hasSuffixSpace: true, deprecated }));
-  tokens.push(createToken(TokenKind.MemberName, item.displayName, { deprecated }));
+  tokens.push(createToken(TokenKind.Keyword, "interface", { hasSuffixSpace: true, deprecated }));
+
+  // Create interface name token with proper metadata (matching splitAndBuild behavior)
+  const nameToken = createToken(TokenKind.TypeName, item.displayName, { deprecated });
+  nameToken.NavigateToId = item.canonicalReference.toString();
+  nameToken.NavigationDisplayName = item.displayName;
+  nameToken.RenderClasses = ["interface"];
+  tokens.push(nameToken);
 
   // Add type parameters
   if (typeParameters?.length > 0) {
@@ -51,7 +50,7 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
             deprecated,
           }),
         );
-        tokens.push(createToken(TokenKind.Text, tp.constraintExcerpt.text.trim(), { deprecated }));
+        processExcerptTokens(tp.constraintExcerpt.spannedTokens, tokens, deprecated);
       }
 
       if (tp.defaultTypeExcerpt?.text.trim()) {
@@ -72,38 +71,29 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
     tokens.push(createToken(TokenKind.Text, ">", { deprecated }));
   }
 
-  // Add parameters
-  tokens.push(createToken(TokenKind.Text, "(", { deprecated }));
-  if (parameters?.length > 0) {
-    parameters.forEach((param, index) => {
-      tokens.push(
-        createToken(TokenKind.Text, param.name, {
-          hasPrefixSpace: index > 0,
-          deprecated,
-        }),
-      );
+  // Add extends clause if interface extends other interfaces
+  if (item.extendsTypes && item.extendsTypes.length > 0) {
+    tokens.push(
+      createToken(TokenKind.Keyword, "extends", {
+        hasPrefixSpace: true,
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
 
-      if (param.isOptional) {
-        tokens.push(createToken(TokenKind.Text, "?", { deprecated }));
-      }
+    item.extendsTypes.forEach((extendsType, index) => {
+      processExcerptTokens(extendsType.excerpt.spannedTokens, tokens, deprecated);
 
-      tokens.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
-      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
-
-      if (index < parameters.length - 1) {
+      if (index < item.extendsTypes.length - 1) {
         tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
   }
 
-  // Add return type
-  tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
-  processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
-
   return tokens;
 }
 
-export const functionTokenGenerator: TokenGenerator<ApiFunction> = {
+export const interfaceTokenGenerator: TokenGenerator<ApiInterface> = {
   isValid,
   generate,
 };

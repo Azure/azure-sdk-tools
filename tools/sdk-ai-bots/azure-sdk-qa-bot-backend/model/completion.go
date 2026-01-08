@@ -96,6 +96,7 @@ type CompletionResp struct {
 	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
 	Intention         *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
+	RouteTenant       *TenantID        `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
 }
 
 type QuestionScope string

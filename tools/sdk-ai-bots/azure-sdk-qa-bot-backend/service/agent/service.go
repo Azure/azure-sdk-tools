@@ -132,9 +132,6 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
 	}
-	if routed {
-		result.Answer += fmt.Sprintf("\n\n*For follow up questions, it's better to contact [%s](%s)*", tenantConfig.ChannelName, tenantConfig.ChannelLink)
-	}
 
 	// 6. Process the result
 	result.ID = requestID
@@ -144,6 +141,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 	result.Intention = intention
 	result.References = utils.FilterInvalidReferenceLinks(result.References, knowledges)
+	if routed {
+		result.RouteTenant = to.Ptr(routedTenantID)
+	}
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }

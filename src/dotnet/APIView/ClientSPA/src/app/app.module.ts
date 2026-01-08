@@ -18,12 +18,13 @@ import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
 import { HttpErrorInterceptorService } from './_services/http-error-interceptor/http-error-interceptor.service';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { ProfilePageComponent } from './_components/profile-page/profile-page.component';
 import { AdminPermissionsPageComponent } from './_components/admin-permissions-page/admin-permissions-page.component';
@@ -61,7 +62,8 @@ export function initializeApp(configService: ConfigService) {
     SelectModule,
     InputTextModule,
     ButtonModule,
-    TooltipModule
+    TooltipModule,
+    ConfirmDialogModule
   ],
   providers: [
     ConfigService,
@@ -77,6 +79,7 @@ export function initializeApp(configService: ConfigService) {
       multi: true
     },
     MessageService,
+    ConfirmationService,
     CookieService,
     providePrimeNG({
       theme: {

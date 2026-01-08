@@ -1,3 +1,4 @@
+<p-confirmDialog></p-confirmDialog>
 <div class="admin-permissions-container">
     <!-- Hero Header -->
     <div class="page-header">
@@ -179,10 +180,7 @@
                             (click)="removeMember(member)"></button>
                     </div>
                     <div *ngIf="selectedGroup.members.length === 0" class="empty-members">
-                        <i class="pi pi-user-plus"></i>
                         <span>No members in this group</span>
-                        <button pButton label="Add First Member" icon="pi pi-plus" 
-                            class="p-button-text p-button-sm" (click)="openAddMemberDialog()"></button>
                     </div>
                 </div>
             </div>

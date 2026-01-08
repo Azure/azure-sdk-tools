@@ -91,6 +91,18 @@ public class PermissionsController : BaseApiController
             return BadRequest("GroupName is required.");
         }
 
+        if (request.Roles != null)
+        {
+            foreach (var role in request.Roles)
+            {
+                if (role is LanguageScopedRoleAssignment scopedRole &&
+                    string.IsNullOrWhiteSpace(scopedRole.Language))
+                {
+                    return BadRequest("Language is required for language-scoped role assignments.");
+                }
+            }
+        }
+
         GroupPermissionsModel existingGroup = await _permissionsManager.GetGroupAsync(request.GroupId);
         if (existingGroup != null)
         {
@@ -112,6 +124,18 @@ public class PermissionsController : BaseApiController
         if (!await _permissionsManager.IsAdminAsync(userName))
         {
             return Forbid();
+        }
+
+        if (request.Roles != null)
+        {
+            foreach (var role in request.Roles)
+            {
+                if (role is LanguageScopedRoleAssignment scopedRole &&
+                    string.IsNullOrWhiteSpace(scopedRole.Language))
+                {
+                    return BadRequest("Language is required for language-scoped role assignments.");
+                }
+            }
         }
 
         try

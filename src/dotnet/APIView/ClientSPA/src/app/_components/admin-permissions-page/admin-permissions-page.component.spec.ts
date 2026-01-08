@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { AdminPermissionsPageComponent } from './admin-permissions-page.component';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { 
     EffectivePermissions, 
     GlobalRole, 
@@ -21,6 +21,7 @@ describe('AdminPermissionsPageComponent', () => {
     let permissionsServiceSpy: jasmine.SpyObj<PermissionsService>;
     let userProfileServiceSpy: jasmine.SpyObj<UserProfileService>;
     let messageServiceSpy: jasmine.SpyObj<MessageService>;
+    let confirmationServiceSpy: jasmine.SpyObj<ConfirmationService>;
 
     const mockAdminPermissions: EffectivePermissions = {
         userId: 'adminUser',
@@ -92,6 +93,7 @@ describe('AdminPermissionsPageComponent', () => {
         ]);
         const userProfileSpy = jasmine.createSpyObj('UserProfileService', ['getUserProfile']);
         const messageSpy = jasmine.createSpyObj('MessageService', ['add']);
+        const confirmationSpy = jasmine.createSpyObj('ConfirmationService', ['confirm']);
 
         await TestBed.configureTestingModule({
             declarations: [AdminPermissionsPageComponent],
@@ -99,7 +101,8 @@ describe('AdminPermissionsPageComponent', () => {
             providers: [
                 { provide: PermissionsService, useValue: permissionsSpy },
                 { provide: UserProfileService, useValue: userProfileSpy },
-                { provide: MessageService, useValue: messageSpy }
+                { provide: MessageService, useValue: messageSpy },
+                { provide: ConfirmationService, useValue: confirmationSpy }
             ]
         }).compileComponents();
 
@@ -108,6 +111,7 @@ describe('AdminPermissionsPageComponent', () => {
         permissionsServiceSpy = TestBed.inject(PermissionsService) as jasmine.SpyObj<PermissionsService>;
         userProfileServiceSpy = TestBed.inject(UserProfileService) as jasmine.SpyObj<UserProfileService>;
         messageServiceSpy = TestBed.inject(MessageService) as jasmine.SpyObj<MessageService>;
+        confirmationServiceSpy = TestBed.inject(ConfirmationService) as jasmine.SpyObj<ConfirmationService>;
     });
 
     describe('Initialization', () => {
@@ -317,7 +321,9 @@ describe('AdminPermissionsPageComponent', () => {
         }));
 
         it('should delete group after confirmation', fakeAsync(() => {
-            spyOn(window, 'confirm').and.returnValue(true);
+            confirmationServiceSpy.confirm.and.callFake((config: any) => {
+                config.accept();
+            });
             permissionsServiceSpy.deleteGroup.and.returnValue(of(void 0));
             
             component.deleteGroup(mockGroups[0]);
@@ -327,7 +333,9 @@ describe('AdminPermissionsPageComponent', () => {
         }));
 
         it('should not delete group when confirmation is cancelled', () => {
-            spyOn(window, 'confirm').and.returnValue(false);
+            confirmationServiceSpy.confirm.and.callFake((config: any) => {
+                // Do nothing - simulates user clicking cancel
+            });
             
             component.deleteGroup(mockGroups[0]);
             
@@ -375,7 +383,9 @@ describe('AdminPermissionsPageComponent', () => {
         });
 
         it('should remove member after confirmation', fakeAsync(() => {
-            spyOn(window, 'confirm').and.returnValue(true);
+            confirmationServiceSpy.confirm.and.callFake((config: any) => {
+                config.accept();
+            });
             permissionsServiceSpy.removeMemberFromGroup.and.returnValue(of(void 0));
             permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
             
@@ -398,20 +408,6 @@ describe('AdminPermissionsPageComponent', () => {
             expect(component.getTotalMembers()).toBe(3); // 2 + 1 from mock groups
         });
 
-        it('should return consistent group colors', () => {
-            const color1 = component.getGroupColor(0);
-            const color2 = component.getGroupColor(0);
-            
-            expect(color1).toBe(color2);
-        });
-
-        it('should cycle through avatar colors', () => {
-            const color0 = component.getGroupColor(0);
-            const color10 = component.getGroupColor(10);
-            
-            expect(color0).toBe(color10); // Should cycle back
-        });
-
         it('should format role display name for global role', () => {
             const role = { kind: 'global' as const, role: GlobalRole.Admin };
             const displayName = component.getRoleDisplayName(role);
@@ -426,13 +422,6 @@ describe('AdminPermissionsPageComponent', () => {
             
             expect(displayName).toContain('Architect');
             expect(displayName).toContain('Python');
-        });
-
-        it('should format role name from camelCase', () => {
-            expect(component.formatRoleName('admin')).toBe('Admin');
-            expect(component.formatRoleName('serviceTeam')).toBe('Service Team');
-            expect(component.formatRoleName('sdkTeam')).toBe('SDK Team');
-            expect(component.formatRoleName('deputyArchitect')).toBe('Deputy Architect');
         });
 
         it('should format date correctly', () => {

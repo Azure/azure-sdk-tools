@@ -93,15 +93,7 @@ public class EffectivePermissions
     }
     public bool HasAnyGlobalRole(params GlobalRole[] roles)
     {
-        foreach (var role in roles)
-        {
-            if (HasGlobalRole(role))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return roles.Any(HasGlobalRole);
     }
 
     public bool HasLanguageRole(LanguageScopedRole role, string language)

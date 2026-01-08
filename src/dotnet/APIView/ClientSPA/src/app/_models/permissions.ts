@@ -76,3 +76,39 @@ export interface GroupPermissionsRequest {
 export interface AddMembersRequest {
     userIds: string[];
 }
+
+export const ROLE_DISPLAY_NAMES: { [key: string]: string } = {
+    [GlobalRole.Admin]: 'Admin',
+    [GlobalRole.ServiceTeam]: 'Service Team',
+    [GlobalRole.SdkTeam]: 'SDK Team',
+    [GlobalRole.Unknown]: 'Unknown',
+    [LanguageScopedRole.Architect]: 'Architect',
+    [LanguageScopedRole.DeputyArchitect]: 'Deputy Architect'
+};
+
+export const SUPPORTED_LANGUAGES = [
+    { label: 'C', value: 'C' },
+    { label: 'C++', value: 'C++' },
+    { label: 'C#', value: 'C#' },
+    { label: 'Go', value: 'Go' },
+    { label: 'Java', value: 'Java' },
+    { label: 'JavaScript', value: 'JavaScript' },
+    { label: 'Python', value: 'Python' },
+    { label: 'Swift', value: 'Swift' },
+    { label: 'TypeSpec', value: 'TypeSpec' }
+];
+
+export const GLOBAL_ROLE_OPTIONS = [
+    { label: ROLE_DISPLAY_NAMES[GlobalRole.ServiceTeam], value: GlobalRole.ServiceTeam },
+    { label: ROLE_DISPLAY_NAMES[GlobalRole.SdkTeam], value: GlobalRole.SdkTeam },
+    { label: ROLE_DISPLAY_NAMES[GlobalRole.Admin], value: GlobalRole.Admin }
+];
+
+export const LANGUAGE_SCOPED_ROLE_OPTIONS = [
+    { label: ROLE_DISPLAY_NAMES[LanguageScopedRole.DeputyArchitect], value: LanguageScopedRole.DeputyArchitect },
+    { label: ROLE_DISPLAY_NAMES[LanguageScopedRole.Architect], value: LanguageScopedRole.Architect }
+];
+
+export function formatRoleName(role: string): string {
+    return ROLE_DISPLAY_NAMES[role] || role;
+}

@@ -1,12 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { 
     EffectivePermissions, 
     GlobalRole, 
     GroupPermissions, 
     GroupPermissionsRequest, 
     LanguageScopedRole, 
-    RoleAssignment 
+    RoleAssignment,
+    SUPPORTED_LANGUAGES,
+    GLOBAL_ROLE_OPTIONS,
+    LANGUAGE_SCOPED_ROLE_OPTIONS,
+    formatRoleName as formatRoleNameFn
 } from 'src/app/_models/permissions';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -39,28 +43,9 @@ export class AdminPermissionsPageComponent implements OnInit {
     groupForm: GroupFormData = this.getEmptyGroupForm();
     newMemberUsername: string = '';
 
-    globalRoleOptions = [
-        { label: 'Service Team', value: GlobalRole.ServiceTeam },
-        { label: 'SDK Team', value: GlobalRole.SdkTeam },
-        { label: 'Admin', value: GlobalRole.Admin }
-    ];
-
-    languageScopedRoleOptions = [
-        { label: 'Deputy Architect', value: LanguageScopedRole.DeputyArchitect },
-        { label: 'Architect', value: LanguageScopedRole.Architect }
-    ];
-
-    languageOptions = [
-        { label: 'C', value: 'C' },
-        { label: 'C++', value: 'C++' },
-        { label: 'C#', value: 'C#' },
-        { label: 'Go', value: 'Go' },
-        { label: 'Java', value: 'Java' },
-        { label: 'JavaScript', value: 'JavaScript' },
-        { label: 'Python', value: 'Python' },
-        { label: 'Swift', value: 'Swift' },
-        { label: 'TypeSpec', value: 'TypeSpec' }
-    ];
+    globalRoleOptions = GLOBAL_ROLE_OPTIONS;
+    languageScopedRoleOptions = LANGUAGE_SCOPED_ROLE_OPTIONS;
+    languageOptions = SUPPORTED_LANGUAGES;
 
     newRoleKind: 'global' | 'scoped' = 'global';
     newGlobalRole: GlobalRole = GlobalRole.ServiceTeam;
@@ -70,7 +55,8 @@ export class AdminPermissionsPageComponent implements OnInit {
     constructor(
         private permissionsService: PermissionsService,
         private userProfileService: UserProfileService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit(): void {
@@ -194,25 +180,31 @@ export class AdminPermissionsPageComponent implements OnInit {
     }
 
     deleteGroup(group: GroupPermissions): void {
-        if (confirm(`Are you sure you want to delete the group "${group.groupName}"?`)) {
-            this.permissionsService.deleteGroup(group.groupId).subscribe({
-                next: () => {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Group deleted successfully'
-                    });
-                    this.loadGroups();
-                },
-                error: (err) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Failed to delete group'
-                    });
-                }
-            });
-        }
+        this.confirmationService.confirm({
+            message: `Are you sure you want to delete the group "${group.groupName}"?`,
+            header: 'Delete Group',
+            icon: 'pi pi-exclamation-triangle',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.permissionsService.deleteGroup(group.groupId).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Group deleted successfully'
+                        });
+                        this.loadGroups();
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to delete group'
+                        });
+                    }
+                });
+            }
+        });
     }
 
     addRoleToForm(): void {
@@ -260,7 +252,7 @@ export class AdminPermissionsPageComponent implements OnInit {
     }
 
     getRoleDisplayName(role: RoleAssignment): string {
-        const roleName = this.formatRoleName(role.role);
+        const roleName = formatRoleNameFn(role.role);
         if (role.kind === 'global') {
             return `${roleName} (Global)`;
         } else {
@@ -268,16 +260,9 @@ export class AdminPermissionsPageComponent implements OnInit {
         }
     }
 
+    // Wrapper for template access to shared formatRoleName function
     formatRoleName(role: string): string {
-        const roleDisplayNames: { [key: string]: string } = {
-            'admin': 'Admin',
-            'serviceTeam': 'Service Team',
-            'sdkTeam': 'SDK Team',
-            'architect': 'Architect',
-            'deputyArchitect': 'Deputy Architect',
-            'unknown': 'Unknown'
-        };
-        return roleDisplayNames[role] || role;
+        return formatRoleNameFn(role);
     }
 
     selectGroup(group: GroupPermissions): void {
@@ -317,25 +302,31 @@ export class AdminPermissionsPageComponent implements OnInit {
         if (!this.selectedGroup) return;
 
         const groupId = this.selectedGroup.groupId;
-        if (confirm(`Are you sure you want to remove "${userId}" from this group?`)) {
-            this.permissionsService.removeMemberFromGroup(groupId, userId).subscribe({
-                next: () => {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: `Member "${userId}" removed successfully`
-                    });
-                    this.refreshGroupsAndReselect(groupId);
-                },
-                error: (err) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Failed to remove member'
-                    });
-                }
-            });
-        }
+        this.confirmationService.confirm({
+            message: `Are you sure you want to remove "${userId}" from this group?`,
+            header: 'Remove Member',
+            icon: 'pi pi-exclamation-triangle',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.permissionsService.removeMemberFromGroup(groupId, userId).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: `Member "${userId}" removed successfully`
+                        });
+                        this.refreshGroupsAndReselect(groupId);
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to remove member'
+                        });
+                    }
+                });
+            }
+        });
     }
 
     private refreshGroupsAndReselect(groupId: string): void {

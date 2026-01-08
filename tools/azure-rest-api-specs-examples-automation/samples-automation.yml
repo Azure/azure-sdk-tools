@@ -35,6 +35,6 @@ jobs:
     displayName: 'Install Golang tools'
 
   - script: |
-      ./automation/main.sh --build-id=$(Build.BuildId) --github-token=$(azuresdk-github-pat) --release-in-days=10 --skip-processed=true --persist-data=true --merge-pull-request=true
+      ./automation/main.sh --build-id=$(Build.BuildId) --github-token=$(azuresdk-github-pat) --release-in-days=15 --skip-processed=true --persist-data=true --merge-pull-request=true
     displayName: 'Collect examples'
     workingDirectory: ./tools/azure-rest-api-specs-examples-automation

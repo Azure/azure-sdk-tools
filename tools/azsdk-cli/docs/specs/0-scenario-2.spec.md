@@ -129,9 +129,10 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
 
-3. **Generating** → `azsdk_package_generate_code`
+3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
    - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](./0-scenario-1.spec.md#2-generating))
-   - **Note**: Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
+   - Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
+   - Both pipeline-based generation (`azsdk_run_generate_sdk`) and local generation (`azsdk_package_generate_code`) workflows are fully supported and should work seamlessly
 
 4. **Customizations** → `azsdk_customized_code_update`
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
@@ -143,7 +144,7 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
    - Single unified testing tool that handles all test modes (live, live-record, playback)
    - Automatically provisions test resources when running live tests if not already available
    - Calls existing test resource provisioning scripts
-   - **Note**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
+   - **Stretch Goal**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
 
 6. **Sample Generation** → `azsdk_package_samples_generate`, `azsdk_package_samples_translate`
    - AI-powered sample generation from natural language descriptions
@@ -248,11 +249,15 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 ### 3. Generating
 
+Scenario 2 supports both local and pipeline-based SDK generation workflows to accommodate different development preferences and CI/CD requirements.
+
+#### 3a. Local Generation
+
 **Tool:** `azsdk_package_generate_code`
 
 **Action:**
 
-- Generate SDK code, tests, and samples for the requested languages
+- Generate SDK code, tests, and samples locally for the requested languages
 - **Bootstrap language library project scaffolding** when generating a **[Net-New SDK](#net-new-sdk)**, including directory structure, package metadata files, and docs (`README.md`).
 - Triggers downstream validation hooks (`azsdk_package_build_code`, `azsdk_package_run_tests --mode playback`, `azsdk_package_run_check`)
 
@@ -261,6 +266,22 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 - Generation succeeds for all five languages (or reports failures with diagnostics)
 - Existing customization layers remain untouched while new files are clearly identified
 - For **[Net-New SDKs](#net-new-sdk)**, all required project scaffolding is created correctly for each target language
+
+#### 3b. Pipeline-Based Generation
+
+**Tool:** `azsdk_run_generate_sdk`
+
+**Action:**
+
+- Trigger SDK generation through Azure DevOps pipelines for the requested languages
+- Handles language-specific pipeline configurations and generation parameters
+- **Bootstrap language library project scaffolding** when generating a **[Net-New SDK](#net-new-sdk)** through pipeline execution
+
+**Success:**
+
+- Pipeline execution completes successfully for all requested languages
+- Generated artifacts are available in pipeline outputs or committed to appropriate branches
+- For **[Net-New SDKs](#net-new-sdk)**, all required project scaffolding is created correctly through pipeline automation
 
 ### 4. Customizations
 

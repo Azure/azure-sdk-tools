@@ -114,6 +114,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var timeout = TimeSpan.FromMinutes(5);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}, Error: {Error}",
+                    processResult.ExitCode, processResult.Output, processResult.Error);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, processResult.Error);
+            }
+
             return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
@@ -167,6 +174,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
+
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}, Error: {Error}",
+                    processResult.ExitCode, processResult.Output, processResult.Error);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, processResult.Error);
+            }
 
             return new PackageCheckResponse(processResult);
         }
@@ -224,6 +238,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                     _logger.LogError(ex, "Error running spelling fix microagent");
                     return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
+            }
+
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}, Error: {Error}",
+                    processResult.ExitCode, processResult.Output, processResult.Error);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, processResult.Error);
             }
 
             return new PackageCheckResponse(processResult);

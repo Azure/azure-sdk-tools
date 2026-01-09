@@ -232,5 +232,22 @@ describe("classTokenGenerator", () => {
         expect(tokens.some((t) => t.Value === displayName)).toBe(true);
       });
     });
+
+    it("handles declare keyword", () => {
+      const mockClass = createMockClass("CryptographyClient", [
+        { kind: ExcerptTokenKind.Content, text: "export " } as ExcerptToken,
+        { kind: ExcerptTokenKind.Content, text: "declare " } as ExcerptToken,
+        { kind: ExcerptTokenKind.Content, text: "class " } as ExcerptToken,
+        { kind: ExcerptTokenKind.Content, text: "CryptographyClient" } as ExcerptToken,
+      ]);
+
+      const tokens = classTokenGenerator.generate(mockClass);
+
+      const tokenValues = tokens.map((t) => t.Value);
+      expect(tokenValues).toContain("export");
+      expect(tokenValues).toContain("declare");
+      expect(tokenValues).toContain("class");
+      expect(tokenValues).toContain("CryptographyClient");
+    });
   });
 });

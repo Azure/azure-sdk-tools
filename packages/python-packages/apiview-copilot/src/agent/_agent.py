@@ -52,7 +52,12 @@ async def invoke_agent(
     await asyncio.to_thread(client.messages.create, thread_id=thread_id, role="user", content=user_input)
 
     # 3) Process a run (polls until terminal state; executes tools if auto-enabled)
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.info("Processing agent run... (this may take a moment)")
     await asyncio.to_thread(client.runs.create_and_process, thread_id=thread_id, agent_id=agent_id)
+    logger.info("Agent run completed")
 
     # 4) Collect messages and extract the latest assistant text
     all_messages = await asyncio.to_thread(client.messages.list, thread_id=thread_id)

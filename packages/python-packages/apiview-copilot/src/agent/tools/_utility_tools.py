@@ -6,6 +6,7 @@
 
 """Plugin for utility functions in the APIView Copilot."""
 
+import asyncio
 import json
 import os
 import tempfile
@@ -37,9 +38,11 @@ class UtilityTools(Tool):
 
     def summarize_api(self, api: str, language: str):
         """
-        Summarize the provided API.
-        :param api: The API content to summarize.
-        :param language: The programming language of the API.
+        Summarize the provided API content/text. Use this when you have the actual API content
+        (not a URL) and want to generate a summary of it.
+
+        :param api: The actual API content/text to summarize (not a URL).
+        :param language: The programming language of the API (e.g., 'python', 'java', 'typescript').
         :return: Summary of the API.
         """
         response = run_prompty(
@@ -49,10 +52,12 @@ class UtilityTools(Tool):
 
     def summarize_api_diff(self, target: str, base: str, language: str):
         """
-        Summarize the differences between the provided APIs.
-        :param target: The target (new) API to compare.
-        :param base: The base (old) API to compare against.
-        :param language: The programming language of the APIs.
+        Summarize the differences between two API contents/texts. Use this when you have
+        the actual API content (not URLs) for both old and new versions.
+
+        :param target: The target (new) API content/text to compare (not a URL).
+        :param base: The base (old) API content/text to compare against (not a URL).
+        :param language: The programming language of the APIs (e.g., 'python', 'java', 'typescript').
         :return: Summary of the differences.
         """
         api_diff = create_diff_with_line_numbers(old=base, new=target)
@@ -96,13 +101,17 @@ class UtilityTools(Tool):
 
     def parse_apiview_url(self, url: str):
         """
-        Parse an APIView URL to extract reviewId and revisionId.
-        :param url: The APIView URL to parse (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})
-        :return: JSON string with reviewId and revisionId if found.
+        Parse and extract information from an APIView URL. Use this tool when the user provides
+        an apiview.dev URL or asks about a URL containing review IDs or revision IDs.
+
+        Extracts reviewId, revisionId, and optional diffApiRevisionId from APIView URLs.
+
+        :param url: The APIView URL to parse (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}&diffApiRevisionId={diffRevisionId})
+        :return: JSON string with reviewId, revisionId, and diffApiRevisionId (if present).
 
         Example:
-            url = "https://spa.apiview.dev/review/640b9bc30baa4050a4eccb6c1f6103a7?activeApiRevisionId=176a2e96bc514dcf8f69c8e551e2e124"
-            Returns: {"reviewId": "640b9bc30baa4050a4eccb6c1f6103a7", "revisionId": "176a2e96bc514dcf8f69c8e551e2e124"}
+            url = "https://spa.apiview.dev/review/640b9bc30baa4050a4eccb6c1f6103a7?activeApiRevisionId=176a2e96bc514dcf8f69c8e551e2e124&diffApiRevisionId=0908606abefe463795f647bb184fd1f7"
+            Returns: {"reviewId": "640b9bc30baa4050a4eccb6c1f6103a7", "revisionId": "176a2e96bc514dcf8f69c8e551e2e124", "diffApiRevisionId": "0908606abefe463795f647bb184fd1f7"}
         """
         from urllib.parse import parse_qs
 
@@ -114,9 +123,51 @@ class UtilityTools(Tool):
         if len(path_parts) >= 2 and path_parts[0] == "review":
             result["reviewId"] = path_parts[1]
 
-        # Extract revisionId from query parameter
+        # Extract revisionId and optional diffApiRevisionId from query parameters
         query_params = parse_qs(parsed.query)
         if "activeApiRevisionId" in query_params:
             result["revisionId"] = query_params["activeApiRevisionId"][0]
+        if "diffApiRevisionId" in query_params:
+            result["diffApiRevisionId"] = query_params["diffApiRevisionId"][0]
 
         return json.dumps(result, indent=2)
+
+    def get_apiview_content_from_url(self, url: str):
+        """
+        Fetch APIView revision content directly from an APIView URL. **USE THIS** when the user
+        provides an apiview.dev URL and wants to fetch, view, summarize, or analyze the API content.
+        
+        This tool extracts the revision ID from the URL and fetches the content in one step,
+        which is faster and more reliable than parsing the URL separately.
+        
+        :param url: The APIView URL (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})
+        :return: The API revision text content, or an error message
+        
+        Example:
+            url = "https://spa.apiview.dev/review/640b9bc30baa4050a4eccb6c1f6103a7?activeApiRevisionId=176a2e96bc514dcf8f69c8e551e2e124"
+            Returns the full API text content for that revision
+        """
+        from urllib.parse import parse_qs
+        from src._apiview import ApiViewClient
+        
+        parsed = urlparse(url)
+        
+        # Extract revisionId from query parameter
+        query_params = parse_qs(parsed.query)
+        revision_id = None
+        if "activeApiRevisionId" in query_params:
+            revision_id = query_params["activeApiRevisionId"][0]
+        
+        if not revision_id:
+            return json.dumps({"error": "Could not extract activeApiRevisionId from URL. Please check the URL format."})
+        
+        try:
+            client = ApiViewClient()
+            content = asyncio.run(client.get_revision_text(revision_id=revision_id))
+            return content
+        except Exception as e:
+            return json.dumps({
+                "error": f"Failed to fetch revision content: {str(e)}", 
+                "revision_id": revision_id,
+                "url": url
+            })

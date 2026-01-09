@@ -465,9 +465,14 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
-def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
+def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False, quiet: bool = False):
     """
     Start or continue an interactive chat session with the agent.
+
+    Args:
+        thread_id: Optional thread ID to continue a previous conversation
+        remote: Whether to use remote API or local agent
+        quiet: If True, suppress error messages during tool execution (agent will retry automatically)
     """
 
     async def async_input(prompt: str) -> str:
@@ -475,6 +480,10 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
         return await asyncio.to_thread(input, prompt)
 
     async def chat():
+        # Suppress Azure SDK error logs if quiet mode is enabled
+        if quiet:
+            logging.getLogger("azure").setLevel(logging.CRITICAL)
+
         print(f"{BOLD}Interactive API Review Agent Chat. Type 'exit' to quit.\n{RESET}")
         messages = []
         current_thread_id = thread_id
@@ -503,6 +512,8 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                             f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                         )
                     break
+                if not user_input.strip():
+                    continue
                 try:
                     payload = {"user_input": user_input}
                     if current_thread_id:
@@ -547,7 +558,10 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                                 f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                             )
                         break
+                    if not user_input.strip():
+                        continue
                     try:
+                        print(f"{BLUE}Processing...{RESET}", end="", flush=True)
                         response, thread_id_out, messages = await invoke_agent(
                             client=client,
                             agent_id=agent_id,
@@ -555,9 +569,11 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                             thread_id=current_thread_id,
                             messages=messages,
                         )
+                        print(f"\r{' ' * 20}\r", end="", flush=True)  # Clear "Processing..." line
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out
                     except Exception as e:
+                        print(f"\r{' ' * 20}\r", end="", flush=True)  # Clear "Processing..." line
                         print(f"Error: {e}")
 
     asyncio.run(chat())
@@ -1352,6 +1368,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
+            )
+            ac.argument(
+                "quiet",
+                action="store_true",
+                help="Suppress error messages during tool execution. The agent will retry automatically.",
+                options_list=["--quiet", "-q"],
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

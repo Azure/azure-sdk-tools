@@ -284,10 +284,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 foreach (var line in lines)
                 {
                     var trimmedLine = line.Trim();
+                    
+                    // Skip empty lines and comments
+                    if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith('#'))
+                    {
+                        continue;
+                    }
+                    
                     if (trimmedLine.StartsWith("directory:", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Extract the value after "directory:"
-                        var value = trimmedLine["directory:".Length..].Trim();
+                        // Extract the value after "directory:" and trim quotes if present
+                        var value = trimmedLine["directory:".Length..].Trim().Trim('"', '\'');
                         return value;
                     }
                 }

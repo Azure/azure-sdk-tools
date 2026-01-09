@@ -11,6 +11,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Logs;
 
 namespace Azure.Sdk.Tools.Cli.Extensions;
 
@@ -58,6 +59,10 @@ public static class OpenTelemetryExtensions
 
     public static void ConfigureOpenTelemetryLogger(this ILoggingBuilder builder)
     {
+        // The McpRawOutputHelper forwards process stdout streams back to the MCP client over ILogger.
+        // Sub-process output should not be uploaded to azure monitor, so add an exclusion here.
+        builder.AddFilter<OpenTelemetryLoggerProvider>((category, _) =>
+            !string.Equals(category, "Azure.Sdk.Tools.Cli.Helpers.McpRawOutputHelper", StringComparison.Ordinal));
         builder.AddOpenTelemetry(logger =>
         {
             logger.AddProcessor(new TelemetryLogRecordEraser());

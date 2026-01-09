@@ -102,6 +102,9 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - TypeSpec Authoring
 - AI-powered sample generation from natural language descriptions
 - Sample translation between programming languages
+- **Checkpointing by commit**: Creating git commits after each stage that generates or modifies code to provide rollback points and track incremental changes
+- **Stretch Goal**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
+- **Stretch Goal**: AI-powered assistance for authoring live tests for [Net-New SDKs](#net-new-sdk) may require additional investigation to determine feasibility and implementation approach
 
 ### Out of Scope for Scenario 2
 
@@ -128,32 +131,38 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
+   - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
    - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](./0-scenario-1.spec.md#2-generating))
    - Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
    - Both pipeline-based generation (`azsdk_run_generate_sdk`) and local generation (`azsdk_package_generate_code`) workflows are fully supported and should work seamlessly
+   - **Checkpoint**: Create a git commit after SDK code generation completes
 
 4. **Customizations** → `azsdk_pacakge_customize_code`
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
    - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code)
    - Automatically determines appropriate customization approach based on request
    - Regenerates SDK after TypeSpec changes and validates builds
+   - **Checkpoint**: Create a git commit after customizations are applied and validated
 
 5. **Testing** → `azsdk_package_run_tests`
    - Single unified testing tool that handles all test modes (live, live-record, playback)
    - Automatically provisions test resources when running live tests if not already available
    - Calls existing test resource provisioning scripts
    - **Stretch Goal**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
+   - **Stretch Goal**: AI-powered assistance for authoring live tests for [Net-New SDKs](#net-new-sdk) may require additional investigation to determine feasibility and implementation approach
 
 6. **Sample Generation** → `azsdk_package_samples_generate`, `azsdk_package_samples_translate`
    - AI-powered sample generation from natural language descriptions
    - Translate existing samples between programming languages
    - Create language-appropriate samples following SDK patterns and conventions
+   - **Checkpoint**: Create a git commit after samples are generated or translated
 
 7. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
    - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata))
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
+   - **Checkpoint**: Create a git commit after metadata, version, and changelog updates are complete
 
 8. **Validating** → `azsdk_package_run_check`
    - Run final validation checks across languages and stages (see [Scenario 1 – Validating](./0-scenario-1.spec.md#4-validating))
@@ -361,6 +370,11 @@ This stage uses a unified testing tool that handles all test modes and automatic
 - **Note**: Bicep file creation and updating would be handled by a separate tool (`azsdk_package_create_test_resources`) rather than being part of `azsdk_package_run_tests`
 - Service-specific parameters, resource types, and configuration details often require human input and domain knowledge
 - Tool provides templates and guidance but may not fully automate bicep file creation for new services
+- **AI-powered live test authoring** for [Net-New SDKs](#net-new-sdk) may be complex and requires additional investigation
+  - Would involve analyzing TypeSpec operations and generating language-specific test scaffolding
+  - Could leverage patterns from existing tests and SDK samples
+  - May be handled by a separate tool (`azsdk_package_generate_tests`) rather than being part of `azsdk_package_run_tests`
+  - Complexity varies by service and may require human guidance for test scenarios and assertions
 
 **Success:**
 
@@ -1200,6 +1214,15 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 - What level of service-specific domain knowledge is required, and how can the tool accommodate varying levels of complexity across different Azure services?
 - Should there be a fallback mechanism or clear guidance when automatic bicep generation is not possible?
 - We should consult with the GHCP4A team.
+
+**AI-Powered Live Test Authoring:**
+
+- How feasible is it to create an AI-powered tool that can help developers author live tests for [Net-New SDKs](#net-new-sdk)?
+- What are the primary challenges in automating test authoring (understanding service semantics, generating realistic test data, determining appropriate assertions, handling authentication/authorization)?
+- Can the tool leverage TypeSpec operations, SDK samples, and existing test patterns to generate initial test scaffolding?
+- Should this be a separate tool (`azsdk_package_generate_tests`) or integrated into existing testing workflows?
+- What level of human guidance is needed for test scenario selection, test data generation, and validation logic?
+- How can the tool handle service-specific complexities and edge cases?
 
 ---
 

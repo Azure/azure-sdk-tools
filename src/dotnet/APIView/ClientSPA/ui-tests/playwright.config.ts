@@ -46,4 +46,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+
+  // Automatically start the Angular dev server before tests
+  // This ensures tests work both locally and in CI pipelines
+  webServer: {
+    command: 'npm run start -- --ssl',
+    url: 'https://localhost:4200',
+    reuseExistingServer: !process.env['CI'], // Reuse existing server locally, start fresh in CI
+    timeout: 120000, // 2 minutes to start the dev server
+    ignoreHTTPSErrors: true,
+    cwd: '..', // Run from ClientSPA directory (parent of ui-tests)
+  },
 });

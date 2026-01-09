@@ -30,10 +30,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             gitHubService = new MockGitHubService();
             inputSanitizer = new InputSanitizer();
 
-            var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
-            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
-            typeSpecHelper = typeSpecHelperMock.Object;
-
             var userHelperMock = new Mock<IUserHelper>();
             userHelperMock.Setup(x => x.GetUserEmail()).ReturnsAsync("test@example.com");
             userHelper = userHelperMock.Object;
@@ -44,7 +40,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var gitHelperMock = new Mock<IGitHelper>();
             gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
+            gitHelperMock.Setup(x => x.GetRepoRemoteUri(It.IsAny<string>())).Returns(new Uri("https://github.com/Azure/azure-rest-api-specs.git"));
+            gitHelperMock.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns((string path) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
             gitHelper = gitHelperMock.Object;
+
+            typeSpecHelper = new TypeSpecHelper(gitHelper);
 
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
@@ -117,6 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable", isTestReleasePlan: true),
                 releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview", isTestReleasePlan: true),
                 releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-03-21", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "stable", isTestReleasePlan: true),
             };
 
             var releasePlanResults = await Task.WhenAll(releasePlanTasks);

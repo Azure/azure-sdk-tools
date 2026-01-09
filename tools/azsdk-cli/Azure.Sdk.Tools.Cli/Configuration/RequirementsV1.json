@@ -40,7 +40,7 @@
             {
                 "requirement": "pip",
                 "check": ["python", "-m", "pip"],
-                "instructions": ["Ensure you've activated the right venv", "python -m ensurepip"],
+                "instructions": ["python -m ensurepip"],
                 "reason": "Pip is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],

@@ -12,8 +12,10 @@ export default defineConfig({
 
   // Reporter configuration
   reporter: [
-    ['html', { open: 'never' }],
-    ['list']
+    ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    ['list'],
+    // JUnit reporter for Azure DevOps integration
+    ['junit', { outputFile: 'test-results/junit-results.xml' }]
   ],
 
   // Timeout for each test

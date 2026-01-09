@@ -523,39 +523,30 @@ Note: Field 'displayName' no longer exists in generated model
 
 ---
 
-### Scenario 7: Build Failure with No Customization Files
+### Scenario 7: Feature Request Requiring Code Customization (No TypeSpec Solution)
 
-**Description:** TypeSpec generates reserved keyword as property name (`class` in Python), causing build failure, but no customization files exist yet.
+**Description:** User requests adding operation ID extraction from polling headers for Java LRO operations, but TypeSpec has no decorator to customize polling behavior or extract data from response headers.
 
-**Entry Point:** Build failure
+**Entry Point:** User prompt ("Add operationId property to AnalyzeOperationDetails by parsing it from the Operation-Location header during polling")
 
-**Problem:** Generated code uses reserved keyword `class` as property name, but no `_patch.py` file exists to apply rename customization.
-
-**Error:**
-
-```
-SyntaxError: invalid syntax
-  File "models.py", line 42
-    self.class = class
-         ^
-```
+**Problem:** LRO polling needs to extract operation ID from `Operation-Location` header and inject it into `AnalyzeOperationDetails` response object. TypeSpec cannot customize polling strategies or header parsing logic. No customization files exist yet.
 
 **Workflow Execution:**
 
 | Phase                 | Action                                                                                                                        | Result                                                              |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **Phase A: TypeSpec** | Attempt to apply `@clientName` to rename property<br/>Regenerate SDK<br/>Build still fails (reserved keyword) | SDK regenerates<br/>Build fails<br/>No customization files found |
-| **Manual Guidance** | Detect no `_patch.py` file exists<br/>Return guidance to create customization file | Tool suggests creating `_patch.py` with property rename pattern |
+| **Phase A: TypeSpec** | Analyze request<br/>Determine no TypeSpec decorator supports polling customization or header extraction<br/>No TypeSpec changes applicable | SDK unchanged<br/>No customization files found |
+| **Manual Guidance** | Detect no `/customization/` directory or `*Customization.java` files exist<br/>Return guidance to create customization infrastructure | Tool suggests creating customization class with LRO polling examples |
 
 **Acceptance Criteria:**
-- Tool detects Phase A build failure
-- Tool identifies no customization files exist for the language
+- Tool determines TypeSpec cannot solve the request (no applicable decorators for polling/headers)
+- Tool identifies no customization files exist for Java
 - Tool returns manual guidance including:
-  - Instruction to create appropriate customization file (`_patch.py` for Python)
-  - Code pattern/template for renaming the reserved keyword property
-  - Reference to language-specific customization documentation
+  - Instruction to create customization infrastructure (e.g., `DocumentIntelligenceCustomizations.java`)
+  - Code pattern/example for customizing polling strategies with header extraction
+  - Reference to Java customization documentation and LRO customization examples
 
-**Key Learning:** When Phase A cannot solve build failures and no customization files exist, tool provides guidance to create the appropriate customization infrastructure.
+**Key Learning:** When feature requests involve runtime behavior like polling strategies or header extraction that TypeSpec cannot address, tool provides guidance to create the appropriate customization files with concrete examples.
 
 ---
 

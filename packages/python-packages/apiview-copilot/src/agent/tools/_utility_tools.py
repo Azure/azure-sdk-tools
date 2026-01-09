@@ -93,3 +93,30 @@ class UtilityTools(Tool):
                 return file.read()
         except Exception as e:
             raise ValueError(f"Error reading text file {file_path}.") from e
+
+    def parse_apiview_url(self, url: str):
+        """
+        Parse an APIView URL to extract reviewId and revisionId.
+        :param url: The APIView URL to parse (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})
+        :return: JSON string with reviewId and revisionId if found.
+
+        Example:
+            url = "https://spa.apiview.dev/review/640b9bc30baa4050a4eccb6c1f6103a7?activeApiRevisionId=176a2e96bc514dcf8f69c8e551e2e124"
+            Returns: {"reviewId": "640b9bc30baa4050a4eccb6c1f6103a7", "revisionId": "176a2e96bc514dcf8f69c8e551e2e124"}
+        """
+        from urllib.parse import parse_qs
+
+        parsed = urlparse(url)
+        result = {}
+
+        # Extract reviewId from path (e.g., /review/{reviewId})
+        path_parts = parsed.path.strip("/").split("/")
+        if len(path_parts) >= 2 and path_parts[0] == "review":
+            result["reviewId"] = path_parts[1]
+
+        # Extract revisionId from query parameter
+        query_params = parse_qs(parsed.query)
+        if "activeApiRevisionId" in query_params:
+            result["revisionId"] = query_params["activeApiRevisionId"][0]
+
+        return json.dumps(result, indent=2)

@@ -11,6 +11,7 @@ from typing import List
 from enum import Enum
 import importlib.util
 
+from tools import publish_samples
 from models import JsExample, JsLintResult
 from lint import JsLint
 
@@ -381,6 +382,10 @@ def main():
     sample_version = get_sample_version(release.version)
 
     module_relative_path_local = get_module_relative_path(sdk_name, package_type, sdk_path)
+
+    # call "npx dev-tool samples publish"
+    publish_samples(sdk_path, module_relative_path_local)
+
     js_examples_relative_path = path.join(module_relative_path_local, "samples", sample_version, "javascript")
     js_examples_path = path.join(sdk_path, js_examples_relative_path)
 

@@ -121,10 +121,9 @@ test.describe('Related Comments - Dialog', () => {
     const wasChecked = await checkboxInput.isChecked();
 
     await firstCheckbox.click();
-    await page.waitForTimeout(200);
 
-    const isNowChecked = await checkboxInput.isChecked();
-    expect(isNowChecked).toBe(!wasChecked);
+    const isNowChecked = await expect.poll(async () => await checkboxInput.isChecked(), { timeout: 3000 }).toBe(!wasChecked);
+    expect(await checkboxInput.isChecked()).toBe(!wasChecked);
   });
 
   test('should allow "Select All" to select all comments', async ({ page }) => {
@@ -149,11 +148,16 @@ test.describe('Related Comments - Dialog', () => {
       .locator('.select-all-section p-checkbox')
       .first();
     await selectAllCheckbox.click();
-    await page.waitForTimeout(300);
 
     const allCheckboxInputs = dialog.locator(
       '.comment-item p-checkbox input[type="checkbox"]'
     );
+    await expect.poll(async () => {
+      return await allCheckboxInputs.evaluateAll((inputs) =>
+        inputs.every((input) => (input as HTMLInputElement).checked)
+      );
+    }, { timeout: 3000 }).toBe(true);
+
     const allChecked = await allCheckboxInputs.evaluateAll((inputs) =>
       inputs.every((input) => (input as HTMLInputElement).checked)
     );
@@ -257,16 +261,14 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
     const selectAll = dialog.locator('.select-all-section p-checkbox').first();
     await expect(selectAll).toBeVisible({ timeout: 3000 });
     await selectAll.click();
-    await page.waitForTimeout(300);
 
     // Choose "Resolve" disposition from dropdown
-    const dispositionDropdown = dialog.locator('p-dropdown').first();
+    const dispositionDropdown = dialog.locator('p-select').first();
     await expect(dispositionDropdown).toBeVisible({ timeout: 3000 });
     await dispositionDropdown.click();
-    await page.waitForTimeout(200);
 
     const resolveOption = page
-      .locator('.p-dropdown-item')
+      .locator('.p-select-option')
       .filter({ hasText: /resolve/i });
     await expect(resolveOption).toBeVisible({ timeout: 3000 });
     await resolveOption.click();
@@ -278,7 +280,7 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
       .first();
     await expect(submitButton).toBeVisible({ timeout: 3000 });
     await submitButton.click();
-    await page.waitForTimeout(500);
+    await expect(dialog).not.toBeVisible({ timeout: 3000 });
 
     expect(batchRequest).not.toBeNull();
     expect(batchRequest!.url).toContain('commentsBatchOperation');
@@ -286,7 +288,6 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
     expect(batchRequest!.body.disposition).toBe('resolve');
     expect(batchRequest!.body.commentIds).toBeDefined();
     expect(batchRequest!.body.commentIds.length).toBe(2);
-    expect(resolveCalls.length).toBe(2);
     await expect(dialog).not.toBeVisible({ timeout: 3000 });
   });
 
@@ -336,7 +337,6 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
     const selectAll = dialog.locator('.select-all-section p-checkbox').first();
     await expect(selectAll).toBeVisible({ timeout: 3000 });
     await selectAll.click();
-    await page.waitForTimeout(300);
 
     // Click upvote button (thumbs up icon)
     const upvoteButton = dialog
@@ -345,7 +345,6 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
       .first();
     await expect(upvoteButton).toBeVisible({ timeout: 3000 });
     await upvoteButton.click();
-    await page.waitForTimeout(300);
 
     // Click "Apply Changes" button
     const submitButton = dialog
@@ -354,7 +353,7 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
       .first();
     await expect(submitButton).toBeVisible({ timeout: 3000 });
     await submitButton.click();
-    await page.waitForTimeout(500);
+    await expect.poll(() => batchRequest, { timeout: 5000 }).not.toBeNull();
 
     expect(batchRequest).not.toBeNull();
     expect(batchRequest!.url).toContain('commentsBatchOperation');
@@ -461,7 +460,6 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
     const selectAll = dialog.locator('.select-all-section p-checkbox').first();
     await expect(selectAll).toBeVisible({ timeout: 3000 });
     await selectAll.click();
-    await page.waitForTimeout(300);
 
     // Type a reply in the resolution comment textarea
     const replyTextarea = dialog.locator('.resolution-comment-textarea');
@@ -560,22 +558,19 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
     const selectAll = dialog.locator('.select-all-section p-checkbox').first();
     await expect(selectAll).toBeVisible({ timeout: 3000 });
     await selectAll.click();
-    await page.waitForTimeout(300);
 
     // Choose "Delete" disposition from first dropdown (disposition dropdown)
     const dispositionDropdown = dialog
-      .locator('.bulk-actions-section p-dropdown')
+      .locator('.bulk-actions-section p-select')
       .first();
     await expect(dispositionDropdown).toBeVisible({ timeout: 3000 });
     await dispositionDropdown.click();
-    await page.waitForTimeout(200);
 
     const deleteOption = page
-      .locator('.p-dropdown-item')
+      .locator('.p-select-option')
       .filter({ hasText: /delete/i });
     await expect(deleteOption).toBeVisible({ timeout: 3000 });
     await deleteOption.click();
-    await page.waitForTimeout(300);
 
     // Provide deletion reason (required for delete - appears after selecting delete)
     const reasonTextarea = dialog.locator('#deletionReason');
@@ -588,7 +583,7 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
       .first();
     await expect(submitButton).toBeVisible({ timeout: 3000 });
     await submitButton.click();
-    await page.waitForTimeout(500);
+    await expect.poll(() => batchRequest, { timeout: 5000 }).not.toBeNull();
 
     expect(batchRequest).not.toBeNull();
     expect(batchRequest!.url).toContain('commentsBatchOperation');

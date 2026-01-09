@@ -1,4 +1,4 @@
-import { Page, Route } from '@playwright/test';
+import { Page } from '@playwright/test';
 import {
   mockReview,
   mockApiRevisions,

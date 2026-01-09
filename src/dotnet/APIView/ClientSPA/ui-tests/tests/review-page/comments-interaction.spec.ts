@@ -2,7 +2,6 @@ import { test, expect, Page } from '@playwright/test';
 import { ReviewPage } from '../../page-objects';
 import { setupReviewPageMocks, setupAuthMocks } from '../../mocks/api-handlers';
 import {
-  mockUserProfile,
   mockComments,
   generateLargeCodePanelData,
 } from '../../fixtures';
@@ -108,7 +107,7 @@ test.describe('Comments - Create New Comment', () => {
     await expect(addCommentBtn).toBeVisible();
     await expect(addCommentBtn).toBeEnabled();
     await addCommentBtn.click();
-    await page.waitForTimeout(1000);
+    await expect.poll(() => getCapturedRequest(), { timeout: 5000 }).not.toBeNull();
 
     // Verify API request
     const capturedRequest = getCapturedRequest();
@@ -134,7 +133,6 @@ test.describe('Comments - Create New Comment', () => {
       .filter({ hasText: /comment/i });
     if (await addCommentOption.isVisible()) {
       await addCommentOption.click();
-      await page.waitForTimeout(500);
 
       const submitBtn = page
         .locator('button.submit')
@@ -157,19 +155,19 @@ test.describe('Comments - Create New Comment', () => {
     await openCommentFormOnLine(page, 4);
 
     const severityDropdown = page
-      .locator('app-comment-thread p-dropdown, app-editor-panel p-dropdown')
+      .locator('app-comment-thread p-select, app-editor-panel p-select')
       .first();
     await expect(severityDropdown).toBeVisible({ timeout: 5000 });
     await severityDropdown.click();
 
-    const dropdownPanel = page.locator('.p-dropdown-panel');
+    const dropdownPanel = page.locator('.p-select-overlay');
     await expect(dropdownPanel).toBeVisible({ timeout: 3000 });
 
     const infoOption = dropdownPanel
-      .locator('.p-dropdown-item')
+      .locator('.p-select-option')
       .filter({ hasText: /info/i });
     const mustFixOption = dropdownPanel
-      .locator('.p-dropdown-item')
+      .locator('.p-select-option')
       .filter({ hasText: /must fix/i });
 
     const hasInfoOption = await infoOption.isVisible().catch(() => false);
@@ -189,7 +187,6 @@ test.describe('Comments - Reply to Comment', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     await waitForCommentThread(page);
   });
@@ -202,7 +199,6 @@ test.describe('Comments - Reply to Comment', () => {
 
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     const replyEditor = await openReplyEditor(commentThread, page);
@@ -218,8 +214,8 @@ test.describe('Comments - Reply to Comment', () => {
     await expect(submitBtn).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
-    await page.waitForTimeout(1000);
 
+    await expect.poll(() => getCapturedRequest(), { timeout: 5000 }).not.toBeNull();
     const capturedRequest = getCapturedRequest();
     expect(capturedRequest).not.toBeNull();
     expect(capturedRequest!.url).toContain('/api/comments');
@@ -231,7 +227,6 @@ test.describe('Comments - Reply to Comment', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     const replyEditor = await openReplyEditor(commentThread, page);
@@ -241,7 +236,6 @@ test.describe('Comments - Reply to Comment', () => {
       .filter({ hasText: /cancel/i });
     await expect(cancelBtn).toBeVisible({ timeout: 3000 });
     await cancelBtn.click();
-    await page.waitForTimeout(300);
 
     await expect(replyEditor).not.toBeVisible({ timeout: 3000 });
   });
@@ -258,12 +252,11 @@ test.describe('Comments - Upvote', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const thumbsUp = page
       .locator('.bi-hand-thumbs-up')
       .or(page.locator('.bi-hand-thumbs-up-fill'));
-    await expect(thumbsUp.first()).toBeVisible();
+    await expect(thumbsUp.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should call upvote API with correct URL when clicking thumbs up', async ({
@@ -274,7 +267,6 @@ test.describe('Comments - Upvote', () => {
 
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     await clickThumbsUp(commentThread, page);
@@ -306,7 +298,6 @@ test.describe('Comments - Downvote AI Comments', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     await clickThumbsDown(commentThread, page);
@@ -338,7 +329,6 @@ test.describe('Comments - Downvote AI Comments', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     await clickThumbsDown(commentThread, page);
@@ -354,7 +344,6 @@ test.describe('Comments - Downvote AI Comments', () => {
       .first();
     await expect(firstReasonCheckbox).toBeVisible({ timeout: 3000 });
     await firstReasonCheckbox.click();
-    await page.waitForTimeout(200);
 
     // Add comments and submit
     const feedbackText = 'This suggestion does not apply to our use case.';
@@ -368,7 +357,6 @@ test.describe('Comments - Downvote AI Comments', () => {
       .first();
     await expect(submitBtn).toBeVisible({ timeout: 3000 });
     await submitBtn.click();
-    await page.waitForTimeout(500);
 
     await expect(feedbackDialog).not.toBeVisible({ timeout: 3000 });
 
@@ -390,7 +378,6 @@ test.describe('Comments - Downvote AI Comments', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     await clickThumbsDown(commentThread, page);
@@ -410,7 +397,6 @@ test.describe('Comments - Downvote AI Comments', () => {
       await feedbackDialog.locator('.p-dialog-header-close').first().click();
     }
 
-    await page.waitForTimeout(300);
     await expect(feedbackDialog).not.toBeVisible({ timeout: 3000 });
     expect(getDownvoteCalled()).toBe(false);
   });
@@ -437,7 +423,6 @@ test.describe('Comments - Edit Comment', () => {
 
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page, {
       hasText: 'My comment that I can edit and delete',
@@ -467,8 +452,8 @@ test.describe('Comments - Edit Comment', () => {
     const saveBtn = page.getByRole('button', { name: 'Save', exact: true });
     await expect(saveBtn).toBeVisible({ timeout: 3000 });
     await saveBtn.click();
-    await page.waitForTimeout(1000);
 
+    await expect.poll(() => getEditRequest(), { timeout: 5000 }).not.toBeNull();
     const editRequest = getEditRequest();
     expect(editRequest).not.toBeNull();
     expect(editRequest!.url).toContain('/updateCommentText');
@@ -487,7 +472,6 @@ test.describe('Comments - Resolve/Unresolve', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     const resolveBtn = commentThread
@@ -504,7 +488,6 @@ test.describe('Comments - Resolve/Unresolve', () => {
 
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page);
     const resolveBtn = commentThread
@@ -512,8 +495,8 @@ test.describe('Comments - Resolve/Unresolve', () => {
       .filter({ hasText: /Resolve Conversation/i });
     await expect(resolveBtn).toBeVisible({ timeout: 5000 });
     await resolveBtn.click();
-    await page.waitForTimeout(500);
 
+    await expect.poll(() => getResolveRequest(), { timeout: 5000 }).not.toBeNull();
     const resolveRequest = getResolveRequest();
     expect(resolveRequest).not.toBeNull();
     expect(resolveRequest!.url).toContain('/resolveComments');
@@ -541,7 +524,6 @@ test.describe('Comments - Delete Comment', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     await expect(page.locator('.bi-three-dots-vertical').first()).toBeVisible({
       timeout: 5000,
@@ -556,7 +538,6 @@ test.describe('Comments - Delete Comment', () => {
 
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const commentThread = await waitForCommentThread(page, {
       hasText: 'My comment that I can edit and delete',
@@ -564,8 +545,8 @@ test.describe('Comments - Delete Comment', () => {
 
     await openCommentMenu(commentThread, page);
     await clickMenuOption(page, /Delete/i);
-    await page.waitForTimeout(500);
 
+    await expect.poll(() => getDeleteRequest(), { timeout: 5000 }).not.toBeNull();
     const deleteRequest = getDeleteRequest();
     expect(deleteRequest).not.toBeNull();
     expect(deleteRequest!.method).toBe('DELETE');
@@ -594,14 +575,14 @@ test.describe('Comments - Scroll Persistence', () => {
     // Open comment and type text without submitting
     const codeLine = page.locator('.code-line').nth(3);
     await codeLine.scrollIntoViewIfNeeded();
-    await codeLine.hover();
 
-    const commentIcon = codeLine.locator(
-      '.line-actions .toggle-user-comments-btn'
-    );
-    await expect(commentIcon).toBeAttached();
-    await commentIcon.evaluate((el) => (el as HTMLElement).click());
-    await page.waitForTimeout(500);
+    // Hover over the line-number-container to trigger visibility of add-comment-btn
+    const lineNumberContainer = codeLine.locator('.line-number-container');
+    await lineNumberContainer.hover();
+
+    const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+    await expect(commentBtn).toBeVisible({ timeout: 5000 });
+    await commentBtn.click();
 
     const textarea = page
       .locator('app-comment-thread textarea, app-editor textarea')
@@ -616,9 +597,15 @@ test.describe('Comments - Scroll Persistence', () => {
     // Scroll away and back
     await viewport.hover();
     await page.mouse.wheel(0, 2000);
-    await page.waitForTimeout(500);
+    await page.waitForFunction(() => {
+      const v = document.querySelector('#viewport');
+      return v && v.scrollTop > 0;
+    }, { timeout: 3000 });
     await page.mouse.wheel(0, -2500);
-    await page.waitForTimeout(500);
+    await page.waitForFunction(() => {
+      const v = document.querySelector('#viewport');
+      return v && v.scrollTop < 500;
+    }, { timeout: 3000 });
 
     // Verify text persists
     await codeLine.scrollIntoViewIfNeeded();
@@ -646,7 +633,7 @@ test.describe('Comments - Multiple Threads Per Line', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
+    await expect(page.locator('app-comment-thread').first()).toBeVisible({ timeout: 5000 });
 
     const commentThreads = page.locator('app-comment-thread');
     expect(await commentThreads.count()).toBeGreaterThanOrEqual(2);
@@ -678,7 +665,6 @@ test.describe('Comments - Multiple Threads Per Line', () => {
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
-    await page.waitForTimeout(2000);
 
     const secondThread = await waitForCommentThread(page, {
       hasText: 'Consider adding documentation',
@@ -690,14 +676,12 @@ test.describe('Comments - Multiple Threads Per Line', () => {
       .first();
     await expect(replyButton).toBeVisible({ timeout: 3000 });
     await replyButton.click();
-    await page.waitForTimeout(300);
 
     const replyText = 'Replying specifically to the documentation thread';
     const textarea = secondThread.locator('textarea').first();
 
     if (await textarea.isVisible().catch(() => false)) {
       await textarea.fill(replyText);
-      await page.waitForTimeout(200);
 
       const submitButton = secondThread
         .locator('button')
@@ -705,8 +689,8 @@ test.describe('Comments - Multiple Threads Per Line', () => {
         .first();
       if (await submitButton.isVisible().catch(() => false)) {
         await submitButton.click();
-        await page.waitForTimeout(500);
 
+        await expect.poll(() => getCapturedRequest(), { timeout: 5000 }).not.toBeNull();
         const capturedRequest = getCapturedRequest();
         expect(capturedRequest).not.toBeNull();
         expect(capturedRequest!.formData['commentText']).toContain(

@@ -75,7 +75,7 @@ test.describe('Code Panel - Responsive Layout', () => {
     const initialPanelCount = await page.locator('.p-splitter-panel').count();
 
     await page.setViewportSize({ width: 800, height: 600 });
-    await page.waitForTimeout(500);
+    await expect(reviewPage.codePanel).toBeVisible({ timeout: 5000 });
 
     const afterResizePanelCount = await page
       .locator('.p-splitter-panel')

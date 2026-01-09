@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { ReviewPage } from '../../page-objects/review.page';
 import { setupAuthMocks, setupReviewPageMocks } from '../../mocks/api-handlers';
 
@@ -17,11 +17,11 @@ test.describe('Navigation - Tree Node Click', () => {
     await page.waitForSelector('p-tree', { timeout: 10000 });
 
     const treeNode = page
-      .locator('.p-treenode-label')
+      .locator('.p-tree-node-label')
       .filter({ hasText: /BlobClient/i })
       .first();
     await treeNode.click();
-    await page.waitForTimeout(500);
+    await expect.poll(() => page.url(), { timeout: 5000 }).toMatch(/nId=|scrollToNodeIdHashed=/);
     const url = page.url();
 
     expect(url).toMatch(/nId=|scrollToNodeIdHashed=/);
@@ -43,16 +43,16 @@ test.describe('Navigation - Expand/Collapse', () => {
 
     await page.waitForSelector('p-tree', { timeout: 10000 });
 
-    // Find the first tree node with children (has a toggler)
-    const toggler = page.locator('.p-tree-toggler').first();
+    // Find the first tree node with children (has a toggle button)
+    const toggler = page.locator('.p-tree-node-toggle-button').first();
     await expect(toggler).toBeVisible({ timeout: 5000 });
 
-    // Get the parent li.p-treenode and its children container (ul.p-treenode-children)
+    // Get the parent li.p-tree-node and its children container
     const treeNode = toggler
-      .locator('xpath=ancestor::li[contains(@class, "p-treenode")]')
+      .locator('xpath=ancestor::li[contains(@class, "p-tree-node")]')
       .first();
     const childrenContainer = treeNode
-      .locator('> ul.p-treenode-children')
+      .locator('[role="group"]')
       .first();
 
     const isExpanded = await childrenContainer.isVisible().catch(() => false);
@@ -60,16 +60,14 @@ test.describe('Navigation - Expand/Collapse', () => {
     // If expanded, collapse first so we can test expand
     if (isExpanded) {
       await toggler.click();
-      await page.waitForTimeout(300);
-      await expect(childrenContainer).not.toBeVisible();
+      await expect(childrenContainer).not.toBeVisible({ timeout: 3000 });
     }
 
     // Now click to expand
     await toggler.click();
-    await page.waitForTimeout(300);
 
     // Verify children are now visible (expanded)
-    await expect(childrenContainer).toBeVisible();
+    await expect(childrenContainer).toBeVisible({ timeout: 3000 });
   });
 
   test('should collapse tree node when clicking collapse icon', async ({
@@ -81,16 +79,16 @@ test.describe('Navigation - Expand/Collapse', () => {
 
     await page.waitForSelector('p-tree', { timeout: 10000 });
 
-    // Find the first tree node with children (has a toggler)
-    const toggler = page.locator('.p-tree-toggler').first();
+    // Find the first tree node with children (has a toggle button)
+    const toggler = page.locator('.p-tree-node-toggle-button').first();
     await expect(toggler).toBeVisible({ timeout: 5000 });
 
-    // Get the parent li.p-treenode and its children container (ul.p-treenode-children)
+    // Get the parent li.p-tree-node and its children container
     const treeNode = toggler
-      .locator('xpath=ancestor::li[contains(@class, "p-treenode")]')
+      .locator('xpath=ancestor::li[contains(@class, "p-tree-node")]')
       .first();
     const childrenContainer = treeNode
-      .locator('> ul.p-treenode-children')
+      .locator('[role="group"]')
       .first();
 
     const isExpanded = await childrenContainer.isVisible().catch(() => false);
@@ -98,16 +96,14 @@ test.describe('Navigation - Expand/Collapse', () => {
     // If collapsed, expand first so we can test collapse
     if (!isExpanded) {
       await toggler.click();
-      await page.waitForTimeout(300);
-      await expect(childrenContainer).toBeVisible();
+      await expect(childrenContainer).toBeVisible({ timeout: 3000 });
     }
 
     // Now click to collapse
     await toggler.click();
-    await page.waitForTimeout(300);
 
     // Verify children are now hidden (collapsed)
-    await expect(childrenContainer).not.toBeVisible();
+    await expect(childrenContainer).not.toBeVisible({ timeout: 3000 });
   });
 });
 
@@ -131,7 +127,9 @@ test.describe('Navigation - Panel Resize', () => {
     await reviewPage.waitForReviewLoaded();
 
     const splitterGutter = page.locator('.p-splitter-gutter').first();
-    const leftPanel = page.locator('.p-splitter-panel').first();
+    // Use .review-panel which is the actual class on the panel divs
+    const leftPanel = page.locator('.review-panel').first();
+    await expect(leftPanel).toBeVisible({ timeout: 5000 });
     const initialWidth = await leftPanel.evaluate(
       (el) => el.getBoundingClientRect().width
     );
@@ -149,8 +147,11 @@ test.describe('Navigation - Panel Resize', () => {
         gutterBox.y + gutterBox.height / 2
       );
       await page.mouse.up();
-      await page.waitForTimeout(300);
     }
+
+    await expect.poll(async () => {
+      return await leftPanel.evaluate((el) => el.getBoundingClientRect().width);
+    }, { timeout: 3000 }).toBeGreaterThan(initialWidth);
 
     const newWidth = await leftPanel.evaluate(
       (el) => el.getBoundingClientRect().width
@@ -166,7 +167,9 @@ test.describe('Navigation - Panel Resize', () => {
     await reviewPage.waitForReviewLoaded();
 
     const splitterGutter = page.locator('.p-splitter-gutter').first();
-    const leftPanel = page.locator('.p-splitter-panel').first();
+    // Use .review-panel which is the actual class on the panel divs
+    const leftPanel = page.locator('.review-panel').first();
+    await expect(leftPanel).toBeVisible({ timeout: 5000 });
     const gutterBox = await splitterGutter.boundingBox();
 
     if (gutterBox) {
@@ -178,8 +181,6 @@ test.describe('Navigation - Panel Resize', () => {
       await page.mouse.down();
       await page.mouse.move(0, gutterBox.y + gutterBox.height / 2);
       await page.mouse.up();
-
-      await page.waitForTimeout(300);
     }
 
     const finalWidth = await leftPanel.evaluate(
@@ -225,14 +226,20 @@ test.describe('Navigation - Search Integration', () => {
     );
 
     await filterInput.first().fill('Blob');
-    await page.waitForTimeout(500);
+
+    const nodesBefore2 = nodesBefore;
+    await expect.poll(async () => {
+      return await page.locator('.p-treenode-label:visible').count();
+    }, { timeout: 5000 }).toBeLessThanOrEqual(nodesBefore2);
 
     const nodesAfter = await page.locator('.p-treenode-label:visible').count();
     expect(nodesAfter).toBeLessThanOrEqual(nodesBefore);
 
     // Clear filter and verify nodes return
     await filterInput.first().clear();
-    await page.waitForTimeout(300);
+    await expect.poll(async () => {
+      return await page.locator('.p-treenode-label:visible').count();
+    }, { timeout: 5000 }).toBeGreaterThanOrEqual(nodesAfter);
 
     const nodesAfterClear = await page
       .locator('.p-treenode-label:visible')

@@ -35,13 +35,13 @@ npm run e2e
 npm run e2e:headed
 
 # Run tests with interactive UI (great for debugging)
-npm run e2e:ui
+npm run e2e:debug
 
 # Run a specific test file
-npx playwright test --config=e2e/playwright.config.ts e2e/tests/review-page/basic.spec.ts
+npx playwright test --config=ui-tests/playwright.config.ts ui-tests/tests/review-page/basic.spec.ts
 
 # Run tests matching a pattern
-npx playwright test --config=e2e/playwright.config.ts -g "should load"
+npx playwright test --config=ui-tests/playwright.config.ts -g "should load"
 ```
 
 ### Step 3: View Test Report
@@ -70,7 +70,7 @@ Install the [Playwright Test for VS Code](https://marketplace.visualstudio.com/i
 
 2. **Use UI mode** for interactive debugging:
    ```bash
-   npm run e2e:ui
+   npm run e2e:debug
    ```
 
 3. **Add `await page.pause()`** in your test to pause execution and inspect the page.
@@ -79,5 +79,5 @@ Install the [Playwright Test for VS Code](https://marketplace.visualstudio.com/i
 
 5. **Enable trace** to get detailed step-by-step recording:
    ```bash
-   npx playwright test --config=e2e/playwright.config.ts --trace on
+   npx playwright test --config=ui-tests/playwright.config.ts --trace on
    ```

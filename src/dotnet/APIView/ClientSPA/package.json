@@ -10,7 +10,11 @@
     "test:ui": "playwright test --config=ui-tests/playwright.config.ts",
     "test:ui:headed": "playwright test --config=ui-tests/playwright.config.ts --headed",
     "test:ui:debug": "playwright test --config=ui-tests/playwright.config.ts --ui",
-    "test:ui:report": "playwright show-report ui-tests/playwright-report"
+    "test:ui:report": "playwright show-report ui-tests/playwright-report",
+    "e2e": "npm run test:ui",
+    "e2e:headed": "npm run test:ui:headed",
+    "e2e:debug": "npm run test:ui:debug",
+    "e2e:report": "npm run test:ui:report"
   },
   "private": true,
   "engines": {

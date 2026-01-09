@@ -1,4 +1,4 @@
-import { Page, Route, Request, expect, Locator } from '@playwright/test';
+import { Page, Request, expect, Locator } from '@playwright/test';
 import { mockUserProfile } from '../fixtures';
 
 export function parseFormData(request: Request): Record<string, string> {
@@ -281,12 +281,11 @@ export async function waitForCommentThread(
 
 export async function openReplyEditor(
   commentThread: Locator,
-  page: Page
+  _page: Page
 ): Promise<Locator> {
   const replyButton = commentThread.locator('.reply-button');
   await expect(replyButton).toBeVisible({ timeout: 5000 });
   await replyButton.click();
-  await page.waitForTimeout(500);
 
   const replyEditorContainer = commentThread.locator('.reply-editor-container');
   await expect(replyEditorContainer).toBeVisible({ timeout: 5000 });
@@ -301,7 +300,8 @@ export async function openCommentMenu(
   const menuButton = commentThread.locator('.bi-three-dots-vertical').first();
   await expect(menuButton).toBeVisible({ timeout: 5000 });
   await menuButton.click();
-  await page.waitForTimeout(300);
+
+  await expect(page.locator('.p-menu, .p-tieredmenu').first()).toBeVisible({ timeout: 3000 });
 }
 
 export async function clickMenuOption(
@@ -313,7 +313,6 @@ export async function clickMenuOption(
     .filter({ hasText: optionText });
   await expect(option.first()).toBeVisible({ timeout: 3000 });
   await option.first().click();
-  await page.waitForTimeout(500);
 }
 
 export async function openCommentFormOnLine(
@@ -322,15 +321,14 @@ export async function openCommentFormOnLine(
 ): Promise<Locator> {
   const codeLine = page.locator('.code-line').nth(lineIndex);
   await codeLine.scrollIntoViewIfNeeded();
-  await codeLine.hover();
 
-  const commentIcon = codeLine.locator(
-    '.line-actions .toggle-user-comments-btn'
-  );
-  await expect(commentIcon).toBeAttached();
-  await commentIcon.evaluate((el) => (el as HTMLElement).click());
+  // Hover over the line-number-container to trigger visibility of add-comment-btn
+  const lineNumberContainer = codeLine.locator('.line-number-container');
+  await lineNumberContainer.hover();
 
-  await page.waitForTimeout(500);
+  const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+  await expect(commentBtn).toBeVisible({ timeout: 5000 });
+  await commentBtn.click();
 
   const textarea = page
     .locator('app-comment-thread textarea, app-editor textarea')
@@ -352,7 +350,10 @@ export async function clickThumbsUp(
     .first();
   await expect(thumbsUpBtn).toBeVisible({ timeout: 5000 });
   await thumbsUpBtn.click();
-  await page.waitForTimeout(500);
+
+  await expect(
+    thumbsUpBtn.locator('.bi-hand-thumbs-up-fill, .bi-hand-thumbs-up')
+  ).toBeVisible({ timeout: 3000 });
 }
 
 export async function clickThumbsDown(
@@ -365,6 +366,6 @@ export async function clickThumbsDown(
       has: page.locator('.bi-hand-thumbs-down'),
     })
     .first();
+  await expect(thumbsDownBtn).toBeVisible({ timeout: 5000 });
   await thumbsDownBtn.click();
-  await page.waitForTimeout(300);
 }

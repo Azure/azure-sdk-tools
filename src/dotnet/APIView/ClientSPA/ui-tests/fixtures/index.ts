@@ -431,7 +431,7 @@ export const mockCodePanelData = {
     'node-blobclient': {
       ...baseNodeMetaData['node-blobclient'],
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient',
           nodeIdHashed: 'node-blobclient',
           comments: [
@@ -443,7 +443,7 @@ export const mockCodePanelData = {
               createdOn: '2025-01-15T11:00:00Z',
             }),
           ],
-        }),
+        })],
       },
     },
   },
@@ -461,7 +461,7 @@ export const mockCodePanelDataOwnedByUser = {
     'node-blobclient': {
       ...baseNodeMetaData['node-blobclient'],
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient',
           nodeIdHashed: 'node-blobclient',
           comments: [
@@ -473,7 +473,7 @@ export const mockCodePanelDataOwnedByUser = {
               createdOn: '2025-01-15T11:00:00Z',
             }),
           ],
-        }),
+        })],
       },
     },
   },
@@ -523,7 +523,7 @@ export const mockCodePanelDataWithRelatedComments = {
     'node-blobclient': {
       ...baseNodeMetaData['node-blobclient'],
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient',
           nodeIdHashed: 'node-blobclient',
           comments: [
@@ -540,7 +540,7 @@ export const mockCodePanelDataWithRelatedComments = {
               confidenceScore: 0.95,
             }),
           ],
-        }),
+        })],
       },
     },
     'node-upload': {
@@ -556,7 +556,7 @@ export const mockCodePanelDataWithRelatedComments = {
         }),
       ],
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient.Upload',
           nodeIdHashed: 'node-upload',
           comments: [
@@ -574,7 +574,7 @@ export const mockCodePanelDataWithRelatedComments = {
               confidenceScore: 0.9,
             }),
           ],
-        }),
+        })],
       },
     },
   },
@@ -689,7 +689,7 @@ export const mockCodePanelDataWithAIComments = {
         ],
       }),
       commentThread: {
-        0: {
+        0: [{
           ...defaultCommentThreadProps,
           lineNumber: 3,
           rowOfTokens: [],
@@ -716,7 +716,7 @@ export const mockCodePanelDataWithAIComments = {
               confidenceScore: 0.92,
             }),
           ],
-        },
+        }],
       },
     },
   },
@@ -779,7 +779,7 @@ export const mockCodePanelDataWithMultipleThreads = {
         ],
       }),
       commentThread: {
-        0: {
+        0: [{
           ...defaultCommentThreadProps,
           lineNumber: 3,
           rowOfTokens: [],
@@ -803,8 +803,8 @@ export const mockCodePanelDataWithMultipleThreads = {
               createdOn: '2025-01-15T10:00:00Z',
             }),
           ],
-        },
-        1: {
+        }],
+        1: [{
           ...defaultCommentThreadProps,
           lineNumber: 3,
           rowOfTokens: [],
@@ -830,7 +830,7 @@ export const mockCodePanelDataWithMultipleThreads = {
               severity: 1,
             }),
           ],
-        },
+        }],
       },
     },
   },
@@ -1152,7 +1152,7 @@ export const mockCodePanelDataForNavigation = {
         childrenNodeIdsInOrder: { 0: 'node-upload', 1: 'node-download' },
       }),
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient',
           nodeIdHashed: 'node-blobclient',
           comments: [
@@ -1165,7 +1165,7 @@ export const mockCodePanelDataForNavigation = {
               createdOn: '2025-01-15T10:00:00Z',
             }),
           ],
-        }),
+        })],
       },
     },
     'node-upload': {
@@ -1185,7 +1185,7 @@ export const mockCodePanelDataForNavigation = {
         ],
       }),
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient.Upload',
           nodeIdHashed: 'node-upload',
           comments: [
@@ -1198,7 +1198,7 @@ export const mockCodePanelDataForNavigation = {
               severity: 1,
             }),
           ],
-        }),
+        })],
       },
     },
     'node-download': {
@@ -1218,7 +1218,7 @@ export const mockCodePanelDataForNavigation = {
         ],
       }),
       commentThread: {
-        0: createCommentThread({
+        0: [createCommentThread({
           nodeId: 'Azure.Storage.Blobs.BlobClient.Download',
           nodeIdHashed: 'node-download',
           comments: [
@@ -1231,7 +1231,7 @@ export const mockCodePanelDataForNavigation = {
               severity: 3,
             }),
           ],
-        }),
+        })],
       },
     },
   },

@@ -30,11 +30,13 @@ Questions about writing API Specification based on TypeSpec, such as TypeSpec us
 - Specification Syntax, decorators, models, operations
 - Azure-specific TypeSpec patterns (@route, @doc, @armResourceOperations, etc.)
 - TypeSpec migration from OpenAPI
+- TypeSpec validation errors and troubleshooting
+- TypeSpec configurations(tspconfig.yaml)
 - **Recommended Tenant**: `azure_sdk_qa_bot`
 
 ### Python SDK
 Questions about Python SDK development, usage, or processes:
-- Python SDK generation
+- Python SDK generation issues
 - Python SDK custom code, testing, or validation
 - Python SDK release processes
 - Python SDK pipeline and CI/CD issues
@@ -42,7 +44,7 @@ Questions about Python SDK development, usage, or processes:
 
 ### Go SDK
 Questions about Go SDK development, usage, or processes:
-- Go SDK generation
+- Go SDK generation issues
 - Go SDK custom code, testing, or validation
 - Go SDK release processes
 - Go SDK pipeline and CI/CD issues
@@ -50,7 +52,7 @@ Questions about Go SDK development, usage, or processes:
 
 ### Java SDK
 Questions about Java SDK development, usage, or processes:
-- Java SDK generation
+- Java SDK generation issues
 - Java SDK custom code, testing, or validation
 - Java SDK release processes
 - Java SDK pipeline and CI/CD issues
@@ -58,7 +60,7 @@ Questions about Java SDK development, usage, or processes:
 
 ### JavaScript SDK
 Questions about JavaScript SDK development, usage, or processes:
-- JavaScript SDK generation
+- JavaScript SDK generation issues
 - JavaScript SDK custom code, testing, or validation
 - JavaScript SDK release processes
 - JavaScript SDK pipeline and CI/CD issues
@@ -66,7 +68,7 @@ Questions about JavaScript SDK development, usage, or processes:
 
 ### .NET SDK
 Questions about .NET SDK development, usage, or processes:
-- .NET SDK generation
+- .NET SDK generation issues
 - .NET SDK custom code, testing, or validation
 - .NET SDK release processes
 - .NET SDK pipeline and CI/CD issues

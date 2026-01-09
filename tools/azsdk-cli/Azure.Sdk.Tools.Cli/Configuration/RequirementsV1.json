@@ -39,7 +39,7 @@
             },
             {
                 "requirement": "pip",
-                "check": ["python", "-m", "pip"],
+                "check": ["python", "-m", "pip", "--version"],
                 "instructions": ["python -m ensurepip"],
                 "reason": "Pip is required for all repos because it's used in a common Verify-Readme Powershell script."
             }

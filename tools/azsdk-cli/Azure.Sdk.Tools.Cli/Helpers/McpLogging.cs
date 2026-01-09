@@ -49,7 +49,7 @@ public sealed class McpServerContextAccessor : IMcpServerContextAccessor
 public sealed class McpServerLoggerProvider(IMcpServerContextAccessor contextAccessor) : ILoggerProvider
 {
     private ILoggerProvider? provider;
-    private readonly ConcurrentDictionary<string, ILogger> loggers = new();
+    private ILogger? logger;
 
     public ILogger CreateLogger(string categoryName) => new McpServerLogger(this, categoryName);
 
@@ -57,7 +57,7 @@ public sealed class McpServerLoggerProvider(IMcpServerContextAccessor contextAcc
     {
         provider?.Dispose();
         provider = null;
-        loggers.Clear();
+        logger = null;
     }
 
     private ILogger? TryGetLogger(string categoryName)
@@ -68,7 +68,8 @@ public sealed class McpServerLoggerProvider(IMcpServerContextAccessor contextAcc
         }
 
         provider ??= contextAccessor.Current.AsClientLoggerProvider();
-        return loggers.GetOrAdd(categoryName, provider.CreateLogger);
+        logger ??= provider.CreateLogger("azsdk");
+        return logger;
     }
 
     private sealed class McpServerLogger(McpServerLoggerProvider owner, string categoryName) : ILogger

@@ -149,6 +149,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(result, Is.False);
         }
 
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/tree/main/specification/contoso/Contoso.Service")]
+        [TestCase("https://github.com/myorg/azure-rest-api-specs/blob/feature/specification/test/Test.Service")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs-pr/blob/main/specification/test/Test.Service")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs-pr/tree/main/specification/test/Test.Service")]
+        [Test]
+        public void Test_IsRepoPathForSpecRepo_WithValidUrls(string url)
+        {
+            var result = typeSpecHelper.IsRepoPathForSpecRepo(url);
+            Assert.That(result, Is.True);
+        }
+
+        [TestCase("https://github.com/Azure/wrong-repo/blob/main/specification/test/Test.Service")]
+        [TestCase("https://example.com/specification/test/Test.Service")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/main/specification/test")]  // missing blob/tree
+        [Test]
+        public void Test_IsRepoPathForSpecRepo_WithInvalidUrls(string url)
+        {
+            var result = typeSpecHelper.IsRepoPathForSpecRepo(url);
+            Assert.That(result, Is.False);
+        }
+
         private static IGitHelper CreateGitHelper(Uri getRepoRemoteUri)
         {
             var gitHelperMock = new Mock<IGitHelper>();

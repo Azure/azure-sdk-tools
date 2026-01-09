@@ -37,8 +37,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         [GeneratedRegex("azure-rest-api-specs{0,1}(.git){0,1}$")]
         private static partial Regex RestApiSpecsPublicRegex();
 
-        [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs/blob/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
+        [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs/(blob|tree)/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
         private static partial Regex GitHubSpecUrlRegex();
+
+        [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs(-pr)?/(blob|tree)/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
+        private static partial Regex GitHubSpecUrlPublicOrPrivateRegex();
 
         private IGitHelper _gitHelper;
 
@@ -92,6 +95,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public bool IsRepoPathForSpecRepo(string path)
         {
+            if (IsUrl(path))
+            {
+                // For URLs, validate proper GitHub blob URL structure for public or private specs repos
+                return GitHubSpecUrlPublicOrPrivateRegex().IsMatch(path);
+            }
+            
             // Docs say this method should work for paths within a repo,
             // so we need to find the repo root first.
             var repoRootPath = _gitHelper.DiscoverRepoRoot(path);

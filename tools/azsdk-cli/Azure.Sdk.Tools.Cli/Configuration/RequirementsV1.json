@@ -34,7 +34,7 @@
             {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/", "If using Ubuntu, run `sudo apt install python-is-python3`, `sudo apt install python3-pip`, `sudo apt install python3-venv`."],
+                "instructions": ["Install Python from https://www.python.org/downloads/ if using Windows or MacOS", "If using Ubuntu, run `sudo apt install python-is-python3`, `sudo apt install python3-pip`, `sudo apt install python3-venv`."],
                 "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
             },
             {

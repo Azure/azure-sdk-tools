@@ -9,6 +9,7 @@ type TenantConfig struct {
 	AgenticSearchPrompt     string
 	IntentionPromptTemplate string
 	KeywordReplaceMap       map[string]string
+	EnableRouting           bool
 }
 
 var typespecSources = []model.Source{
@@ -41,18 +42,48 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		IntentionPromptTemplate: "language_python/intention.md",
 		AgenticSearchPrompt:     "language_python/agentic_search.md",
 	},
+	model.TenantID_DotnetChannelQaBot: {
+		Sources: append([]model.Source{model.Source_AzureSDKForNetDocs, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('dotnet_*', 'title')",
+		},
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+	},
 	model.TenantID_GolangChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForGo, model.Source_AzureSDKGuidelines}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForGo, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('golang_*', 'title')",
 		},
-		PromptTemplate:          "common/language_channel.md",
-		IntentionPromptTemplate: "prompt_template/intention.md",
-		AgenticSearchPrompt:     "common/agentic_search.md",
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+	},
+	model.TenantID_JavaChannelQaBot: {
+		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKForJavaWiki, model.Source_AzureSDKGuidelines, model.Source_AutorestJava, model.Source_AzureSDKDocsEng}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('java_*', 'title')",
+		},
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+	},
+	model.TenantID_JavaScriptChannelQaBot: {
+		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",
+		},
+		PromptTemplate:          "language_channel/qa.md",
+		IntentionPromptTemplate: "language_channel/intention.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_AzureSDKQaBot: {
-		PromptTemplate:          "typespec/qa.md",
-		Sources:                 typespecSources,
+		PromptTemplate: "typespec/qa.md",
+		Sources:        append(typespecSources, model.Source_AzureSDKDocsEng),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
+		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
 	},
@@ -61,6 +92,22 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		Sources:                 []model.Source{model.Source_AzureSDKDocsEng},
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
+	},
+	model.TenantID_GeneralQaBot: {
+		PromptTemplate:          "general/qa.md",
+		IntentionPromptTemplate: "general/intention.md",
+		AgenticSearchPrompt:     "general/agentic_search.md",
+		EnableRouting:           true,
+	},
+	model.TenantID_APISpecReviewBot: {
+		PromptTemplate: "api_spec_review/qa.md",
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureSDKDocsEng},
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
+		},
+		IntentionPromptTemplate: "api_spec_review/intention.md",
+		AgenticSearchPrompt:     "api_spec_review/agentic_search.md",
+		EnableRouting:           true,
 	},
 }
 

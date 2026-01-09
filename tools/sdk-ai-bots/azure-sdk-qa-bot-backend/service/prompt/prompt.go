@@ -100,6 +100,21 @@ func (p *IntentionPromptParser) ParseResponse(response, template string) (*model
 	return &resp, nil
 }
 
+type RoutingTenantPromptParser struct {
+	*DefaultPromptParser
+}
+
+func (p *RoutingTenantPromptParser) ParseResponse(response, template string) (*model.TenantRoutingResult, error) {
+	// Implement your response parsing logic here
+	// For example, you can unmarshal the response into a struct
+	var resp model.TenantRoutingResult
+	err := json.Unmarshal([]byte(response), &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 // findModuleRoot finds the module root by looking for go.mod file
 func findModuleRoot() (string, error) {
 	// Start from the current file's directory

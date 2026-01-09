@@ -3,11 +3,16 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
-	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
-	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
-	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
-	TenantID_GolangChannelQaBot TenantID = "golang_channel_qa_bot"
+	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
+	TenantID_TypeSpecExtension      TenantID = "typespec_extension"
+	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
+	TenantID_DotnetChannelQaBot     TenantID = "dotnet_channel_qa_bot"
+	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"
+	TenantID_GolangChannelQaBot     TenantID = "golang_channel_qa_bot"
+	TenantID_JavaChannelQaBot       TenantID = "java_channel_qa_bot"
+	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
+	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
+	TenantID_APISpecReviewBot       TenantID = "api_spec_review_bot"
 )
 
 type Source string
@@ -29,6 +34,12 @@ const (
 	Source_AzureSDKForGo                  Source = "azure_sdk_for_go_docs"
 	Source_StaticAzureDocs                Source = "static_azure_docs"
 	Source_StaticTypeSpecToSwaggerMapping Source = "static_typespec_to_swagger_mapping"
+	Source_AzureSDKForJava                Source = "azure_sdk_for_java_docs"
+	Source_AzureSDKForJavaWiki            Source = "azure_sdk_for_java_wiki"
+	Source_AutorestJava                   Source = "autorest_java_docs"
+	Source_AzureSDKForJavaScript          Source = "azure_sdk_for_js_docs"
+	Source_AzureSDKForJavaScriptWiki      Source = "azure_sdk_for_js_wiki"
+	Source_AzureSDKForNetDocs             Source = "azure_sdk_for_net_docs"
 )
 
 type Role string
@@ -85,6 +96,7 @@ type CompletionResp struct {
 	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
 	Intention         *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
+	RouteTenant       *TenantID        `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
 }
 
 type QuestionScope string
@@ -101,4 +113,8 @@ type IntentionResult struct {
 	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
 	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
 	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
+}
+
+type TenantRoutingResult struct {
+	RouteTenant TenantID `json:"route_tenant" jsonschema:"required,description=The tenant ID to route the question to"`
 }

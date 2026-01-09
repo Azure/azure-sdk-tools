@@ -5,7 +5,7 @@ package main
 
 const (
 	moduleName    = "github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
-	moduleVersion = "v0.5.0"
+	moduleVersion = "v0.7.0"
 )
 
 // GetVersion returns the module version

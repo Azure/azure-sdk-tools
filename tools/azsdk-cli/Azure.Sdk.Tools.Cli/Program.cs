@@ -49,27 +49,7 @@ public class Program
         // In MCP server mode skip console output except for fatal server errors (which may happen
         // before the MCP logging transport is initialized).
         // All other logs will be redirected via the mcp logger over json-rpc to the mcp client only
-        if (!isCommandLine)
-        {
-            builder.Logging.ClearProviders();
-            builder.Logging.AddConsole(consoleLogOptions =>
-            {
-                consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
-            });
-            builder.Logging.AddFilter<Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>((category, level) =>
-                level >= LogLevel.Error
-                && category != null
-                && (category.StartsWith("Microsoft.Hosting", StringComparison.Ordinal)
-                    || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal)
-                    || category.StartsWith("Microsoft.Extensions.Hosting", StringComparison.Ordinal)));
-        }
-        else
-        {
-            builder.Logging.AddConsole(consoleLogOptions =>
-            {
-                consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
-            });
-        }
+        builder.Logging.ConfigureMcpConsoleLogging(isCommandLine);
 
         // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
@@ -82,14 +62,8 @@ public class Program
         });
 
         // add the console logger
-        builder.Services.AddLogging(l =>
-        {
-            if (isCommandLine)
-            {
-                l.AddConsole();
-            }
-            l.SetMinimumLevel(logLevel);
-        });
+        builder.Services.ConfigureDefaultLogging(logLevel, isCommandLine);
+
 
         var outputMode = !isCommandLine ? OutputHelper.OutputModes.Mcp : outputFormat switch
         {

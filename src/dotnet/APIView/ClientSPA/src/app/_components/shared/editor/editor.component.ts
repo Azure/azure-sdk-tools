@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SimplemdeModule, SimplemdeOptions, SimplemdeComponent } from 'ngx-simplemde';
+import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
 
 @Component({
     selector: 'app-editor',
@@ -18,7 +18,6 @@ export class EditorComponent {
   @Input() content: string = '';
   @Output() contentChange = new EventEmitter<string>();
   @Input() editorId: string = '';
-  @ViewChild('simpleEditor') simpleEditor!: SimplemdeComponent;
 
   private currentContent: string = '';
 

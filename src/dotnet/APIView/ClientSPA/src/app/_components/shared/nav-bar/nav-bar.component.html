@@ -7,11 +7,6 @@
         </button>
         <div class="navbar-collapse collapse">
             <ul class="navbar-nav ms-auto align-items-center">
-                <li *ngIf="isLoggedIn && isAdmin" class="nav-item">
-                    <a routerLink="/admin/permissions" target="_blank" class="nav-link nav-icon" title="Admin Settings" data-clarity-region="admin-settings-link">
-                        <i class="bi bi-shield-lock"></i>
-                    </a>
-                </li>
 
                 <!-- Requested Reviews link (for approvers) -->
                 <li *ngIf="isLoggedIn && isApprover" class="nav-item">

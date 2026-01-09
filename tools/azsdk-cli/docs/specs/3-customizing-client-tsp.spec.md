@@ -179,12 +179,12 @@ flowchart TD
     Entry[<b>Entry Point</b><br/>Customization request from any source]
     Entry --> Classify
 
-    Classify[<b>Classifier</b><br/>Analyze request & route to next action<br/><i>Max 2 iterations per phase</i>]
+    Classify[<b>Classifier</b><br/>Analyze request & route to next action<br/>]
     Classify -->|TypeSpec can help| PhaseA
     Classify -->|Stalled/complex| Failure
     Classify -->|Complete| Success
 
-    PhaseA[<b>Phase A: TypeSpec</b><br/>Apply client.tsp decorators]
+    PhaseA[<b>Phase A: TypeSpec</b><br/>Apply client.tsp decorators<br/><i>Max 2 iterations</i>]
     PhaseA --> Regen[Regenerate SDK]
 
     Regen --> RegenOK{Generation<br/>Success?}
@@ -193,7 +193,7 @@ flowchart TD
 
     Build --> BuildOK{Build<br/>Success?}
     BuildOK -->|Yes| Classify
-    BuildOK -->|No + has files| PhaseB[<b>Phase B: Code Repair</b><br/>Patch customization files]
+    BuildOK -->|No + has files| PhaseB[<b>Phase B: Code Repair</b><br/>Patch customization files<br/><i>Max 2 iterations</i>]
     BuildOK -->|No, no files| Classify
     PhaseB --> Regen
 
@@ -219,6 +219,14 @@ flowchart TD
 #### Classifier
 
 The classifier analyzes context and routes to Phase A (TypeSpec can help), Success (done), or Failure (stalled/complex). Phase B activates automatically when Phase A fails and customization files exist.
+
+**Routing Logic:**
+- **Phase A**: TypeSpec decorators can address the issue
+- **Success**: Task completed successfully
+- **Failure (Manual Guidance)**: One of the following conditions:
+  - Stalled: Same error appears twice consecutively in the same phase
+  - Complex: Issue exceeds scope boundaries or context limits
+  - **No Customization Files**: Phase A build fails but no customization files exist (Java: no `/customization/` or `*Customization.java`, Python: no `*_patch.py`, .NET: no partial classes). Tool suggests creating appropriate customization file for the language.
 
 **Implementation**: Uses client customizations reference doc to determine if TypeSpec can address issues.
 
@@ -407,6 +415,8 @@ This section provides concrete test scenarios to validate the two-phase customiz
 
 **Key Learning:** API review naming feedback typically resolved with scoped `@clientName` decorators. Tool validates all affected language builds.
 
+**Note:** Sample updates are out of scope for the customization workflow—sample errors are ignored during validation as they may require manual updates. Generated samples are automatically updated during regeneration; handwritten samples may require manual updates or use of `azsdk_package_samples_generate`. In this example, samples that reference `AIProjectConnectionEntraIDCredential` may require manual updates or regeneration using `azsdk_package_samples_generate`. Sample updates are out of scope for the customization workflow—samples are not validated during SDK builds.
+
 ---
 
 ### Scenario 3: TypeSpec Rename Causing Customization Drift
@@ -513,6 +523,33 @@ Note: Field 'displayName' no longer exists in generated model
 
 ---
 
+### Scenario 7: Feature Request Requiring Code Customization (No TypeSpec Solution)
+
+**Description:** User requests adding operation ID extraction from polling headers for Java LRO operations, but TypeSpec has no decorator to customize polling behavior or extract data from response headers.
+
+**Entry Point:** User prompt ("Add operationId property to AnalyzeOperationDetails by parsing it from the Operation-Location header during polling")
+
+**Problem:** LRO polling needs to extract operation ID from `Operation-Location` header and inject it into `AnalyzeOperationDetails` response object. TypeSpec cannot customize polling strategies or header parsing logic. No customization files exist yet.
+
+**Workflow Execution:**
+
+| Phase                 | Action                                                                                                                        | Result                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Phase A: TypeSpec** | Analyze request<br/>Determine no TypeSpec decorator supports polling customization or header extraction<br/>No TypeSpec changes applicable | SDK unchanged<br/>No customization files found |
+| **Manual Guidance** | Detect no `/customization/` directory or `*Customization.java` files exist<br/>Return guidance to create customization infrastructure | Tool suggests creating customization class with LRO polling examples |
+
+**Acceptance Criteria:**
+- Tool determines TypeSpec cannot solve the request (no applicable decorators for polling/headers)
+- Tool identifies no customization files exist for Java
+- Tool returns manual guidance including:
+  - Instruction to create customization infrastructure (e.g., `DocumentIntelligenceCustomizations.java`)
+  - Code pattern/example for customizing polling strategies with header extraction
+  - Reference to Java customization documentation and LRO customization examples
+
+**Key Learning:** When feature requests involve runtime behavior like polling strategies or header extraction that TypeSpec cannot address, tool provides guidance to create the appropriate customization files with concrete examples.
+
+---
+
 ### Testing Checklist
 
 Use these scenarios to validate the customization workflow implementation:
@@ -523,11 +560,12 @@ Use these scenarios to validate the customization workflow implementation:
 - [ ] **Scenario 4**: Hide operation from Python SDK (Phase A focus)
 - [ ] **Scenario 5**: .NET build errors from analyzer (Phase A focus)
 - [ ] **Scenario 6**: Create Python subclient architecture (Phase A focus)
+- [ ] **Scenario 7**: Build failure with no customization files (Manual guidance)
 - [ ] **Summary response**: Tool returns change summary with all modifications
 - [ ] **Change summary**: Tool returns structured response with all changes (TypeSpec decorators, code patches, files modified)
 - [ ] **Max retry limit**: Tool stops after 2 attempts per phase (Phase A: 2, Phase B: 2, total: 4 iterations)
 - [ ] **Stall detection**: Tool detects when same error appears twice consecutively
-- [ ] **Context limit**: Tool monitors context size and fails gracefully when exceeding ~50K characters
+- [ ] **Context limit**: Tool monitors context size and fails gracefully when exceeding character limits
 - [ ] **Build validation**: All scenarios complete with no build errors (warnings acceptable)
 
 ---
@@ -543,6 +581,8 @@ Use these scenarios to validate the customization workflow implementation:
   - Phase B is error-driven safety net for TypeSpec-induced customization conflicts
   - Examples: Duplicate field removal, reference updates, import fixes
 - [ ] **Manual Guidance (10% Coverage)**: Remaining niche cases receive structured guidance for manual implementation
+  - Includes suggesting creation of customization files when Phase A fails and no files exist
+  - Examples: Complex architectural changes, niche language-specific patterns, stalled iterations
 - [ ] **Efficiency**: Reduce manual effort in SDK regeneration workflows by 60%+
 - [ ] **Interactive Workflow**: Tool applies changes (uncommitted) and returns summary for user review
 - [ ] **Cross-Language**: Support .NET, Java, JavaScript, Python, and Go

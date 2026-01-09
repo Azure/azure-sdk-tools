@@ -451,6 +451,9 @@ export class CommentThreadComponent {
       if (contentText.length === 0) {
         this.messageService.add(emptyCommentContentWarningMessage);
       } else {
+        const comment = this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!;
+        comment.commentText = content;
+        comment.isInEditMode = false;
         this.saveCommentActionEmitter.emit(
           {
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
@@ -465,7 +468,6 @@ export class CommentThreadComponent {
           } as CommentUpdatesDto
         );
       }
-      this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
     }
   }
 

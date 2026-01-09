@@ -40,7 +40,7 @@ For TypeSpec questions, follow this structured approach:
 ## Step 4: Code Verification
 - Do not change the structure of the user's TypeSpec code
 - Double-check all TypeSpec syntax elements
-- Verify decorator placement and parameters
+- Verify decorator placement and parameters, it's better to mention the library source of the decorator
 - Ensure proper namespace and import usage
 
 # ANSWER GUIDELINES

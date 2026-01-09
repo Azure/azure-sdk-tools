@@ -56,17 +56,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                    (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
         }
 
-        private static bool IsValidGitHubSpecUrl(string url)
-        {
-            return GitHubSpecUrlRegex().IsMatch(url) && 
-                   !url.Contains("azure-rest-api-specs-pr", StringComparison.OrdinalIgnoreCase);
-        }
-
         public bool IsValidTypeSpecProjectPath(string path)
         {
             if (IsUrl(path))
             {
-                return IsValidGitHubSpecUrl(path);
+                return GitHubSpecUrlRegex().IsMatch(path);
             }
             return TypeSpecProject.IsValidTypeSpecProjectPath(path);
         }
@@ -87,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             if (IsUrl(path))
             {
-                return IsValidGitHubSpecUrl(path);
+                return GitHubSpecUrlRegex().IsMatch(path);
             }
             var repoUri = _gitHelper.GetRepoRemoteUri(path);
             return RestApiSpecsPublicRegex().IsMatch(repoUri.ToString());

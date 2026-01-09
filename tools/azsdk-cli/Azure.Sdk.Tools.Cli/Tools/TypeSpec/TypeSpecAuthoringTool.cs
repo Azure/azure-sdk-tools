@@ -11,10 +11,10 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
     /// <summary>
-    /// Guide the user to define and update TypeSpec-based API specifications for Azure services.
+    /// Generate a solution or execution plan to define and update TypeSpec-based API specifications for Azure services.
     /// It connects to an AI agent that can answer questions about TypeSpec, Azure SDK guidelines, and API best practices.
     /// </summary>
-    [McpServerToolType, Description("Guide the user to perform typespec related tasks, e.g. define and update TypeSpec based API spec for an azure service.")]
+    [McpServerToolType, Description("This type contains the tool to generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.")]
     public class TypeSpecAuthoringTool : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
-        private const string TypeSpecAuthoringToolCommandName = "authoring";
+        private const string TypeSpecAuthoringToolCommandName = "retrieve-solution";
 
         private readonly Option<string> _requestOption = new("--request")
         {
@@ -90,22 +90,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
 
-        [McpServerTool(Name = "azsdk_typespec_authoring")]
-        [Description(@"
-Authoring, edit, and version **TypeSpec** projects for Azure services (management plane & data plane). 
-Use this tool to create or update service namespaces, API versions, resources, models, and operations, 
-and to validate alignment with Azure API guidelines and typespec-azure templates.
-This tool applies to all tasks involving **TypeSpec**:
-- Writing new TypeSpec definitions: service, api version, resource, models, operations
-- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, or operations
-- Versioning evolution:
-  - Make a **preview** API **stable (GA)**.
-  - Replace an existing **preview** with a **new preview**.
-  - Replace a **preview** with a **stable**
-  - Replacing a preview API with a stable API and a new preview API.
-  - **Add** a preview or **add** a stable API version.
-- Resolving TypeSpec-related issues
-
+        [McpServerTool(Name = "azsdk_typespec_retrieve_solution")]
+        [Description(@"Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.
 Pass in a `request` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links
 ")]

@@ -34,8 +34,14 @@
             {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"],
+                "instructions": ["Install Python from https://www.python.org/downloads/ if using Windows. If using Ubuntu, run `sudo apt install python-is-python3`."],
                 "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
+            },
+            {
+                "requirement": "pip",
+                "check": ["python", "-m", "pip"],
+                "instructions": ["Ensure you've activated the right venv", "python -m ensurepip"],
+                "reason": "Pip is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],
         "java": [

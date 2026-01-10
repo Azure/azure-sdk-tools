@@ -18,13 +18,19 @@ function generate(item: ApiClass, deprecated?: boolean): ReviewToken[] {
   // Extract structured properties
   const typeParameters = item.typeParameters;
 
-  // Add export and class keywords
+  // Add export keyword
   tokens.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
 
   // Check for default export
   const isDefaultExport = item.excerptTokens.some((t) => t.text.includes("export default"));
   if (isDefaultExport) {
     tokens.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
+  }
+
+  // Add declare keyword (common in .d.ts files)
+  const hasDeclare = item.excerptTokens.some((t) => t.text.includes("declare"));
+  if (hasDeclare) {
+    tokens.push(createToken(TokenKind.Keyword, "declare", { hasSuffixSpace: true, deprecated }));
   }
 
   // Add abstract modifier if applicable

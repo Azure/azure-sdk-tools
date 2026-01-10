@@ -10,6 +10,8 @@ namespace IssueLabeler.Shared
         public string? Body { get; set; }
         public string? Service { get; set; }
         public string? Category { get; set; }
+        public string? Server { get; set; }
+        public string? Tool { get; set; }
         public string? Author { get; set; }
         public string? Repository { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }

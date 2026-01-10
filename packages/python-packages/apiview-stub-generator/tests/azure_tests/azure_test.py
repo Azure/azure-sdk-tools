@@ -11,7 +11,7 @@ import requests
 from subprocess import check_call
 from pytest import fail, mark
 
-from apistub import ApiView, StubGenerator
+from apistub import ApiView, console_entry_point
 import json
 import zipfile
 
@@ -52,20 +52,20 @@ def _copy_directory_from_github(dest_dir, repo_url, directory, tag=None):
     """
     # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
-    
+
     # Clone the repository to the temporary directory
     clone_cmd = ["git", "clone", "--depth", "1"]
     if tag:
         clone_cmd.extend(["--branch", tag])
     clone_cmd.extend([repo_url, temp_dir])
     check_call(clone_cmd)
-    
+
     # Path to the specific directory in the cloned repository
     src_dir = os.path.join(temp_dir, directory)
-    
+
     # Create another temporary directory to copy the specific directory
     shutil.copytree(src_dir, dest_dir)
-    
+
     # Clean up the cloned repository
     shutil.rmtree(temp_dir)
 
@@ -75,7 +75,7 @@ def _get_src(src_dir, subdirectory, package_name, version):
     repo_url = "https://github.com/Azure/azure-sdk-for-python.git"
     directory = f"sdk/{subdirectory}/{package_name}"
     tag = f"{package_name}_{version}"  # Optional: specify a tag to clone
-    
+
     _copy_directory_from_github(src_dir, repo_url, directory, tag)
     print(f"Directory copied to: {src_dir}")
     # Check if apiview-properties.json exists in the source directory
@@ -86,7 +86,7 @@ def _get_src(src_dir, subdirectory, package_name, version):
 def _get_mapping_file(dest_dir, subdirectory, package_name, version):
     """
     Download the apiview-properties.json mapping file from the GitHub repository.
-    
+
     :param dest_dir: Destination directory to copy the file to
     :param subdirectory: Subdirectory within sdk/ where the package is located
     :param package_name: Name of the package
@@ -96,7 +96,7 @@ def _get_mapping_file(dest_dir, subdirectory, package_name, version):
     tag = f"{package_name}_{version}"  # Optional: specify a tag to clone
     raw_url = f"https://raw.githubusercontent.com/Azure/azure-sdk-for-python/{tag}/sdk/{subdirectory}/{package_name}/apiview-properties.json"
     return _download_file(dest_dir, raw_url)
-    
+
 def _download_file(dest_folder, url):
     """
     Download a file from a URL to a destination folder.
@@ -129,9 +129,9 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type, subdirectory):
     response = requests.get(pypi_url)
     response.raise_for_status()
     data = response.json()
-    
+
     url = None
-    
+
     for file_info in data['urls']:
         if pkg_type == "whl" and file_info['packagetype'] == 'bdist_wheel':
             url = file_info['url']
@@ -139,10 +139,10 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type, subdirectory):
         elif pkg_type == "sdist" and file_info['packagetype'] == 'sdist':
             url = file_info['url']
             break
-    
+
     if not url:
         raise ValueError(f"Could not find {pkg_type} file for the specified version.")
-    
+
     pkg_path = _download_file(temp_dir, url)
     # Copy apiview-properties.json to pkg_path from github repo if it exists
     mapping_file = _get_mapping_file(temp_dir, subdirectory, package_name, version)
@@ -232,7 +232,7 @@ class TestApiViewAzure:
                     collect_line_ids(line.children, index)
 
         collect_line_ids(apiview.review_lines)
-    
+
     def _download_packages(self, directory, package_name, version, pkg_type):
         temp_dir = tempfile.mkdtemp()
         temp_path = os.path.join(temp_dir, package_name)
@@ -267,7 +267,7 @@ class TestApiViewAzure:
             # Pretty-print both JSON objects for easier diff comparison on failure
             old_json_str = json.dumps(old_tokens, indent=2, sort_keys=True)
             new_json_str = json.dumps(new_tokens, indent=2, sort_keys=True)
-            
+
             assert old_json_str == new_json_str, (
                 f"Generated token file does not match the provided token file.\n"
                 f"Expected file: {old_file}\n"
@@ -275,20 +275,53 @@ class TestApiViewAzure:
                 f"Differences will be shown in the assertion diff below."
             )
 
-    def _write_tokens(self, stub_gen):
-        apiview = stub_gen.generate_tokens()
-        json_tokens = stub_gen.serialize(apiview)
-        # Write to JSON file
-        out_file_path = stub_gen.out_path
-        # Generate JSON file name if outpath doesn't have json file name
-        if not out_file_path.endswith(".json"):
-            out_file_path = os.path.join(
-                stub_gen.out_path, f"{apiview.package_name}_python.json"
-            )
-        with open(out_file_path, "w") as json_file:
-            json_file.write(json_tokens)
+    def _diff_markdown_file(self, old_file, new_file):
+        """
+        Compare two markdown files, ignoring version differences.
+        """
+        with open(old_file, 'r') as f1, open(new_file, 'r') as f2:
+            old_lines = f1.readlines()
+            new_lines = f2.readlines()
 
-        return apiview
+            # Replace version information in the header (line 2)
+            # Format: "# Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
+            if len(old_lines) > 1 and old_lines[1].startswith("# Package is parsed"):
+                old_lines[1] = "# Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x\n"
+            if len(new_lines) > 1 and new_lines[1].startswith("# Package is parsed"):
+                new_lines[1] = "# Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x\n"
+
+            old_content = "".join(old_lines)
+            new_content = "".join(new_lines)
+
+            assert old_content == new_content, (
+                f"Generated markdown file does not match the provided markdown file.\n"
+                f"Expected file: {old_file}\n"
+                f"Generated file: {new_file}\n"
+                f"Differences will be shown in the assertion diff below."
+            )
+
+    def _write_tokens(self, pkg_path, temp_path, mapping_file):
+        """Generate tokens using console_entry_point with --md flag to generate both JSON and markdown"""
+        import sys
+
+        # Build command-line arguments
+        old_argv = sys.argv
+        try:
+            sys.argv = [
+                "apistubgen",
+                "--pkg-path", pkg_path,
+                "--temp-path", temp_path,
+                "--out-path", temp_path,
+                "--md"
+            ]
+            if mapping_file:
+                sys.argv.extend(["--mapping-path", mapping_file])
+
+            # Call console_entry_point with _is_test=True to get apiview
+            apiview = console_entry_point(_is_test=True)
+            return apiview
+        finally:
+            sys.argv = old_argv
 
     @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
@@ -296,18 +329,26 @@ class TestApiViewAzure:
         check_call(["pip", "freeze"])
         pkg_path, mapping_file = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
-        # Explicitly pass through mapping file path
-        stub_gen = StubGenerator(
-            pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path, mapping_path=mapping_file
-        )
-        apiview = self._write_tokens(stub_gen)
+
+        # Run apistubgen command with both --json and --md flags
+        apiview = self._write_tokens(pkg_path, temp_path, mapping_file)
+
         self._validate_line_ids(apiview)
 
         assert apiview.package_name == pkg_name
         assert apiview.namespace == pkg_namespace
+
         # Compare the generated token file with the provided token file
         outfile = f"{pkg_name}_python.json"
         generated_token_file = os.path.join(temp_path, outfile)
         provided_token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"token_files/{outfile}"))
-
         self._diff_token_file(provided_token_file, generated_token_file)
+
+        # Compare the generated markdown file with the provided markdown file in package-specific folder
+        generated_md_file = os.path.join(temp_path, "api.md")
+        provided_md_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"md_files/{pkg_name}/api.md"))
+
+        if os.path.exists(provided_md_file):
+            self._diff_markdown_file(provided_md_file, generated_md_file)
+        else:
+            print(f"Provided markdown file not found: {provided_md_file}. Skipping markdown comparison.")

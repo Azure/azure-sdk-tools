@@ -218,10 +218,7 @@ export function splitAndBuild(
 ) {
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
-  const lines = s
-    .replace(/export declare function/g, "export function")
-    .replace(/export declare class/g, "export class")
-    .split("\n");
+  const lines = s.split("\n");
   const { kind: memberKind, displayName: currentTypeName } = item;
   const currentTypeid = item.canonicalReference.toString();
   for (const l of lines) {

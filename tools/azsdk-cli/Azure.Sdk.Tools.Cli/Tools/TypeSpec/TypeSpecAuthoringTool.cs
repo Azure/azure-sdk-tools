@@ -155,6 +155,7 @@ Returns an documents with references and snippets
                     IsSuccessful = response.HasResult,
                     //Contexts = response.Knowledges ?? new List<Knowledge>(),
                     Context = context,
+                    Intention = response.Intention != null ? JsonSerializer.Serialize(response.Intention, jsonOptions) : string.Empty
                 };
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)

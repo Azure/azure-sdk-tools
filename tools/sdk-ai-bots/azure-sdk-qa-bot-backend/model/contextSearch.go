@@ -10,6 +10,7 @@ type ContextSearchReq struct {
 }
 
 type ContextSearchResp struct {
-	HasResult  bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
-	Knowledges []Knowledge `json:"knowledges" jsonschema:"omitempty,description=The documents for the query"`
+	HasResult  bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
+	Knowledges []Knowledge      `json:"knowledges" jsonschema:"omitempty,description=The documents for the query"`
+	Intention  *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intension for the query"`
 }

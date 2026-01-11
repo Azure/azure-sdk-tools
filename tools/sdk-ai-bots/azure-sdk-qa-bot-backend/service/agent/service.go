@@ -78,7 +78,7 @@ func (s *CompletionService) SearchContext(ctx context.Context, req *model.Comple
 	_, reasoningModelMessages := s.buildMessages(req)
 
 	// 2. Build query for search
-	query, _ := s.buildQueryForSearch(req, reasoningModelMessages)
+	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Check if we need RAG processing
 	var knowledges []model.Knowledge
@@ -106,6 +106,7 @@ func (s *CompletionService) SearchContext(ctx context.Context, req *model.Comple
 	return &model.ContextSearchResp{
 		HasResult:  true,
 		Knowledges: knowledges,
+		Intention:  intention,
 	}, nil
 }
 

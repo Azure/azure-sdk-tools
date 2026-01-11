@@ -132,6 +132,7 @@ Important Links:
 }
 
 func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
+	config.LoadEnvFile()
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()

@@ -43,7 +43,7 @@ export class RAGModel implements PromptCompletionModel {
     ]);
     logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
-      endpoint: config.isLocal ? "http://127.0.0.1:8088": ragEndpoint,
+      endpoint: config.isLocal ? "http://127.0.0.1:8088" : ragEndpoint,
       accessToken: token ? token.token : undefined
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });

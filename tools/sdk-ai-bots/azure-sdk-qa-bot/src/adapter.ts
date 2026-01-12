@@ -9,7 +9,7 @@ import { isAzureAppService } from './common/shared.js';
 import { sendActivityWithRetry } from './activityUtils.js';
 
 // For Teams App Test Tool, don't require authentication
-const adapterConfig = config.isLocal === 'true' && !config.MicrosoftAppId
+const adapterConfig = config.isLocal && !config.MicrosoftAppId
   ? {} // No authentication for test tool
   : config;
 

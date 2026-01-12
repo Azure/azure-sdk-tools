@@ -74,6 +74,8 @@ async def invoke_agent(
             return str(obj)
 
     response_text = ""
+    # Note: client.messages.list returns messages with newest first, so we iterate
+    # without reversing to get the most recent assistant message
     for m in list(all_messages):
         role = getattr(m, "role", None)
         if role == MessageRole.AGENT.value or role == "assistant":
@@ -110,13 +112,24 @@ an appropriate error message to the user.
     tools = SearchTools().all_tools() + ApiReviewTools().all_tools() + UtilityTools().all_tools()
     toolset.add(FunctionTool(tools))
 
-    agent = client.create_agent(
-        name="APIView Copilot Readwrite Agent",
-        description="A read-write agent that can perform searches and trigger allowed actions.",
-        model=model_deployment_name,
-        instructions=ai_instructions,
-        toolset=toolset,
-    )
+    try:
+        agent = client.create_agent(
+            name="APIView Copilot Readwrite Agent",
+            description="A read-write agent that can perform searches and trigger allowed actions.",
+            model=model_deployment_name,
+            instructions=ai_instructions,
+            toolset=toolset,
+        )
+    except Exception as e:
+        error_msg = str(e)
+        if "timed out" in error_msg.lower():
+            raise RuntimeError(
+                "Failed to create agent: Azure Agents service timed out. "
+                "This may be a temporary service issue. Please try again in a moment."
+            ) from e
+        else:
+            raise RuntimeError(f"Failed to create agent: {error_msg}") from e
+
     # enable all tools by default
     client.enable_auto_function_calls(tools=toolset)
 
@@ -152,13 +165,24 @@ You are a READ-ONLY assistant.
     tools = safe_search_tools + ApiReviewTools().all_tools() + UtilityTools().all_tools()
     toolset.add(FunctionTool(tools))
 
-    agent = client.create_agent(
-        name="APIView Copilot Readonly Agent",
-        description="A read-only agent for search/retrieve/summarize without side effects.",
-        model=model_deployment_name,
-        instructions=ai_instructions,
-        toolset=toolset,
-    )
+    try:
+        agent = client.create_agent(
+            name="APIView Copilot Readonly Agent",
+            description="A read-only agent for search/retrieve/summarize without side effects.",
+            model=model_deployment_name,
+            instructions=ai_instructions,
+            toolset=toolset,
+        )
+    except Exception as e:
+        error_msg = str(e)
+        if "timed out" in error_msg.lower():
+            raise RuntimeError(
+                "Failed to create agent: Azure Agents service timed out. "
+                "This may be a temporary service issue. Please try again in a moment."
+            ) from e
+        else:
+            raise RuntimeError(f"Failed to create agent: {error_msg}") from e
+
     # enable all tools by default
     client.enable_auto_function_calls(tools=toolset)
 

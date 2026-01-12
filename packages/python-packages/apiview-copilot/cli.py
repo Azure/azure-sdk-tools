@@ -465,7 +465,9 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
-def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False, quiet: bool = False):
+def handle_agent_chat(
+    thread_id: Optional[str] = None, remote: bool = False, quiet: bool = False, readonly: bool = False
+):
     """
     Start or continue an interactive chat session with the agent.
 
@@ -473,6 +475,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False, qui
         thread_id: Optional thread ID to continue a previous conversation
         remote: Whether to use remote API or local agent
         quiet: If True, suppress error messages during tool execution (agent will retry automatically)
+        readonly: If True, force readonly mode even if user has write permissions
     """
 
     async def async_input(prompt: str) -> str:
@@ -533,7 +536,12 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False, qui
             # Local mode: select read-only vs read-write based on the caller's AAD token roles
             token = _try_get_access_token()
             claims = _get_unverified_token_claims(token) if token else {}
-            agent_cm = get_readwrite_agent if _claims_is_writer(claims) else get_readonly_agent
+
+            # Force readonly if flag is set, otherwise use permissions-based selection
+            if readonly:
+                agent_cm = get_readonly_agent
+            else:
+                agent_cm = get_readwrite_agent if _claims_is_writer(claims) else get_readonly_agent
 
             mode = "readwrite" if agent_cm is get_readwrite_agent else "readonly"
             print(f"{BOLD}Local agent mode:{RESET} {mode}\n")
@@ -1374,6 +1382,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Suppress error messages during tool execution. The agent will retry automatically.",
                 options_list=["--quiet", "-q"],
+            )
+            ac.argument(
+                "readonly",
+                action="store_true",
+                help="Force readonly mode, even if you have write permissions.",
+                options_list=["--readonly", "-r"],
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

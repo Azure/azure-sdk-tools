@@ -1,19 +1,33 @@
 # Release History
 
-## 0.5.11 (Unreleased)
+## 0.5.12 (Unreleased)
 
 ### Features Added
 
-- Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
+- Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
+- Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
+### Other Changes
+
+## 0.5.11 (2026-01-05)
+
+### Features Added
+
+- Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
+- Removed `azsdk pkg release-readiness` and replace it with `azsdk pkg release --check-ready`
+- Add MCP Tool `azsdk_update_api_spec_pull_request_in_release_plan` & CLI command to update the TypeSpec pull request link in release plan
+
+### Bugs Fixed
+
 - Fixed test failures being reported as a success to the agent.
 - Test result output is now made available to the agent.
-
-### Other Changes
+- Fixed an APIView approval failure bug in `azsdk_release_sdk` tool for management plane packages.
+- Fixed issue in `azsdk_link_sdk_pull_request_to_release_plan` and `azsdk_get_sdk_pull_request_link` tools where language was set as unknown in response.
+- Fixed issue in `azsdk_get_release_plan_for_spec_pr` where tool call status was set as successful in telemetry but actually failed.
 
 ## 0.5.10 (2025-12-08)
 

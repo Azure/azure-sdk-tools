@@ -9,9 +9,11 @@ import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
 import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
+import { TooltipModule } from 'primeng/tooltip';
+import { RippleModule } from 'primeng/ripple';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 
 describe('ConversationPageComponent', () => {
   let component: ConversationPageComponent;
@@ -19,20 +21,20 @@ describe('ConversationPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         ConversationPageComponent,
         ConversationsComponent,
         NavBarComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenuModule,
-        SidebarModule,
-        MenubarModule
+        DrawerModule,
+        MenubarModule,
+        TooltipModule,
+        RippleModule
       ],
       providers: [
         {

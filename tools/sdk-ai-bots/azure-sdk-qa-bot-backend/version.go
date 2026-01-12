@@ -4,7 +4,7 @@
 package main
 
 const (
-	moduleName    = "github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+	moduleName    = "github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
 	moduleVersion = "v0.5.0"
 )
 

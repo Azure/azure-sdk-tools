@@ -143,7 +143,7 @@ describe('ThinkingHandler', () => {
 
       const result = (thinkingHandler as any).generateAnswer(successResponse);
 
-      expect(result).toBe('This is a test answer without references');
+      expect(result).toBe('This is a test answer without references\n\n> **NOTE:** If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.');
       expect(result).not.toContain('**References**');
     });
   });

@@ -1,5 +1,11 @@
 # Release History
 
+## 0.3.6 (2025-12-04)
+
+### Breaking Changes
+
+Moved all clusters to SSS3PT_ prefixed resource groups
+
 ## 0.3.5 (2025-01-23)
 
 ### Breaking Changes

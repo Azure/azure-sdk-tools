@@ -15,31 +15,17 @@ import { TimelineModule } from 'primeng/timeline';
 import { DividerModule } from 'primeng/divider';
 import { DialogModule } from 'primeng/dialog';
 import { CheckboxModule } from 'primeng/checkbox';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
+import { TooltipModule } from 'primeng/tooltip';
+import { RippleModule } from 'primeng/ripple';
 import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
 import { SharedAppModule } from './shared-app.module';
-import { CommonModule } from '@angular/common'; 
+import { CommonModule } from '@angular/common';
 import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
 import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
 import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cross-lang-view.component';
 
 @NgModule({
-  declarations: [
-    ReviewInfoComponent,
-    CommentThreadComponent,
-    RelatedCommentsDialogComponent,
-    AICommentFeedbackDialogComponent,
-    AICommentDeleteDialogComponent,
-    CommentSeverityComponent,
-    CrossLangViewComponent,
-    ConversationsComponent,
-    ReviewPageLayoutComponent,
-    RevisionOptionsComponent,
-    PageOptionsSectionComponent,
-    MarkdownToHtmlPipe,
-    HtmlToMarkdownPipe,
-    EditorComponent,
-  ],
   exports: [
     ReviewInfoComponent,
     CommentThreadComponent,
@@ -59,7 +45,10 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     MenuModule,
     TimelineModule,
     DividerModule,
-    OverlayPanelModule
+    PopoverModule,
+    CheckboxModule,
+    TooltipModule,
+    RippleModule
   ],
   imports: [
     CommonModule,
@@ -70,7 +59,23 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     DividerModule,
     DialogModule,
     CheckboxModule,
-    OverlayPanelModule
+    PopoverModule,
+    TooltipModule,
+    RippleModule,
+    ReviewInfoComponent,
+    CommentThreadComponent,
+    RelatedCommentsDialogComponent,
+    AICommentFeedbackDialogComponent,
+    AICommentDeleteDialogComponent,
+    CommentSeverityComponent,
+    CrossLangViewComponent,
+    ConversationsComponent,
+    ReviewPageLayoutComponent,
+    RevisionOptionsComponent,
+    PageOptionsSectionComponent,
+    MarkdownToHtmlPipe,
+    HtmlToMarkdownPipe,
+    EditorComponent
   ]
 })
 export class ReviewPageLayoutModule { }

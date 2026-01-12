@@ -17,12 +17,12 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
 )
 
@@ -294,10 +294,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 
 	// Preprocess HTML content if it contains HTML entities or tags
 	preprocessService := preprocess.NewPreprocessService()
-	if strings.Contains(req.Message.Content, "\\u003c") || strings.Contains(req.Message.Content, "&lt;") || strings.Contains(req.Message.Content, "<") {
-		log.Printf("Detected HTML content, preprocessing...")
-		req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
-	}
+	req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
 
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
@@ -307,11 +304,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	// process history messages
 	for _, message := range req.History {
 		// Preprocess HTML content in history messages
-		content := message.Content
-		if strings.Contains(content, "\\u003c") || strings.Contains(content, "&lt;") || strings.Contains(content, "<") {
-			log.Printf("Detected HTML content in history message, preprocessing...")
-			content = preprocessService.PreprocessHTMLContent(content)
-		}
+		content := preprocessService.PreprocessHTMLContent(message.Content)
 
 		if message.Role == model.Role_Assistant {
 			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
@@ -330,6 +323,22 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				content := info.Content
+				info.Link = preprocessService.PreprocessHTMLContent(info.Link)
+
+				// Check if this is a pipeline link and analyze it
+				if utils.IsPipelineLink(info.Link) {
+					log.Printf("Detected Azure DevOps pipeline link: %s", info.Link)
+					analysisText, err := utils.AnalyzePipeline(info.Link, "", true) // Use agent analysis
+					if err != nil {
+						log.Printf("Failed to analyze pipeline: %v", err)
+						// Fall back to regular link processing
+					} else {
+						// Use the pipeline analysis as content
+						content = analysisText
+						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				}
+
 				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
@@ -481,11 +490,18 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 	// Get the tenant-specific agentic search prompt
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
-	agenticSearchPrompt := ""
+	agenticSearchPromptTemplate := ""
 	if hasConfig {
-		agenticSearchPrompt = tenantConfig.AgenticSearchPrompt
+		agenticSearchPromptTemplate = tenantConfig.AgenticSearchPrompt
 	}
-
+	promptParser := prompt.AgenticSearchPromptParser{
+		DefaultPromptParser: &prompt.DefaultPromptParser{},
+	}
+	agenticSearchPrompt, err := promptParser.ParsePrompt(nil, agenticSearchPromptTemplate)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
 	sourceFilter := map[model.Source]string{}
 	if hasConfig && tenantConfig.SourceFilter != nil {
 		sourceFilter = tenantConfig.SourceFilter

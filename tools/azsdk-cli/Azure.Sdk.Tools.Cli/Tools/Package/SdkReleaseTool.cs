@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -205,7 +206,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return package;
                 }
 
-                package.IsPackageReady = package.IsChangeLogReady;
+                package.IsPackageReady = true;
 
                 //Check release date for latest version in planned release
                 var plannedRelease = package.PlannedReleases.FirstOrDefault(r => r.Version.Equals(package.Version)) ?? package.PlannedReleases.LastOrDefault();
@@ -218,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
                 bool isPreviewRelease = releaseType.Equals("Beta");
-                bool isDataPlanePackage = package.PackageType != SdkType.Management;
+                bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
                 {

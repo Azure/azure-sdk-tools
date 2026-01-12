@@ -1,6 +1,13 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version .
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.5.11.
+
+<style>
+table td:nth-child(2),
+table th:nth-child(2) {
+  white-space: nowrap;
+}
+</style>
 
 ## Tools list
 
@@ -8,7 +15,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |------|---------|-------------|
 | azsdk_analyze_log_file | `azsdk azp log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk azp analyze` | Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user |
-| azsdk_check_api_spec_ready_for_sdk | `azsdk spec-workflow check-api-readiness` | Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params. |
+| azsdk_apiview_get_comments | `azsdk apiview get-comments` | Get all the comments of an APIView API using the APIView URL |
+| azsdk_check_api_spec_ready_for_sdk | `azsdk release-plan check-api-readiness` | Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params. |
 | azsdk_check_package_release_readiness | `azsdk pkg release-readiness` | Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status. |
 | azsdk_check_service_label |  | Checks if a service label exists and returns its details |
 | azsdk_convert_swagger_to_typespec | `azsdk tsp convert` | Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project. |
@@ -31,7 +39,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_get_release_plan_for_spec_pr |  | Get release plan for API spec pull request. This tool should be used only if work item Id is unknown. |
 | azsdk_get_sdk_pull_request_link | `azsdk spec-workflow get-sdk-pr` | Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item. |
 | azsdk_link_namespace_approval_issue | `azsdk release-plan link-namespace-approval` | Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id. |
-| azsdk_link_sdk_pull_request_to_release_plan | `azsdk spec-workflow link-sdk-pr` | Link SDK pull request to release plan work item |
+| azsdk_link_sdk_pull_request_to_release_plan | `azsdk release-plan link-sdk-pr` | Link SDK pull request to release plan work item |
 | azsdk_package_build_code | `azsdk pkg build` | Build/compile SDK code for a specified project locally. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally. |
 | azsdk_package_run_check | `azsdk pkg validate` | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
@@ -47,6 +55,8 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 | azsdk_update_language_exclusion_justification |  | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |
 | azsdk_verify_setup | `azsdk verify setup` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. |
+|  | `azsdk mcp` | Starts the MCP server (stdio mode) |
+|  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners update` | Update codeowners in a repository |
 |  | `azsdk config codeowners validate` | Validate codeowners for an existing service entry |
 |  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
@@ -54,4 +64,7 @@ This document provides a comprehensive list of all MCP (Model Context Protocol) 
 |  | `azsdk pkg readme generate` | Generate README content for a package |
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
+|  | `azsdk release-plan list-overdue` |  |
+|  | `azsdk apiview get-content` | Get content by APIView URL |
+|  | `azsdk list` |  |
 

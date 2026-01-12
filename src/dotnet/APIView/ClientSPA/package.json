@@ -6,32 +6,45 @@
     "start": "ng serve",
     "build": "ng build --output-path=../APIViewWeb/wwwroot/spa --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:ui": "playwright test --config=ui-tests/playwright.config.ts",
+    "test:ui:headed": "playwright test --config=ui-tests/playwright.config.ts --headed",
+    "test:ui:debug": "playwright test --config=ui-tests/playwright.config.ts --ui",
+    "test:ui:report": "playwright show-report ui-tests/playwright-report",
+    "e2e": "npm run test:ui",
+    "e2e:headed": "npm run test:ui:headed",
+    "e2e:debug": "npm run test:ui:debug",
+    "e2e:report": "npm run test:ui:report"
   },
   "private": true,
+  "engines": {
+    "node": "^20.11.1 || >=22.11.0"
+  },
   "dependencies": {
-    "@angular/animations": "^17.3.10",
-    "@angular/common": "^17.3.10",
-    "@angular/compiler": "^17.3.10",
-    "@angular/core": "^17.3.10",
-    "@angular/forms": "^17.3.10",
-    "@angular/platform-browser": "^17.3.10",
-    "@angular/platform-browser-dynamic": "^17.3.10",
-    "@angular/router": "^17.3.10",
+    "@angular/animations": "^20.3.15",
+    "@angular/common": "^20.3.15",
+    "@angular/compiler": "^20.3.15",
+    "@angular/core": "^20.3.15",
+    "@angular/forms": "^20.3.15",
+    "@angular/platform-browser": "^20.3.15",
+    "@angular/platform-browser-dynamic": "^20.3.15",
+    "@angular/router": "^20.3.15",
     "@microsoft/signalr": "^8.0.7",
     "@popperjs/core": "^2.11.8",
-    "bootstrap": "^5.3.1",
+    "@primeng/themes": "^21.0.1",
+    "@primeuix/themes": "^2.0.2",
+    "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.10.5",
     "class-transformer": "^0.5.1",
     "idb": "^8.0.3",
     "jquery": "^3.7.1",
-    "ngx-cookie-service": "17.1",
-    "ngx-monaco-editor-v2": "^17.0.1",
+    "ngx-cookie-service": "^20.0.0",
+    "ngx-monaco-editor-v2": "^20.0.0",
     "ngx-simplemde": "^12.0.0",
-    "ngx-timeago": "^3.0.0",
-    "ngx-ui-scroll": "^3.2.0",
-    "primeicons": "^6.0.1",
-    "primeng": "^17.1.0",
+    "ngx-timeago": "^4.0.0",
+    "ngx-ui-scroll": "^4.1.0",
+    "primeicons": "^7.0.0",
+    "primeng": "^20.0.0",
     "reflect-metadata": "^0.2.2",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-highlight": "^7.0.0",
@@ -45,13 +58,14 @@
     "tslib": "^2.3.0",
     "turndown": "^7.2.0",
     "unified": "^11.0.4",
-    "zone.js": "~0.14.0"
+    "zone.js": "~0.15.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^17.3.17",
-    "@angular/cli": "~17.3.10",
-    "@angular/compiler-cli": "^17.3.10",
+    "@angular/build": "^20.3.13",
+    "@angular/cli": "~20.3.13",
+    "@angular/compiler-cli": "^20.3.15",
     "@fortawesome/fontawesome-free": "^6.4.2",
+    "@playwright/test": "^1.57.0",
     "@types/jasmine": "~4.3.0",
     "@types/turndown": "^5.0.5",
     "jasmine-core": "~4.6.0",
@@ -60,10 +74,14 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.3.0",
+    "less": "^4.2.0",
+    "typescript": "~5.9.3",
     "workbox-cli": "^7.1.0"
   },
   "overrides": {
-    "glob@<10.5.0": "10.5.0"
+    "glob@<10.5.0": "10.5.0",
+    "workbox-cli": {
+      "update-notifier": "5.1.0"
+    }
   }
 }

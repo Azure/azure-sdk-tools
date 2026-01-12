@@ -6,7 +6,7 @@ using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec
 {
     public class TspInitToolTests
     {
@@ -43,6 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             {
                 Assert.That(result.IsSuccessful, Is.False);
                 Assert.That(result.ResponseError, Does.Contain("Invalid --template"));
+                Assert.That(result.Language, Is.EqualTo("TypeSpec"));
             });
 
         }

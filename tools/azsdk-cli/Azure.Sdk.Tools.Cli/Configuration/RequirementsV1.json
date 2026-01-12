@@ -14,7 +14,7 @@
             {
                 "requirement": "tsp >= 1.0.0",
                 "check": ["tsp", "--version"],
-                "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
+                "instructions": ["npm install -g @typespec/compiler@latest"]
             },
             {
                 "requirement": "Powershell >= 7.0",
@@ -34,8 +34,14 @@
             {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"],
+                "instructions": ["Install Python from https://www.python.org/downloads/ if using Windows or MacOS", "If using Ubuntu, run `sudo apt install python-is-python3`, `sudo apt install python3-pip`, `sudo apt install python3-venv`."],
                 "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
+            },
+            {
+                "requirement": "pip",
+                "check": ["python", "-m", "pip", "--version"],
+                "instructions": ["python -m ensurepip", "If using Ubuntu, run `sudo apt install python3-pip`"],
+                "reason": "Pip is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],
         "java": [

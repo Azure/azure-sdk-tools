@@ -1,5 +1,5 @@
 
-@import "../../../APIViewWeb/Client/css/shared/mixins.scss";
+@use "../../../APIViewWeb/Client/css/shared/mixins.scss" as *;
 
 :host ::ng-deep {
 
@@ -7,29 +7,29 @@
         background-color: var(--base-bg-color);
         color: var(--base-text-color);
     }
-    
+
     p {
         color: var(--base-text-color);
     }
-    
+
     a, a:link {
         color: var(--link-color);
         text-decoration: none;
     }
-    
+
     a:active {
         color: var(--link-active);
     }
-    
+
     a:hover {
         color: var(--link-active);
         text-decoration: underline;
     }
-    
+
     a:visited {
         color: var(--link-visited);
     }
-    
+
     html {
         font-size: 14px;
     }
@@ -37,7 +37,7 @@
     .p-small-size {
         height: 1.9rem;
     }
-    
+
     .virtual-body {
         background-color: var(--base-bg-color);
         color: var(--base-text-color);
@@ -55,14 +55,14 @@
         .p-menuitem-link {
             font-size: x-large;
         }
-        
+
         p-badge {
             position: relative;
             left: -1.2rem;
             top: -1.4rem;
         }
     }
-    
+
     .p-menu {
         background: var(--base-fg-color);
         color: var(--base-text-color);

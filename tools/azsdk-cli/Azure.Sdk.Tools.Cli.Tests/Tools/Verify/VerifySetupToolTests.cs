@@ -64,7 +64,7 @@ internal class VerifySetupToolTests
             new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
             new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
             new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new GoLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
+            new GoLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
             new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
         ];
 

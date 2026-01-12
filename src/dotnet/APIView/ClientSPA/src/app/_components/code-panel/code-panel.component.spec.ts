@@ -185,7 +185,7 @@ describe('CodePanelComponent', () => {
       );
       const row5 = new CodePanelRowData(
         CodePanelRowDatatype.Diagnostics, 5, [], "Azure.Template.MiniSecretClient.MiniSecretClient(System.Uri, Azure.Core.TokenCredential)", "nodeIdHashed", 0, 0,
-        new Set(), 0, "noneDiff", '', '', new CodeDiagnostic("diagnosticId", "text", "helpLinkUri", "targetId", "level"),
+        new Set(), 0, "noneDiff", '', '', '', new CodeDiagnostic("diagnosticId", "text", "helpLinkUri", "targetId", "level"),
       );
 
       component.codePanelRowData = [row1, row2, row3, row4, row5];

@@ -71,8 +71,7 @@ steps:
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     DOTNET_CLI_TELEMETRY_OPTOUT: 1
     DOTNET_MULTILEVEL_LOOKUP: 0
-    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
-    APIVIEW_URI: "http://localhost:5000/AutoReview/UploadAutoReview"
+    APIVIEW_URI: "http://localhost:5000/autoreview/upload"
     APIVIEW_TESTPKGPATH: "$(Build.BinariesDirectory)"
     APIVIEW_ENDPOINT: "http://localhost:5000"
     APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'

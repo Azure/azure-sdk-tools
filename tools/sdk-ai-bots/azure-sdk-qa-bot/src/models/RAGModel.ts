@@ -53,7 +53,7 @@ export class RAGModel implements PromptCompletionModel {
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await thinkingHandler.start(context, conversationMessages);
+    const replyStartTimestamp = await thinkingHandler.start(conversationMessages);
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);

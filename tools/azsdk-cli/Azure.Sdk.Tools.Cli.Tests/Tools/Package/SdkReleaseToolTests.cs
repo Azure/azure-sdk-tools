@@ -2,12 +2,13 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
 {
     internal class SdkReleaseToolTests
     {
@@ -20,53 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
 
             logger = new TestLogger<SdkReleaseTool>();
-            var mockDevOpsService = new Mock<IDevOpsService>();
-            mockDevOpsService.Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(new PackageWorkitemResponse
-                {
-                    PackageName = "azure-template",
-                    Language = SdkLanguage.Python,
-                    ResponseError = null,
-                    PipelineDefinitionUrl = "https://dev.azure.com/fake-org/fake-project/_build?definitionId=1",
-                    WorkItemId = 12345,
-                    changeLogStatus = "Approved",
-                    APIViewStatus = "Approved",
-                    PackageNameStatus = "Approved",
-                    PackageRepoPath = "template",
-                    LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",
-                    LatestPipelineStatus = "Succeeded",
-                    WorkItemUrl = "https://dev.azure.com/fake-org/fake-project/_workitems/edit/12345",
-                    State = "Active",
-                    PlannedReleaseDate = "06/30/2025",
-                    DisplayName = "Azure Template",
-                    Version = "1.0.0",
-                    PlannedReleases = new List<SDKReleaseInfo>
-                    {
-                        new() {
-                            Version = "1.0.0",
-                            ReleaseDate = "06/30/2025",
-                            ReleaseType = "GA"
-                        }
-                    },
-                });
-            mockDevOpsService.Setup(x => x.RunPipelineAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>()))
-                .ReturnsAsync(new Build
-                {
-                    Id = 1,
-                    Status = BuildStatus.InProgress,
-                    Result = BuildResult.None,
-                    Url = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1"
-                });
-            mockDevOpsService.Setup(x => x.GetPipelineRunAsync(It.IsAny<int>()))
-                .ReturnsAsync(new Build
-                {
-                    Id = 1,
-                    Status = BuildStatus.Completed,
-                    Result = BuildResult.Succeeded,
-                    Url = "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1"
-                });
-            devOpsService = mockDevOpsService.Object;
-
+            devOpsService = new MockDevOpsService();
             sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
                 logger,

@@ -1,4 +1,4 @@
-module github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+module github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
 
 go 1.24.0
 

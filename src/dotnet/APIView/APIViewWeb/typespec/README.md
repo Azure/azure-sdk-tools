@@ -8,15 +8,22 @@ These APIs are designed for external teams to integrate with APIView programmati
 
 ## Documented APIs
 
-### AutoReview APIs (API Key Authentication)
+### AutoReview APIs (No Authentication)
 
-APIs for automated API review creation and status checks, used in CI/CD pipelines:
+API for review status checks, used in CI/CD pipelines:
 
-- `POST /AutoReview/UploadAutoReview` - Upload automatic API review file
 - `GET /AutoReview/GetReviewStatus` - Get review approval status
-- `GET /AutoReview/CreateApiReview` - Create API review from Azure DevOps artifacts
 
-**Authentication:** API Key via `ApiKey` header
+**Authentication:** None required
+
+### AutoReview APIs (Azure AD Token or GitHub Token Authentication)
+
+APIs for automated API review creation, used in CI/CD pipelines:
+
+- `POST /autoreview/upload` - Upload automatic API review file
+- `POST /autoreview/create` - Create API review from Azure DevOps artifacts
+
+**Authentication:** Azure AD or GitHub Bearer token
 
 ### API Revisions APIs (Azure AD Token Authentication)
 
@@ -121,8 +128,8 @@ The compiled OpenAPI specification (`tsp-output/openapi.yaml`) can be:
 ### Using AutoReview API to Upload a Review
 
 ```bash
-curl -X POST "https://apiview.dev/AutoReview/UploadAutoReview?label=v1.0.0" \
-  -H "ApiKey: your-api-key-here" \
+curl -X POST "https://apiview.dev/autoreview/upload?label=v1.0.0" \
+  -H "Authorization: Bearer your-token-here" \
   -F "file=@path/to/api-review-file.json"
 ```
 

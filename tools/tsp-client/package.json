@@ -18,7 +18,7 @@
     "purge": "rimraf ./node_modules package-lock.json",
     "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
-    "test": "vitest run",
+    "test": "vitest run --max-concurrency=1",
     "test:commands": "npx tsx ./test/run_commands.ts",
     "tsp-client": "node cmd/tsp-client.js",
     "watch": "tsc -p . --watch",

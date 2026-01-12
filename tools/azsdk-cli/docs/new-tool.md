@@ -351,6 +351,37 @@ Tools that may have error cases but no need for a custom type should use `Defaul
 the return type. The `.Result` property takes `object`, but must override `Format()` to serialize/stringify
 the value.
 
+#### Setting Required Telemetry Information in Tool Responses
+
+To properly tag tool calls in telemetry, tool responses must include the following information when applicable:
+
+1. **Package Name**
+   - **Required when**: Tool is triggered/operated at a package level
+   - **How to set**: Set the `PackageName` property in responses derived from `PackageResponseBase`
+   - **Purpose**: Identifies which package the tool operation was performed on
+
+2. **Language**
+   - **Required when**: Tool/command is specifically run for an SDK language
+   - **How to set**: Set the `Language` property in responses derived from `PackageResponseBase` or use the `SetLanguage()` method
+   - **Purpose**: Identifies which SDK language the tool operation was performed for
+
+3. **TypeSpec Project Path**
+   - **Required when**: TypeSpec path is known to the tool
+   - **How to set**: Set the `TypeSpecProject` property with the relative path to TypeSpec project root in responses derived from `PackageResponseBase`, `TypeSpecBaseResponse`, or `ReleasePlanBaseResponse`
+   - **Purpose**: Links the operation to a specific TypeSpec project
+
+4. **Package Type**
+   - **Required when**: Tool call is at a package level or TypeSpec project level
+   - **How to set**: Set the `PackageType` property to `SdkType.Management` or `SdkType.Dataplane` in responses derived from `PackageResponseBase`, `TypeSpecBaseResponse`, or `ReleasePlanBaseResponse`, or use the `SetPackageType()` method
+   - **Purpose**: Classifies the package as management plane or data plane
+   - **Note**: Package type is known for TypeSpec projects and SDK packages
+
+5. **Tool Operation Status**
+   - **Required when**: Tool operation encounters an error or failure
+   - **How to set**: Set the `ResponseError` property (for a single error) or `ResponseErrors` property (for multiple errors) in any response derived from `CommandResponse`
+   - **Purpose**: Marks a tool operation as failed in telemetry, which will be included in the failed tool call list
+   - **Note**: Setting either `ResponseError` or `ResponseErrors` automatically sets `OperationStatus` to `Status.Failed`
+
 
 ### Response Class Template
 

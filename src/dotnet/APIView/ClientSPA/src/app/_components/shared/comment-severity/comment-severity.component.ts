@@ -1,11 +1,20 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
 import { CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 
 @Component({
-  selector: 'app-comment-severity',
-  templateUrl: './comment-severity.component.html',
-  styleUrls: ['./comment-severity.component.scss']
+    selector: 'app-comment-severity',
+    templateUrl: './comment-severity.component.html',
+    styleUrls: ['./comment-severity.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        SelectModule
+    ]
 })
 export class CommentSeverityComponent {
   @Input() severity: CommentSeverity | string | null | undefined;

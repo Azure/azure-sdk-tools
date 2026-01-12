@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
@@ -203,11 +204,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.Status = "Failed";
                 }
                 response.SetLanguage(language);
+                string typeSpecProjectPath = "";
                 // Is valid typespec project path
                 if (!TypeSpecProject.IsValidTypeSpecProjectPath(typespecProjectRoot))
                 {
                     response.ResponseErrors.Add($"Invalid TypeSpec project root path [{typespecProjectRoot}].");
                     response.Status = "Failed";
+                }
+                else
+                {
+                    typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
+                    response.TypeSpecProject = typeSpecProjectPath;
                 }
 
                 if (string.IsNullOrEmpty(apiVersion))
@@ -244,8 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogInformation("SDK generation failed with details: [{FailureDetails}]", failureDetails);
                     return response;
                 }
-
-                string typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
+                
                 string apiSpecBranchRef = "main";
                 if (pullRequestNumber > 0)
                 {
@@ -265,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         sdkRepoBranch = sdkPullRequest.Head.Ref;
                     }
                 }
-                response.TypeSpecProject = typeSpecProjectPath;
+
                 logger.LogInformation("Running SDK generation pipeline");
                 var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(apiSpecBranchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch);
                 response.Status = "Success";
@@ -278,6 +284,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 errorResponse.ResponseError = $"Failed to run pipeline to generate SDK, Details: {ex.Message}";
                 errorResponse.Status = "Failed";
                 errorResponse.ExitCode = 1;
+                errorResponse.SetLanguage(language);
+                errorResponse.TypeSpecProject = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
                 return errorResponse;
             }
         }
@@ -297,6 +305,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 var response = new ReleaseWorkflowResponse();
                 language = inputSanitizer.SanitizeLanguage(language);
+                response.SetLanguage(language);
                 if (!IsValidLanguage(language))
                 {
                     response.ResponseError = $"Unsupported language to get pull request details. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";
@@ -309,7 +318,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                response.SetLanguage(language);
                 // Get SDK details from work item
                 if (buildId == 0)
                 {

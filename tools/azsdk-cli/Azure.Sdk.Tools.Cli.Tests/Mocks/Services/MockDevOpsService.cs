@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             });
         }
 
-        Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
+        Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus)
         {
             return Task.FromResult(true);
         }

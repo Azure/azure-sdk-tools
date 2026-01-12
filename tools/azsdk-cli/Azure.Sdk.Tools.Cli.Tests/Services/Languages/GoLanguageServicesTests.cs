@@ -39,7 +39,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 new PowershellHelper(NullLogger<PowershellHelper>.Instance, Mock.Of<IRawOutputHelper>()),
                 new GitHelper(Mock.Of<IGitHubService>(), NullLogger<GitHelper>.Instance),
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
-                Mock.Of<IFileHelper>());
+                Mock.Of<IFileHelper>(),
+                Mock.Of<ISpecGenSdkConfigHelper>());
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

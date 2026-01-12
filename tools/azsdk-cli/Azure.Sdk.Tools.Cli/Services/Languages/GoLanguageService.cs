@@ -18,7 +18,8 @@ public partial class GoLanguageService : LanguageService
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
     {
         base.processHelper = processHelper;
         this.powershellHelper = powershellHelper;
@@ -26,6 +27,7 @@ public partial class GoLanguageService : LanguageService
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
         base.fileHelper = fileHelper;
+        base.specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
 
     private readonly string goUnix = "go";

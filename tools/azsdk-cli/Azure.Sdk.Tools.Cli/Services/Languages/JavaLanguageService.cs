@@ -26,7 +26,8 @@ public sealed partial class JavaLanguageService : LanguageService
         IMicroagentHostService microagentHost,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
     {
         this.microagentHost = microagentHost;
         base.processHelper = processHelper;
@@ -35,6 +36,7 @@ public sealed partial class JavaLanguageService : LanguageService
         base.logger = logger;
         base.commonValidationHelpers = commonValidationHelpers;
         base.fileHelper = fileHelper;
+        base.specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)

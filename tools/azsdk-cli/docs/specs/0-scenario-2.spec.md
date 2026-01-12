@@ -1,4 +1,4 @@
-<!-- cspell:words Deidentification HealthDataAIServices healthdataaiservices DeidServices TypeSpec NetNew rehydrate crosslanguage scaffolding teardown noninteractive changelogs handwritten provisioning rerecordings azsdk AZSDK automatable westus2 -->
+<!-- cspell:words Deidentification HealthDataAIServices healthdataaiservices DeidServices TypeSpec BrandNew rehydrate crosslanguage scaffolding teardown noninteractive changelogs handwritten provisioning rerecordings azsdk AZSDK automatable westus2 -->
 # Spec: Scenario 2
 
 ## Table of Contents
@@ -39,7 +39,7 @@ Scenario 2 extends **[Scenario 1](./0-scenario-1.spec.md#overview)** by adding: 
 Scenario 2 validates:
 
 - Expanded inner loop: setup → generation → customization → testing (live / recorded) → validation
-- Support for **[Net-New SDKs](#net-new-sdk)** and existing SDKs
+- Support for **[Brand New Packages](#brand-new-package)** and existing SDKs
 - All five languages (.NET, Java, JavaScript, Python, Go)
 - Health Deidentification service end to end
 - Both **Agent Mode** and **CLI Mode** paths
@@ -52,10 +52,10 @@ The terminology from [Scenario 1 Definitions](./0-scenario-1.spec.md#definitions
 
 <!-- markdownlint-disable MD033 -->
 - **<a id="agent"></a>Agent**: GitHub Copilot running in a Copilot-enabled editor (VS Code, Visual Studio, or IntelliJ) with access to the Azure SDK Tools Model Context Protocol (MCP) server, enabling AI-assisted SDK development workflows.
-- **<a id="net-new-sdk"></a>Net-New SDK**: A service library that has not yet shipped a preview release and therefore requires scaffolding for code, tests, and resources.
+- **<a id="brand-new-package"></a>Brand New Package**: A service library that has not yet shipped a preview release and therefore requires scaffolding for code, tests, and resources.
 - **<a id="typespec-customizations"></a>TypeSpec Customizations**: Updates to TypeSpec inputs (for example, `client.tsp`) performed before invoking generation to tailor the generated SDK surfaces.
 - **<a id="code-customizations"></a>Code Customizations**: Handwritten code layered on top of generated output after generation completes, maintained in language-specific customization zones.
-- **<a id="live-test"></a>Live Test**: An automated test that executes against Azure resources. When recording is explicitly enabled, it produces recordings for later playback validation.
+- **<a id="live-test"></a>Live Test**: A test that executes against Azure resources. When recording is explicitly enabled, it produces recordings for later playback validation.
 - **<a id="test-recording"></a>Test Recording**: Captured HTTP interactions produced by live tests when recording is enabled, reused for playback-based validation.
 - **<a id="test-infrastructure"></a>Test Infrastructure**: Azure resources, credentials, configuration, and environment settings required to execute or re-record live tests.
 
@@ -63,7 +63,7 @@ The terminology from [Scenario 1 Definitions](./0-scenario-1.spec.md#definitions
 
 ## Why Scenario 2 Matters
 
-Without coverage for customization, live testing, and **[Net-New SDK](#net-new-sdk)** creation the toolset would remain fragmented. Scenario 2 delivers:
+Without coverage for customization, live testing, and **[Brand New Package](#brand-new-package)** creation the toolset would remain fragmented. Scenario 2 delivers:
 
 - Clear success benchmarks (including scaffolding)
 - Repeatable validation across customization and testing
@@ -87,24 +87,25 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 
 - **All [Scenario 1 activities](./0-scenario-1.spec.md#workflow) are included**
 - All five languages: .NET, Java, JavaScript, Python, Go
-- **Both [Net-New SDKs](#net-new-sdk) and existing SDKs**
+- **Both [Brand New Packages](#brand-new-package) and existing SDKs**
 - TypeSpec-based generation for the Health Deidentification service
 - Both **data plane and management plane** coverage
 - Both **Agent Mode and CLI Mode** validation
 - All models available through GitHub Copilot:
   - **Required for testing**: Claude Sonnet 4, Claude Sonnet 4.5, GPT-4o, GPT-5
 - Automated environment remediation (install/upgrade tooling)
+  - Auto-install of user-level tools and packages that don't require administrator permissions (e.g., language-specific package managers, command-line utilities via user-level package managers)
 - **[TypeSpec Customizations](#typespec-customizations)** to shape generated surfaces
 - **[Code Customizations](#code-customizations)** to add handwritten code layers
-- Creation of **[Live Tests](#live-test)**, and new **[Test Recordings](#test-recording)** for [Net-New SDKs](#net-new-sdk)
+- Creation of **[Live Tests](#live-test)**, and new **[Test Recordings](#test-recording)** for [Brand New Packages](#brand-new-package)
 - Re-recording tests for existing SDKs
 - Automated handling of Azure resources for live tests
 - TypeSpec Authoring
 - AI-powered sample generation from natural language descriptions
 - Sample translation between programming languages
 - **Checkpointing by commit**: Creating git commits after each stage that generates or modifies code to provide rollback points and track incremental changes
-- **Stretch Goal**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
-- **Stretch Goal**: AI-powered assistance for authoring live tests for [Net-New SDKs](#net-new-sdk) may require additional investigation to determine feasibility and implementation approach
+- **Stretch Goal**: Creation of bicep files for test resource provisioning for [Brand New Packages](#brand-new-package) may be complex and will need to be more thoroughly investigated before committing to full automation
+- **Stretch Goal**: AI-powered assistance for authoring live tests for [Brand New Packages](#brand-new-package) may require additional investigation to determine feasibility and implementation approach
 
 ### Out of Scope for Scenario 2
 
@@ -112,11 +113,13 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 - GA releases
 - Architectural review preparation
   - **Note**: Even though architectural review preparation is out of scope for this scenario, instruction files should still provide guidance on how users can initiate the architectural review process outside of the agent workflow until it can be integrated into future scenarios
-  - **Note**: Similarly, package naming approval is required for [Net-New SDKs](#net-new-sdk), and instruction files should provide guidance on how to initiate the package naming approval process outside of the agent workflow
+  - **Note**: Similarly, package naming approval is required for [Brand New Packages](#brand-new-package), and instruction files should provide guidance on how to initiate the package naming approval process outside of the agent workflow
 - Breaking change reviews
 - Updating changelog/`README.md`/metadata content for data-plane libraries
   - **Note**: For .NET, metadata update functionality (export-api script) already works for both data-plane and management-plane libraries and is implemented in Scenario 1
 - Error resolution assistance beyond environment setup remediation
+- Auto-installation of system-level tools or upgrades requiring administrator permissions (e.g., full IDEs like Visual Studio, system-wide SDK bundles, platform toolchains)
+  - **Note**: These tools will be detected and reported with installation guidance and links, but not automatically installed
 
 ---
 
@@ -125,43 +128,46 @@ Without coverage for customization, live testing, and **[Net-New SDK](#net-new-s
 1. **Environment Setup** → `azsdk_verify_setup`
    - Verify tools and versions (see [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup))
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
-   - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
+   - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_authoring`
+2. **TypeSpec Authoring** → `azsdk_typespec_authoring` **(Agent Mode only)**
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
+   - **Note**: This tool is only available in Agent Mode as it requires conversational interaction and natural language prompts
    - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
    - Generate SDK code, tests, and samples (see [Scenario 1 – Generating](./0-scenario-1.spec.md#2-generating))
-   - Generation tooling now handles library project bootstrapping for [Net-New SDKs](#net-new-sdk)
+   - Generation tooling now handles library project bootstrapping for [Brand New Packages](#brand-new-package)
    - Both pipeline-based generation (`azsdk_run_generate_sdk`) and local generation (`azsdk_package_generate_code`) workflows are fully supported and should work seamlessly
    - **Checkpoint**: Create a git commit after SDK code generation completes
 
-4. **Customizations** → `azsdk_pacakge_customize_code`
+4. **Customizations** → `azsdk_package_customize_code` **(Agent Mode only)**
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
    - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code)
    - Automatically determines appropriate customization approach based on request
    - Regenerates SDK after TypeSpec changes and validates builds
+   - **Note**: This tool is only available in Agent Mode as it requires conversational interaction and natural language prompts
    - **Checkpoint**: Create a git commit after customizations are applied and validated
 
 5. **Testing** → `azsdk_package_run_tests`
    - Single unified testing tool that handles all test modes (live, live-record, playback)
    - Automatically provisions test resources when running live tests if not already available
    - Calls existing test resource provisioning scripts
-   - **Stretch Goal**: Creation of bicep files for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
-   - **Stretch Goal**: AI-powered assistance for authoring live tests for [Net-New SDKs](#net-new-sdk) may require additional investigation to determine feasibility and implementation approach
+   - **Stretch Goal**: Creation of bicep files for test resource provisioning for [Brand New Packages](#brand-new-package) may be complex and will need to be more thoroughly investigated before committing to full automation
+   - **Stretch Goal**: AI-powered assistance for authoring live tests for [Brand New Packages](#brand-new-package) may require additional investigation to determine feasibility and implementation approach
 
-6. **Sample Generation** → `azsdk_package_samples_generate`, `azsdk_package_samples_translate`
-   - AI-powered sample generation from natural language descriptions
-   - Translate existing samples between programming languages
+6. **Sample Generation** → `azsdk_package_samples_generate` **(Agent Mode only)**, `azsdk_package_samples_translate`
+   - AI-powered sample generation from natural language descriptions (Agent Mode only)
+   - Translate existing samples between programming languages (CLI and Agent Mode)
    - Create language-appropriate samples following SDK patterns and conventions
+   - **Note**: Sample generation (`azsdk_package_samples_generate`) is only available in Agent Mode as it requires natural language prompts; sample translation (`azsdk_package_samples_translate`) is available in both CLI and Agent Mode
    - **Checkpoint**: Create a git commit after samples are generated or translated
 
 7. **Update Package/Docs/Metadata** → `azsdk_package_update_metadata`, `azsdk_package_update_version`, `azsdk_package_update_changelog_content`
    - Update package metadata, docs, and changelogs (see [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata))
-   - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Net-New SDKs](#net-new-sdk)
+   - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
    - **Checkpoint**: Create a git commit after metadata, version, and changelog updates are complete
 
 8. **Validating** → `azsdk_package_run_check`
@@ -186,17 +192,17 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 - **Default mode (verify only)**: Detects and reports on tool presence, versions, and compatibility issues without making changes.
 - **Auto-install mode (`--auto-install` flag)**: When enabled, offers to remediate detected issues:
-  - For tools that can be installed/updated with **straightforward automation** (for example, language-specific package managers, small command-line utilities):
+  - For tools that can be installed/updated **without administrator permissions** (for example, language-specific package managers, command-line utilities installed via user-level package managers):
     - Performs the installation or upgrade using scripted, repeatable steps.
-  - For tools that are **too large or complex** to manage automatically (for example, full IDEs, heavy emulators, system-wide SDK bundles):
-    - The [Agent](#agent) must clearly articulate that the tool is too large or complex for automatic installation and explain why.
+  - For tools that **require system-level installs or administrator permissions** (for example, full IDEs, system-wide SDK bundles, platform toolchains):
+    - The [Agent](#agent) must clearly articulate that the tool requires administrator permissions and is out of scope for automatic installation.
     - Directs the user to the **official installation documentation** and captures links surfaced to the user.
 
 **Limitations & Rules:**
 
 - In verify-only mode (default), tool **only detects and reports** issues without attempting any fixes.
 - In auto-install mode, tool **MUST NOT** silently install or upgrade tools; user confirmation is always required in Agent Mode.
-- For tools in the "too large/complex" category, auto-install mode **only verifies** presence/version and **outputs links and instructions** instead of attempting installation. The [Agent](#agent) must clearly communicate why the tool cannot be auto-installed (e.g., "Visual Studio is too large and complex for automatic installation").
+- **System-level installs or upgrades requiring administrator permissions are out of scope** for auto-install mode. For these tools, auto-install mode **only verifies** presence/version and **outputs links and instructions** instead of attempting installation. The [Agent](#agent) must clearly communicate why the tool cannot be auto-installed (e.g., "Visual Studio requires administrator permissions for installation").
 - When possible, auto-install mode attempts to **align versions** to the recommended baseline (for example, minimum and tested versions for TypeSpec, language toolchains, and `azsdk` itself).
 - In CLI/automation contexts (for example, CI pipelines), auto-install mode runs in a **non-interactive mode** where installation behavior is controlled via additional flags (for example, `--no-prompt`, `--allow-upgrade`) to avoid blocking prompts.
 
@@ -205,7 +211,6 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 - All tools required by Scenario 2 are either:
   - Installed at compatible versions, or
   - Explicitly reported as missing with clear installation guidance and links.
-- A **single summarized report** is produced (and logged to disk) that `azsdk_verify_setup` and downstream stages can reference.
 - A **defined set of criteria exists** for determining which tools can be auto-installed/auto-upgraded versus which require manual installation with guidance links (see [Open Questions](#open-questions)).
 
 ### 2. TypeSpec Authoring (AI-Powered)
@@ -213,6 +218,8 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
 **Tool:** `azsdk_typespec_authoring`
+
+**Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage.
 
 **Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
 
@@ -249,7 +256,7 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Success:**
 
-- Generated TypeSpec code passes compilation without errors
+- Generated TypeSpec code passes compilation without errors, validated with `azsdk_run_typespec_validation` tool. 
 - Generated code follows Azure ARM/DP/SDK guidelines (validated by linter/validator)
 - Generated code includes proper decorators and templates (no hallucinated decorators)
 - Solution includes relevant documentation references
@@ -267,14 +274,14 @@ Scenario 2 supports both local and pipeline-based SDK generation workflows to ac
 **Action:**
 
 - Generate SDK code, tests, and samples locally for the requested languages
-- **Bootstrap language library project scaffolding** when generating a **[Net-New SDK](#net-new-sdk)**, including directory structure, package metadata files, and docs (`README.md`).
+- **Bootstrap language library project scaffolding** when generating a **[Brand New Package](#brand-new-package)**, including directory structure, package metadata files, and docs (`README.md`).
 - Triggers downstream validation hooks (`azsdk_package_build_code`, `azsdk_package_run_tests --mode playback`, `azsdk_package_run_check`)
 
 **Success:**
 
 - Generation succeeds for all five languages (or reports failures with diagnostics)
 - Existing customization layers remain untouched while new files are clearly identified
-- For **[Net-New SDKs](#net-new-sdk)**, all required project scaffolding is created correctly for each target language
+- For **[Brand New Packages](#brand-new-package)**, all required project scaffolding is created correctly for each target language
 
 #### 3b. Pipeline-Based Generation
 
@@ -284,13 +291,13 @@ Scenario 2 supports both local and pipeline-based SDK generation workflows to ac
 
 - Trigger SDK generation through Azure DevOps pipelines for the requested languages
 - Handles language-specific pipeline configurations and generation parameters
-- **Bootstrap language library project scaffolding** when generating a **[Net-New SDK](#net-new-sdk)** through pipeline execution
+- **Bootstrap language library project scaffolding** when generating a **[Brand New Package](#brand-new-package)** through pipeline execution
 
 **Success:**
 
 - Pipeline execution completes successfully for all requested languages
 - Generated artifacts are available in pipeline outputs or committed to appropriate branches
-- For **[Net-New SDKs](#net-new-sdk)**, all required project scaffolding is created correctly through pipeline automation
+- For **[Brand New Packages](#brand-new-package)**, all required project scaffolding is created correctly through pipeline automation
 
 ### 4. Customizations
 
@@ -302,7 +309,9 @@ Customization requests can come from multiple sources:
 - **API View feedback**: Comments and suggestions from API reviewers
 - **Build logs**: Compilation errors, warnings, or validation failures that require code adjustments
 
-**Tool:** `azsdk_pacakge_customize_code`
+**Tool:** `azsdk_package_customize_code`
+
+**Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage.
 
 **Two-Phase Workflow:**
 
@@ -364,14 +373,15 @@ This stage uses a unified testing tool that handles all test modes and automatic
 4. **For live-record mode**: Captures test recordings during execution
 5. **Cleanup**: Optionally tears down resources using `--cleanup` flag
 
-**Net-New SDK Considerations:**
+**Brand New Package Considerations:**
 
-- **Creation and updating of bicep files** for test resource provisioning for [Net-New SDKs](#net-new-sdk) may be complex and will need to be more thoroughly investigated before committing to full automation
-- **Note**: Bicep file creation and updating would be handled by a separate tool (`azsdk_package_create_test_resources`) rather than being part of `azsdk_package_run_tests`
-- Service-specific parameters, resource types, and configuration details often require human input and domain knowledge
-- Tool provides templates and guidance but may not fully automate bicep file creation for new services
-- **AI-powered live test authoring** for [Net-New SDKs](#net-new-sdk) may be complex and requires additional investigation
-  - Would involve analyzing TypeSpec operations and generating language-specific test scaffolding
+**Note**: All [Brand New Package](#brand-new-package) testing considerations below are **stretch goals** for Scenario 2 and require additional investigation before committing to full automation.
+
+- **Bicep File Management**: Test resource provisioning for [Brand New Packages](#brand-new-package) requires bicep files with service-specific parameters, resource types, and configuration details that often require human input and domain knowledge.
+  - **Option 1 - Bicep File Generation**: A separate tool (`azsdk_package_create_test_resources`) could provide templates and guidance to assist with bicep file creation, though full automation may not be feasible for all services.
+  - **Option 2 - Bicep File Validation**: As an alternative, a validator tool could verify that user-authored bicep files follow repository conventions (e.g., setting correct output variables, following naming patterns) without attempting full generation.
+  
+- **AI-Powered Live Test Authoring**: Generating initial test scaffolding for [Brand New Packages](#brand-new-package) would involve analyzing TypeSpec operations and generating language-specific test code.
   - Could leverage patterns from existing tests and SDK samples
   - May be handled by a separate tool (`azsdk_package_generate_tests`) rather than being part of `azsdk_package_run_tests`
   - Complexity varies by service and may require human guidance for test scenarios and assertions
@@ -382,13 +392,15 @@ This stage uses a unified testing tool that handles all test modes and automatic
 - Test resources are provisioned and torn down cleanly for live tests
 - Test recordings are generated or refreshed correctly
 - Playback runs succeed with recordings
-- For [Net-New SDKs](#net-new-sdk), test assets are created (with manual input where needed)
+- For [Brand New Packages](#brand-new-package), test assets are created (with manual input where needed)
 
 ### 6. Sample Generation
 
 **Tools:** `azsdk_package_samples_generate`, `azsdk_package_samples_translate`
 
-**Sample Generation:**
+**Sample Generation (`azsdk_package_samples_generate`):**
+
+**Availability:** Agent Mode only - This tool requires natural language prompts describing sample requirements and is not suitable for CLI usage.
 
 - Generate language-specific code samples from natural language descriptions
 - Support multiple samples from single description with multiple scenarios
@@ -396,7 +408,9 @@ This stage uses a unified testing tool that handles all test modes and automatic
 - Include proper error handling and authentication patterns
 - Requires active Azure authentication and Azure OpenAI access
 
-**Sample Translation:**
+**Sample Translation (`azsdk_package_samples_translate`):**
+
+**Availability:** CLI and Agent Mode - This tool accepts structured parameters and can be used in both modes.
 
 - Translate existing samples between programming languages
 - Automatically detect source and target languages from package structure
@@ -413,16 +427,16 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 Unchanged from Scenario 1. Refer to [Scenario 1 – Update Package/Docs/Metadata](./0-scenario-1.spec.md#3-update-packagedocsmetadata) for complete details.
 
-**Enhancements for [Net-New SDKs](#net-new-sdk):**
+**Enhancements for [Brand New Packages](#brand-new-package):**
 
-- **CI Configuration**: A new tool `azsdk_package_update_ci` will be added to provision and update `ci.yml` files for net-new SDKs
+- **CI Configuration**: A new tool `azsdk_package_update_ci` will be added to provision and update `ci.yml` files for Brand New Packages
 - **Java Metadata**: The `azsdk_package_update_metadata` tool will be enhanced to support parent-level and root-level `pom.xml` updates for Java libraries
 - **Data Plane Versioning**: The `azsdk_package_update_version` tool will be extended to update versions for data-plane libraries (currently returns no-op for data-plane libraries in Scenario 1)
 
 **Success (additional for Scenario 2):**
 
-- Tooling correctly handles package metadata updates for both [Net-New SDKs](#net-new-sdk) and existing SDKs
-- CI configuration files are provisioned correctly for net-new SDKs
+- Tooling correctly handles package metadata updates for both [Brand New Packages](#brand-new-package) and existing SDKs
+- CI configuration files are provisioned correctly for Brand New Packages
 - Java parent and root `pom.xml` files are updated appropriately
 - Version updates work for both data-plane and management-plane libraries
 
@@ -432,7 +446,7 @@ Unchanged from Scenario 1. Refer to [Scenario 1 – Validating](./0-scenario-1.s
 
 **Success (additional for Scenario 2):**
 
-- Validation checks pass for both [Net-New SDKs](#net-new-sdk) and existing SDKs
+- Validation checks pass for both [Brand New Packages](#brand-new-package) and existing SDKs
 
 ---
 
@@ -450,15 +464,15 @@ Scenario 2 is complete when:
 - Testing succeeds in all modes (live, live-record, playback) with automatic resource provisioning and cleanup, test recordings are generated or refreshed correctly, and test filtering works as expected
 - **All Scenario 2 tooling enhancements and additions function correctly** as defined in their respective stage details:
   - `azsdk_verify_setup` detects issues in verify-only mode and remediates them in auto-install mode (enhanced from Scenario 1)
-  - `azsdk_pacakge_customize_code` applies both TypeSpec and code customizations through unified two-phase workflow (new)
+  - `azsdk_package_customize_code` applies both TypeSpec and code customizations through unified two-phase workflow (new)
   - `azsdk_package_run_tests` handles all test modes with automatic resource management (new)
-- **Both [Net-New SDKs](#net-new-sdk) and existing SDKs** are fully supported throughout all stages
+- **Both [Brand New Packages](#brand-new-package) and existing SDKs** are fully supported throughout all stages
 
 ---
 
 ## Agent Prompts
 
-### Full Workflow (Net-New SDK)
+### Full Workflow (Brand New Package)
 
 **Prompt:**
 
@@ -468,7 +482,7 @@ I need to create a new Health Deidentification SDK for all languages.
 
 **Expected Agent Activity:**
 
-1. **Agent prompts user** to explain the full workflow for creating a net-new SDK, including environment setup, code generation, test creation, and validation steps.
+1. **Agent prompts user** to explain the full workflow for creating a Brand New Package, including environment setup, code generation, test creation, and validation steps.
 2. **Agent asks user** which languages to target (or confirms "all five languages").
 3. Execute `azsdk_verify_setup` for selected languages to check prerequisites.
    - **Agent reports** environment check results (installed tools, missing tools, version mismatches)
@@ -476,11 +490,11 @@ I need to create a new Health Deidentification SDK for all languages.
    - If user confirms, execute `azsdk_verify_setup --auto-install` to remediate issues
    - **Agent prompts user** for confirmation before installing or upgrading any tools in auto-install mode
 4. Invoke `azsdk_package_generate_code` to generate SDK code, along with tests and samples that can be generated from TypeSpec.
-   - **Note**: For net-new SDKs, generation automatically bootstraps the complete language library project scaffolding including directory structure, package metadata files, and `README.md`
+   - **Note**: For Brand New Packages, generation automatically bootstraps the complete language library project scaffolding including directory structure, package metadata files, and `README.md`
    - After generation completes, validation is performed (build and playback tests)
    - **Agent reports** generation results and any validation issues
 5. **Agent asks user** if any customizations are needed (TypeSpec or code level).
-   - If yes, apply `azsdk_pacakge_customize_code` to handle both TypeSpec and code customizations:
+   - If yes, apply `azsdk_package_customize_code` to handle both TypeSpec and code customizations:
      - Phase A: Apply TypeSpec customizations to `client.tsp`, regenerate SDK, validate build
      - Phase B: Apply code customizations if needed (helper APIs, convenience methods), validate final build
      - Present consolidated diff and **obtain user approval** before applying changes
@@ -531,7 +545,7 @@ There are new changes in the Health Deidentification API spec. I need to regener
    - **Agent reports** generation results and any validation issues
 5. **Agent asks user** if any customizations are needed (TypeSpec or code level).
    - In this example, user indicates no customizations needed; agent proceeds to next step
-   - If customizations were needed, agent would apply `azsdk_pacakge_customize_code` as in net-new SDK workflow
+   - If customizations were needed, agent would apply `azsdk_package_customize_code` as in Brand New Package workflow
 6. Execute tests with `azsdk_package_run_tests --mode playback` to validate the generated code.
    - **Agent reports** playback test results
 7. If applicable for management plane, run `azsdk_package_update_metadata`, `azsdk_package_update_version`, and `azsdk_package_update_changelog_content`.
@@ -556,7 +570,7 @@ I need to adjust the client surface for the Health Deidentification SDK. Can you
 **Expected Agent Activity:**
 
 1. **Agent asks user** for specific details about the desired changes.
-2. Call `azsdk_pacakge_customize_code` with the customization request.
+2. Call `azsdk_package_customize_code` with the customization request.
 3. Tool executes Phase A (TypeSpec Customizations):
    - Analyzes request and determines TypeSpec changes are appropriate (operation renames, parameter grouping, etc.)
    - Opens the `client.tsp` file and applies edits aligned with the request
@@ -576,7 +590,7 @@ I need to add some convenience methods to the Health Deidentification SDK to mak
 **Expected Agent Activity:**
 
 1. **Agent asks user** for specific details about the convenience methods needed.
-2. Call `azsdk_pacakge_customize_code` with the customization request.
+2. Call `azsdk_package_customize_code` with the customization request.
 3. Tool executes Phase A (TypeSpec) - determines TypeSpec cannot address this request (convenience methods require handwritten code).
 4. Tool executes Phase B (Code Customizations):
    - Identifies customization directories for each language
@@ -586,7 +600,7 @@ I need to add some convenience methods to the Health Deidentification SDK to mak
 6. User approves changes.
 7. **Agent reports** which files were created/modified in the convenience layer for each language.
 
-### Live Testing (Net-New SDK)
+### Live Testing (Brand New Package)
 
 **Prompt:**
 
@@ -634,71 +648,71 @@ Refresh only outdated or failing test recordings for the Health Deidentification
 3. Execute `azsdk_package_run_tests --mode playback --test-filter <pattern>` to validate new recordings.
 4. Summarize which recordings changed and any remaining discrepancies.
 
-### TypeSpec Authoring - Add New API Version
+### TypeSpec Authoring - Add a new preview API version
 
 **Prompt:**
 
 ```text
-I need to add a new preview API version to the Health Deidentification TypeSpec. Can you help me add version 2025-10-01-preview?
+Add a new preview API version 2025-10-01-preview for service widget resource management
 ```
 
 **Expected Agent Activity:**
 
-1. **Agent calls** `azsdk_typespec_authoring` with the request
-2. Tool analyzes current TypeSpec project structure and identifies version enum
-3. Tool queries Azure SDK Knowledge Base for versioning guidelines
-4. Tool generates solution:
-   - Add enum option to version enum following YYYY-MM-DD format
-   - Decorate with `@previewVersion` for preview versions
-   - Add new example folder and copy still-relevant examples
-5. **Agent reports** changes and provides documentation links:
-   - Link to Azure TypeSpec versioning guide
-   - Link to preview version guidelines
+1. analyzes current TypeSpec project to identify namespace and version
+2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
+4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
+5. Ask for features to add to this version. e.g.
+    - Add new resources
+    - Add new operations to an existing resource
+    - Add new models, unions, or enums
+    - Deprecate resources
+    - Deprecate operations
+    - Deprecate models, unions, or enums
+6. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+7. Update code, by default the features will only be added to this new version
+8. Summarize all the actions taken and display the reference docs
 
-### TypeSpec Authoring - Add ARM Resource
+### TypeSpec Authoring - Update TypeSpec to follow Azure guidelines
 
 **Prompt:**
 
 ```text
-I need to add a new ARM resource to the Health Deidentification service TypeSpec with standard CRUD operations.
+Update the TypeSpec code to follow Azure guidelines for service widget resource management.
 ```
 
 **Expected Agent Activity:**
 
-1. **Agent calls** `azsdk_typespec_authoring` with the request
-2. Tool analyzes current TypeSpec project to identify namespace and version
-3. Tool queries Azure SDK Knowledge Base for ARM resource patterns
-4. Tool generates solution:
-   - Create tracked resource model with properties
-   - Add resource interface with `@armResourceOperations` decorator
-   - Include standard CRUD operations using ARM templates
-   - Add list operations following ARM patterns
-5. **Agent applies** generated TypeSpec code
-6. **Agent reports** what was created and provides documentation links:
-   - Link to ARM resource type guide
-   - Link to ARM operation templates
+1. Validate the TypeSpec code and display a list of code snippets that violates Azure guidelines, and the suggested fix
+1. Let user confirm which one to fix
+1. Apply the code fix
+1. Compile the fixed TypeSpec code and let user validate the output
 
-### TypeSpec Authoring - Fix Resource Hierarchy
+### TypeSpec Authoring - Add a new stable API version
 
 **Prompt:**
 
 ```text
-I need to update the Health Deidentification TypeSpec to establish a parent-child resource relationship. Can you help me set up the correct routing?
+Add a new stable API version 2025-10-01 for service widget resource management.
 ```
 
 **Expected Agent Activity:**
 
-1. **Agent calls** `azsdk_typespec_authoring` with the request and current resource definitions
-2. Tool identifies this as a parent-child resource hierarchy scenario
-3. Tool queries Azure SDK Knowledge Base for `@parentResource` pattern
-4. Tool generates solution:
-   - Add `@parentResource` decorator to establish hierarchy
-   - Add required path parameters
-   - Update route to include parent path segment
-5. **Agent applies** changes to TypeSpec files
-6. **Agent reports** changes made and provides documentation links:
-   - Link to child resource guide
-   - Link to `@parentResource` decorator documentation
+1. analyzes current TypeSpec project to identify namespace and version
+2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+3. Add a enum option `v2025_10_01` in version enum for this new API version
+4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
+5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
+6. Ask for features to add to this version. e.g.
+    - Add new resources
+    - Add new operations to an existing resource
+    - Add new models, unions, or enums
+    - Deprecate resources
+    - Deprecate operations
+    - Deprecate models, unions, or enums
+7. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+8. Update code, by default the features will only be added to this new version
+9. Summarize all the actions taken and display the reference docs
 
 ### Sample Generation
 
@@ -834,84 +848,7 @@ Environment verification complete: 4/5 languages ready
 Use --auto-install flag to remediate issues automatically.
 ```
 
-### 2. TypeSpec Authoring
-
-**Command:**
-
-```bash
-azsdk typespec authoring --request "add a new preview API version 2025-10-01-preview"
-```
-
-**Options:**
-
-- `--prompt<string>`: The TypeSpec-related prompt or task description (required)
-- `--typespec-source-path <path>`: Path to TypeSpec source file or folder (optional, defaults to current directory)
-
-**Expected Output:**
-
-```text
-**Solution:** To add a new API version '2025-10-01-preview' for your service in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
-
-**Step-by-step guidance:**
-1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format. Since this is a preview version, use the '-preview' suffix and decorate with @previewVersion.
-
-@previewVersion
-v2025_10_01_preview: "2025-10-01-preview"
-
-2. Add an example folder for this version (examples/2025-10-01-preview) and copy any still-relevant examples from the previous version.
-
-**References:**
-- How to define a preview version: https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version
-- Azure TypeSpec versioning guide: https://azure.github.io/typespec-azure/docs/howtos/versioning
-```
-
-**Error Cases:**
-
-```text
-✗ Error: Required argument missing: --request
-
-Usage: azsdk typespec authoring --request <request> [--additional-information <info>] [--typespec-source-path <path>]
-```
-
-### 3. Apply Customizations
-
-**Note**: It is unclear whether a CLI command for customizations should exist, as customizations may not be a good use case for non-interactive CLI execution. See the [Pipeline & CI Usage](#pipeline--ci-usage) section for discussion on whether `azsdk_pacakge_customize_code` should be used in CI at all.
-
-**Command:**
-
-```bash
-azsdk customized-code update --package-path <path_to_sdk> --customization-request "<request>"
-```
-
-**Options:**
-
-- `--package-path <path>`: Path to the SDK package directory (required)
-- `--customization-request <text>`: Description of customization to apply - supports build errors, user requests, API review feedback (required)
-- `--typespec-project-path <path>`: Path to TypeSpec project directory (optional, for working from azure-rest-api-specs)
-- `--dry-run`: Display planned changes without applying them
-- `--auto-approve`: Skip approval checkpoint (for CI/automation)
-
-**Expected Output:**
-
-```text
-Applying customizations...
-
-Phase A: TypeSpec Customizations
-✓ Applied @clientName("BarClient", "csharp") to FooClient
-✓ Regenerated SDK code
-✓ Build validation passed
-
-Phase B: Code Customizations
-(No code customizations needed)
-
-Consolidated Changes:
-  client.tsp:
-    + @clientName("BarClient", "csharp")
-
-Approve these changes? (Y/n)
-```
-
-### 4. Run Tests
+### 2. Run Tests
 
 **Command:**
 
@@ -968,69 +905,9 @@ Translation complete:
   Directory structure preserved
 ```
 
-### 5. Generate Samples
+### 3. Translate Samples
 
-**Command:**
-
-```bash
-azsdk package samples generate --package-path <path_to_package> --prompt "<description>"
-```
-
-**Options:**
-
-- `--package-path <path>`: Path to the SDK package directory (required)
-- `--prompt <text|path>`: Natural language description of the sample or path to markdown file with requirements (required)
-- `--overwrite`: Overwrite existing sample files without prompting
-- `--model <name>`: Azure OpenAI deployment name to use (default: uses configured model)
-- `--extra-context <path>`: Additional files/folders for context (can be specified multiple times)
-
-**Examples:**
-
-```bash
-# Generate a basic sample
-azsdk package samples generate \
-  --package-path ./azure-sdk-for-net/sdk/ai/Azure.AI.Projects \
-  --prompt "Create a sample that gets chat completions from Azure OpenAI"
-
-# Generate multiple samples
-azsdk package samples generate \
-  --package-path ./azure-sdk-for-python/sdk/ai/azure-ai-projects \
-  --prompt "Create samples for: 1) Create embeddings, 2) Upload a file, 3) Process results"
-
-# Use markdown file with detailed requirements
-azsdk package samples generate \
-  --package-path ./azure-sdk-for-js/sdk/ai/ai-projects \
-  --prompt ./sample-requirements.md \
-  --extra-context ./docs/authentication.md \
-  --overwrite
-
-# Use specific model
-azsdk package samples generate \
-  --package-path ./azure-sdk-for-java/sdk/ai/azure-ai-projects \
-  --prompt "Generate samples for AI operations" \
-  --model gpt-4o
-```
-
-**Expected Output:**
-
-```text
-Generating samples for Azure.AI.Projects...
-
-✓ Analyzing package structure
-✓ Generating sample: chat_completions_basic.cs
-✓ Generating sample: create_embeddings.cs
-✓ Validating generated samples
-
-Samples generated successfully:
-  - samples/chat_completions_basic.cs
-  - samples/create_embeddings.cs
-
-All samples follow .NET SDK patterns and include error handling.
-```
-
-### 6. Translate Samples
-
-**Command:**
+**Command:****
 
 ```bash
 azsdk package samples translate --from <source_package_path> --to <target_package_path>
@@ -1104,7 +981,7 @@ Scenario 2 also needs to consider **how the CLI tools will be used inside CI/CD 
   - Should be configurable via flags or environment variables in CI (for example, default verify-only mode vs. `--fix` mode with `--auto-install`) to avoid surprise installations on shared agents.
   - In CI, verify-only mode (default) should be safe to run always; fix mode should be opt-in.
 - Customization and generation:
-  - **Open Question**: Should `azsdk_pacakge_customize_code` be used in CI at all, or is it primarily an agent-mode/interactive tool?
+  - **Open Question**: Should `azsdk_package_customize_code` be used in CI at all, or is it primarily an agent-mode/interactive tool?
     - **Agent Mode Argument**: Customizations typically require human decision-making (reviewing diffs, approving changes, iterative refinement), making them better suited for interactive agent workflows where developers can provide feedback and guidance.
     - **CI Argument**: Some customizations (like applying consistent API review feedback patterns or automated fixes) might be deterministic enough to run in CI with `--auto-approve` flag.
     - **Hybrid Approach**: Customizations are performed locally in agent mode, committed to source control, and CI only runs generation + build + test on the committed customizations.
@@ -1126,6 +1003,7 @@ These are intentionally left for follow-up design (Wes to clarify):
      - **Option B**: Pipeline loops to call CLI commands one package at a time
      - Trade-offs exist for both approaches; need to experiment with a few commands to determine best approach
    - Decision needed after trying commands in practice to understand performance, logging, error handling, and developer experience implications
+   - Could use command like `azsdk ci` or `npm ci`.
 2. How should **secrets and Azure credentials** be passed into `azsdk_test_live` in CI (for example, federated credentials, service principals, managed identities)?
    - Current thinking: Credentials would be like AzCLI or AzPS logins for the pipeline step running a particular command
    - Using chained credentials should be sufficient (pipeline environment already has authenticated context)
@@ -1150,12 +1028,12 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 
 1. Author detailed tool specs for new Scenario 2 tools:
    - Enhanced `azsdk_verify_setup` (with optional fix mode for remediation)
-   - Enhanced `azsdk_pacakge_customize_code` (unified two-phase customization workflow)
+   - Enhanced `azsdk_package_customize_code` (unified two-phase customization workflow)
    - Enhanced `azsdk_package_run_tests` (unified testing with automatic resource management)
 2. Confirm integration points with existing tools (`azsdk_package_generate_code`, `azsdk_package_build_code`).
 3. Define telemetry events (start, success, failure) and common correlation identifiers across all tools.
 4. Document unified customization workflow (Phase A TypeSpec → regenerate → Phase B code → build verification).
-5. Document testing flows (automatic resource provisioning, test mode selection, recording capture) for both net-new and existing SDKs.
+5. Document testing flows (automatic resource provisioning, test mode selection, recording capture) for both brand new and existing SDKs.
 6. Finalize prompt catalog revisions and CLI command adjustments (consolidated commands, simplified options).
 7. Update shared docs (`mcp-tools.md`, engineering hub) to include updated tools and flows.
 8. Identify any edge cases for environment remediation (unsupported auto-install) and test asset generation complexity to feed into Open Questions.
@@ -1180,13 +1058,13 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 
 ### Scope Considerations
 
-**Net-New SDKs:**
+**Brand New Packages:**
 
-- Should [Net-New SDK](#net-new-sdk) support be included in Scenario 2, or deferred to a later scenario?
-- Current assessment: Generation and testing stages would require additional work for Net-New SDKs
+- Should [Brand New Package](#brand-new-package) support be included in Scenario 2, or deferred to a later scenario?
+- Current assessment: Generation and testing stages would require additional work for Brand New Packages
   - Generation: Project scaffolding and bootstrapping for languages
   - Testing: Test asset creation is complex and may require manual configuration due to service-specific resource requirements
-- Decision needed: Include Net-New SDK support now, or focus on existing SDK workflows and add Net-New support in a future scenario?
+- Decision needed: Include Brand New Package support now, or focus on existing SDK workflows and add Brand New Package support in a future scenario?
 
 ### Tool and Process Questions
 
@@ -1197,12 +1075,12 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 
 **Customization Decision Logic:**
 
-- What is the complete set of criteria that `azsdk_pacakge_customize_code` should use to determine whether a customization should be done using TypeSpec (Phase A) versus code (Phase B), or both?
+- What is the complete set of criteria that `azsdk_package_customize_code` should use to determine whether a customization should be done using TypeSpec (Phase A) versus code (Phase B), or both?
 - Should the decision logic be language-specific or language-agnostic?
 
 **Test Asset Generation:**
 
-- How much automation is feasible for test asset generation for [Net-New SDKs](#net-new-sdk)?
+- How much automation is feasible for test asset generation for [Brand New Packages](#brand-new-package)?
 - What level of manual configuration should be expected versus automated?
 - Should there be templates or wizards to assist with complex service-specific configurations?
 
@@ -1217,7 +1095,7 @@ Focus this scenario’s delivery on producing high-quality MCP/CLI tool specific
 
 **AI-Powered Live Test Authoring:**
 
-- How feasible is it to create an AI-powered tool that can help developers author live tests for [Net-New SDKs](#net-new-sdk)?
+- How feasible is it to create an AI-powered tool that can help developers author live tests for [Brand New Packages](#brand-new-package)?
 - What are the primary challenges in automating test authoring (understanding service semantics, generating realistic test data, determining appropriate assertions, handling authentication/authorization)?
 - Can the tool leverage TypeSpec operations, SDK samples, and existing test patterns to generate initial test scaffolding?
 - Should this be a separate tool (`azsdk_package_generate_tests`) or integrated into existing testing workflows?

@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         public static string? RepositoryName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
         
         public static string? CopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH_MCP_EVALS");
-        public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
+        public static ChatCompletion GetChatCompletion(IChatClient chatClient, McpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
         public static TokenCredential GetCredential(ILogger? logger = null)
         {
@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 .Build();
         }
 
-        public static async Task<IMcpClient> GetMcpClientAsync(ILogger? logger = null)
+        public static async Task<McpClient> GetMcpClientAsync(ILogger? logger = null)
         {
             logger?.LogDebug("Starting MCP client creation...");
             logger?.LogDebug($"Command: dotnet run --project {relativePathToCli} -- start");
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 if (UseMCPRelease)
                 {
                     // Use MCP release
-                    return await McpClientFactory.CreateAsync(
+                    return await McpClient.CreateAsync(
                         new StdioClientTransport(
                             new()
                             {
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 }
                 
                 // Run your local MCP server directly with dotnet run
-                var mcpClient = await McpClientFactory.CreateAsync(
+                var mcpClient = await McpClient.CreateAsync(
                     new StdioClientTransport(
                         new()
                         {

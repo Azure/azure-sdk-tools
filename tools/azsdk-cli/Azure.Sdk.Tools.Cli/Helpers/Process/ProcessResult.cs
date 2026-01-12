@@ -22,4 +22,11 @@ public class ProcessResult
     {
         OutputDetails.Add((StdioLevel.StandardError, line));
     }
+
+    /// <summary>
+    /// Extracts only stdout. For both stdout and stderr, interleaved, see <see cref="Output"/>
+    /// </summary>
+    public string Stdout => string.Join(
+        Environment.NewLine,
+        OutputDetails.Where(x => x.Item1 == StdioLevel.StandardOutput).Select(x => x.Item2));
 }

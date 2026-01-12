@@ -1,4 +1,16 @@
 :host ::ng-deep {
+    .review-menubar {
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background-color: var(--base-fg-color);
+        padding: 0.5rem 0.5rem;
+
+        .p-menubar-start {
+            display: flex;
+            align-items: center;
+        }
+    }
+
     #page-right-panel+.btn-sm {
         padding: .05rem .4rem;
         font-size: 0.8rem;

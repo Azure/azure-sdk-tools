@@ -1,10 +1,22 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
-import { Menu } from 'primeng/menu';
-import { OverlayPanel } from 'primeng/overlaypanel';
+import { Menu, MenuModule } from 'primeng/menu';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { PanelModule } from 'primeng/panel';
+import { TimelineModule } from 'primeng/timeline';
+import { TooltipModule } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select';
+import { TimeagoModule } from 'ngx-timeago';
 import { take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
+import { RelatedCommentsDialogComponent } from '../related-comments-dialog/related-comments-dialog.component';
+import { AICommentFeedbackDialogComponent } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
+import { AICommentDeleteDialogComponent } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
+import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
+import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
@@ -30,12 +42,30 @@ interface AICommentInfo {
   items: AICommentInfoItem[];
 }
 @Component({
-  selector: 'app-comment-thread',
-  templateUrl: './comment-thread.component.html',
-  styleUrls: ['./comment-thread.component.scss'],
-  host: {
-    'class': 'user-comment-content'
-  },
+    selector: 'app-comment-thread',
+    templateUrl: './comment-thread.component.html',
+    styleUrls: ['./comment-thread.component.scss'],
+    host: {
+        'class': 'user-comment-content'
+    },
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        MenuModule,
+        PopoverModule,
+        PanelModule,
+        TimelineModule,
+        TooltipModule,
+        SelectModule,
+        TimeagoModule,
+        EditorComponent,
+        RelatedCommentsDialogComponent,
+        AICommentFeedbackDialogComponent,
+        AICommentDeleteDialogComponent,
+        MarkdownToHtmlPipe,
+        LanguageNamesPipe
+    ]
 })
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
@@ -54,13 +84,13 @@ export class CommentThreadComponent {
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
-  @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() commentThreadNavigationEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
-  @ViewChild('aiInfoPanel') aiInfoPanel!: OverlayPanel;
-  
+  @ViewChild('aiInfoPanel') aiInfoPanel!: Popover;
+
   assetsPath : string = environment.assetsPath;
   currentAIInfoStructured: AICommentInfo | null = null;
   menuItemAllUsers: MenuItem[] = [];
@@ -85,7 +115,7 @@ export class CommentThreadComponent {
 
   showRelatedCommentsDialog: boolean = false;
   relatedComments: CommentItemModel[] = [];
-  selectedCommentId: string = ''; 
+  selectedCommentId: string = '';
 
   showAIFeedbackDialog: boolean = false;
   showAIDeleteDialog: boolean = false;
@@ -106,9 +136,9 @@ export class CommentThreadComponent {
     if (!this.codePanelRowData?.comments || this.codePanelRowData.comments.length === 0) {
       return false;
     }
-    
+
     const firstComment = this.codePanelRowData.comments[0];
-    return firstComment.createdBy === this.userProfile?.userName || 
+    return firstComment.createdBy === this.userProfile?.userName ||
            (firstComment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!));
   }
 
@@ -184,7 +214,7 @@ export class CommentThreadComponent {
     if (changes['codePanelRowData']) {
       this.setCommentResolutionState();
     }
-    
+
     if (changes['allComments'] || changes['allCodePanelRowData']) {
       if (this.allComments && this.allComments.length > 0) {
         CommentRelationHelper.calculateRelatedComments(this.allComments);
@@ -201,7 +231,7 @@ export class CommentThreadComponent {
         if (lastestResolvedComment) {
           this.threadResolvedBy = lastestResolvedComment.changeHistory.reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
         }
-      }    
+      }
       this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'mb-2' : "";
       this.resolveThreadButtonText = 'Unresolve';
     }
@@ -245,7 +275,7 @@ export class CommentThreadComponent {
 
   toggleThreadCollapse() {
     this.isThreadCollapsed = !this.isThreadCollapsed;
-    
+
     if (this.isThreadCollapsed) {
       this.stopEditingSeverity();
     }
@@ -284,7 +314,7 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-item-id");
     const commentData = this.codePanelRowData?.comments?.find(comment => comment.id === commentId)?.commentText.replace(/<[^>]*>/g, '').trim();
 
-    let codeLineContent = this.associatedCodeLine 
+    let codeLineContent = this.associatedCodeLine
         ? this.associatedCodeLine.rowOfTokens
             .map(token => token.value)
             .join('')
@@ -316,13 +346,14 @@ export class CommentThreadComponent {
     const deleteAction = {
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
       nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      threadId: this.codePanelRowData!.threadId,
       commentId: commentId,
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
       title: title // Used for Sample Instance of CommentThread
     } as CommentUpdatesDto;
-    
+
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
-    
+
     if (comment?.commentSource === CommentSource.AIGenerated) {
       this.pendingDeleteAction = deleteAction;
       setTimeout(() => {
@@ -352,6 +383,7 @@ export class CommentThreadComponent {
         {
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          threadId: this.codePanelRowData!.threadId,
           title: title // Used for Sample Instance of CommentThread
         }
       );
@@ -373,11 +405,19 @@ export class CommentThreadComponent {
       elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
     } else if (this.instanceLocation === "samples") {
       elementId = target.closest(".user-comment-thread")?.getAttribute("title");
+    } else if (this.instanceLocation === "code-panel") {
+      if (this.codePanelRowData?.comments && this.codePanelRowData.comments.length > 0) {
+        elementId = this.codePanelRowData.comments[0].elementId;
+      } else {
+        elementId = this.codePanelRowData?.nodeId;
+      }
     }
 
     const HTML_STRIP_REGEX = /<\/?[^>]+(>|$)/g
     const emptyCommentContentWarningMessage = { severity: 'info', icon: 'bi bi-info-circle', summary: "Comment Info", detail: "Comment content is empty. No action taken.", key: 'bc', life: 3000 };
 
+    const nodeIdValue = this.codePanelRowData?.nodeId || elementId;
+    const elementIdValue = elementId || this.codePanelRowData?.nodeId;
 
     if (replyEditorContainer) {
       const content = this.getEditorContent("replyEditor");
@@ -386,14 +426,15 @@ export class CommentThreadComponent {
         this.messageService.add(emptyCommentContentWarningMessage);
       } else {
         this.saveCommentActionEmitter.emit(
-          { 
+          {
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
-            nodeId: this.codePanelRowData!.nodeId,
+            nodeId: nodeIdValue,
             nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+            threadId: this.codePanelRowData!.threadId,
             commentText: content,
             allowAnyOneToResolve: this.allowAnyOneToResolve,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-            elementId: elementId,
+            elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
             severity: this.selectedSeverity
           } as CommentUpdatesDto
@@ -410,20 +451,23 @@ export class CommentThreadComponent {
       if (contentText.length === 0) {
         this.messageService.add(emptyCommentContentWarningMessage);
       } else {
+        const comment = this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!;
+        comment.commentText = content;
+        comment.isInEditMode = false;
         this.saveCommentActionEmitter.emit(
-          { 
+          {
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
-            nodeId: this.codePanelRowData!.nodeId,
+            nodeId: nodeIdValue,
             nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+            threadId: this.codePanelRowData!.threadId,
             commentId: commentId,
             commentText: content,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-            elementId: elementId,
+            elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup
           } as CommentUpdatesDto
         );
       }
-      this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
     }
   }
 
@@ -439,9 +483,10 @@ export class CommentThreadComponent {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
     this.commentUpvoteActionEmitter.emit(
-      { 
+      {
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        threadId: this.codePanelRowData!.threadId,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
       } as CommentUpdatesDto
@@ -454,14 +499,15 @@ export class CommentThreadComponent {
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
     const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
     const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
-    
-    const downvoteAction = { 
+
+    const downvoteAction = {
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
       nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+      threadId: this.codePanelRowData!.threadId,
       commentId: commentId,
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
     } as CommentUpdatesDto;
-    
+
     if (isAIComment && !hasDownvote) {
       this.pendingDownvoteAction = downvoteAction;
       setTimeout(() => {
@@ -475,11 +521,11 @@ export class CommentThreadComponent {
 
   onAIFeedbackSubmit(feedback: AICommentFeedback): void {
     this.showAIFeedbackDialog = false;
-    
+
     if (this.pendingDownvoteAction) {
       this.commentDownvoteActionEmitter.emit(this.pendingDownvoteAction);
     }
-    
+
     if (feedback.reasons.length > 0) {
       this.commentsService.submitAICommentFeedback(
         this.reviewId,
@@ -495,7 +541,7 @@ export class CommentThreadComponent {
         }
       });
     }
-    
+
     this.pendingDownvoteAction = null;
   }
 
@@ -506,11 +552,11 @@ export class CommentThreadComponent {
 
   onAIDeleteConfirm(deleteReason: AICommentDeleteReason): void {
     this.showAIDeleteDialog = false;
-    
+
     if (this.pendingDeleteAction) {
       this.deleteCommentActionEmitter.emit(this.pendingDeleteAction);
     }
-    
+
     if (deleteReason.reason.trim().length > 0) {
       this.commentsService.submitAICommentFeedback(
         this.reviewId,
@@ -526,7 +572,7 @@ export class CommentThreadComponent {
         }
       });
     }
-    
+
     this.pendingDeleteAction = null;
   }
 
@@ -548,10 +594,20 @@ export class CommentThreadComponent {
   }
 
   handleThreadResolutionButtonClick(action: string) {
+    const isResolving = action === "Resolve";
+    if (isResolving) {
+      this.threadResolvedBy = this.userProfile?.userName;
+      // Collapse the thread when resolving
+      this.threadResolvedAndExpanded = false;
+      this.threadResolvedStateToggleText = 'Show';
+      this.threadResolvedStateToggleIcon = 'bi-arrows-expand';
+    }
+
     this.commentResolutionActionEmitter.emit(
-      { 
-        commentThreadUpdateAction: (action == "Resolve") ? CommentThreadUpdateAction.CommentResolved  : CommentThreadUpdateAction.CommentUnResolved,
+      {
+        commentThreadUpdateAction: isResolving ? CommentThreadUpdateAction.CommentResolved : CommentThreadUpdateAction.CommentUnResolved,
         elementId: this.codePanelRowData!.comments[0].elementId,
+        threadId: this.codePanelRowData!.threadId,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
         resolvedBy: this.userProfile?.userName
@@ -559,15 +615,15 @@ export class CommentThreadComponent {
     );
   }
 
-  handleCommentThreadNavaigation(event: Event, direction: CodeLineRowNavigationDirection) {
+  handleCommentThreadNavigation(event: Event, direction: CodeLineRowNavigationDirection) {
     const target = (event.target as Element).closest(".user-comment-thread")?.parentNode as Element;
     const targetIndex = target.getAttribute("data-sid");
-    this.commentThreadNavaigationEmitter.emit({
-      commentThreadNavaigationPointer: targetIndex,
+    this.commentThreadNavigationEmitter.emit({
+      commentThreadNavigationPointer: targetIndex,
       direction: direction
     });
   }
-  
+
   handleContentEmitter(event: string) {
     this.changeDetectorRef.detectChanges();
   }
@@ -598,39 +654,39 @@ export class CommentThreadComponent {
     // Update the comment's severity value locally first
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
     if (comment && this.reviewId && this.reviewId.trim() !== '') {
-      const originalSeverity = comment.severity; 
+      const originalSeverity = comment.severity;
       const originalSeverityEnum = this.getSeverityEnumValue(originalSeverity);
-      
+
       if (originalSeverityEnum === newSeverity) {
         return;
       }
-      
+
       comment.severity = newSeverity;
       this.commentsService.updateCommentSeverity(this.reviewId, commentId, newSeverity).subscribe({
         next: (response) => {
         },
         error: (error) => {
           comment.severity = originalSeverity;
-          this.messageService.add({ 
-            severity: 'error', 
-            icon: 'bi bi-exclamation-triangle', 
-            summary: 'Update Failed', 
-            detail: `Failed to update comment severity. Server error: ${error.status || 'Unknown'}. Please try again.`, 
-            key: 'bc', 
-            life: 5000 
+          this.messageService.add({
+            severity: 'error',
+            icon: 'bi bi-exclamation-triangle',
+            summary: 'Update Failed',
+            detail: `Failed to update comment severity. Server error: ${error.status || 'Unknown'}. Please try again.`,
+            key: 'bc',
+            life: 5000
           });
           // Force UI update to show reverted value
           this.changeDetectorRef.detectChanges();
         }
       });
     } else if (!this.reviewId || this.reviewId.trim() === '') {
-      this.messageService.add({ 
-        severity: 'warn', 
-        icon: 'bi bi-exclamation-triangle', 
-        summary: 'Update Not Available', 
-        detail: 'Cannot update severity: review information is not available.', 
-        key: 'bc', 
-        life: 3000 
+      this.messageService.add({
+        severity: 'warn',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Update Not Available',
+        detail: 'Cannot update severity: review information is not available.',
+        key: 'bc',
+        life: 3000
       });
     }
   }
@@ -651,13 +707,13 @@ export class CommentThreadComponent {
 
   onSeveritySelectionChange(newSeverity: CommentSeverity): void {
     this.selectedSeverity = newSeverity;
-    
+
     if (newSeverity === CommentSeverity.Question || newSeverity === CommentSeverity.Suggestion) {
       this.allowAnyOneToResolve = true;  // Questions and Suggestions can be resolved by anyone
     } else if (newSeverity === CommentSeverity.ShouldFix || newSeverity === CommentSeverity.MustFix) {
       this.allowAnyOneToResolve = false; // These need more restricted resolution
     }
-    
+
     this.changeDetectorRef.detectChanges();
   }
 
@@ -686,13 +742,13 @@ export class CommentThreadComponent {
       }
       this.visibleRelatedCommentsCache.set(cacheKey, this.relatedComments);
     }
-    
+
     this.showRelatedCommentsDialog = true;
   }
 
   onResolveSelectedComments(resolutionData: CommentResolutionData) {
     const { commentIds, batchVote, resolutionComment, disposition, severity, feedbackReasons, feedbackAdditionalComments } = resolutionData;
-    
+
     if (commentIds.length === 0) {
       this.showRelatedCommentsDialog = false;
       return;
@@ -700,7 +756,7 @@ export class CommentThreadComponent {
 
     const hasFeedbackReasons = feedbackReasons && feedbackReasons.length > 0;
     const hasFeedbackComment = feedbackAdditionalComments && feedbackAdditionalComments.trim().length > 0;
-    
+
     const feedback = (hasFeedbackReasons || hasFeedbackComment) ? {
       reasons: feedbackReasons || [],
       comment: feedbackAdditionalComments || '',
@@ -717,18 +773,18 @@ export class CommentThreadComponent {
     }).subscribe({
       next: (response) => {
         const createdComments = response.body || [];
-        
+
         if (severity !== null && severity !== undefined) {
           this.applyBatchSeverity(commentIds, severity);
         }
-        
+
         // Only emit resolution events if disposition is 'resolve'
         if (disposition === 'resolve') {
           this.emitResolutionEvents(commentIds);
         }
-        
+
         this.emitCreationEvents(createdComments);
-        
+
         this.showRelatedCommentsDialog = false;
       },
       error: (error) => {
@@ -746,10 +802,10 @@ export class CommentThreadComponent {
 
   private applyBatchSeverity(commentIds: string[], severity: CommentSeverity): void {
     commentIds.forEach(commentId => {
-      const commentCodeRow = this.allCodePanelRowData?.find(row => 
+      const commentCodeRow = this.allCodePanelRowData?.find(row =>
         row.comments?.some(c => c.id === commentId)
       );
-      
+
       if (!commentCodeRow) {
         return;
       }
@@ -767,6 +823,7 @@ export class CommentThreadComponent {
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
         commentId: commentId,
+        threadId: comment?.threadId || commentCodeRow.threadId || this.codePanelRowData?.threadId,
         nodeIdHashed: commentCodeRow.nodeIdHashed,
         severity: severity,
         associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
@@ -778,12 +835,15 @@ export class CommentThreadComponent {
     commentIds.forEach(commentId => {
       const comment = this.relatedComments.find(c => c.id === commentId);
       if (comment) {
-        const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === comment.elementId);
-        
+        const commentCodeRow = this.allCodePanelRowData?.find(row =>
+          row.threadId === comment.threadId || row.comments?.some(c => c.id === commentId)
+        );
+
         this.batchResolutionActionEmitter.emit({
           commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
           elementId: comment.elementId,
           commentId: comment.id,
+          threadId: comment.threadId || commentCodeRow?.threadId || this.codePanelRowData?.threadId,
           nodeIdHashed: commentCodeRow?.nodeIdHashed ?? this.codePanelRowData?.nodeIdHashed,
           associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup ?? this.codePanelRowData?.associatedRowPositionInGroup,
           resolvedBy: this.userProfile?.userName
@@ -794,12 +854,27 @@ export class CommentThreadComponent {
 
   private emitCreationEvents(createdComments: CommentItemModel[]): void {
     createdComments.forEach(createdComment => {
-      const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === createdComment.elementId);
-      
+      const originalComment = this.relatedComments.find(rc => rc.elementId === createdComment.elementId);
+
+      let commentCodeRow: CodePanelRowData | undefined;
+      if (originalComment) {
+        commentCodeRow = this.allCodePanelRowData?.find(row =>
+          row.comments?.some(c => c.id === originalComment.id)
+        );
+      }
+
+      if (!commentCodeRow) {
+        commentCodeRow = this.allCodePanelRowData?.find(row =>
+          (createdComment.threadId && row.threadId === createdComment.threadId) ||
+          row.nodeId === createdComment.elementId
+        );
+      }
+
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
         comment: createdComment,
         elementId: createdComment.elementId,
+        threadId: createdComment.threadId || commentCodeRow?.threadId || this.codePanelRowData?.threadId,
         nodeIdHashed: commentCodeRow?.nodeIdHashed,
         associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup,
         reviewId: this.reviewId
@@ -821,7 +896,7 @@ export class CommentThreadComponent {
 
   getAICommentInfoStructured(comment: CommentItemModel): AICommentInfo {
     const items: AICommentInfoItem[] = [];
-    
+
     if (comment.confidenceScore && comment.confidenceScore > 0) {
       const score = Math.round(comment.confidenceScore * 100);
       const scoreClass = score >= 80 ? 'high-confidence' : score >= 60 ? 'medium-confidence' : 'low-confidence';
@@ -832,7 +907,7 @@ export class CommentThreadComponent {
         valueClass: scoreClass
       });
     }
-    
+
     if (comment.guidelineIds && comment.guidelineIds.length > 0) {
       items.push({
         icon: 'pi-book',
@@ -841,7 +916,7 @@ export class CommentThreadComponent {
         valueList: comment.guidelineIds
       });
     }
-    
+
     if (comment.memoryIds && comment.memoryIds.length > 0) {
       items.push({
         icon: 'pi-database',
@@ -850,13 +925,13 @@ export class CommentThreadComponent {
         valueList: comment.memoryIds
       });
     }
-    
+
     items.push({
         icon: 'pi-id-card',
         label: 'Id',
         value: comment.id,
       });
-    
+
     return { items };
   }
 

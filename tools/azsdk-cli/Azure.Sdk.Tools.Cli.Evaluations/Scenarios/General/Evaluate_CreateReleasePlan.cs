@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             // External construction of evaluation context
             bool checkInputs = false;
 
-            var result = await EvaluationHelper.RunScenarioAsync(
+            var result = await EvaluationHelper.RunToolInputScenarioAsync(
                 scenarioName: this.ScenarioName,
                 scenarioData: scenarioData,
                 chatCompletion: s_chatCompletion!,

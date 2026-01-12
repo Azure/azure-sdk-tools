@@ -66,20 +66,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public TypeSpecValidationResponse RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
             try
-            {
-                var response = new TypeSpecValidationResponse()
-                {
-                    TypeSpecProject = typeSpecProjectRootPath
-                };
+            {                
                 logger.LogInformation("TypeSpec project root path: {typeSpecProjectRootPath}", typeSpecProjectRootPath);
                 if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
                 {
-                    response.ResponseError = $"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.";
-                    return response;
+                    var errorResponse = new TypeSpecValidationResponse
+                    {
+                        TypeSpecProject = string.Empty,
+                        ResponseError = $"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects."
+                    };
+                    return errorResponse;
                 }
 
-                response.TypeSpecProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectRootPath);
-                response.PackageType = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRootPath) ? SdkType.Management : SdkType.Dataplane;
+                var response = new TypeSpecValidationResponse()
+                {
+                    TypeSpecProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectRootPath),
+                    PackageType = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRootPath) ? SdkType.Management : SdkType.Dataplane
+                };
 
                 try
                 {

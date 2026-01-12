@@ -172,7 +172,7 @@ module keyvault 'cluster/keyvault.bicep' = {
 }
 
 module workloadAppIdentities 'cluster/workloadappidentities.bicep' = if (!updateNodes) {
-  name: 'workloadAppIdentities'
+  name: 'workloadAppIdentities-${groupSuffix}'
   scope: group
   params: {
     groupSuffix: groupSuffix
@@ -185,7 +185,7 @@ module workloadAppIdentities 'cluster/workloadappidentities.bicep' = if (!update
 }
 
 module workloadAppRoles 'cluster/workloadapproles.bicep' = if (!updateNodes) {
-  name: 'workloadAppRoles'
+  name: 'workloadAppRoles-${groupSuffix}'
   scope: subscription()
   params: {
     infraWorkloadAppObjectId: workloadAppIdentities.outputs.infraWorkloadAppObjectId

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Attributes;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
@@ -28,9 +27,15 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 _language = value;
             }
         }
+
+        /// <summary>
+        /// The package name, within the package ecosystem (ie: azure-core, @azure/core, etc..). 
+        /// Go uses the sub-path as the package name (sdk/azcore, sdk/resourcemanager/msi/armmsi).
+        /// </summary>
         [Telemetry]
         [JsonPropertyName("package_name")]
         public string? PackageName { get; set; }
+
         [JsonPropertyName("package_display_name")]
         public string? DisplayName { get; set; }
         [JsonPropertyName("version")]
@@ -44,6 +49,26 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         [JsonPropertyName("sdk_repo")]
         public string? SdkRepoName { get; set; }
 
+        public PackageResponseBase() { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PackageResponseBase"/> class with the specified
+        /// SDK language and package name.
+        /// </summary>
+        /// <param name="packageName">The package identifier or name.</param>
+        /// <param name="language">The SDK language for the package.</param>
+        public PackageResponseBase(string packageName, SdkLanguage language)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(packageName, nameof(packageName));
+
+            if (language == SdkLanguage.Unknown)
+            {
+                throw new ArgumentException($"language cannot be {SdkLanguage.Unknown}", nameof(language));
+            }
+
+            PackageName = packageName;
+            Language = language;
+        }
 
         public void SetLanguage(string language)
         {

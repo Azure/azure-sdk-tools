@@ -75,7 +75,7 @@ public class PackageInfoContractTests
         var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
         var scriptsDir = Path.Combine(repoRoot, "eng", "scripts");
         Directory.CreateDirectory(scriptsDir);
-        
+
         // Create a minimal Python script that outputs the package info
         var scriptContent = $@"#!/usr/bin/env python
 import sys
@@ -98,11 +98,11 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
   "name": "@azure/{{packageName}}",
   "version": "{{version}}",
   "sdk-type": "{{sdkType switch
-    {
-        SdkType.Dataplane => "client",
-        SdkType.Management => "mgmt",
-        _ => ""
-    }}}" 
+        {
+            SdkType.Dataplane => "client",
+            SdkType.Management => "mgmt",
+            _ => ""
+        }}}" 
 }
 """);
     }
@@ -197,7 +197,7 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
         var info = await helper.GetPackageInfo(pkgPath);
         Assert.That(info.PackageVersion, Is.EqualTo(expectedVersion));
     }
-    
+
     [Test]
     [TestCase(SdkLanguage.JavaScript, SdkType.Dataplane)]
     [TestCase(SdkLanguage.JavaScript, SdkType.Management)]
@@ -237,7 +237,7 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
         SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
         SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
         SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
-        SdkLanguage.Go => new GoLanguageService(processHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.Go => new GoLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

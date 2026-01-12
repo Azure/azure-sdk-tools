@@ -74,7 +74,7 @@
             {
                 "requirement": "go",
                 "check": ["go", "version"],
-                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/"]
+                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/", "If using Ubuntu, run `sudo snap install go`"]
             },
             {
                 "requirement": "goimports",
@@ -87,7 +87,7 @@
                 "instructions": ["https://golangci-lint.run/docs/welcome/install/"]
             },
             {
-                "requirement": "generator",
+                "requirement": "generator >= 0.4.3",
                 "check": ["generator", "--help"],
                 "instructions": ["go install github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"]
             }

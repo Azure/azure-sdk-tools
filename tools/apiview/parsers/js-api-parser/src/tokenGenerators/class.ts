@@ -27,12 +27,6 @@ function generate(item: ApiClass, deprecated?: boolean): ReviewToken[] {
     tokens.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   }
 
-  // Add declare keyword (common in .d.ts files)
-  const hasDeclare = item.excerptTokens.some((t) => t.text.includes("declare"));
-  if (hasDeclare) {
-    tokens.push(createToken(TokenKind.Keyword, "declare", { hasSuffixSpace: true, deprecated }));
-  }
-
   // Add abstract modifier if applicable
   if (item.isAbstract) {
     tokens.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));

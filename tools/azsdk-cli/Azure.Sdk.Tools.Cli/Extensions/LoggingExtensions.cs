@@ -14,6 +14,13 @@ public static class LoggingExtensions
         services.AddHostedService<McpLoggingHostedService>();
     }
 
+    // Some dependencies may use the logger instance provided by the host builder (i.e. asp.net)
+    // before the MCP server is initialized and can register it's logging provider.
+    // For most of these logs we want to swallow them so we don't spam the user with misleading
+    // failed to parse message logs from logger stdout. However, in the case of any fatal server
+    // startup errors, we wouldn't want to swallow those as it could make debugging difficult.
+    // This is a filter to make sure that we hide all non-error logs but show all
+    // asp.net server logs even if they can't be sent over the mcp protocol.
     public static void ConfigureMcpConsoleLogging(this ILoggingBuilder builder, bool isCommandLine)
     {
         if (!isCommandLine)

@@ -145,11 +145,11 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
 
 4. **Customizations** → `azsdk_package_customize_code` **(Agent Mode only)**
    - Unified tool for applying both [TypeSpec Customizations](#typespec-customizations) and [Code Customizations](#code-customizations)
-   - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code)
+   - Two-phase workflow: Phase A (TypeSpec) → Phase B (Code), code patches applied in Phase B to fix build errors after TypeSpec customizations (Phase A) fail.
    - Automatically determines appropriate customization approach based on request
    - Regenerates SDK after TypeSpec changes and validates builds
-   - **Note**: This tool is only available in Agent Mode as it requires conversational interaction and natural language prompts
-   - **Checkpoint**: Create a git commit after customizations are applied and validated
+   - Provide structured guidance for manual intervention If Phase B cannot resolve errors within scope restrictions
+   - **Checkpoint**: **User Review**: Changes remain uncommitted in working directory for user review. 
 
 5. **Testing** → `azsdk_package_run_tests`
    - Single unified testing tool that handles all test modes (live, live-record, playback)
@@ -325,9 +325,8 @@ Customization requests can come from multiple sources:
 
 **Phase B – [Code Customizations](#code-customizations):**
 
-- If Phase A doesn't resolve all issues, apply language-specific code patches
+- If Phase A doesn't has build failures and customization files exist, apply language-specific code patches
 - Apply handwritten custom code on top of generated output
-- Place customizations into the correct directories and layers for each language, ensuring **project scaffolding properly separates generated and custom code** to maintain regeneration compatibility
 - Use existing patching mechanisms for SDK code modifications
 - Apply safe patches: imports, visibility modifiers, reserved keyword renames, annotations
 - Validate final build (maximum of 2 fix cycles to prevent infinite loops)
@@ -335,9 +334,9 @@ Customization requests can come from multiple sources:
 **Unified Experience:**
 
 - Tool accepts a single `customizationRequest` parameter (natural language, build errors, API review feedback, etc.)
-- Automatically determines whether TypeSpec, code, or both approaches are needed
+- Attempts TypeSpec fixes first (Phase A), then error-driven code repairs if needed (Phase B)
 - Generates consolidated diff of all changes (spec + SDK code)
-- Enforces approval checkpoint before applying changes (CLI: interactive prompt, MCP: agent UI)
+- Enforces approval checkpoint via user review before applying changes (CLI: interactive prompt, MCP: agent UI)
 - Provides concise summary of applied changes, regardless of mechanism
 
 **Success:**
@@ -493,10 +492,11 @@ I need to create a new Health Deidentification SDK for all languages.
    - **Note**: For Brand New Packages, generation automatically bootstraps the complete language library project scaffolding including directory structure, package metadata files, and `README.md`
    - After generation completes, validation is performed (build and playback tests)
    - **Agent reports** generation results and any validation issues
-5. **Agent asks user** if any customizations are needed (TypeSpec or code level).
-   - If yes, apply `azsdk_package_customize_code` to handle both TypeSpec and code customizations:
+5. **Agent asks user** if any customizations are needed.
+   - If yes, invoke `azsdk_package_customize_code` with the customization request:
      - Phase A: Apply TypeSpec customizations to `client.tsp`, regenerate SDK, validate build
-     - Phase B: Apply code customizations if needed (helper APIs, convenience methods), validate final build
+     - Phase B (only for error repairs): If Phase A fails and build errors exist with customization files present, apply narrow code repairs (<20 lines, deterministic only) to fix compilation errors
+     - **Note**: Phase B does NOT add new features (helper APIs, convenience methods). For proactive feature additions, tool provides Manual Guidance to create customizations outside this workflow.
      - Present consolidated diff and **obtain user approval** before applying changes
 6. Create test infrastructure for the new SDK:
    - **Agent asks user** for service-specific details needed for test resource provisioning (resource types, required parameters, configuration values)
@@ -592,13 +592,10 @@ I need to add some convenience methods to the Health Deidentification SDK to mak
 1. **Agent asks user** for specific details about the convenience methods needed.
 2. Call `azsdk_package_customize_code` with the customization request.
 3. Tool executes Phase A (TypeSpec) - determines TypeSpec cannot address this request (convenience methods require handwritten code).
-4. Tool executes Phase B (Code Customizations):
-   - Identifies customization directories for each language
-   - Applies handwritten convenience layer code on top of generated SDK
-   - Validates builds succeed
-5. Tool presents consolidated diff of changes.
-6. User approves changes.
-7. **Agent reports** which files were created/modified in the convenience layer for each language.
+4. Tool returns with manual guidance:
+   - Language-specific customization file locations
+   - Code examples from similar SDKs
+   - Naming conventions and patterns to follow
 
 ### Live Testing (Brand New Package)
 

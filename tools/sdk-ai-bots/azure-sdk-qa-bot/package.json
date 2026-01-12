@@ -15,7 +15,7 @@
   "scripts": {
     "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
     "dev:teamsfx:testtool": "env-cmd --silent -f .localConfigs.testTool npm run dev",
-    "dev:teamsfx:launch-testtool": "env-cmd --silent -f env/.env.testtool teamsapptester start",
+    "dev:teamsfx:launch-teams-testtool": "env-cmd --silent -f env/.env.testtool teamsapptester start",
     "dev": "tsx watch --inspect=9239 ./src/index.ts",
     "build": "tsc --build && shx cp -r ./src/prompts ./lib/src",
     "start": "node ./lib/src/index.js",

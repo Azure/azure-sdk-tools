@@ -7,10 +7,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using APIView;
 using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -108,9 +110,16 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
         
-        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null, bool excludeDiagnostics = false)
         {
-            return await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
+            IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
+            
+            if (excludeDiagnostics)
+            {
+                comments = comments.Where(c => c.CommentSource != CommentSource.Diagnostic);
+            }
+            
+            return comments;
         }
 
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
@@ -687,6 +696,167 @@ namespace APIViewWeb.Managers
                         Comment = comment
                     });
             }
+        }
+
+        public async Task<List<CommentItemModel>> SyncDiagnosticCommentsAsync(
+            APIRevisionListItemModel apiRevision,
+            CodeDiagnostic[] diagnostics)
+        {
+            diagnostics ??= [];
+            string reviewId = apiRevision.ReviewId;
+            string apiRevisionId = apiRevision.Id;
+
+            string currentHash = ComputeDiagnosticsHash(diagnostics);
+            if (apiRevision.DiagnosticsHash == currentHash)
+            {
+                IEnumerable<CommentItemModel> existingComments = await _commentsRepository.GetCommentsAsync(reviewId);
+                return existingComments
+                    .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
+                    .ToList();
+            }
+
+            IEnumerable<CommentItemModel> allComments = await _commentsRepository.GetCommentsAsync(reviewId);
+            Dictionary<string, CommentItemModel> existingDiagnosticComments = allComments
+                .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
+                .ToDictionary(c => c.Id, c => c);
+
+            var result = new List<CommentItemModel>();
+            var expectedDiagnosticIds = new HashSet<string>();
+            foreach (var diagnostic in diagnostics)
+            {
+                string diagnosticHash = GenerateDiagnosticHash(diagnostic.TargetId, diagnostic.Text);
+                string commentId = $"diag-{apiRevisionId}-{diagnosticHash}";
+                string threadId = $"diag-thread-{apiRevisionId}-{diagnosticHash}";
+                expectedDiagnosticIds.Add(commentId);
+
+                CommentSeverity newSeverity = MapDiagnosticLevelToSeverity(diagnostic.Level);
+                if (existingDiagnosticComments.TryGetValue(commentId, out var existingComment))
+                {
+                    bool needsUpdate = false;
+                    if (existingComment.IsResolved)
+                    {
+                        var lastResolveAction = existingComment.ChangeHistory
+                            .LastOrDefault(h => h.ChangeAction == CommentChangeAction.Resolved);
+
+                        if (lastResolveAction?.ChangedBy == ApiViewConstants.AzureSdkBotName)
+                        {
+                            existingComment.IsResolved = false;
+                            existingComment.ChangeHistory.Add(new CommentChangeHistoryModel
+                            {
+                                ChangeAction = CommentChangeAction.UnResolved,
+                                ChangedBy = ApiViewConstants.AzureSdkBotName,
+                                ChangedOn = DateTime.UtcNow
+                            });
+                            needsUpdate = true;
+                        }
+                    }
+
+                    if (existingComment.Severity != newSeverity)
+                    {
+                        existingComment.Severity = newSeverity;
+                        needsUpdate = true;
+                    }
+
+                    if (needsUpdate)
+                    {
+                        await _commentsRepository.UpsertCommentAsync(existingComment);
+                    }
+
+                    result.Add(existingComment);
+                    continue;
+                }
+
+                // New diagnostic - create comment
+                string commentText = diagnostic.Text;
+                if (!string.IsNullOrEmpty(diagnostic.HelpLinkUri))
+                {
+                    commentText += $"\n\n[Details]({diagnostic.HelpLinkUri})";
+                }
+
+                var comment = new CommentItemModel
+                {
+                    Id = commentId,
+                    ReviewId = reviewId,
+                    APIRevisionId = apiRevisionId,
+                    ElementId = diagnostic.TargetId,
+                    ThreadId = threadId,
+                    CommentText = commentText,
+                    CommentSource = CommentSource.Diagnostic,
+                    Severity = newSeverity,
+                    CreatedBy = ApiViewConstants.AzureSdkBotName,
+                    CreatedOn = DateTime.UtcNow,
+                    IsResolved = false,
+                    ResolutionLocked = false,
+                    CommentType = CommentType.APIRevision
+                };
+
+                await _commentsRepository.UpsertCommentAsync(comment);
+                result.Add(comment);
+            }
+
+            foreach (var existingComment in existingDiagnosticComments.Values.Where(existingComment =>
+                         !expectedDiagnosticIds.Contains(existingComment.Id) && !existingComment.IsResolved))
+            {
+                existingComment.IsResolved = true;
+                existingComment.ChangeHistory.Add(new CommentChangeHistoryModel
+                {
+                    ChangeAction = CommentChangeAction.Resolved,
+                    ChangedBy = ApiViewConstants.AzureSdkBotName,
+                    ChangedOn = DateTime.UtcNow
+                });
+                await _commentsRepository.UpsertCommentAsync(existingComment);
+            }
+
+            apiRevision.DiagnosticsHash = currentHash;
+            await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+
+            return result;
+        }
+
+        private static string ComputeDiagnosticsHash(CodeDiagnostic[] diagnostics)
+        {
+            if (diagnostics == null || diagnostics.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            var sortedDiagnostics = diagnostics
+                .OrderBy(d => d.TargetId)
+                .ThenBy(d => d.Text)
+                .ThenBy(d => d.Level);
+
+            var sb = new StringBuilder();
+            foreach (var d in sortedDiagnostics)
+            {
+                sb.Append(d.TargetId).Append('|').Append(d.Text).Append('|').Append((int)d.Level).Append(';');
+            }
+
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString()));
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        }
+
+        private static string GenerateDiagnosticHash(string targetId, string text)
+        {
+            string compositeKey = $"{targetId}|{text}";
+
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(compositeKey));
+            var hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+
+            return hashString.Substring(0, 16);
+        }
+
+        private static CommentSeverity MapDiagnosticLevelToSeverity(CodeDiagnosticLevel level)
+        {
+            return level switch
+            {
+                CodeDiagnosticLevel.Fatal => CommentSeverity.MustFix,
+                CodeDiagnosticLevel.Error => CommentSeverity.MustFix,
+                CodeDiagnosticLevel.Warning => CommentSeverity.ShouldFix,
+                CodeDiagnosticLevel.Info => CommentSeverity.Suggestion,
+                _ => CommentSeverity.ShouldFix
+            };
         }
     }
 }

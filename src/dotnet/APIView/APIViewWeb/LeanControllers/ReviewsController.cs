@@ -232,7 +232,8 @@ namespace APIViewWeb.LeanControllers
 
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
-                IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
+                // Exclude diagnostic comments - they are loaded and synced separately per revision
+                IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision, excludeDiagnostics: true);
 
                 Task<CodeFile> activeFileTask = _codeFileRepository.GetCodeFileFromStorageAsync(
                     revisionId: activeAPIRevision.Id, 
@@ -266,7 +267,14 @@ namespace APIViewWeb.LeanControllers
                     return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
                 }
 
-                List<CommentItemModel> filteredComments = comments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
+                List<CommentItemModel> diagnosticComments = await _commentsManager.SyncDiagnosticCommentsAsync(
+                    activeAPIRevision,
+                    activeRevisionReviewCodeFile.Diagnostics);
+
+                List<CommentItemModel> allComments = comments.ToList();
+                allComments.AddRange(diagnosticComments);
+
+                List<CommentItemModel> filteredComments = allComments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,

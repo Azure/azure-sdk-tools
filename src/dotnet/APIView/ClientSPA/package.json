@@ -38,13 +38,13 @@
     "class-transformer": "^0.5.1",
     "idb": "^8.0.3",
     "jquery": "^3.7.1",
-    "ngx-cookie-service": "^20.0.0",
+    "ngx-cookie-service": "^21.1.0",
     "ngx-monaco-editor-v2": "^20.0.0",
     "ngx-simplemde": "^12.0.0",
     "ngx-timeago": "^4.0.0",
     "ngx-ui-scroll": "^4.1.0",
     "primeicons": "^7.0.0",
-    "primeng": "^20.0.0",
+    "primeng": "^21.0.2",
     "reflect-metadata": "^0.2.2",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-highlight": "^7.0.0",
@@ -58,6 +58,7 @@
     "tslib": "^2.3.0",
     "turndown": "^7.2.0",
     "unified": "^11.0.4",
+    "vscroll": "^1.7.0",
     "zone.js": "~0.15.1"
   },
   "devDependencies": {

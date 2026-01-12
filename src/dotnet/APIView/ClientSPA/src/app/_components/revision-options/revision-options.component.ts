@@ -250,11 +250,11 @@ export class RevisionOptionsComponent implements OnChanges {
   mapRevisionToMenu(apiRevisions: APIRevision[]) {
     return apiRevisions
       .map((apiRevision: APIRevision) => {
-      return {
+      const mapped = {
         id : apiRevision.id,
-        resolvedLabel: apiRevision.resolvedLabel,
+        resolvedLabel: apiRevision.resolvedLabel || apiRevision.label || apiRevision.packageVersion || `PR ${apiRevision.pullRequestNo}` || 'Revision',
         language: apiRevision.language,
-        label: apiRevision.label,
+        label: apiRevision.label || apiRevision.resolvedLabel || apiRevision.packageVersion || `PR ${apiRevision.pullRequestNo}` || 'Revision',
         files: apiRevision.files,
         packageName: apiRevision.packageName,
         typeClass: getTypeClass(apiRevision.apiRevisionType),
@@ -275,6 +275,8 @@ export class RevisionOptionsComponent implements OnChanges {
         command: () => {
         }
       };
+
+      return mapped;
     });
   }
 

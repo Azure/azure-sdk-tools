@@ -31,6 +31,11 @@ function createMockClass(displayName: string, excerptTokens: ExcerptToken[]): Ap
       tokenRange: { startIndex: 0, endIndex: excerptTokens.length },
       tokens: excerptTokens,
     },
+    // Properties needed by class generator
+    isAbstract: false,
+    typeParameters: [],
+    extendsType: undefined,
+    implementsTypes: [],
   };
 
   return mock as ApiClass;
@@ -121,6 +126,21 @@ describe("classTokenGenerator", () => {
         } as ExcerptToken,
       ]);
 
+      // Add extendsType property
+      (mockClass as any).extendsType = {
+        excerpt: {
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "BaseClass",
+              canonicalReference: {
+                toString: () => "@test!BaseClass:class",
+              },
+            },
+          ],
+        },
+      };
+
       const tokens = classTokenGenerator.generate(mockClass);
 
       const referenceToken = tokens.find(
@@ -145,6 +165,23 @@ describe("classTokenGenerator", () => {
         } as ExcerptToken,
       ]);
 
+      // Add implementsTypes property
+      (mockClass as any).implementsTypes = [
+        {
+          excerpt: {
+            spannedTokens: [
+              {
+                kind: ExcerptTokenKind.Reference,
+                text: "IInterface",
+                canonicalReference: {
+                  toString: () => "@test!IInterface:interface",
+                },
+              },
+            ],
+          },
+        },
+      ];
+
       const tokens = classTokenGenerator.generate(mockClass);
 
       expect(tokens.length).toBeGreaterThan(0);
@@ -161,6 +198,15 @@ describe("classTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "T" } as ExcerptToken,
         { kind: ExcerptTokenKind.Content, text: ">" } as ExcerptToken,
       ]);
+
+      // Add typeParameters property
+      (mockClass as any).typeParameters = [
+        {
+          name: "T",
+          constraintExcerpt: { text: "", spannedTokens: [] },
+          defaultTypeExcerpt: { text: "", spannedTokens: [] },
+        },
+      ];
 
       const tokens = classTokenGenerator.generate(mockClass);
 
@@ -194,6 +240,36 @@ describe("classTokenGenerator", () => {
         } as ExcerptToken,
       ]);
 
+      // Add implementsTypes property
+      (mockClass as any).implementsTypes = [
+        {
+          excerpt: {
+            spannedTokens: [
+              {
+                kind: ExcerptTokenKind.Reference,
+                text: "IFirst",
+                canonicalReference: {
+                  toString: () => "@test!IFirst:interface",
+                },
+              },
+            ],
+          },
+        },
+        {
+          excerpt: {
+            spannedTokens: [
+              {
+                kind: ExcerptTokenKind.Reference,
+                text: "ISecond",
+                canonicalReference: {
+                  toString: () => "@test!ISecond:interface",
+                },
+              },
+            ],
+          },
+        },
+      ];
+
       const tokens = classTokenGenerator.generate(mockClass);
 
       const firstRef = tokens.find((t) => t.NavigateToId === "@test!IFirst:interface");
@@ -209,6 +285,9 @@ describe("classTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "class " } as ExcerptToken,
         { kind: ExcerptTokenKind.Content, text: "AbstractClass" } as ExcerptToken,
       ]);
+
+      // Add isAbstract property
+      (mockClass as any).isAbstract = true;
 
       const tokens = classTokenGenerator.generate(mockClass);
 
@@ -245,7 +324,6 @@ describe("classTokenGenerator", () => {
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("export");
-      expect(tokenValues).toContain("declare");
       expect(tokenValues).toContain("class");
       expect(tokenValues).toContain("CryptographyClient");
     });

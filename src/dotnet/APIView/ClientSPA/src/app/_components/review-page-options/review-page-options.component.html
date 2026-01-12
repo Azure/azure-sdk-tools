@@ -152,6 +152,11 @@
             <label class="ms-2">Comments</label>
         </li>
         <li class="list-group-item d-flex align-items-center">
+            <p-toggleswitch [(ngModel)]="showSystemCommentsSwitch"
+            (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostic-comments" />
+            <label class="ms-2">Diagnostic comments</label>
+        </li>
+        <li class="list-group-item d-flex align-items-center">
             <p-toggleswitch [(ngModel)]="showDocumentationSwitch"
             (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
             <label class="ms-2">Documentation</label>

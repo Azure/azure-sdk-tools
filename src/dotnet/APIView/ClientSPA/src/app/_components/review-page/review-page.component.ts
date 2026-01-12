@@ -459,10 +459,9 @@ export class ReviewPageComponent implements OnInit {
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         if (userPreferenceModel!.showSystemComments) {
-          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
-        }
-        else {
-          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
+          this.codePanelComponent?.insertDiagnosticCommentThreads();
+        } else {
+          this.codePanelComponent?.removeDiagnosticCommentThreads();
         }
       }
     });

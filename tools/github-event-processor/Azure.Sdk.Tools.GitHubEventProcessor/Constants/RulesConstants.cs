@@ -49,6 +49,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string CloseAddressedIssues = "CloseAddressedIssues";
         public const string LockClosedIssues = "LockClosedIssues";
         public const string EnforceMaxLifeOfIssues = "EnforceMaxLifeOfIssues";
+        public const string BackfillMcpHistoricalIssues = "BackfillMcpHistoricalIssues";
 
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
         /// <param name="cronTaskToRun">String, the scheduled event</param>
-        public static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun)
+        public static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun, McpIssueProcessing mcpProcessor)
         {
             // Scheduled events can make multiple calls to SearchIssues due to pagination. Any call to SearchIssues can
             // run into a SecondaryRateLimitExceededException, regardless of the page, and there could be pending updates
@@ -66,6 +67,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     case RulesConstants.EnforceMaxLifeOfIssues:
                         {
                             await EnforceMaxLifeOfIssues(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    case RulesConstants.BackfillMcpHistoricalIssues:
+                        {
+                            await BackfillMcpHistoricalIssues(gitHubEventClient, scheduledEventPayload, mcpProcessor);
                             break;
                         }
                     default:
@@ -644,6 +650,70 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// Trigger: Manual execution (workflow_dispatch)
+        /// Query Criteria:
+        ///     Repository is microsoft/mcp
+        ///     Issue is open
+        ///     Issue has no labels OR only has "needs-triage" label
+        /// Resulting Action:
+        ///     Run InitialIssueTriage logic on each issue (predict labels, assign owners, add triage labels)
+        /// </summary>
+        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
+        /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
+        public static async Task BackfillMcpHistoricalIssues(GitHubEventClient gitHubEventClient, 
+        ScheduledEventGitHubPayload scheduledEventPayload, McpIssueProcessing mcpProcessor)
+        {
+            if (!scheduledEventPayload.Repository.Owner.Login.Equals("microsoft", StringComparison.OrdinalIgnoreCase) ||
+                !scheduledEventPayload.Repository.Name.Equals("mcp", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
+            
+            SearchIssuesRequest requestNoLabels = gitHubEventClient.CreateSearchRequest(
+                scheduledEventPayload.Repository.Owner.Login,
+                scheduledEventPayload.Repository.Name,
+                IssueTypeQualifier.Issue,
+                ItemState.Open,
+                0,
+                new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
+                new List<string>()
+            );
+
+            int numUpdates = 0;
+            int totalIssuesProcessed = 0;
+
+            var result = await gitHubEventClient.QueryIssues(requestNoLabels);
+            var allIssues = result.Items.ToList();
+            var serializer = new SimpleJsonSerializer();
+
+            foreach (var issue in allIssues)
+            {
+                if (numUpdates >= ScheduledTaskUpdateLimit)
+                {
+                    break;
+                }
+
+                var payloadJson = $@"{{
+                    ""action"": ""{ActionConstants.Opened}"",
+                    ""issue"": {serializer.Serialize(issue)},
+                    ""repository"": {serializer.Serialize(scheduledEventPayload.Repository)},
+                    ""sender"": {serializer.Serialize(issue.User)}
+                }}";
+                
+                var issuePayload = serializer.Deserialize<IssueEventGitHubPayload>(payloadJson);
+                await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issuePayload, mcpProcessor);
+                
+                numUpdates++;
+                totalIssuesProcessed++;
+            }
+
+            Console.WriteLine($"MCP historical issue backfill complete. Processed {totalIssuesProcessed} issues.");
         }
     }
 }

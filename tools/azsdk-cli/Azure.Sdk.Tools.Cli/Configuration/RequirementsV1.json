@@ -99,6 +99,11 @@
                 "instructions": ["Install Python from https://www.python.org/downloads/"]
             },
             {
+                "requirement": "azure-sdk-tools",
+                "check": ["pip", "show", "azure-sdk-tools"],
+                "instructions": ["python -m pip install -e eng/tools/azure-sdk-tools[build]"]
+            },
+            {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],
                 "instructions": ["Navigate to the Python SDK repository root directory", "Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with azpysdk --help"],

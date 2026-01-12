@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
@@ -29,22 +29,21 @@ import { environment } from 'src/environments/environment';
     styleUrls: ['./revisions-list.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        FormsModule,
-        RouterModule,
-        TableModule,
-        ButtonModule,
-        MenuModule,
-        FileUploadModule,
-        DrawerModule,
-        SelectModule,
-        MultiSelectModule,
-        ContextMenuModule,
-        LanguageNamesPipe,
-        LastUpdatedOnPipe,
-        TimeagoModule
-    ]
+    ReactiveFormsModule,
+    FormsModule,
+    RouterModule,
+    TableModule,
+    ButtonModule,
+    MenuModule,
+    FileUploadModule,
+    DrawerModule,
+    SelectModule,
+    MultiSelectModule,
+    ContextMenuModule,
+    LanguageNamesPipe,
+    LastUpdatedOnPipe,
+    TimeagoModule
+]
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;

@@ -23,13 +23,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { BadgeModule } from 'primeng/badge';
 import { SimplemdeModule } from 'ngx-simplemde';
-import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
 import { environment } from 'src/environments/environment';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-
-const monacoEditorConfig: NgxMonacoEditorConfig = {
-  baseUrl: `${environment.assetsPath}/monaco/min/vs`
-};
 
 
 @NgModule({
@@ -58,8 +53,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     DrawerModule,
     TimeagoModule,
     InputTextModule,
-    SimplemdeModule,
-    MonacoEditorModule
+    SimplemdeModule
   ],
   imports: [
     CommonModule,
@@ -83,7 +77,6 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     InputTextModule,
     TimeagoModule.forRoot(),
     SimplemdeModule.forRoot(),
-    MonacoEditorModule.forRoot(monacoEditorConfig),
     NavBarComponent,
     RevisionsListComponent,
     LanguageNamesPipe,

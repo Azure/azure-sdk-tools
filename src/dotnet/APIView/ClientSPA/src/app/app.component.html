@@ -1,13 +1,19 @@
 <div class="virtual-body" [style.--scroll-bar-height]="scrollBarHeight" [style.--scroll-bar-width]="scrollBarWidth">
-    <router-outlet></router-outlet>
-    <p-toast position="bottom-center" key="bc" >
-        <ng-template let-message pTemplate="message">
-            <div class="d-flex flex-column w-100" style="flex: 1; min-width: 0;">
-                <div class="fw-bolder"><i *ngIf="message.icon" class="{{ message.icon }} me-2"></i>{{ message.summary }}</div>
-                <div class="small mt-2" *ngIf="message.detail">{{ message.detail }}</div>
-                <div *ngIf="message.data && message.data.action === 'RefreshPage'" class="small mt-2"><button type="button" class="btn btn-warning btn-sm" (click)="reloadPage()">Refresh</button> page to see changes.</div>
-            </div>
-        </ng-template>
-    </p-toast>
+  <router-outlet></router-outlet>
+  <p-toast position="bottom-center" key="bc" >
+    <ng-template let-message pTemplate="message">
+      <div class="d-flex flex-column w-100" style="flex: 1; min-width: 0;">
+        <div class="fw-bolder">@if (message.icon) {
+          <i class="{{ message.icon }} me-2"></i>
+        }{{ message.summary }}</div>
+        @if (message.detail) {
+          <div class="small mt-2">{{ message.detail }}</div>
+        }
+        @if (message.data && message.data.action === 'RefreshPage') {
+          <div class="small mt-2"><button type="button" class="btn btn-warning btn-sm" (click)="reloadPage()">Refresh</button> page to see changes.</div>
+        }
+      </div>
+    </ng-template>
+  </p-toast>
 </div>
 

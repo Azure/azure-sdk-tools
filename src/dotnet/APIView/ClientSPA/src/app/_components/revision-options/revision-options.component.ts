@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -18,13 +18,12 @@ import { SamplesRevision } from 'src/app/_models/samples';
     styleUrls: ['./revision-options.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        SelectModule,
-        SelectButtonModule,
-        TimeagoModule,
-        LastUpdatedOnPipe
-    ]
+    FormsModule,
+    SelectModule,
+    SelectButtonModule,
+    TimeagoModule,
+    LastUpdatedOnPipe
+]
 })
 export class RevisionOptionsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];

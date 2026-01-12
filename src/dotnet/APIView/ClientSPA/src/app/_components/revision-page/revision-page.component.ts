@@ -10,14 +10,14 @@ import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { ReviewPageLayoutModule } from 'src/app/_modules/shared/review-page-layout.module';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
     selector: 'app-revision-page',
     templateUrl: './revision-page.component.html',
     styleUrls: ['./revision-page.component.scss'],
     standalone: true,
-    imports: [CommonModule, ReviewPageLayoutModule, SharedAppModule]
+    imports: [ReviewPageLayoutModule, SharedAppModule]
 })
 export class RevisionPageComponent {
   reviewId : string | null = null;

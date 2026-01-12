@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
 
@@ -9,10 +9,9 @@ import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
     styleUrls: ['./editor.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        SimplemdeModule
-    ]
+    FormsModule,
+    SimplemdeModule
+]
 })
 export class EditorComponent {
   @Input() content: string = '';

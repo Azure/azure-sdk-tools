@@ -1,4 +1,4 @@
-import { NgModule, inject, provideAppInitializer } from '@angular/core';
+import { NgModule, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
@@ -59,6 +59,7 @@ export function initializeApp(configService: ConfigService) {
     { provide: APP_BASE_HREF, useValue: '/' },
     MessageService,
     CookieService,
+    provideZoneChangeDetection({ eventCoalescing: true }),
     providePrimeNG({
       theme: {
         preset: Lara,

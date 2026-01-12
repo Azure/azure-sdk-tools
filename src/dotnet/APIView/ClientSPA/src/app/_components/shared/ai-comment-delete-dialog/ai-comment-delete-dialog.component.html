@@ -34,10 +34,12 @@
     </div>
 
     <!-- Validation Message -->
-    <div *ngIf="!canDelete && reason.length > 0" class="alert alert-warning py-2 px-3 mb-0" role="alert">
-      <i class="bi bi-exclamation-triangle me-2"></i>
-      <small>Please provide a reason for deletion.</small>
-    </div>
+    @if (!canDelete && reason.length > 0) {
+      <div class="alert alert-warning py-2 px-3 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <small>Please provide a reason for deletion.</small>
+      </div>
+    }
   </div>
 
   <ng-template pTemplate="footer">

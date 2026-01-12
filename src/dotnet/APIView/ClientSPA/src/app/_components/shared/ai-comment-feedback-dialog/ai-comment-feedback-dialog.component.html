@@ -23,16 +23,18 @@
       <label class="form-label fw-semibold">
         Reason <span class="text-danger">*</span>
       </label>
-      <div *ngFor="let reason of feedbackReasons" class="reason-item">
-        <p-checkbox
-          [value]="reason.key"
-          [(ngModel)]="selectedReasons"
-          [inputId]="reason.key"
-          [binary]="false"
-          styleClass="reason-checkbox">
-        </p-checkbox>
-        <label [for]="reason.key" class="ms-2">{{ reason.label }}</label>
-      </div>
+      @for (reason of feedbackReasons; track reason) {
+        <div class="reason-item">
+          <p-checkbox
+            [value]="reason.key"
+            [(ngModel)]="selectedReasons"
+            [inputId]="reason.key"
+            [binary]="false"
+            styleClass="reason-checkbox">
+          </p-checkbox>
+          <label [for]="reason.key" class="ms-2">{{ reason.label }}</label>
+        </div>
+      }
     </div>
 
     <!-- Additional Comments -->
@@ -50,10 +52,12 @@
     </div>
 
     <!-- Validation Message -->
-    <div *ngIf="!canSubmit" class="alert alert-warning py-2 px-3 mb-0" role="alert">
-      <i class="bi bi-exclamation-triangle me-2"></i>
-      <small>Please select at least one reason to submit feedback.</small>
-    </div>
+    @if (!canSubmit) {
+      <div class="alert alert-warning py-2 px-3 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <small>Please select at least one reason to submit feedback.</small>
+      </div>
+    }
   </div>
 
   <ng-template pTemplate="footer">

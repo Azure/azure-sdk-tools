@@ -1,68 +1,88 @@
 
-<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+@if (isLoading) {
+  <div class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
-</div>
-<div *ngIf="codePanelRowSource;" id="viewport" tabindex="0" class="{{languageSafeName!}}" role="region" aria-label="Scrollable code panel" (click)="onCodePanelItemClick($event)" (keydown)="onKeyDown($event)">
-  <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" severity="info" icon="bi bi-info-circle" text="There is no difference between the two API revisions."></p-message>
-  <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
-    [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
-      <div class="line-actions">
-          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)" class="line-number-container" [class.has-comment-btn]="canAddComment(item)">
-            <span class="text-decoration-none line-number-text" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
-            <button *ngIf="canAddComment(item)" type="button" class="btn btn-sm add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
-              <i class="bi bi-plus-lg"></i>
-            </button>
-            <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
-              <ng-template pTemplate="item" let-item>
-                <span pRipple [attr.data-item-id]="index" class="flex align-items-center p-menuitem-link">
-                  <i *ngIf="item?.icon" class="mx-2 {{item?.icon}}"></i>
-                  {{ item.label }}
-                </span>
-              </ng-template>
-            </p-menu>
-          </span>
-          <span *ngIf="showDocumentation" class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
-      </div>
-      <div class="code-line-content" [style.padding-left.px]="((item.indent-1) * 15)">
-          <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
-          [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
-      </div>
-    </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">
-      <div class="code-line-content">
-        <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
-      </div>
-    </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
-      <app-comment-thread
-        [codePanelRowData]="item"
-        [allComments]="allComments"
-        [allCodePanelRowData]="codePanelRowData"
-        [associatedCodeLine]="getAssociatedCodeLine(item)"
-        [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
-        [userProfile]="userProfile"
-        [preferredApprovers]="preferredApprovers"
-        [reviewId]="reviewId || ''"
-        (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
-        (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
-        (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
-        (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
-        (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
-        (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
-        (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
-        (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
-      </app-comment-thread>
-    </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguage">
-      <app-cross-lang-view
-        [codePanelRowData]="item"
-        [userProfile]="userProfile"
-        (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
-      ></app-cross-lang-view>
-    </ng-container>
   </div>
-</div>
-<div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !codePanelRowSource">
-  <h5 [innerHTML]="loadFailedMessage"></h5>
-</div>
+}
+@if (codePanelRowSource;) {
+  <div id="viewport" tabindex="0" class="{{languageSafeName!}}" role="region" aria-label="Scrollable code panel" (click)="onCodePanelItemClick($event)" (keydown)="onKeyDown($event)">
+    @if (showNoDiffInContentMessage()) {
+      <p-message class="sticky-top" severity="info" icon="bi bi-info-circle" text="There is no difference between the two API revisions."></p-message>
+    }
+    <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
+      [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
+      @if (item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation) {
+        <div class="line-actions">
+          @if (showLineNumbers && item.lineNumber > 0) {
+            <span [ngClass]="getLineNumberClassObject(item)" class="line-number-container" [class.has-comment-btn]="canAddComment(item)">
+              <span class="text-decoration-none line-number-text" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
+              @if (canAddComment(item)) {
+                <button type="button" class="btn btn-sm add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              }
+              <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
+                <ng-template pTemplate="item" let-item>
+                  <span pRipple [attr.data-item-id]="index" class="flex align-items-center p-menuitem-link">
+                    @if (item?.icon) {
+                      <i class="mx-2 {{item?.icon}}"></i>
+                    }
+                    {{ item.label }}
+                  </span>
+                </ng-template>
+              </p-menu>
+            </span>
+          }
+          @if (showDocumentation) {
+            <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
+          }
+        </div>
+        <div class="code-line-content" [style.padding-left.px]="((item.indent-1) * 15)">
+          @for (token of item.rowOfTokens; track token) {
+            <span [ngClass]="getTokenClassObject(token)"
+            [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
+          }
+        </div>
+      }
+      @if (item.type === CodePanelRowDatatype.Diagnostics) {
+        <div class="code-line-content">
+          <span>{{ item.diagnostics.text }} @if (item.diagnostics.helpLinkUri) {
+            <a href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a>
+          }</span>
+        </div>
+      }
+      @if (item.type === CodePanelRowDatatype.CommentThread) {
+        <app-comment-thread
+          [codePanelRowData]="item"
+          [allComments]="allComments"
+          [allCodePanelRowData]="codePanelRowData"
+          [associatedCodeLine]="getAssociatedCodeLine(item)"
+          [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
+          [userProfile]="userProfile"
+          [preferredApprovers]="preferredApprovers"
+          [reviewId]="reviewId || ''"
+          (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
+          (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+          (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
+          (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+          (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+          (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
+          (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
+          (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
+        </app-comment-thread>
+      }
+      @if (item.type === CodePanelRowDatatype.CrossLanguage) {
+        <app-cross-lang-view
+          [codePanelRowData]="item"
+          [userProfile]="userProfile"
+          (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
+        ></app-cross-lang-view>
+      }
+    </div>
+  </div>
+}
+@if (!isLoading && !codePanelRowSource) {
+  <div class="pt-4 d-flex justify-content-center align-items-center">
+    <h5 [innerHTML]="loadFailedMessage"></h5>
+  </div>
+}

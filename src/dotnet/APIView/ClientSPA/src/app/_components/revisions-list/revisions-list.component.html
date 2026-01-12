@@ -1,24 +1,31 @@
 <p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
-<div *ngIf="review == null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
+@if (review == null && revisions.length == 0) {
+  <div class="d-flex justify-content-center align-items-center" style="height: 90vh;">
     <div class="text-center">
-        <h6>Select a Review on the left panel to view its APIRevisions</h6>
-        <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
-            <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
-        </div>
+      <h6>Select a Review on the left panel to view its APIRevisions</h6>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
+        <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
+      </div>
     </div>
-</div>
-<div *ngIf="review != null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
+  </div>
+}
+@if (review != null && revisions.length == 0) {
+  <div class="d-flex justify-content-center align-items-center" style="height: 90vh;">
     <div class="text-center">
-        <h6>There are no {{apiRevisionsListDetail}} {{review.packageName}}</h6>
-        <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
-            <button *ngIf="!showDeletedAPIRevisions" type="button" (click)="toggleShowDeletedAPIRevisions()" class="btn btn-outline-primary">View Deleted APIRevisions</button>
-            <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
-        </div>
+      <h6>There are no {{apiRevisionsListDetail}} {{review.packageName}}</h6>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
+        @if (!showDeletedAPIRevisions) {
+          <button type="button" (click)="toggleShowDeletedAPIRevisions()" class="btn btn-outline-primary">View Deleted APIRevisions</button>
+        }
+        <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
+      </div>
     </div>
-</div>
-<p-table *ngIf="revisions.length > 0"
+  </div>
+}
+@if (revisions.length > 0) {
+  <p-table
     #apiRevisionsTable
     [rows]="noOfRows"
     [value]="revisions"
@@ -42,186 +49,243 @@
     [tableStyle]="{ 'min-width': '20rem'}"
     styleClass="p-datatable-striped p-datatable-sm">
     <ng-template pTemplate="caption">
-        <div class="d-flex justify-content-between index-table-info">
-            <div>
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="createRevisionSidebarVisible = true;"><i class="bi bi-plus-lg"></i>Add Revision</button>
-            </div>
-            <div>
-                <button *ngIf="showDeletedAPIRevisions && showDeleteButton" (click)="restoreRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Restore</button>
-                <button *ngIf="!showDeletedAPIRevisions && showDeleteButton" (click)="deleteRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-danger me-1"><i class="bi bi-x-octagon-fill me-1"></i>Delete</button>
-                <button *ngIf="showSelectionActions" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="clearSelection()"><i class="bi bi-x-circle me-1"></i>Selection</button>
-                <button *ngIf="!showDeletedAPIRevisions && showDiffButton" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="viewDiffOfSelectedAPIRevisions()"><i class="bi bi-file-diff me-1"></i>Diff</button>
-                <button *ngIf="tableHasFilters()" (click)="clear(apiRevisionsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
-            </div>
+      <div class="d-flex justify-content-between index-table-info">
+        <div>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="createRevisionSidebarVisible = true;"><i class="bi bi-plus-lg"></i>Add Revision</button>
         </div>
+        <div>
+          @if (showDeletedAPIRevisions && showDeleteButton) {
+            <button (click)="restoreRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Restore</button>
+          }
+          @if (!showDeletedAPIRevisions && showDeleteButton) {
+            <button (click)="deleteRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-danger me-1"><i class="bi bi-x-octagon-fill me-1"></i>Delete</button>
+          }
+          @if (showSelectionActions) {
+            <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="clearSelection()"><i class="bi bi-x-circle me-1"></i>Selection</button>
+          }
+          @if (!showDeletedAPIRevisions && showDiffButton) {
+            <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="viewDiffOfSelectedAPIRevisions()"><i class="bi bi-file-diff me-1"></i>Diff</button>
+          }
+          @if (tableHasFilters()) {
+            <button (click)="clear(apiRevisionsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
+          }
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
+        </div>
+      </div>
     </ng-template>
     <ng-template pTemplate="header">
-        <tr>
-            <th style="width:1%"></th>
-            <th style="width:25%">APIRevision - Label</th>
-            <th style="width:19%">Author</th>
-            <th style="width:15%">Details</th>
-            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="createdOn" style="width:15%">Created<p-sortIcon class="ms-2" field="createdOn"></p-sortIcon></th>
-            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdatedOn"></p-sortIcon></th>
-            <th *ngIf="showAPIRevisionsAssignedToMe" style="width:15%">RequestedOn</th>
-            <th *ngIf="showAPIRevisionsAssignedToMe"  style="width:15%">RequestedBy</th>
-        </tr>
-        <tr>
-            <th>
-            </th>
-            <th>
-                <p-columnFilter type="text" field="label" [showMenu]="false"></p-columnFilter>
-            </th>
-            <th>
-                <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
-            </th>
-            <th>
-                <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
-                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                        <p-multiSelect [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
-                            <ng-template let-group pTemplate="group">
-                                <div class="inline-block vertical-align-middle">
-                                    <span class="ml-1 mt-1">{{ group.label }}</span>
-                                </div>
-                            </ng-template>
-                        </p-multiSelect>
-                    </ng-template>
-                </p-columnFilter>
-            </th>
-            <th>
-            </th>
-            <th>
-            </th>
-        </tr>
+      <tr>
+        <th style="width:1%"></th>
+        <th style="width:25%">APIRevision - Label</th>
+        <th style="width:19%">Author</th>
+        <th style="width:15%">Details</th>
+        @if (!showAPIRevisionsAssignedToMe) {
+          <th pSortableColumn="createdOn" style="width:15%">Created<p-sortIcon class="ms-2" field="createdOn"></p-sortIcon></th>
+        }
+        @if (!showAPIRevisionsAssignedToMe) {
+          <th pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdatedOn"></p-sortIcon></th>
+        }
+        @if (showAPIRevisionsAssignedToMe) {
+          <th style="width:15%">RequestedOn</th>
+        }
+        @if (showAPIRevisionsAssignedToMe) {
+          <th  style="width:15%">RequestedBy</th>
+        }
+      </tr>
+      <tr>
+        <th>
+        </th>
+        <th>
+          <p-columnFilter type="text" field="label" [showMenu]="false"></p-columnFilter>
+        </th>
+        <th>
+          <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
+        </th>
+        <th>
+          <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
+            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+              <p-multiSelect [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
+                <ng-template let-group pTemplate="group">
+                  <div class="inline-block vertical-align-middle">
+                    <span class="ml-1 mt-1">{{ group.label }}</span>
+                  </div>
+                </ng-template>
+              </p-multiSelect>
+            </ng-template>
+          </p-columnFilter>
+        </th>
+        <th>
+        </th>
+        <th>
+        </th>
+      </tr>
     </ng-template>
     <ng-template pTemplate="body" let-revision>
-        <tr [pContextMenuRow]="revision">
-            <td><p-tableCheckbox [value]="revision"></p-tableCheckbox></td>
-            <td>
-                <a *ngIf="!showDeletedAPIRevisions; else disabledLink" (click)="viewRevision(revision)" style="cursor: pointer;">{{ revision.resolvedLabel }}</a>
-                <ng-template #disabledLink>{{ revision.resolvedLabel }}</ng-template>
-            </td>
-            <td class="author-table-data">
-                <img [alt]="revision.createdBy" src="https://github.com/{{ revision.createdBy }}.png?size=40" width="32" />
-                <span><a href="{{profilePageWebAppUrl}}{{ revision.createdBy }}" target="_blank">{{ revision.createdBy }}</a></span>
-            </td>
-            <td>
-                <i class="{{ badgeClass.get(revision.isApproved.toString()) }} me-2"></i>
-                <i class="{{ badgeClass.get(revision.apiRevisionType) }} me-2"></i>
-            </td>
-            <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.createdOn !== null) ? (revision.createdOn | timeago) : "" }}</td>
-            <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.lastUpdatedOn !== null) ? (revision | lastUpdatedOn | timeago) : "" }}</td>
-            <td *ngIf="showAPIRevisionsAssignedToMe">{{ (revision.assignedReviewers[0].assingedOn !== null) ? (revision.assignedReviewers[0].assingedOn | timeago) : "" }}</td>
-            <td *ngIf="showAPIRevisionsAssignedToMe">{{revision.assignedReviewers[0].assignedBy}}</td>
-        </tr>
+      <tr [pContextMenuRow]="revision">
+        <td><p-tableCheckbox [value]="revision"></p-tableCheckbox></td>
+        <td>
+          @if (!showDeletedAPIRevisions) {
+            <a (click)="viewRevision(revision)" style="cursor: pointer;">{{ revision.resolvedLabel }}</a>
+          } @else {
+            {{ revision.resolvedLabel }}
+          }
+        </td>
+        <td class="author-table-data">
+          <img [alt]="revision.createdBy" src="https://github.com/{{ revision.createdBy }}.png?size=40" width="32" />
+          <span><a href="{{profilePageWebAppUrl}}{{ revision.createdBy }}" target="_blank">{{ revision.createdBy }}</a></span>
+        </td>
+        <td>
+          <i class="{{ badgeClass.get(revision.isApproved.toString()) }} me-2"></i>
+          <i class="{{ badgeClass.get(revision.apiRevisionType) }} me-2"></i>
+        </td>
+        @if (!showAPIRevisionsAssignedToMe) {
+          <td>{{ (revision.createdOn !== null) ? (revision.createdOn | timeago) : "" }}</td>
+        }
+        @if (!showAPIRevisionsAssignedToMe) {
+          <td>{{ (revision.lastUpdatedOn !== null) ? (revision | lastUpdatedOn | timeago) : "" }}</td>
+        }
+        @if (showAPIRevisionsAssignedToMe) {
+          <td>{{ (revision.assignedReviewers[0].assingedOn !== null) ? (revision.assignedReviewers[0].assingedOn | timeago) : "" }}</td>
+        }
+        @if (showAPIRevisionsAssignedToMe) {
+          <td>{{revision.assignedReviewers[0].assignedBy}}</td>
+        }
+      </tr>
     </ng-template>
     <ng-template pTemplate="summary">
-        <div *ngIf="review != null" class="flex align-items-center justify-content-center">
-            {{totalNumberOfRevisions}} {{apiRevisionsListDetail}} {{review.packageName}}
+      @if (review != null) {
+        <div class="flex align-items-center justify-content-center">
+          {{totalNumberOfRevisions}} {{apiRevisionsListDetail}} {{review.packageName}}
         </div>
-        <div  *ngIf="review == null" class="flex align-items-center justify-content-center">
-            {{totalNumberOfRevisions}} {{apiRevisionsListDetail}} all Reviews
+      }
+      @if (review == null) {
+        <div  class="flex align-items-center justify-content-center">
+          {{totalNumberOfRevisions}} {{apiRevisionsListDetail}} all Reviews
         </div>
+      }
     </ng-template>
-</p-table>
+  </p-table>
+}
 <p-drawer [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [showCloseIcon]="false" styleClass="create-revision-sidebar">
-    <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
+  <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
     <h4>Create Revision</h4>
-    <p *ngIf="!createRevisionForm.get('selectedCRLanguage')!.value">Select a Language Below to view instructions for creating a Review.</p>
+    @if (!createRevisionForm.get('selectedCRLanguage')!.value) {
+      <p>Select a Language Below to view instructions for creating a Review.</p>
+    }
     <form [formGroup]="createRevisionForm" (ngSubmit)="createRevision()">
-        <p-select formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
-            <ng-template pTemplate="selectedItem">
-                <div class="flex align-items-center gap-2" *ngIf="createRevisionForm.get('selectedCRLanguage')!.value">
-                  <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames }}-original.svg" style="width: 25px"/>
-                  <span class="mx-2 mt-1">{{ createRevisionForm.get('selectedCRLanguage')!.value!.label }}</span>
-                </div>
-            </ng-template>
-            <ng-template let-crLanguage pTemplate="item">
-                <div class="flex align-items-center gap-2">
-                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames }}-original.svg" style="width: 25px"/>
-                    <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
-                </div>
-            </ng-template>
-        </p-select>
-        <div *ngIf="createRevisionInstruction && createRevisionInstruction!.length > 0" class="card mt-2">
-            <div class="card-body">
-              <h5 class="card-title">What to Upload</h5>
-              <ol *ngIf=" createRevisionForm.get('selectedCRLanguage')!.value && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'">
-                <li *ngFor="let item of createRevisionInstruction" [innerHTML]="item"></li>
+      <p-select formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
+        <ng-template pTemplate="selectedItem">
+          @if (createRevisionForm.get('selectedCRLanguage')!.value) {
+            <div class="flex align-items-center gap-2">
+              <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames }}-original.svg" style="width: 25px"/>
+              <span class="mx-2 mt-1">{{ createRevisionForm.get('selectedCRLanguage')!.value!.label }}</span>
+            </div>
+          }
+        </ng-template>
+        <ng-template let-crLanguage pTemplate="item">
+          <div class="flex align-items-center gap-2">
+            <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames }}-original.svg" style="width: 25px"/>
+            <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
+          </div>
+        </ng-template>
+      </p-select>
+      @if (createRevisionInstruction && createRevisionInstruction!.length > 0) {
+        <div class="card mt-2">
+          <div class="card-body">
+            <h5 class="card-title">What to Upload</h5>
+            @if ( createRevisionForm.get('selectedCRLanguage')!.value && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec') {
+              <ol>
+                @for (item of createRevisionInstruction; track item) {
+                  <li [innerHTML]="item"></li>
+                }
               </ol>
-              <div *ngIf="createRevisionForm.get('selectedCRLanguage')!.value && createRevisionForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec'">
-                    TypeSpec review can be generated manually using one of the following options.
-                    <ol>
-                        <li>
-                            <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
-                        </li>
-                        <li>
-                            <strong>Option 2:</strong> Create API review file locally using following steps.
-                            <ul>
-                                <li>
-                                    Install  <code>&#64;azure-tools/typespec-apiview</code>
-                                </li>
-                                <li>
-                                    Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "&#64;azure-tools/typespec-apiview"</code>
-                                </li>
-                                <li>
-                                    Select Json as the language option in Create review page.
-                                </li>
-                                <li>
-                                    Upload the JSON file that is emitted.
-                                </li>
-                            </ul>
-                        </li>
-                    </ol>
-                </div>
-            </div>
+            }
+            @if (createRevisionForm.get('selectedCRLanguage')!.value && createRevisionForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec') {
+              <div>
+                TypeSpec review can be generated manually using one of the following options.
+                <ol>
+                  <li>
+                    <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
+                  </li>
+                  <li>
+                    <strong>Option 2:</strong> Create API review file locally using following steps.
+                    <ul>
+                      <li>
+                        Install  <code>&#64;azure-tools/typespec-apiview</code>
+                      </li>
+                      <li>
+                        Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "&#64;azure-tools/typespec-apiview"</code>
+                      </li>
+                      <li>
+                        Select Json as the language option in Create review page.
+                      </li>
+                      <li>
+                        Upload the JSON file that is emitted.
+                      </li>
+                    </ul>
+                  </li>
+                </ol>
+              </div>
+            }
+          </div>
         </div>
-        <div class="mt-2">
-            <p-fileUpload
-                #revisionCreationFileUpload name="selectedFile"
-                *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
-                chooseLabel="Select File" [customUpload]="true"
-                [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0"
-                accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)" (onRemove)="createRevisionForm.get('selectedFile')?.reset()">
-                <ng-template pTemplate="content">
-                    <div *ngIf="createRevisionForm.get('selectedFile')!.value == null" class="mx-2">or drag and drop files here</div>
-                </ng-template>
-            </p-fileUpload>
-        </div>
-        <div *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec'"
-            class="card flex justify-content-center mt-2">
-            <input type="text" pInputText formControlName="filePath"
+      }
+      <div class="mt-2">
+        @if (createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec') {
+          <p-fileUpload
+            #revisionCreationFileUpload name="selectedFile"
+            chooseLabel="Select File" [customUpload]="true"
+            [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0"
+            accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)" (onRemove)="createRevisionForm.get('selectedFile')?.reset()">
+            <ng-template pTemplate="content">
+              @if (createRevisionForm.get('selectedFile')!.value == null) {
+                <div class="mx-2">or drag and drop files here</div>
+              }
+            </ng-template>
+          </p-fileUpload>
+        }
+      </div>
+      @if (createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec') {
+        <div
+          class="card flex justify-content-center mt-2">
+          <input type="text" pInputText formControlName="filePath"
             placeholder="Package root e.g https://github.com/Azure/azure-rest-api-specs/specification/cognitiveservices/AnomalyDetector/"/>
-        </div>
-        <div *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined" class="card flex justify-content-center mt-2">
+          </div>
+        }
+        @if (createRevisionForm.get('selectedCRLanguage')!.value != undefined) {
+          <div class="card flex justify-content-center mt-2">
             <input type="text" pInputText formControlName="label"  placeholder="Enter a label for the APIRevision"/>
-        </div>
+          </div>
+        }
         <div class="d-grid gap-2 mt-2">
-            <button *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined" [disabled]="!createRevisionForm.valid"
-                type="submit" class="btn btn-primary btn-md"><i class="fas fa-cloud-upload-alt"></i> {{ crButtonText }}
-                <span *ngIf="creatingRevision" class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
+          @if (createRevisionForm.get('selectedCRLanguage')!.value != undefined) {
+            <button [disabled]="!createRevisionForm.valid"
+              type="submit" class="btn btn-primary btn-md"><i class="fas fa-cloud-upload-alt"></i> {{ crButtonText }}
+              @if (creatingRevision) {
+                <span class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
+              }
             </button>
+          }
         </div>
-    </form>
+      </form>
     </div>
-</p-drawer>
-<p-drawer [(visible)]="optionsSidebarVisible" position="right" [showCloseIcon]="false" styleClass="options-sidebar">
+  </p-drawer>
+  <p-drawer [(visible)]="optionsSidebarVisible" position="right" [showCloseIcon]="false" styleClass="options-sidebar">
     <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
-    <h4>Filter APIRevisions</h4>
-    <ul class="list-group list-group-flush">
+      <h4>Filter APIRevisions</h4>
+      <ul class="list-group list-group-flush">
         <li class="list-group-item">
-            <div class="form-check form-switch">
-                <input class="form-check-input" (change)="toggleShowDeletedAPIRevisions()" type="checkbox" role="switch" id="showDeletedAPIRevisions" [checked]="showDeletedAPIRevisions">
-                <label class="form-check-label" for="showDeletedAPIRevisions">View Deleted APIRevisions</label>
-            </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" (change)="toggleShowDeletedAPIRevisions()" type="checkbox" role="switch" id="showDeletedAPIRevisions" [checked]="showDeletedAPIRevisions">
+            <label class="form-check-label" for="showDeletedAPIRevisions">View Deleted APIRevisions</label>
+          </div>
         </li>
         <li class="list-group-item">
-            <div class="form-check form-switch">
-                <input class="form-check-input" (change)="toggleShowAPIRevisionsAssignedToMe()" type="checkbox" role="switch" id="showRevisionsUserIsAssignedtoReview" [checked]="showAPIRevisionsAssignedToMe">
-                <label class="form-check-label" for="showRevisionsUserIsAssignedtoReview">View APIRevisions Assigned to Me</label>
-            </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" (change)="toggleShowAPIRevisionsAssignedToMe()" type="checkbox" role="switch" id="showRevisionsUserIsAssignedtoReview" [checked]="showAPIRevisionsAssignedToMe">
+            <label class="form-check-label" for="showRevisionsUserIsAssignedtoReview">View APIRevisions Assigned to Me</label>
+          </div>
         </li>
-    </ul>
+      </ul>
     </div>
-</p-drawer>
+  </p-drawer>

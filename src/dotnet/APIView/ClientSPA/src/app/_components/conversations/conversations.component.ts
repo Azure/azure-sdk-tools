@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { TimeagoModule } from 'ngx-timeago';
 import { TimelineModule } from 'primeng/timeline';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
@@ -21,12 +21,11 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
     styleUrls: ['./conversations.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        TimeagoModule,
-        TimelineModule,
-        CommentThreadComponent,
-        LastUpdatedOnPipe
-    ]
+    TimeagoModule,
+    TimelineModule,
+    CommentThreadComponent,
+    LastUpdatedOnPipe
+]
 })
 export class ConversationsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];

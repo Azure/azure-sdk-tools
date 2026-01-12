@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { DrawerModule } from 'primeng/drawer';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -23,12 +23,11 @@ import { environment } from 'src/environments/environment';
     styleUrls: ['./nav-bar.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        DrawerModule,
-        SelectButtonModule,
-        TimeagoModule
-    ]
+    FormsModule,
+    DrawerModule,
+    SelectButtonModule,
+    TimeagoModule
+]
 })
 export class NavBarComponent implements OnInit {
   userProfile : UserProfile | undefined;

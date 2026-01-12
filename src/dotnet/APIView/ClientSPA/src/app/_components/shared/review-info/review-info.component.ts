@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MenubarModule } from 'primeng/menubar';
@@ -19,12 +19,11 @@ import { environment } from 'src/environments/environment';
     styleUrls: ['./review-info.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        MenubarModule,
-        RevisionOptionsComponent,
-        LanguageNamesPipe
-    ]
+    FormsModule,
+    MenubarModule,
+    RevisionOptionsComponent,
+    LanguageNamesPipe
+]
 })
 export class ReviewInfoComponent {
   @Input() apiRevisions: APIRevision[] = [];

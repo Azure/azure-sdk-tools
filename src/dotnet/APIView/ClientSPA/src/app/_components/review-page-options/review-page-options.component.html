@@ -1,302 +1,338 @@
-<ng-container *ngIf="loadingStatus === 'completed'; else loadingOrFailedTemplate">
-    <app-page-options-section sectionName="Approval">
+@if (loadingStatus === 'completed') {
+  <app-page-options-section sectionName="Approval">
     <ul class="list-group">
-        <li class="list-group-item text-center">
-            <ng-container *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)">
-                <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
-                    <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
-                    <div class="d-grid gap-2">
-                        <button class="{{apiRevisionApprovalBtnClass}}" type="button"
-                            (click)="handleAPIRevisionApprovalAction()"
-                            [disabled]="isAPIRevisionApprovalDisabled">{{apiRevisionApprovalBtnLabel}}</button>
-                    </div>
-                </ng-container>
-                <ng-template #cantToggleApproveAPIRevision>
-                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision."
-                        tooltipPosition="bottom">
-                        <button class="{{apiRevisionApprovalBtnClass}}" type="button"
-                            disabled>
-                            {{apiRevisionApprovalBtnLabel}}
-                        </button>
-                    </div>
-                </ng-template>
-            </ng-container>
-            <span *ngIf="activeAPIRevision && activeAPIRevision!.approvers.length > 0; else noAPIRevisionApprovers" class="small text-muted mt-1">
-                Approved by: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
-            </span>
-            <ng-template #noAPIRevisionApprovers>
-                <span class="small text-muted mt-1">Current Revision approval pending</span>
-            </ng-template>
-        </li>
-        <li class="list-group-item text-center" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
-            <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
-                <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
-            </ng-container>
-            <ng-template #reviewIsNotApproved>
-                <div *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName); else userIsNotAPreferedApprover">
-                    <span class="small text-muted">Approves first release of the package</span>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-success" type="button" id="first-release-approval-button"
-                            (click)="handleReviewApprovalAction()"
-                            pTooltip="Package name must be approved before first preview release of a new package."
-                            tooltipPosition="bottom"
-                            data-clarity-region="approve-namespace-button">
-                            Approve first release
-                        </button>
-                    </div>
-                    <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
-                </div>
-            </ng-template>
-            <ng-template #userIsNotAPreferedApprover>
-                <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
-            </ng-template>
-        </li>
-        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">
+      <li class="list-group-item text-center">
+        @if (userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)) {
+          @if (canToggleApproveAPIRevision) {
+            @if (apiRevisionApprovalMessage) {
+              <span class="small text-muted">{{apiRevisionApprovalMessage}}</span>
+            }
             <div class="d-grid gap-2">
-                <button class="{{namespaceReviewBtnClass}}" type="button"
-                        (click)="handleNamespaceReviewAction()"
-                        [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress"
-                        data-clarity-region="request-namespace-review-button">
-                    <span *ngIf="isNamespaceReviewInProgress" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    {{namespaceReviewBtnLabel}}
+              <button class="{{apiRevisionApprovalBtnClass}}" type="button"
+                (click)="handleAPIRevisionApprovalAction()"
+              [disabled]="isAPIRevisionApprovalDisabled">{{apiRevisionApprovalBtnLabel}}</button>
+            </div>
+          } @else {
+            <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision."
+              tooltipPosition="bottom">
+              <button class="{{apiRevisionApprovalBtnClass}}" type="button"
+                disabled>
+                {{apiRevisionApprovalBtnLabel}}
+              </button>
+            </div>
+          }
+        }
+        @if (activeAPIRevision && activeAPIRevision!.approvers.length > 0) {
+          <span class="small text-muted mt-1">
+            Approved by: @for (approver of activeAPIRevision!.approvers; track approver) {
+            <a href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
+          }
+        </span>
+      } @else {
+        <span class="small text-muted mt-1">Current Revision approval pending</span>
+      }
+    </li>
+    @if (review?.language !== 'TypeSpec' && review?.language !== 'Swagger') {
+      <li class="list-group-item text-center">
+        @if (reviewIsApproved) {
+          <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
+        } @else {
+          @if (userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)) {
+            <div>
+              <span class="small text-muted">Approves first release of the package</span>
+              <div class="d-grid gap-2">
+                <button class="btn btn-success" type="button" id="first-release-approval-button"
+                  (click)="handleReviewApprovalAction()"
+                  pTooltip="Package name must be approved before first preview release of a new package."
+                  tooltipPosition="bottom"
+                  data-clarity-region="approve-namespace-button">
+                  Approve first release
                 </button>
+              </div>
+              <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </div>
-            <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
+          } @else {
+            <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
+          }
+        }
+      </li>
+    }
+    @if (canRequestNamespaceReview) {
+      <li class="list-group-item text-center">
+        <div class="d-grid gap-2">
+          <button class="{{namespaceReviewBtnClass}}" type="button"
+            (click)="handleNamespaceReviewAction()"
+            [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress"
+            data-clarity-region="request-namespace-review-button">
+            @if (isNamespaceReviewInProgress) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            }
+            {{namespaceReviewBtnLabel}}
+          </button>
+        </div>
+        @if (namespaceReviewMessage) {
+          <span class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
+        }
+      </li>
+    }
+  </ul>
+</app-page-options-section>
+@if (associatedPullRequests.length > 0) {
+  <app-page-options-section sectionName="Associated Pull Requests">
     <ul class="list-group">
-        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
-            <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
-    <ul class="list-group">
-        <li class="list-group-item" *ngFor="let pullRequest of pullRequestsOfAssociatedAPIRevisions">
-            <span>
-                <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: userProfile?.preferences?.theme }}-original.svg" class="me-2" width="20" height="20">
-                <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank" ><small>{{pullRequest.packageName}}</small></a>
-            </span>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section sectionName="Page Utils">
-    <ul class="list-group">
+      @for (pullRequest of associatedPullRequests; track pullRequest) {
         <li class="list-group-item">
-            <p-iconField iconPosition="left" styleClass="w-full">
-                <p-inputIcon styleClass="pi pi-search" />
-                <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" class="review-search-input" data-clarity-region="review-search-input"/>
-            </p-iconField>
-            <div *ngIf="codeLineSearchInfo" class="d-flex justify-content-between">
-                <small class="review-search-info">{{ (codeLineSearchInfo.currentMatch?.index ?? 0) + 1 }} of {{ codeLineSearchInfo.totalMatchCount }}</small>
-                <span class="mt-2">
-                    <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)" data-clarity-region="review-search-up"></i>
-                    <i class="bi bi-arrow-down-short border review-search-icon" (click)="navigateSearch(1)" data-clarity-region="review-search-down"></i>
-                    <i class="bi bi-x border rounded-end review-search-icon" (click)="clearReviewSearch()" data-clarity-region="review-search-clear"></i>
-                </span>
-            </div>
+          <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
         </li>
-        <li class="list-group-item" *ngIf="showCommentsSwitch">
-            <label class="small mx-1 fw-semibold">Comment:</label>
-            <div class="d-grid gap-2">
-                <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" data-clarity-region="review-comment-prev">
-                        <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" data-clarity-region="review-comment-next">
-                        <i class="bi bi-arrow-down"></i>Next</button>
-                </div>
-            </div>
+      }
+    </ul>
+  </app-page-options-section>
+}
+@if (pullRequestsOfAssociatedAPIRevisions.length > 0) {
+  <app-page-options-section sectionName="Associated API Revisions" [collapsedInput]="true">
+    <ul class="list-group">
+      @for (pullRequest of pullRequestsOfAssociatedAPIRevisions; track pullRequest) {
+        <li class="list-group-item">
+          <span>
+            <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: userProfile?.preferences?.theme }}-original.svg" class="me-2" width="20" height="20">
+            <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank" ><small>{{pullRequest.packageName}}</small></a>
+          </span>
         </li>
-        <li class="list-group-item" *ngIf="isDiffView && contentHasDiff">
+      }
+    </ul>
+  </app-page-options-section>
+}
+<app-page-options-section sectionName="Page Utils">
+  <ul class="list-group">
+    <li class="list-group-item">
+      <p-iconField iconPosition="left" styleClass="w-full">
+        <p-inputIcon styleClass="pi pi-search" />
+        <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" class="review-search-input" data-clarity-region="review-search-input"/>
+      </p-iconField>
+      @if (codeLineSearchInfo) {
+        <div class="d-flex justify-content-between">
+          <small class="review-search-info">{{ (codeLineSearchInfo.currentMatch?.index ?? 0) + 1 }} of {{ codeLineSearchInfo.totalMatchCount }}</small>
+          <span class="mt-2">
+            <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)" data-clarity-region="review-search-up"></i>
+            <i class="bi bi-arrow-down-short border review-search-icon" (click)="navigateSearch(1)" data-clarity-region="review-search-down"></i>
+            <i class="bi bi-x border rounded-end review-search-icon" (click)="clearReviewSearch()" data-clarity-region="review-search-clear"></i>
+          </span>
+        </div>
+      }
+    </li>
+    @if (showCommentsSwitch) {
+      <li class="list-group-item">
+        <label class="small mx-1 fw-semibold">Comment:</label>
+        <div class="d-grid gap-2">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
+            <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" data-clarity-region="review-comment-prev">
+              <i class="bi bi-arrow-up"></i>Prev</button>
+              <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" data-clarity-region="review-comment-next">
+                <i class="bi bi-arrow-down"></i>Next</button>
+              </div>
+            </div>
+          </li>
+        }
+        @if (isDiffView && contentHasDiff) {
+          <li class="list-group-item">
             <label class="small mx-1 fw-semibold">Diff:</label>
             <div class="d-grid gap-2">
-                <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
-                        <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)">
-                        <i class="bi bi-arrow-down"></i>Next</button>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
+                <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
+                  <i class="bi bi-arrow-up"></i>Prev</button>
+                  <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                    <i class="bi bi-arrow-down"></i>Next</button>
+                  </div>
                 </div>
-            </div>
-        </li>
-        <li class="list-group-item">
-            <div class="d-grid gap-2">
+              </li>
+            }
+            <li class="list-group-item">
+              <div class="d-grid gap-2">
                 <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)" data-clarity-region="copy-review-text-button">
-                    <i class="bi bi-clipboard"></i>
-                    {{ copyReviewTextButtonText }}
+                  <i class="bi bi-clipboard"></i>
+                  {{ copyReviewTextButtonText }}
                 </button>
-                <ng-container *ngIf="review && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName) && isCopilotReviewSupported">
-                    <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText == 'Generating review...'" (click)="generateAIReview()" data-clarity-region="generate-copilot-review-button">
-                        <i *ngIf="aiReviewGenerationState === 'NotStarted' || aiReviewGenerationState == 'Completed'" class="bi bi-stars"></i>
-                        <div *ngIf="aiReviewGenerationState == 'InProgress'" class="spinner-grow spinner-grow-sm" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        {{ generateAIReviewButtonText }}
-                    </button>
-                    <button *ngIf="aiReviewGenerationState == 'Completed' && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)" type="button" class="btn btn-outline-danger" (click)="clearAutoGeneratedComments()"><i class="bi bi-x-lg me-2"></i>Clear copilot comments</button>
-                </ng-container>
-            </div>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section sectionName="Page Settings">
-    <ul class="list-group">
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showCommentsSwitch"
-            (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toggle-comments" />
-            <label class="ms-2">Comments</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showSystemCommentsSwitch"
-            (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostics" />
-            <label class="ms-2">System comments</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showDocumentationSwitch"
-            (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
-            <label class="ms-2">Documentation</label>
-        </li>
-        <li *ngIf="hasHiddenAPIs" class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showHiddenAPISwitch"
-            (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
-            <label class="ms-2">Hidden APIs</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showLineNumbersSwitch"
-            (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toggle-line-numbers"/>
-            <label class="ms-2">Line numbers</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showLeftNavigationSwitch"
-            (onChange)="onShowLeftNavigationSwitchChange($event)" data-clarity-region="toggle-left-navigation" />
-            <label class="ms-2">Left navigation</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="disableCodeLinesLazyLoading"
-            (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
-            <label class="ms-2">Disable lazy loading</label>
-        </li>
-        <li *ngIf="isDiffView" class="list-group-item">
-            <label class="small mx-1" for="diff-style-select">Diff style :</label>
-            <p-selectButton
-                (onChange)="onDiffStyleChange($event)"
-                [options]="diffStyleOptions"
-                [(ngModel)]="selectedDiffStyle"
-                [disabled]="!contentHasDiff"
-                optionLabel="label"
-                styleClass="w-100 apiview-toggle-button-group"
-                data-clarity-region="diff-view-style-selectbutton" />
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section sectionName="API Revision Options">
-    <ul class="list-group">
-        <li class="list-group-item">
-            <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
-            <p-multiSelect
-                [options]="preferredApprovers"
-                [(ngModel)]="selectedApprovers"
-                placeholder="Request Reviewers"
-                [showClear]="true"
-                (onPanelHide)="handleAssignedReviewersChange()"
-                styleClass="full-width-input"
-                data-clarity-region="reviewers-multiselect">
-                    <ng-template pTemplate="selectedItems">
-                        <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
-                        <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>
-                        </div>
-                        <div *ngIf="!selectedApprovers || selectedApprovers.length === 0">Select Reviewers</div>
-                    </ng-template>
-                    <ng-template let-approver pTemplate="item">
-                        <div class="flex align-items-center gap-2">
-                            <img
-                                src="https://github.com/{{ approver }}.png?size=30"
-                                class="me-2 rounded reviewer-avatar" />
-                            <span>{{ approver }}</span>
-                        </div>
-                    </ng-template>
-            </p-multiSelect>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section sectionName="Review Options">
-    <ul class="list-group">
-        <li class="list-group-item">
-            <p-toggleswitch [(ngModel)]="subscribeSwitch"
-            (onChange)="onSubscribeSwitchChange($event)"
-            data-clarity-region="toggle-subscribe" />
-            <label class="ms-2">Subscribe</label>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section sectionName="Change History" [collapsedInput]="true">
-    <ul class="list-group">
-        <li class="list-group-item change-history">
-            <p-timeline [value]="activeAPIRevision?.changeHistory">
-                <ng-template pTemplate="marker" let-changeHistory>
-                    <span [style]="{ 'background-color': changeHistory.color }">
-                        <i [class]="changeHistoryIcons[changeHistory.changeAction]"></i>
-                    </span>
-                </ng-template>
-                <ng-template pTemplate="content" let-changeHistory>
-                    <div class="p-text-primary small">{{ changeHistory.changeAction | titlecase }}</div>
-                    <div class="p-text-secondary small">{{ changeHistory.changedBy }}</div>
-                    <div class="p-text-secondary small">{{ (changeHistory.changedOn) ? (changeHistory.changedOn | timeago) : "" }}</div>
-                </ng-template>
-            </p-timeline>
-        </li>
-    </ul>    </app-page-options-section>
-
-    <p-dialog header="Approve APIRevision"
-    [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
-    [style]="{ width: '40dvw' }">
-    <ul class="list-group">
-        <li class="list-group-item" *ngIf="hasActiveConversation">
-            <div class="float-start">
-                <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
-            </div>
-            <div class="float-end">
-                <p-toggleswitch [(ngModel)]="overrideActiveConversationforApproval"/>
-                <label class="ms-2">Override</label>
-            </div>
-        </li>
-        <li class="list-group-item" *ngIf="hasFatalDiagnostics">
-            <div class="float-start">
-                <p class="mb-0">This API has fatal diagnostics.</p>
-            </div>
-            <div class="float-end">
-                <p-toggleswitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
-                <label class="ms-2">Override</label>
-            </div>
-        </li>
-      </ul>
-      <div class="d-grid gap-2 mt-2">
-        <button class="btn btn-success" type="button"
-            (click)="toggleAPIRevisionApproval()"
-            [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
-      </div>
-    </p-dialog>
-
-    <p-dialog header="Disable Lazy Loading"
-        [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
-        [style]="{ width: '30dvw' }" (onHide)="onDisableLazyLoadingModalHide()">
-        <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
-        <div class="d-grid gap-2 mt-2">
-        <button class="btn btn-primary" type="button" (click)="onDisableLazyLoadingConfirm()">Disable</button>
-        <button class="btn btn-link" type="button" (click)="onDisableLazyLoadingCancel()">Cancel</button>
-        </div>
-    </p-dialog>
-</ng-container>
-<ng-template #loadingOrFailedTemplate>
-    <div *ngIf="loadingStatus === 'loading'" class="spinner-border m-3" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</ng-template>
+                @if (review && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName) && isCopilotReviewSupported) {
+                  <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText == 'Generating review...'" (click)="generateAIReview()" data-clarity-region="generate-copilot-review-button">
+                    @if (aiReviewGenerationState === 'NotStarted' || aiReviewGenerationState == 'Completed') {
+                      <i class="bi bi-stars"></i>
+                    }
+                    @if (aiReviewGenerationState == 'InProgress') {
+                      <div class="spinner-grow spinner-grow-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    }
+                    {{ generateAIReviewButtonText }}
+                  </button>
+                  @if (aiReviewGenerationState == 'Completed' && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)) {
+                    <button type="button" class="btn btn-outline-danger" (click)="clearAutoGeneratedComments()"><i class="bi bi-x-lg me-2"></i>Clear copilot comments</button>
+                  }
+                }
+              </div>
+            </li>
+          </ul>
+        </app-page-options-section>
+        <app-page-options-section sectionName="Page Settings">
+          <ul class="list-group">
+            <li class="list-group-item d-flex align-items-center">
+              <p-toggleswitch [(ngModel)]="showCommentsSwitch"
+                (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toggle-comments" />
+                <label class="ms-2">Comments</label>
+              </li>
+              <li class="list-group-item d-flex align-items-center">
+                <p-toggleswitch [(ngModel)]="showSystemCommentsSwitch"
+                  (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostics" />
+                  <label class="ms-2">System comments</label>
+                </li>
+                <li class="list-group-item d-flex align-items-center">
+                  <p-toggleswitch [(ngModel)]="showDocumentationSwitch"
+                    (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
+                    <label class="ms-2">Documentation</label>
+                  </li>
+                  @if (hasHiddenAPIs) {
+                    <li class="list-group-item d-flex align-items-center">
+                      <p-toggleswitch [(ngModel)]="showHiddenAPISwitch"
+                        (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
+                        <label class="ms-2">Hidden APIs</label>
+                      </li>
+                    }
+                    <li class="list-group-item d-flex align-items-center">
+                      <p-toggleswitch [(ngModel)]="showLineNumbersSwitch"
+                        (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toggle-line-numbers"/>
+                        <label class="ms-2">Line numbers</label>
+                      </li>
+                      <li class="list-group-item d-flex align-items-center">
+                        <p-toggleswitch [(ngModel)]="showLeftNavigationSwitch"
+                          (onChange)="onShowLeftNavigationSwitchChange($event)" data-clarity-region="toggle-left-navigation" />
+                          <label class="ms-2">Left navigation</label>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                          <p-toggleswitch [(ngModel)]="disableCodeLinesLazyLoading"
+                            (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
+                            <label class="ms-2">Disable lazy loading</label>
+                          </li>
+                          @if (isDiffView) {
+                            <li class="list-group-item">
+                              <label class="small mx-1" for="diff-style-select">Diff style :</label>
+                              <p-selectButton
+                                (onChange)="onDiffStyleChange($event)"
+                                [options]="diffStyleOptions"
+                                [(ngModel)]="selectedDiffStyle"
+                                [disabled]="!contentHasDiff"
+                                optionLabel="label"
+                                styleClass="w-100 apiview-toggle-button-group"
+                                data-clarity-region="diff-view-style-selectbutton" />
+                              </li>
+                            }
+                          </ul>
+                        </app-page-options-section>
+                        <app-page-options-section sectionName="API Revision Options">
+                          <ul class="list-group">
+                            <li class="list-group-item">
+                              <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
+                              <p-multiSelect
+                                [options]="preferredApprovers"
+                                [(ngModel)]="selectedApprovers"
+                                placeholder="Request Reviewers"
+                                [showClear]="true"
+                                (onPanelHide)="handleAssignedReviewersChange()"
+                                styleClass="full-width-input"
+                                data-clarity-region="reviewers-multiselect">
+                                <ng-template pTemplate="selectedItems">
+                                  @if (selectedApprovers && selectedApprovers.length > 0) {
+                                    <div class="inline-flex align-items-center gap-2 px-1 me-1">
+                                      <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>
+                                    </div>
+                                  }
+                                  @if (!selectedApprovers || selectedApprovers.length === 0) {
+                                    <div>Select Reviewers</div>
+                                  }
+                                </ng-template>
+                                <ng-template let-approver pTemplate="item">
+                                  <div class="flex align-items-center gap-2">
+                                    <img
+                                      src="https://github.com/{{ approver }}.png?size=30"
+                                      class="me-2 rounded reviewer-avatar" />
+                                      <span>{{ approver }}</span>
+                                    </div>
+                                  </ng-template>
+                                </p-multiSelect>
+                              </li>
+                            </ul>
+                          </app-page-options-section>
+                          <app-page-options-section sectionName="Review Options">
+                            <ul class="list-group">
+                              <li class="list-group-item">
+                                <p-toggleswitch [(ngModel)]="subscribeSwitch"
+                                  (onChange)="onSubscribeSwitchChange($event)"
+                                  data-clarity-region="toggle-subscribe" />
+                                  <label class="ms-2">Subscribe</label>
+                                </li>
+                              </ul>
+                            </app-page-options-section>
+                            <app-page-options-section sectionName="Change History" [collapsedInput]="true">
+                              <ul class="list-group">
+                                <li class="list-group-item change-history">
+                                  <p-timeline [value]="activeAPIRevision?.changeHistory">
+                                    <ng-template pTemplate="marker" let-changeHistory>
+                                      <span [style]="{ 'background-color': changeHistory.color }">
+                                        <i [class]="changeHistoryIcons[changeHistory.changeAction]"></i>
+                                      </span>
+                                    </ng-template>
+                                    <ng-template pTemplate="content" let-changeHistory>
+                                      <div class="p-text-primary small">{{ changeHistory.changeAction | titlecase }}</div>
+                                      <div class="p-text-secondary small">{{ changeHistory.changedBy }}</div>
+                                      <div class="p-text-secondary small">{{ (changeHistory.changedOn) ? (changeHistory.changedOn | timeago) : "" }}</div>
+                                    </ng-template>
+                                  </p-timeline>
+                                </li>
+                              </ul>    </app-page-options-section>
+                              <p-dialog header="Approve APIRevision"
+                                [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
+                                [style]="{ width: '40dvw' }">
+                                <ul class="list-group">
+                                  @if (hasActiveConversation) {
+                                    <li class="list-group-item">
+                                      <div class="float-start">
+                                        <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
+                                      </div>
+                                      <div class="float-end">
+                                        <p-toggleswitch [(ngModel)]="overrideActiveConversationforApproval"/>
+                                        <label class="ms-2">Override</label>
+                                      </div>
+                                    </li>
+                                  }
+                                  @if (hasFatalDiagnostics) {
+                                    <li class="list-group-item">
+                                      <div class="float-start">
+                                        <p class="mb-0">This API has fatal diagnostics.</p>
+                                      </div>
+                                      <div class="float-end">
+                                        <p-toggleswitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
+                                        <label class="ms-2">Override</label>
+                                      </div>
+                                    </li>
+                                  }
+                                </ul>
+                                <div class="d-grid gap-2 mt-2">
+                                  <button class="btn btn-success" type="button"
+                                    (click)="toggleAPIRevisionApproval()"
+                                  [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
+                                </div>
+                              </p-dialog>
+                              <p-dialog header="Disable Lazy Loading"
+                                [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
+                                [style]="{ width: '30dvw' }" (onHide)="onDisableLazyLoadingModalHide()">
+                                <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
+                                <div class="d-grid gap-2 mt-2">
+                                  <button class="btn btn-primary" type="button" (click)="onDisableLazyLoadingConfirm()">Disable</button>
+                                  <button class="btn btn-link" type="button" (click)="onDisableLazyLoadingCancel()">Cancel</button>
+                                </div>
+                              </p-dialog>
+                            } @else {
+                              @if (loadingStatus === 'loading') {
+                                <div class="spinner-border m-3" role="status">
+                                  <span class="visually-hidden">Loading...</span>
+                                </div>
+                              }
+                            }

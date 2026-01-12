@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { PanelModule } from 'primeng/panel';
 import { CookieService } from 'ngx-cookie-service';
 
@@ -9,9 +9,8 @@ import { CookieService } from 'ngx-cookie-service';
     styleUrls: ['./page-options-section.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        PanelModule
-    ]
+    PanelModule
+]
 })
 export class PageOptionsSectionComponent implements OnInit{
   @Input() sectionName : string = '';

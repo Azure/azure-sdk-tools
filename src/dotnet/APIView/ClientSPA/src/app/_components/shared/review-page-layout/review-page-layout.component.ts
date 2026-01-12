@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
@@ -18,14 +18,13 @@ import { UserProfile } from 'src/app/_models/userProfile';
     styleUrls: ['./review-page-layout.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        MenuModule,
-        RippleModule,
-        TooltipModule,
-        BadgeModule,
-        NavBarComponent,
-        ReviewInfoComponent
-    ]
+    MenuModule,
+    RippleModule,
+    TooltipModule,
+    BadgeModule,
+    NavBarComponent,
+    ReviewInfoComponent
+]
 })
 export class ReviewPageLayoutComponent {
   @Input() review : Review | undefined = undefined;

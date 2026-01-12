@@ -1,78 +1,85 @@
 <app-nav-bar></app-nav-bar>
 <div class="container">
-    <div *ngIf="isLoaded" class="row">
-        <div class="col-md-3"></div>
-        <div class="col-md-6">
-            <div class="text-center my-3">
-                <img class="rounded-circle my-1" src="https://github.com/{{userName}}.png?size=200">
-                <h2>{{userName}}</h2>
-            </div>
-            <ng-container *ngIf="userName === userProfile?.userName; else notCurrentuser">
-                <ul  class="list-group list-group">
-                    <li class="list-group-item">
-                        <div class="mb-1">
-                            <label for="emailInput" class="form-label fw-semibold">Notification email</label>
-                            <input type="email" pInputText [style]="{'width':'100%'}" [ngModel]="notificationEmail" id="emailInput" (ngModelChange)="onProfileChange($event)"  aria-describedby="emaiInputlHelp"/>
-                            <div id="emaiInputlHelp" class="form-text">Enter your email to get notifications. Leave blank to stop emails.</div>
-                        </div>
-                    </li>
-                    <li *ngIf="allowedApprovers.includes(userName)" class="list-group-item" id="reviewLanguagesListItem">
-                        <div class="mb-1">
-                            <label for="reviewLanguagesMultiSelect" class="form-label fw-semibold">Review languages</label>
-                            <div class="card flex justify-content-center">
-                                <p-multiSelect
-                                    id="reviewLanguagesMultiSelect"
-                                    (onChange)="onProfileChange($event)"
-                                    [options]="languages"
-                                    [filter]="false"
-                                    [ngModel]="selectedLanguages"
-                                    optionLabel="label"
-                                    placeholder="Select languages you want to be able to approve."
-                                    [showClear]="true"
-                                    (onClear)="onProfileChange($event)"
-                                    [maxSelectedLabels]="12"
-                                    selectedItemsLabel="{0} items selected"
-                                    [style]="{'width':'100%'}">
-                                    <ng-template let-option pTemplate="item">
-                                        <div class="inline-block vertical-align-middle">
-                                            <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames: userProfile?.preferences?.theme }}-original.svg" width="24" class="vertical-align-middle" />
-                                            <span class="mx-2 mt-1">{{ option.label }}</span>
-                                        </div>
-                                    </ng-template>
-                                </p-multiSelect>
-                            </div>
-                            <div id="reviewLanguagesHelp" class="form-text">You can approve reviews! Pick the languages you'd like to approve below.</div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="mb-1">
-                            <label for="scrollBarDropdown" class="form-label fw-semibold">Scrollbar size</label>
-                            <div class="card flex justify-content-center">
-                                <p-select
-                                    (onChange)="onProfileChange($event)"
-                                    id="scrollBarDropdown"
-                                    [options]="scrollBarSizes"
-                                    [(ngModel)]="selectedScrollBarSize"
-                                    [style]="{'width':'100%'}">
-                                </p-select>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-                <div class="mt-4 d-grid gap-2">
-                    <button type="button" class="btn btn-primary btn-lg" (click)="saveProfileChanges()" [disabled]="disableSaveButton">Save changes</button>
-                </div>
-            </ng-container>
-            <ng-template #notCurrentuser>
-                <div class="text-center">
-                    <div><i class="bi bi-github me-2"></i><a href="https://github.com/{{userName}}" target="_blank">{{userName}}</a></div>
-                    <div *ngIf="userEmail"><i class="bi bi-envelope-at me-2"></i><a href="mailto:{{userEmail}}">{{userEmail}}</a></div>
-                </div>
-            </ng-template>
+  @if (isLoaded) {
+    <div class="row">
+      <div class="col-md-3"></div>
+      <div class="col-md-6">
+        <div class="text-center my-3">
+          <img class="rounded-circle my-1" src="https://github.com/{{userName}}.png?size=200">
+          <h2>{{userName}}</h2>
         </div>
-        <div class="mt-4 col-md-3"></div>
+        @if (userName === userProfile?.userName) {
+          <ul  class="list-group list-group">
+            <li class="list-group-item">
+              <div class="mb-1">
+                <label for="emailInput" class="form-label fw-semibold">Notification email</label>
+                <input type="email" pInputText [style]="{'width':'100%'}" [ngModel]="notificationEmail" id="emailInput" (ngModelChange)="onProfileChange($event)"  aria-describedby="emaiInputlHelp"/>
+                <div id="emaiInputlHelp" class="form-text">Enter your email to get notifications. Leave blank to stop emails.</div>
+              </div>
+            </li>
+            @if (allowedApprovers.includes(userName)) {
+              <li class="list-group-item" id="reviewLanguagesListItem">
+                <div class="mb-1">
+                  <label for="reviewLanguagesMultiSelect" class="form-label fw-semibold">Review languages</label>
+                  <div class="card flex justify-content-center">
+                    <p-multiSelect
+                      id="reviewLanguagesMultiSelect"
+                      (onChange)="onProfileChange($event)"
+                      [options]="languages"
+                      [filter]="false"
+                      [ngModel]="selectedLanguages"
+                      optionLabel="label"
+                      placeholder="Select languages you want to be able to approve."
+                      [showClear]="true"
+                      (onClear)="onProfileChange($event)"
+                      [maxSelectedLabels]="12"
+                      selectedItemsLabel="{0} items selected"
+                      [style]="{'width':'100%'}">
+                      <ng-template let-option pTemplate="item">
+                        <div class="inline-block vertical-align-middle">
+                          <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames: userProfile?.preferences?.theme }}-original.svg" width="24" class="vertical-align-middle" />
+                          <span class="mx-2 mt-1">{{ option.label }}</span>
+                        </div>
+                      </ng-template>
+                    </p-multiSelect>
+                  </div>
+                  <div id="reviewLanguagesHelp" class="form-text">You can approve reviews! Pick the languages you'd like to approve below.</div>
+                </div>
+              </li>
+            }
+            <li class="list-group-item">
+              <div class="mb-1">
+                <label for="scrollBarDropdown" class="form-label fw-semibold">Scrollbar size</label>
+                <div class="card flex justify-content-center">
+                  <p-select
+                    (onChange)="onProfileChange($event)"
+                    id="scrollBarDropdown"
+                    [options]="scrollBarSizes"
+                    [(ngModel)]="selectedScrollBarSize"
+                    [style]="{'width':'100%'}">
+                  </p-select>
+                </div>
+              </div>
+            </li>
+          </ul>
+          <div class="mt-4 d-grid gap-2">
+            <button type="button" class="btn btn-primary btn-lg" (click)="saveProfileChanges()" [disabled]="disableSaveButton">Save changes</button>
+          </div>
+        } @else {
+          <div class="text-center">
+            <div><i class="bi bi-github me-2"></i><a href="https://github.com/{{userName}}" target="_blank">{{userName}}</a></div>
+            @if (userEmail) {
+              <div><i class="bi bi-envelope-at me-2"></i><a href="mailto:{{userEmail}}">{{userEmail}}</a></div>
+            }
+          </div>
+        }
+      </div>
+      <div class="mt-4 col-md-3"></div>
     </div>
-    <div *ngIf="isLoaded == false" class="text-center my-3">
-        <h5>Page failed to load. Ensure the username is correct.</h5>
+  }
+  @if (isLoaded == false) {
+    <div class="text-center my-3">
+      <h5>Page failed to load. Ensure the username is correct.</h5>
     </div>
+  }
 </div>

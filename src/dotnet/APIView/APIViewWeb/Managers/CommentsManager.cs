@@ -698,9 +698,20 @@ namespace APIViewWeb.Managers
             }
         }
 
+        /// <summary>
+        /// Synchronizes diagnostic comments for an API revision based on the current set of diagnostics.
+        /// Creates new comments for new diagnostics, resolves comments for removed diagnostics,
+        /// and updates existing comments when severity or help link changes.
+        /// Uses hash-based caching to skip synchronization when diagnostics haven't changed.
+        /// </summary>
+        /// <param name="apiRevision">The API revision to sync diagnostics for.</param>
+        /// <param name="diagnostics">The current set of diagnostics from the code file.</param>
+        /// <param name="existingComments">Pre-fetched comments to avoid additional database calls. </param>
+        /// <returns>A list of diagnostic comments for the API revision after synchronization.</returns>
         public async Task<List<CommentItemModel>> SyncDiagnosticCommentsAsync(
             APIRevisionListItemModel apiRevision,
-            CodeDiagnostic[] diagnostics)
+            CodeDiagnostic[] diagnostics,
+            IEnumerable<CommentItemModel> existingComments)
         {
             diagnostics ??= [];
             string reviewId = apiRevision.ReviewId;
@@ -709,14 +720,12 @@ namespace APIViewWeb.Managers
             string currentHash = ComputeDiagnosticsHash(diagnostics);
             if (apiRevision.DiagnosticsHash == currentHash)
             {
-                IEnumerable<CommentItemModel> existingComments = await _commentsRepository.GetCommentsAsync(reviewId);
                 return existingComments
                     .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
                     .ToList();
             }
 
-            IEnumerable<CommentItemModel> allComments = await _commentsRepository.GetCommentsAsync(reviewId);
-            Dictionary<string, CommentItemModel> existingDiagnosticComments = allComments
+            Dictionary<string, CommentItemModel> existingDiagnosticComments = existingComments
                 .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
                 .ToDictionary(c => c.Id, c => c);
 
@@ -730,6 +739,8 @@ namespace APIViewWeb.Managers
                 expectedDiagnosticIds.Add(commentId);
 
                 CommentSeverity newSeverity = MapDiagnosticLevelToSeverity(diagnostic.Level);
+                string newCommentText = BuildDiagnosticCommentText(diagnostic.Text, diagnostic.HelpLinkUri);
+
                 if (existingDiagnosticComments.TryGetValue(commentId, out var existingComment))
                 {
                     bool needsUpdate = false;
@@ -757,6 +768,12 @@ namespace APIViewWeb.Managers
                         needsUpdate = true;
                     }
 
+                    if (existingComment.CommentText != newCommentText)
+                    {
+                        existingComment.CommentText = newCommentText;
+                        needsUpdate = true;
+                    }
+
                     if (needsUpdate)
                     {
                         await _commentsRepository.UpsertCommentAsync(existingComment);
@@ -767,12 +784,6 @@ namespace APIViewWeb.Managers
                 }
 
                 // New diagnostic - create comment
-                string commentText = diagnostic.Text;
-                if (!string.IsNullOrEmpty(diagnostic.HelpLinkUri))
-                {
-                    commentText += $"\n\n[Details]({diagnostic.HelpLinkUri})";
-                }
-
                 var comment = new CommentItemModel
                 {
                     Id = commentId,
@@ -780,7 +791,7 @@ namespace APIViewWeb.Managers
                     APIRevisionId = apiRevisionId,
                     ElementId = diagnostic.TargetId,
                     ThreadId = threadId,
-                    CommentText = commentText,
+                    CommentText = newCommentText,
                     CommentSource = CommentSource.Diagnostic,
                     Severity = newSeverity,
                     CreatedBy = ApiViewConstants.AzureSdkBotName,
@@ -844,7 +855,15 @@ namespace APIViewWeb.Managers
             var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(compositeKey));
             var hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
 
-            return hashString.Substring(0, 16);
+            return hashString[..16];
+        }
+
+        /// <summary>
+        /// Builds the comment text for a diagnostic, including the help link if available.
+        /// </summary>
+        private static string BuildDiagnosticCommentText(string diagnosticText, string helpLinkUri)
+        {
+            return string.IsNullOrEmpty(helpLinkUri) ? diagnosticText : $"{diagnosticText}\n\n[Details]({helpLinkUri})";
         }
 
         private static CommentSeverity MapDiagnosticLevelToSeverity(CodeDiagnosticLevel level)

@@ -22,9 +22,9 @@
     }
 
     .diagnostic-badge-custom {
-        background-color: #fff3cd;
-        border-color: #ffc107;
-        color: #856404;
+        background-color: var(--severity-should-fix-bg);
+        border-color: var(--severity-should-fix-border);
+        color: var(--severity-should-fix-text);
         .bi { font-size: .7rem; }
     }
 

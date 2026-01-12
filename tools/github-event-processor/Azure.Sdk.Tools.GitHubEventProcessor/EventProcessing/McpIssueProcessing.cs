@@ -172,7 +172,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             string serverLabel,
             IssueTriageResponse triageOutput)
         {
-            string teamMention = GetTeamMentionForServerLabel(serverLabel);
+            string? teamMention = GetTeamMentionForServerLabel(serverLabel);
             
             string issueComment;
             if (teamMention != null)

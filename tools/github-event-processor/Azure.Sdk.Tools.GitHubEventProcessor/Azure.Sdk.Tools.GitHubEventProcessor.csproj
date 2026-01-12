@@ -5,6 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>github-event-processor</ToolCommandName>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

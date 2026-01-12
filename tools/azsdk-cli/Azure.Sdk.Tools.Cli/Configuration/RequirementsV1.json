@@ -88,7 +88,7 @@
             },
             {
                 "requirement": "generator >= 0.4.3",
-                "check": ["generator", "--help"],
+                "check": ["generator", "-v"],
                 "instructions": ["go install github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"]
             }
         ],

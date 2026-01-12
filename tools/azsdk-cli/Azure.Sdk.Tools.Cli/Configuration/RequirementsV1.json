@@ -101,7 +101,7 @@
             {
                 "requirement": "azure-sdk-tools",
                 "check": ["pip", "show", "azure-sdk-tools"],
-                "instructions": ["python -m pip install -e eng/tools/azure-sdk-tools[build]"]
+                "instructions": ["Navigate to the Python SDK repository root directory", "python -m pip install -e eng/tools/azure-sdk-tools[build]"]
             },
             {
                 "requirement": "azpysdk",

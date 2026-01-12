@@ -111,6 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
+        private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
@@ -236,12 +237,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
-            var languages = new string[] { "Dotnet", "JavaScript", "Python", "Java", "Go" };
-            foreach (var lang in languages)
+            foreach (var lang in SUPPORTED_SDK_LANGUAGES)
             {
                 var sdkGenPipelineUrl = workItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var sdkPullRequestUrl = workItem.Fields.TryGetValue($"Custom.SDKPullRequestFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var packageName = workItem.Fields.TryGetValue($"Custom.{lang}PackageName", out value) ? value?.ToString() ?? string.Empty : string.Empty;
+                var generationStatus = workItem.Fields.TryGetValue($"Custom.GenerationStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var releaseStatus = workItem.Fields.TryGetValue($"Custom.ReleaseStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
@@ -254,7 +255,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Language = MapLanguageIdToName(lang),
                             GenerationPipelineUrl = sdkGenPipelineUrl,
                             SdkPullRequestUrl = sdkPullRequestUrl,
+                            GenerationStatus = generationStatus,
                             ReleaseStatus = releaseStatus,
+                            PullRequestStatus = pullRequestStatus,
                             PackageName = packageName,
                             ReleaseExclusionStatus = exclusionStatus
                         }
@@ -991,6 +994,22 @@ namespace Azure.Sdk.Tools.Cli.Services
                     }
                 };
                 await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId);
+
+                // Reset SDK generation status for all languages to "In progress" in the release plan work item
+                var releasePlanUpdateDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+                foreach (var lang in SUPPORTED_SDK_LANGUAGES)
+                {
+                    releasePlanUpdateDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/fields/Custom.GenerationStatusFor{lang}",
+                            Value = "In progress"
+                        }
+                    );
+                }
+                await connection.GetWorkItemClient().UpdateWorkItemAsync(releasePlanUpdateDocument, releasePlanWorkItemId);
+
                 return true;
             }
             catch (Exception ex)

@@ -72,6 +72,12 @@
                               class="ai-badge-custom ms-2">
                             AI-generated
                         </span>
+                        <!-- Diagnostic Badge -->
+                        <span *ngIf="isDiagnostic(comment)"
+                              class="diagnostic-badge-custom ms-2"
+                              title="System diagnostic">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Diagnostic
+                        </span>
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">

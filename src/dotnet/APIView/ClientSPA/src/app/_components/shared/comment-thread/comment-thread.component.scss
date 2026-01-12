@@ -1,7 +1,7 @@
 :host ::ng-deep {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-    .ai-badge-custom, .related-comments-indicator {
+    .ai-badge-custom, .diagnostic-badge-custom, .related-comments-indicator {
         display: inline-flex;
         align-items: center;
         background-color: var(--base-fg-color);
@@ -19,6 +19,13 @@
         color: var(--text-color-secondary);
         &:hover { background-color: var(--base-bg-color); border-color: var(--text-muted-color); transform: translateY(-1px); box-shadow: 0 2px 4px var(--shadow-color); }
         .pi { font-size: .8rem; margin: .2rem 0 0 .25rem; }
+    }
+
+    .diagnostic-badge-custom {
+        background-color: var(--severity-should-fix-bg);
+        border-color: var(--severity-should-fix-border);
+        color: var(--severity-should-fix-text);
+        .bi { font-size: .7rem; }
     }
 
     .related-comments-btn { background: none; border: none; padding: 0; }

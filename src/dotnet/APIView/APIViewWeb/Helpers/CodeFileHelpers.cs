@@ -211,9 +211,7 @@ namespace APIViewWeb.Helpers
         private static NavigationTreeNode CreateNavigationNode(ReviewLine reviewLine, string nodeIdHashed)
         {
             NavigationTreeNode navTreeNode = null;
-            //Generate navigation node only from active revision
-            if (!reviewLine.IsActiveRevisionLine)
-                return navTreeNode;
+            // Generate navigation node for both active revision lines and removed lines (from diff revision)
             var navToken = reviewLine.Tokens.FirstOrDefault(t => !string.IsNullOrEmpty(t.NavigationDisplayName));
             if (navToken != null && reviewLine.IsHidden != true)
             {

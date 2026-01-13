@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -12,8 +13,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     {
         private string _targetKey;
         private string _newValue;
-        private string _regexValue = null;
         private string _groupForReplace = null;
+        private readonly Regex _regex;
 
         /// <summary>
         /// Can be used for multiple purposes:
@@ -33,11 +34,10 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             _targetKey = key;
             _newValue = value;
-            _regexValue = regex;
             _groupForReplace = groupForReplace;
             Condition = condition;
 
-            StringSanitizer.ConfirmValidRegex(regex);
+            _regex = GetRegex(regex);
         }
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)
@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 // We do this because letting .NET split and then reassemble header values introduces a space into the header itself
                 // Ex: "application/json;odata=minimalmetadata" with .NET default header parsing becomes "application/json; odata=minimalmetadata"
                 // Given this breaks signature verification, we have to avoid it.
-                headers[_targetKey] = headers[_targetKey].Select(x => StringSanitizer.SanitizeValue(x, _newValue, _regexValue, _groupForReplace)).ToArray();
+                headers[_targetKey] = headers[_targetKey].Select(x => StringSanitizer.SanitizeValue(x, _newValue, _regex, _groupForReplace)).ToArray();
             }
         }
     }

@@ -1033,7 +1033,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanDetails> releasePlans, string emailerUri)
         {
-            const string subject = "Action Required: Missing Tier 1 language in your Azure SDK Release Plan";
+            const string subject = "Action Required: Azure SDKs Not Yet Published for Your Release Plan";
             
             foreach (var releasePlan in releasePlans)
             {
@@ -1050,40 +1050,43 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var releaseOwnerName = releasePlan.Owner;
                 var plane = releasePlan.IsManagementPlane ? "Management Plane" : "Data Plane";
                 var releasePlanLink = releasePlan.ReleasePlanLink;
+                var releasePlanDate = releasePlan.SDKReleaseMonth;
                 
-                // Identify missing Tier 1 languages
-                var missingSDKs = new List<string> { ".NET", "JavaScript", "Python", "Java", "Go" };
-                // Skip Go for Data Plane release plans
-                if (releasePlan.IsDataPlane)
-                {
-                    missingSDKs.Remove("Go");
-                }
-                // Remove languages that are already released
-                foreach (var info in releasePlan.SDKInfo)
-                {
-                    if (string.Equals(info.ReleaseStatus, "released", StringComparison.OrdinalIgnoreCase))
-                    {
-                        missingSDKs.RemoveAll(lang => string.Equals(lang, info.Language, StringComparison.OrdinalIgnoreCase));
-                    }
-                }
+                // Identify SDKs not yet released (skip Go for Data Plane and skip excluded languages)
+                var missingSDKs = releasePlan.SDKInfo
+                    .Where(info => (string.IsNullOrEmpty(info.ReleaseStatus) || !string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+                             && (releasePlan.IsManagementPlane || !string.Equals(info.Language, "Go", StringComparison.OrdinalIgnoreCase))
+                             && !string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
+                             && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+                    .Select(info => info.Language)
+                    .ToList();
                 
                 var body = $"""
                     <html>
                     <body>
                         <p>Hello {releaseOwnerName},</p>
-                        <p>Our automation has flagged your Azure SDK release plan as missing one or more Tier 1 SDKs for the following plane:</p>
+                        <p>Our automation has detected that one or more Azure SDKs generated for your release plan have not yet been published to the required language package managers.</p>
                         <ul>
-                            <li><strong>Plane:</strong> {plane}</li>
-                            <li><strong>Missing SDKs:</strong> {string.Join(", ", missingSDKs)}</li>
-                            <li><strong>Release Plan Link:</strong> <a href={releasePlanLink}>{releasePlanLink}</a></li>
+                            <li><strong>Azure SDK Type:</strong> {plane}</li>
+                            <li><strong>SDKs not yet published:</strong> {string.Join(", ", missingSDKs)}</li>
+                            <li><strong>Release Plan:</strong> <a href="{releasePlanLink}">{releasePlanLink}</a></li>
+                            <li><strong>Release Plan Target Release Date:</strong> {releasePlanDate}</li>
                         </ul>
-                        <p>Per Azure SDK release requirements, all Tier 1 languages must be supported unless an approved exclusion is filed. Please take one of the following actions:</p>
+                        <p>Per Azure SDK release requirements, all Tier 1 language SDKs must be <strong>published to their respective package managers</strong> before a release plan can be marked as complete.</p>
+                        <p>Until the missing SDKs are published:</p>
+                        <ul>
+                            <li>The release plan cannot be completed in Release Planner.</li>
+                            <li>If this release is in scope for CPEX, Cloud Lifecycle phase KPIs for Public Preview or GA will remain incomplete.</li>
+                        </ul>
+                        <p><strong>Required actions:</strong></p>
                         <ol>
-                            <li>Generate and release the missing SDKs using <a href='https://aka.ms/azsdk/dpcodegen'>https://aka.ms/azsdk/dpcodegen</a></li>
-                            <li>File for an exclusion: <a href='https://eng.ms/docs/products/azure-developer-experience/onboard/request-exception'>https://eng.ms/docs/products/azure-developer-experience/onboard/request-exception</a></li>
+                            <li>Publish the missing SDKs to their respective package managers, or</li>
+                            <li>Update the target release date in the release plan, or</li>
+                            <li>If publication is not intended, file an approved exception: <a href="https://eng.ms/docs/products/azure-developer-experience/onboard/request-exception">https://eng.ms/docs/products/azure-developer-experience/onboard/request-exception</a></li>
                         </ol>
-                        <p>Thank you for helping maintain language parity across Azure SDKs.</p>
-                        <p>Best regards,<br/>Azure SDK PM Team</p>
+                        <p>Once publication is complete, this status will clear automatically. Thank you for helping maintain consistent, complete Azure SDK releases across all mandatory Tier 1 languages.</p>
+                        <p>Best regards,</p>
+                        <p>Azure SDK PM Team</p>
                     </body>
                     </html>
                 """;
@@ -1094,19 +1097,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private async Task SendEmailNotification(string emailerUri, string to, string cc, string subject, string body)
         {
-            try
+            var emailPayload = new
             {
-                var emailPayload = new
-                {
-                    EmailTo = to,
-                    CC = cc,
-                    Subject = subject,
-                    Body = body
-                };
-                
-                var jsonContent = JsonSerializer.Serialize(emailPayload);
-                var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                
+                EmailTo = to,
+                CC = cc,
+                Subject = subject,
+                Body = body
+            };
+            
+            var jsonContent = JsonSerializer.Serialize(emailPayload);
+            
+            using (var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json"))
+            {
                 logger.LogInformation("Sending Email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
                 
                 var response = await httpClient.PostAsync(emailerUri, httpContent);
@@ -1114,12 +1116,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 
                 logger.LogInformation("Successfully sent email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to send email. To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
-            }
         }
-        
+
         [McpServerTool(Name = UpdateApiSpecPullRequestToolName), Description("Update TypeSpec pull request URL in a release plan using work item id or release plan id.")]
         public async Task<ReleaseWorkflowResponse> UpdateSpecPullRequestInReleasePlan(string specPullRequestUrl, int workItemId = 0, int releasePlanId = 0)
         {

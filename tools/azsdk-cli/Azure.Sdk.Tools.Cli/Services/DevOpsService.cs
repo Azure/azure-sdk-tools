@@ -247,22 +247,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
 
-                if (!string.IsNullOrEmpty(sdkGenPipelineUrl) || !string.IsNullOrEmpty(sdkPullRequestUrl) || !string.IsNullOrEmpty(packageName))
-                {
-                    releasePlan.SDKInfo.Add(
-                        new SDKInfo()
-                        {
-                            Language = MapLanguageIdToName(lang),
-                            GenerationPipelineUrl = sdkGenPipelineUrl,
-                            SdkPullRequestUrl = sdkPullRequestUrl,
-                            GenerationStatus = generationStatus,
-                            ReleaseStatus = releaseStatus,
-                            PullRequestStatus = pullRequestStatus,
-                            PackageName = packageName,
-                            ReleaseExclusionStatus = exclusionStatus
-                        }
-                    );
-                }
+                releasePlan.SDKInfo.Add(
+                    new SDKInfo()
+                    {
+                        Language = MapLanguageIdToName(lang),
+                        GenerationPipelineUrl = sdkGenPipelineUrl,
+                        SdkPullRequestUrl = sdkPullRequestUrl,
+                        GenerationStatus = generationStatus,
+                        ReleaseStatus = releaseStatus,
+                        PullRequestStatus = pullRequestStatus,
+                        PackageName = packageName,
+                        ReleaseExclusionStatus = exclusionStatus
+                    }
+                );
             }
 
             // Get details from API spec work item

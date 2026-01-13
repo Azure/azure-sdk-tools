@@ -530,7 +530,12 @@ namespace APIViewWeb.Helpers
         /// </summary>
         private static void AddLineToResult(List<ReviewLine> resultLines, ReviewLine line)
         {
-            if (string.IsNullOrEmpty(line.LineId) && !string.IsNullOrEmpty(line.RelatedToLine))
+            bool isDecorator = string.IsNullOrEmpty(line.LineId) 
+                && !string.IsNullOrEmpty(line.RelatedToLine) 
+                && line.IsContextEndLine != true
+                && line.Tokens.Count > 0;
+            
+            if (isDecorator)
             {
                 int relatedIndex = resultLines.FindIndex(l => l.LineId == line.RelatedToLine);
                 if (relatedIndex >= 0)

@@ -462,6 +462,7 @@ stages:
         Paths:
           - eng/common/scripts/
     - task: NuGetAuthenticate@1
+    # Checkout the SDK repository for regeneration
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Paths:

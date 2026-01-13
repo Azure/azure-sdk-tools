@@ -33,7 +33,7 @@ namespace IssueLabelerService
             string query,
             int count,
             double scoreThreshold,
-            Dictionary<string, string> labels = null)
+            string filter = null)
         {
 
             var searchResults = await AzureSearchQueryAsync<IndexContent>(
@@ -41,7 +41,8 @@ namespace IssueLabelerService
                 semanticConfigName,
                 field,
                 query,
-                count
+                count,
+                filter
             );
 
             var filteredIssues = new List<IndexContent>();

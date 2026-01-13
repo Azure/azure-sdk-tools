@@ -36,6 +36,8 @@ var host = new HostBuilder()
         {
             options.Connect(configEndpoint, credential);
         });
+        // Add local settings AFTER Azure App Config so they override for local testing
+        builder.AddConfiguration(functionConfig);
 
         var configRoot = builder.Build();
 
@@ -79,6 +81,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<TokenCredential>(credential);
         services.AddSingleton<TriageRag>();
+        services.AddSingleton<McpTriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();

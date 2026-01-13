@@ -26,6 +26,7 @@ namespace SearchIndexCreator
             Console.WriteLine("3. Process Demo");
             Console.WriteLine("4. Create or Refresh Labels");
             Console.WriteLine("5. Create or Update Knowledge Agent");
+            Console.WriteLine("6. Delete Knowledge Agent");
 
             var input = Console.ReadLine();
 
@@ -48,6 +49,9 @@ namespace SearchIndexCreator
                     case "5":
                         await ProcessKnowledgeAgent(config);
                         break;
+                    case "6":
+                        await DeleteKnowledgeAgent(config);
+                        break;
                     default:
                         Console.WriteLine("Invalid option selected.");
                         break;
@@ -63,7 +67,19 @@ namespace SearchIndexCreator
         {
             // 1. Retrieve all issues from a repository
             var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
-            var issueTriageContent = await issueTriageContentRetrieval.RetrieveContent("Azure");
+            var repository = config["repo"];
+            var repoOwner = repository?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true 
+                ? "microsoft" 
+                : "Azure";
+            List<IssueLabeler.Shared.IssueTriageContent> issueTriageContent;
+            if (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase))
+            {
+                issueTriageContent = await issueTriageContentRetrieval.RetrieveContentForMcp("microsoft");
+            }
+            else
+            {
+                issueTriageContent = await issueTriageContentRetrieval.RetrieveContent("Azure");
+            }
             Console.WriteLine($"Retrieved {issueTriageContent.Count} search contents from the repository.");
 
             // 2. Upload the search contents to Azure Blob Storage
@@ -113,7 +129,19 @@ namespace SearchIndexCreator
         {
             var tokenAuth = new Credentials(config["GithubKey"]);
             var labelRetrieval = new LabelRetrieval(tokenAuth, config);
-            await labelRetrieval.CreateOrRefreshLabels("Azure");
+            var repo = config["repo"];
+            var repoOwner = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true 
+                ? "microsoft" 
+                : "Azure";
+
+            if (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase))
+            {
+                await labelRetrieval.CreateOrRefreshMcpLabels(repoOwner);
+            }
+            else
+            {
+                await labelRetrieval.CreateOrRefreshLabels(repoOwner);
+            }
         }
 
         private static async Task ProcessKnowledgeAgent(IConfigurationSection config)
@@ -122,6 +150,14 @@ namespace SearchIndexCreator
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
             await issueKnowledgeAgent.CreateOrUpdateAsync();
+        }
+
+        private static async Task DeleteKnowledgeAgent(IConfigurationSection config)
+        {
+            var defaultCredential = new DefaultAzureCredential();
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
+            await issueKnowledgeAgent.DeleteAsync();
         }
     }
 }

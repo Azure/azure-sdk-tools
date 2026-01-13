@@ -1006,7 +1006,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         public async Task<ReleasePlanListResponse> ListOverdueReleasePlans(bool notifyOwners = false, string emailerUri = "")
         {
             try
-            {   
+            {
                 if (notifyOwners && string.IsNullOrWhiteSpace(emailerUri))
                 {
                     return new ReleasePlanListResponse { ResponseError = "Emailer URI is required when notify owners is enabled." };

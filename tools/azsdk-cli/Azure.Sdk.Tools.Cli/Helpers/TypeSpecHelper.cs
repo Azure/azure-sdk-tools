@@ -86,8 +86,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public bool IsRepoPathForPublicSpecRepo(string path)
         {
-            var repoUri = _gitHelper.GetRepoRemoteUri(path);
-            return RestApiSpecsPublicRegex().IsMatch(repoUri.ToString());
+            var uri = _gitHelper.GetRepoRemoteUri(path);
+            return RestApiSpecsPublicRegex().IsMatch(uri.ToString());
         }
 
         public bool IsRepoPathForSpecRepo(string path)

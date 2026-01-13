@@ -89,6 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
         [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "specification/dell/Dell.Storage.Management")]
         [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/feature/specification/contoso/Contoso.Service", "specification/contoso/Contoso.Service")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/test/Test.Service?query=param#L123", "specification/test/Test.Service")]
         [Test]
         public void Test_GetTypeSpecProjectRelativePathFromUrl(string url, string expected)
         {

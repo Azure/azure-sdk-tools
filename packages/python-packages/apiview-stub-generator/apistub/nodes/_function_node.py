@@ -378,6 +378,9 @@ class FunctionNode(NodeEntityBase):
                 self.return_type, apiview=self.apiview, has_suffix_space=False
             )
 
+        # Add punctuation for better syntax coloring with .md rendering
+        review_line.add_punctuation(": ...", has_suffix_space=False)
+
         review_line = self._reviewline_if_needed(
             param_lines, review_line, use_multi_line
         )

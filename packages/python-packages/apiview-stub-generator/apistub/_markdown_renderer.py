@@ -29,7 +29,7 @@ def render_markdown(apiview):
     # Start Python code block for syntax highlighting
     # Note: Syntax highlighting quality depends on the markdown renderer
     # Some keywords may not highlight perfectly due to non-standard API syntax
-    lines.append("```python")
+    lines.append("```py")
 
     # Render all review lines with proper indentation
     def render_lines(review_lines, indent_level=0):

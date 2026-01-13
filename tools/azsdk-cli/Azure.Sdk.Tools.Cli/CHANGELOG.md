@@ -12,6 +12,8 @@
 
 ### Bugs Fixed
 
+- Fixed case insensitivity with ward ScanPaths in package validation readme tool
+
 ### Other Changes
 
 ## 0.5.11 (2026-01-05)

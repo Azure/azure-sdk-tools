@@ -473,7 +473,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     
                 if (!targetWorkItems.Any())
                 {
-                    throw new Exception("Target Id passed into create work item relation was not valid.");
+                    throw new Exception($"Work item with ID {targetId} does not exist.");
                 }
 
                 foreach (var targetWorkItemRef in targetWorkItems)

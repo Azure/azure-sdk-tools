@@ -38,7 +38,7 @@ public class InstrumentedTool : DelegatingMcpServerTool
 
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
-        mcpServerContextAccessor.TrySet(request?.Server);
+        mcpServerContextAccessor.Initialize(request?.Server);
         using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
         Activity.Current = activity;
         if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))

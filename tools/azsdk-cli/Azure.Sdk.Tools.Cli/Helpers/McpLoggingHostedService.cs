@@ -9,7 +9,7 @@ public sealed class McpLoggingHostedService(McpServer server, IMcpServerContextA
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        contextAccessor.TrySet(server);
+        contextAccessor.Initialize(server);
         return Task.CompletedTask;
     }
 

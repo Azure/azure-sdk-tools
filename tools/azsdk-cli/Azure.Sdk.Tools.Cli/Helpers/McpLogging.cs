@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Collections.Concurrent;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -13,7 +12,7 @@ public interface IMcpServerContextAccessor
 {
     McpServer? Current { get; }
     bool IsEnabled { get; }
-    void TrySet(McpServer? server);
+    void Initialize(McpServer? server);
     void Disable();
 }
 
@@ -29,7 +28,7 @@ public sealed class McpServerContextAccessor : IMcpServerContextAccessor
 
     public bool IsEnabled => enabled;
 
-    public void TrySet(McpServer? server)
+    public void Initialize(McpServer? server)
     {
         if (!enabled || server == null || current != null)
         {

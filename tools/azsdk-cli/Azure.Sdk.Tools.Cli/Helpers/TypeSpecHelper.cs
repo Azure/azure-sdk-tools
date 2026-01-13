@@ -28,6 +28,26 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string GetSpecRepoRootPath(string path);
         public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath);
+
+        /// <summary>
+        /// Checks if a string is an HTTP or HTTPS URL
+        /// </summary>
+        public bool IsUrl(string path);
+
+        /// <summary>
+        /// Checks if the given string is a GitHub URL pointing to a TypeSpec project in azure-rest-api-specs
+        /// </summary>
+        public bool IsValidTypeSpecProjectUrl(string url);
+
+        /// <summary>
+        /// Determines if a GitHub URL points to a management plane TypeSpec project
+        /// </summary>
+        public bool IsTypeSpecUrlForMgmtPlane(string url);
+
+        /// <summary>
+        /// Extracts the relative specification path from a GitHub URL
+        /// </summary>
+        public string GetTypeSpecProjectRelativePathFromUrl(string url);
     }
     public partial class TypeSpecHelper : ITypeSpecHelper
     {
@@ -40,9 +60,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs/(blob|tree)/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
         private static partial Regex GitHubSpecUrlRegex();
 
-        [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs(-pr)?/(blob|tree)/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
-        private static partial Regex GitHubSpecUrlPublicOrPrivateRegex();
-
         private IGitHelper _gitHelper;
 
         public TypeSpecHelper(IGitHelper gitHelper)
@@ -50,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             _gitHelper = gitHelper;
         }
 
-        private static bool IsUrl(string path)
+        public bool IsUrl(string path)
         {
             return Uri.TryCreate(path, UriKind.Absolute, out var uri) && 
                    (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
@@ -58,43 +75,23 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public bool IsValidTypeSpecProjectPath(string path)
         {
-            if (IsUrl(path))
-            {
-                return GitHubSpecUrlRegex().IsMatch(path);
-            }
             return TypeSpecProject.IsValidTypeSpecProjectPath(path);
         }
 
         public bool IsTypeSpecProjectForMgmtPlane(string Path)
         {
-            if (IsUrl(Path))
-            {
-                // For URLs, infer from path - check for .Management or resource-manager
-                return Path.Contains(".Management", StringComparison.OrdinalIgnoreCase) || 
-                       Path.Contains("resource-manager", StringComparison.OrdinalIgnoreCase);
-            }
             var typeSpecObject = TypeSpecProject.ParseTypeSpecConfig(Path);
             return typeSpecObject?.IsManagementPlane ?? false;
         }
 
         public bool IsRepoPathForPublicSpecRepo(string path)
         {
-            if (IsUrl(path))
-            {
-                return GitHubSpecUrlRegex().IsMatch(path);
-            }
             var repoUri = _gitHelper.GetRepoRemoteUri(path);
             return RestApiSpecsPublicRegex().IsMatch(repoUri.ToString());
         }
 
         public bool IsRepoPathForSpecRepo(string path)
         {
-            if (IsUrl(path))
-            {
-                // For URLs, validate proper GitHub blob URL structure for public or private specs repos
-                return GitHubSpecUrlPublicOrPrivateRegex().IsMatch(path);
-            }
-            
             // Docs say this method should work for paths within a repo,
             // so we need to find the repo root first.
             var repoRootPath = _gitHelper.DiscoverRepoRoot(path);
@@ -107,12 +104,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (string.IsNullOrEmpty(path))
             {
                 throw new ArgumentException("path cannot be null or empty.", nameof(path));
-            }
-
-            // just return it as-is for validation
-            if (IsUrl(path))
-            {
-                return path;
             }
 
             if (Directory.Exists(Path.Combine(path, "specification")))
@@ -139,6 +130,38 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             int specIndex = typeSpecProjectPath.IndexOf("specification");
             return specIndex >= 0 ? typeSpecProjectPath[specIndex..].Replace("\\", "/") : string.Empty;
+        }
+
+        // URL-specific helper methods
+        public bool IsValidTypeSpecProjectUrl(string url)
+        {
+            return IsUrl(url) && GitHubSpecUrlRegex().IsMatch(url);
+        }
+
+        public bool IsTypeSpecUrlForMgmtPlane(string url)
+        {
+            if (!IsUrl(url))
+            {
+                return false;
+            }
+            // For URLs, infer from path - check for .Management or resource-manager
+            return url.Contains(".Management", StringComparison.OrdinalIgnoreCase) || 
+                   url.Contains("resource-manager", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public string GetTypeSpecProjectRelativePathFromUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url) || !IsValidTypeSpecProjectUrl(url))
+            {
+                return string.Empty;
+            }
+
+            // Parse URL to get the path component (automatically strips query params and fragments)
+            var uri = new Uri(url);
+            var path = uri.AbsolutePath;
+            
+            int specIndex = path.IndexOf("specification");
+            return specIndex >= 0 ? path[specIndex..] : string.Empty;
         }
     }
 }

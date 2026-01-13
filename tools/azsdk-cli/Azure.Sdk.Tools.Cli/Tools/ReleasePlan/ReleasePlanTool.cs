@@ -417,9 +417,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
-                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                var specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                // Handle both URLs and local paths for TypeSpec projects
+                bool isValidTypeSpec;
+                bool isMgmt;
+                string specProject;
+                
+                if (typeSpecHelper.IsUrl(typeSpecProjectPath))
+                {
+                    // URL path
+                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectUrl(typeSpecProjectPath);
+                    isMgmt = typeSpecHelper.IsTypeSpecUrlForMgmtPlane(typeSpecProjectPath);
+                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath);
+                }
+                else
+                {
+                    // Local file path
+                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
+                    isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
+                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+                
+                var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
                 var email = await userHelper.GetUserEmail();

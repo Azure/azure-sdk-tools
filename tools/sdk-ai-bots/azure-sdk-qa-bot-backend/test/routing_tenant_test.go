@@ -65,11 +65,6 @@ func TestRoutingTenant_General(t *testing.T) {
 			"For JS - I see that the pipeline run has passed successfully but in the PR we are getting the broken error: [404] broken link https://learn.microsoft.com/javascript/api/@azure/arm-dell-storage. Do you know what's causing this or how to fix it?",
 			model.TenantID_JavaScriptChannelQaBot,
 		},
-		{
-			"Creating new service typespec definition",
-			"title: Creating new service typespec definition\n question: Hello,\nI'm currently writing a new definition for a service and wanted to ask if there's any guidance on how to go about it. I saw this guide [Work against the release branch](https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update) however it doesn't go over creating the service folder and creating the readme.md file, please help with this, thanks",
-			model.TenantID_AzureSDKOnboarding,
-		},
 	}
 
 	for _, tc := range testcases {

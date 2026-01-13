@@ -106,6 +106,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 throw new ArgumentException("path cannot be null or empty.", nameof(path));
             }
 
+            if (IsUrl(path))
+            {
+                throw new ArgumentException("GetSpecRepoRootPath does not accept URLs. Use local filesystem paths only.", nameof(path));
+            }
+
             if (Directory.Exists(Path.Combine(path, "specification")))
             {
                 return path;
@@ -160,7 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var uri = new Uri(url);
             var path = uri.AbsolutePath;
             
-            int specIndex = path.IndexOf("specification");
+            int specIndex = path.IndexOf("specification", StringComparison.OrdinalIgnoreCase);
             return specIndex >= 0 ? path[specIndex..] : string.Empty;
         }
     }

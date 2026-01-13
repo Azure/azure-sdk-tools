@@ -40,8 +40,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var gitHelperMock = new Mock<IGitHelper>();
             gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
-            gitHelperMock.Setup(x => x.GetRepoRemoteUri(It.IsAny<string>())).Returns(new Uri("https://github.com/Azure/azure-rest-api-specs.git"));
-            gitHelperMock.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns((string path) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
+            gitHelperMock.Setup(x => x.GetRepoRemoteUri(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute))))
+                .Returns(new Uri("https://github.com/Azure/azure-rest-api-specs.git"));
+            gitHelperMock.Setup(x => x.DiscoverRepoRoot(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute))))
+                .Returns((string path) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
             gitHelper = gitHelperMock.Object;
 
             typeSpecHelper = new TypeSpecHelper(gitHelper);
@@ -107,32 +109,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.True(releaseplan.ResponseError.Contains("Invalid API version"));
         }
 
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "2025-03-21", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "stable")]
         [Test]
-        public async Task Test_Create_releasePlan_with_valid_inputs()
+        public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string apiVersion, string prUrl, string sdkType)
         {
-            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var result = await releasePlanTool.CreateReleasePlan(
+                typeSpecPath, 
+                targetMonth, 
+                "12345678-1234-5678-9012-123456789012", 
+                "12345678-1234-5678-9012-123456789012", 
+                apiVersion, 
+                prUrl, 
+                sdkType, 
+                isTestReleasePlan: true);
 
-            var releasePlanTasks = new[]{
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-03-21", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "stable", isTestReleasePlan: true),
-            };
-
-            var releasePlanResults = await Task.WhenAll(releasePlanTasks);
-
-            var releasePlans = releasePlanResults
-                .Select(r => r.ReleasePlanDetails as ReleasePlanDetails)
-                .ToList();
-
-            foreach (var plan in releasePlans)
-            {
-                Assert.IsNotNull(plan);
-                Assert.IsNotNull(plan.WorkItemId);
-                Assert.IsNotNull(plan.ReleasePlanId);
-                Assert.IsNotNull(plan.ReleasePlanLink);
-            }
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.IsNotNull(result.ReleasePlanDetails);
+            Assert.IsNotNull(result.ReleasePlanDetails.WorkItemId);
+            Assert.IsNotNull(result.ReleasePlanDetails.ReleasePlanId);
+            Assert.IsNotNull(result.ReleasePlanDetails.ReleasePlanLink);
         }
 
         [Test]
@@ -288,22 +287,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
         }
 
+        [TestCase("Javascript", "@invalid/package/name")]
+        [TestCase("Go", "invalid/package/name")]
         [Test]
-        public async Task Test_Update_SDK_Details_single_invalid_package_name()
+        public async Task Test_Update_SDK_Details_single_invalid_package_name(string language, string package)
         {
-            var languagePackageMap = new Dictionary<string, string>
-            {
-                { "Javascript", "@invalid/package/name" },
-                { "Go", "invalid/package/name" },
-            };
-
-            foreach (var (language, package) in languagePackageMap)
-            {
-                string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
-                var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
-                Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
-                Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
-            }
+            string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+            Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
         }
 
         [Test]
@@ -324,28 +316,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
         }
 
+        [TestCase("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345")]
+        [TestCase(".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
+        [TestCase("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
+        [TestCase("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345")]
+        [TestCase("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345")]
         [Test]
-        public async Task Test_link_sdk_pull_request_to_release_plan()
+        public async Task Test_link_sdk_pull_request_to_release_plan(string language, string pullRequestUrl)
         {
-            var cases = new (string language, string pullRequestUrl)[]
-            {
-                ("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345"),
-                (".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
-                ("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
-                ("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345"),
-                ("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345"),
-            };
-
-            foreach (var (language, pullRequestUrl) in cases)
-            {
-                var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
-                Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
-                Assert.That(response.Language, Is.Not.EqualTo(Models.SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
-            }
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
+            Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
+            Assert.That(response.Language, Is.Not.EqualTo(Models.SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
         }
 
         [Test]

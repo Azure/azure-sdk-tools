@@ -339,16 +339,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 throw new Exception($"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}");
             }
 
-            var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-
-            // Ensure a release plan is created only if the API specs pull request is in a public repository.
-            if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+            // Skip filesystem validation for URLs since GetSpecRepoRootPath expects local paths
+            if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
             {
-                throw new Exception("""
-                    SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
-                    Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
-                    A release plan cannot be created for SDK generation using a pull request in a private repository.
-                    """);
+                var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+
+                // Ensure a release plan is created only if the API specs pull request is in a public repository.
+                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+                {
+                    throw new Exception("""
+                        SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
+                        Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
+                        A release plan cannot be created for SDK generation using a pull request in a private repository.
+                        """);
+                }
             }
 
             if (!Guid.TryParse(serviceTreeId, out _))

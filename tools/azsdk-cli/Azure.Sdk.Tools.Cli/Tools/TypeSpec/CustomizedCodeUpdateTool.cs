@@ -232,21 +232,12 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     /// <summary>
     /// Detects whether customization files exist for the current language in the package directory.
-    /// This determines if Phase B (code customization repairs) should activate after Phase A build failures.
-    /// 
-    /// Detection Confidence Levels:
-    /// - Java: HIGH - /customization/ directory or *Customization.java files
-    /// - Python: HIGH - *_patch.py files
-    /// - .NET: MEDIUM - partial class keyword search (may have false positives)
-    /// - JavaScript: NOT SUPPORTED - uses 3-way merge, not file-based detection
-    /// - Go: NOT IMPLEMENTED - patterns not yet defined
     /// </summary>
     /// <param name="packagePath">Path to the package directory.</param>
     /// <param name="languageService">The language service for the package.</param>
     /// <returns>
-    /// True if customization files exist and Phase B should be attempted.
-    /// False if no customizations detected OR detection not supported for language.
-    /// Note: False does NOT mean "no customizations exist" - it means "Phase B cannot help".
+    /// True if customization files are detected.
+    /// False if no customizations detected or detection not supported for the language.
     /// </returns>
     private bool HasCustomizationFiles(string packagePath, LanguageService languageService)
     {
@@ -270,143 +261,75 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     return HasDotNetCustomizationFiles(packagePath);
 
                 case SdkLanguage.JavaScript:
-                    // JavaScript/TypeScript uses a different customization paradigm:
-                    // - Authors edit generated code directly (not separate files)
-                    // - Changes are reconciled via 3-way merge on regeneration
-                    // - Detection would require git history analysis (comparing working dir vs. last generation)
-                    // - Phase B's string replacement approach doesn't apply to merge-based workflows
-                    // See: https://github.com/Azure/azure-sdk-for-js/wiki/Modular-(DPG)-Customization-Guide
-                    // Future support would need: git-aware detection + 3-way merge handling
-                    logger.LogDebug("JavaScript uses 3-way merge customization - Phase B detection not applicable. " +
-                        "Returning false does NOT mean no customizations exist.");
-                    return false;
+                    return HasJavaScriptCustomizationFiles(packagePath);
 
                 case SdkLanguage.Go:
-                    // Go customization patterns not yet defined for Phase B scope
-                    logger.LogDebug("Go customization detection not implemented yet. " +
-                        "If you need Go support, please define customization file patterns first.");
-                    return false;
+                    return HasGoCustomizationFiles(packagePath);
 
                 default:
                     logger.LogWarning("Unknown language for customization detection: {Language}. " +
-                        "Returning false - Phase B will not activate. If this language needs support, " +
-                        "implement detection logic in HasCustomizationFiles().", languageService.Language);
+                        "Customization detection not supported for this language.", languageService.Language);
                     return false;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unexpected error detecting customization files for {Language} in {PackagePath}. " +
-                "Returning false to prevent Phase B activation. This may be a file system issue or permission problem.",
+            logger.LogError(ex, "Unexpected error detecting customization files for {Language} in {PackagePath}.",
                 languageService.Language, packagePath);
             return false;
         }
     }
 
     /// <summary>
-    /// Checks for Java customization files: /customization/ directory OR *Customization.java files.
-    /// 
-    /// Detection Strategy (HIGH Confidence):
-    /// - Looks for /customization/ directory (primary pattern)
-    /// - OR looks for *Customization.java files anywhere in package tree
-    /// 
-    /// Limitations:
-    /// - May miss customizations if naming convention differs
-    /// - Does not inspect file contents to verify they are actual customizations
-    /// - If this returns false but you know customizations exist, the file patterns may need updating
+    /// Checks for Java customization files: /customization/ directory.
     /// </summary>
     private bool HasJavaCustomizationFiles(string packagePath)
     {
-        // Check for /customization/ directory
         var customizationDir = Path.Combine(packagePath, "customization");
         if (Directory.Exists(customizationDir))
         {
-            logger.LogDebug("Found Java customization directory: {CustomizationDir}. Phase B can proceed.", customizationDir);
+            logger.LogDebug("Found Java customization directory: {CustomizationDir}", customizationDir);
             return true;
         }
 
-        // Check for *Customization.java files anywhere in package
-        var customizationFiles = Directory.GetFiles(packagePath, "*Customization.java", SearchOption.AllDirectories);
-        if (customizationFiles.Length > 0)
-        {
-            logger.LogDebug("Found {Count} Java customization class files. Phase B can proceed.", customizationFiles.Length);
-            return true;
-        }
-
-        logger.LogDebug("No Java customization files found in {PackagePath} using patterns: /customization/ directory or *Customization.java files. " +
-            "If customizations exist with different naming, please update detection patterns.",
-            packagePath);
+        logger.LogDebug("No Java customization directory found in {PackagePath}", packagePath);
         return false;
     }
 
     /// <summary>
     /// Checks for Python customization files: *_patch.py files.
-    /// 
-    /// Detection Strategy (HIGH Confidence):
-    /// - Looks for *_patch.py files anywhere in package tree (standard Python customization pattern)
-    /// 
-    /// Limitations:
-    /// - Only detects _patch.py naming convention
-    /// - Does not validate if files contain actual customization code
-    /// - If this returns false but you know customizations exist, they may use a different pattern
     /// </summary>
     private bool HasPythonCustomizationFiles(string packagePath)
     {
         var patchFiles = Directory.GetFiles(packagePath, "*_patch.py", SearchOption.AllDirectories);
         if (patchFiles.Length > 0)
         {
+            logger.LogDebug("Found {Count} Python patch files", patchFiles.Length);
+            return true;
+        }
+
+        logger.LogDebug("No Python patch files found in {PackagePath}", packagePath);
+        return false;
+    }
+
     /// <summary>
     /// Checks for .NET customization files: partial classes in .cs files.
-    /// 
-    /// Detection Strategy (MEDIUM Confidence):
-    /// - Scans all .cs files for "partial class" keyword (case-insensitive)
-    /// - Assumes partial classes indicate customization (common pattern in generated code)
-    /// 
-    /// Limitations and Uncertainty:
-    /// - KEYWORD SEARCH ONLY: May produce false positives if partial classes exist for other reasons
-    /// - Does NOT verify if partial classes are extending generated types vs. unrelated code
-    /// - Does NOT check if customizations are in a specific directory structure
-    /// - If this returns true but there are no actual customizations, the keyword search may be too broad
-    /// - If this returns false but customizations exist, they may not use partial classes
-    /// 
-    /// Recommended Improvements:
-    /// - Consider checking for specific file naming patterns (e.g., *.Customization.cs)
-    /// - Or check for customizations in a dedicated directory (e.g., /Customizations/)
-    /// - Or validate that partial classes extend known generated types
     /// </summary>
     private bool HasDotNetCustomizationFiles(string packagePath)
     {
-        // Find all .cs files in the package
         var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories);
         
         foreach (var file in csFiles)
         {
             try
             {
-                // Read file and check for "partial class" keyword
                 var content = File.ReadAllText(file);
                 if (content.Contains("partial class", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.LogDebug("Found .NET partial class in: {FilePath}. CAUTION: This is a keyword search and may not definitively indicate customizations. " +
-                        "Phase B will proceed, but if you encounter issues, verify these are actual customization files.",
-                        file);
+                    logger.LogDebug("Found .NET partial class in: {FilePath}", file);
                     return true;
                 }
             }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to read file {FilePath} for partial class detection. Skipping this file and continuing search. " +
-                    "This may be a permission issue or the file may be locked.",
-                    file);
-                // Continue checking other files
-            }
-        }
-
-        logger.LogDebug("No .NET partial classes found in {PackagePath} using keyword search. " +
-            "If customizations exist but don't use partial classes, consider updating detection strategy.",
-            packagePath);
-        return false;
-    }       }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to read file {FilePath} for partial class detection", file);
@@ -417,4 +340,55 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         logger.LogDebug("No .NET partial classes found in {PackagePath}", packagePath);
         return false;
     }
+
+    /// <summary>
+    /// Checks for JavaScript/TypeScript customization files: generated/ folder at package root.
+    /// </summary>
+    private bool HasJavaScriptCustomizationFiles(string packagePath)
+    {
+        var generatedDir = Path.Combine(packagePath, "generated");
+        if (Directory.Exists(generatedDir))
+        {
+            logger.LogDebug("Found JavaScript generated/ directory: {GeneratedDir}", generatedDir);
+            return true;
+        }
+
+        logger.LogDebug("No JavaScript generated/ directory found in {PackagePath}", packagePath);
+        return false;
+    }
+
+    /// <summary>
+    /// Checks for Go customization files: go-generate command in tspconfig.yaml.
+    /// </summary>
+    private bool HasGoCustomizationFiles(string packagePath)
+    {
+        // Check for tspconfig.yaml in the package directory
+        // check tsp-config.yaml for go-generate to detect customizations
+        var tspConfigPath = Path.Combine(packagePath, "tspconfig.yaml");
+        if (!File.Exists(tspConfigPath))
+        {
+            logger.LogDebug("No tspconfig.yaml found in {PackagePath} - cannot check for Go customizations", packagePath);
+            return false;
+        }
+
+        try
+        {
+            var tspConfig = File.ReadAllText(tspConfigPath);
+            // Check for go-generate in emitter options
+            if (tspConfig.Contains("go-generate:", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogDebug("Found go-generate command in {TspConfigPath}", tspConfigPath);
+                return true;
+            }
+
+            logger.LogDebug("No go-generate command found in {TspConfigPath}", tspConfigPath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to read tspconfig.yaml for Go customization detection in {PackagePath}", packagePath);
+            return false;
+        }
+    }
 }
+

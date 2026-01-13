@@ -359,7 +359,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
 
                 // Link API spec as child of release plan
-                await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
+                await CreateWorkItemRelationAsync(releasePlanWorkItemId, "child", targetUrl: apiSpecWorkItem.Url);
 
                 // Update release plan status to in progress
                 releasePlanWorkItem = await UpdateWorkItemAsync(releasePlanWorkItemId, new Dictionary<string, string>
@@ -447,31 +447,80 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        private async Task LinkWorkItemAsChildAsync(int parentId, string childUrl)
+        public async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, string? targetId = null, string? targetUrl = null)
         {
-            try
+            // Create generic work item relation(s) based on target IDs and/or URLs
+            if (string.IsNullOrWhiteSpace(targetId) && string.IsNullOrWhiteSpace(targetUrl))
             {
-                // Add work item as child of release plan work item
-                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                throw new Exception("To create work item relation, either Target ids or Target urls must be provided.");
+            }
+
+            var workItemClient = connection.GetWorkItemClient();
+
+            // Resolve relation type system name/reference
+            var relationTypes = await workItemClient.GetRelationTypesAsync();
+            var relationTypeSystemName = ResolveRelationTypeSystemName(relationTypes, relationType);
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+
+            // Handle target ID
+            if (!string.IsNullOrWhiteSpace(targetId))
+            {
+                var wiql = new Wiql { Query = $"SELECT [System.Id] FROM WorkItems WHERE ([System.Id] = {targetId})" };
+                var queryResult = await workItemClient.QueryByWiqlAsync(wiql);
+                var targetWorkItems = queryResult.WorkItems ?? [];
+    
+                if (!targetWorkItems.Any())
                 {
-                     new JsonPatchOperation
-                     {
-                          Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                          Path = "/relations/-",
-                          Value = new WorkItemRelation
-                          {
-                              Rel = "System.LinkTypes.Hierarchy-Forward",
-                              Url = childUrl
-                          }
-                      }
-                };
-                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, parentId);
+                    throw new Exception("Target Id passed into create work item relation was not valid.");
+                }
+
+                foreach (var targetWorkItemRef in targetWorkItems)
+                {
+                    // targetWorkItemRef contains only Id + Url; URL is enough to create relation
+                    patchDocument.Add(new JsonPatchOperation
+                    {
+                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = "/relations/-",
+                        Value = new WorkItemRelation
+                        {
+                            Rel = relationTypeSystemName,
+                            Url = targetWorkItemRef.Url
+                        }
+                    });
+                }
             }
-            catch (Exception ex)
+
+            // Handle target URLs (comma-separated)
+            if (!string.IsNullOrWhiteSpace(targetUrl))
             {
-                var errorMessage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
-                throw new Exception(errorMessage);
+                patchDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/relations/-",
+                    Value = new WorkItemRelation
+                    {
+                        Rel = relationTypeSystemName,
+                        Url = targetUrl
+                    }
+                });
             }
+
+            await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+            var workItem = await workItemClient.GetWorkItemAsync(id, expand: WorkItemExpand.All);
+            return workItem;
+        }
+
+        private static string ResolveRelationTypeSystemName(IEnumerable<WorkItemRelationType> relationTypes, string relationType)
+        {
+            // Match service-provided relation type by display name (case-insensitive)
+            var match = relationTypes.FirstOrDefault(rt => string.Equals(rt.Name, relationType, StringComparison.OrdinalIgnoreCase));
+            if(match != null && match.ReferenceName != null)
+            {
+                return match.ReferenceName;
+            }
+            
+            throw new Exception($"Relation Type '{relationType}' is not valid.");
         }
 
         public static string MapLanguageToId(string language)

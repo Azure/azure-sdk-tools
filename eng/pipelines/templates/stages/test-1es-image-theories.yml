@@ -11,8 +11,8 @@ extends:
 
             pool:
               name: $(MACPOOL)
-              image: $(MACVMIMAGE)
-              os: macos
+              vmImage: $(MACVMIMAGE)
+              os: macOS
 
             steps:
               - pwsh: |

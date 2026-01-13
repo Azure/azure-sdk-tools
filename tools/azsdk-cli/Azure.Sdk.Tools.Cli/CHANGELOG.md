@@ -6,6 +6,7 @@
 
 - Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
+- Added email notification support for overdue release plan owners.
 
 ### Breaking Changes
 

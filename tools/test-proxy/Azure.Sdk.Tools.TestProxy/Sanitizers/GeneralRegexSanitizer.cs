@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -10,6 +11,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class GeneralRegexSanitizer : RecordedTestSanitizer
     {
         private string _newValue;
+        private Regex _regex;
         private string _regexValue = null;
         private string _groupForReplace = null;
 
@@ -34,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _groupForReplace = groupForReplace;
             Condition = condition;
 
-            StringSanitizer.ConfirmValidRegex(regex);
+            _regex = GetRegex(regex);
 
             _bodySanitizer = new BodyRegexSanitizer(value, regex, groupForReplace);
             _uriSanitizer = new UriRegexSanitizer(value, regex, groupForReplace);
@@ -50,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 // Given this breaks signature verification, we have to avoid it.
                 var originalValue = headers[headerKey][0];
 
-                var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
+                var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
 
                 headers[headerKey][0] = replacement;
             }

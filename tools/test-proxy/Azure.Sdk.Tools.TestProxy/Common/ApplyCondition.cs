@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             get => _uriRegex;
             set
             {
-                StringSanitizer.ConfirmValidRegex(value);
+                _ = RecordedTestSanitizer.GetRegex(value);
                 _uriRegex = value;
             }
         }

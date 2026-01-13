@@ -36,6 +36,7 @@ type Config struct {
 	AI_SEARCH_KNOWLEDGE_BASE     string
 	AI_SEARCH_KNOWLEDGE_SOURCE   string
 	AI_SEARCH_KNOWLEDGE_BASE_API string
+	AI_SEARCH_TOPK               int
 
 	STORAGE_BASE_URL            string
 	STORAGE_KNOWLEDGE_CONTAINER string

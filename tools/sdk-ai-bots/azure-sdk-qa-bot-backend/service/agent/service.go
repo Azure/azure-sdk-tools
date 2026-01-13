@@ -46,7 +46,7 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		return model.NewEmptyContentError()
 	}
 	if req.TopK == nil {
-		topK := 20
+		topK := config.AppConfig.AI_SEARCH_TOPK
 		req.TopK = &topK
 	}
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
@@ -691,7 +691,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 	}
 
 	// Then, add agentic search results after vector search results
-	topK := 10
+	topK := config.AppConfig.AI_SEARCH_TOPK / 2
 	if len(agenticChunks) > topK {
 		agenticChunks = agenticChunks[:topK] // Limit to TopK results
 	}

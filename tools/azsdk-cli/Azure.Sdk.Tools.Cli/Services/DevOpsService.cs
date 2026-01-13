@@ -447,7 +447,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        public async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, string? targetId = null, string? targetUrl = null)
+        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, string? targetId = null, string? targetUrl = null)
         {
             // Create generic work item relation(s) based on target IDs and/or URLs
             if (string.IsNullOrWhiteSpace(targetId) && string.IsNullOrWhiteSpace(targetUrl))
@@ -458,6 +458,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var workItemClient = connection.GetWorkItemClient();
 
             // Resolve relation type system name/reference
+            // ex: Child, Parent, Related, etc map to the appropriate name.
             var relationTypes = await workItemClient.GetRelationTypesAsync();
             var relationTypeSystemName = ResolveRelationTypeSystemName(relationTypes, relationType);
 

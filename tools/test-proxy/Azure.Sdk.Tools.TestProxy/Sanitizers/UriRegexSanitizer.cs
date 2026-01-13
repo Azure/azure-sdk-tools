@@ -9,7 +9,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class UriRegexSanitizer : RecordedTestSanitizer
     {
         private string _newValue;
-        private string _regexValue = null;
         private string _groupForReplace = null;
 
         private readonly Regex _regex;
@@ -26,7 +25,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// </param>
         public UriRegexSanitizer(string value = "Sanitized", string regex = null, string groupForReplace = null, ApplyCondition condition = null)
         {
-            _regexValue = regex;
             _newValue = value;
             _groupForReplace = groupForReplace;
 

@@ -86,7 +86,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             int defaultExtensionCount = await GetDefaultExtensionCount();
 
-            // we should have exactly DefaultExtensionCount + 2 if we're counting all the customizations appropriately
+            // we should have exactly DefaultExtensionCount + 3 if we're counting all the customizations appropriately
             Assert.True(descriptions.Count == defaultExtensionCount + 3);
             Assert.True(model.Matchers.Count() == 1);
             Assert.True(model.Sanitizers.Count() == defaultExtensionCount + 2);

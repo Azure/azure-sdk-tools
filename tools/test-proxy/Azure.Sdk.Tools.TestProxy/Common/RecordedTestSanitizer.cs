@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Abstraction for getting a compiled Regex from a string. Used by derived classes to cache their compiled regexes.
         /// </summary>
-        /// <param name="regex">A regular expression. Passing null explicitly will result in a True return.</param>
+        /// <param name="regex">The regular expression pattern to compile.</param>
         public static Regex GetRegex(string regex)
         {
             try

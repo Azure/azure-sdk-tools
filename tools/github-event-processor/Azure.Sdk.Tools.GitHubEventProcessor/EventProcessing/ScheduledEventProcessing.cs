@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
@@ -74,6 +75,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             await BackfillMcpHistoricalIssues(gitHubEventClient, scheduledEventPayload, mcpProcessor);
                             break;
                         }
+                    // case RulesConstants.RefreshMcpLabels:
+                    //     {
+                    //         await RefreshMcpLabels(gitHubEventClient, scheduledEventPayload);
+                    //         break;
+                    //     }
                     default:
                         {
                             Console.WriteLine($"{cronTaskToRun} is not valid Scheduled Event rule. Please ensure the scheduled event yml is correctly passing in the correct rules constant.");
@@ -715,5 +721,94 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
             Console.WriteLine($"MCP historical issue backfill complete. Processed {totalIssuesProcessed} issues.");
         }
+
+        /// <summary>
+        /// Trigger: Daily at 2am UTC
+        /// Query Criteria:
+        ///     Repository is microsoft/mcp
+        /// Resulting Action:
+        ///     Fetch all labels from microsoft/mcp repository
+        ///     Filter service labels (yellow: ffeb77) and tool labels (red: e99695)
+        ///     Upload label data to Azure Blob Storage for AI-powered issue triage
+        /// </summary>
+        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
+        /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
+        // public static async Task RefreshMcpLabels(GitHubEventClient gitHubEventClient,
+        //     ScheduledEventGitHubPayload scheduledEventPayload)
+        // {
+        //     // Only run for microsoft/mcp repository
+        //     if (!scheduledEventPayload.Repository.Owner.Login.Equals("microsoft", StringComparison.OrdinalIgnoreCase) ||
+        //         !scheduledEventPayload.Repository.Name.Equals("mcp", StringComparison.OrdinalIgnoreCase))
+        //     {
+        //         Console.WriteLine($"Skipping label refresh for repository {scheduledEventPayload.Repository.Owner.Login}/{scheduledEventPayload.Repository.Name}");
+        //         return;
+        //     }
+
+        //     Console.WriteLine("Starting MCP label refresh...");
+
+        //     try
+        //     {
+        //         // Get storage account name from environment variable
+        //         var storageAccountName = Environment.GetEnvironmentVariable("MCP_ISSUE_STORAGE_NAME");
+        //         if (string.IsNullOrEmpty(storageAccountName))
+        //         {
+        //             throw new InvalidOperationException("MCP_ISSUE_STORAGE_NAME environment variable is not set");
+        //         }
+
+        //         // Fetch labels from the repository using GitHubEventClient's connection
+        //         var labels = await gitHubEventClient.GetLabels(
+        //             scheduledEventPayload.Repository.Owner.Login,
+        //             scheduledEventPayload.Repository.Name);
+
+        //         Console.WriteLine($"Fetched {labels.Count} total labels from {scheduledEventPayload.Repository.Name}");
+
+        //         // Filter labels by color (service labels: ffeb77 yellow, tool labels: e99695 red)
+        //         var filteredLabels = labels
+        //             .Where(label =>
+        //                 string.Equals(label.Color, "ffeb77", StringComparison.OrdinalIgnoreCase) ||
+        //                 string.Equals(label.Color, "e99695", StringComparison.OrdinalIgnoreCase))
+        //             .Select(label => new
+        //             {
+        //                 Name = label.Name,
+        //                 Color = label.Color
+        //             })
+        //             .ToList();
+
+        //         Console.WriteLine($"Filtered to {filteredLabels.Count} service/tool labels");
+
+        //         // Upload to Azure Blob Storage
+        //         var blobServiceClient = new BlobServiceClient(
+        //             new Uri($"https://{storageAccountName}.blob.core.windows.net/"),
+        //             new DefaultAzureCredential());
+
+        //         var containerClient = blobServiceClient.GetBlobContainerClient("labels");
+        //         await containerClient.CreateIfNotExistsAsync();
+
+        //         var blobClient = containerClient.GetBlobClient("mcp");
+        //         var labelsJson = JsonSerializer.Serialize(filteredLabels);
+
+        //         var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
+        //         {
+        //             ContentType = "application/json"
+        //         };
+
+        //         using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(labelsJson)))
+        //         {
+        //             await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobUploadOptions
+        //             {
+        //                 HttpHeaders = blobHttpHeaders,
+        //                 Overwrite = true
+        //             });
+        //         }
+
+        //         Console.WriteLine($"✅ Successfully uploaded MCP labels to blob storage: {storageAccountName}/labels/mcp");
+        //         Console.WriteLine("Labels are now up-to-date for AI-powered issue triage");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"❌ Error refreshing MCP labels: {ex.Message}");
+        //         throw;
+        //     }
+        // }
     }
 }

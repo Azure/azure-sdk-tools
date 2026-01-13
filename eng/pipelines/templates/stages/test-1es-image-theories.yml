@@ -19,10 +19,6 @@ extends:
                   dotnet --list-sdks
                 displayName: 'Run dotnet --list-sdks'
 
-              - pwsh: |
-                  Write-Host "$(DOTNET_HOST)"
-                displayName: 'Dump Default DOTNET_HOST value'
-
               - template: /eng/common/testproxy/test-proxy-tool.yml
 
               - pwsh: |
@@ -63,10 +59,6 @@ extends:
                   dotnet --list-sdks
                 displayName: 'Run dotnet --list-sdks'
 
-              - pwsh: |
-                  Write-Host "$(DOTNET_HOST)"
-                displayName: 'Dump Default DOTNET_HOST value'
-
               - template: /eng/common/testproxy/test-proxy-tool.yml
 
               - pwsh: |
@@ -106,10 +98,6 @@ extends:
               - pwsh: |
                   dotnet --list-sdks
                 displayName: 'Run dotnet --list-sdks'
-
-              - pwsh: |
-                  Write-Host "$(DOTNET_HOST)"
-                displayName: 'Dump Default DOTNET_HOST value'
 
               - template: /eng/common/testproxy/test-proxy-tool.yml
 

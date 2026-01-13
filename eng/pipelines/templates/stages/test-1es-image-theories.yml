@@ -10,8 +10,8 @@ extends:
           - job: 'MacOS'
 
             pool:
-              name: $(MACOSPOOL)
-              image: $(MACOSVMIMAGE)
+              name: $(MACPOOL)
+              image: $(MACVMIMAGE)
               os: macos
 
             steps:

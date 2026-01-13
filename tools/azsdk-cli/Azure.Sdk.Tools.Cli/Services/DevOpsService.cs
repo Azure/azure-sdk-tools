@@ -474,7 +474,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Query should only come up with one work item
                 if (!targetWorkItems.Any())
                 {
-                    throw new Exception($"Target ID: {targetId} passed into create work item relation was not valid.");
+                    throw new Exception($"Work item with ID {targetId} does not exist.");
                 }
                 var targetWorkItem = targetWorkItems.First();
 

@@ -624,7 +624,36 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 }
 
 // mergeAndProcessSearchResults intelligently merges agentic and knowledge search results,
-// prioritizes them based on relevance and source, then processes them
+//
+// Detailed logic:
+// 1. Vector Search Results Processing:
+//   - Filters out chunks with rerank score below low relevance threshold
+//   - Applies special expansion rules for static chunks (TypeSpec QA, TypeSpec Migration, Mapping)
+//   - High-relevance chunks (score >= threshold): expands to full file content
+//   - Header-level chunks (H1/H2): applies hierarchical expansion to include sub chunks
+//   - Other chunks(H3): kept as-is without expansion
+//
+// 2. Agentic Search Results Processing:
+//   - Applies same special expansion rules for static chunks
+//   - Header-level chunks(H1/H2): applies hierarchical expansion
+//   - Other chunks(H3): kept without expansion
+//
+// 3. Deduplication:
+//   - Removes duplicate expansions to avoid redundant content
+//
+// 4. Parallel Chunk Expansion:
+//   - Uses goroutines to process all chunks concurrently for performance
+//   - Expansion strategies:
+//   - ExpansionFullFile: fetches and merges complete file content with headers
+//   - ExpansionQA: expands complete Q&A section under Header1
+//   - ExpansionMapping: expands complete code mapping section under Header2
+//   - ExpansionHierarchical: fetches all sub-chunks under detected hierarchy level (H1/H2)
+//   - ExpansionNone: keeps original chunk unchanged
+//
+// 5. Build Result:
+//   - Converts all expanded chunks into Knowledge objects
+//
+// Returns: slice of Knowledge objects with merged and expanded search results
 func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.Index, knowledgeResults []model.Index) []model.Knowledge {
 	mergeStart := time.Now()
 

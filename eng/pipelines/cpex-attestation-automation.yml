@@ -13,7 +13,10 @@ parameters:
 jobs:
   - job: AttestCPEXKPIs
     steps:
-      - checkout: self
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+        parameters:
+          Paths:
+            - eng/scripts/Invoke-CPEX-Attestation-Automation.ps1
       - task: AzureCLI@2
         displayName: Invoke CPEX KPI Attestation Automation
         inputs:

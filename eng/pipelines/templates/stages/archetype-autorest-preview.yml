@@ -98,7 +98,16 @@ stages:
     - checkout: self
       path: s/autorest
 
-    - checkout: azure-sdk-tools
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        SkipCheckoutNone: true
+        Repositories:
+          - Name: Azure/azure-sdk-tools
+            Commitish: $(Build.SourceVersion)
+            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
+        Paths:
+          - eng/scripts/autorest/
+          - eng/common/scripts/
     
     - task: NuGetAuthenticate@1
 

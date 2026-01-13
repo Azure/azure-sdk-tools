@@ -38,7 +38,10 @@ parameters:
 jobs:
   - job: ManualAttestationEntry
     steps: 
-      - checkout: self
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+        parameters:
+          Paths:
+            - eng/scripts/Add-CPEX-Attestation-Entry.ps1
       - task: AzureCLI@2
         displayName: Submit Manual CPEX KPI Entry
         inputs:

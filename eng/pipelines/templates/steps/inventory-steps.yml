@@ -1,6 +1,9 @@
 # this job assumes that variables $(Pool), $(OsVmImage), and $(Host) are populated by a strategy matrix
 steps:
-  - checkout: self
+  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+    parameters:
+      Paths:
+        - eng/common/scripts/Import-AzModules.ps1
 
   # Inventory files should be written without headers in the format:
   # Host, VmImage, Package Manager, Package Name, Package Version, Package Architecture {unknown, x86, amd64, arm64, all}

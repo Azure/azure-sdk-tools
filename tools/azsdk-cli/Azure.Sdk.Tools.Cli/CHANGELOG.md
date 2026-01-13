@@ -6,6 +6,7 @@
 
 - Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
+- Added support for GitHub URLs in TypeSpecHelper methods to accept URLs like `https://github.com/Azure/azure-rest-api-specs/blob/main/specification/...` in addition to local paths
 
 ### Breaking Changes
 

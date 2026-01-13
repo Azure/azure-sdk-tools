@@ -12,7 +12,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     {
         private string _newValue;
         private readonly Regex _regex;
-        private string _regexValue = null;
         private string _groupForReplace = null;
 
         private BodyRegexSanitizer _bodySanitizer;
@@ -32,7 +31,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
         {
             _newValue = value;
-            _regexValue = regex;
             _groupForReplace = groupForReplace;
             Condition = condition;
 

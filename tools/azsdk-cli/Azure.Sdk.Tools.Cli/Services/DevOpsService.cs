@@ -449,10 +449,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, string? targetId = null, string? targetUrl = null)
         {
-            // Create generic work item relation(s) based on target IDs and/or URLs
+            // Create generic work item relation(s) based on target ID and/or URL
             if (string.IsNullOrWhiteSpace(targetId) && string.IsNullOrWhiteSpace(targetUrl))
             {
-                throw new Exception("To create work item relation, either Target ids or Target urls must be provided.");
+                throw new Exception("To create work item relation, either Target ID or Target URL must be provided.");
             }
 
             var workItemClient = connection.GetWorkItemClient();
@@ -470,30 +470,29 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var wiql = new Wiql { Query = $"SELECT [System.Id] FROM WorkItems WHERE ([System.Id] = {targetId})" };
                 var queryResult = await workItemClient.QueryByWiqlAsync(wiql);
                 var targetWorkItems = queryResult.WorkItems ?? [];
-    
+                
+                // Query should only come up with one work item
                 if (!targetWorkItems.Any())
                 {
-                    throw new Exception("Target Id passed into create work item relation was not valid.");
+                    throw new Exception($"Target ID: {targetId} passed into create work item relation was not valid.");
                 }
+                var targetWorkItem = targetWorkItems.First();
 
-                foreach (var targetWorkItemRef in targetWorkItems)
+                // targetWorkItem contains only Id + Url; URL is enough to create relation
+                patchDocument.Add(new JsonPatchOperation
                 {
-                    // targetWorkItemRef contains only Id + Url; URL is enough to create relation
-                    patchDocument.Add(new JsonPatchOperation
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/relations/-",
+                    Value = new WorkItemRelation
                     {
-                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                        Path = "/relations/-",
-                        Value = new WorkItemRelation
-                        {
-                            Rel = relationTypeSystemName,
-                            Url = targetWorkItemRef.Url
-                        }
-                    });
-                }
+                        Rel = relationTypeSystemName,
+                        Url = targetWorkItem.Url
+                    }
+                });
+                
             }
-
             // Handle target URLs (comma-separated)
-            if (!string.IsNullOrWhiteSpace(targetUrl))
+            else if (!string.IsNullOrWhiteSpace(targetUrl))
             {
                 patchDocument.Add(new JsonPatchOperation
                 {

@@ -120,6 +120,7 @@ steps:
 
     # nohup does NOT continue beyond the current session if you use it within powershell
     - bash: |
+        echo $DOTNET_ROOT
         nohup $(Build.BinariesDirectory)/test-proxy/test-proxy 1>${{ parameters.rootFolder }}/test-proxy.log 2>${{ parameters.rootFolder }}/test-proxy-error.log &
 
         echo $! > $(Build.SourcesDirectory)/test-proxy.pid

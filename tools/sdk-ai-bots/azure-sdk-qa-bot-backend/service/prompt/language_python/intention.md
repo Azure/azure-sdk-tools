@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Licensed under the MIT License. -->
+
 # Role Description
 You are an intent recognition assistant specialized in analyzing Azure Python SDK questions and determining their context, scope, and category.
 

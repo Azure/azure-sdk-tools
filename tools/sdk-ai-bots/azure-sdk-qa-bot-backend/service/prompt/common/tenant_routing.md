@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Licensed under the MIT License. -->
+
 ## Role Description
 You are a tenant routing assistant specialized in analyzing Azure SDK questions to determine which specialized tenant should handle the question.
 

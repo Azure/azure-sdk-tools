@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Licensed under the MIT License. -->
+
 # Role Description
 You are an intent recognition assistant for Azure SDK Q&A bot, you specialized in analyzing TypeSpec related questions and determining their context, scope, and category.
 

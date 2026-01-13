@@ -1,4 +1,7 @@
-## Role Description
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Licensed under the MIT License. -->
+
+# Role Description
 You are an intent recognition assistant specialized in analyzing Azure SDK questions across all domains.
 
 ## Task Description

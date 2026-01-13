@@ -21,10 +21,6 @@ extends:
 
               - template: /eng/common/testproxy/test-proxy-tool.yml
 
-              - pwsh: |
-                  Write-Host "$(DOTNET_HOST)"
-                displayName: 'Dump DOTNET_HOST value after installation and run of Test Proxy'
-
               - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
 
               - pwsh: |
@@ -61,10 +57,6 @@ extends:
 
               - template: /eng/common/testproxy/test-proxy-tool.yml
 
-              - pwsh: |
-                  Write-Host "$(DOTNET_HOST)"
-                displayName: 'Dump DOTNET_HOST value after installation and run of Test Proxy'
-
               - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
 
               - pwsh: |
@@ -100,10 +92,6 @@ extends:
                 displayName: 'Run dotnet --list-sdks'
 
               - template: /eng/common/testproxy/test-proxy-tool.yml
-
-              - pwsh: |
-                  Write-Host "$(DOTNET_HOST)"
-                displayName: 'Dump DOTNET_HOST value after installation and run of Test Proxy'
 
               - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
 

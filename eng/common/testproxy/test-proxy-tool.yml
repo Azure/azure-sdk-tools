@@ -64,14 +64,38 @@ steps:
       displayName: 'Configure Kestrel and PROXY_MANUAL_START Variables'
       condition: and(succeeded(), ${{ parameters.condition }})
 
-    - task: UseDotNet@2
-      displayName: "Use .NET SDK 9.0.x"
-      retryCountOnTaskFailure: 3
-      condition: and(succeeded(), eq(variables['DOTNET_HOST'],''), ${{ parameters.condition }})
-      inputs:
-        packageType: sdk
-        version: 9.0.x
-        performMultiLevelLookup: true
+    - pwsh: |
+        $needsInstall = $true
+        try {
+          $needsInstall = -not (& dotnet --list-sdks 2>$null |
+            ForEach-Object { ($_ -split '\s+\[')[0] } |
+            Where-Object { $_ -like '9.*' -or $_ -like '10.*' })
+        } catch {
+          $needsInstall = $true
+        }
+        Write-Host "##vso[task.setvariable variable=InstallDotNet9]$needsInstall"
+      displayName: Detect compatible dotnet
+      condition: and(succeeded(), eq(variables['Agent.OS'],'Darwin'), ${{ parameters.condition }})
+
+    - pwsh: |
+        Write-Host "Yes"
+      displayName: 'We should use dotnet'
+      condition: and(succeeded(),
+                   eq(variables['Agent.OS'],'Darwin'),
+                   eq(variables['InstallDotNet9'],'True'),
+                   ${{ parameters.condition }})
+
+    # - task: UseDotNet@2
+    #   displayName: "Use .NET SDK 9.0.x"
+    #   retryCountOnTaskFailure: 3
+    #   condition: and(succeeded(),
+    #                eq(variables['Agent.OS'],'Darwin'),
+    #                eq(variables['InstallDotNet9'],'True'),
+    #                ${{ parameters.condition }})
+    #   inputs:
+    #     packageType: sdk
+    #     version: 9.0.x
+    #     performMultiLevelLookup: true
 
     - pwsh: |
         $invocation = @"

@@ -24,15 +24,10 @@ public sealed partial class PythonLanguageService : LanguageService
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
     {
         this.pythonHelper = pythonHelper;
         this.npxHelper = npxHelper;
-        base.processHelper = processHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
-        base.specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
 

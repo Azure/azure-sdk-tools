@@ -9,12 +9,41 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
     public abstract class LanguageService
     {
-        protected IProcessHelper processHelper;
-        protected IGitHelper gitHelper;
-        protected ILogger<LanguageService> logger;
-        protected ICommonValidationHelpers commonValidationHelpers;
-        protected IFileHelper fileHelper;
-        protected ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+        protected readonly IProcessHelper processHelper;
+        protected readonly IGitHelper gitHelper;
+        protected readonly ILogger<LanguageService> logger;
+        protected readonly ICommonValidationHelpers commonValidationHelpers;
+        protected readonly IFileHelper fileHelper;
+        protected readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+
+        /// <summary>
+        /// Protected parameterless constructor for test mocking purposes.
+        /// </summary>
+        protected LanguageService()
+        {
+            processHelper = null!;
+            gitHelper = null!;
+            logger = null!;
+            commonValidationHelpers = null!;
+            fileHelper = null!;
+            specGenSdkConfigHelper = null!;
+        }
+
+        protected LanguageService(
+            IProcessHelper processHelper,
+            IGitHelper gitHelper,
+            ILogger<LanguageService> logger,
+            ICommonValidationHelpers commonValidationHelpers,
+            IFileHelper fileHelper,
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        {
+            this.processHelper = processHelper;
+            this.gitHelper = gitHelper;
+            this.logger = logger;
+            this.commonValidationHelpers = commonValidationHelpers;
+            this.fileHelper = fileHelper;
+            this.specGenSdkConfigHelper = specGenSdkConfigHelper;
+        }
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;

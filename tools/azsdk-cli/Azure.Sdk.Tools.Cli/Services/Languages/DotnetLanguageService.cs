@@ -17,7 +17,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
-    private IPowershellHelper powershellHelper;
+    private readonly IPowershellHelper powershellHelper;
 
     public DotnetLanguageService(
         IProcessHelper processHelper,
@@ -27,14 +27,9 @@ public sealed partial class DotnetLanguageService: LanguageService
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
     {
         this.powershellHelper = powershellHelper;
-        base.processHelper = processHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
-        base.specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;

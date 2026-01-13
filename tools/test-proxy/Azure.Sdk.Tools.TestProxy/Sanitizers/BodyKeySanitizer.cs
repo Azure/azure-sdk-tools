@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _newValue;
         private string _regexValue = null;
         private string _groupForReplace = null;
-        private Regex _regex;
+        private readonly Regex _regex;
 
         /// <summary>
         /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by

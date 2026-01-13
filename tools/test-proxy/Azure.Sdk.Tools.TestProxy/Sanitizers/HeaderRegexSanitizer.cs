@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _targetKey;
         private string _newValue;
         private string _groupForReplace = null;
-        private Regex _regex;
+        private readonly Regex _regex;
 
         /// <summary>
         /// Can be used for multiple purposes:

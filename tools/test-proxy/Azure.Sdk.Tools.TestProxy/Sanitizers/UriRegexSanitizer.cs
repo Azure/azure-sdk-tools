@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _regexValue = null;
         private string _groupForReplace = null;
 
-        private Regex _regex;
+        private readonly Regex _regex;
 
         /// <summary>
         /// Runs a regex replace on the member of your choice.

@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class GeneralRegexSanitizer : RecordedTestSanitizer
     {
         private string _newValue;
-        private Regex _regex;
+        private readonly Regex _regex;
         private string _regexValue = null;
         private string _groupForReplace = null;
 

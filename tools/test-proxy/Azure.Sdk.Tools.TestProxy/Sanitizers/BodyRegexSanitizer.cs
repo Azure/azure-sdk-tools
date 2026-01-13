@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     {
         private string _newValue;
         private string _groupForReplace = null;
-        private Regex _regex;
+        private readonly Regex _regex;
 
         /// <summary>
         /// This sanitizer offers regex replace within a returned body. Specifically, this means regex applying to the raw JSON. If you are attempting to simply 

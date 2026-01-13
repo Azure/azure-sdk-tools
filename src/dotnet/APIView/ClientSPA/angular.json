@@ -38,7 +38,8 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/styles.less"
+              "src/styles.less",
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",

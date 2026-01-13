@@ -4,7 +4,6 @@ import { CodeEditorComponent } from './code-editor.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { ReviewNavComponent } from '../../review-nav/review-nav.component';
 import { FormsModule } from '@angular/forms';
 
@@ -20,8 +19,7 @@ describe('CodeEditorComponent', () => {
       ],
       imports: [
         HttpClientTestingModule,
-        FormsModule,
-        MonacoEditorModule.forRoot()
+        FormsModule
       ],
       providers: [
         {

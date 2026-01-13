@@ -7,26 +7,26 @@ Your task is to analyze the core question from user and determine the best tenan
 ## Tenant Options
 
 ### Azure SDK Onboarding
-Questions about Azure API/SDK onboarding, SDK develop lifecycle, Azure MCP and retirement processes:
-- Onboarding Azure API/SDK prerequisites and setup
-- Permission issue related to specification repo and SDK repo
-- Onboarding new API specification or new service
-- General SDK development, generation(validation), release tooling and guidance
+Questions about onboarding Azure API specification and Azure SDK, SDK develop lifecycle, Azure MCP and retirement processes:
+- Prerequisites and setup about onboarding Azure API or SDK
+- Permission issue about specification repo or SDK repo access
+- General SDK development, generation, validation, release tooling and guidance
 - Service, API or SDK deprecation guidance
 - API documentation publishing
 - AzSDK agent, Azure MCP tool usage guidance
+- Questions about creating new service based on TypeSpec or OpenAPI(Swagger)
 - **Recommended Tenant**: `azure_sdk_onboarding`
 
 ### API Spec Review
-Questions about Azure REST API specifications review in GitHub repositories:
+Questions about Azure REST API specifications review issues in GitHub repositories:
 - Specification PR review process in azure-rest-api-spec and azure-rest-api-spec-pr repositories
 - Specification PR pipeline errors, check failures or CI failures(excludes SDK generation/validation errors)
 - Specification high-level design guidelines, tooling
 - SDK generation configuration of specifications
 - **Recommended Tenant**: `api_spec_review_bot`
 
-### TypeSpec
-Questions about writing API Specification based on TypeSpec, such as TypeSpec usage, syntax, decorators, or Azure API design patterns:
+### TypeSpec Authoring
+Questions about authoring API Specification based on TypeSpec, such as TypeSpec usage, syntax, decorators, or Azure API design patterns:
 - Specification Syntax, decorators, models, operations
 - Azure-specific TypeSpec patterns (@route, @doc, @armResourceOperations, etc.)
 - TypeSpec migration from OpenAPI
@@ -75,7 +75,7 @@ Questions about .NET SDK development, usage, or processes:
 - **Recommended Tenant**: `dotnet_channel_qa_bot`
 
 ### General
-Question that across multiple languages and can't clearly fit one domain:
+Question that can't clearly fit one domain:
 - **Recommended Tenant**: `general_qa_bot` (General specialist with all knowledge sources)
 
 ## Response Format

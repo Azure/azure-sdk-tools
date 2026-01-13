@@ -1,6 +1,9 @@
 Import-Module Pester
 
 BeforeAll {
+    # Default shared regex pattern with optional .git suffix
+    $script:defaultRegex = '^(https://github\.com/Azure/azure-sdk-for-java(?:\.git)?/(?:blob|tree)/)main(/.*)$'
+    
     # Helper function to test link replacement logic directly
     # This mirrors the logic in ReplaceGithubLink function from Verify-Links.ps1
     function Test-ReplaceGithubLink {
@@ -57,21 +60,18 @@ Describe "ReplaceGithubLink" {
 
     Context "When regex handles optional .git suffix" {
         It "Should replace branch name whether .git is present or not" {
-            # This simulates the actual regex pattern from verify-links.yml
-            $regex = '^(https://github\.com/Azure/azure-sdk-for-java(?:\.git)?/(?:blob|tree)/)main(/.*)$'
-            
             # Test without .git
             $originalLinkWithoutGit = "https://github.com/Azure/azure-sdk-for-java/blob/main/README.md"
             $expectedLink = "https://github.com/Azure/azure-sdk-for-java/blob/abc123def/README.md"
             
-            $resultWithoutGit = Test-ReplaceGithubLink -originLink $originalLinkWithoutGit -branchReplaceRegex $regex -branchReplacementName "abc123def"
+            $resultWithoutGit = Test-ReplaceGithubLink -originLink $originalLinkWithoutGit -branchReplaceRegex $defaultRegex -branchReplacementName "abc123def"
             $resultWithoutGit | Should -Be $expectedLink
             
             # Test with .git
             $originalLinkWithGit = "https://github.com/Azure/azure-sdk-for-java.git/blob/main/README.md"
             $expectedLinkWithGit = "https://github.com/Azure/azure-sdk-for-java.git/blob/abc123def/README.md"
             
-            $resultWithGit = Test-ReplaceGithubLink -originLink $originalLinkWithGit -branchReplaceRegex $regex -branchReplacementName "abc123def"
+            $resultWithGit = Test-ReplaceGithubLink -originLink $originalLinkWithGit -branchReplaceRegex $defaultRegex -branchReplacementName "abc123def"
             $resultWithGit | Should -Be $expectedLinkWithGit
         }
     }
@@ -80,14 +80,14 @@ Describe "ReplaceGithubLink" {
         It "Should return original link unchanged" {
             $originalLink = "https://github.com/SomeOrg/SomeRepo/blob/main/README.md"
             
-            $result = Test-ReplaceGithubLink -originLink $originalLink -branchReplaceRegex '^(https://github\.com/Azure/azure-sdk-for-java(?:\.git)?/(?:blob|tree)/)main(/.*)$' -branchReplacementName "abc123def"
+            $result = Test-ReplaceGithubLink -originLink $originalLink -branchReplaceRegex $defaultRegex -branchReplacementName "abc123def"
             $result | Should -Be $originalLink
         }
 
         It "Should return original link when branch name doesn't match" {
             $originalLink = "https://github.com/Azure/azure-sdk-for-java/blob/feature-branch/README.md"
             
-            $result = Test-ReplaceGithubLink -originLink $originalLink -branchReplaceRegex '^(https://github\.com/Azure/azure-sdk-for-java(?:\.git)?/(?:blob|tree)/)main(/.*)$' -branchReplacementName "abc123def"
+            $result = Test-ReplaceGithubLink -originLink $originalLink -branchReplaceRegex $defaultRegex -branchReplacementName "abc123def"
             $result | Should -Be $originalLink
         }
     }
@@ -96,7 +96,7 @@ Describe "ReplaceGithubLink" {
         It "Should return original link when branchReplacementName is empty" {
             $originalLink = "https://github.com/Azure/azure-sdk-for-java/blob/main/README.md"
             
-            $result = Test-ReplaceGithubLink -originLink $originalLink -branchReplaceRegex '^(https://github\.com/Azure/azure-sdk-for-java(?:\.git)?/(?:blob|tree)/)main(/.*)$' -branchReplacementName ""
+            $result = Test-ReplaceGithubLink -originLink $originalLink -branchReplaceRegex $defaultRegex -branchReplacementName ""
             $result | Should -Be $originalLink
         }
 

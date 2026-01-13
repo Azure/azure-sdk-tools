@@ -1,0 +1,593 @@
+# Feature: Customizing Client TypeSpec - Two-Phase Workflow
+
+**Spec**: https://github.com/Azure/azure-sdk-tools/blob/f3ec3e03e5db9b2e5d2bbe2d5840dd03fa1e3421/tools/azsdk-cli/docs/specs/3-customizing-client-tsp.spec.md
+
+## Overview
+Enhance `CustomizedCodeUpdateTool` to implement intelligent two-phase customization workflow that applies TypeSpec customizations (Phase A) and code customizations (Phase B) with mandatory approval checkpoints.
+
+## Key Terms
+- **TypeSpec Customizations**: SDK-specific customizations in `client.tsp` using `Azure.ClientGenerator.Core` decorators
+- **Code Customizations**: Language-specific modifications (Java customization classes, Python `_patch.py`, .NET partial classes)
+- **Customization Workflow**: AI-assisted interactive process with mandatory user approval before applying changes
+- **Entry Points**: Build failures, API review feedback, PR comments, user prompts, linting/typing checks
+
+## Goals
+1. Improve service team experience for authoring `client.tsp` customizations
+2. Automate detection and resolution of build failures through both TypeSpec and code customizations
+3. Provide unified approach for handling both customization types through single workflow
+4. Enable AI agents to become experts in TypeSpec decorators and language-specific code patterns
+
+## Design Components
+
+### 1. TypeSpec Client Customizations Reference Document
+- Location: `eng/common/knowledge/customizing-client-tsp.md`
+- Purpose: Teach AI agents about `Azure.ClientGenerator.Core` decorators
+- Referenced by: `eng/common/instructions/azsdk-tools/typespec-docs.instructions.md`
+- Living document with concise examples for common scenarios
+
+### 2. Enhanced CustomizedCodeUpdateTool
+**Name (MCP)**: `azsdk_package_customize_code`
+
+**New Inputs**:
+- `--customization-request` / `customizationRequest`: Text blob with build errors, user prompts, API feedback, or breaking changes
+- `--typespec-project-path` / `typespecProjectPath`: [Optional] Path to TypeSpec project with `tspconfig.yaml`
+
+**Two-Phase Workflow**:
+
+1. **Context Classifier** (LLM-based)
+   - Analyzes requests and routes to: Phase A (TypeSpec can help), Success (done), or Failure (too complex/stalled)
+   - **Classifier NEVER routes directly to Phase B**
+   - **Phase B activation**: Automatic after Phase A build failures when customization files exist (not a classifier decision)
+
+2. **Phase A - TypeSpec Customizations**
+   - Apply `client.tsp` adjustments (decorators, naming, grouping, scope configs)
+   - Re-run TypeSpec compilation and regenerate SDK
+   - Validate build and return to classifier
+   - **Max 2 iterations** before returning to classifier with failure
+
+3. **Phase B - Code Customizations (Repair Mode)**
+   - **Max 2 iterations** (independent of Phase A's 2 iterations, total 4 possible)
+   - **Philosophy**: Narrow scope with safety boundaries - prioritize correctness over automation coverage
+   - **Activation**: Triggered when ALL of:
+     - Phase A completed successfully (SDK regenerated)
+     - Build failed after Phase A
+     - Customization files exist (Java: `/customization/` or `*Customization.java`, Python: `*_patch.py`, .NET: partial classes)
+   - **Detection**: Build errors occur in generated code
+     - Example: Error at `/models/AnalyzeResult.java:178: variable operationId already defined`
+     - Root Cause: Customization file injects `operationId`, TypeSpec now generates same field → conflict
+   - **Tool**: Microagent with `ClientCustomizationCodePatchTool`
+   - **Narrow Scope** (intentionally limited for v1.0):
+     - ALL must be true: Mechanical fix, <20 lines, <5 files, deterministic pattern, TypeSpec cannot solve
+     - ✅ **Within scope**: Remove duplicate fields, update references after rename, add imports, rename keywords
+     - ❌ **Out of scope**: Convenience methods, architecture changes, visibility changes, error handling, complex logic
+   - **Execution Flow**:
+     1. Analyze errors + customization files + TypeSpec changes
+     2. **Assess feasibility**: Can fix be applied safely within narrow scope?
+        - **If NO** (uncertain, complex, or exceeds limits) → Return manual guidance, do NOT attempt fix
+        - **If YES** (deterministic mechanical fix) → Proceed to step 3
+     3. Apply string replacement patches to customization files
+     4. Regenerate SDK (changes to customization files don't auto-regenerate)
+     5. Validate with build
+     6. Return to classifier (may loop back to Phase B if errors persist, max 2 Phase B iterations total)
+   - **Manual Guidance Format** (when automation skipped):
+     - Issue: What conflict was detected
+     - Files: Affected files with line numbers
+     - Approach: Suggested manual fix steps
+     - Reason: Why automated fix was skipped (uncertainty/complexity/scope)
+     - **Principle**: Provide clear guidance rather than risk incorrect automated fixes that introduce subtle bugs
+   - **Context**: Phase A results + build errors (paths + lines) + customization file content (optional: specific generated files)
+   - **Success Target**: 50-70% automation acceptable - Narrow scope means many cases will return guidance
+
+4. **Summary & Approval**
+   - Present summary of changes to local repo files
+   - Tool returns response with change summary
+   - Calling agent (GitHub Copilot) presents summary to user through chat UI
+   - User approves/rejects through agent conversation
+   - **Iteration Limits**: Maximum 2 attempts per phase (independent counters)
+     - Phase A: Max 2 iterations (applying TypeSpec decorators → regenerate → build)
+     - Phase B: Max 2 iterations (patching code → regenerate → build)
+     - Total possible: 4 iterations before returning failure
+   - Provide next step instructions
+
+### 3. Context Tracking
+**Approach**: Simple Context Concatenation
+- Append phase results and validation outcomes to original context for each iteration
+- Include: changes applied, build results, new errors discovered
+- Provides classifier with history for next phase decision
+- **Stall Detection Metrics**:
+  - Maximum 2 attempts per phase (independent counters: Phase A tracks separately from Phase B)
+  - Total maximum: 4 iterations across both phases before returning failure
+  - Stall detected if same error message appears 2 consecutive times within same phase
+  - Context size limit: ~50K characters (approximately 12,500 tokens) before triggering manual intervention
+  - After Phase A completes (success or 2 attempts), Phase A counter resets; Phase B gets its own 2 attempts
+  - If limits exceeded, return error with guidance for manual resolution
+
+### 4. Git Patch Support
+- Works from `azure-sdk-for-*` repo with local `azure-rest-api-specs` clone
+- **Assumes both repositories are cloned locally**
+- TypeSpec project path derived from `tsp-location.yaml` in SDK package
+- Directly applies changes to local repo clones
+- Having all repos available locally is requirement
+
+### 5. Approval Checkpoint UX
+- **Tool Responsibility**: Return structured response with change summary
+- **Agent Responsibility**: Present summary to user through chat interface
+- **User Action**: Approve or reject through conversational prompts
+- **Flow**:
+  1. Tool completes changes and returns `CustomizedCodeUpdateResponse` with `ChangesSummary` field
+  2. Agent displays summary in chat: "The following changes were applied..."
+  3. User responds with approval/rejection through natural language
+  4. Agent proceeds based on user decision (commit changes or revert)
+- **No built-in approval UI in tool itself** - approval is handled at agent orchestration level
+
+## Test Scenarios with Acceptance Criteria
+
+### Scenario 1: Duplicate field injection (Java)
+**Description**: TypeSpec adds property already in customization → Phase B removes duplicate
+**Entry Point**: Build failure
+**Acceptance Criteria**:
+- Build completes with no errors (warnings are acceptable)
+- Duplicate field is removed from customization class
+- Generated code contains the property from TypeSpec
+- SDK functionality is preserved
+
+### Scenario 2: API review feedback (.NET)
+**Description**: Rename model with scoped `@clientName` → Phase A only
+**Entry Point**: API review feedback
+**Acceptance Criteria**:
+- `@clientName` decorator applied with correct scope (e.g., "csharp")
+- SDK regenerates successfully
+- Build completes with no errors
+- Only .NET SDK is affected, other languages unchanged
+
+### Scenario 3: TypeSpec rename drift (Java)
+**Description**: Property renamed but customization references old name → Both phases
+**Entry Point**: Build failure after regeneration
+**Acceptance Criteria**:
+- TypeSpec regeneration completes successfully
+- All references to old property name updated to new name in customization files
+- Build completes with no errors
+- SDK functionality is preserved
+
+### Scenario 4: Hide operation (Python)
+**Description**: Use `@access` decorator → Phase A only
+**Entry Point**: User prompt
+**Acceptance Criteria**:
+- `@access` decorator applied with correct scope
+- Operation hidden from public API in Python SDK
+- SDK regenerates successfully
+- Build completes with no errors
+
+### Scenario 5: .NET analyzer errors
+**Description**: Naming violations resolved with `@clientName` → Phase A only
+**Entry Point**: Build failure (.NET analyzer)
+**Acceptance Criteria**:
+- `@clientName` decorators applied for all violations
+- Analyzer errors resolved
+- Build completes with no errors
+- Names follow .NET conventions
+
+### Scenario 6: Python subclient architecture
+**Description**: Use `@client` and `@clientInitialization` → Phase A only
+**Entry Point**: User prompt
+**Acceptance Criteria**:
+- `@client` decorator creates correct client structure
+- `@clientInitialization` decorator applied if needed
+- SDK regenerates successfully
+- Build completes with no errors
+- Client architecture matches requirements
+
+## Success Criteria
+- Automated detection of build failure types across all languages
+- Successfully apply TypeSpec Customizations for common spec issues (Phase A)
+- Successfully apply Code Customizations for mechanical fixes (Phase B)
+- Enforce approval checkpoints in agent contexts
+- Support .NET, Java, JavaScript, Python, Go
+
+## Pipeline/CI Considerations
+**Primary Usage**: Agent-interactive mode only
+**NOT for CI/Pipeline**: Tool requires human judgment, has non-deterministic AI behavior, needs interactive approval
+
+**Recommended CI Workflow**:
+1. Local Development: Apply customizations interactively in agent mode
+2. Commit Changes: Commit approved TypeSpec and SDK code customizations
+3. CI Validation: Run standard tools (`azsdk_package_generate_code`, `azsdk_package_build_code`, `azsdk_package_run_tests`)
+
+## Implementation Notes
+- Tool operates from `azure-sdk-for-*` repo with spec repo cloned locally
+- Classifier uses client customizations reference doc for decision-making
+- Context grows with iterations - monitor for LLM confusion/stall detection
+- **Phase B: Narrow scope by design** - mechanical transformations only, returns guidance when uncertain
+- **Correctness over coverage** - 50-70% Phase B automation is acceptable success rate
+- Approval checkpoint is critical safety mechanism for all automated changes
+- Phase B is safety net (10% of workflows), Phase A solves majority (80%)
+
+## Key Files to Modify
+- `Azure.Sdk.Tools.Cli/Tools/TypeSpec/CustomizedCodeUpdateTool.cs` - Main tool enhancement
+- `eng/common/knowledge/customizing-client-tsp.md` - New reference doc (to be created)
+- `eng/common/instructions/azsdk-tools/typespec-docs.instructions.md` - Reference new doc
+
+## Open Questions
+- ~~Phase B automation boundaries: What qualifies as "deterministic" vs "complex"?~~ **RESOLVED**: <20 lines, <5 files, remove/update only, triggered by build errors
+- ~~Phase B routing strategy~~ **RESOLVED**: Error-driven only (NEVER proactive), always start with Phase A
+- ~~Phase B activation logic~~ **RESOLVED**: File presence check (not keyword matching), activate when customization files exist after Phase A build failure
+- ~~Success rate thresholds before expanding Phase B scope~~ **RESOLVED**: 50-70% automation acceptable for Phase B, expand based on real-world usage
+- ~~Language-specific complexity differences (Java AST vs Python _patch.py)~~ **RESOLVED**: Use ClientCustomizationCodePatchTool (string replacement) for all languages initially
+- ~~Escape hatches when Phase B fails repeatedly~~ **RESOLVED**: Maximum 2 attempts per phase, then return error with manual resolution guidance
+- ~~Approval mechanism~~ **RESOLVED**: Tool returns summary, agent handles user interaction
+- ~~Stall detection metrics~~ **RESOLVED**: 2 attempts per phase, 50K character context limit, duplicate error detection
+- ~~Error pattern catalog~~ **RESOLVED**: Let LLM detect dynamically, no pre-defined catalog needed
+- ~~Generated code access~~ **RESOLVED**: Can incrementally provide specific error files if context helps (implementation detail)
+
+---
+**TODO**: Delete this file before submitting PR
+
+---
+
+## PROPOSED IMPLEMENTATION STEPS
+
+### Phase 1: Update Response Models and Data Structures [] 
+
+**Step 1.1**: Enhance CustomizedCodeUpdateResponse model []
+- Add `ChangesSummary` property to hold detailed change information
+- Add `PhaseAAttempts` int property to track Phase A iteration count
+- Add `PhaseBAttempts` int property to track Phase B iteration count
+- Add `TypeSpecChanges` list property containing applied decorator details (decorator name, target, scope, file path)
+- Add `CodePatches` list property containing applied patch details (file path, old content preview, new content preview)
+- Add `BuildResult` property with success status and error messages
+- Add `ModifiedFiles` list property with paths to all modified files
+- Update `Format()` method to present changes in human-readable format
+
+**Step 1.2**: Create supporting data transfer objects []
+- Create `TypeSpecChangeDetail` class with properties: DecoratorName, Target, Scope, FilePath
+- Create `CodePatchDetail` class with properties: FilePath, OldContentPreview (first 100 chars), NewContentPreview (first 100 chars), ReplacementCount
+- Create `BuildResultDetail` class with properties: Success bool, ErrorMessages list, WarningMessages list
+
+### Phase 2: Add New Tool Parameters []
+
+**Step 2.1**: Update CustomizedCodeUpdateTool command definition []
+- Add `customizationRequest` Argument accepting text blob (build errors, user prompts, API feedback)
+- Add optional `typespecProjectPath` Option for TypeSpec project directory path
+- Remove `updateCommitSha` parameter (derive from tsp-location.yaml instead)
+- Update command description to reflect two-phase workflow capabilities
+
+**Step 2.2**: Update MCP tool method signature []
+- Modify `UpdateAsync` method to accept `customizationRequest` string parameter
+- Add optional `typespecProjectPath` string parameter
+- Keep `packagePath` parameter as-is
+- Remove `commitSha` parameter
+
+### Phase 3: Implement Context Tracking System []
+
+**Step 3.1**: Create CustomizationContext class []
+- Add `OriginalRequest` string property for initial customization request
+- Add `Iterations` list to store iteration history (phase name, changes applied, build result, errors discovered)
+- Add `PhaseAAttempts` counter (independent, max 2)
+- Add `PhaseBAttempts` counter (independent, max 2)
+- Add `LastErrorPhaseA` string to track consecutive duplicate errors in Phase A
+- Add `LastErrorPhaseB` string to track consecutive duplicate errors in Phase B
+- Add method `AppendIteration` to add new iteration with phase result
+- Add method `GetFullContext` to concatenate all iterations into single string for classifier
+- Add method `HasExceededPhaseALimits` to check if Phase A attempts >= 2
+- Add method `HasExceededPhaseBLimits` to check if Phase B attempts >= 2
+- Add method `HasExceededContextSize` to check if context >= 50K chars
+- Add method `IsStalledInPhaseA` to detect if last Phase A error matches previous Phase A error
+- Add method `IsStalledInPhaseB` to detect if last Phase B error matches previous Phase B error
+
+**Step 3.2**: Create iteration tracking model []
+- Create `CustomizationIteration` class with properties: PhaseName, ChangesApplied list, BuildSuccess bool, ErrorMessages list, Timestamp
+
+### Phase 4: Implement Phase A - TypeSpec Customizations []
+
+**Step 4.1**: Create TypeSpec customization microagent []
+- Inject `IMicroagentHostService` into CustomizedCodeUpdateTool
+- Create microagent with instructions referencing `eng/common/knowledge/customizing-client-tsp.md`
+- Provide tools: file read, file write for `client.tsp`
+- Microagent analyzes customization request and current `client.tsp` content
+- Microagent applies appropriate decorators (`@clientName`, `@access`, `@client`, `@clientLocation`, etc.)
+- Microagent returns list of changes made (TypeSpecChangeDetail objects)
+- **Classifier Routes**: 
+  - Phase A (TypeSpec can help): Apply decorators and attempt fixes
+  - Success (done): Request already satisfied, no changes needed
+  - Failure (stalled/complex): Too complex for automation, return manual guidance
+- **CRITICAL**: Classifier NEVER routes directly to Phase B
+- **Phase B Activation**: Determined by workflow logic (not classifier decision) - activates when Phase A build fails AND customization files exist
+
+**Step 4.2**: Implement TypeSpec regeneration after Phase A []
+- Use existing `ITspClientHelper.UpdateGenerationAsync` to regenerate SDK
+- Derive commit SHA from `tsp-location.yaml` in package directory
+- Capture regeneration success/failure
+- Add regeneration result to iteration history
+
+**Step 4.3**: Implement build validation after Phase A []
+- Use existing `BuildSdkAsync` method to validate compilation
+- Capture build success/failure and error messages
+- Parse errors for Phase B activation keywords
+- Add build result to iteration history
+
+### Phase 5: Implement Phase B - Code Customizations []
+
+**Step 5.1**: Create code customization microagent with narrow scope instructions []
+- Create microagent with instructions emphasizing narrow scope and manual guidance fallback
+- Provide `ClientCustomizationCodePatchTool` (already exists in `Microagents/Tools/`)
+- Provide file read tools to inspect customization files
+- **Decision Flow**:
+  1. Analyze build errors + customization files + Phase A changes
+  2. Assess: Is conflict deterministic, mechanical, <20 lines, <5 files?
+  3. **If NO** → Return `ManualGuidanceResponse` with fix instructions
+  4. **If YES** → Apply AI assisted patches using ClientCustomizationCodePatchTool
+- Microagent identifies fixable patterns:
+  - Duplicate field definitions ("already defined" in errors)
+  - Undefined references ("cannot find symbol", "is not defined")
+  - Files to patch (extract paths from errors)
+- **When uncertain or complex** → Return guidance instead of attempting fix
+- Output: Either `CodePatchDetail` objects (fixes applied) OR `ManualGuidanceDetail` (guidance provided)
+
+**Step 5.2**: Implement Phase B activation detection []
+- **Activation Criteria** (ALL must be true):
+  1. Phase A completed (SDK successfully regenerated from TypeSpec)
+  2. Build failed after Phase A regeneration
+  3. Customization files exist in package:
+     - Java: Directory `/customization/` exists OR files matching `*Customization.java`
+     - Python: Files matching `*_patch.py`
+     - .NET: Partial classes detected (files with `partial class` keyword)
+- **Do NOT use error keyword matching** - file presence is sufficient
+- If activation criteria met, execute Phase B with build errors as context
+- Pass build errors + file paths to Phase B microagent as context
+
+**Step 5.3**: Implement build validation after Phase B []
+- Regenerate SDK again using `ITspClientHelper.UpdateGenerationAsync`
+- Build SDK using existing `BuildSdkAsync` method
+- Capture final build result
+- Add result to iteration history
+
+### Phase 6: Implement Main Workflow Loop []
+
+**Step 6.1**: Create main `RunUpdateAsync` method orchestration []
+- Initialize CustomizationContext with original request
+- Main loop structure:
+  1. **Classifier Phase**: Analyze request + context, route to Phase A/Success/Failure
+     - If Success: Exit with success response
+     - If Failure: Exit with manual guidance
+     - If Phase A: Continue to Phase A loop
+  
+  2. **Phase A Loop** (max 2 iterations):
+     a. Check `context.HasExceededPhaseALimits()` → if true, exit to Classifier with failure
+     b. Check `context.IsStalledInPhaseA()` → if true, exit to Classifier with failure
+     c. Check `context.HasExceededContextSize()` → if true, exit with error
+     d. Execute Phase A: Apply TypeSpec decorators to `client.tsp`
+     e. Regenerate SDK from TypeSpec
+     f. If regeneration fails: Increment PhaseAAttempts, return to Classifier
+     g. Build SDK
+     h. If build succeeds: Return to Classifier (may route to Success)
+     i. If build fails: Check Phase B activation criteria
+     j. Append Phase A iteration to context
+  
+  3. **Phase B Activation Check**:
+     - If Phase A build failed AND customization files exist: Enter Phase B loop
+     - Otherwise: Increment PhaseAAttempts, return to Classifier
+  
+  4. **Phase B Loop** (max 2 iterations, independent of Phase A):
+     a. Check `context.HasExceededPhaseBLimits()` → if true, return to Classifier with failure
+     b. Check `context.IsStalledInPhaseB()` → if true, return to Classifier with failure
+     c. Check `context.HasExceededContextSize()` → if true, exit with error
+     d. Execute Phase B: Analyze errors, patch customization files (or return guidance)
+     e. Regenerate SDK (customization file changes require regeneration)
+     f. Build SDK
+     g. If build succeeds: Return to Classifier (may route to Success)
+     h. If build fails: Increment PhaseBAttempts, append iteration, loop back to Phase B (if under limit)
+     i. If Phase B limit reached: Return to Classifier with failure
+  
+- After classifier routes to Success or Failure, build final CustomizedCodeUpdateResponse
+- Response includes: ChangesSummary, PhaseAAttempts count, PhaseBAttempts count, BuildResult, ModifiedFiles, NextSteps
+
+**Step 6.2**: Implement response building []
+- Populate `ChangesSummary` with all TypeSpec changes and code patches from context
+- Set `PhaseAAttempts` and `PhaseBAttempts` counts
+- Set `BuildResult` with final build status
+- List all `ModifiedFiles` from both TypeSpec and SDK repos
+- Set `NextSteps` guidance based on outcome:
+  - Success: "Review changes and commit if approved"
+  - Partial success: "Some issues remain, review and fix manually"
+  - Failure: "Manual intervention required, see error details"
+
+### Phase 7: Error Handling and Resilience []
+
+**Step 7.1**: Add comprehensive error handling []
+- Wrap each phase execution in try-catch
+- Capture exceptions in iteration history
+- Return error response with details if unrecoverable error occurs
+- Log all errors using `ILogger<CustomizedCodeUpdateTool>`
+
+**Step 7.2**: Implement stall detection []
+- Track errors separately per phase using `LastErrorPhaseA` and `LastErrorPhaseB`
+- **Phase A stall**: Compare current Phase A error with `LastErrorPhaseA`
+  - If identical in consecutive Phase A iterations, stall detected
+  - Return to Classifier with failure and guidance
+- **Phase B stall**: Compare current Phase B error with `LastErrorPhaseB`
+  - If identical in consecutive Phase B iterations, stall detected
+  - Return to Classifier with failure and guidance
+- Phase transitions (A→B) do NOT count as stall (different error types expected)
+
+**Step 7.3**: Implement context size monitoring []
+- Before each iteration, check `context.GetFullContext().Length`
+- If exceeds 50,000 characters, return error response
+- Include guidance for manual resolution in error message
+
+### Phase 8: Update Tool Registration and Documentation []
+
+**Step 8.1**: Update tool description []
+- Modify `[Description]` attribute on CustomizedCodeUpdateTool class
+- Update XML documentation comments for public methods
+- Clarify two-phase workflow in method summaries
+
+**Step 8.2**: Add XML documentation []
+- Document all new public properties on CustomizedCodeUpdateResponse
+- Document CustomizationContext class and methods
+- Document TypeSpecChangeDetail and CodePatchDetail classes
+
+### Phase 9: Integration and End-to-End Testing []
+
+**Purpose**: Validate complete two-phase workflow orchestration from initial request through final build
+
+**Step 9.1**: Test Phase A-Only Scenarios (Scenarios 2, 4, 5, 6) []
+- **Scenario 2 (.NET API review feedback)**:
+  - Verify classifier routes to Phase A
+  - Verify `@clientName` decorator applied with correct scope
+  - Verify SDK regenerates successfully after Phase A
+  - Verify build passes after Phase A
+  - Verify Phase B never activates (no customization files + build succeeded)
+  - Verify workflow completes with Success
+
+- **Scenario 4 (Python hide operation)**:
+  - Verify classifier routes to Phase A
+  - Verify `@access` decorator applied correctly
+  - Verify SDK regenerates and builds successfully
+  - Verify Phase B never activates
+  - Verify workflow completes with Success
+
+- **Scenario 5 (.NET analyzer errors)**:
+  - Verify classifier routes to Phase A
+  - Verify `@clientName` decorators applied for all violations
+  - Verify build passes after Phase A (analyzer errors resolved)
+  - Verify Phase B never activates
+  - Verify workflow completes with Success
+
+- **Scenario 6 (Python subclient architecture)**:
+  - Verify classifier routes to Phase A
+  - Verify `@client` and `@clientInitialization` decorators applied
+  - Verify SDK regenerates and builds successfully
+  - Verify Phase B never activates
+  - Verify workflow completes with Success
+
+**Step 9.2**: Test Phase A → Phase B Scenarios (Scenarios 1, 3) []
+- **Scenario 1 (Java duplicate field injection)**:
+  - Verify classifier routes to Phase A
+  - Verify Phase A completes (SDK regenerated from TypeSpec)
+  - Verify build fails after Phase A (duplicate field error)
+  - Verify Phase B activation detection (customization files exist)
+  - Verify Phase B microagent analyzes error correctly
+  - Verify Phase B applies code patch to remove duplicate field
+  - Verify SDK regenerates after Phase B patch
+  - Verify build passes after Phase B
+  - Verify workflow completes with Success
+
+- **Scenario 3 (Java TypeSpec rename drift)**:
+  - Verify classifier routes to Phase A
+  - Verify Phase A applies TypeSpec rename successfully
+  - Verify SDK regenerates after Phase A
+  - Verify build fails (customization references old property name)
+  - Verify Phase B activation detection
+  - Verify Phase B updates all references to new property name
+  - Verify SDK regenerates after Phase B
+  - Verify build passes after Phase B
+  - Verify workflow completes with Success
+
+**Step 9.3**: Test Iteration Limits (Independent Counters) []
+- **Phase A Limit Test**:
+  - Create scenario where Phase A fails repeatedly (e.g., invalid decorator syntax)
+  - Verify Phase A attempts count increments correctly
+  - Verify Phase A max 2 iterations enforced
+  - Verify failure returned to classifier after 2 Phase A attempts
+  - Verify PhaseAAttempts = 2 in final response
+
+- **Phase B Limit Test**:
+  - Create scenario where Phase B fails repeatedly (e.g., patch doesn't resolve error)
+  - Verify Phase A completes successfully first
+  - Verify Phase B attempts count increments correctly (independent of Phase A)
+  - Verify Phase B max 2 iterations enforced
+  - Verify failure returned to classifier after 2 Phase B attempts
+  - Verify PhaseBAttempts = 2 in final response
+
+- **Combined Limit Test**:
+  - Create scenario using both phases with failures
+  - Verify Phase A gets full 2 attempts
+  - Verify Phase B gets separate 2 attempts after Phase A
+  - Verify total 4 iterations possible (2 Phase A + 2 Phase B)
+  - Verify PhaseAAttempts = 2 and PhaseBAttempts = 2 in final response
+
+**Step 9.4**: Test Stall Detection (Per-Phase) []
+- **Phase A Stall Detection**:
+  - Create scenario where Phase A produces identical error twice
+  - Verify `LastErrorPhaseA` tracking works correctly
+  - Verify stall detected on second consecutive identical Phase A error
+  - Verify workflow exits Phase A with failure and guidance
+
+- **Phase B Stall Detection**:
+  - Create scenario where Phase B produces identical error twice
+  - Verify `LastErrorPhaseB` tracking works correctly
+  - Verify stall detected on second consecutive identical Phase B error
+  - Verify workflow exits Phase B with failure and guidance
+
+- **Phase Boundary Test** (No Cross-Phase Stall):
+  - Create scenario where Phase A error differs from Phase B error
+  - Verify Phase A error stored in `LastErrorPhaseA`
+  - Verify Phase B error stored in `LastErrorPhaseB`
+  - Verify transition from Phase A to Phase B does NOT trigger stall detection
+  - Verify each phase has independent stall tracking
+
+**Step 9.5**: Test Error Handling Paths []
+- **Phase A Failure (No Build)**:
+  - Create scenario where Phase A regeneration fails
+  - Verify Phase B never activates (no build occurred)
+  - Verify classifier receives failure with error details
+  - Verify proper error guidance in response
+
+- **Phase B Files Don't Exist**:
+  - Create scenario where Phase A build fails but no customization files exist
+  - Verify Phase B activation check returns false
+  - Verify workflow returns to classifier with Phase A failure
+  - Verify Phase B never executes
+
+- **Manual Guidance Path**:
+  - Create scenario with complex/uncertain error (e.g., architectural issue)
+  - Verify Phase B microagent assesses feasibility
+  - Verify Phase B returns `ManualGuidanceDetail` instead of attempting fix
+  - Verify guidance includes: issue description, affected files, suggested approach, reason for skipping automation
+  - Verify no code patches applied
+
+**Step 9.6**: Test Context Size Limits []
+- Create scenario with very long error messages approaching 50K characters
+- Verify context size check triggers before exceeding limit
+- Verify workflow exits with error and manual resolution guidance
+- Verify context size error message is clear
+
+**Step 9.7**: Validate Response Structure []
+- Verify `ChangesSummary` contains all TypeSpec changes (Phase A)
+- Verify `ChangesSummary` contains all code patches (Phase B) or manual guidance
+- Verify `ModifiedFiles` lists all touched files in both repos
+- Verify `BuildResult` accurately reflects final build status
+- Verify `PhaseAAttempts` and `PhaseBAttempts` counters are correct
+- Verify `NextSteps` provides clear guidance based on outcome:
+  - Success: "Review changes and commit if approved"
+  - Partial success: "Some issues remain, review and fix manually"
+  - Failure: "Manual intervention required, see error details"
+
+---
+
+### Implementation Notes
+
+**Assumptions**:
+- Classifier logic will be implemented by another developer
+- Both azure-sdk-for-* and azure-rest-api-specs repos are cloned locally
+- Build errors are acceptable outcome (no errors required for success)
+- ClientCustomizationCodePatchTool already exists and is functional
+- Microagent framework (IMicroagentHostService) is available and working
+
+**Dependencies**:
+- `IMicroagentHostService` - For AI agent orchestration
+- `ITspClientHelper` - For TypeSpec regeneration
+- `ISpecGenSdkConfigHelper` - For build validation
+- `ClientCustomizationCodePatchTool` - For code patching (already exists)
+- `eng/common/knowledge/customizing-client-tsp.md` - Reference document (already exists)
+
+**Key Design Decisions**:
+- **Narrow scope Phase B**: Mechanical fixes only, returns guidance when uncertain (correctness over coverage)
+- **Response-based approval**: Tool returns summary, agent handles user interaction
+- **File presence detection**: Phase B activates on customization file existence after Phase A build failure (not keyword matching)
+- **Context concatenation**: Simple append approach for iteration history
+- **Hard limits**: 2 attempts per phase, 50K character context size, 50-70% Phase B success target acceptable
+- **Microagents for both phases**: Leverage existing framework for AI operations
+- **Spec-first always**: Never route to Phase B proactively, always start with Phase A
+
+---

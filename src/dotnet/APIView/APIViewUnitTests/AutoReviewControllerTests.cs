@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb;
-using APIViewWeb.Controllers;
+using APIViewWeb.LeanControllers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
@@ -43,11 +43,10 @@ namespace APIViewUnitTests
 
             _controller = new AutoReviewController(
                 _mockCodeFileManager.Object,
-                _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
                 _mockAutoReviewService.Object,
-                _mockConfiguration.Object,
-                _languageServices);
+                _languageServices,
+                _mockConfiguration.Object);
 
             // Set up the HTTP context with a mock user principal
             SetupControllerContext();

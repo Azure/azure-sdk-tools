@@ -1,5 +1,12 @@
 # Release History
 
+## 0.6.0 (2025-12-16)
+
+### Features Added
+
+* Support access and analyze pipeline logs via azsdk-cli
+* Enhance HTML content preprocessing to handle various encoding scenarios
+
 ## 0.5.0 (2025-12-10)
 
 ### Features Added

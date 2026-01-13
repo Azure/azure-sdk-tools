@@ -11,7 +11,7 @@ import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
 import { SplitterModule } from 'primeng/splitter';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
 import { PanelModule } from 'primeng/panel';
@@ -26,18 +26,18 @@ describe('SamplesPageComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [
-        SamplesPageComponent,
+        SamplesPageComponent
+      ],
+      imports: [
         NavBarComponent,
         ReviewInfoComponent,
         ReviewPageLayoutComponent,
         PageOptionsSectionComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         SplitterModule,
-        SidebarModule,
+        DrawerModule,
         PanelModule,
         MenuModule,
         MenubarModule,

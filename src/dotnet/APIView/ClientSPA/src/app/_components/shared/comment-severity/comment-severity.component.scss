@@ -36,44 +36,21 @@
 
 // Severity badge colors
 .severity-question {
-  background-color: #e3f2fd;
-  color: #1976d2;
+  background-color: var(--severity-question-bg);
+  color: var(--severity-question-text);
 }
 
 .severity-suggestion {
-  background-color: #f3e5f5;
-  color: #7b1fa2;
+  background-color: var(--severity-suggestion-bg);
+  color: var(--severity-suggestion-text);
 }
 
 .severity-should-fix {
-  background-color: #fff3e0;
-  color: #e65100;
+  background-color: var(--severity-should-fix-bg);
+  color: var(--severity-should-fix-text);
 }
 
 .severity-must-fix {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-// Dark mode support
-:host-context(.dark-mode) {
-  .severity-question {
-    background-color: rgba(33, 150, 243, 0.2);
-    color: #90caf9;
-  }
-
-  .severity-suggestion {
-    background-color: rgba(156, 39, 176, 0.2);
-    color: #ce93d8;
-  }
-
-  .severity-should-fix {
-    background-color: rgba(255, 152, 0, 0.2);
-    color: #ffb74d;
-  }
-
-  .severity-must-fix {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #ef5350;
-  }
+  background-color: var(--severity-must-fix-bg);
+  color: var(--severity-must-fix-text);
 }

@@ -1,4 +1,4 @@
-@import "../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+@use "../../../../../APIViewWeb/Client/css/shared/mixins.scss" as *;
 
 :host ::ng-deep {
     #langauge-filter p-columnfilterformelement,

@@ -28,7 +28,7 @@ function Get-McpVersion {
         throw "Azure SDK CLI executable not found at: $exePath"
     }
     
-    $versionOutput = & $exePath --version 2>&1
+    $version = & $exePath --version 2>&1
     
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to run azsdk --version command. Exit code: $LASTEXITCODE"
@@ -74,6 +74,13 @@ function Generate-McpToolsMarkdown {
 # Tools available in Azure SDK MCP server
 
 This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version $version.
+
+<style>
+table td:nth-child(2),
+table th:nth-child(2) {
+  white-space: nowrap;
+}
+</style>
 
 ## Tools list
 

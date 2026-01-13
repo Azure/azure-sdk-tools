@@ -10,8 +10,8 @@ describe('AICommentDeleteDialogComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AICommentDeleteDialogComponent],
       imports: [
+        AICommentDeleteDialogComponent,
         FormsModule,
         DialogModule,
         NoopAnimationsModule
@@ -36,29 +36,29 @@ describe('AICommentDeleteDialogComponent', () => {
     spyOn(component.deleteConfirm, 'emit');
     component.commentId = 'test-123';
     component.reason = '';
-    
+
     component.onDelete();
-    
+
     expect(component.deleteConfirm.emit).not.toHaveBeenCalled();
   });
 
   it('should reset form after successful delete', () => {
     component.reason = 'This comment is wrong';
-    
+
     component.onDelete();
-    
+
     expect(component.reason).toBe('');
   });
 
   it('should reset form on cancel', () => {
     component.reason = 'Some reason';
     component.visible = true;
-    
+
     spyOn(component.visibleChange, 'emit');
     spyOn(component.cancel, 'emit');
-    
+
     component.onCancel();
-    
+
     expect(component.reason).toBe('');
     expect(component.visible).toBe(false);
     expect(component.visibleChange.emit).toHaveBeenCalledWith(false);
@@ -67,11 +67,11 @@ describe('AICommentDeleteDialogComponent', () => {
 
   it('should reset form on hide', () => {
     component.reason = 'Some reason';
-    
+
     spyOn(component.cancel, 'emit');
-    
+
     component.onHide();
-    
+
     expect(component.reason).toBe('');
     expect(component.cancel.emit).toHaveBeenCalled();
   });

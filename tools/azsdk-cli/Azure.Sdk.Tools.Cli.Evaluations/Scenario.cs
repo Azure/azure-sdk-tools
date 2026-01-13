@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
     {
         // Static services shared across all tests
         protected static IChatClient? s_chatClient;
-        protected static IMcpClient? s_mcpClient;
+        protected static McpClient? s_mcpClient;
         protected static ChatCompletion? s_chatCompletion;
         protected static IEnumerable<string>? s_toolNames;
         protected static ChatConfiguration? s_chatConfig;

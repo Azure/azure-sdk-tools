@@ -39,6 +39,7 @@ public class AgentHelpers
                 CreatedBy = comment.CreatedBy,
                 CommentText = comment.CommentText,
                 IsResolved = comment.IsResolved,
+                ThreadId = comment.ThreadId,
                 Severity = comment.Severity?.ToString() ?? String.Empty
             }).ToList();
     }

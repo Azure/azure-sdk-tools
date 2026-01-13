@@ -8,38 +8,31 @@ import { RevisionsListComponent } from 'src/app/_components/revisions-list/revis
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { TableModule } from 'primeng/table';
 import { ChipModule } from 'primeng/chip';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { MenubarModule } from 'primeng/menubar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SplitterModule } from 'primeng/splitter';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 import { TimeagoModule } from 'ngx-timeago';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
-import { MessagesModule } from 'primeng/messages';
+import { MessageModule } from 'primeng/message';
 import { BadgeModule } from 'primeng/badge';
 import { SimplemdeModule } from 'ngx-simplemde';
 import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
 import { environment } from 'src/environments/environment';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
-  baseUrl: environment.assetsPath 
+  baseUrl: `${environment.assetsPath}/monaco/min/vs`
 };
- 
+
 
 @NgModule({
-  declarations: [
-    NavBarComponent,
-    RevisionsListComponent,
-    LanguageNamesPipe,
-    LastUpdatedOnPipe,
-    ApprovalPipe
-  ],
   exports: [
     NavBarComponent,
     RevisionsListComponent,
@@ -50,19 +43,19 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     ContextMenuModule,
     TableModule,
     ChipModule,
-    DropdownModule,
+    SelectModule,
     MenubarModule,
-    MessagesModule,
+    MessageModule,
     MultiSelectModule,
     FormsModule,
     IconFieldModule,
     InputIconModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,
     SplitterModule,
-    SidebarModule,
+    DrawerModule,
     TimeagoModule,
     InputTextModule,
     SimplemdeModule,
@@ -74,23 +67,28 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     ContextMenuModule,
     TableModule,
     ChipModule,
-    DropdownModule,
+    SelectModule,
     MenubarModule,
-    MessagesModule,
+    MessageModule,
     MultiSelectModule,
     FormsModule,
     IconFieldModule,
     InputIconModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,
     SplitterModule,
-    SidebarModule,
+    DrawerModule,
     InputTextModule,
     TimeagoModule.forRoot(),
     SimplemdeModule.forRoot(),
-    MonacoEditorModule.forRoot(monacoEditorConfig)
+    MonacoEditorModule.forRoot(monacoEditorConfig),
+    NavBarComponent,
+    RevisionsListComponent,
+    LanguageNamesPipe,
+    LastUpdatedOnPipe,
+    ApprovalPipe
   ]
 })
 export class SharedAppModule { }

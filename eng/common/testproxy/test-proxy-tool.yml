@@ -64,26 +64,26 @@ steps:
       displayName: 'Configure Kestrel and PROXY_MANUAL_START Variables'
       condition: and(succeeded(), ${{ parameters.condition }})
 
-    - pwsh: |
-        $needsInstall = $true
-        try {
-          $needsInstall = -not (& dotnet --list-sdks 2>$null |
-            ForEach-Object { ($_ -split '\s+\[')[0] } |
-            Where-Object { $_ -like '9.*' -or $_ -like '10.*' })
-        } catch {
-          $needsInstall = $true
-        }
-        Write-Host "##vso[task.setvariable variable=InstallDotNet9]$needsInstall"
-      displayName: Detect compatible dotnet
-      condition: and(succeeded(), eq(variables['Agent.OS'],'Darwin'), ${{ parameters.condition }})
+    # - pwsh: |
+    #     $needsInstall = $true
+    #     try {
+    #       $needsInstall = -not (& dotnet --list-sdks 2>$null |
+    #         ForEach-Object { ($_ -split '\s+\[')[0] } |
+    #         Where-Object { $_ -like '9.*' -or $_ -like '10.*' })
+    #     } catch {
+    #       $needsInstall = $true
+    #     }
+    #     Write-Host "##vso[task.setvariable variable=InstallDotNet9]$needsInstall"
+    #   displayName: Detect compatible dotnet
+    #   condition: and(succeeded(), eq(variables['Agent.OS'],'Darwin'), ${{ parameters.condition }})
 
-    - pwsh: |
-        Write-Host "Yes"
-      displayName: 'We should use dotnet'
-      condition: and(succeeded(),
-                   eq(variables['Agent.OS'],'Darwin'),
-                   eq(variables['InstallDotNet9'],'True'),
-                   ${{ parameters.condition }})
+    # - pwsh: |
+    #     Write-Host "Yes"
+    #   displayName: 'We should use dotnet'
+    #   condition: and(succeeded(),
+    #                eq(variables['Agent.OS'],'Darwin'),
+    #                eq(variables['InstallDotNet9'],'True'),
+    #                ${{ parameters.condition }})
 
     # - task: UseDotNet@2
     #   displayName: "Use .NET SDK 9.0.x"
@@ -131,6 +131,7 @@ steps:
       workingDirectory: "${{ parameters.rootFolder }}"
       env:
         DOTNET_ROLL_FORWARD: 'Major'
+        DOTNET_ROOT: '$HOME/.dotnet'
 
     - pwsh: |
         for ($i = 0; $i -lt 10; $i++) {

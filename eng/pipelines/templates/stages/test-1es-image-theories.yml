@@ -29,7 +29,27 @@ extends:
                   Write-Host "$(DOTNET_HOST)"
                 displayName: 'Dump DOTNET_HOST value after installation and run of Test Proxy'
 
-              - template: /eng/common/testproxy/publish-proxy-logs.yml
+              - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
+
+              - pwsh: |
+                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy.log
+                  foreach($file in $files){
+                      Write-Host "##[group]$file"
+                      cat $file
+                      Write-Host "##[endgroup]"
+                  }
+                displayName: Dump Test-Proxy Logs
+                condition: succeededOrFailed()
+
+              - pwsh: |
+                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy-error.log
+                  foreach($file in $files){
+                      Write-Host "##[group]$file"
+                      cat $file
+                      Write-Host "##[endgroup]"
+                  }
+                displayName: Dump Test-Proxy Error Logs
+                condition: succeededOrFailed()
 
           - job: 'Windows'
 
@@ -53,7 +73,27 @@ extends:
                   Write-Host "$(DOTNET_HOST)"
                 displayName: 'Dump DOTNET_HOST value after installation and run of Test Proxy'
 
-              - template: /eng/common/testproxy/publish-proxy-logs.yml
+              - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
+
+              - pwsh: |
+                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy.log
+                  foreach($file in $files){
+                      Write-Host "##[group]$file"
+                      cat $file
+                      Write-Host "##[endgroup]"
+                  }
+                displayName: Dump Test-Proxy Logs
+                condition: succeededOrFailed()
+
+              - pwsh: |
+                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy-error.log
+                  foreach($file in $files){
+                      Write-Host "##[group]$file"
+                      cat $file
+                      Write-Host "##[endgroup]"
+                  }
+                displayName: Dump Test-Proxy Error Logs
+                condition: succeededOrFailed()
 
           - job: 'Linux'
 
@@ -77,4 +117,24 @@ extends:
                   Write-Host "$(DOTNET_HOST)"
                 displayName: 'Dump DOTNET_HOST value after installation and run of Test Proxy'
 
-              - template: /eng/common/testproxy/publish-proxy-logs.yml
+              - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
+
+              - pwsh: |
+                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy.log
+                  foreach($file in $files){
+                      Write-Host "##[group]$file"
+                      cat $file
+                      Write-Host "##[endgroup]"
+                  }
+                displayName: Dump Test-Proxy Logs
+                condition: succeededOrFailed()
+
+              - pwsh: |
+                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy-error.log
+                  foreach($file in $files){
+                      Write-Host "##[group]$file"
+                      cat $file
+                      Write-Host "##[endgroup]"
+                  }
+                displayName: Dump Test-Proxy Error Logs
+                condition: succeededOrFailed()

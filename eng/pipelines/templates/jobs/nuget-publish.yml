@@ -54,8 +54,6 @@ jobs:
       - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
         parameters:
           SkipCheckoutNone: true
-          Paths:
-            - eng/scripts/Verify-Nuget-Artifact-Changelogs.ps1
 
       - download: none # Disable the automatic downloading so that we can download ourselves to the location we want.
       - task: DownloadPipelineArtifact@2

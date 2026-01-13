@@ -57,10 +57,6 @@ stages:
       - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
         parameters:
           SkipCheckoutNone: true
-          Paths:
-            - eng/pipelines/templates/scripts/
-            - eng/scripts/Increment-dotnet-package.ps1
-            - eng/common/scripts/Update-Changelog.ps1
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages

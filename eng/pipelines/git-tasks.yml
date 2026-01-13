@@ -41,9 +41,6 @@ jobs:
         deploy:
           steps:
             - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-              parameters:
-                Paths:
-                  - eng/common/scripts/Delete-RemoteTag.ps1
             - task: PowerShell@2
               displayName: Delete remote tag
               condition: succeeded()

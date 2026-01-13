@@ -105,9 +105,6 @@ stages:
           - Name: Azure/azure-sdk-tools
             Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
-        Paths:
-          - eng/scripts/autorest/
-          - eng/common/scripts/
     
     - task: NuGetAuthenticate@1
 
@@ -223,9 +220,6 @@ stages:
           - Name: Azure/azure-sdk-tools
             Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(Build.SourcesDirectory)
-        Paths:
-          - eng/scripts/autorest/
-          - eng/common/pipelines/templates/steps/
 
     - task: NuGetAuthenticate@1
 
@@ -311,9 +305,6 @@ stages:
             - Name: Azure/azure-sdk-tools
               Commitish: $(Build.SourceVersion)
               WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
-          Paths:
-            - eng/scripts/autorest/
-            - eng/common/scripts/
 
       - task: NuGetAuthenticate@1
 
@@ -385,8 +376,6 @@ stages:
           - Name: Azure/azure-sdk-tools
             Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
-        Paths:
-          - eng/common/scripts/
 
     - task: NuGetAuthenticate@1
 
@@ -459,8 +448,6 @@ stages:
           - Name: Azure/azure-sdk-tools
             Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
-        Paths:
-          - eng/common/scripts/
     - task: NuGetAuthenticate@1
     # Checkout the SDK repository for regeneration
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -523,8 +510,6 @@ stages:
           - Name: Azure/azure-sdk-tools
             Commitish: $(Build.SourceVersion)
             WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
-        Paths:
-          - eng/common/scripts/
 
     - pwsh: |
         $generateJobResult = '$(generateJobResult)'

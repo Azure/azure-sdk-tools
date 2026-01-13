@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Prompts;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Telemetry
 {
-    public class ConversationAnalysisPromptTemplate : PromptTemplateBase
-    {
+    public class ConversationAnalysisPromptTemplate : BasePromptTemplate
+    {        public override string TemplateId => "conversation-analysis";
+        public override string Version => "1.0.0";
+        public override string Description => "Analyzes conversation content to extract topics, categories, and insights";
         public override string BuildPrompt()
         {
             return """

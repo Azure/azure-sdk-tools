@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Telemetry
 {
@@ -91,9 +92,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Telemetry
             };
 
             var mainCommand = new Command("telemetry", "Session-based conversation telemetry tracking");
-            mainCommand.AddCommand(startCommand);
-            mainCommand.AddCommand(addCommand);
-            mainCommand.AddCommand(endCommand);
+            mainCommand.Add(startCommand);
+            mainCommand.Add(addCommand);
+            mainCommand.Add(endCommand);
 
             return mainCommand;
         }
@@ -388,13 +389,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Telemetry
         {
             try
             {
-                var microagent = new ConversationSummaryMicroagent();
                 var promptTemplate = new ConversationAnalysisPromptTemplate();
                 
                 var prompt = promptTemplate.BuildPrompt()
                     .Replace("{{conversation_content}}", conversationContent);
 
-                var result = await microagentHost.RunMicroagent(microagent, prompt);
+                var microagent = new Microagent<ConversationSummaryResult>
+                {
+                    Instructions = prompt
+                };
+
+                var result = await microagentHost.RunAgentToCompletion(microagent);
                 
                 if (result != null)
                 {

@@ -9,7 +9,7 @@ Your task is to analyze the core question from user and determine the best tenan
 ### Azure SDK Onboarding
 Questions about Azure API/SDK onboarding, SDK develop lifecycle, Azure MCP and retirement processes:
 - Onboarding Azure API/SDK prerequisites and setup
-- Permission of spec repo or SDK repo access
+- Permission issue related to specification repo and SDK repo
 - Onboarding new API specification or new service
 - General SDK development, generation(validation), release tooling and guidance
 - Service, API or SDK deprecation guidance

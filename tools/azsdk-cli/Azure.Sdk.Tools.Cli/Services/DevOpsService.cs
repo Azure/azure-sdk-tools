@@ -111,15 +111,15 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
-        private Lazy<Task<List<WorkItemRelationType>>>? _cachedRelationTypes;
+        private List<WorkItemRelationType>? _cachedRelationTypes;
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
-        private Lazy<Task<List<WorkItemRelationType>>> GetCachedRelationTypes() =>
-            _cachedRelationTypes ??= new(() => connection.GetWorkItemClient().GetRelationTypesAsync());
+        private async Task<List<WorkItemRelationType>> GetCachedRelationTypes() =>
+            _cachedRelationTypes ??= await connection.GetWorkItemClient().GetRelationTypesAsync();
 
         public async Task<List<ReleasePlanDetails>> ListOverdueReleasePlansAsync()
         {
@@ -467,8 +467,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Resolve relation type system name/reference
             // ex: Child, Parent, Related, etc map to the appropriate name.
-            var relationTypes = await GetCachedRelationTypes().Value;
-            var relationTypeSystemName = ResolveRelationTypeSystemName(relationTypes, relationType);
+            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType);
 
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
 
@@ -517,8 +516,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
         }
 
-        private static string ResolveRelationTypeSystemName(IEnumerable<WorkItemRelationType> relationTypes, string relationType)
+        private async Task<string> ResolveRelationTypeSystemName(string relationType)
         {
+            var relationTypes = await GetCachedRelationTypes();
+
             // Match service-provided relation type by display name (case-insensitive)
             var match = relationTypes.FirstOrDefault(rt => string.Equals(rt.Name, relationType, StringComparison.OrdinalIgnoreCase));
             if(match != null && match.ReferenceName != null)

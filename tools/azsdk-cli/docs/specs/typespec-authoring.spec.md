@@ -234,7 +234,7 @@ enum Versions {
 
 ## Design Proposal
 
-Build a custom agent `typespec-author-agent` that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
+Build a custom agent `azure-typespec-author-agent` that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
 The agent adopts Azure KB to provide solution for user request:
 
 Based on the request, the agent will invoke an Azure KB tool to retrieve the solution for user request and then apply the solution to edit TypeSpec files.

@@ -13,6 +13,8 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { MessageService } from 'primeng/api';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { SignalRServiceMock } from 'src/app/_services/signal-r/signal-r-test.mock';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;
@@ -46,7 +48,8 @@ describe('ReviewPageOptionsComponent', () => {
           useClass: HttpErrorInterceptorService,
           multi: true
         },
-        MessageService
+        MessageService,
+        { provide: SignalRService, useClass: SignalRServiceMock }
       ]
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);

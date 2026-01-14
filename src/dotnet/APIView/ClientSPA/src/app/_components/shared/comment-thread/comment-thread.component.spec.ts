@@ -8,6 +8,8 @@ import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { MessageService } from 'primeng/api';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { SignalRServiceMock } from 'src/app/_services/signal-r/signal-r-test.mock';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
@@ -18,12 +20,11 @@ describe('CommentThreadComponent', () => {
       imports: [
         CommentThreadComponent,
         HttpClientTestingModule,
-        ReviewPageModule,
-        SharedAppModule,
         NoopAnimationsModule
       ],
       providers: [
-        MessageService
+        MessageService,
+        { provide: SignalRService, useClass: SignalRServiceMock }
       ]
     });
     fixture = TestBed.createComponent(CommentThreadComponent);
@@ -123,8 +124,9 @@ describe('CommentThreadComponent', () => {
 
       component.codePanelRowData!.comments = [comment1, comment2];
       component.codePanelRowData!.isResolvedCommentThread = true;
-      fixture.detectChanges();
       component.setCommentResolutionState();
+      fixture.detectChanges();
+
       expect(component.threadResolvedBy).toBe('test user 2');
     });
   });

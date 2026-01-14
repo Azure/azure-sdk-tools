@@ -5,7 +5,14 @@
     "outDir": "./out-tsc/spec",
     "types": [
       "jasmine"
-    ]
+    ],
+    "lib": [
+      "ES2022",
+      "dom"
+    ],
+    "paths": {
+      "monaco-editor/esm/vs/editor/editor.api.js": ["src/app/monaco-test.mock.ts"]
+    }
   },
   "files": [
     "src/test.ts"

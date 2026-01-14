@@ -92,8 +92,8 @@ export function getAIReviewNotificationInfo(jobInfo : AIReviewJobCompletedDto, o
       action: 'RefreshPage',
     };
     // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
-    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
-    const pageUrl = `${window.location.protocol}//${window.location.host}${basePath}review/${jobInfo.reviewId}?activeApiRevisionId=${jobInfo.apirevisionId}`;
+    const basePath = location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
+    const pageUrl = `${location.protocol}//${location.host}${basePath}review/${jobInfo.reviewId}?activeApiRevisionId=${jobInfo.apirevisionId}`;
     const messagePart = (jobInfo.noOfGeneratedComments === 1) ? "comment" : "comments";
     const messageDetail = `Copilot generated ${jobInfo.noOfGeneratedComments} ${messagePart}.`;
     const summary = 'Copilot Comments';

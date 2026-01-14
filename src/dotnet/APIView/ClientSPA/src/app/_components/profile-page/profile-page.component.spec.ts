@@ -5,6 +5,8 @@ import { By } from '@angular/platform-browser';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { SignalRServiceMock } from 'src/app/_services/signal-r/signal-r-test.mock';
 
 describe('ProfilePageComponent', () => {
   let component: ProfilePageComponent;
@@ -25,11 +27,12 @@ describe('ProfilePageComponent', () => {
               paramMap: convertToParamMap({ userNme: 'test' }),
             }
           }
-        }
+        },
+        { provide: SignalRService, useClass: SignalRServiceMock }
       ]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(ProfilePageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -17,6 +17,27 @@ extends:
             steps:
               - template: /eng/pipelines/templates/steps/investigate-step-template-tool.yml
 
+          - job: 'Windows'
+
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
+
+            steps:
+              - template: /eng/pipelines/templates/steps/investigate-step-template-tool.yml
+
+          - job: 'Linux'
+
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+
+            steps:
+              - template: /eng/pipelines/templates/steps/investigate-step-template-tool.yml
+
+
           - job: 'MacOS2'
 
             pool:
@@ -27,7 +48,7 @@ extends:
             steps:
               - template: /eng/pipelines/templates/steps/investigate-step-template-no-tool.yml
 
-          - job: 'Windows'
+          - job: 'Windows2'
 
             pool:
               name: $(WINDOWSPOOL)
@@ -37,7 +58,7 @@ extends:
             steps:
               - template: /eng/pipelines/templates/steps/investigate-step-template-no-tool.yml
 
-          - job: 'Linux'
+          - job: 'Linux2'
 
             pool:
               name: $(LINUXPOOL)

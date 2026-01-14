@@ -55,7 +55,7 @@ public abstract class MCPToolBase
             activity?.SetTag(TagName.CommandArgs, commandLine);
 
             CommandResponse response = await HandleCommand(parseResult, cancellationToken);
-            activity?.SetTag(TagName.CommandResponse, response);
+            activity?.SetTag(TagName.CommandResponse, output.Format(response));
 
             if (response.ExitCode == 0)
             {
@@ -66,6 +66,9 @@ public abstract class MCPToolBase
                 activity?.SetStatus(ActivityStatusCode.Error);
             }
 
+            // Hoist all properties from the output response object to the tag level.
+            // This will enable KQL queries against command-specific output values
+            // without having to parse the raw string output given to the user.
             if (activity != null)
             {
                 AddCustomTelemetryFromResponse(activity, response);

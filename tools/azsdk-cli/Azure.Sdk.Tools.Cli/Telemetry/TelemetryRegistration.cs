@@ -20,7 +20,7 @@ internal enum TelemetryMode
 
 internal static class TelemetryRegistration
 {
-    private const string DefaultAppInsightsConnectionString = "InstrumentationKey=cf8756d3-ef86-4365-9da3-c3df9d28b1d3;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=9dd94d04-d58f-4d70-b9b2-40682cd7b3e7";
+    private const string DefaultAppInsightsConnectionString = "InstrumentationKey=61976f7a-4734-47a1-9fa0-0d5dcfda7f11;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=b22875b9-495e-4a5f-925a-a8b3b28ab441";
 
     internal static void AddTelemetry(this IServiceCollection services, bool debug)
     {
@@ -30,7 +30,8 @@ internal static class TelemetryRegistration
 
         var telemetryEnabled = IsTelemetryEnabled();
 
-        var openTelemetry = services.AddOpenTelemetry()
+        services
+            .AddOpenTelemetry()
             .ConfigureResource(ConfigureResource)
             .WithTracing(builder =>
             {
@@ -58,7 +59,8 @@ internal static class TelemetryRegistration
 
     private static void ConfigureTelemetryOptions(IServiceCollection services)
     {
-        services.AddOptions<AzSdkToolsMcpServerConfiguration>()
+        services
+            .AddOptions<AzSdkToolsMcpServerConfiguration>()
             .Configure(options =>
             {
                 var entryAssembly = Assembly.GetEntryAssembly();

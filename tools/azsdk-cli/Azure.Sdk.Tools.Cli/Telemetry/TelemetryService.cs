@@ -84,6 +84,10 @@ internal class TelemetryService : ITelemetryService
 
     public void Flush()
     {
+        // Do not block too long before exiting the CLI at the end of command execution,
+        // even if the telemetry upload is not complete.
+        // 2 seconds seems like a reasonable balance but most of the time the
+        // upload delay should be very quick and not noticeable to users.
         _tracerProvider?.ForceFlush(2000);
     }
 

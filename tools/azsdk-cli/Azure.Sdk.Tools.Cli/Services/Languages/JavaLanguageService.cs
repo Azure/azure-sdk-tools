@@ -244,34 +244,28 @@ public sealed partial class JavaLanguageService : LanguageService
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override string GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         try
         {
-            // In azure-sdk-for-java layout, generated code lives under:
-            //   <pkgRoot>/azure-<package>-<service>/src
-            // Customizations live under parallel directory:
+            // In azure-sdk-for-java layout, customizations live under:
             //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
             // Example (document intelligence):
-            //   generated root: .../azure-ai-documentintelligence/src
-            //   customization root: .../azure-ai-documentintelligence/customization/src/main/java
-            logger.LogInformation("Trying to resolve Java customization root from generationRoot '{GenerationRoot}'", generationRoot);
+            //   package path: .../azure-ai-documentintelligence
+            //   customization: .../azure-ai-documentintelligence/customization/src/main/java
+            logger.LogInformation("Checking for Java customizations in packagePath '{PackagePath}'", packagePath);
 
-            var customizationSourceRoot = Path.Combine(generationRoot, CustomizationDirName, "src", "main", "java");
+            var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
             var exists = Directory.Exists(customizationSourceRoot);
             logger.LogInformation("Checking customization path: {CustomizationPath}, exists: {Exists}", customizationSourceRoot, exists);
 
-            if (exists)
-            {
-                return customizationSourceRoot;
-            }
-            logger.LogInformation("No customization directory found, returning null");
+            return exists;
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Failed to resolve Java customization root from generationRoot '{GenerationRoot}'", generationRoot);
+            logger.LogDebug(ex, "Failed to check Java customizations in packagePath '{PackagePath}'", packagePath);
         }
-        return null;
+        return false;
     }
 
     public override async Task<bool> ApplyPatchesAsync(

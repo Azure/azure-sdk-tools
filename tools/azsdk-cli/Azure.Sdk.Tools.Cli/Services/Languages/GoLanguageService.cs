@@ -132,27 +132,42 @@ public partial class GoLanguageService : LanguageService
         return categories.TryGetValue("go", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 
-    public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
-        // In azure-sdk-for-go layout, customization files live in internal/generate subdirectory:
-        //   <packageRoot>/internal/generate/
-        // Example: sdk/messaging/eventgrid/azsystemevents/internal/generate
+        // Go customization files can live in different locations depending on the package.
+        // Known locations include:
+        //   - internal/generate (most common)
+        //   - testdata/generate (e.g., azcertificates)
+        // TODO: In the future, check tspconfig.yaml for "go-generate" directive for definitive detection.
+
+        // Check known customization locations in order of likelihood
+        string[] knownLocations = ["internal/generate", "testdata/generate"];
         
-        if (!Directory.Exists(generationRoot))
+        foreach (var location in knownLocations)
         {
-            logger.LogDebug("Cannot find customization root - generation root does not exist: {GenerationRoot}", generationRoot);
-            return null;
+            var customizationPath = Path.Combine(packagePath, location);
+            if (Directory.Exists(customizationPath))
+            {
+                // Verify the directory actually contains Go files (not just an empty directory)
+                try
+                {
+                    var goFiles = Directory.GetFiles(customizationPath, "*.go", SearchOption.TopDirectoryOnly);
+                    if (goFiles.Length > 0)
+                    {
+                        logger.LogDebug("Found {Count} Go customization file(s) at {CustomizationPath}", goFiles.Length, customizationPath);
+                        return true;
+                    }
+                    logger.LogDebug("Directory exists but contains no .go files: {CustomizationPath}", customizationPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error checking for Go files in {CustomizationPath}", customizationPath);
+                }
+            }
         }
 
-        var customizationRoot = Path.Combine(generationRoot, "internal", "generate");
-        if (Directory.Exists(customizationRoot))
-        {
-            logger.LogDebug("Found Go customization root: {CustomizationRoot}", customizationRoot);
-            return customizationRoot;
-        }
-
-        logger.LogDebug("No customization directory found at {CustomizationRoot}", customizationRoot);
-        return null;
+        logger.LogDebug("No Go customization files found in known locations for {PackagePath}", packagePath);
+        return false;
     }
 
     /// <summary>

@@ -124,34 +124,44 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             var customizationRoot = languageService.GetCustomizationRoot(packagePath, ct);
             logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
 
-            // Apply patches
-            var patchesApplied = await ApplyPatchesAsync(commitSha, customizationRoot, packagePath, languageService, ct);
             var guidance = new List<string>();
 
-            // If patches were applied, regenerate and build to validate the complete process
-            if (patchesApplied)
+            // Check if customizations exist - only activate Phase B if customization files are present
+            if (string.IsNullOrEmpty(customizationRoot))
             {
-                logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-                var (Success, ErrorMessage) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
-                if (!Success)
-                {
-                    logger.LogWarning("Code regeneration failed: {Error}", ErrorMessage);
-                    guidance.Add($"Code regeneration failed after applying patches: {ErrorMessage}");
-                    guidance.Add("");
-                    guidance.Add(PATCHES_FAILED_GUIDANCE);
-                }
-                else
-                {
-                    logger.LogInformation("Regeneration successful, building SDK code to validate...");
-                    await BuildAndGenerateGuidanceAsync(packagePath, languageService, guidance, ct);
-                }
+                logger.LogInformation("No customization files detected - Phase B skipped");
+                guidance.Add(NO_CUSTOMIZATIONS_FOUND_NEXT_STEPS);
             }
             else
             {
-                // No patches applied or no customizations found
-                guidance.Add(string.IsNullOrEmpty(customizationRoot) || !Directory.Exists(customizationRoot) 
-                    ? NO_CUSTOMIZATIONS_FOUND_NEXT_STEPS 
-                    : PATCHES_FAILED_GUIDANCE);
+                logger.LogInformation("Customization files detected at: {CustomizationRoot} - activating Phase B", customizationRoot);
+                
+                // Phase B: Apply patches to customization code
+                var patchesApplied = await ApplyPatchesAsync(commitSha, customizationRoot, packagePath, languageService, ct);
+
+                // If patches were applied, regenerate and build to validate the complete process
+                if (patchesApplied)
+                {
+                    logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
+                    var (Success, ErrorMessage) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
+                    if (!Success)
+                    {
+                        logger.LogWarning("Code regeneration failed: {Error}", ErrorMessage);
+                        guidance.Add($"Code regeneration failed after applying patches: {ErrorMessage}");
+                        guidance.Add("");
+                        guidance.Add(PATCHES_FAILED_GUIDANCE);
+                    }
+                    else
+                    {
+                        logger.LogInformation("Regeneration successful, building SDK code to validate...");
+                        await BuildAndGenerateGuidanceAsync(packagePath, languageService, guidance, ct);
+                    }
+                }
+                else
+                {
+                    // Customizations exist but patches were not applied or failed
+                    guidance.Add(PATCHES_FAILED_GUIDANCE);
+                }
             }
 
             return new CustomizedCodeUpdateResponse

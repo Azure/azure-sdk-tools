@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.26 (Unreleased)
+Added the `--md` flag to additionally generate a markdown file that mimics the APIView UI.
+
 ## Version 0.3.25 (2025-12-01)
 Fixed a bug where the overload implementations were being included in the APIView, causing issues with extra APIView Copilot comments being generated.
 Fixed a bug where duplicate diagnostics were being added.

@@ -1,0 +1,27 @@
+parameters:
+  os: '$(Agent.OS)'
+
+steps:
+  - pwsh: |
+      dotnet --list-sdks
+    displayName: 'Run dotnet --list-sdks'
+
+  - pwsh: |
+      Get-ChildItem Env: | Format-List
+    displayName: 'Dump Environment'
+
+  - task: UseDotNet@2
+    displayName: "Use .NET SDK 9.0.x"
+    retryCountOnTaskFailure: 3
+    inputs:
+      packageType: sdk
+      version: 9.0.x
+      performMultiLevelLookup: true
+
+  - pwsh: |
+      dotnet --list-sdks
+    displayName: 'Run dotnet --list-sdks'
+
+  - pwsh: |
+      Get-ChildItem Env: | Format-List
+    displayName: 'Dump Environment'

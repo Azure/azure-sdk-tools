@@ -15,7 +15,7 @@ extends:
               os: macOS
 
             steps:
-              - template: /eng/pipelines/templates/steps/investigate-step-template.yml
+              - template: /eng/pipelines/templates/steps/investigate-step-template-tool.yml
 
           - job: 'MacOS2'
 
@@ -25,46 +25,24 @@ extends:
               os: macOS
 
             steps:
-            - pwsh: |
-                dotnet --list-sdks
-              displayName: 'Run dotnet --list-sdks'
+              - template: /eng/pipelines/templates/steps/investigate-step-template-no-tool.yml
 
-            - pwsh: |
-                Get-ChildItem Env: | Format-Table -AutoSize
-              displayName: 'Dump Environment'
+          - job: 'Windows'
 
-            - task: UseDotNet@2
-              displayName: "Use .NET SDK 9.0.x"
-              retryCountOnTaskFailure: 3
-              inputs:
-                packageType: sdk
-                version: 9.0.x
-                performMultiLevelLookup: true
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
 
-            - pwsh: |
-                dotnet --list-sdks
-              displayName: 'Run dotnet --list-sdks'
+            steps:
+              - template: /eng/pipelines/templates/steps/investigate-step-template-no-tool.yml
 
-            - pwsh: |
-                Get-ChildItem Env: | Format-Table -AutoSize
-              displayName: 'Dump Environment'
+          - job: 'Linux'
 
-          # - job: 'Windows'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
 
-          #   pool:
-          #     name: $(WINDOWSPOOL)
-          #     image: $(WINDOWSVMIMAGE)
-          #     os: windows
-
-          #   steps:
-          #     template: /eng/pipelines/templates/steps/investigate-step-template.yml
-
-          # - job: 'Linux'
-
-          #   pool:
-          #     name: $(LINUXPOOL)
-          #     image: $(LINUXVMIMAGE)
-          #     os: linux
-
-          #   steps:
-          #     template: /eng/pipelines/templates/steps/investigate-step-template.yml
+            steps:
+              - template: /eng/pipelines/templates/steps/investigate-step-template-no-tool.yml

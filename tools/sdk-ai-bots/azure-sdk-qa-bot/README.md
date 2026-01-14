@@ -71,7 +71,7 @@ go run main.go
 ### Start Bot app
 
 1. Click 'Debug in Microsoft 365 Agents Playground' button in ENVIRONMENT 'testtool'
-   ![debug](image.png)
+   ![debug-local](doc\images\debug-local.png)
 2. choose 'Node.js' -> Run Script: dev:teamsfx:testtool
 
 ### Start Microsoft 365 Agents Playground - Simulate Teams Channel

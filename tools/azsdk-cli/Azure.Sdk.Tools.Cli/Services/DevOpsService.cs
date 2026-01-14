@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
-
+        private IEnumerable<WorkItemRelationType>? _cachedRelationTypes;
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
@@ -459,8 +459,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Resolve relation type system name/reference
             // ex: Child, Parent, Related, etc map to the appropriate name.
-            var relationTypes = await workItemClient.GetRelationTypesAsync();
-            var relationTypeSystemName = ResolveRelationTypeSystemName(relationTypes, relationType);
+            _cachedRelationTypes ??= await workItemClient.GetRelationTypesAsync();
+            var relationTypeSystemName = ResolveRelationTypeSystemName(_cachedRelationTypes, relationType);
 
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
 
@@ -506,9 +506,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 });
             }
 
-            await workItemClient.UpdateWorkItemAsync(patchDocument, id);
-            var workItem = await workItemClient.GetWorkItemAsync(id, expand: WorkItemExpand.All);
-            return workItem;
+            return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
         }
 
         private static string ResolveRelationTypeSystemName(IEnumerable<WorkItemRelationType> relationTypes, string relationType)

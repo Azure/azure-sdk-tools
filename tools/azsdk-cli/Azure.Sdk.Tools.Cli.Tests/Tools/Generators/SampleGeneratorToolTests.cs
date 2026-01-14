@@ -530,17 +530,16 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public async Task GenerateSamples_MissingPromptOption_ShowsError()
+    public void GenerateSamples_MissingPromptOption_ShowsError()
     {
         // Arrange: create a valid package path but omit --prompt (required)
         var (_, packagePath) = CreateFakeGoPackage();
         var command = tool.GetCommandInstances().First();
 
-        // Act: invoke without required --prompt
+        // Act: parse without required --prompt
         var parseResult = command.Parse(["generate", "--package-path", packagePath]);
-        int exitCode = await parseResult.InvokeAsync();
 
         // Assert: parser/tool should fail with non-zero exit code
-        Assert.That(exitCode, Is.Not.EqualTo(0), "Expected non-zero exit code when required --prompt option is missing");
+        Assert.That(parseResult.Errors, Is.Not.Empty, "Expected parse errors when required --prompt option is missing");
     }
 }

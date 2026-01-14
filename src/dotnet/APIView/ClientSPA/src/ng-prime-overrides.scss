@@ -170,7 +170,7 @@ p-contextmenusub {
 }
 
 .p-checkbox .p-checkbox-box .p-checkbox-icon {
-    color: var(--primary-btn-color) !important;
+    color: var(--checkbox-icon-color) !important;
 }
 
 .p-datatable .p-datatable-tbody > tr:focus {
@@ -572,6 +572,70 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:focus
     color: var(--primary-btn-color) !important;
 }
 
+/* Severity Dropdown Styling */
+.severity-dropdown,
+p-select.severity-dropdown {
+    min-width: 100px !important;
+    max-width: 150px !important;
+}
+
+.severity-dropdown .p-select,
+p-select.severity-dropdown .p-select,
+.p-component.severity-dropdown,
+.severity-edit-container .p-select {
+    border: 1px solid var(--border-color) !important;
+    border-radius: 20px !important;
+    background: var(--base-fg-color) !important;
+    box-shadow: none !important;
+    transition: all .2s !important;
+    max-height: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    min-width: 100px !important;
+    max-width: 150px !important;
+    overflow: hidden !important;
+}
+
+.severity-dropdown .p-select .p-select-label,
+p-select.severity-dropdown .p-select .p-select-label,
+.severity-edit-container .p-select .p-select-label {
+    padding: 4px 12px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: var(--base-text-color) !important;
+    border-radius: 20px 0 0 20px !important;
+    background: var(--base-fg-color) !important;
+    border: none !important;
+    line-height: 1.2 !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.severity-dropdown .p-select .p-select-dropdown,
+p-select.severity-dropdown .p-select .p-select-dropdown,
+.severity-edit-container .p-select .p-select-dropdown {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    border-left: 1px solid var(--border-color) !important;
+    background: var(--base-fg-color) !important;
+    border-radius: 0 20px 20px 0 !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+.severity-dropdown .p-select .p-select-dropdown .p-select-dropdown-icon,
+p-select.severity-dropdown .p-select .p-select-dropdown .p-select-dropdown-icon,
+.severity-edit-container .p-select .p-select-dropdown .p-select-dropdown-icon {
+    color: var(--base-text-color) !important;
+    font-size: 11px !important;
+}
+
 /* Emphasis Badge (Global) */
 .emphasis-badge {
     border-radius: 5px;
@@ -820,12 +884,19 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.
 p-inputswitch, .p-inputswitch, .p-toggleswitch {
     width: 40px !important;
     height: 24px !important;
+    flex-shrink: 0 !important;
+    min-width: 40px !important;
 }
 
-.p-inputswitch .p-inputswitch-slider, .p-toggleswitch .p-toggleswitch-slider {
+.p-inputswitch .p-inputswitch-slider,
+.p-toggleswitch .p-toggleswitch-slider {
     border-radius: 30px;
     background: var(--base-bg-color);
     border: 1px solid var(--border-color);
+    position: relative;
+    width: 40px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
 }
 
 .p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
@@ -834,28 +905,32 @@ p-inputswitch, .p-inputswitch, .p-toggleswitch {
     border-color: var(--link-active) !important;
 }
 
-.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before,
-.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider:before {
-    transform: none !important;
-    left: calc(100% - 1.25rem) !important;
-    background: var(--primary-btn-color) !important;
-}
-
 .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider,
 .p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider {
     background: var(--primary-color) !important;
     border-color: var(--primary-color) !important;
 }
 
+.p-toggleswitch-handle {
+    background: var(--toggle-switch-off) !important;
+    width: 16px !important;
+    height: 16px !important;
+    left: 2px !important;
+    top: 50% !important;
+    margin-top: -8px !important;
+    border-radius: 50% !important;
+    transition: all 0.2s !important;
+    position: absolute !important;
+}
+
+.p-toggleswitch-checked .p-toggleswitch-handle {
+    left: 20px !important;
+    background: var(--toggle-switch-on) !important;
+}
+
 .p-inputswitch .p-inputswitch-slider:before,
 .p-toggleswitch .p-toggleswitch-slider:before {
-    background: var(--border-color);
-    width: 1rem;
-    height: 1rem;
-    left: 0.25rem;
-    margin-top: -0.5rem;
-    border-radius: 50%;
-    transition-duration: 0.2s;
+    display: none !important;
 }
 
 .p-message .p-message-content {

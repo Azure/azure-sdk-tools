@@ -12,8 +12,8 @@ describe('ApiRevisionOptionsComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RevisionOptionsComponent],
       imports: [
+        RevisionOptionsComponent,
         SharedAppModule,
         ReviewPageModule
       ],
@@ -114,7 +114,7 @@ describe('ApiRevisionOptionsComponent', () => {
         lastUpdatedOn: '2021-07-04T00:00:00Z',
       },
     ];
- 
+
     it('should correctly tag the latest GA APIRevision', () => {
       var result = component.tagLatestGARevision(apiRevisions);
       expect(result.id).toEqual('3');

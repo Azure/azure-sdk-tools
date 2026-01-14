@@ -12,8 +12,10 @@ describe('NavBarComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [NavBarComponent],
-      imports: [HttpClientTestingModule],
+      imports: [
+        NavBarComponent,
+        HttpClientTestingModule
+      ],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         {

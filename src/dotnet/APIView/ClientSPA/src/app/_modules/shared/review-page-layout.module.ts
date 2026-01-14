@@ -26,22 +26,6 @@ import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
 import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cross-lang-view.component';
 
 @NgModule({
-  declarations: [
-    ReviewInfoComponent,
-    CommentThreadComponent,
-    RelatedCommentsDialogComponent,
-    AICommentFeedbackDialogComponent,
-    AICommentDeleteDialogComponent,
-    CommentSeverityComponent,
-    CrossLangViewComponent,
-    ConversationsComponent,
-    ReviewPageLayoutComponent,
-    RevisionOptionsComponent,
-    PageOptionsSectionComponent,
-    MarkdownToHtmlPipe,
-    HtmlToMarkdownPipe,
-    EditorComponent,
-  ],
   exports: [
     ReviewInfoComponent,
     CommentThreadComponent,
@@ -77,7 +61,21 @@ import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cros
     CheckboxModule,
     PopoverModule,
     TooltipModule,
-    RippleModule
+    RippleModule,
+    ReviewInfoComponent,
+    CommentThreadComponent,
+    RelatedCommentsDialogComponent,
+    AICommentFeedbackDialogComponent,
+    AICommentDeleteDialogComponent,
+    CommentSeverityComponent,
+    CrossLangViewComponent,
+    ConversationsComponent,
+    ReviewPageLayoutComponent,
+    RevisionOptionsComponent,
+    PageOptionsSectionComponent,
+    MarkdownToHtmlPipe,
+    HtmlToMarkdownPipe,
+    EditorComponent
   ]
 })
 export class ReviewPageLayoutModule { }

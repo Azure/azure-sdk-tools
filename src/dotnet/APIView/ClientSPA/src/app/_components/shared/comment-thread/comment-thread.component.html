@@ -27,9 +27,9 @@
                         (onHide)="onSeverityDropdownHide()"
                         optionLabel="label"
                         optionValue="value"
-                        [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
                         styleClass="severity-dropdown"
                         overlayStyleClass="severity-dropdown-panel"
+                        appendTo="body"
                         (click)="$event.stopPropagation()">
                     </p-select>
                 </div>
@@ -138,8 +138,9 @@
                     (ngModelChange)="onSeveritySelectionChange($event)"
                     optionLabel="label"
                     optionValue="value"
-                    [style]="{'min-width': '120px'}"
+                    styleClass="severity-dropdown"
                     overlayStyleClass="severity-dropdown-panel"
+                    appendTo="body"
                     [showClear]="false">
                 </p-select>
             </div>

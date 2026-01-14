@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <returns>Absolute path to customization root or <c>null</c> if none is found / applicable.</returns>
         public virtual string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
         {
-            return "This is not an applicable operation for this language";
+            return null;
         }
 
         /// <summary>

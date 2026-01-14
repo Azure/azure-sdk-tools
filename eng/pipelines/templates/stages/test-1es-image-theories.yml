@@ -15,102 +15,56 @@ extends:
               os: macOS
 
             steps:
-              - pwsh: |
-                  dotnet --list-sdks
-                displayName: 'Run dotnet --list-sdks'
+              template: /eng/pipelines/templates/steps/investigate-step-template.yml
 
-              - template: /eng/common/testproxy/test-proxy-tool.yml
-
-              - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
-
-              - pwsh: |
-                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy.log
-                  foreach($file in $files){
-                      Write-Host "##[group]$file"
-                      cat $file
-                      Write-Host "##[endgroup]"
-                  }
-                displayName: Dump Test-Proxy Logs
-                condition: succeededOrFailed()
-
-              - pwsh: |
-                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy-error.log
-                  foreach($file in $files){
-                      Write-Host "##[group]$file"
-                      cat $file
-                      Write-Host "##[endgroup]"
-                  }
-                displayName: Dump Test-Proxy Error Logs
-                condition: succeededOrFailed()
-
-          - job: 'Windows'
+          - job: 'MacOS'
 
             pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
+              name: $(MACPOOL)
+              vmImage: $(MACVMIMAGE)
+              os: macOS
 
             steps:
-              - pwsh: |
-                  dotnet --list-sdks
-                displayName: 'Run dotnet --list-sdks'
+            - pwsh: |
+                dotnet --list-sdks
+              displayName: 'Run dotnet --list-sdks'
 
-              - template: /eng/common/testproxy/test-proxy-tool.yml
+            - pwsh: |
+                Get-ChildItem Env: | Format-Table -AutoSize
+              displayName: 'Dump Environment'
 
-              - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
+            - task: UseDotNet@2
+              displayName: "Use .NET SDK 9.0.x"
+              retryCountOnTaskFailure: 3
+              inputs:
+                packageType: sdk
+                version: 9.0.x
+                performMultiLevelLookup: true
 
-              - pwsh: |
-                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy.log
-                  foreach($file in $files){
-                      Write-Host "##[group]$file"
-                      cat $file
-                      Write-Host "##[endgroup]"
-                  }
-                displayName: Dump Test-Proxy Logs
-                condition: succeededOrFailed()
+            - pwsh: |
+                dotnet --list-sdks
+              displayName: 'Run dotnet --list-sdks'
 
-              - pwsh: |
-                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy-error.log
-                  foreach($file in $files){
-                      Write-Host "##[group]$file"
-                      cat $file
-                      Write-Host "##[endgroup]"
-                  }
-                displayName: Dump Test-Proxy Error Logs
-                condition: succeededOrFailed()
+            - pwsh: |
+                Get-ChildItem Env: | Format-Table -AutoSize
+              displayName: 'Dump Environment'
 
-          - job: 'Linux'
+          # - job: 'Windows'
 
-            pool:
-              name: $(LINUXPOOL)
-              image: $(LINUXVMIMAGE)
-              os: linux
+          #   pool:
+          #     name: $(WINDOWSPOOL)
+          #     image: $(WINDOWSVMIMAGE)
+          #     os: windows
 
-            steps:
-              - pwsh: |
-                  dotnet --list-sdks
-                displayName: 'Run dotnet --list-sdks'
+          #   steps:
+          #     template: /eng/pipelines/templates/steps/investigate-step-template.yml
 
-              - template: /eng/common/testproxy/test-proxy-tool.yml
+          # - job: 'Linux'
 
-              - template: /eng/common/testproxy/test-proxy-tool-shutdown.yml
+          #   pool:
+          #     name: $(LINUXPOOL)
+          #     image: $(LINUXVMIMAGE)
+          #     os: linux
 
-              - pwsh: |
-                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy.log
-                  foreach($file in $files){
-                      Write-Host "##[group]$file"
-                      cat $file
-                      Write-Host "##[endgroup]"
-                  }
-                displayName: Dump Test-Proxy Logs
-                condition: succeededOrFailed()
-
-              - pwsh: |
-                  $files = Get-ChildItem -Path $(Build.SourcesDirectory) -Filter test-proxy-error.log
-                  foreach($file in $files){
-                      Write-Host "##[group]$file"
-                      cat $file
-                      Write-Host "##[endgroup]"
-                  }
-                displayName: Dump Test-Proxy Error Logs
-                condition: succeededOrFailed()
+          #   steps:
+          #     template: /eng/pipelines/templates/steps/investigate-step-template.yml

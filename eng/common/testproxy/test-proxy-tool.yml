@@ -85,18 +85,6 @@ steps:
     #                eq(variables['InstallDotNet9'],'True'),
     #                ${{ parameters.condition }})
 
-    # - task: UseDotNet@2
-    #   displayName: "Use .NET SDK 9.0.x"
-    #   retryCountOnTaskFailure: 3
-    #   condition: and(succeeded(),
-    #                eq(variables['Agent.OS'],'Darwin'),
-    #                eq(variables['InstallDotNet9'],'True'),
-    #                ${{ parameters.condition }})
-    #   inputs:
-    #     packageType: sdk
-    #     version: 9.0.x
-    #     performMultiLevelLookup: true
-
     - pwsh: |
         $invocation = @"
         Start-Process $(Build.BinariesDirectory)/test-proxy/test-proxy.exe
@@ -120,9 +108,6 @@ steps:
 
     # nohup does NOT continue beyond the current session if you use it within powershell
     - bash: |
-        if [[ "$(uname)" == "Darwin" ]]; then
-          export DOTNET_ROOT="$HOME/.dotnet"
-        fi
         nohup $(Build.BinariesDirectory)/test-proxy/test-proxy 1>${{ parameters.rootFolder }}/test-proxy.log 2>${{ parameters.rootFolder }}/test-proxy-error.log &
 
         echo $! > $(Build.SourcesDirectory)/test-proxy.pid
@@ -136,7 +121,7 @@ steps:
         DOTNET_ROLL_FORWARD: 'Major'
 
     - pwsh: |
-        for ($i = 0; $i -lt 10; $i++) {
+        for ($i = 0; $i -lt 3; $i++) {
             try {
                 Write-Host "Invoke-WebRequest -Uri `"http://localhost:5000/Admin/IsAlive`" | Out-Null"
                 Invoke-WebRequest -Uri "http://localhost:5000/Admin/IsAlive" | Out-Null
@@ -144,7 +129,7 @@ steps:
                 exit 0
             } catch {
                 Write-Warning "Failed to successfully connect to test proxy. Retrying..."
-                Start-Sleep 6
+                Start-Sleep 10
             }
         }
         Write-Error "Could not connect to test proxy."

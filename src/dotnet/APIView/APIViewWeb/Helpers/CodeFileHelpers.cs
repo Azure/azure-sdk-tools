@@ -525,6 +525,28 @@ namespace APIViewWeb.Helpers
             }
         }
 
+        /// <summary>
+        /// Adds a line to resultLines, positioning it before its related line if needed.
+        /// </summary>
+        private static void AddLineToResult(List<ReviewLine> resultLines, ReviewLine line)
+        {
+            bool isDecorator = string.IsNullOrEmpty(line.LineId) 
+                && !string.IsNullOrEmpty(line.RelatedToLine) 
+                && line.IsContextEndLine != true
+                && line.Tokens.Count > 0;
+            
+            if (isDecorator)
+            {
+                int relatedIndex = resultLines.FindIndex(l => l.LineId == line.RelatedToLine);
+                if (relatedIndex >= 0)
+                {
+                    resultLines.Insert(relatedIndex, line);
+                    return;
+                }
+            }
+            resultLines.Add(line);
+        }
+
         public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
         {
             List<ReviewLine> resultLines = [];
@@ -602,7 +624,7 @@ namespace APIViewWeb.Helpers
                     }
                     else
                     {
-                        resultLines.Add(line);
+                        AddLineToResult(resultLines, line);
                     }
                     continue;
                 }

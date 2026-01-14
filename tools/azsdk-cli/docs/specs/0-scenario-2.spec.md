@@ -1015,7 +1015,7 @@ These are intentionally left for follow-up design (Wes to clarify):
      - Packing step is currently missing from the tools
      - Not needed for local development scenarios
      - Required for pipeline scenarios to produce distributable artifacts
-     - Decision needed: Add dedicated `azsdk_package_pack` tool or integrate packing into existing tools
+     - Add dedicated `azsdk_package_pack` tool or integrate packing into existing tools
 
 ---
 

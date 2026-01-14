@@ -228,36 +228,39 @@ public sealed partial class DotnetLanguageService: LanguageService
         return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 
-    public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.
         // Customizations are partial types defined outside the Generated folder.
         // Example: sdk/ai/Azure.AI.DocumentIntelligence/src/
         //   - Generated/ (generated code)
         //   - Customized/ or other folders (customization code with partial classes)
-        
-        if (!Directory.Exists(generationRoot))
-        {
-            logger.LogDebug("Cannot find customization root - generation root does not exist: {GenerationRoot}", generationRoot);
-            return null;
-        }
 
         try
         {
-            var csFiles = Directory.GetFiles(generationRoot, "*.cs", SearchOption.AllDirectories)
-                .Where(file => !file.Contains(Path.DirectorySeparatorChar + "Generated" + Path.DirectorySeparatorChar) &&
-                               !file.EndsWith(Path.DirectorySeparatorChar + "Generated", StringComparison.OrdinalIgnoreCase));
+            var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories)
+                .Where(file => !IsInGeneratedDirectory(file));
             
             foreach (var file in csFiles)
             {
                 try
                 {
-                    var content = File.ReadAllText(file);
-                    if (content.Contains("partial class", StringComparison.OrdinalIgnoreCase))
+                    // Use ReadLines for efficiency - stop reading as soon as we find a partial class
+                    foreach (var line in File.ReadLines(file))
                     {
-                        var customizationDir = Path.GetDirectoryName(file);
-                        logger.LogDebug("Found .NET partial class in: {FilePath}, returning customization root: {CustomizationRoot}", file, customizationDir);
-                        return customizationDir;
+                        // Skip comment lines and look for partial class declarations
+                        var trimmedLine = line.TrimStart();
+                        if (trimmedLine.StartsWith("//") || trimmedLine.StartsWith("/*") || trimmedLine.StartsWith("*"))
+                        {
+                            continue;
+                        }
+                        
+                        // Check for partial class keyword (case-sensitive for C#)
+                        if (trimmedLine.Contains("partial class ") || trimmedLine.Contains("partial class\t"))
+                        {
+                            logger.LogDebug("Found .NET partial class in: {FilePath}", file);
+                            return true;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -266,13 +269,32 @@ public sealed partial class DotnetLanguageService: LanguageService
                 }
             }
 
-            logger.LogDebug("No .NET partial classes found outside Generated folder in {GenerationRoot}", generationRoot);
-            return null;
+            logger.LogDebug("No .NET partial classes found outside Generated folder in {PackagePath}", packagePath);
+            return false;
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Error searching for .NET customization files in {GenerationRoot}", generationRoot);
-            return null;
+            logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
+            return false;
         }
+    }
+
+    /// <summary>
+    /// Checks if a file path is within a "Generated" directory at any level.
+    /// Walks up the directory tree to handle cross-platform path scenarios.
+    /// </summary>
+    private static bool IsInGeneratedDirectory(string filePath)
+    {
+        var directory = Path.GetDirectoryName(filePath);
+        while (!string.IsNullOrEmpty(directory))
+        {
+            var dirName = Path.GetFileName(directory);
+            if (string.Equals(dirName, "Generated", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            directory = Path.GetDirectoryName(directory);
+        }
+        return false;
     }
 }

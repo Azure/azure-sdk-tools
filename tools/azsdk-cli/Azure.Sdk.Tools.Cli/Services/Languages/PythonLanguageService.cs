@@ -123,32 +123,24 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     return (packageName, packageVersion);
 }
 
-    public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
-        if (!Directory.Exists(generationRoot))
-        {
-            logger.LogDebug("Cannot find customization root - generation root does not exist: {GenerationRoot}", generationRoot);
-            return null;
-        }
-
         try
         {
-            var patchFiles = Directory.GetFiles(generationRoot, "*_patch.py", SearchOption.AllDirectories);
+            var patchFiles = Directory.GetFiles(packagePath, "*_patch.py", SearchOption.AllDirectories);
             if (patchFiles.Length > 0)
             {
-                // Return the common parent directory of all patch files
-                var firstPatchDir = Path.GetDirectoryName(patchFiles[0]);
-                logger.LogDebug("Found {Count} Python _patch.py file(s), returning customization root: {CustomizationRoot}", patchFiles.Length, firstPatchDir);
-                return firstPatchDir;
+                logger.LogDebug("Found {Count} Python _patch.py file(s) in {PackagePath}", patchFiles.Length, packagePath);
+                return true;
             }
 
-            logger.LogDebug("No Python _patch.py files found in {GenerationRoot}", generationRoot);
-            return null;
+            logger.LogDebug("No Python _patch.py files found in {PackagePath}", packagePath);
+            return false;
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Error searching for Python customization files in {GenerationRoot}", generationRoot);
-            return null;
+            logger.LogWarning(ex, "Error searching for Python customization files in {PackagePath}", packagePath);
+            return false;
         }
     }
 

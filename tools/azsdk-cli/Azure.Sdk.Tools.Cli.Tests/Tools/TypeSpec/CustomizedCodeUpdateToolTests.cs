@@ -28,7 +28,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override bool IsCustomizedCodeUpdateSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) => null; // No customizations found
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => false; // No customizations found
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
@@ -55,8 +55,7 @@ public class CustomizedCodeUpdateToolAutoTests
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
-            Path.Combine(generationRoot, "customization"); // Mock customization root exists
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
             => Task.FromResult(true); // Simulate successful patch application
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
@@ -147,8 +146,7 @@ public class CustomizedCodeUpdateToolAutoTests
         private Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
-            Path.Combine(generationRoot, "customization"); // Mock customization root exists
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
         {

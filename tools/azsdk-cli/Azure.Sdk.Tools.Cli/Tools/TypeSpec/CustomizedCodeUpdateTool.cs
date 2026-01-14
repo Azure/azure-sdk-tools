@@ -124,23 +124,23 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 };
             }
 
-            var customizationRoot = languageService.GetCustomizationRoot(packagePath, ct);
-            logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
+            var hasCustomizations = languageService.HasCustomizations(packagePath, ct);
+            logger.LogDebug("Has customizations: {HasCustomizations}", hasCustomizations);
 
             var guidance = new List<string>();
 
             // Check if customizations exist - only activate Phase B if customization files are present
-            if (string.IsNullOrEmpty(customizationRoot))
+            if (!hasCustomizations)
             {
                 logger.LogInformation("No customization files detected - Phase B skipped");
                 guidance.Add(NO_CUSTOMIZATIONS_FOUND_NEXT_STEPS);
             }
             else
             {
-                logger.LogInformation("Customization files detected at: {CustomizationRoot} - activating Phase B", customizationRoot);
+                logger.LogInformation("Customization files detected - activating Phase B");
                 
                 // Phase B: Apply patches to customization code
-                var patchesApplied = await ApplyPatchesAsync(commitSha, customizationRoot, packagePath, languageService, ct);
+                var patchesApplied = await ApplyPatchesAsync(commitSha, packagePath, packagePath, languageService, ct);
 
                 // If patches were applied, regenerate and build to validate the complete process
                 if (patchesApplied)
@@ -162,7 +162,10 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 }
                 else
                 {
-                    // Customizations exist but patches were not applied or failed
+                    // Customizations exist but patches were not applied. This can happen when:
+                    // - No applicable changes were found between old and new generated code
+                    // - The patching process encountered errors (check earlier logs for details)
+                    logger.LogInformation("Patches were not applied. This may indicate no applicable changes or a patching error. See earlier logs for details.");
                     guidance.Add(PATCHES_FAILED_GUIDANCE);
                 }
             }

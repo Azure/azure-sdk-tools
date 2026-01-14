@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
-        private readonly Lazy<Task<IEnumerable<WorkItemRelationType>>> _cachedRelationTypes =
+        private readonly Lazy<Task<List<WorkItemRelationType>>> _cachedRelationTypes =
             new(() => connection.GetWorkItemClient().GetRelationTypesAsync());
         
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };

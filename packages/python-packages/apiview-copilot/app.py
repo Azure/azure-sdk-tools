@@ -29,7 +29,7 @@ from src._mention import handle_mention_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, run_prompty
-from src.agent._agent import get_main_agent, invoke_agent
+from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
@@ -171,14 +171,26 @@ class AgentChatResponse(BaseModel):
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat(
     request: AgentChatRequest,
-    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER, AppRole.WRITER, AppRole.APP_WRITER)),
 ):
     """Handle chat requests to the agent."""
     logger.info("Received /agent/chat request: user_input=%s, thread_id=%s", request.user_input, request.thread_id)
     try:
-        async with get_main_agent() as agent:
+        roles = _claims.get("roles", [])
+        if isinstance(roles, str):
+            roles = roles.split()
+        token_roles = set(roles)
+
+        is_writer = (AppRole.WRITER.value in token_roles) or (AppRole.APP_WRITER.value in token_roles)
+        agent_factory = get_readwrite_agent if is_writer else get_readonly_agent
+
+        with agent_factory() as (client, agent_id):
             response, thread_id_out, messages = await invoke_agent(
-                agent=agent, user_input=request.user_input, thread_id=request.thread_id, messages=request.messages
+                client=client,
+                agent_id=agent_id,
+                user_input=request.user_input,
+                thread_id=request.thread_id,
+                messages=request.messages,
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
     except AgentInvokeException as e:
@@ -186,7 +198,7 @@ async def agent_chat(
             logger.warning("Rate limit exceeded: %s", e)
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.") from e
         logger.error("AgentInvokeException: %s", e)
-        raise HTTPException(status_code=500, detail="Agent error: {e}") from e
+        raise HTTPException(status_code=500, detail=f"Agent error: {e}") from e
     except Exception as e:
         logger.error("Error in /agent/chat: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e

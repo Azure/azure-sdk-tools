@@ -30,6 +30,7 @@ public sealed partial class PythonLanguageService : LanguageService
         this.npxHelper = npxHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
@@ -118,6 +119,35 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     }
     return (packageName, packageVersion);
 }
+
+    public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    {
+        if (!Directory.Exists(generationRoot))
+        {
+            logger.LogDebug("Cannot find customization root - generation root does not exist: {GenerationRoot}", generationRoot);
+            return null;
+        }
+
+        try
+        {
+            var patchFiles = Directory.GetFiles(generationRoot, "*_patch.py", SearchOption.AllDirectories);
+            if (patchFiles.Length > 0)
+            {
+                // Return the common parent directory of all patch files
+                var firstPatchDir = Path.GetDirectoryName(patchFiles[0]);
+                logger.LogDebug("Found {Count} Python _patch.py file(s), returning customization root: {CustomizationRoot}", patchFiles.Length, firstPatchDir);
+                return firstPatchDir;
+            }
+
+            logger.LogDebug("No Python _patch.py files found in {GenerationRoot}", generationRoot);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for Python customization files in {GenerationRoot}", generationRoot);
+            return null;
+        }
+    }
 
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {

@@ -33,6 +33,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
+    public override bool IsCustomizedCodeUpdateSupported => true;
     /// <summary>
     /// Gets the default samples directory path relative to the package path.
     /// </summary>
@@ -222,5 +223,53 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
         return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
+
+    public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    {
+        // In azure-sdk-for-net, generated code lives in the Generated folder.
+        // Customizations are partial types defined outside the Generated folder.
+        // Example: sdk/ai/Azure.AI.DocumentIntelligence/src/
+        //   - Generated/ (generated code)
+        //   - Customized/ or other folders (customization code with partial classes)
+        
+        if (!Directory.Exists(generationRoot))
+        {
+            logger.LogDebug("Cannot find customization root - generation root does not exist: {GenerationRoot}", generationRoot);
+            return null;
+        }
+
+        try
+        {
+            var csFiles = Directory.GetFiles(generationRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(file => !file.Contains(Path.DirectorySeparatorChar + "Generated" + Path.DirectorySeparatorChar) &&
+                               !file.EndsWith(Path.DirectorySeparatorChar + "Generated", StringComparison.OrdinalIgnoreCase));
+            
+            foreach (var file in csFiles)
+            {
+                try
+                {
+                    var content = File.ReadAllText(file);
+                    if (content.Contains("partial class", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var customizationDir = Path.GetDirectoryName(file);
+                        logger.LogDebug("Found .NET partial class in: {FilePath}, returning customization root: {CustomizationRoot}", file, customizationDir);
+                        return customizationDir;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to read file {FilePath} for partial class detection", file);
+                }
+            }
+
+            logger.LogDebug("No .NET partial classes found outside Generated folder in {GenerationRoot}", generationRoot);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for .NET customization files in {GenerationRoot}", generationRoot);
+            return null;
+        }
     }
 }

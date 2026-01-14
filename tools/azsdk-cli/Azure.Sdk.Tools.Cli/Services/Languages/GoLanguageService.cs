@@ -34,6 +34,7 @@ public partial class GoLanguageService : LanguageService
     private readonly IPowershellHelper powershellHelper;
 
     public override SdkLanguage Language { get; } = SdkLanguage.Go;
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
@@ -129,6 +130,29 @@ public partial class GoLanguageService : LanguageService
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
         return categories.TryGetValue("go", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
+
+    public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    {
+        // In azure-sdk-for-go layout, customization files live in internal/generate subdirectory:
+        //   <packageRoot>/internal/generate/
+        // Example: sdk/messaging/eventgrid/azsystemevents/internal/generate
+        
+        if (!Directory.Exists(generationRoot))
+        {
+            logger.LogDebug("Cannot find customization root - generation root does not exist: {GenerationRoot}", generationRoot);
+            return null;
+        }
+
+        var customizationRoot = Path.Combine(generationRoot, "internal", "generate");
+        if (Directory.Exists(customizationRoot))
+        {
+            logger.LogDebug("Found Go customization root: {CustomizationRoot}", customizationRoot);
+            return customizationRoot;
+        }
+
+        logger.LogDebug("No customization directory found at {CustomizationRoot}", customizationRoot);
+        return null;
     }
 
     /// <summary>

@@ -473,7 +473,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 		Messages:       messages,
 		DeploymentName: &s.model,
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-		TopP:           to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
+		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
 	}, nil)
 	if err != nil {
 		// Check if this is a rate limit error (429)

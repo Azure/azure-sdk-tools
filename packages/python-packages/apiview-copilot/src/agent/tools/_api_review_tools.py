@@ -40,6 +40,24 @@ class ApiReviewTools(Tool):
 
         return result
 
+    def _resolve_revision_id(self, revision_id: Optional[str], url: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+        """
+        Helper to resolve revision_id from either the ID itself or a URL.
+        Returns: (revision_id, error_json)
+        If successful, error_json is None.
+        If failed, revision_id is None and error_json contains the error message.
+        """
+        if url:
+            parsed = self._parse_apiview_url(url)
+            revision_id = parsed.get("revisionId")
+            if not revision_id:
+                return None, json.dumps({"error": "Could not extract activeApiRevisionId from URL"})
+
+        if not revision_id:
+            return None, json.dumps({"error": "Must provide either revision_id or url parameter"})
+
+        return revision_id, None
+
     def review_api(self, *, language: str, target: str):
         """
         Perform an API review on a single API.
@@ -71,14 +89,9 @@ class ApiReviewTools(Tool):
             url (str, optional): The APIView URL containing activeApiRevisionId parameter.
         Note: Provide either revision_id OR url, not both.
         """
-        if url:
-            parsed = self._parse_apiview_url(url)
-            revision_id = parsed.get("revisionId")
-            if not revision_id:
-                return json.dumps({"error": "Could not extract activeApiRevisionId from URL"})
-
-        if not revision_id:
-            return json.dumps({"error": "Must provide either revision_id or url parameter"})
+        revision_id, error = self._resolve_revision_id(revision_id, url)
+        if error:
+            return error
 
         client = ApiViewClient()
         return asyncio.run(client.get_revision_text(revision_id=revision_id))
@@ -114,14 +127,9 @@ class ApiReviewTools(Tool):
             url (str, optional): The APIView URL containing activeApiRevisionId parameter.
         Note: Provide either revision_id OR url, not both.
         """
-        if url:
-            parsed = self._parse_apiview_url(url)
-            revision_id = parsed.get("revisionId")
-            if not revision_id:
-                return json.dumps({"error": "Could not extract activeApiRevisionId from URL"})
-
-        if not revision_id:
-            return json.dumps({"error": "Must provide either revision_id or url parameter"})
+        revision_id, error = self._resolve_revision_id(revision_id, url)
+        if error:
+            return error
 
         client = ApiViewClient()
         return asyncio.run(client.get_revision_outline(revision_id=revision_id))
@@ -134,14 +142,9 @@ class ApiReviewTools(Tool):
             url (str, optional): The APIView URL containing activeApiRevisionId parameter.
         Note: Provide either revision_id OR url, not both.
         """
-        if url:
-            parsed = self._parse_apiview_url(url)
-            revision_id = parsed.get("revisionId")
-            if not revision_id:
-                return json.dumps({"error": "Could not extract activeApiRevisionId from URL"})
-
-        if not revision_id:
-            return json.dumps({"error": "Must provide either revision_id or url parameter"})
+        revision_id, error = self._resolve_revision_id(revision_id, url)
+        if error:
+            return error
 
         client = ApiViewClient()
         return asyncio.run(client.get_review_comments(revision_id=revision_id))

@@ -40,7 +40,7 @@ jobs:
       runOnce:
         deploy:
           steps:
-            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+            - checkout: self
             - task: PowerShell@2
               displayName: Delete remote tag
               condition: succeeded()

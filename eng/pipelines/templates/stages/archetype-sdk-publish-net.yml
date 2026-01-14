@@ -54,9 +54,7 @@ stages:
       - checkout: azure-sdk-build-tools
         path: _azure-sdk-build-tools
 
-      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-        parameters:
-          SkipCheckoutNone: true
+      - checkout: self
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages

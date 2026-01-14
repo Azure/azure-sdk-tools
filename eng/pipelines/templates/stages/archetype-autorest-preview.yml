@@ -98,13 +98,7 @@ stages:
     - checkout: self
       path: s/autorest
 
-    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-      parameters:
-        SkipCheckoutNone: true
-        Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
-            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
+    - checkout: azure-sdk-tools
     
     - task: NuGetAuthenticate@1
 
@@ -214,12 +208,7 @@ stages:
   jobs:
   - job: Publish
     steps:
-    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-      parameters:
-        Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
-            WorkingDirectory: $(Build.SourcesDirectory)
+    - checkout: azure-sdk-tools
 
     - task: NuGetAuthenticate@1
 
@@ -298,13 +287,7 @@ stages:
       - checkout: self
         path: s/autorest # Use a predictable path for the `self` repo
 
-      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-        parameters:
-          SkipCheckoutNone: true
-          Repositories:
-            - Name: Azure/azure-sdk-tools
-              Commitish: $(Build.SourceVersion)
-              WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
+      - checkout: azure-sdk-tools
 
       - task: NuGetAuthenticate@1
 
@@ -369,13 +352,7 @@ stages:
         SkipCheckoutNone: true
     - checkout: self
       path: s/autorest
-    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-      parameters:
-        SkipCheckoutNone: true
-        Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
-            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
+    - checkout: azure-sdk-tools
 
     - task: NuGetAuthenticate@1
 
@@ -441,15 +418,8 @@ stages:
       matrixArtifactsPath: $(Pipeline.Workspace)/matrix_artifacts
     steps:
     - checkout: self
-    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-      parameters:
-        SkipCheckoutNone: true
-        Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
-            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
+    - checkout: azure-sdk-tools
     - task: NuGetAuthenticate@1
-    # Checkout the SDK repository for regeneration
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Paths:
@@ -503,13 +473,7 @@ stages:
       generatorVersion: $[stageDependencies.Build.Build.outputs['ci_build.generatorVersion']]
     steps:
     - checkout: self
-    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-      parameters:
-        SkipCheckoutNone: true
-        Repositories:
-          - Name: Azure/azure-sdk-tools
-            Commitish: $(Build.SourceVersion)
-            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools
+    - checkout: azure-sdk-tools
 
     - pwsh: |
         $generateJobResult = '$(generateJobResult)'

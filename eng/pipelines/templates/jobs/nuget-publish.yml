@@ -51,9 +51,7 @@ jobs:
       - checkout: azure-sdk-build-tools
         path: _azure-sdk-build-tools
 
-      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-        parameters:
-          SkipCheckoutNone: true
+      - checkout: self
 
       - download: none # Disable the automatic downloading so that we can download ourselves to the location we want.
       - task: DownloadPipelineArtifact@2

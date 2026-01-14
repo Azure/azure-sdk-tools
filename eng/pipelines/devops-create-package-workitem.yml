@@ -44,7 +44,7 @@ parameters:
   default: ''
 
 steps:
-- template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+- checkout: self
 
 - task: AzureCLI@2
   displayName: Create Package Work Item

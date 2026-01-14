@@ -111,7 +111,9 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
-        private IEnumerable<WorkItemRelationType>? _cachedRelationTypes;
+        private readonly Lazy<Task<IEnumerable<WorkItemRelationType>>> _cachedRelationTypes =
+            new(() => connection.GetWorkItemClient().GetRelationTypesAsync());
+        
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
@@ -463,8 +465,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Resolve relation type system name/reference
             // ex: Child, Parent, Related, etc map to the appropriate name.
-            _cachedRelationTypes ??= await workItemClient.GetRelationTypesAsync();
-            var relationTypeSystemName = ResolveRelationTypeSystemName(_cachedRelationTypes, relationType);
+            var relationTypes = await _cachedRelationTypes.Value;
+            var relationTypeSystemName = ResolveRelationTypeSystemName(relationTypes, relationType);
 
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
 

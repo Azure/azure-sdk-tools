@@ -167,24 +167,11 @@ public class VersionUpdateTool : LanguageMcpTool
                     var scriptParameters = new Dictionary<string, string>
                     {
                         { "SdkRepoPath", sdkRepoRoot },
-                        { "PackagePath", packagePath }
+                        { "PackagePath", packagePath },
+                        { "ReleaseType", releaseType ?? string.Empty },
+                        { "Version", version ?? string.Empty },
+                        { "ReleaseDate", releaseDate }
                     };
-
-                    // Add optional parameters if provided
-                    if (!string.IsNullOrWhiteSpace(releaseType))
-                    {
-                        scriptParameters["ReleaseType"] = releaseType;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(version))
-                    {
-                        scriptParameters["Version"] = version;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(releaseDate))
-                    {
-                        scriptParameters["ReleaseDate"] = releaseDate;
-                    }
                     
                     // Create and execute process options for the update-version script
                     var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
@@ -205,7 +192,7 @@ public class VersionUpdateTool : LanguageMcpTool
             }
 
             // Run default logic to update version
-            logger.LogInformation("Running default logic to update version for the package...");            
+            logger.LogInformation("Running default logic to update version for the package...");
             return await languageService.UpdateVersionAsync(packagePath, releaseType, version, releaseDate, ct);
         }
         catch (Exception ex)

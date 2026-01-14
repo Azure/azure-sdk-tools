@@ -15,7 +15,7 @@ extends:
               os: macOS
 
             steps:
-              template: /eng/pipelines/templates/steps/investigate-step-template.yml
+              - template: /eng/pipelines/templates/steps/investigate-step-template.yml
 
           - job: 'MacOS'
 

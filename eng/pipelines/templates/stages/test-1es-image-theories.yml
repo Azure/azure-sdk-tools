@@ -17,7 +17,7 @@ extends:
             steps:
               - template: /eng/pipelines/templates/steps/investigate-step-template.yml
 
-          - job: 'MacOS'
+          - job: 'MacOS2'
 
             pool:
               name: $(MACPOOL)

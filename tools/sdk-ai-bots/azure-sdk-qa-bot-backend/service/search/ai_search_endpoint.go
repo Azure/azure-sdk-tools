@@ -491,7 +491,6 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 // deduplicateExpansions removes duplicate chunk expansions considering hierarchy:
 // - If a header1 is being expanded, remove any header2/header3 under it
 // - If a header2 is being expanded, remove any header3 under it
-// - If a full file is being expanded, remove any other chunks from the same file
 func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansion) []model.ChunkWithExpansion {
 	result := make([]model.ChunkWithExpansion, 0)
 	processedChunks := make(map[string]bool)
@@ -499,16 +498,12 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 	// Track what hierarchies are being expanded
 	expandedHeader1 := make(map[string]bool) // contextID|title|header1
 	expandedHeader2 := make(map[string]bool) // contextID|title|header1|header2
-	expandedFiles := make(map[string]bool)   // contextID|title
 
 	// First pass: identify what's being expanded
 	for _, cwe := range expansions {
 		c := cwe.Chunk
-		fileKey := fmt.Sprintf("%s|%s", c.ContextID, c.Title)
 
 		switch cwe.Expansion {
-		case model.ExpansionFullFile:
-			expandedFiles[fileKey] = true
 		case model.ExpansionHierarchical:
 			Hierarchy := s.DetectChunkHierarchy(c)
 			switch Hierarchy {
@@ -525,26 +520,9 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 	// Second pass: filter out redundant expansions
 	for _, cwe := range expansions {
 		c := cwe.Chunk
-		fileKey := fmt.Sprintf("%s|%s", c.ContextID, c.Title)
-
 		// Check if already processed (exact duplicate)
 		chunkKey := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Chunk)
 		if processedChunks[chunkKey] {
-			continue
-		}
-
-		// For full file expansions, check if we've already processed this file
-		if cwe.Expansion == model.ExpansionFullFile {
-			if processedChunks[fileKey] {
-				log.Printf("Skipping duplicate full file expansion: %s/%s", c.ContextID, c.Title)
-				continue
-			}
-			processedChunks[fileKey] = true
-		}
-
-		// If this file is already being fully expanded, skip other chunks from it
-		if expandedFiles[fileKey] && cwe.Expansion != model.ExpansionFullFile {
-			log.Printf("Skipping chunk (file already expanded): %s/%s", c.ContextID, c.Title)
 			continue
 		}
 

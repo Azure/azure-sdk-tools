@@ -630,7 +630,6 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 // 1. Vector Search Results Processing:
 //   - Filters out chunks with rerank score below low relevance threshold
 //   - Applies special expansion rules for static chunks (TypeSpec QA, TypeSpec Migration, Mapping)
-//   - High-relevance chunks (score >= threshold): expands to full file content
 //   - Header-level chunks (H1/H2): applies hierarchical expansion to include sub chunks
 //   - Other chunks(H3): kept as-is without expansion
 //
@@ -645,7 +644,6 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 // 4. Parallel Chunk Expansion:
 //   - Uses goroutines to process all chunks concurrently for performance
 //   - Expansion strategies:
-//   - ExpansionFullFile: fetches and merges complete file content with headers
 //   - ExpansionQA: expands complete Q&A section under Header1
 //   - ExpansionMapping: expands complete code mapping section under Header2
 //   - ExpansionHierarchical: fetches all sub-chunks under detected hierarchy level (H1/H2)
@@ -661,7 +659,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
 	//  Add knowledge search results with scoring based on relevance
-	for i, result := range knowledgeResults {
+	for _, result := range knowledgeResults {
 		// Skip low relevance results
 		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
 			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
@@ -682,22 +680,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			allChunks = append(allChunks, model.ChunkWithExpansion{
 				Chunk:     result,
 				Expansion: model.ExpansionMapping,
-			})
-			continue
-		}
-
-		// High relevance results: expand the full file
-		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionFullFile,
-			})
-			continue
-		}
-		if i > 0 && knowledgeResults[i-1].ContextID != knowledgeResults[i].ContextID {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionFullFile,
 			})
 			continue
 		}
@@ -773,11 +755,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			chunk := cwe.Chunk
 
 			switch cwe.Expansion {
-			case model.ExpansionFullFile:
-				// Expand full file using CompleteChunk
-				chunks, _ := s.searchClient.GetCompleteContext(chunk)
-				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, chunks)
-				log.Printf("✓ Expanded full file: %s/%s", chunk.ContextID, chunk.Title)
 			case model.ExpansionQA:
 				// Expand complete QA chunk
 				subChunks, _ := s.searchClient.GetHeader1CompleteContext(chunk)

@@ -9,7 +9,6 @@ type ExpansionType int
 
 const (
 	ExpansionNone         ExpansionType = iota // No expansion needed - use chunk as-is
-	ExpansionFullFile                          // Expand entire file using CompleteChunk
 	ExpansionHierarchical                      // Expand based on header hierarchy
 	ExpansionQA                                // Expand based on Q&A pairs
 	ExpansionMapping                           // Expand based on TypeSpec to Swagger mapping

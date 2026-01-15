@@ -96,6 +96,8 @@ extends:
               - checkout: none
               - download: current
               - task: UsePythonVersion@0
+                inputs:
+                  versionSpec: '${{ parameters.PythonVersion}}'
 
               - script: |
                   set -e

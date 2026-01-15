@@ -360,15 +360,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
                 logger.LogInformation("Creating api spec with title: {apiSpecTitle}", apiSpecTitle);
-                var apiSpecWorkItem = await CreateWorkItemAsync(workItemFields, "API Spec", apiSpecTitle);
+                var apiSpecWorkItem = await CreateWorkItemAsync(workItemFields, "API Spec", apiSpecTitle, parentId: releasePlanWorkItemId);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
                     throw new Exception("Failed to create API spec work item");
                 }
-
-                // Link API spec as child of release plan
-                await CreateWorkItemRelationAsync(releasePlanWorkItemId, "child", targetUrl: apiSpecWorkItem.Url);
 
                 // Update release plan status to in progress
                 releasePlanWorkItem = await UpdateWorkItemAsync(releasePlanWorkItemId, new Dictionary<string, string>

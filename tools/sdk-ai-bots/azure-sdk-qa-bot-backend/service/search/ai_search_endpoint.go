@@ -489,49 +489,35 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 }
 
 // deduplicateExpansions removes duplicate chunk expansions considering hierarchy:
-// - If a header1 is being expanded, remove any header2/header3 under it
-// - If a header2 is being expanded, remove any header3 under it
+// - If a header1 is being expanded, remove any subsequent header2/header3 under it
+// - If a header2 is being expanded, remove any subsequent header3 under it
+// This respects the order/priority of expansions in the array
 func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansion) []model.ChunkWithExpansion {
 	result := make([]model.ChunkWithExpansion, 0)
 	processedChunks := make(map[string]bool)
 
-	// Track what hierarchies are being expanded
+	// Track what hierarchies have been expanded (built incrementally during iteration)
 	expandedHeader1 := make(map[string]bool) // contextID|title|header1
 	expandedHeader2 := make(map[string]bool) // contextID|title|header1|header2
 
-	// First pass: identify what's being expanded
+	// Process expansions in order, tracking what's been expanded
 	for _, cwe := range expansions {
 		c := cwe.Chunk
 
-		switch cwe.Expansion {
-		case model.ExpansionHierarchical:
-			Hierarchy := s.DetectChunkHierarchy(c)
-			switch Hierarchy {
-			case model.HierarchyHeader1:
-				h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
-				expandedHeader1[h1Key] = true
-			case model.HierarchyHeader2:
-				h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
-				expandedHeader2[h2Key] = true
-			}
-		}
-	}
-
-	// Second pass: filter out redundant expansions
-	for _, cwe := range expansions {
-		c := cwe.Chunk
 		// Check if already processed (exact duplicate)
 		chunkKey := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Chunk)
 		if processedChunks[chunkKey] {
 			continue
 		}
 
-		// If this is a header2/header3 chunk under an expanded header1, skip it
+		// Detect hierarchy once for efficiency
+		hierarchy := s.DetectChunkHierarchy(c)
+
+		// If this is a header2/header3 chunk under an already expanded header1, skip it
 		if c.Header1 != "" {
 			h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
 			if expandedHeader1[h1Key] {
-				Hierarchy := s.DetectChunkHierarchy(c)
-				switch Hierarchy {
+				switch hierarchy {
 				case model.HierarchyHeader2, model.HierarchyHeader3:
 					log.Printf("Skipping chunk (header1 already expanded): %s/%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2)
 					continue
@@ -539,12 +525,11 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 			}
 		}
 
-		// If this is a header3 chunk under an expanded header2, skip it
+		// If this is a header3 chunk under an already expanded header2, skip it
 		if c.Header1 != "" && c.Header2 != "" {
 			h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
 			if expandedHeader2[h2Key] {
-				Hierarchy := s.DetectChunkHierarchy(c)
-				switch Hierarchy {
+				switch hierarchy {
 				case model.HierarchyHeader3:
 					log.Printf("Skipping chunk (header2 already expanded): %s/%s#%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2, c.Header3)
 					continue
@@ -555,6 +540,18 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 		// Not redundant, keep it
 		processedChunks[chunkKey] = true
 		result = append(result, cwe)
+
+		// Track this expansion for future iterations
+		if cwe.Expansion == model.ExpansionHierarchical {
+			switch hierarchy {
+			case model.HierarchyHeader1:
+				h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
+				expandedHeader1[h1Key] = true
+			case model.HierarchyHeader2:
+				h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
+				expandedHeader2[h2Key] = true
+			}
+		}
 	}
 
 	return result

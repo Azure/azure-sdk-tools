@@ -81,7 +81,7 @@ extends:
         - stage: 'ReleaseToFeed'
           displayName: "Release to ${{ parameters.FeedName }}"
           dependsOn: Build
-          condition: and(succeeded(), ne(parameters.FeedName, ''))
+          condition: and(succeeded(), ne('${{ parameters.FeedName }}', ''))
           variables:
             - template: /eng/pipelines/templates/variables/globals.yml
             - template: /eng/pipelines/templates/variables/image.yml

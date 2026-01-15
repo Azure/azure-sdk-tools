@@ -141,8 +141,8 @@ extends:
                   targetPath: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
 
               pool:
-                image: ubuntu-24.04
-                name: azsdk-pool
+                image: $(LINUXVMIMAGE)
+                name: $(LINUXPOOL)
                 os: linux
 
               strategy:

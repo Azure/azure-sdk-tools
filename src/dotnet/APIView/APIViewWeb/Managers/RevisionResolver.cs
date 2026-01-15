@@ -104,7 +104,7 @@ public class RevisionResolver : IRevisionResolver
             return new RevisionResolveResult { ReviewId = revision.ReviewId, RevisionId = revision.Id };
         }
 
-        ReviewListItemModel review = (await _reviewManager.GetReviewsAsync(new List<string>{reviewId})).FirstOrDefault();
+        ReviewListItemModel review = (await _reviewManager.GetReviewsAsync([reviewId])).FirstOrDefault();
         if (review == null)
         {
             _logger.LogWarning("Review not found for ID: {ReviewId}", reviewId);

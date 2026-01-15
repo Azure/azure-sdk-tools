@@ -1,6 +1,6 @@
 using System;
 
-namespace APIViewWeb.Models;
+namespace APIViewWeb.LeanModels;
 
 public class ReviewMetadata
 {

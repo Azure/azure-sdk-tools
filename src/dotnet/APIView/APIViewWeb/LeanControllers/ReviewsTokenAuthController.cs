@@ -5,7 +5,6 @@ using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
-using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -118,7 +117,7 @@ public class ReviewsTokenAuthController : ControllerBase
                 return NotFound($"Revision '{revisionId}' not found.");
             }
 
-            ReviewListItemModel review = (await _reviewManager.GetReviewsAsync(new List<string>{revision.ReviewId})).FirstOrDefault();
+            ReviewListItemModel review = (await _reviewManager.GetReviewsAsync([revision.ReviewId])).FirstOrDefault();
             if (review == null)
             {
                 return NotFound($"Review for revision '{revisionId}' not found.");

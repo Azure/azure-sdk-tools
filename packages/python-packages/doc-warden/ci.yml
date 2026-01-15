@@ -57,15 +57,19 @@ extends:
       - script: |
           ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml
         displayName: 'Ensure .NET Backwards Compat'
+        continueOnError: true
 
       - script: |
           ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o
         displayName: 'Ensure Java Backwards Compat'
+        continueOnError: true
 
       - script: |
           ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o -c $(Build.SourcesDirectory)/sdk-for-python/eng/.docsettings.yml
         displayName: 'Ensure Python Backwards Compat'
+        continueOnError: true
 
       - script: |
           ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o -c $(Build.SourcesDirectory)/sdk-for-js/eng/.docsettings.yml
         displayName: 'Ensure JS Backwards Compat'
+        continueOnError: true

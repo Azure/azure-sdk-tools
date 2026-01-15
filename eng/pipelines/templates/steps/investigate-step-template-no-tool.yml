@@ -2,6 +2,10 @@ parameters:
   os: '$(Agent.OS)'
 
 steps:
+  - bash: |
+      which dotnet
+    displayName: 'Which dotnet'
+
   - pwsh: |
       dotnet --list-sdks
     displayName: 'Run dotnet --list-sdks'

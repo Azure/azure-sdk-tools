@@ -153,7 +153,7 @@ public class RevisionResolverTests
         APIRevisionListItemModel mockRevision = CreateMockRevision("revision123", "review123", "1.0.0");
 
         _mockReviewManager
-            .Setup(x => x.GetReviewsAsync(It.Is<List<string>>(l => l.Contains("review123")), null))
+            .Setup(x => x.GetReviewsAsync(new List<string> { "review123" }, null))
             .ReturnsAsync(new List<ReviewListItemModel> { mockReview });
 
         _mockApiRevisionsManager
@@ -190,7 +190,7 @@ public class RevisionResolverTests
         APIRevisionListItemModel mockRevision = CreateMockRevision("revision789", "review789", "1.0.0");
 
         _mockReviewManager
-            .Setup(x => x.GetReviewsAsync(It.Is<List<string>>(l => l.Contains("review789")), null))
+            .Setup(x => x.GetReviewsAsync(new List<string> { "review789" }, null))
             .ReturnsAsync(new List<ReviewListItemModel> { mockReview });
 
         _mockApiRevisionsManager

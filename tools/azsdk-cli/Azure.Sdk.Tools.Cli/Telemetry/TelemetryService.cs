@@ -57,7 +57,12 @@ internal class TelemetryService : ITelemetryService
 
         await _isInitialized.Task;
 
-        var activity = Parent.StartActivity(activityId, ActivityKind.Server);
+        var activity = Parent.StartActivity(activityId);
+        // TODO: switch above ActivityKind.Server so telemetry ends up in
+        // the more appropriate requests table in azure monitor.
+        // Currently the data pipeline is set up to read from the
+        // dependencies table, so a dashboard migration needs to happen first.
+        // var activity = Parent.StartActivity(activityId, ActivityKind.Server);
 
         if (activity == null)
         {

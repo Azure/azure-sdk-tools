@@ -2,10 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -55,7 +52,8 @@ public abstract class MCPToolBase
             activity?.SetTag(TagName.CommandArgs, commandLine);
 
             CommandResponse response = await HandleCommand(parseResult, cancellationToken);
-            activity?.SetTag(TagName.CommandResponse, output.Format(response));
+            // Pass response.GetType() otherwise we will only serialize CommandResponse base type properties
+            activity?.SetTag(TagName.CommandResponse, JsonSerializer.Serialize(response, response.GetType()));
 
             if (response.ExitCode == 0)
             {
@@ -64,14 +62,6 @@ public abstract class MCPToolBase
             else
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-            }
-
-            // Hoist all properties from the output response object to the tag level.
-            // This will enable KQL queries against command-specific output values
-            // without having to parse the raw string output given to the user.
-            if (activity != null)
-            {
-                AddCustomTelemetryFromResponse(activity, response);
             }
 
             output.OutputCommandResponse(response);
@@ -88,26 +78,6 @@ public abstract class MCPToolBase
         {
             // Force upload of events since we won't have background batching in CLI mode
             telemetryService.Flush();
-        }
-    }
-
-    private static void AddCustomTelemetryFromResponse(Activity activity, CommandResponse response)
-    {
-        var responseProperties = response.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        foreach (var prop in responseProperties)
-        {
-            // Check if property is tagged for telemetry
-            var telemetryAttr = prop.GetCustomAttributes<TelemetryAttribute>();
-            if (telemetryAttr != null)
-            {
-                var value = prop.GetValue(response);
-                var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
-                string propertyName = jsonAttr?.Name ?? prop.Name;
-                if (value != null)
-                {
-                    activity.AddTag(propertyName, JsonSerializer.Serialize(value));
-                }
-            }
         }
     }
 

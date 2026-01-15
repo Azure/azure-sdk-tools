@@ -226,7 +226,7 @@ namespace Azure.Sdk.Tools.Cli.Models
                 });
             }
             
-            if(!string.IsNullOrEmpty(title))
+            if (!string.IsNullOrEmpty(title))
             {
                 jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {

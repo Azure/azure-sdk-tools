@@ -7,7 +7,7 @@ steps:
     displayName: 'Run dotnet --list-sdks'
 
   - pwsh: |
-      Get-ChildItem Env: | Format-Table -AutoSize
+      Get-ChildItem Env: | Format-List
     displayName: 'Dump Environment'
 
   - template: /eng/common/testproxy/test-proxy-tool.yml
@@ -35,5 +35,6 @@ steps:
     condition: succeededOrFailed()
 
   - pwsh: |
-      Get-ChildItem Env: | Format-Table -AutoSize
+      Get-ChildItem Env: | Format-List
     displayName: 'Dump Environment'
+    condition: succeededOrFailed()

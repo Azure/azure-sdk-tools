@@ -7,6 +7,23 @@
     [userProfile]="userProfile"
     [showPageoptionsButton]="true"
     (pageOptionsEmitter)="handlePageOptionsEmitter($event)">
+    <app-review-toolbar
+        [apiRevisions]="apiRevisions"
+        [activeApiRevisionId]="activeApiRevisionId"
+        [diffApiRevisionId]="diffApiRevisionId"
+        [isDiffView]="!!diffApiRevisionId"
+        [contentHasDiff]="codePanelData?.hasDiff"
+        [diffStyleInput]="diffStyle!"
+        [userProfile]="userProfile"
+        [codeLineSearchInfo]="codeLineSearchInfo"
+        (diffStyleEmitter)="handleDiffStyleEmitter($event)"
+        (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+        (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
+        (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
+        (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
+        (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
+        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+    </app-review-toolbar>
     <p-splitter
         [panelSizes]="panelSizes"
         [minSizes]="minSizes"

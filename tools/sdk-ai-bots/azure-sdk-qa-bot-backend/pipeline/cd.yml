@@ -15,7 +15,7 @@ parameters:
   - name: slot
     displayName: 'Target Slot'
     type: string
-    default: authoring
+    default: ''
     values:
       - authoring
       - codereview

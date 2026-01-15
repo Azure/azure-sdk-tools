@@ -136,7 +136,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             try
             {
-
                 MultipartSection section;
                 while ((section = reader.ReadNextSectionAsync()
                                          .GetAwaiter()

@@ -29,3 +29,4 @@ extends:
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'docwardenpython'
     PackageName: 'Python Doc Warden'
+    PublishToPyPi: true

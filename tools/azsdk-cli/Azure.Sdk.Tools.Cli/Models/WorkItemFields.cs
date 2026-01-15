@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text;
-using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.WorkItemTracking.Process.WebApi.Models.Process;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
@@ -206,7 +204,6 @@ namespace Azure.Sdk.Tools.Cli.Models
                     }
                     sb.Append($"<a href=\"{pr}\">{pr}</a>");
                 }
-                var prLinks = sb.ToString();
 
                 jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {

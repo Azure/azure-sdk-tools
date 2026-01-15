@@ -400,7 +400,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private async Task<WorkItem> CreateWorkItemAsync(WorkItemFields fields, string workItemType, string title, int? parentId = null, int? relatedId = null)
         {
             var workItemsFieldJson = JsonSerializer.Serialize(fields);
-            logger.LogDebug("Input work item json: {releasePlanJson}", fields);
+            logger.LogDebug("Input work item json: {releasePlanJson}", workItemsFieldJson);
             var specDocument = fields.GetPatchDocument(workItemType, title);
 
             logger.LogInformation("Creating {workItemType} work item", workItemType);
@@ -431,7 +431,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
         {
             // Create generic work item relation(s) based on target ID and/or URL
-            if (targetId != null && string.IsNullOrWhiteSpace(targetUrl))
+            if (targetId == null && string.IsNullOrWhiteSpace(targetUrl))
             {
                 throw new Exception("To create work item relation, either Target ID or Target URL must be provided.");
             }

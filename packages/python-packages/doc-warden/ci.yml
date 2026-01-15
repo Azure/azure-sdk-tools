@@ -26,7 +26,6 @@ extends:
   parameters:
     PythonVersion: '3.10'
     PackagePath: 'packages/python-packages/doc-warden'
-    FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'docwardenpython'
     PackageName: 'Python Doc Warden'
     PublishToPyPi: true

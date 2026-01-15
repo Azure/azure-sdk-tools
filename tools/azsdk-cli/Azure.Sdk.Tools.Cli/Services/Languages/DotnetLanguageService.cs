@@ -14,6 +14,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 {
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private const string GeneratedDirName = "Generated";
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
@@ -289,7 +290,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         while (!string.IsNullOrEmpty(directory))
         {
             var dirName = Path.GetFileName(directory);
-            if (string.Equals(dirName, "Generated", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(dirName, GeneratedDirName, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

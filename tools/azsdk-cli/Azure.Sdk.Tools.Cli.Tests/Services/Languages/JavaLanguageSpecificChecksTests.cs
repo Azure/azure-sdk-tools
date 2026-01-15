@@ -34,7 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 new Mock<IMicroagentHostService>().Object,
                 NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object,
-                Mock.Of<IFileHelper>());
+                Mock.Of<IFileHelper>(),
+                Mock.Of<ISpecGenSdkConfigHelper>());
         }
 
         #region Setup Helpers
@@ -972,7 +973,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
-                    Mock.Of<IFileHelper>());
+                    Mock.Of<IFileHelper>(),
+                    Mock.Of<ISpecGenSdkConfigHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1026,7 +1028,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
-                    Mock.Of<IFileHelper>());
+                    Mock.Of<IFileHelper>(),
+                    Mock.Of<ISpecGenSdkConfigHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1080,7 +1083,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
-                    Mock.Of<IFileHelper>());
+                    Mock.Of<IFileHelper>(),
+                    Mock.Of<ISpecGenSdkConfigHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1134,7 +1138,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IMicroagentHostService>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
-                    Mock.Of<IFileHelper>());
+                    Mock.Of<IFileHelper>(),
+                    Mock.Of<ISpecGenSdkConfigHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);

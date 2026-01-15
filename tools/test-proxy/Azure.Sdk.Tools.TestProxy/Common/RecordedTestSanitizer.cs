@@ -32,6 +32,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public ApplyCondition Condition { get; protected set; } = null;
 
+        /// <summary>
+        /// Indicates which parts of a RecordEntry this sanitizer applies to.
+        /// By default, only applies to headers (Authorization header sanitization).
+        /// Derived sanitizers should override this to specify their scope.
+        /// </summary>
+        protected SanitizerScope _scope = SanitizerScope.Header;
+
+        /// <summary>
+        /// Checks if this sanitizer applies to a given part of the record.
+        /// </summary>
+        protected bool AppliesTo(SanitizerScope part) => (_scope & part) != 0;
+
         /// This is just a temporary workaround to avoid breaking tests that need to be re-recorded
         //  when updating the JsonPathSanitizer logic to avoid changing date formats when deserializing requests.
         //  this property will be removed in the future.
@@ -232,18 +244,27 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
         {
             if (Condition == null || Condition.IsApplicable(entry))
             {
-                entry.RequestUri = SanitizeUri(entry.RequestUri);
+                if (AppliesTo(SanitizerScope.Uri))
+                {
+                    entry.RequestUri = SanitizeUri(entry.RequestUri);
+                }
 
-                SanitizeHeaders(entry.Request.Headers);
+                if (AppliesTo(SanitizerScope.Header))
+                {
+                    SanitizeHeaders(entry.Request.Headers);
+                }
 
-                if (matchingBodies)
+                if (matchingBodies && AppliesTo(SanitizerScope.Body))
                 {
                     SanitizeBody(entry.Request);
                 }
 
-                SanitizeHeaders(entry.Response.Headers);
+                if (AppliesTo(SanitizerScope.Header))
+                {
+                    SanitizeHeaders(entry.Response.Headers);
+                }
 
-                if (entry.RequestMethod != RequestMethod.Head && matchingBodies)
+                if (entry.RequestMethod != RequestMethod.Head && matchingBodies && AppliesTo(SanitizerScope.Body))
                 {
                     SanitizeBody(entry.Response);
                 }

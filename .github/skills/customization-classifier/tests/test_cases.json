@@ -1,0 +1,148 @@
+{
+  "test_cases": [
+    {
+      "id": "basic_rename_phase_a",
+      "description": "Basic rename request should route to PHASE_A",
+      "input": {
+        "service": "DocumentIntelligence",
+        "language": "csharp",
+        "request": "Rename FooClient to BarClient for .NET"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "build_error_type_not_found",
+      "description": "Build error for missing type should route to PHASE_A",
+      "input": {
+        "service": "TextAnalytics",
+        "language": "csharp",
+        "request": "Build failed with: error CS0246: The type or namespace name 'FooModel' could not be found"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "hide_operation_phase_a",
+      "description": "Hide operation request should route to PHASE_A",
+      "input": {
+        "service": "AIProjects",
+        "language": "python",
+        "request": "Remove get_create_project_status from Python SDK public API"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "client_restructure_phase_a",
+      "description": "Client restructuring should route to PHASE_A",
+      "input": {
+        "service": "DocumentProcessing",
+        "language": "python",
+        "request": "Create 2 clients: main DocumentProcessingClient and subclient ProjectClient that takes project_id"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "no_typespec_solution_polling",
+      "description": "Polling customization has no TypeSpec solution - should FAIL",
+      "input": {
+        "service": "DocumentIntelligence",
+        "language": "java",
+        "request": "Add custom polling logic to extract operation ID from Operation-Location header during LRO polling"
+      },
+      "expected": {
+        "classification": "FAILURE"
+      }
+    },
+    {
+      "id": "stall_detection_same_error_twice",
+      "description": "Same error appearing twice should trigger stall detection",
+      "input": {
+        "service": "TextAnalytics",
+        "language": "csharp",
+        "request": "--- Iteration 2 ---\nBuild failed: error CS0246: FooModel not found\n--- Iteration 3 ---\n--- Code Changes Applied ---\nAdded using statement for FooModel\n--- Build Result ---\nerror CS0246: FooModel not found"
+      },
+      "expected": {
+        "classification": "FAILURE"
+      }
+    },
+    {
+      "id": "max_iterations_exceeded",
+      "description": "Iteration count > 4 should trigger failure",
+      "input": {
+        "service": "OpenAI",
+        "language": "python",
+        "request": "--- Iteration 5 ---\nStill getting build errors after multiple TypeSpec and code fix attempts"
+      },
+      "expected": {
+        "classification": "FAILURE"
+      }
+    },
+    {
+      "id": "build_success",
+      "description": "Build success should return SUCCESS classification",
+      "input": {
+        "service": "DocumentIntelligence",
+        "language": "java",
+        "request": "--- Iteration 2 ---\nRename FooClient to BarClient\n--- TypeSpec Changes Applied ---\nAdded @@clientName(FooClient, \"BarClient\", \"java\")\n--- Build Result ---\nBuild succeeded."
+      },
+      "expected": {
+        "classification": "SUCCESS"
+      }
+    },
+    {
+      "id": "missing_customization_files_python",
+      "description": "Phase A failed with no _patch.py files should suggest creating them",
+      "input": {
+        "service": "AIProjects",
+        "language": "python",
+        "request": "--- Iteration 2 ---\n--- TypeSpec Changes Applied ---\nAdded @@clientName(getItems, \"listItems\", \"python\")\n--- Build Result ---\nBuild failed: _patch.py references old method name 'get_items'\nNote: No *_patch.py files exist in the package."
+      },
+      "expected": {
+        "classification": "FAILURE"
+      }
+    },
+    {
+      "id": "missing_customization_files_java",
+      "description": "Phase A failed with no Java customization class should suggest creating them",
+      "input": {
+        "service": "DocumentIntelligence",
+        "language": "java",
+        "request": "--- Iteration 2 ---\n--- TypeSpec Changes Applied ---\nApplied decorator\n--- Build Result ---\nBuild failed: Customization needed but no /customization/ directory or *Customization.java files exist"
+      },
+      "expected": {
+        "classification": "FAILURE"
+      }
+    },
+    {
+      "id": "analyzer_error_naming_violation",
+      "description": ".NET analyzer naming violation should route to PHASE_A",
+      "input": {
+        "service": "Cognitive",
+        "language": "csharp",
+        "request": "Build failed with analyzer errors:\nAZC0030: Model name 'CreateRequestParameters' ends with 'Parameters'\nAZC0012: Type name 'Tasks' is too generic"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "complex_convenience_method",
+      "description": "Complex convenience method request should FAIL (out of scope)",
+      "input": {
+        "service": "Storage",
+        "language": "python",
+        "request": "Add a convenience method that automatically retries with exponential backoff and handles token refresh"
+      },
+      "expected": {
+        "classification": "FAILURE"
+      }
+    }
+  ]
+}

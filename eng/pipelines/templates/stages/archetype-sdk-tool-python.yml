@@ -153,31 +153,30 @@ extends:
                         inputs:
                           versionSpec: '3.9'
 
-                      - ${{ if eq(parameters.PublicFeed, 'PyPi') }}:
-                        - pwsh: |
-                            $esrpDirectory = "$(Pipeline.Workspace)/esrp-release/${{parameters.ArtifactName}}"
-                            New-Item -ItemType Directory -Force -Path $esrpDirectory
+                      - pwsh: |
+                          $esrpDirectory = "$(Pipeline.Workspace)/esrp-release/${{parameters.ArtifactName}}"
+                          New-Item -ItemType Directory -Force -Path $esrpDirectory
 
-                            Get-ChildItem -Path "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/" `
-                              | Where-Object { ($_.Name -like "*.tar.gz" -or $_.Name -like "*.whl") } `
-                              | Copy-Item -Destination $esrpDirectory
+                          Get-ChildItem -Path "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/" `
+                            | Where-Object { ($_.Name -like "*.tar.gz" -or $_.Name -like "*.whl") } `
+                            | Copy-Item -Destination $esrpDirectory
 
-                            Get-ChildItem $esrpDirectory
-                          displayName: Isolate files for ESRP Publish
+                          Get-ChildItem $esrpDirectory
+                        displayName: Isolate files for ESRP Publish
 
-                        # - task: EsrpRelease@9
-                        #   displayName: 'Publish to ESRP'
-                        #   inputs:
-                        #     ConnectedServiceName: 'Azure SDK PME Managed Identity'
-                        #     ClientId: '5f81938c-2544-4f1f-9251-dd9de5b8a81b'
-                        #     DomainTenantId: '975f013f-7f24-47e8-a7d3-abc4752bf346'
-                        #     UseManagedIdentity: true
-                        #     KeyVaultName: 'kv-azuresdk-codesign'
-                        #     SignCertName: 'azure-sdk-esrp-release-certificate'
-                        #     Intent: 'PackageDistribution'
-                        #     ContentType: 'PyPI'
-                        #     FolderLocation: $(Pipeline.Workspace)/esrp-release/${{parameters.ArtifactName}}
-                        #     Owners: $(Build.RequestedForEmail)
-                        #     Approvers: $(Build.RequestedForEmail)
-                        #     ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
-                        #     MainPublisher: 'ESRPRELPACMANTEST'
+                      # - task: EsrpRelease@9
+                      #   displayName: 'Publish to ESRP'
+                      #   inputs:
+                      #     ConnectedServiceName: 'Azure SDK PME Managed Identity'
+                      #     ClientId: '5f81938c-2544-4f1f-9251-dd9de5b8a81b'
+                      #     DomainTenantId: '975f013f-7f24-47e8-a7d3-abc4752bf346'
+                      #     UseManagedIdentity: true
+                      #     KeyVaultName: 'kv-azuresdk-codesign'
+                      #     SignCertName: 'azure-sdk-esrp-release-certificate'
+                      #     Intent: 'PackageDistribution'
+                      #     ContentType: 'PyPI'
+                      #     FolderLocation: $(Pipeline.Workspace)/esrp-release/${{parameters.ArtifactName}}
+                      #     Owners: $(Build.RequestedForEmail)
+                      #     Approvers: $(Build.RequestedForEmail)
+                      #     ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
+                      #     MainPublisher: 'ESRPRELPACMANTEST'

@@ -75,6 +75,12 @@
                         </li>
                         
                         @if (User.Identity.IsAuthenticated) {
+                            <!-- Admin Settings link (for admins) -->
+                            <li class="nav-item admin-settings-item d-none">
+                                <a href="#" class="nav-link nav-icon" title="Admin Settings" target="_blank">
+                                    <i class="bi bi-shield-lock"></i>
+                                </a>
+                            </li>
                             <!-- User profile avatar with dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">

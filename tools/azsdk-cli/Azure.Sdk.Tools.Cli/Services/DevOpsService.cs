@@ -349,7 +349,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 logger.LogInformation("Creating release plan with title: {releasePlanTitle}", releasePlanTitle);
-                WorkItem releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
+                WorkItemFields workItemFields = releasePlan.GetWorkItemFields();
+                WorkItem releasePlanWorkItem = await CreateWorkItemAsync(workItemFields, "Release Plan", releasePlanTitle);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;
                 if (releasePlanWorkItemId == 0)
                 {
@@ -359,7 +360,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
                 logger.LogInformation("Creating api spec with title: {apiSpecTitle}", apiSpecTitle);
-                var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan, "API Spec", apiSpecTitle);
+                var apiSpecWorkItem = await CreateWorkItemAsync(workItemFields, "API Spec", apiSpecTitle);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
@@ -399,51 +400,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<WorkItem> CreateWorkItemAsync(ReleasePlanDetails releasePlan, string workItemType, string title)
+        private async Task<WorkItem> CreateWorkItemAsync(WorkItemFields fields, string workItemType, string title, int? parentId = null, int? relatedId = null)
         {
-            var releasePlanJson = JsonSerializer.Serialize(releasePlan);
-            logger.LogDebug("Input work item json: {releasePlanJson}", releasePlanJson);
-            var specDocument = releasePlan.GetPatchDocument();
-            specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-            {
-                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                Path = "/fields/System.Title",
-                Value = title
-            });
-
-            if (workItemType == "API Spec" && releasePlan.SpecPullRequests.Count > 0)
-            {
-                StringBuilder sb = new StringBuilder();
-                foreach (var pr in releasePlan.SpecPullRequests)
-                {
-                    if (sb.Length > 0)
-                    {
-                        sb.Append("<br>");
-                    }
-                    sb.Append($"<a href=\"{pr}\">{pr}</a>");
-                }
-                var prLinks = sb.ToString();
-                logger.LogInformation("Adding pull request {pullRequestLinks} to API spec work item.", prLinks);
-                specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.RESTAPIReviews",
-                    Value = sb.ToString()
-                });
-
-                var activeSpecPullRequest = releasePlan.ActiveSpecPullRequest;
-                if (string.IsNullOrEmpty(activeSpecPullRequest))
-                {
-                    // If active spec pull request is not provided, use the first pull request from the list
-                    activeSpecPullRequest = releasePlan.SpecPullRequests.FirstOrDefault() ?? string.Empty;
-                }
-                specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.ActiveSpecPullRequestUrl",
-                    Value = activeSpecPullRequest
-                });
-            }
+            var workItemsFieldJson = JsonSerializer.Serialize(fields);
+            logger.LogDebug("Input work item json: {releasePlanJson}", fields);
+            var specDocument = fields.GetPatchDocument(workItemType, title);
 
             logger.LogInformation("Creating {workItemType} work item", workItemType);
             logger.LogDebug("Sending work item request to DevOps: {@specDocument}", specDocument);
@@ -452,13 +413,28 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new Exception("Failed to create Work Item");
             }
+
+            if (workItem.Id != null)
+            {
+                if (parentId != null)
+                {
+                    // Create parent-child relation
+                    await CreateWorkItemRelationAsync(workItem.Id.Value, "parent", targetId: parentId);
+                }
+
+                if (relatedId != null)
+                { 
+                    await CreateWorkItemRelationAsync(workItem.Id.Value, "related", targetId: relatedId);
+                }
+            }
+
             return workItem;
         }
 
-        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, string? targetId = null, string? targetUrl = null)
+        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
         {
             // Create generic work item relation(s) based on target ID and/or URL
-            if (string.IsNullOrWhiteSpace(targetId) && string.IsNullOrWhiteSpace(targetUrl))
+            if (targetId != null && string.IsNullOrWhiteSpace(targetUrl))
             {
                 throw new Exception("To create work item relation, either Target ID or Target URL must be provided.");
             }
@@ -472,7 +448,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
 
             // Handle target ID
-            if (!string.IsNullOrWhiteSpace(targetId))
+            if (targetId != null)
             {
                 var wiql = new Wiql { Query = $"SELECT [System.Id] FROM WorkItems WHERE ([System.Id] = {targetId})" };
                 var queryResult = await workItemClient.QueryByWiqlAsync(wiql);

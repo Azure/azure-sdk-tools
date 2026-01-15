@@ -87,20 +87,6 @@
 
     <app-page-options-section sectionName="Page Utils">
     <ul class="list-group">
-        <li class="list-group-item">
-            <p-iconField iconPosition="left" styleClass="w-full">
-                <p-inputIcon styleClass="pi pi-search" />
-                <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" class="review-search-input" data-clarity-region="review-search-input"/>
-            </p-iconField>
-            <div *ngIf="codeLineSearchInfo" class="d-flex justify-content-between">
-                <small class="review-search-info">{{ (codeLineSearchInfo.currentMatch?.index ?? 0) + 1 }} of {{ codeLineSearchInfo.totalMatchCount }}</small>
-                <span class="mt-2">
-                    <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)" data-clarity-region="review-search-up"></i>
-                    <i class="bi bi-arrow-down-short border review-search-icon" (click)="navigateSearch(1)" data-clarity-region="review-search-down"></i>
-                    <i class="bi bi-x border rounded-end review-search-icon" (click)="clearReviewSearch()" data-clarity-region="review-search-clear"></i>
-                </span>
-            </div>
-        </li>
         <li class="list-group-item" *ngIf="showCommentsSwitch">
             <label class="small mx-1 fw-semibold">Comment:</label>
             <div class="d-grid gap-2">
@@ -146,30 +132,10 @@
 
     <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showCommentsSwitch"
-            (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toggle-comments" />
-            <label class="ms-2">Comments</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showSystemCommentsSwitch"
-            (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostics" />
-            <label class="ms-2">System comments</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showDocumentationSwitch"
-            (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
-            <label class="ms-2">Documentation</label>
-        </li>
         <li *ngIf="hasHiddenAPIs" class="list-group-item d-flex align-items-center">
             <p-toggleswitch [(ngModel)]="showHiddenAPISwitch"
             (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
             <label class="ms-2">Hidden APIs</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showLineNumbersSwitch"
-            (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toggle-line-numbers"/>
-            <label class="ms-2">Line numbers</label>
         </li>
         <li class="list-group-item d-flex align-items-center">
             <p-toggleswitch [(ngModel)]="showLeftNavigationSwitch"
@@ -180,17 +146,6 @@
             <p-toggleswitch [(ngModel)]="disableCodeLinesLazyLoading"
             (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
             <label class="ms-2">Disable lazy loading</label>
-        </li>
-        <li *ngIf="isDiffView" class="list-group-item">
-            <label class="small mx-1" for="diff-style-select">Diff style :</label>
-            <p-selectButton
-                (onChange)="onDiffStyleChange($event)"
-                [options]="diffStyleOptions"
-                [(ngModel)]="selectedDiffStyle"
-                [disabled]="!contentHasDiff"
-                optionLabel="label"
-                styleClass="w-100 apiview-toggle-button-group"
-                data-clarity-region="diff-view-style-selectbutton" />
         </li>
     </ul>
     </app-page-options-section>

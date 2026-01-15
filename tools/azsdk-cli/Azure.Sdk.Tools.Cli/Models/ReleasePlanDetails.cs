@@ -36,97 +36,24 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string LanguageExclusionRequesterNote { get; set; } = string.Empty;
         public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
-        public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
+        public WorkItemFields GetWorkItemFields()
         {
-
-            var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            return new WorkItemFields
             {
-                new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.ServiceTreeID",
-                    Value = ServiceTreeId
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.ProductServiceTreeID",
-                    Value = ProductTreeId
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.SDKReleaseMonth",
-                    Value = SDKReleaseMonth
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.MgmtScope",
-                    Value = IsManagementPlane ? "Yes" : "No"
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.DataScope",
-                    Value = IsDataPlane ? "Yes" : "No"
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.APISpecDefinitionType",
-                    Value = SpecType
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.APISpecversion",
-                    Value = SpecAPIVersion
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.SDKtypetobereleased",
-                    Value = SDKReleaseType
-                }
+                ServiceTreeId = this.ServiceTreeId,
+                ProductTreeId = this.ProductTreeId,
+                SDKReleaseMonth = this.SDKReleaseMonth,
+                IsManagementPlane = this.IsManagementPlane,
+                IsDataPlane = this.IsDataPlane,
+                SpecAPIVersion = this.SpecAPIVersion,
+                SpecType = this.SpecType,
+                IsTestReleasePlan = this.IsTestReleasePlan,
+                SDKReleaseType = this.SDKReleaseType,
+                ReleasePlanSubmittedByEmail = this.ReleasePlanSubmittedByEmail,
+                IsCreatedByAgent = this.IsCreatedByAgent,
+                SpecPullRequests = this.SpecPullRequests,
+                ActiveSpecPullRequest = this.ActiveSpecPullRequest
             };
-
-            // Add release plan test tag if this is a test release plan
-            if (IsTestReleasePlan)
-            {
-                var tag = new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/System.Tags",
-                    Value = "Release Planner App Test"
-                };
-                jsonDocument.Add(tag);
-            }
-
-            // Add flag in release plan to indicate that it's used by Copilot agent
-            if (IsCreatedByAgent)
-            {
-                var createdUsingAgent = new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.CreatedUsing",
-                    Value = "Copilot"
-                };
-                jsonDocument.Add(createdUsingAgent);
-            }
-
-            // Add release plan submitted by email field
-            if (!string.IsNullOrEmpty(ReleasePlanSubmittedByEmail))
-            {
-                var submittedByEmail = new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.ReleasePlanSubmittedby",
-                    Value = ReleasePlanSubmittedByEmail
-                };
-                jsonDocument.Add(submittedByEmail);
-            }
-            return jsonDocument;
         }
     }
 

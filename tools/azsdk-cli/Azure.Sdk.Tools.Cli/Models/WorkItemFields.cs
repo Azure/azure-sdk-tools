@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.WorkItemTracking.Process.WebApi.Models.Process;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
 {
     public class WorkItemFields
     {
-        public string Title { get; set; } = string.Empty;
         public string Language { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;
         public string GroupId { get; set; } = string.Empty;
@@ -30,8 +32,10 @@ namespace Azure.Sdk.Tools.Cli.Models
         public bool IsCreatedByAgent { get; set; }
         public string AssignedTo { get; set; } = string.Empty;
         public string Tag { get; set; } = string.Empty;
+        public List<string> SpecPullRequests { get; set; } = [];
+        public string ActiveSpecPullRequest { get; set; } = string.Empty;
 
-        public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
+        public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument(string workItemType = null, string? title = null)
         {
 
             var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
@@ -96,12 +100,6 @@ namespace Azure.Sdk.Tools.Cli.Models
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.EpicType",
                     Value = EpicType
-                },
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/System.Title",
-                    Value = Title
                 },
                 new JsonPatchOperation
                 {
@@ -196,6 +194,51 @@ namespace Azure.Sdk.Tools.Cli.Models
                 };
                 jsonDocument.Add(submittedByEmail);
             }
+
+            if (!string.IsNullOrEmpty(workItemType) && workItemType == "API Spec" && SpecPullRequests.Count > 0)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (var pr in SpecPullRequests)
+                {
+                    if (sb.Length > 0)
+                    {
+                        sb.Append("<br>");
+                    }
+                    sb.Append($"<a href=\"{pr}\">{pr}</a>");
+                }
+                var prLinks = sb.ToString();
+
+                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.RESTAPIReviews",
+                    Value = sb.ToString()
+                });
+
+                var activeSpecPullRequest = ActiveSpecPullRequest;
+                if (string.IsNullOrEmpty(activeSpecPullRequest))
+                {
+                    // If active spec pull request is not provided, use the first pull request from the list
+                    activeSpecPullRequest = SpecPullRequests.FirstOrDefault() ?? string.Empty;
+                }
+                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.ActiveSpecPullRequestUrl",
+                    Value = activeSpecPullRequest
+                });
+            }
+            
+            if(!string.IsNullOrEmpty(title))
+            {
+                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Title",
+                    Value = title
+                });
+            }
+
             return jsonDocument;
         }
     }

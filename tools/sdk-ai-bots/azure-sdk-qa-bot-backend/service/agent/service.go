@@ -373,6 +373,18 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 						},
 					),
 				})
+			} else if info.Type == model.AdditionalInfoType_Text {
+				content := info.Content
+				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+				}
+				var msg *azopenai.ChatRequestUserMessage
+				msg = &azopenai.ChatRequestUserMessage{
+					Content: azopenai.NewChatRequestUserMessageContent(content),
+				}
+				llmMessages = append(llmMessages, msg)
+				reasoningModelMessages = append(reasoningModelMessages, msg)
 			}
 		}
 	}

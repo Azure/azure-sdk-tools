@@ -8,10 +8,10 @@
 * Add new knowledge sources from JS, Java and .Net
 * Support routing tenant based on question domain
 
-## Other changes
+## Other Changes
 
 * Refine prompt for onboarding channel to improve answer accuracy
-* Refactor post process of merging and sorting and complete chunk logic, to give more better context to LLM
+* Refactor post process of merging and sorting and complete chunk logic, to give better context to LLM
 
 ## 0.6.0 (2025-12-16)
 

@@ -4241,7 +4241,7 @@ class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerT
         importfrom_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="use-inspect-iscoroutinefunction",
+                msg_id="remove-deprecated-iscoroutinefunction",
                 line=3,
                 node=importfrom_node,
                 col_offset=0,

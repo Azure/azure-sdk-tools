@@ -3037,13 +3037,13 @@ class InvalidUseOfOverload(BaseChecker):
 class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):
     """Rule to check that we use inspect.iscoroutinefunction instead of deprecated asyncio.iscoroutinefunction."""
 
-    name = "use-inspect-iscoroutinefunction"
+    name = "remove-deprecated-iscoroutinefunction"
     priority = -1
     msgs = {
         "C4774": (
             "Use 'inspect.iscoroutinefunction()' or 'asyncio.coroutines.iscoroutinefunction()' instead of deprecated 'asyncio.iscoroutinefunction()'. "
             "The asyncio version was deprecated in Python 3.12 and will be removed in Python 3.16.",
-            "use-inspect-iscoroutinefunction",
+            "remove-deprecated-iscoroutinefunction",
             "Replace asyncio.iscoroutinefunction with inspect.iscoroutinefunction.",
         ),
     }
@@ -3066,7 +3066,7 @@ class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):
             for name, alias in node.names:
                 if name == "iscoroutinefunction":
                     self.add_message(
-                        msgid="use-inspect-iscoroutinefunction",
+                        msgid="remove-deprecated-iscoroutinefunction",
                         node=node,
                         confidence=None,
                     )
@@ -3081,7 +3081,7 @@ class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):
                     # Check if it's asyncio or an alias for asyncio
                     if module_name == "asyncio" or (self._asyncio_alias and module_name == self._asyncio_alias):
                         self.add_message(
-                            msgid="use-inspect-iscoroutinefunction",
+                            msgid="remove-deprecated-iscoroutinefunction",
                             node=node,
                             confidence=None,
                         )

@@ -269,3 +269,185 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
             approver_ids.add(item.get("id"))
 
     return approver_ids
+
+
+def resolve_package(
+    package_description: str, language: str, version: Optional[str] = None, environment: str = "production"
+) -> Optional[dict]:
+    """
+    Resolves package information from a package description and language.
+
+    Args:
+        package_description: Package name or description to search for
+        language: Language of the package (e.g., 'python', 'java')
+        version: Optional version to filter by. Currently not used but reserved for future use.
+        environment: The APIView environment ('production' or 'staging')
+
+    Returns:
+        A dict containing:
+        - package_name: The actual package name
+        - review_id: The review ID (use with ApiViewClient to get revisions)
+        - revision_id: Always None (revisions must be retrieved via APIView API)
+        - language: The language
+        - version: The package version (if available)
+        - revision_label: The assumed revision label ("Latest")
+
+        Returns None if no matching package is found.
+    """
+    from src._utils import run_prompty
+
+    try:
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+
+        # Normalize the language for comparison
+        pretty_language = get_language_pretty_name(language)
+
+        # First, try exact match with CONTAINS
+        query = """
+            SELECT c.id, c.PackageName, c.Language, c.packageVersion
+            FROM c 
+            WHERE CONTAINS(LOWER(c.PackageName), @package_description)
+            AND c.Language = @language
+        """
+
+        parameters = [
+            {"name": "@package_description", "value": package_description.lower()},
+            {"name": "@language", "value": pretty_language},
+        ]
+
+        results = list(
+            reviews_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
+        )
+
+        # Check for exact match first
+        exact_match = None
+        for result in results:
+            if result.get("PackageName", "").lower() == package_description.lower():
+                exact_match = result
+                break
+
+        selected_review = exact_match
+
+        # If no exact match found, get all packages for the language and use LLM
+        if not selected_review:
+            # Get ALL packages for this language (whether or not we have CONTAINS results)
+            all_packages_query = """
+                SELECT c.id, c.PackageName, c.Language, c.packageVersion
+                FROM c 
+                WHERE c.Language = @language
+            """
+            all_packages_params = [{"name": "@language", "value": pretty_language}]
+
+            all_results = list(
+                reviews_container.query_items(
+                    query=all_packages_query, parameters=all_packages_params, enable_cross_partition_query=True
+                )
+            )
+
+            if not all_results:
+                return None
+
+            # Extract package names
+            available_packages = [r.get("PackageName", "") for r in all_results if r.get("PackageName")]
+
+            # Use LLM to find the best match
+            try:
+                llm_result = run_prompty(
+                    folder="other",
+                    filename="resolve_package.prompty",
+                    inputs={
+                        "package_description": package_description,
+                        "language": pretty_language,
+                        "available_packages": available_packages,
+                    },
+                )
+
+                matched_package = llm_result.strip()
+
+                if matched_package == "NO_MATCH":
+                    return None
+
+                # Find the review for the matched package
+                for result in all_results:
+                    if result.get("PackageName", "") == matched_package:
+                        selected_review = result
+                        break
+            except Exception as e:
+                print(f"Error using LLM for package matching: {e}")
+                return None
+
+        if not selected_review:
+            return None
+
+        review_id = selected_review["id"]
+        package_name = selected_review.get("PackageName", "")
+        package_version = selected_review.get("packageVersion", "")
+
+        # Now get the revisions for this review from the APIRevisions container
+        revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+        selected_revision = None
+
+        # If version is specified, query directly for that version
+        if version:
+            versioned_query = """
+                SELECT c.id, c.Name, c.Label, c.CreatedOn, c.packageVersion, c._ts
+                FROM c
+                WHERE c.ReviewId = @review_id AND c.packageVersion = @version
+                ORDER BY c._ts DESC
+            """
+            versioned_params = [{"name": "@review_id", "value": review_id}, {"name": "@version", "value": version}]
+
+            versioned_revisions = list(
+                revisions_container.query_items(
+                    query=versioned_query, parameters=versioned_params, enable_cross_partition_query=True
+                )
+            )
+
+            if versioned_revisions:
+                selected_revision = versioned_revisions[0]  # Most recent with matching version
+
+        # If no version specified or no match found, get the most recent revision with a packageVersion
+        if not selected_revision:
+            latest_query = """
+                SELECT c.id, c.Name, c.Label, c.CreatedOn, c.packageVersion, c._ts
+                FROM c
+                WHERE c.ReviewId = @review_id 
+                AND IS_DEFINED(c.packageVersion) 
+                AND c.packageVersion != null 
+                AND c.packageVersion != ""
+                ORDER BY c._ts DESC
+            """
+            latest_params = [{"name": "@review_id", "value": review_id}]
+
+            latest_revisions = list(
+                revisions_container.query_items(
+                    query=latest_query, parameters=latest_params, enable_cross_partition_query=True
+                )
+            )
+
+            if not latest_revisions:
+                return {
+                    "package_name": package_name,
+                    "review_id": review_id,
+                    "revision_id": None,
+                    "language": pretty_language,
+                    "version": package_version,
+                }
+
+            selected_revision = latest_revisions[0]
+
+        # Get the version from the selected revision
+        revision_version = selected_revision.get("packageVersion", "")
+
+        return {
+            "package_name": package_name,
+            "review_id": review_id,
+            "revision_id": selected_revision["id"],
+            "language": pretty_language,
+            "version": revision_version,
+            "revision_label": selected_revision.get("Label", ""),
+        }
+    except Exception as e:
+        print(f"Error resolving package: {e}")
+        return None

@@ -62,6 +62,14 @@ namespace ApiViewCopilot {
     @header("Authorization") authorization: string,
   ): AgentChatResponse;
 
+  /** Resolves package information from a package description and language. */
+  @route("/api-review/resolve-package")
+  @post
+  op resolvePackage(
+    @body request: ResolvePackageRequest,
+    @header("Authorization") authorization: string,
+  ): ResolvePackageResponse;
+
   /** Test endpoint to verify authentication is working. */
   @route("/auth-test")
   @get
@@ -223,5 +231,39 @@ namespace ApiViewCopilot {
 
     /** The list of messages in the conversation. */
     messages: {}[];
+  }
+
+  model ResolvePackageRequest {
+    /** The package description or name to search for. */
+    packageDescription: string;
+
+    /** The programming language of the package (e.g., 'python', 'java'). */
+    language: string;
+
+    /** Optional version to filter by. If not provided, returns the latest revision. */
+    version?: string;
+
+    /** The APIView environment ('production' or 'staging'). Defaults to 'production'. */
+    environment?: "production" | "staging";
+  }
+
+  model ResolvePackageResponse {
+    /** The resolved package name. */
+    packageName: string;
+
+    /** The review ID for the package. */
+    reviewId: string;
+
+    /** The revision ID for the package. */
+    revisionId: string;
+
+    /** The programming language. */
+    language: string;
+
+    /** The package version. */
+    version: string;
+
+    /** The revision label (e.g., 'Source Branch:main'). */
+    revisionLabel: string;
   }
 }

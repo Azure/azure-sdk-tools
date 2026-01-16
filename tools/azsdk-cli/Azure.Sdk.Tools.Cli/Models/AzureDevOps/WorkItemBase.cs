@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
-namespace Azure.Sdk.Tools.Cli.Models
+namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class WorkItemBase
     {

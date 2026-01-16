@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
-namespace Azure.Sdk.Tools.Cli.Models
+namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ApiSpecWorkItem : WorkItemBase
     {
@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Models
             if (SpecPullRequests.Count > 0)
             {
                 StringBuilder sb = new StringBuilder();
-                foreach (var pr in this.SpecPullRequests)
+                foreach (var pr in SpecPullRequests)
                 {
                     if (sb.Length > 0)
                     {
@@ -35,20 +35,20 @@ namespace Azure.Sdk.Tools.Cli.Models
                     sb.Append($"<a href=\"{pr}\">{pr}</a>");
                 }
                 var prLinks = sb.ToString();
-                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                jsonDocument.Add(new JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.RESTAPIReviews",
                     Value = sb.ToString()
                 });
 
-                var activeSpecPullRequest = this.ActiveSpecPullRequest;
+                var activeSpecPullRequest = ActiveSpecPullRequest;
                 if (string.IsNullOrEmpty(activeSpecPullRequest))
                 {
                     // If active spec pull request is not provided, use the first pull request from the list
-                    activeSpecPullRequest = this.SpecPullRequests.FirstOrDefault() ?? string.Empty;
+                    activeSpecPullRequest = SpecPullRequests.FirstOrDefault() ?? string.Empty;
                 }
-                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                jsonDocument.Add(new JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.ActiveSpecPullRequestUrl",

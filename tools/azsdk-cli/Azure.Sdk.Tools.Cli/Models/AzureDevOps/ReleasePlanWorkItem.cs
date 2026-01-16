@@ -3,7 +3,7 @@
 using System.Reflection;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
-namespace Azure.Sdk.Tools.Cli.Models
+namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ReleasePlanWorkItem : WorkItemBase
     {
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Models
             if (IsTestReleasePlan)
             {
                 var releasePlanTag = "Release Planner App Test";
-                var tagValue = string.IsNullOrEmpty(this.Tag) ? releasePlanTag : $"{Tag},{releasePlanTag}";
+                var tagValue = string.IsNullOrEmpty(Tag) ? releasePlanTag : $"{Tag},{releasePlanTag}";
 
                 jsonDocument.RemoveAll(doc => doc.Path == "/fields/System.Tags");
 
@@ -85,14 +85,14 @@ namespace Azure.Sdk.Tools.Cli.Models
         {
             return new ApiSpecWorkItem
             {
-                IsCreatedByAgent = this.IsCreatedByAgent,
-                AssignedTo = this.AssignedTo,
-                Tag = this.Tag,
-                Owner = this.Owner,
-                SpecAPIVersion = this.SpecAPIVersion,
-                SpecType = this.SpecType,
-                SpecPullRequests = this.SpecPullRequests,
-                ActiveSpecPullRequest = this.ActiveSpecPullRequest
+                IsCreatedByAgent = IsCreatedByAgent,
+                AssignedTo = AssignedTo,
+                Tag = Tag,
+                Owner = Owner,
+                SpecAPIVersion = SpecAPIVersion,
+                SpecType = SpecType,
+                SpecPullRequests = SpecPullRequests,
+                ActiveSpecPullRequest = ActiveSpecPullRequest
             };
         }
     }

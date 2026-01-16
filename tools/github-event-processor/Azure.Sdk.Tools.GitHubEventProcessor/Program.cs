@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
                         gitHubEventClient.SetConfigEntryOverrides(scheduledEventPayload.Repository);
                         string cronTaskToRun = args[2];
-                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun, mcpProcessor);
+                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
                         break;
                     }
                 default:

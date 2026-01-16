@@ -71,6 +71,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 return;
             }
 
+            if ((usePredictedLabels.UsePredictedServer || usePredictedLabels.UsePredictedTool) &&
+                userLabels.Contains(TriageLabelConstants.NeedsTriage, StringComparer.OrdinalIgnoreCase))
+            {
+                gitHubEventClient.RemoveLabel(TriageLabelConstants.NeedsTriage);
+            }
+
             if (userLabels != null)
             {
                 foreach (var label in userLabels)

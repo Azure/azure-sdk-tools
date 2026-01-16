@@ -194,14 +194,19 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Locates the customization (hand-authored) root directory for the language, if any.
+        /// Determines whether the package has any hand-authored customizations.
         /// </summary>
-        /// <param name="generationRoot">Root folder of newly generated sources (e.g. a <c>src</c> directory).</param>
+        /// <param name="packagePath">Root folder of the package (e.g. SDK package directory).</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>Absolute path to customization root or <c>null</c> if none is found / applicable.</returns>
-        public virtual string? GetCustomizationRoot(string generationRoot, CancellationToken ct)
+        /// <returns>True if customizations exist; false otherwise.</returns>
+        public virtual bool HasCustomizations(string packagePath, CancellationToken ct)
         {
-            return "This is not an applicable operation for this language";
+            if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
+            {
+                logger?.LogDebug("Cannot check for customizations - package path does not exist: {PackagePath}", packagePath);
+                return false;
+            }
+            return false;
         }
 
         /// <summary>

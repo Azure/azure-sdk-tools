@@ -1,12 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Services.Languages;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -30,6 +26,7 @@ public sealed partial class PythonLanguageService : LanguageService
         this.npxHelper = npxHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
@@ -118,6 +115,31 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     }
     return (packageName, packageVersion);
 }
+
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    {
+        // Python SDKs can have _patch.py files in multiple locations within the package:
+        // e.g., azure/packagename/_patch.py, azure/packagename/models/_patch.py, azure/packagename/operations/_patch.py
+        // Finding at least one indicates the package has customizations.
+
+        try
+        {
+            var patchFiles = Directory.GetFiles(packagePath, "_patch.py", SearchOption.AllDirectories);
+            if (patchFiles.Length > 0)
+            {
+                logger.LogDebug("Found Python _patch.py file(s) in {PackagePath}", packagePath);
+                return true;
+            }
+
+            logger.LogDebug("No Python _patch.py files found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for Python customization files in {PackagePath}", packagePath);
+            return false;
+        }
+    }
 
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {

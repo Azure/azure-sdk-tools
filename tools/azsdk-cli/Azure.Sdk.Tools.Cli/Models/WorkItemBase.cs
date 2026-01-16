@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         [FieldName("System.AssignedTo")]
         public string AssignedTo { get; set; } = string.Empty;
 
+        [FieldName("System.Tags")]
         public string Tag { get; set; } = string.Empty;
 
         [FieldName("System.Title")]

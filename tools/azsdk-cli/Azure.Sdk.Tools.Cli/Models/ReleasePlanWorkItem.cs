@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
 {
-    public class ReleasePlanDetails : WorkItemBase
+    public class ReleasePlanWorkItem : WorkItemBase
     {
         [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
@@ -60,9 +60,9 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
-        public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument(string? workItemType = null)
+        public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
-            var jsonDocument = base.GetPatchDocument(workItemType);
+            var jsonDocument = base.GetPatchDocument();
 
             if (IsTestReleasePlan)
             {

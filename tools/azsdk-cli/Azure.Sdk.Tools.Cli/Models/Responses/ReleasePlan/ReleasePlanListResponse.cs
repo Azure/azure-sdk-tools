@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList
     {
         [JsonPropertyName("release_plans")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<ReleasePlanDetails>? ReleasePlanDetailsList { get; set; }
+        public List<ReleasePlanWorkItem>? ReleasePlanDetailsList { get; set; }
 
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;

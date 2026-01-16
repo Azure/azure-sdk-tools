@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task GenerateSDK_WhenLanguageNotInReleasePlan()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("does not have a language specified"));
 
             // Test 2: Empty language
-            var releasePlanWithEmptyLanguage = new ReleasePlanDetails
+            var releasePlanWithEmptyLanguage = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -132,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GenerateSDK_WhenSDKInfoListIsEmpty()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>() // Empty list - no SDK info at all
             };
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task GenerateSdk_Uses_WorkItemApi()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -274,7 +274,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GetSDKPullRequestDetails_WithWorkItemId_ButNoSDKInfo_ReturnsError()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>()
             };
@@ -291,7 +291,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GetSDKPullRequestDetails_WithWorkItemId_ButDifferentLanguage_ReturnsError()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {

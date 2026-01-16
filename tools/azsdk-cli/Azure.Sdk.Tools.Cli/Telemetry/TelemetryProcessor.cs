@@ -51,5 +51,63 @@ public sealed class TelemetryProcessor : BaseProcessor<Activity>
         {
             activity.SetTag(TelemetryConstants.TagName.ModelsUsed, modelsUsed);
         }
+        
+        // Conversation tracking telemetry
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.ConversationTopic) is string conversationTopic)
+        {
+            activity.SetTag(TelemetryConstants.TagName.ConversationTopic, conversationTopic);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.ConversationContext) is string conversationContext)
+        {
+            activity.SetTag(TelemetryConstants.TagName.ConversationContext, conversationContext);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.ConversationTags) is string conversationTags)
+        {
+            activity.SetTag(TelemetryConstants.TagName.ConversationTags, conversationTags);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.ConversationSummary) is string conversationSummary)
+        {
+            activity.SetTag(TelemetryConstants.TagName.ConversationSummary, conversationSummary);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.ConversationCategory) is string conversationCategory)
+        {
+            activity.SetTag(TelemetryConstants.TagName.ConversationCategory, conversationCategory);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.SessionId) is string sessionId)
+        {
+            activity.SetTag(TelemetryConstants.TagName.SessionId, sessionId);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.SessionDurationMinutes) is string sessionDurationMinutes)
+        {
+            activity.SetTag(TelemetryConstants.TagName.SessionDurationMinutes, sessionDurationMinutes);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.MessageCount) is string messageCount)
+        {
+            activity.SetTag(TelemetryConstants.TagName.MessageCount, messageCount);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.AiAnalysisCompleted) is string aiAnalysisCompleted)
+        {
+            activity.SetTag(TelemetryConstants.TagName.AiAnalysisCompleted, aiAnalysisCompleted);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.AiConfidenceScore) is string aiConfidenceScore)
+        {
+            activity.SetTag(TelemetryConstants.TagName.AiConfidenceScore, aiConfidenceScore);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.SessionStartTime) is string sessionStartTime)
+        {
+            activity.SetTag(TelemetryConstants.TagName.SessionStartTime, sessionStartTime);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.InitialContext) is string initialContext)
+        {
+            activity.SetTag(TelemetryConstants.TagName.InitialContext, initialContext);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.TrackingTimestamp) is string trackingTimestamp)
+        {
+            activity.SetTag(TelemetryConstants.TagName.TrackingTimestamp, trackingTimestamp);
+        }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.NotificationSent) is string notificationSent)
+        {
+            activity.SetTag(TelemetryConstants.TagName.NotificationSent, notificationSent);
+        }
     }
 }

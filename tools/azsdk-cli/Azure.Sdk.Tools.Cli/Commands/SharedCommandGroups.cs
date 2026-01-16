@@ -80,6 +80,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Telemetry = new(
+            Verb: "telemetry",
+            Description: "Telemetry tracking and notification commands"
+        );
+
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

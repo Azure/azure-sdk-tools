@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     /// <summary>
     /// Service for interacting with the AI completion API.
     /// </summary>
-    public interface IAiCompletionService
+    public interface IAzureKnowledgeBaseService
     {
         /// <summary>
         /// Sends a completion request to the AI service.

@@ -13,23 +13,23 @@ namespace Azure.Sdk.Tools.Cli.Services
     /// <summary>
     /// Implementation of the AI completion service.
     /// </summary>
-    public class AiCompletionService : IAiCompletionService
+    public class AzureKnowledgeBaseService : IAzureKnowledgeBaseService
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<AiCompletionService> _logger;
-        private readonly AiCompletionOptions _options;
+        private readonly ILogger<AzureKnowledgeBaseService> _logger;
+        private readonly AzureKnowledgeBaseOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly IPublicClientApplication? _msalApp;
         private readonly IList<string> scopes = new List<string>();
-        private readonly string authUrl = "https://login.microsoftonline.com/organizations/";
+        private const string authUrl = "https://login.microsoftonline.com/organizations/";
         private const string DefaultServiceEndpoint = "https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net";
         private const string DefaultClientId = "830f1656-8b36-4e8e-9781-87ccdd038644";
         private const string DefaultAuthScope = "api://azure-sdk-qa-bot-dev/token";
 
-        public AiCompletionService(
+        public AzureKnowledgeBaseService(
             HttpClient httpClient,
-            ILogger<AiCompletionService> logger,
-            IOptions<AiCompletionOptions> options)
+            ILogger<AzureKnowledgeBaseService> logger,
+            IOptions<AzureKnowledgeBaseOptions> options)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
             if (string.IsNullOrEmpty(_options.Endpoint))
             {
-                _logger.LogInformation("AI completion API endpoint has not been configured. You can set the environment variable {EndpointEnvironmentVariable}.", AiCompletionOptions.EndpointEnvironmentVariable);
+                _logger.LogInformation("Azure knowledge base service endpoint has not been configured. You can set the environment variable {EndpointEnvironmentVariable}.", AzureKnowledgeBaseOptions.EndpointEnvironmentVariable);
                 _logger.LogInformation("Using default endpoint: {Endpoint}", DefaultServiceEndpoint);
                 _options.Endpoint = DefaultServiceEndpoint;
                 _options.AuthScope = DefaultAuthScope;
@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             if (!string.IsNullOrEmpty(_options.ClientId)) {
-                _logger.LogInformation("AI completion service endpoint and client id are configured. Initializing authentication.");
+                _logger.LogInformation("Azure knowledge base service endpoint and client id are configured. Initializing authentication.");
 
                 var builder = PublicClientApplicationBuilder
                 .Create(_options.ClientId)
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(_options.Endpoint)) {
-                throw new ArgumentException($"AI completion API endpoint has not been configured. Please set environment variable {AiCompletionOptions.EndpointEnvironmentVariable}.");
+                throw new ArgumentException($"Azure knowledge base service endpoint has not been configured. Please set environment variable {AzureKnowledgeBaseOptions.EndpointEnvironmentVariable}.");
             }
             if (request == null)
             {
@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 if (scopes.Count == 0)
                 {
-                    _logger.LogError("No authentication scopes configured for AI completion service. Please set environment variable {EnvVar}.", AiCompletionOptions.AzureSDKBotScopeEnvironmentVariable);
+                    _logger.LogError("No authentication scopes configured for AI completion service. Please set environment variable {EnvVar}.", AzureKnowledgeBaseOptions.AzureKBScopeEnvironmentVariable);
                     return null;
                 }
                 var accounts = await _msalApp.GetAccountsAsync();
@@ -227,7 +227,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return authResult;
             } else
             {
-                _logger.LogInformation("AI completion client id not configured, skipping authentication.");
+                _logger.LogInformation("Azure knowledge base service client id not configured, skipping authentication.");
                 return null;
             }
         }

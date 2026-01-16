@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-        private readonly IAiCompletionService _aiCompletionService;
+        private readonly IAzureKnowledgeBaseService _azureKnowledgeBaseService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
@@ -37,10 +37,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             Required = false,
         };
         public TypeSpecAuthoringTool(
-            IAiCompletionService aiCompletionService,
+            IAzureKnowledgeBaseService azureKnowledgeBaseService,
             ILogger<TypeSpecAuthoringTool> logger)
         {
-            _aiCompletionService = aiCompletionService ?? throw new ArgumentNullException(nameof(aiCompletionService));
+            _azureKnowledgeBaseService = azureKnowledgeBaseService ?? throw new ArgumentNullException(nameof(azureKnowledgeBaseService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -136,7 +136,7 @@ Returns an answer with supporting references and documentation links
                 }
 
                 // Call the service
-                var response = await _aiCompletionService.SendCompletionRequestAsync(
+                var response = await _azureKnowledgeBaseService.SendCompletionRequestAsync(
                     completionRequest, ct);
 
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",

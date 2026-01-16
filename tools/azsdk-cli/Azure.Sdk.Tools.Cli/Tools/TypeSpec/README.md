@@ -1,17 +1,18 @@
-# azsdk ai-completion
+# azsdk typespec retrieve-solution
 
-The `ai-completion` command connects to the QA bot `/completion` endpoint.
+The `typespec retrieve-solution` command connects to the Azure knowledge base service `/completion` endpoint.
 
 It can be access via the CLI or as an MCP tool.
 
 ## Configuration
 
-2 settings are required for both the CLI or MCP tool to work:
+You can configure azure knowledge base service via environment variables if you want to use your own service.
 
-- AI_COMPLETION_ENDPOINT
-- AI_COMPLETION_API_KEY
+- AZURE_KB_ENDPOINT
+- AZURE_KB_CLIENT_ID
+- AZURE_KB_SCOPE
 
-The `AI_COMPLETION_API_KEY` should not be required if running the `/completion` endpoint locally.
+If the Knowledge base service need authentication, you need provide `AZURE_KB_CLIENT_ID` and `AZURE_KB_SCOPE`
 
 These are currently settable as environment variables.
 
@@ -26,42 +27,50 @@ For vscode, create the `.vscode/mcp.json` file and add the development build of 
 ```json
 {
   "servers": {
-    "azsdk-w-qa-bot": {
+    "azure-sdk-mcp": {
       "type": "stdio",
-      "command": "/path/to/repo/azure-sdk-tools/tsp-qa-bot/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "args": ["start"]
+    }
+  }
+}
+```
+
+### Configure Azure Knowledge base service
+
+If you want to use a different Azure Knowledge Base service instead of the default one, set the AZURE_KB_ENDPOINT environment variable to specify the endpoint.
+
+```json
+{
+  "servers": {
+    "azure-sdk-mcp": {
+      "type": "stdio",
+      "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
       "args": ["start"],
       "env": {
-        "AI_COMPLETION_ENDPOINT": "https://completion.endpoint"
+        "AZURE_KB_ENDPOINT": "https://completion.endpoint"
       }
     }
   }
 }
 ```
 
-When using azure-sdk-bot-qa-service as the AI completion service in Azure with built-in Microsoft authentication enabled, you must also set the environment variable AI_COMPLETION_BOT_CLIENT_ID. This variable should reference the application (client) ID of the AI completion service. You can find both the endpoint and the client ID in the Azure SDK QA bot configuration blob.
+If the service is deployed in Azure with built-in Microsoft authentication enabled, you must also set the AZURE_KB_CLIENT_ID and AZURE_KB_SCOPE environment variables. These variables should reference the application (client) ID of the service and the authentication scope. You can find both the endpoint and the client ID in the Azure SDK QA backend service configuration blob.
 
 ```
 {
   "servers": {
-    "azsdk-w-qa-bot": {
+    "azure-sdk-mcp": {
       "type": "stdio",
-      "command": "/path/to/repo/azure-sdk-tools/tsp-qa-bot/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
       "args": ["start"],
       "env": {
-        "AI_COMPLETION_ENDPOINT": "https://azuresdkqabot-endpoint.azurewebsites.net",
-        "AI_COMPLETION_BOT_CLIENT_ID": "azure-web-service-application-id"
+        "AZURE_KB_ENDPOINT": "https://azuresdkqabot-endpoint.azurewebsites.net",
+        "AZURE_KB_CLIENT_ID": "azure-web-service-application-id",
+        "AZURE_KB_SCOPE": "azure-web-service-authentication-scope"
       }
     }
   }
 }
 
 ```
-
-
-## Testing in vscode
-
-So far, I've found that you have to tell copilot while in agent mode to use the tool. I usually start with something like:
-
-> Use the azsdk qa bot to ...
-
-This could be tuned if we decide to make this part of the azsdk cli.

@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<IAiCompletionService, AiCompletionService>();
+            services.AddSingleton<IAzureKnowledgeBaseService, AzureKnowledgeBaseService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();

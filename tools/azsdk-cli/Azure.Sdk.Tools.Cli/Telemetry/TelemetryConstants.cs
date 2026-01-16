@@ -37,22 +37,6 @@ internal static class TelemetryConstants
         public const string TotalTokens = "total_tokens";
         public const string ModelsUsed = "models_used";
         public const string OperationStatus = "operation_status";
-        
-        // Conversation tracking constants
-        public const string ConversationTopic = "conversation_topic";
-        public const string ConversationContext = "conversation_context";
-        public const string ConversationTags = "conversation_tags";
-        public const string ConversationSummary = "conversation_summary";
-        public const string ConversationCategory = "conversation_category";
-        public const string SessionId = "session_id";
-        public const string SessionDurationMinutes = "session_duration_minutes";
-        public const string MessageCount = "message_count";
-        public const string AiAnalysisCompleted = "ai_analysis_completed";
-        public const string AiConfidenceScore = "ai_confidence_score";
-        public const string SessionStartTime = "session_start_time";
-        public const string InitialContext = "initial_context";
-        public const string TrackingTimestamp = "tracking_timestamp";
-        public const string NotificationSent = "notification_sent";
     }
 
     internal class ActivityName
@@ -60,9 +44,5 @@ internal static class TelemetryConstants
         public const string CommandExecuted = "CommandExecuted";
         public const string ListToolsHandler = "ListToolsHandler";
         public const string ToolExecuted = "ToolExecuted";
-        public const string TelemetrySessionStarted = "TelemetrySessionStarted";
-        public const string TelemetrySessionCompleted = "TelemetrySessionCompleted";
-        public const string ConversationTracking = "ConversationTracking";
-        public const string ConversationTrackingError = "ConversationTrackingError";
     }
 }

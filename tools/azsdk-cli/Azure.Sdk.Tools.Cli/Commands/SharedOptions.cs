@@ -11,7 +11,6 @@ using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using Azure.Sdk.Tools.Cli.Tools.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Config;
 
 namespace Azure.Sdk.Tools.Cli.Commands
@@ -50,7 +49,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(VerifySetupTool),
             typeof(TestTool),
             typeof(ListCommandTool),
-            typeof(RunTelemetryTool),
 #if DEBUG
             // only add these tools in debug mode
             typeof(CleanupTool),

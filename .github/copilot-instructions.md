@@ -1,3 +1,1 @@
 - @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.
-
-When working in this repository, wrap the interactions with `azsdk_start_telemetry_session` at the beginning and `azsdk_end_telemetry_session` at the end to ensure proper telemetry tracking. Use `azsdk_add_to_telemetry_session` to log significant events or data points during the session. 

@@ -1,59 +1,82 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Reflection;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
 {
-    public class ReleasePlanDetails
+    public class ReleasePlanDetails : WorkItemBase
     {
-        public int WorkItemId { get; set; }
-        public string WorkItemUrl { get; set; } = string.Empty;
-        public string WorkItemHtmlUrl { get; set; } = string.Empty;
+        [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
+
+        [FieldName("Custom.ProductServiceTreeID")]
         public string ProductTreeId { get; set; } = string.Empty;
+
         public string ProductName { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Owner { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+
+        [FieldName("Custom.RESTAPIReviews")]
         public List<string> SpecPullRequests { get; set; } = [];
+
+        [FieldName("Custom.SDKReleaseMonth")]
         public string SDKReleaseMonth { get; set; } = string.Empty;
+
+        [FieldName("Custom.MgmtScope")]
         public bool IsManagementPlane { get; set; } = false;
+
+        [FieldName("Custom.DataScope")]
         public bool IsDataPlane { get; set; } = false;
+
+        [FieldName("Custom.APISpecversion")]
         public string SpecAPIVersion { get; set; } = string.Empty;
+
+        [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
+
         public string ReleasePlanLink { get; set; } = string.Empty;
+
         public bool IsTestReleasePlan { get; set; } = false;
+
         public int ReleasePlanId { get; set; }
+
+        [FieldName("Custom.SDKtypetobereleased")]
         public string SDKReleaseType { get; set; } = string.Empty;
+
         public List<SDKInfo> SDKInfo { get; set; } = [];
+
+        [FieldName("Custom.ReleasePlanSubmittedby")]
         public string ReleasePlanSubmittedByEmail { get; set; } = string.Empty;
-        public bool IsCreatedByAgent { get; set; }
+
+        [FieldName("Custom.ActiveSpecPullRequestUrl")]
         public string ActiveSpecPullRequest { get; set; } = string.Empty;
+
         public string SDKLanguages { get; set; } = string.Empty;
+
         public bool IsSpecApproved { get; set; } = false;
+
         public int ApiSpecWorkItemId { get; set; } = 0;
+
         public string LanguageExclusionRequesterNote { get; set; } = string.Empty;
+
         public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
-        public WorkItemFields GetWorkItemFields()
+        public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument(string? workItemType = null)
         {
-            return new WorkItemFields
+            var jsonDocument = base.GetPatchDocument(workItemType);
+
+            if (IsTestReleasePlan)
             {
-                ServiceTreeId = this.ServiceTreeId,
-                ProductTreeId = this.ProductTreeId,
-                SDKReleaseMonth = this.SDKReleaseMonth,
-                IsManagementPlane = this.IsManagementPlane,
-                IsDataPlane = this.IsDataPlane,
-                SpecAPIVersion = this.SpecAPIVersion,
-                SpecType = this.SpecType,
-                IsTestReleasePlan = this.IsTestReleasePlan,
-                SDKReleaseType = this.SDKReleaseType,
-                ReleasePlanSubmittedByEmail = this.ReleasePlanSubmittedByEmail,
-                IsCreatedByAgent = this.IsCreatedByAgent,
-                SpecPullRequests = this.SpecPullRequests,
-                ActiveSpecPullRequest = this.ActiveSpecPullRequest
-            };
+                var releasePlanTag = "Release Planner App Test";
+                var tagValue = string.IsNullOrEmpty(Tag) ? releasePlanTag : $"{Tag},{releasePlanTag}";
+                jsonDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Tags",
+                    Value = tagValue
+                });
+            }
+
+            return jsonDocument;
         }
     }
 

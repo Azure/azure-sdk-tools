@@ -1,0 +1,6 @@
+- Greetings/Thanks message, should be false
+- Suggestions/Questions about Azure SDK Q&A bot, should be false
+- Announcements or system message, should be false
+- Technical questions, should be true
+- Permisstion related questions, should be true
+- For all other cases not covered above, should be true

@@ -362,6 +362,44 @@ async function processSourceDirectory(
     const changedFiles: ProcessedMarkdownFile[] = [];
     const unchangedFiles: ProcessedMarkdownFile[] = [];
     
+    // Helper function to process a single file
+    const processSingleFile = (fullPath: string, fileSourceDir: string): void => {
+        totalProcessed++;
+        
+        try {
+            const processed = processMarkdownFile(fullPath, source, fileSourceDir);
+            
+            if (!processed.isValid) {
+                return;
+            }
+
+            if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
+                console.log(`Content changed for: ${processed.blobPath}`);
+                changedDocuments++;
+                changedFiles.push(processed);
+                
+                const targetFilePath = path.join(targetDir, processed.filename);
+                fs.writeFileSync(targetFilePath, processed.content);
+            } else {
+                console.log(`Content unchanged for: ${processed.blobPath}`);
+                unchangedDocuments++;
+                unchangedFiles.push(processed);
+            }
+        } catch (error) {
+            console.error(`Error processing file ${fullPath}:`, error);
+            throw error;
+        }
+    };
+    
+    // Check if sourceDir is actually a file on the filesystem
+    const isFile = fs.existsSync(sourceDir) && fs.statSync(sourceDir).isFile();
+    
+    if (isFile) {
+        processSingleFile(sourceDir, path.dirname(sourceDir));
+        
+        return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, unchangedFiles };
+    }
+    
     async function walkDirectory(dir: string): Promise<void> {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         
@@ -383,35 +421,7 @@ async function processSourceDirectory(
                     continue;
                 }
                 
-                totalProcessed++;
-                
-                try {
-                    // Use the shared processMarkdownFile logic to get processed content and blob path
-                    const processed = processMarkdownFile(fullPath, source, sourceDir);
-                    
-                    // Skip if the file is not valid for processing (e.g., azure-sdk-guidelines case)
-                    if (!processed.isValid) {
-                        continue;
-                    }
-
-                    // Check if content has changed by comparing MD5
-                    if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
-                        console.log(`Content changed for: ${processed.blobPath}`);
-                        changedDocuments++;
-                        changedFiles.push(processed);
-                        
-                        // Create target file and write processed content
-                        const targetFilePath = path.join(targetDir, processed.filename);
-                        fs.writeFileSync(targetFilePath, processed.content);
-                    } else {
-                        console.log(`Content unchanged for: ${processed.blobPath}`);
-                        unchangedDocuments++;
-                        unchangedFiles.push(processed);
-                    }
-                } catch (error) {
-                    console.error(`Error processing file ${fullPath}:`, error);
-                    throw error;
-                }
+                processSingleFile(fullPath, sourceDir);
             }
         }
     }

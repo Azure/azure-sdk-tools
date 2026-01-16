@@ -32,6 +32,29 @@ func TestIntentionRecognition_TechnicalQuestion(t *testing.T) {
 	require.NotEmpty(t, intentionResult.Question)
 }
 
+func TestIntentionRecognition_PermissionMessage(t *testing.T) {
+	config.LoadEnvFile()
+	config.InitConfiguration()
+	config.InitSecrets()
+	config.InitOpenAIClient()
+
+	service, err := agent.NewCompletionService()
+	require.NoError(t, err)
+
+	messages := []model.Message{
+		{
+			Role:    model.Role_User,
+			Content: "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
+		},
+	}
+	llmMessages := convertToLLMMessages(messages)
+	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	require.NoError(t, err)
+	require.NotNil(t, intentionResult)
+	require.True(t, intentionResult.NeedsRagProcessing, "Permission question should require RAG processing")
+	require.NotEmpty(t, intentionResult.Question)
+}
+
 func TestIntentionRecognition_GreetingMessage(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()

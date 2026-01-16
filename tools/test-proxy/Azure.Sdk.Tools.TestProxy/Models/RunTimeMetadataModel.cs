@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using System.IO;
+using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
@@ -74,7 +76,10 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             IList<FieldInfo> fields = new List<FieldInfo>(tType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
             var arguments = new List<Tuple<string, string>>();
 
-            var filteredFields = fields.Where(x => x.FieldType.Name == "String" || x.FieldType.Name == "ApplyCondition");
+            var filteredFields = fields.Where(field =>
+                field.FieldType == typeof(string) ||
+                field.FieldType == typeof(ApplyCondition) ||
+                field.FieldType == typeof(Regex));
 
             // we only want to crawl the fields if it is an inherited type. customizations are not offered
             // when looking at a base RecordMatcher, ResponseTransform, or RecordedTestSanitizer
@@ -89,21 +94,29 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                     {
                         propValue = "This argument is unset or null.";
                     }
+                    else if (field.FieldType == typeof(ApplyCondition))
+                    {
+                        propValue = prop.ToString();
+
+                        if (string.IsNullOrEmpty(propValue))
+                        {
+                            continue;
+                        }
+                    }
+                    else if (field.FieldType == typeof(Regex))
+                    {
+                        var regexValue = ((Regex)prop).ToString();
+
+                        if (string.IsNullOrEmpty(regexValue))
+                        {
+                            continue;
+                        }
+
+                        propValue = "\"" + regexValue + "\"";
+                    }
                     else
                     {
-                        if (field.FieldType.Name == "ApplyCondition")
-                        {
-                            propValue = prop.ToString();
-
-                            if (propValue == null)
-                            {
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            propValue = "\"" + prop.ToString() + "\"";
-                        }
+                        propValue = "\"" + prop.ToString() + "\"";
                     }
 
                     arguments.Add(new Tuple<string, string>(GetFriendlyFieldName(field.Name), propValue));

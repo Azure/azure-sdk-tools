@@ -56,7 +56,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
-            services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
+            services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
+            if (outputMode == OutputHelper.OutputModes.Mcp)
+            {
+                services.AddSingleton<IRawOutputHelper, McpRawOutputHelper>();
+            }
+            else
+            {
+                services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
+            }
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
@@ -171,7 +179,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
                         var logger = loggerFactory.CreateLogger(toolType);
                         var telemetryService = services.GetRequiredService<ITelemetryService>();
-                        return new InstrumentedTool(telemetryService, logger, innerTool);
+                        var mcpServerContextAccessor = services.GetRequiredService<IMcpServerContextAccessor>();
+                        return new InstrumentedTool(telemetryService, logger, mcpServerContextAccessor, innerTool);
                     }));
                 }
             }

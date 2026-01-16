@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,38 +8,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public static class StringSanitizer
     {
-        /// <summary>
-        /// Quick and easy abstraction for checking regex validity. Passing null explicitly will result in a True return.
-        /// </summary>
-        /// <param name="regex">A regular expression.</param>
-        public static void ConfirmValidRegex(string regex)
-        {
-            try
-            {
-                new Regex(regex);
-            }
-            catch (Exception e)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Expression of value {regex} does not successfully compile. Failure Details: {e.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Quick and easy abstraction for checking regex validity. Passing null explicitly will result in a True return.
-        /// </summary>
-        /// <param name="regex">A regular expression.</param>
-        public static Regex GetRegex(string regex)
-        {
-            try
-            {
-                return new Regex(regex);
-            }
-            catch (Exception e)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"Expression of value {regex} does not successfully compile. Failure Details: {e.Message}");
-            }
-        }
-
         /// <summary>
         /// General purpose string replacement. Simple abstraction of string.Replace().
         /// </summary>
@@ -61,20 +29,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="groupName">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation. 
         /// Note that with this implementation, you can refer to a numbered group if you didn't name it, EG: '0'.</param>
         /// <returns>An updated value of the input string, with replacement operations completed if necessary.</returns>
-        public static string SanitizeValue(string inputValue, string replacementValue, string regex = null, string groupName = null)
+        public static string SanitizeValue(string inputValue, string replacementValue, Regex regex, string groupName = null)
         {
             if (regex == null)
             {
                 return replacementValue;
             }
 
-            Regex rx = new Regex(regex);
-
             var replacement = String.Empty;
 
             if (groupName != null)
             {
-                replacement = rx.Replace(inputValue, m =>
+                replacement = regex.Replace(inputValue, m =>
                 {
                     var group = m.Groups[groupName];
                     var sb = new StringBuilder();
@@ -109,7 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             else
             {
-                replacement = rx.Replace(inputValue, replacementValue);
+                replacement = regex.Replace(inputValue, replacementValue);
             }
 
             return replacement;

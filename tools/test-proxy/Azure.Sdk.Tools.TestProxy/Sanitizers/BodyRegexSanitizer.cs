@@ -1,6 +1,5 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
-using System;
-using System.Text;
+using Azure.Sdk.Tools.TestProxy.Common;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -10,8 +9,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class BodyRegexSanitizer : RecordedTestSanitizer
     {
         private string _newValue;
-        private string _regexValue = null;
         private string _groupForReplace = null;
+        private readonly Regex _regex;
 
         /// <summary>
         /// This sanitizer offers regex replace within a returned body. Specifically, this means regex applying to the raw JSON. If you are attempting to simply 
@@ -28,16 +27,14 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         public BodyRegexSanitizer(string value = "Sanitized", string regex = null, string groupForReplace = null, ApplyCondition condition = null)
         {
             _newValue = value;
-            _regexValue = regex;
             _groupForReplace = groupForReplace;
             Condition = condition;
-
-            StringSanitizer.ConfirmValidRegex(regex);
+            _regex = GetRegex(regex);
         }
 
         public override string SanitizeTextBody(string contentType, string body)
         {
-            return StringSanitizer.SanitizeValue(body, _newValue, _regexValue, _groupForReplace);
+            return StringSanitizer.SanitizeValue(body, _newValue, _regex, _groupForReplace);
         }
     }
 }

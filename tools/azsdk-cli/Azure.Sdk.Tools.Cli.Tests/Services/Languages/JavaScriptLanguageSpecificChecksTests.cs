@@ -31,7 +31,8 @@ internal class JavaScriptLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<JavaScriptLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
-            Mock.Of<IFileHelper>());
+            Mock.Of<IFileHelper>(),
+            Mock.Of<ISpecGenSdkConfigHelper>());
 
         _packagePath = "/tmp/javascript-package";
     }

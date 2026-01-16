@@ -1,0 +1,55 @@
+{
+  "action": "opened",
+  "issue": {
+    "id": 1234567892,
+    "number": 102,
+    "title": "MCP prompt tool not working",
+    "body": "The prompt tool is not responding correctly.",
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [],
+    "labels": [
+      {
+        "id": 2,
+        "name": "tool-prompts.mcp",
+        "color": "0366d6"
+      },
+      {
+        "id": 3,
+        "name": "needs-triage",
+        "color": "FF0000"
+      }
+    ],
+    "created_at": "2026-01-11T10:00:00Z",
+    "updated_at": "2026-01-11T10:00:00Z",
+    "closed_at": null,
+    "user": {
+      "login": "InternalUser",
+      "id": 54321,
+      "type": "User"
+    },
+    "comments": 0,
+    "html_url": "https://github.com/microsoft/mcp/issues/102",
+    "url": "https://api.github.com/repos/microsoft/mcp/issues/102"
+  },
+  "repository": {
+    "id": 887099834,
+    "name": "mcp",
+    "full_name": "microsoft/mcp",
+    "private": false,
+    "owner": {
+      "login": "microsoft",
+      "id": 6154722,
+      "type": "Organization"
+    },
+    "html_url": "https://github.com/microsoft/mcp",
+    "url": "https://api.github.com/repos/microsoft/mcp",
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "InternalUser",
+    "id": 54321,
+    "type": "User"
+  }
+}

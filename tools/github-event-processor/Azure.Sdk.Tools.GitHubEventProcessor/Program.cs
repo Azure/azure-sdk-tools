@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
@@ -15,6 +18,26 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
     {
         static async Task Main(string[] args)
         {
+            var host = Host.CreateDefaultBuilder(args)
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddSimpleConsole(options =>
+                {
+                    options.SingleLine = true;
+                    options.TimestampFormat = "[HH:mm:ss] ";
+                });
+                logging.SetMinimumLevel(LogLevel.Information);
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<McpIssueProcessing>();
+            })
+            .Build();
+
+            var serviceProvider = host.Services;
+            var mcpProcessor = serviceProvider.GetRequiredService<McpIssueProcessing>();
+
             // "dotnet run --" the "--" says don't count dotnet run as arguments
             if (args.Length < 2)
             {
@@ -42,7 +65,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     {
                         IssueEventGitHubPayload issueEventPayload = serializer.Deserialize<IssueEventGitHubPayload>(rawJson);
                         gitHubEventClient.SetConfigEntryOverrides(issueEventPayload.Repository);
-                        await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issueEventPayload);
+                        await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issueEventPayload, mcpProcessor);
                         break;
                     }
                 case EventConstants.IssueComment:
@@ -86,7 +109,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
                         gitHubEventClient.SetConfigEntryOverrides(scheduledEventPayload.Repository);
                         string cronTaskToRun = args[2];
-                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
+                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun, mcpProcessor);
                         break;
                     }
                 default:

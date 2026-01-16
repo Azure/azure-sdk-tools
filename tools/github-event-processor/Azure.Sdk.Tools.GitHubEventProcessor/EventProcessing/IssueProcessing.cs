@@ -27,10 +27,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task ProcessIssueEvent(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public static async Task ProcessIssueEvent(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload,
+        McpIssueProcessing mcpProcessor)
         {
-            await InitialIssueTriage(gitHubEventClient, issueEventPayload);
-            ManualIssueTriage(gitHubEventClient, issueEventPayload);
+            if (IsMcpRepository(issueEventPayload))
+            {
+                await mcpProcessor.ProcessIssueTriageAsync(gitHubEventClient, issueEventPayload);
+            }
+            else
+            {
+                await InitialIssueTriage(gitHubEventClient, issueEventPayload);
+            }
             ServiceAttention(gitHubEventClient, issueEventPayload);
             ManualTriageAfterExternalAssignment(gitHubEventClient, issueEventPayload);
             RequireAttentionForNonMilestone(gitHubEventClient, issueEventPayload);
@@ -42,6 +49,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             await gitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
         }
 
+        private static bool IsMcpRepository(IssueEventGitHubPayload issueEventPayload)
+        {
+            return issueEventPayload.Repository.Owner.Login.Equals("microsoft", StringComparison.OrdinalIgnoreCase)
+                && issueEventPayload.Repository.Name.Equals("mcp", StringComparison.OrdinalIgnoreCase);
+        }
 
         /// <summary>
         /// Initial Issue Triage

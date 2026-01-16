@@ -1,5 +1,18 @@
 # Release History
 
+## 0.7.0 (unreleased)
+
+### Features Added
+
+* Add new tenants General, API Review, JS, Java and .Net
+* Add new knowledge sources from JS, Java and .Net
+* Support routing tenant based on question domain
+
+## Other changes
+
+* Refine prompt for onboarding channel to improve answer accuracy
+* Refactor post process of merging and sorting and complete chunk logic, to give more better context to LLM
+
 ## 0.6.0 (2025-12-16)
 
 ### Features Added

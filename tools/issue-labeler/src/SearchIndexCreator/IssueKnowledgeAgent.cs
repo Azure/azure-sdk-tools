@@ -31,9 +31,14 @@ namespace SearchIndexCreator
                 ModelName = _config["KnowledgeAgentModelName"]
             };
             var agentModel = new KnowledgeAgentAzureOpenAIModel(azureOpenAIParameters: openAiParameters);
+            
+            // Read threshold from config, default to 1.0f for backward compatibility
+            var rerankerThreshold = float.TryParse(_config["RerankerThreshold"], out var threshold) 
+                ? threshold : 1.0f;
+            
             var targetIndex = new KnowledgeAgentTargetIndex(IndexName)
             {
-                DefaultRerankerThreshold = 1.0f
+                DefaultRerankerThreshold = rerankerThreshold
             };
 
             var agent = new KnowledgeAgent(
@@ -56,6 +61,21 @@ namespace SearchIndexCreator
             catch (Exception ex)
             {
                 return false;
+            }
+        }
+
+        public async Task DeleteAsync()
+        {
+            var agentName = _config["KnowledgeAgentName"];
+            Console.WriteLine($"Deleting knowledge agent '{agentName}'...");
+            try
+            {
+                await _indexClient.DeleteKnowledgeAgentAsync(agentName);
+                Console.WriteLine($"Knowledge agent '{agentName}' deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting knowledge agent: {ex.Message}");
             }
         }
     }

@@ -36,6 +36,9 @@ var host = new HostBuilder()
         {
             options.Connect(configEndpoint, credential);
         });
+        // Add Function App Settings (local.settings.json locally, Environment Variables in Azure)
+        // after Azure App Config so they can override any App Config values when needed
+        builder.AddConfiguration(functionConfig);
 
         var configRoot = builder.Build();
 
@@ -79,6 +82,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<TokenCredential>(credential);
         services.AddSingleton<TriageRag>();
+        services.AddSingleton<McpTriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();

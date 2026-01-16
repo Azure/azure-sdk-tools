@@ -246,26 +246,30 @@ public sealed partial class JavaLanguageService : LanguageService
 
     public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
+        // In azure-sdk-for-java layout, customizations live under:
+        //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
+        // Example (document intelligence):
+        //   package path: .../azure-ai-documentintelligence
+        //   customization: .../azure-ai-documentintelligence/customization/src/main/java
+        // TODO: In the future, check tspconfig.yaml for "customization-class" directive for definitive detection.
+
         try
         {
-            // In azure-sdk-for-java layout, customizations live under:
-            //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
-            // Example (document intelligence):
-            //   package path: .../azure-ai-documentintelligence
-            //   customization: .../azure-ai-documentintelligence/customization/src/main/java
-            logger.LogInformation("Checking for Java customizations in packagePath '{PackagePath}'", packagePath);
-
             var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
-            var exists = Directory.Exists(customizationSourceRoot);
-            logger.LogInformation("Checking customization path: {CustomizationPath}, exists: {Exists}", customizationSourceRoot, exists);
+            if (Directory.Exists(customizationSourceRoot))
+            {
+                logger.LogDebug("Found Java customization directory at {CustomizationPath}", customizationSourceRoot);
+                return true;
+            }
 
-            return exists;
+            logger.LogDebug("No Java customization directory found in {PackagePath}", packagePath);
+            return false;
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Failed to check Java customizations in packagePath '{PackagePath}'", packagePath);
+            logger.LogWarning(ex, "Error searching for Java customization files in {PackagePath}", packagePath);
+            return false;
         }
-        return false;
     }
 
     public override async Task<bool> ApplyPatchesAsync(

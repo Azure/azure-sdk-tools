@@ -14,6 +14,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 {
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private const string GeneratedFolderName = "Generated";
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
@@ -235,27 +236,19 @@ public sealed partial class DotnetLanguageService: LanguageService
 
         try
         {
+            var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
             var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories)
-                .Where(file => !IsInGeneratedDirectory(file));
+                .Where(file => !file.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
             
             foreach (var file in csFiles)
             {
                 try
                 {
-                    // Use ReadLines for efficiency - stop reading as soon as we find a partial class
                     foreach (var line in File.ReadLines(file))
                     {
-                        // Skip comment lines and look for partial class declarations
-                        var trimmedLine = line.TrimStart();
-                        if (trimmedLine.StartsWith("//") || trimmedLine.StartsWith("/*") || trimmedLine.StartsWith("*"))
+                        if (line.Contains("partial class"))
                         {
-                            continue;
-                        }
-                        
-                        // Check for partial class keyword (case-sensitive for C#)
-                        if (trimmedLine.Contains("partial class ") || trimmedLine.Contains("partial class\t"))
-                        {
-                            logger.LogDebug("Found .NET partial class in: {FilePath}", file);
+                            logger.LogDebug("Found .NET partial class in {FilePath}", file);
                             return true;
                         }
                     }
@@ -266,7 +259,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                 }
             }
 
-            logger.LogDebug("No .NET partial classes found outside Generated folder in {PackagePath}", packagePath);
+            logger.LogDebug("No .NET partial classes found in {PackagePath}", packagePath);
             return false;
         }
         catch (Exception ex)
@@ -274,24 +267,5 @@ public sealed partial class DotnetLanguageService: LanguageService
             logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
             return false;
         }
-    }
-
-    /// <summary>
-    /// Checks if a file path is within a "Generated" directory at any level.
-    /// Walks up the directory tree to handle cross-platform path scenarios.
-    /// </summary>
-    private static bool IsInGeneratedDirectory(string filePath)
-    {
-        var directory = Path.GetDirectoryName(filePath);
-        while (!string.IsNullOrEmpty(directory))
-        {
-            var dirName = Path.GetFileName(directory);
-            if (string.Equals(dirName, "Generated", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            directory = Path.GetDirectoryName(directory);
-        }
-        return false;
     }
 }

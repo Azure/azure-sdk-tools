@@ -33,6 +33,10 @@ public partial class GoLanguageService : LanguageService
     private readonly string golangciLintWin = "golangci-lint.exe";
     private readonly IPowershellHelper powershellHelper;
 
+    // Known locations for Go customization files
+    private const string CustomizationPathInternalGenerate = "internal/generate";
+    private const string CustomizationPathTestdataGenerate = "testdata/generate";
+
     public override SdkLanguage Language { get; } = SdkLanguage.Go;
     public override bool IsCustomizedCodeUpdateSupported => true;
 
@@ -140,34 +144,28 @@ public partial class GoLanguageService : LanguageService
         //   - testdata/generate (e.g., azcertificates)
         // TODO: In the future, check tspconfig.yaml for "go-generate" directive for definitive detection.
 
-        // Check known customization locations in order of likelihood
-        string[] knownLocations = ["internal/generate", "testdata/generate"];
-        
-        foreach (var location in knownLocations)
+        try
         {
-            var customizationPath = Path.Combine(packagePath, location);
-            if (Directory.Exists(customizationPath))
+            string[] knownLocations = [CustomizationPathInternalGenerate, CustomizationPathTestdataGenerate];
+            
+            foreach (var location in knownLocations)
             {
-                // Verify the directory actually contains Go files (not just an empty directory)
-                try
+                var customizationPath = Path.Combine(packagePath, location);
+                if (Directory.Exists(customizationPath))
                 {
-                    var goFiles = Directory.GetFiles(customizationPath, "*.go", SearchOption.TopDirectoryOnly);
-                    if (goFiles.Length > 0)
-                    {
-                        logger.LogDebug("Found {Count} Go customization file(s) at {CustomizationPath}", goFiles.Length, customizationPath);
-                        return true;
-                    }
-                    logger.LogDebug("Directory exists but contains no .go files: {CustomizationPath}", customizationPath);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Error checking for Go files in {CustomizationPath}", customizationPath);
+                    logger.LogDebug("Found Go customization directory at {CustomizationPath}", customizationPath);
+                    return true;
                 }
             }
-        }
 
-        logger.LogDebug("No Go customization files found in known locations for {PackagePath}", packagePath);
-        return false;
+            logger.LogDebug("No Go customization directory found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for Go customization files in {PackagePath}", packagePath);
+            return false;
+        }
     }
 
     /// <summary>

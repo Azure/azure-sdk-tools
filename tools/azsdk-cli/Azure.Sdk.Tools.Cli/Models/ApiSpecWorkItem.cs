@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Reflection;
+using System.Text;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
@@ -23,22 +25,34 @@ namespace Azure.Sdk.Tools.Cli.Models
 
             if (SpecPullRequests.Count > 0)
             {
-                var prLinks = string.Join("<br>", SpecPullRequests.Select(pr => $"<a href=\"{pr}\">{pr}</a>"));
-                jsonDocument.Add(new JsonPatchOperation
+                StringBuilder sb = new StringBuilder();
+                foreach (var pr in this.SpecPullRequests)
+                {
+                    if (sb.Length > 0)
+                    {
+                        sb.Append("<br>");
+                    }
+                    sb.Append($"<a href=\"{pr}\">{pr}</a>");
+                }
+                var prLinks = sb.ToString();
+                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.RESTAPIReviews",
-                    Value = prLinks
+                    Value = sb.ToString()
                 });
-                
-                var activeSpec = string.IsNullOrEmpty(ActiveSpecPullRequest)
-                    ? SpecPullRequests.FirstOrDefault() ?? string.Empty
-                    : ActiveSpecPullRequest;
-                jsonDocument.Add(new JsonPatchOperation
+
+                var activeSpecPullRequest = this.ActiveSpecPullRequest;
+                if (string.IsNullOrEmpty(activeSpecPullRequest))
+                {
+                    // If active spec pull request is not provided, use the first pull request from the list
+                    activeSpecPullRequest = this.SpecPullRequests.FirstOrDefault() ?? string.Empty;
+                }
+                jsonDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.ActiveSpecPullRequestUrl",
-                    Value = activeSpec
+                    Value = activeSpecPullRequest
                 });
             }
 

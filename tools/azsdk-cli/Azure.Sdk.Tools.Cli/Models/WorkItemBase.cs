@@ -27,7 +27,6 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public string Description { get; set; } = string.Empty;
 
-        [FieldName("System.State")]
         public string Status { get; set; } = string.Empty;
 
         [FieldName("Custom.PrimaryPM")]
@@ -45,12 +44,20 @@ namespace Azure.Sdk.Tools.Cli.Models
                 {
                     continue;
                 }
- 
+
+                var value = prop.GetValue(this);
+
+                // Convert boolean values to "Yes"/"No"
+                if (value is bool boolValue)
+                {
+                    value = boolValue ? "Yes" : "No";
+                }
+
                 jsonDocument.Add(new JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = $"/fields/{attr.Name}",
-                    Value = prop.GetValue(this)
+                    Value = value
                 });
             }
 

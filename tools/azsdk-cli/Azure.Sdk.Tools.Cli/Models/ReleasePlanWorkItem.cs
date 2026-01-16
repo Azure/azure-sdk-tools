@@ -15,7 +15,6 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public string ProductName { get; set; } = string.Empty;
 
-        [FieldName("Custom.RESTAPIReviews")]
         public List<string> SpecPullRequests { get; set; } = [];
 
         [FieldName("Custom.SDKReleaseMonth")]
@@ -67,7 +66,10 @@ namespace Azure.Sdk.Tools.Cli.Models
             if (IsTestReleasePlan)
             {
                 var releasePlanTag = "Release Planner App Test";
-                var tagValue = string.IsNullOrEmpty(Tag) ? releasePlanTag : $"{Tag},{releasePlanTag}";
+                var tagValue = string.IsNullOrEmpty(this.Tag) ? releasePlanTag : $"{Tag},{releasePlanTag}";
+
+                jsonDocument.RemoveAll(doc => doc.Path == "/fields/System.Tags");
+
                 jsonDocument.Add(new JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
@@ -77,6 +79,21 @@ namespace Azure.Sdk.Tools.Cli.Models
             }
 
             return jsonDocument;
+        }
+
+        public ApiSpecWorkItem ToApiSpecWorkItem()
+        {
+            return new ApiSpecWorkItem
+            {
+                IsCreatedByAgent = this.IsCreatedByAgent,
+                AssignedTo = this.AssignedTo,
+                Tag = this.Tag,
+                Owner = this.Owner,
+                SpecAPIVersion = this.SpecAPIVersion,
+                SpecType = this.SpecType,
+                SpecPullRequests = this.SpecPullRequests,
+                ActiveSpecPullRequest = this.ActiveSpecPullRequest
+            };
         }
     }
 

@@ -435,7 +435,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
-                var releasePlan = new ReleasePlanDetails
+                var releasePlan = new ReleasePlanWorkItem
                 {
                     SDKReleaseMonth = targetReleaseMonthYear,
                     ServiceTreeId = serviceTreeId,
@@ -946,7 +946,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlanDetails releasePlan)
+        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlanWorkItem releasePlan)
         {
             var repoOwner = parsedUrl.RepoOwner;
             var repoName = parsedUrl.RepoName;

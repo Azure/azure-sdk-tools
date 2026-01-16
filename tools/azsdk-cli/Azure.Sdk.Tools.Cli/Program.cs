@@ -21,6 +21,7 @@ public class Program
     {
         var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
         logLevel ??= debug ? LogLevel.Debug : LogLevel.Information;
+
         ServerApp = CreateAppBuilder(args, outputFormat, logLevel.Value, debug).Build();
         return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug);
     }
@@ -49,7 +50,7 @@ public class Program
         // In MCP server mode skip console output except for fatal server errors (which may happen
         // before the MCP logging transport is initialized).
         // All other logs will be redirected via the mcp logger over json-rpc to the mcp client only
-        builder.Logging.ConfigureMcpConsoleLogging(isCommandLine);
+        builder.Logging.ConfigureMcpConsoleFallbackLogging(isCommandLine);
 
         // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
@@ -64,7 +65,6 @@ public class Program
         // add the console logger
         builder.Services.ConfigureDefaultLogging(logLevel, isCommandLine);
 
-
         var outputMode = !isCommandLine ? OutputHelper.OutputModes.Mcp : outputFormat switch
         {
             "plain" => OutputHelper.OutputModes.Plain,
@@ -73,28 +73,22 @@ public class Program
             _ => throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json")
         };
 
-        // register common services
         ServiceRegistrations.RegisterCommonServices(builder.Services, outputMode);
-        // register MCP tools
         ServiceRegistrations.RegisterInstrumentedMcpTools(builder.Services, args);
 
-        if (isCommandLine)
+        builder.Services.AddTelemetry(debug);
+
+        if (!isCommandLine)
         {
-            return builder;
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
+            });
+            builder.Services.ConfigureMcpLogging();
+            builder.Services
+                .AddMcpServer()
+                .WithStdioServerTransport();
         }
-
-        builder.Services.ConfigureMcpLogging();
-
-        TelemetryService.RegisterServerTelemetry(builder.Services, debug);
-
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
-        });
-
-        builder.Services
-            .AddMcpServer()
-            .WithStdioServerTransport();
 
         return builder;
     }

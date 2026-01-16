@@ -7,8 +7,11 @@
 - Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
+- Added CLI mode telemetry, app insights endpoint determined by debug vs. release builds
 
 ### Breaking Changes
+
+- Removed ability to set custom telemetry endpoint via environment variable
 
 ### Bugs Fixed
 

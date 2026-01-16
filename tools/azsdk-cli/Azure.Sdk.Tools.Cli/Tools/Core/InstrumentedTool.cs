@@ -51,7 +51,7 @@ public class InstrumentedTool : DelegatingMcpServerTool
         try
         {
             // Add tool name and arg
-            activity?.AddTag(TagName.ToolName, request.Params.Name);
+            activity?.SetTag(TagName.ToolName, request.Params.Name);
             var args = JsonSerializer.Serialize(request.Params.Arguments, serializerOptions);
             activity?.SetTag(TagName.ToolArgs, args);
 

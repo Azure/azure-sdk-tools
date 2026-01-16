@@ -71,7 +71,11 @@ public abstract class MCPToolBase
             // Must be called before we manually flush below
             activity?.Dispose();
             // Force upload of events since we won't have background batching in CLI mode
-            telemetryService.Flush();
+            var flushed = telemetryService.Flush();
+            if (flushed == false && debug)
+            {
+                output.OutputError("Telemetry flush did not complete before timeout");
+            }
         }
     }
 

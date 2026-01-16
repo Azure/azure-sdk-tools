@@ -20,7 +20,14 @@ internal enum TelemetryMode
 
 internal static class TelemetryRegistration
 {
+    // Used for runs of the released executable.
+    // App insights owned by datax team
     private const string DefaultAppInsightsConnectionString = "InstrumentationKey=61976f7a-4734-47a1-9fa0-0d5dcfda7f11;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=b22875b9-495e-4a5f-925a-a8b3b28ab441";
+
+    // Used for development that way if there are regressions to telemetry uploads
+    // we can observe them before shipping a release executable.
+    // AzSdkToolsMcpAppInsights in the 'Azure SDK Engineering System' subscription
+    private const string DebugAppInsightsConnectionString = "InstrumentationKey=30dc97fc-a02e-4ac2-b42b-3984be8e8617;IngestionEndpoint=https://westus3-1.in.applicationinsights.azure.com/;LiveEndpoint=https://westus3.livediagnostics.monitor.azure.com/;ApplicationId=6852648c-9710-45ec-8470-24738c518ae6";
 
     internal static void AddTelemetry(this IServiceCollection services, bool debug)
     {
@@ -103,22 +110,17 @@ internal static class TelemetryRegistration
 
     private static string GetAppInsightsConnectionString()
     {
-        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_APPLICATIONINSIGHTS_CONNECTION_STRING");
-        if (string.IsNullOrEmpty(appInsightsConnectionString))
-        {
-            return DefaultAppInsightsConnectionString;
-        }
-        return appInsightsConnectionString;
+#if DEBUG
+        // In development mode with dotnet run, upload telemetry to our testing app insights
+        return DebugAppInsightsConnectionString;
+#else
+        return DefaultAppInsightsConnectionString;
+#endif
     }
 
     private static bool IsTelemetryEnabled()
     {
-#if DEBUG
-        // Skip telemetry export for local development (dotnet run mode)
-        return false;
-#else
         var telemetryEnv = Environment.GetEnvironmentVariable("AZSDKTOOLS_COLLECT_TELEMETRY");
         return string.IsNullOrEmpty(telemetryEnv) || (bool.TryParse(telemetryEnv, out var parsed) && parsed);
-#endif
     }
 }

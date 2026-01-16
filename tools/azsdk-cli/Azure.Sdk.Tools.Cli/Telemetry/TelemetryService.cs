@@ -11,9 +11,16 @@ using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Telemetry;
-/// <summary>
-/// Provides access to services.
-/// </summary>
+
+public interface ITelemetryService : IDisposable
+{
+    ValueTask<Activity?> StartActivity(string activityName);
+
+    ValueTask<Activity?> StartActivity(string activityName, Implementation? clientInfo);
+
+    bool? Flush();
+}
+
 internal class TelemetryService : ITelemetryService
 {
     private readonly bool _isEnabled;
@@ -87,13 +94,13 @@ internal class TelemetryService : ITelemetryService
         return activity;
     }
 
-    public void Flush()
+    public bool? Flush()
     {
         // Do not block too long before exiting the CLI at the end of command execution,
         // even if the telemetry upload is not complete.
         // 2 seconds seems like a reasonable balance but most of the time the
         // upload delay should be very quick and not noticeable to users.
-        _tracerProvider?.ForceFlush(2000);
+        return _tracerProvider?.ForceFlush(2000);
     }
 
     public void Dispose()

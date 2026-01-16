@@ -48,21 +48,13 @@ public abstract class MCPToolBase
         {
             var fullCommandName = string.Join('.', command.Parents.Reverse().Select(p => p.Name).Append(command.Name));
             var commandLine = string.Join(" ", parseResult.Tokens.Select(t => t.Value));
-            activity?.AddTag(TagName.CommandName, fullCommandName);
+            activity?.SetTag(TagName.CommandName, fullCommandName);
             activity?.SetTag(TagName.CommandArgs, commandLine);
 
             CommandResponse response = await HandleCommand(parseResult, cancellationToken);
             // Pass response.GetType() otherwise we will only serialize CommandResponse base type properties
             activity?.SetTag(TagName.CommandResponse, JsonSerializer.Serialize(response, response.GetType()));
-
-            if (response.ExitCode == 0)
-            {
-                activity?.SetStatus(ActivityStatusCode.Ok);
-            }
-            else
-            {
-                activity?.SetStatus(ActivityStatusCode.Error);
-            }
+            activity?.SetStatus(response.ExitCode == 0 ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
 
             output.OutputCommandResponse(response);
 
@@ -76,6 +68,8 @@ public abstract class MCPToolBase
         }
         finally
         {
+            // Must be called before we manually flush below
+            activity?.Dispose();
             // Force upload of events since we won't have background batching in CLI mode
             telemetryService.Flush();
         }

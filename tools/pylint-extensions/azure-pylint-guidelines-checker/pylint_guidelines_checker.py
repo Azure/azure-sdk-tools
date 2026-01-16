@@ -3041,10 +3041,10 @@ class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):
     priority = -1
     msgs = {
         "C4774": (
-            "Use 'inspect.iscoroutinefunction()' or 'asyncio.coroutines.iscoroutinefunction()' instead of deprecated 'asyncio.iscoroutinefunction()'. "
+            "Use 'inspect.iscoroutinefunction()' instead of deprecated 'asyncio.iscoroutinefunction()'. "
             "The asyncio version was deprecated in Python 3.12 and will be removed in Python 3.16.",
             "remove-deprecated-iscoroutinefunction",
-            "Replace asyncio.iscoroutinefunction with inspect.iscoroutinefunction or asyncio.coroutines.iscoroutinefunction.",
+            "Replace asyncio.iscoroutinefunction with inspect.iscoroutinefunction.",
         ),
     }
 

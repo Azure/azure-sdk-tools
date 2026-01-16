@@ -4221,3 +4221,100 @@ use_secret(secret_value)
         with self.assertNoMessages():
             self.checker.visit_assign(assign_node)
             self.checker.visit_call(call_node)
+
+
+class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerTestCase):
+    """Test that we detect and warn about deprecated asyncio.iscoroutinefunction usage."""
+    CHECKER_CLASS = checker.DoNotUseDeprecatedAsyncioIscoroutinefunction
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "use_inspect_iscoroutinefunction.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_violation_import_from(self, setup):
+        """Check that importing iscoroutinefunction from asyncio raises a warning"""
+        importfrom_node = setup.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="remove-deprecated-iscoroutinefunction",
+                line=3,
+                node=importfrom_node,
+                col_offset=0,
+                end_line=3,
+                end_col_offset=39,
+            )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_violation_asyncio_call(self, setup):
+        """Check that calling asyncio.iscoroutinefunction raises a warning"""
+        # First, visit the import to set up the checker state
+        import_node = setup.body[1]
+        self.checker.visit_import(import_node)
+        
+        # Get the function that contains the call
+        function_node = setup.body[2]
+        if_node = function_node.body[1]  # The if statement
+        call_node = if_node.test  # The if condition contains the call
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="remove-deprecated-iscoroutinefunction",
+                line=12,
+                node=call_node,
+                col_offset=7,
+                end_line=12,
+                end_col_offset=49,
+            )
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_violation_with_alias(self, setup):
+        """Check that using an alias for asyncio still raises a warning"""
+        # Visit the import with alias to set up the checker state
+        import_node = setup.body[3]
+        self.checker.visit_import(import_node)
+        
+        # Get the function that contains the call with alias
+        function_node = setup.body[4]
+        if_node = function_node.body[1]  # The if statement
+        call_node = if_node.test  # The if condition contains the call
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="remove-deprecated-iscoroutinefunction",
+                line=22,
+                node=call_node,
+                col_offset=7,
+                end_line=22,
+                end_col_offset=45,
+            )
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_acceptable_inspect_usage(self, setup):
+        """Check that using inspect.iscoroutinefunction does not raise a warning"""
+        function_node = setup.body[6]
+        if_node = function_node.body[1]  # The if statement
+        call_node = if_node.test  # The if condition contains the call
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_acceptable_other_asyncio_usage(self, setup):
+        """Check that using other asyncio functions does not raise warnings"""
+        function_node = setup.body[7]
+        
+        # asyncio.run() call
+        call_node1 = function_node.body[1].value
+        # asyncio.sleep() call
+        call_node2 = function_node.body[2].value
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node1)
+            self.checker.visit_call(call_node2)

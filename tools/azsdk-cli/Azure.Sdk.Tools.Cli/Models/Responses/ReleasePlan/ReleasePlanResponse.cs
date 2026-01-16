@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
 {
@@ -10,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
     {
         [JsonPropertyName("release_plan_details")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ReleasePlanDetails? ReleasePlanDetails { get; set; }
+        public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
         protected override string Format()

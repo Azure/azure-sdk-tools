@@ -3,6 +3,7 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
@@ -10,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
     {
         // Configurable properties for testing
         public Build? ConfiguredPipelineRun { get; set; }
-        public ReleasePlanDetails? ConfiguredReleasePlanForWorkItem { get; set; }
+        public ReleasePlanWorkItem? ConfiguredReleasePlanForWorkItem { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
 
@@ -19,9 +20,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
         
-        Task<List<ReleasePlanDetails>> IDevOpsService.ListOverdueReleasePlansAsync()
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.ListOverdueReleasePlansAsync()
         {
-            return Task.FromResult(new List<ReleasePlanDetails>());
+            return Task.FromResult(new List<ReleasePlanWorkItem>());
         }
         
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
@@ -76,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
-        Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan)
+        Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan)
         {
             var workItem = new WorkItem
             {
@@ -96,9 +97,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(ConfiguredPipelineRun);
         }
 
-        Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanAsync(int releasePlanId)
+        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(int releasePlanId)
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 1,
                 ReleasePlanId = releasePlanId,
@@ -108,9 +109,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
-        Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanAsync(string pullRequestUrl)
+        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanAsync(string pullRequestUrl)
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = 0, // Release plan does not exists
                 ReleasePlanId = 1,
@@ -121,20 +122,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
-        Task<List<ReleasePlanDetails>> IDevOpsService.GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan)
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan)
         {
-            var releasePlans = new List<ReleasePlanDetails>();
+            var releasePlans = new List<ReleasePlanWorkItem>();
             return Task.FromResult(releasePlans);
         }
         
-        Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
+        Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
         {
             if (ConfiguredReleasePlanForWorkItem != null)
             {
                 return Task.FromResult(ConfiguredReleasePlanForWorkItem);
             }
             
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = workItemId,
                 ReleasePlanId = 1,

@@ -58,7 +58,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [missing-retry-policy](#missing-retry-policy)
 - [missing-distributed-tracing-policy](#missing-distributed-tracing-policy)
 - [do-not-use-logging-exception](#do-not-use-logging-exception)
-- [use-inspect-iscoroutinefunction](#use-inspect-iscoroutinefunction)
+- [remove-deprecated-iscoroutinefunction](#remove-deprecated-iscoroutinefunction)
 
 ## client-method-should-not-use-static-method
 
@@ -1184,7 +1184,7 @@ except Exception as e:
     logger.debug("An error occurred", exc_info=e)  # Using logger.debug with exc_info
 ```
 
-## use-inspect-iscoroutinefunction
+## remove-deprecated-iscoroutinefunction
 ❌ **Incorrect**:
 ```python
 import asyncio

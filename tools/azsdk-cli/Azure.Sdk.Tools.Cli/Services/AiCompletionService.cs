@@ -22,6 +22,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly IPublicClientApplication? _msalApp;
         private readonly IList<string> scopes = new List<string>();
         private readonly string authUrl = "https://login.microsoftonline.com/organizations/";
+        private const string DefaultServiceEndpoint = "https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net";
+        private const string DefaultClientId = "830f1656-8b36-4e8e-9781-87ccdd038644";
+        private const string DefaultAuthScope = "api://azure-sdk-qa-bot-dev/token";
 
         public AiCompletionService(
             HttpClient httpClient,
@@ -38,10 +41,16 @@ namespace Azure.Sdk.Tools.Cli.Services
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 WriteIndented = _options.EnableDebugLogging
             };
+            if (string.IsNullOrEmpty(_options.Endpoint))
+            {
+                _logger.LogInformation("AI completion API endpoint has not been configured. You can set the environment variable {EndpointEnvironmentVariable}.", AiCompletionOptions.EndpointEnvironmentVariable);
+                _logger.LogInformation("Using default endpoint: {Endpoint}", DefaultServiceEndpoint);
+                _options.Endpoint = DefaultServiceEndpoint;
+                _options.AuthScope = DefaultAuthScope;
+                _options.ClientId = DefaultClientId;
+            }
 
-            if (string.IsNullOrEmpty(_options.Endpoint)) {
-                logger.LogError("AI completion API endpoint is not configured. Please set environment variable {EnvVar}.", AiCompletionOptions.EndpointEnvironmentVariable);
-            } else if (!string.IsNullOrEmpty(_options.ClientId)) {
+            if (!string.IsNullOrEmpty(_options.ClientId)) {
                 _logger.LogInformation("AI completion service endpoint and client id are configured. Initializing authentication.");
 
                 var builder = PublicClientApplicationBuilder

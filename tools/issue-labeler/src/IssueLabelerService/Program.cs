@@ -36,7 +36,8 @@ var host = new HostBuilder()
         {
             options.Connect(configEndpoint, credential);
         });
-        // Add local settings AFTER Azure App Config so they override for local testing
+        // Add Function App Settings (local.settings.json locally, Environment Variables in Azure)
+        // after Azure App Config so they can override any App Config values when needed
         builder.AddConfiguration(functionConfig);
 
         var configRoot = builder.Build();

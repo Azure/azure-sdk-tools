@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (IsMcpRepository(issueEventPayload))
             {
-                await mcpProcessor.ProcessIssueTriageAsync(gitHubEventClient, issueEventPayload);
+                await mcpProcessor.ProcessInitialIssueTriageAsync(gitHubEventClient, issueEventPayload);
             }
             else
             {

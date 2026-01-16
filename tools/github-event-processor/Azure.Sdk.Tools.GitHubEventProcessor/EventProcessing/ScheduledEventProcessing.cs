@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
@@ -24,7 +22,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
         /// <param name="cronTaskToRun">String, the scheduled event</param>
-        public static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun, McpIssueProcessing mcpProcessor)
+        public static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun)
         {
             // Scheduled events can make multiple calls to SearchIssues due to pagination. Any call to SearchIssues can
             // run into a SecondaryRateLimitExceededException, regardless of the page, and there could be pending updates

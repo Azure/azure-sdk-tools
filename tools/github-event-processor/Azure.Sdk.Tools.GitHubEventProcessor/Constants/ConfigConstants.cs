@@ -16,5 +16,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string DefaultBranch = "main";
         public const string ServerLabelPrefix = "server-"; 
         public const string ToolLabelPrefix = "tools-";
+        public static readonly List<string> OtherLabels = new List<string> { "remote-mcp" };
     }
 }

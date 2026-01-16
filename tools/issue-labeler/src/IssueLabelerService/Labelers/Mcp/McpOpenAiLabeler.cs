@@ -83,8 +83,7 @@ namespace IssueLabelerService
 
             var jsonSchema = BuildJsonSchema();
 
-            // 5. Call OpenAI via TriageRag
-            var instructions = _config.LabelInstructions; // You can point this to an MCP-specific instruction string
+            var instructions = _config.LabelInstructions;
             string rawResult = await _ragService.SendMessageQnaAsync(
                 instructions,
                 userPrompt,
@@ -101,7 +100,6 @@ namespace IssueLabelerService
                 return new Dictionary<string, string>();
             }
 
-            // 6. Parse JSON and validate
             JObject parsed;
             try
             {
@@ -198,9 +196,9 @@ namespace IssueLabelerService
                 query,
                 topK: top,
                 scoreThreshold: scoreThreshold,
-                cleanQuery: true,           
+                cleanQuery: true,
                 onlyLabeledIssues: true,
-                excludeIssueId: issue.IssueNumber.ToString()); 
+                excludeIssueId: issue.IssueNumber.ToString());
 
             if (searchContentResults.Count == 0)
             {
@@ -241,12 +239,12 @@ namespace IssueLabelerService
             var tags = new List<string>();
             var tagPattern = new System.Text.RegularExpressions.Regex(@"\[([A-Z]+)\]");
             var matches = tagPattern.Matches(title);
-            
+
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
                 tags.Add(match.Groups[1].Value);
             }
-            
+
             return tags.Any() ? string.Join(", ", tags) : "None";
         }
 
@@ -536,7 +534,6 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
                 _config.ConfidenceThreshold,
                 CultureInfo.InvariantCulture);
 
-            // 1. Validate Server
             if (string.IsNullOrEmpty(server))
             {
                 _logger.LogWarning(
@@ -568,28 +565,16 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
                 return new Dictionary<string, string>();
             }
 
-            // 2. Validate Tool
             bool isAzureMcp = server.Equals("server-Azure.Mcp", StringComparison.OrdinalIgnoreCase);
-            
+
             if (string.IsNullOrEmpty(tool))
             {
-                // if (isAzureMcp)
-                // {
-                //     _logger.LogWarning(
-                //         "MCP labeler returned empty Tool for Azure MCP issue #{IssueNumber} in {Repository}. Tool is required for Azure MCP.",
-                //         issue.IssueNumber,
-                //         issue.RepositoryName);
-                //     return new Dictionary<string, string>();
-                // }
-                // else
-                // {
-                    _logger.LogInformation(
-                        "MCP labeler returned no Tool for issue #{IssueNumber} in {Repository}. This is acceptable for non-Azure MCP servers. Applying Server label only.",
-                        issue.IssueNumber,
-                        issue.RepositoryName);
-                    result["Server"] = server;
-                    return result;
-                //}
+                _logger.LogInformation(
+                    "MCP labeler returned no Tool for issue #{IssueNumber} in {Repository}. This is acceptable for non-Azure MCP servers. Applying Server label only.",
+                    issue.IssueNumber,
+                    issue.RepositoryName);
+                result["Server"] = server;
+                return result;
             }
 
             bool toolIsUnknown = string.Equals(tool, "UNKNOWN", StringComparison.OrdinalIgnoreCase);
@@ -618,9 +603,9 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
                 toolIsUnknown = true;
             }
 
-            // 3. Build final result - only include Tool if it's not UNKNOWN
+            // Build final result - only include Tool if it's not UNKNOWN
             result["Server"] = server;
-            
+
             if (!toolIsUnknown)
             {
                 result["Tool"] = tool;
@@ -640,4 +625,3 @@ Retrieved similar issues and context (note: ""Unlabeled"" entries are historical
         #endregion
     }
 }
- 

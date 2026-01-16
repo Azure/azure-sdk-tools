@@ -14,12 +14,6 @@ namespace SearchIndexCreator
     {
         public static async Task Main(string[] args)
         {
-            if (args.Length > 0 && args[0] == "sync-labels")
-            {
-                await RunLabelSync(args);
-                return;
-            }
-
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("local.settings.json")
@@ -164,85 +158,6 @@ namespace SearchIndexCreator
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
             var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
             await issueKnowledgeAgent.DeleteAsync();
-        }
-
-        private static async Task RunLabelSync(string[] args)
-        {
-            Console.WriteLine("Starting label sync in CLI mode...");
-
-            // Parse arguments: --repo-owner <owner> --repo-name <name>
-            string? repoOwner = null;
-            string? repoName = null;
-
-            for (int i = 1; i < args.Length; i++)
-            {
-                if (args[i] == "--repo-owner" && i + 1 < args.Length)
-                    repoOwner = args[++i];
-                else if (args[i] == "--repo-name" && i + 1 < args.Length)
-                    repoName = args[++i];
-            }
-
-            if (string.IsNullOrEmpty(repoOwner))
-            {
-                Console.WriteLine("Error: --repo-owner is required");
-                Environment.Exit(1);
-            }
-
-            if (string.IsNullOrEmpty(repoName))
-            {
-                Console.WriteLine("Error: --repo-name is required");
-                Environment.Exit(1);
-            }
-
-            var configDict = new Dictionary<string, string?>
-            {
-                ["GithubKey"] = Environment.GetEnvironmentVariable("GithubKey"),
-                ["IssueStorageName"] = Environment.GetEnvironmentVariable("IssueStorageName"),
-                ["RepositoryNamesForLabels"] = repoName,
-                ["McpRepositoryForLabels"] = repoName
-            };
-
-            if (string.IsNullOrEmpty(configDict["GithubKey"]))
-            {
-                Console.WriteLine("Error: GithubKey environment variable is required");
-                Environment.Exit(1);
-            }
-
-            if (string.IsNullOrEmpty(configDict["IssueStorageName"]))
-            {
-                Console.WriteLine("Error: IssueStorageName environment variable is required");
-                Environment.Exit(1);
-            }
-
-            Console.WriteLine($"Syncing labels for repository: {repoOwner}/{repoName}");
-
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(configDict)
-                .Build();
-
-            try
-            {
-                var tokenAuth = new Credentials(configDict["GithubKey"]);
-                var labelRetrieval = new LabelRetrieval(tokenAuth, config);
-                
-                if (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase) && 
-                    repoName.Equals("mcp", StringComparison.OrdinalIgnoreCase))
-                {
-                    await labelRetrieval.CreateOrRefreshMcpLabels(repoOwner);
-                }
-                else
-                {
-                    await labelRetrieval.CreateOrRefreshLabels(repoOwner);
-                }
-                
-                Console.WriteLine("Label sync completed successfully");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during label sync: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                Environment.Exit(1);
-            }
         }
     }
 }

@@ -13,6 +13,7 @@ const (
 	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
 	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
 	TenantID_APISpecReviewBot       TenantID = "api_spec_review_bot"
+	TenantID_AzureTypespecAuthoring TenantID = "azure_typespec_authoring"
 )
 
 type Source string
@@ -69,6 +70,7 @@ type AdditionalInfoType string
 const (
 	AdditionalInfoType_Link  AdditionalInfoType = "link"
 	AdditionalInfoType_Image AdditionalInfoType = "image"
+	AdditionalInfoType_Text  AdditionalInfoType = "text"
 )
 
 type AdditionalInfo struct {

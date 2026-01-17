@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
@@ -89,7 +90,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITelemetryService, TelemetryService>();
             services.ConfigureOpenTelemetry();
 
+            // Add HttpClient
             services.AddHttpClient();
+
             services.AddAzureClients(clientBuilder =>
             {
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection

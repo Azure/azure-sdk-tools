@@ -106,6 +106,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
+        public Task<List<LabelWorkItem>> GetLabelWorkItemsAsync();
+        public Task<LabelWorkItem> CreateLabelWorkItemAsync(string label);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1364,6 +1366,75 @@ namespace Azure.Sdk.Tools.Cli.Services
             var workItem = await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
             logger.LogDebug("Updated work item {workItemId}", workItem.Id);
             return workItem;
+        }
+
+        /// <summary>
+        /// Gets all Label work items from the Release project.
+        /// </summary>
+        /// <returns>List of LabelWorkItem objects</returns>
+        public async Task<List<LabelWorkItem>> GetLabelWorkItemsAsync()
+        {
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var workItems = await FetchWorkItemsPagedAsync(query);
+
+            return workItems.Select(wi => new LabelWorkItem
+            {
+                Label = wi.Fields.TryGetValue("Custom.Label", out object? labelValue) ? labelValue?.ToString() ?? string.Empty : string.Empty,
+                WorkItemId = wi.Id ?? 0,
+                WorkItemUrl = GetWorkItemHtmlUrl(wi.Id ?? 0)
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Creates a new Label work item in the Release project.
+        /// </summary>
+        /// <param name="label">The label name to create</param>
+        /// <returns>The created LabelWorkItem</returns>
+        public async Task<LabelWorkItem> CreateLabelWorkItemAsync(string label)
+        {
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Title",
+                    Value = $"Label: {label}"
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.Label",
+                    Value = label
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.History",
+                    Value = "This work item was automatically created from the service labels CSV file (common-labels.csv) by the azsdk CLI tool."
+                }
+            };
+
+            logger.LogInformation("Creating Label work item for '{label}'", label);
+            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(patchDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, "Label");
+            
+            if (workItem == null || workItem.Id == null)
+            {
+                throw new Exception($"Failed to create Label work item for '{label}'");
+            }
+
+            logger.LogInformation("Created Label work item {workItemId} for '{label}'", workItem.Id, label);
+
+            return new LabelWorkItem
+            {
+                Label = label,
+                WorkItemId = workItem.Id ?? 0,
+                WorkItemUrl = GetWorkItemHtmlUrl(workItem.Id ?? 0)
+            };
+        }
+
+        private static string GetWorkItemHtmlUrl(int workItemId)
+        {
+            return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
         }
     }
 }

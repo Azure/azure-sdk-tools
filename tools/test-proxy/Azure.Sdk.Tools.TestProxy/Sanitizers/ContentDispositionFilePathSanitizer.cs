@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     {
         public ContentDispositionFilePathSanitizer()
         {
+            _scope = SanitizerScope.Body;
         }
 
         public override void SanitizeBody(RequestOrResponse message)
@@ -20,7 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             {
                 return;
             }
-            
+
             message.Body = NormalizeContentDispositionHeaderFilePaths(boundary, message.Body);
         }
 

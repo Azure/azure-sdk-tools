@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         /// <summary>
         /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by
-        /// whatever substitution is offered. This simply means that if you are attempting to replace a specific key wholesale, this sanitizer will be 
+        /// whatever substitution is offered. This simply means that if you are attempting to replace a specific key wholesale, this sanitizer will be
         /// simpler than configuring a BodyRegexSanitizer that has to match against the full "KeyName": "Value" that is part of the json structure. Further reading is available
         /// <a href="https://www.newtonsoft.com/json/help/html/SelectToken.htm#SelectTokenJSONPath">here.</a> If the body is NOT a JSON object, this sanitizer will NOT be applied.
         /// </summary>
@@ -28,11 +28,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation. Defaults to replacing the entire string.</param>
         /// <param name="groupForReplace">The regex capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
         /// <param name="condition">
-        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains various configuration keys. 
+        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains various configuration keys.
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
         public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
         {
+            _scope = SanitizerScope.Body;
             _jsonPath = jsonPath;
             _newValue = value;
             _regexValue = regex;
@@ -97,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                             }
                         }
                     }
-                } 
+                }
                 catch(Exception e)
                 {
                     DebugLogger.LogError($"Ran into exception \"{e.Message}\" while attempting to run regex \"{_regexValue}\" against body value \"{body}\"");

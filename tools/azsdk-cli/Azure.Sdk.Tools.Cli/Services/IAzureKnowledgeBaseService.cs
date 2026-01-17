@@ -1,4 +1,4 @@
-using Azure.Sdk.Tools.Cli.Models.AiCompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {

@@ -8,11 +8,11 @@ It can be access via the CLI or as an MCP tool.
 
 You can configure azure knowledge base service via environment variables if you want to use your own service.
 
-- AZURE_KB_ENDPOINT
-- AZURE_KB_CLIENT_ID
-- AZURE_KB_SCOPE
+- AZURE_SDK_KB_ENDPOINT
+- AZURE_SDK_KB_CLIENT_ID
+- AZURE_SDK_KB_SCOPE
 
-If the Knowledge base service need authentication, you need provide `AZURE_KB_CLIENT_ID` and `AZURE_KB_SCOPE`
+If the Knowledge base service need authentication, you need provide `AZURE_SDK_KB_CLIENT_ID` and `AZURE_SDK_KB_SCOPE`
 
 These are currently settable as environment variables.
 
@@ -38,7 +38,7 @@ For vscode, create the `.vscode/mcp.json` file and add the development build of 
 
 ### Configure Azure Knowledge base service
 
-If you want to use a different Azure Knowledge Base service instead of the default one, set the AZURE_KB_ENDPOINT environment variable to specify the endpoint.
+If you want to use a different Azure Knowledge Base service instead of the default one, set the AZURE_SDK_KB_ENDPOINT environment variable to specify the endpoint.
 
 ```json
 {
@@ -48,14 +48,14 @@ If you want to use a different Azure Knowledge Base service instead of the defau
       "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
       "args": ["start"],
       "env": {
-        "AZURE_KB_ENDPOINT": "https://completion.endpoint"
+        "AZURE_SDK_KB_ENDPOINT": "https://completion.endpoint"
       }
     }
   }
 }
 ```
 
-If the service is deployed in Azure with built-in Microsoft authentication enabled, you must also set the AZURE_KB_CLIENT_ID and AZURE_KB_SCOPE environment variables. These variables should reference the application (client) ID of the service and the authentication scope. You can find both the endpoint and the client ID in the Azure SDK QA backend service configuration blob.
+If the service is deployed in Azure with built-in Microsoft authentication enabled, you must also set the AZURE_SDK_KB_CLIENT_ID and AZURE_SDK_KB_SCOPE environment variables. These variables should reference the application (client) ID of the service and the authentication scope. You can find both the endpoint and the client ID in the Azure SDK QA backend service configuration blob.
 
 ```
 {
@@ -65,9 +65,9 @@ If the service is deployed in Azure with built-in Microsoft authentication enabl
       "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
       "args": ["start"],
       "env": {
-        "AZURE_KB_ENDPOINT": "https://azuresdkqabot-endpoint.azurewebsites.net",
-        "AZURE_KB_CLIENT_ID": "azure-web-service-application-id",
-        "AZURE_KB_SCOPE": "azure-web-service-authentication-scope"
+        "AZURE_SDK_KB_ENDPOINT": "https://azuresdkqabot-endpoint.azurewebsites.net",
+        "AZURE_SDK_KB_CLIENT_ID": "azure-web-service-application-id",
+        "AZURE_SDK_KB_SCOPE": "azure-web-service-authentication-scope"
       }
     }
   }

@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Models.AiCompletion;
-using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
+using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
+
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
 {

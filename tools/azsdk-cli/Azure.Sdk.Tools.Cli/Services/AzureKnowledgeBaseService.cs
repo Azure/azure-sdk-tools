@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Models.AiCompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;

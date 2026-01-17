@@ -48,16 +48,16 @@ namespace Azure.Sdk.Tools.Cli.Options
     /// <summary>
     /// Environment variable name for the endpoint override.
     /// </summary>
-    public const string EndpointEnvironmentVariable = "AZURE_KB_ENDPOINT";
+    public const string EndpointEnvironmentVariable = "AZURE_SDK_KB_ENDPOINT";
 
     /// <summary>
     /// Environment variable name for the service application client ID.
     /// </summary>
-    public const string AzureKBClientIdEnvironmentVariable = "AZURE_KB_CLIENT_ID";
+    public const string AzureKBClientIdEnvironmentVariable = "AZURE_SDK_KB_CLIENT_ID";
 
     /// <summary>
     /// Environment variable name for the service application authentication scope.
     /// </summary>
-    public const string AzureKBScopeEnvironmentVariable = "AZURE_KB_SCOPE";
+    public const string AzureKBScopeEnvironmentVariable = "AZURE_SDK_KB_SCOPE";
   }
 }

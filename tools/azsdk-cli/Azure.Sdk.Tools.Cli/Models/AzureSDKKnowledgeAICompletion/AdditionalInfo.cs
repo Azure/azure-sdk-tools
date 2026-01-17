@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 
-namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion
 {
   public class AdditionalInfo
   {

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion
 {
   public class CompletionResponse
   {

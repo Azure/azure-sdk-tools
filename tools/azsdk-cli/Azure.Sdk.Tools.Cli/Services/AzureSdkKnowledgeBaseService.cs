@@ -22,9 +22,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly IPublicClientApplication? _msalApp;
         private readonly IList<string> scopes = new List<string>();
         private const string authUrl = "https://login.microsoftonline.com/organizations/";
-        private const string DefaultServiceEndpoint = "https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net";
-        private const string DefaultClientId = "830f1656-8b36-4e8e-9781-87ccdd038644";
-        private const string DefaultAuthScope = "api://azure-sdk-qa-bot-dev/token";
+
+        private static readonly ServiceInfo DefaultAzureSdkKnowledgeService = new()
+        {
+            Endpoint = "https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net",
+            ClientId = "830f1656-8b36-4e8e-9781-87ccdd038644",
+            AuthScope = "api://azure-sdk-qa-bot-dev/token"
+        };
 
         public AzureSdkKnowledgeBaseService(
             HttpClient httpClient,
@@ -44,10 +48,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (string.IsNullOrEmpty(_options.Endpoint))
             {
                 _logger.LogInformation("Azure knowledge base service endpoint has not been configured. You can set the environment variable {EndpointEnvironmentVariable}.", AzureSdkKnowledgeBaseOptions.EndpointEnvironmentVariable);
-                _logger.LogInformation("Using default endpoint: {Endpoint}", DefaultServiceEndpoint);
-                _options.Endpoint = DefaultServiceEndpoint;
-                _options.AuthScope = DefaultAuthScope;
-                _options.ClientId = DefaultClientId;
+                _logger.LogInformation("Using default endpoint: {Endpoint}", DefaultAzureSdkKnowledgeService.Endpoint);
+                _options.Endpoint = DefaultAzureSdkKnowledgeService.Endpoint;
+                _options.AuthScope = DefaultAzureSdkKnowledgeService.AuthScope;
+                _options.ClientId = DefaultAzureSdkKnowledgeService.ClientId;
             }
 
             if (!string.IsNullOrEmpty(_options.ClientId)) {
@@ -328,6 +332,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                     _logger.LogInformation("Token cache has been updated with new authentication data");
                 }
             });
+        }
+
+        /// <summary>
+        /// Represents service information for Azure SDK Knowledge Base service.
+        /// Contains endpoint URL, client ID, and authentication scope information.
+        /// </summary>
+        internal sealed class ServiceInfo
+        {
+            public required string Endpoint { get; init; }
+            public string ClientId { get; init; }
+            public string AuthScope { get; init; }
         }
     }
 }

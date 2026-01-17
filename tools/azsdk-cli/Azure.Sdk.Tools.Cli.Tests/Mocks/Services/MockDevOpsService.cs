@@ -211,5 +211,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             };
             return Task.FromResult(workItem);
         }
+
+        Task<List<LabelWorkItem>> IDevOpsService.GetLabelWorkItemsAsync()
+        {
+            return Task.FromResult(new List<LabelWorkItem>());
+        }
+
+        Task<LabelWorkItem> IDevOpsService.CreateLabelWorkItemAsync(string label)
+        {
+            return Task.FromResult(new LabelWorkItem
+            {
+                Label = label,
+                WorkItemId = 1,
+                WorkItemUrl = $"https://dev.azure.com/azure-sdk/release/_workitems/edit/1"
+            });
+        }
     }
 }

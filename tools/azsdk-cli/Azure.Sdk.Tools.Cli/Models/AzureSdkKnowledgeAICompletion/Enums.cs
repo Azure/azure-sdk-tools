@@ -1,8 +1,8 @@
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Models.seraialize;
+using Azure.Sdk.Tools.Cli.Models.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
 {
     [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<TenantId>))]
     public enum TenantId

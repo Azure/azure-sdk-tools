@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
 {
     public class QueryIntention
     {

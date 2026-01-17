@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec

@@ -1,11 +1,11 @@
-using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
     /// <summary>
     /// Service for interacting with the AI completion API.
     /// </summary>
-    public interface IAzureKnowledgeBaseService
+    public interface IAzureSdkKnowledgeBaseService
     {
         /// <summary>
         /// Sends a completion request to the AI service.

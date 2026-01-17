@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Options
   /// <summary>
   /// Configuration options for the AI completion service.
   /// </summary>
-  public class AzureKnowledgeBaseOptions
+  public class AzureSdkKnowledgeBaseOptions
   {
     /// <summary>
     /// Configuration section name for binding.

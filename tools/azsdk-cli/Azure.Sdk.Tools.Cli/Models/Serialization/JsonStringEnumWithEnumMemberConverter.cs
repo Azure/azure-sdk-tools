@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.Cli.Models.seraialize
+namespace Azure.Sdk.Tools.Cli.Models.Serialization
 {
     public class JsonStringEnumWithEnumMemberConverter<T> : JsonConverter<T> where T : struct, Enum
     {

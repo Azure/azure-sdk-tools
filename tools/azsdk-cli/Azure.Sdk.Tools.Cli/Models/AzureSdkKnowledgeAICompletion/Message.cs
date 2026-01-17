@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations;
 
-namespace Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion
+namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
 {
   public class Message
   {

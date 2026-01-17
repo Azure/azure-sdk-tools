@@ -2,7 +2,7 @@ using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-        private readonly IAzureKnowledgeBaseService _azureKnowledgeBaseService;
+        private readonly IAzureSdkKnowledgeBaseService _azureSdkKnowledgeBaseService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
@@ -37,10 +37,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             Required = false,
         };
         public TypeSpecAuthoringTool(
-            IAzureKnowledgeBaseService azureKnowledgeBaseService,
+            IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
             ILogger<TypeSpecAuthoringTool> logger)
         {
-            _azureKnowledgeBaseService = azureKnowledgeBaseService ?? throw new ArgumentNullException(nameof(azureKnowledgeBaseService));
+            _azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService ?? throw new ArgumentNullException(nameof(azureSdkKnowledgeBaseService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -136,7 +136,7 @@ Returns an answer with supporting references and documentation links
                 }
 
                 // Call the service
-                var response = await _azureKnowledgeBaseService.SendCompletionRequestAsync(
+                var response = await _azureSdkKnowledgeBaseService.SendCompletionRequestAsync(
                     completionRequest, ct);
 
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",

@@ -60,11 +60,28 @@ func (s *PreprocessService) DecodeHTMLContent(input string) string {
 func (s *PreprocessService) CleanHTMLTags(input string) string {
 	// Extract links and replace them with their text and URL
 	linkRe := regexp.MustCompile(`<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["'][^>]*>([^<]+)</a>`)
-	cleaned := linkRe.ReplaceAllString(input, "$2 ($1)")
+	links := []string{}
+	placeholder := "___LINK_PLACEHOLDER_%d___"
 
-	// Remove HTML tags but keep the text content
+	cleaned := linkRe.ReplaceAllStringFunc(input, func(match string) string {
+		// Extract href and text
+		matches := linkRe.FindStringSubmatch(match)
+		if len(matches) == 3 {
+			link := fmt.Sprintf(`<a href="%s">%s</a>`, matches[1], matches[2])
+			links = append(links, link)
+			return fmt.Sprintf(placeholder, len(links)-1)
+		}
+		return match
+	})
+
+	// Step 2: Remove all remaining HTML tags
 	re := regexp.MustCompile(`<[^>]*>`)
 	cleaned = re.ReplaceAllString(cleaned, "")
+
+	// Step 3: Restore anchor tags from placeholders
+	for i, link := range links {
+		cleaned = strings.ReplaceAll(cleaned, fmt.Sprintf(placeholder, i), link)
+	}
 
 	// Clean up extra whitespace and newlines
 	cleaned = regexp.MustCompile(`\s+`).ReplaceAllString(cleaned, " ")

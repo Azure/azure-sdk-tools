@@ -3,6 +3,22 @@ import * as path from 'path';
 import { InvocationContext } from '@azure/functions';
 
 /**
+ * Hierarchical metadata for categorizing documentation
+ */
+export interface Metadata {
+    scope: 'branded' | 'unbranded';
+    plane?: 'data-plane' | 'management-plane';
+}
+
+/**
+ * File-specific metadata override using glob pattern matching
+ */
+export interface Override {
+    pattern: string;
+    metadata: Metadata;
+}
+
+/**
  * Configuration interfaces matching the schema
  */
 export interface DocumentationPath {
@@ -14,6 +30,8 @@ export interface DocumentationPath {
     ignoredPaths?: string[];
     relativeByRepoPath?: boolean;
     isSpectorTest?: boolean;
+    metadata?: Metadata;
+    overrides?: Override[];
 }
 
 export interface Repository {
@@ -47,6 +65,8 @@ export interface DocumentationSource {
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
     isSpectorTest?: boolean;
+    metadata?: Metadata;
+    overrides?: Override[];
 }
 
 export interface RepositoryConfig {
@@ -110,7 +130,9 @@ export class ConfigurationLoader {
                     folder: docPath.folder,
                     fileNameLowerCase: docPath.fileNameLowerCase,
                     ignoredPaths: docPath.ignoredPaths,
-                    isSpectorTest: docPath.isSpectorTest
+                    isSpectorTest: docPath.isSpectorTest,
+                    metadata: docPath.metadata,
+                    overrides: docPath.overrides,
                 });
             }
         }

@@ -3,8 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BlobService } from './services/StorageService';
 import { SpectorCaseProcessor } from './services/SpectorCaseProcessor';
-import { ConfigurationLoader, RepositoryConfig } from './services/ConfigurationLoader';
+import { ConfigurationLoader, RepositoryConfig, DocumentationSource, Metadata } from './services/ConfigurationLoader';
 import { SearchService } from './services/SearchService';
+import { MetadataResolver } from './services/MetadataResolver';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -20,16 +21,6 @@ import { SearchService } from './services/SearchService';
  * Triggered daily via timer or manually via HTTP request
  */
 
-// Configuration for documentation sources
-interface DocumentationSource {
-    path: string;
-    folder: string;
-    name?: string;
-    fileNameLowerCase?: boolean;
-    ignoredPaths?: string[];
-    isSpectorTest?: boolean;
-}
-
 
 // Model for processed markdown file result
 interface ProcessedMarkdownFile {
@@ -37,6 +28,7 @@ interface ProcessedMarkdownFile {
     content: string;
     blobPath: string;
     isValid: boolean; // Indicates if the file should be processed further
+    metadata?: Metadata;
 }
 
 // Result interface for source directory processing
@@ -79,8 +71,8 @@ export async function processDailySyncKnowledge(): Promise<void> {
 
         console.log('Preprocessing spector cases...');
         
-        // Preprocess spector cases
-        await preprocessSpectorCases(docsDir);
+        // // Preprocess spector cases
+        // await preprocessSpectorCases(docsDir);
 
         console.log('Processing documentation sources...');
         
@@ -139,15 +131,15 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log(`Processing completed: ${totalProcessed} total, ${changedDocuments} changed, ${unchangedDocuments} unchanged`);
         console.log(`Files that changed: ${allChangedFiles.length}, Files that remained unchanged: ${allUnchangedFiles.length}`);
 
-        // Delete the AI Search index for changed files
-        await deleteAISearchIndex(searchService, allChangedFiles);
+        // // Delete the AI Search index for changed files
+        // await deleteAISearchIndex(searchService, allChangedFiles);
 
         // Upload files to blob storage (only for changed documents)
         await uploadFilesToBlobStorage(allChangedFiles);
         
-        // Clean up expired blobs
-        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
-        console.log('Daily sync knowledge processing completed');
+        // // Clean up expired blobs
+        // await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
+        // console.log('Daily sync knowledge processing completed');
 
     } finally {
         // Cleanup working directory
@@ -372,18 +364,40 @@ async function processSourceDirectory(
             if (!processed.isValid) {
                 return;
             }
+            // Prepare blob metadata for comparison
+            let blobMetadata: Record<string, string> | undefined;
+            if (processed.metadata) {
+                blobMetadata = {
+                    scope: processed.metadata.scope
+                };
+                if (processed.metadata.plane) {
+                    blobMetadata.plane = processed.metadata.plane;
+                }
+            }
 
-            if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
-                console.log(`Content changed for: ${processed.blobPath}`);
-                changedDocuments++;
-                changedFiles.push(processed);
-                
-                const targetFilePath = path.join(targetDir, processed.filename);
-                fs.writeFileSync(targetFilePath, processed.content);
-            } else {
-                console.log(`Content unchanged for: ${processed.blobPath}`);
-                unchangedDocuments++;
-                unchangedFiles.push(processed);
+            // Check if content or metadata has changed
+            const contentChanged = blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs);
+            const metadataChanged = blobService.hasMetadataChanged(processed.blobPath, blobMetadata, existingBlobs);
+
+            if (contentChanged || metadataChanged) {
+                if (contentChanged && metadataChanged) {
+                    console.log(`Content and metadata changed for: ${processed.blobPath}`);
+                } else if (contentChanged) {
+                    console.log(`Content changed for: ${processed.blobPath}`);
+                } else {
+                    console.log(`Metadata changed for: ${processed.blobPath}`);
+                }
+                if (contentChanged) {
+                    changedDocuments++;
+                    changedFiles.push(processed);
+                    
+                    const targetFilePath = path.join(targetDir, processed.filename);
+                    fs.writeFileSync(targetFilePath, processed.content);
+                } else {
+                    console.log(`Content unchanged for: ${processed.blobPath}`);
+                    unchangedDocuments++;
+                    unchangedFiles.push(processed);
+                }
             }
         } catch (error) {
             console.error(`Error processing file ${fullPath}:`, error);
@@ -625,11 +639,23 @@ export function processMarkdownFile(
     }
     const blobPath = path.join(source.folder, fileName).replace(/\\/g, '/');
     
+    // Resolve metadata if source has metadata configuration
+    let metadata: Metadata;
+    if (source.metadata) {
+        const relativePath = path.relative(sourceDir, filePath);
+        metadata = MetadataResolver.resolveMetadata(
+            relativePath,
+            source.metadata,
+            source.overrides
+        );
+    }
+    
     return {
         filename: processed.filename,
         content: processed.content,
         blobPath: blobPath,
-        isValid: true
+        isValid: true,
+        metadata: metadata
     };
 }
 
@@ -717,7 +743,23 @@ async function uploadFilesToBlobStorage(
         // Upload only changed files
         for (const file of changedFiles) {
             if (file.isValid) {
-                await blobService.putBlob(file.blobPath, file.content);
+                // Prepare blob metadata if it exists
+                let blobMetadata: Record<string, string> | undefined;
+                
+                if (file.metadata) {
+                    // Convert metadata to string key-value pairs for blob metadata
+                    // Only store scope and plane as blob metadata
+                    blobMetadata = {
+                        scope: file.metadata.scope
+                    };
+                    
+                    // Only add plane if it exists
+                    if (file.metadata.plane) {
+                        blobMetadata.plane = file.metadata.plane;
+                    }
+                }
+                
+                await blobService.putBlob(file.blobPath, file.content, blobMetadata);
                 uploadedCount++;
             }
         }

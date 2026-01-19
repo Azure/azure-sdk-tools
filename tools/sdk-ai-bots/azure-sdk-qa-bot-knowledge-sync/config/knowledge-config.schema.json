@@ -135,9 +135,53 @@
           "type": "boolean",
           "description": "Whether this path is a Spector test",
           "default": false
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata",
+          "description": "Default metadata for all files in this path"
+        },
+        "overrides": {
+          "type": "array",
+          "description": "File-specific metadata overrides using glob patterns",
+          "items": {
+            "$ref": "#/$defs/Override"
+          }
         }
       },
       "required": ["description", "folder"],
+      "additionalProperties": false
+    },
+    "Metadata": {
+      "type": "object",
+      "description": "Hierarchical metadata for categorizing documentation",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": ["branded", "unbranded"],
+          "description": "Target audience: branded (Azure-specific) or unbranded (general TypeSpec)"
+        },
+        "plane": {
+          "type": "string",
+          "enum": ["data-plane", "management-plane"],
+          "description": "Service plane: data-plane (DPG), management-plane (MPG/ARM)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Override": {
+      "type": "object",
+      "description": "File-specific metadata override using glob pattern matching",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Glob pattern to match files (e.g., '**/Azure Data Plane Service/**', '**/*paging*.md')"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata",
+          "description": "Metadata to apply to matching files (inherits from parent, only specified fields are overridden)"
+        }
+      },
+      "required": ["pattern", "metadata"],
       "additionalProperties": false
     }
   }

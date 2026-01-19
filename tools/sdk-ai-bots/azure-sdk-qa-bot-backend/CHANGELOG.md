@@ -12,7 +12,7 @@
 
 * Refine prompt for onboarding channel to improve answer accuracy
 * Refactor post process of merging and sorting and complete chunk logic, to give better context to LLM
-* Refine prompt for PR reviewing questions and unaccessable link scenarios
+* Refine prompt for PR reviewing questions and inaccessible link scenarios
 
 ## 0.6.0 (2025-12-16)
 

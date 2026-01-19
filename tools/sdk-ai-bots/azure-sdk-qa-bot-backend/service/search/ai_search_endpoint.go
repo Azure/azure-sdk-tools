@@ -178,9 +178,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		allResults = allResults[:k]
 	}
 
-	// Sort the top K results by source priority exactly
-	sortResultsBySource(allResults, sources)
-
 	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(sources))
 
 	return allResults, nil

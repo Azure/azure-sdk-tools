@@ -1,6 +1,6 @@
 # Release History
 
-## 0.7.0 (2026-01-16)
+## 0.7.0 (2026-01-19)
 
 ### Features Added
 
@@ -12,6 +12,7 @@
 
 * Refine prompt for onboarding channel to improve answer accuracy
 * Refactor post process of merging and sorting and complete chunk logic, to give better context to LLM
+* Refine prompt for PR reviewing questions and unaccessable link scenarios
 
 ## 0.6.0 (2025-12-16)
 

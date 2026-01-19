@@ -58,9 +58,13 @@ func (s *PreprocessService) DecodeHTMLContent(input string) string {
 
 // CleanHTMLTags removes HTML tags from the content while preserving the text
 func (s *PreprocessService) CleanHTMLTags(input string) string {
+	// Extract links and replace them with their text and URL
+	linkRe := regexp.MustCompile(`<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["'][^>]*>([^<]+)</a>`)
+	cleaned := linkRe.ReplaceAllString(input, "$2 ($1)")
+
 	// Remove HTML tags but keep the text content
 	re := regexp.MustCompile(`<[^>]*>`)
-	cleaned := re.ReplaceAllString(input, "")
+	cleaned = re.ReplaceAllString(cleaned, "")
 
 	// Clean up extra whitespace and newlines
 	cleaned = regexp.MustCompile(`\s+`).ReplaceAllString(cleaned, " ")

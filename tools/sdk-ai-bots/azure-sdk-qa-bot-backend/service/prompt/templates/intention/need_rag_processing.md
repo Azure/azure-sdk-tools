@@ -1,6 +1,12 @@
-- Greetings/Thanks message, should be false
-- Suggestions/Questions about Azure SDK Q&A bot, should be false
-- Announcements or system message, should be false
-- Technical questions, should be true
-- Permisstion related questions, should be true
-- For all other cases not covered above, should be true
+Determine whether the user's message requires RAG (Retrieval Augmented Generation) processing.
+
+**Return `false` for:**
+- Greetings or thanks messages
+- Suggestions or questions about the Azure SDK Q&A bot itself
+- Announcements or system messages
+
+**Return `true` for:**
+- Technical questions
+- Permission-related questions
+- PR review process questions
+- All other cases not explicitly listed above

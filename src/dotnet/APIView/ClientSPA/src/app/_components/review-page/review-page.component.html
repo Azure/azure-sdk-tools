@@ -6,31 +6,16 @@
     [diffApiRevisionId]="diffApiRevisionId"
     [userProfile]="userProfile"
     [showPageoptionsButton]="true"
-    (pageOptionsEmitter)="handlePageOptionsEmitter($event)">
-    <app-review-toolbar
-        [apiRevisions]="apiRevisions"
-        [activeApiRevisionId]="activeApiRevisionId"
-        [diffApiRevisionId]="diffApiRevisionId"
-        [isDiffView]="!!diffApiRevisionId"
-        [contentHasDiff]="codePanelData?.hasDiff"
-        [diffStyleInput]="diffStyle!"
-        [userProfile]="userProfile"
-        [codeLineSearchInfo]="codeLineSearchInfo"
-        (diffStyleEmitter)="handleDiffStyleEmitter($event)"
-        (showCommentsEmitter)="handleShowCommentsEmitter($event)"
-        (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
-        (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
-        (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
-        (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
-        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
-    </app-review-toolbar>
+    [showLeftNavigation]="showLeftNavigation"
+    (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
+    (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)">
     <p-splitter
         class="mt-2"
         [panelSizes]="panelSizes"
         [minSizes]="minSizes"
         [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
         <ng-template pTemplate>
-            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded overflow-auto review-panel">
+            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center rounded overflow-auto review-panel">
                 <app-review-nav
                     [reviewPageNavigation]="reviewPageNavigation"
                     [loadFailed]="loadFailed"
@@ -38,30 +23,52 @@
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center border rounded review-panel">
-                <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
-                    [crossLanguageRowData]="crossLanguageRowData"
-                    [language]="language" [languageSafeName]="languageSafeName"
+            <div class="col flex flex-column align-items-center justify-content-center rounded gap-2 review-panel" style="overflow: hidden;">
+                <app-review-toolbar
+                    style="width: 100%;"
+                    [apiRevisions]="apiRevisions"
+                    [activeApiRevisionId]="activeApiRevisionId"
+                    [diffApiRevisionId]="diffApiRevisionId"
                     [isDiffView]="!!diffApiRevisionId"
-                    [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
+                    [contentHasDiff]="codePanelData?.hasDiff"
+                    [diffStyleInput]="diffStyle!"
                     [userProfile]="userProfile"
-                    [allComments]="comments"
-                    [loadFailed]="loadFailed"
-                    [loadFailedMessage]="loadFailedMessage"
-                    [showLineNumbers]="showLineNumbers"
-                    [showDocumentation]="userProfile?.preferences?.showDocumentation ?? true"
-                    [scrollToNodeIdHashed]="scrollToNodeIdHashed"
-                    [scrollToNodeId]="scrollToNodeId"
-                    [codeLineSearchText]="codeLineSearchText"
                     [codeLineSearchInfo]="codeLineSearchInfo"
-                    [preferredApprovers]="preferredApprovers"
-                    (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
+                    [hasHiddenAPIs]="hasHiddenAPIs"
+                    (diffStyleEmitter)="handleDiffStyleEmitter($event)"
+                    (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+                    (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
+                    (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
+                    (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
+                    (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
+                    (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
                     (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
-                </app-code-panel>
+                </app-review-toolbar>
+                <div style="width: 100%; flex: 1; overflow: auto;">
+                    <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
+                        [crossLanguageRowData]="crossLanguageRowData"
+                        [language]="language" [languageSafeName]="languageSafeName"
+                        [isDiffView]="!!diffApiRevisionId"
+                        [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
+                        [userProfile]="userProfile"
+                        [allComments]="comments"
+                        [loadFailed]="loadFailed"
+                        [loadFailedMessage]="loadFailedMessage"
+                        [showLineNumbers]="showLineNumbers"
+                        [showDocumentation]="userProfile?.preferences?.showDocumentation ?? true"
+                        [scrollToNodeIdHashed]="scrollToNodeIdHashed"
+                        [scrollToNodeId]="scrollToNodeId"
+                        [codeLineSearchText]="codeLineSearchText"
+                        [codeLineSearchInfo]="codeLineSearchInfo"
+                        [preferredApprovers]="preferredApprovers"
+                        (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
+                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+                    </app-code-panel>
+                </div>
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded overflow-auto review-panel options-panel px-3">
+            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center rounded overflow-auto review-panel options-panel px-3">
                 <app-review-page-options
                     [loadingStatus]="getLoadingStatus()"
                     [isDiffView]="!!diffApiRevisionId"
@@ -79,14 +86,10 @@
                     (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                     (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                     (showCommentsEmitter)="handleShowCommentsEmitter($event)"
-                    (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
                     (diffStyleEmitter)="handleDiffStyleEmitter($event)"
                     (subscribeEmitter)="handleSubscribeEmitter($event)"
                     (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
                     (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
-                    (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"
-                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
-                    (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
                     (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
                     (diffNavigationEmitter)="handleDiffNavigationEmitter($event)"
                     (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"

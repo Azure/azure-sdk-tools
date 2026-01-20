@@ -9,7 +9,9 @@
         [diffApiRevisionId]="diffApiRevisionId"
         [userProfile]="userProfile"
         [showPageoptionsButton]="showPageoptionsButton"
-        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
+        [showLeftNavigation]="showLeftNavigation"
+        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
+        (showLeftNavigationEmitter)="handleLeftNavigationEmitter($event)"></app-review-info>
     <div class="mt-1" style="display: flex;">
         <div>
             <p-menu [model]="sideMenu" styleClass="side-menu">

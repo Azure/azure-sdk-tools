@@ -130,26 +130,6 @@
     </ul>
     </app-page-options-section>
 
-    <app-page-options-section sectionName="Page Settings">
-    <ul class="list-group">
-        <li *ngIf="hasHiddenAPIs" class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showHiddenAPISwitch"
-            (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
-            <label class="ms-2">Hidden APIs</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showLeftNavigationSwitch"
-            (onChange)="onShowLeftNavigationSwitchChange($event)" data-clarity-region="toggle-left-navigation" />
-            <label class="ms-2">Left navigation</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="disableCodeLinesLazyLoading"
-            (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
-            <label class="ms-2">Disable lazy loading</label>
-        </li>
-    </ul>
-    </app-page-options-section>
-
     <app-page-options-section sectionName="API Revision Options">
     <ul class="list-group">
         <li class="list-group-item">
@@ -238,16 +218,6 @@
             (click)="toggleAPIRevisionApproval()"
             [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
       </div>
-    </p-dialog>
-
-    <p-dialog header="Disable Lazy Loading"
-        [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
-        [style]="{ width: '30dvw' }" (onHide)="onDisableLazyLoadingModalHide()">
-        <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
-        <div class="d-grid gap-2 mt-2">
-        <button class="btn btn-primary" type="button" (click)="onDisableLazyLoadingConfirm()">Disable</button>
-        <button class="btn btn-link" type="button" (click)="onDisableLazyLoadingCancel()">Cancel</button>
-        </div>
     </p-dialog>
 </ng-container>
 <ng-template #loadingOrFailedTemplate>

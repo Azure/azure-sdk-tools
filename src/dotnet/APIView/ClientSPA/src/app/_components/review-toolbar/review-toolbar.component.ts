@@ -10,6 +10,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { TimeagoModule } from 'ngx-timeago';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 import { APIRevision } from 'src/app/_models/revision';
@@ -34,6 +35,7 @@ import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
     InputTextModule,
     PopoverModule,
     ButtonModule,
+    DialogModule,
     TimeagoModule,
     LastUpdatedOnPipe
   ],
@@ -49,12 +51,15 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   @Input() diffStyleInput: string | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
+  @Input() hasHiddenAPIs: boolean = false;
 
   @Output() diffStyleEmitter: EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() disableCodeLinesLazyLoadingEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showHiddenAPIEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter: EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter: EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
@@ -83,8 +88,8 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
 
   // Diff style properties
   diffStyleOptions: any[] = [
-    { label: 'Changes only', value: TREE_DIFF_STYLE },
-    { label: 'Full diff', value: FULL_DIFF_STYLE }
+    { label: 'Full diff', value: FULL_DIFF_STYLE },
+    { label: 'Changes only', value: TREE_DIFF_STYLE }
   ];
   selectedDiffStyle: string = TREE_DIFF_STYLE;
 
@@ -92,11 +97,19 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   showCommentsSwitch: boolean = true;
   showSystemCommentsSwitch: boolean = true;
   showDocumentationSwitch: boolean = true;
+  showHiddenAPISwitch: boolean = false;
+  disableCodeLinesLazyLoading: boolean = false;
+  showDisableCodeLinesLazyLoadingModal: boolean = false;
   showLineNumbersSwitch: boolean = true;
 
   // Search properties
   codeLineSearchText: FormControl = new FormControl('');
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
+
+  // Safe display properties
+  currentMatchIndexValue: number = 0;
+  totalMatchCountValue: number = 0;
+  showSearchControls: boolean = false;
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -106,7 +119,9 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
       this.showCommentsSwitch = this.userProfile.preferences.showComments ?? true;
       this.showSystemCommentsSwitch = this.userProfile.preferences.showSystemComments ?? true;
       this.showDocumentationSwitch = this.userProfile.preferences.showDocumentation ?? true;
+      this.showHiddenAPISwitch = this.userProfile.preferences.showHiddenApis ?? false;
       this.showLineNumbersSwitch = !this.userProfile.preferences.hideLineNumbers;
+      this.disableCodeLinesLazyLoading = this.userProfile.preferences.disableCodeLinesLazyLoading ?? false;
     }
 
     // Initialize diff style
@@ -125,6 +140,29 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    if (changes['codeLineSearchInfo']) {
+      if (this.codeLineSearchInfo && this.codeLineSearchInfo.currentMatch) {
+         try {
+           const match = this.codeLineSearchInfo.currentMatch as any;
+           console.log('ReviewToolbar: Processing match index:', match.index);
+           this.currentMatchIndexValue = (typeof match.index === 'number') ? match.index + 1 : 1;
+           this.totalMatchCountValue = this.codeLineSearchInfo.totalMatchCount || 0;
+           this.showSearchControls = true;
+           console.log('ReviewToolbar: Updated values:', this.currentMatchIndexValue, this.totalMatchCountValue);
+         } catch(e) {
+           console.error('ReviewToolbar: Error processing match index', e);
+           this.currentMatchIndexValue = 1;
+           this.totalMatchCountValue = 0;
+           this.showSearchControls = false;
+         }
+      } else {
+        console.log('ReviewToolbar: No match selected');
+        this.currentMatchIndexValue = 0;
+        this.totalMatchCountValue = 0;
+        this.showSearchControls = false;
+      }
+    }
+
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
         this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
@@ -148,7 +186,9 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
       this.showCommentsSwitch = this.userProfile.preferences.showComments ?? true;
       this.showSystemCommentsSwitch = this.userProfile.preferences.showSystemComments ?? true;
       this.showDocumentationSwitch = this.userProfile.preferences.showDocumentation ?? true;
+      this.showHiddenAPISwitch = this.userProfile.preferences.showHiddenApis ?? false;
       this.showLineNumbersSwitch = !this.userProfile.preferences.hideLineNumbers;
+      this.disableCodeLinesLazyLoading = this.userProfile.preferences.disableCodeLinesLazyLoading ?? false;
     }
   }
 
@@ -211,12 +251,15 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   }
 
   onDiffStyleChange(event: any) {
-    this.diffStyleEmitter.emit(event.value);
+    if (event.value) {
+      this.diffStyleEmitter.emit(event.value);
+    }
   }
 
   onCommentsSwitchChange(event: any) {
     this.showCommentsEmitter.emit(event.checked);
   }
+
 
   onShowSystemCommentsSwitchChange(event: any) {
     this.showSystemCommentsEmitter.emit(event.checked);
@@ -226,8 +269,35 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
     this.showDocumentationEmitter.emit(event.checked);
   }
 
+  onShowHiddenAPISwitchChange(event: any) {
+    this.showHiddenAPIEmitter.emit(event.checked);
+  }
+
   onShowLineNumbersSwitchChange(event: any) {
     this.showLineNumbersEmitter.emit(event.checked);
+  }
+
+  onDisableLazyLoadingSwitchChange(event: any) {
+    if (event.checked) {
+      this.showDisableCodeLinesLazyLoadingModal = true;
+    } else {
+      this.disableCodeLinesLazyLoadingEmitter.emit(event.checked);
+    }
+  }
+
+  onDisableLazyLoadingModalHide() {
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  onDisableLazyLoadingConfirm() {
+    this.disableCodeLinesLazyLoadingEmitter.emit(true);
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  onDisableLazyLoadingCancel() {
+    this.showDisableCodeLinesLazyLoadingModal = false;
+    // Revert the toggle if they cancel
+    this.disableCodeLinesLazyLoading = false;
   }
 
   navigateSearch(direction: number) {

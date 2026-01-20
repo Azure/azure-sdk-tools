@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         protected override Command GetCommand()
         {
-            var command = new Command(TypeSpecAuthoringToolCommandName, "Guide the user to define and update TypeSpec based API spec for an azure service.")
+            var command = new Command(TypeSpecAuthoringToolCommandName, "Retrieve a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.")
             {
                 _requestOption,
                 _additionalInformationOption

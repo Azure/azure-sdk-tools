@@ -203,6 +203,42 @@
       "expected": {
         "classification": "PHASE_A"
       }
+    },
+    {
+      "id": "discussion_explanation_no_action",
+      "description": "Explanation comment requires no action - SUCCESS",
+      "input": {
+        "service": "ContentUnderstanding",
+        "language": "python",
+        "request": "yes, setting false is the default behavior. We use some fields like max_tokens which were not supported by newer reasoning models like gpt-5, so we have to add that extra field to ensure that we don't send those params while making LLM calls for evaluation."
+      },
+      "expected": {
+        "classification": "SUCCESS"
+      }
+    },
+    {
+      "id": "discussion_question_clarification",
+      "description": "Clarification question requires no action - SUCCESS",
+      "input": {
+        "service": "ContentUnderstanding",
+        "language": "python",
+        "request": "is setting False the same as the default behavior today?"
+      },
+      "expected": {
+        "classification": "SUCCESS"
+      }
+    },
+    {
+      "id": "discussion_status_observation",
+      "description": "Status observation requires no action - SUCCESS",
+      "input": {
+        "service": "ContentUnderstanding",
+        "language": "python",
+        "request": "Method was made private"
+      },
+      "expected": {
+        "classification": "SUCCESS"
+      }
     }
   ]
 }

@@ -99,8 +99,16 @@ Return ONE of these classifications:
 | Classification | When to Use |
 |----------------|-------------|
 | **PHASE_A** | TypeSpec decorators can address the issue (renaming, hiding operations, client restructuring, visibility changes) |
-| **SUCCESS** | Task completed successfully (build passes, no errors remain) |
-| **FAILURE** | Manual guidance needed (see failure conditions below) |
+| **SUCCESS** | No further action needed |
+| **FAILURE** | Manual guidance needed |
+
+## Success Conditions
+
+Return `SUCCESS` when no further action is needed:
+
+- Build completed successfully with no errors remaining
+- Input is informational, not a directive (e.g., explanations, questions, acknowledgments)
+- Input uses past tense indicating completed action (e.g., "Method was made private") rather than directive tense requesting action (e.g., "Make method private")
 
 ## Failure Conditions
 
@@ -150,13 +158,13 @@ The input may contain concatenated iteration history. Parse these sections:
 
 ```
 1. Parse iteration count from context
-   → If count > 4: return FAILURE (max iterations exceeded)
+   → If count > 2: return FAILURE (max iterations exceeded)
 
 2. Check for stall (same error twice)
    → If stalled: return FAILURE (stalled)
 
-3. Check latest build result
-   → If build succeeded: return SUCCESS
+3. Check if no further action is needed
+   → If build succeeded OR input is informational/non-actionable: return SUCCESS
 
 4. Analyze the error/request against TypeSpec capabilities:
    - Renaming (models, operations, properties) → PHASE_A (use @clientName)

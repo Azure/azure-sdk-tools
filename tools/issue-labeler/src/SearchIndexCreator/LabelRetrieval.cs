@@ -128,11 +128,6 @@ namespace SearchIndexCreator
 
                     var labelsJson = JsonSerializer.Serialize(labelData);
 
-                    var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
-                    {
-                        ContentType = "application/json"
-                    };
-
                     using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(labelsJson));
                     await blobClient.DeleteIfExistsAsync();
 
@@ -147,7 +142,6 @@ namespace SearchIndexCreator
                     await blobClient.UploadAsync(stream, uploadOptions);
 
                     Console.WriteLine($"Uploaded {repo} to {containerClient.Name} container.");
- 
                 }
                 catch (Exception ex)
                 {

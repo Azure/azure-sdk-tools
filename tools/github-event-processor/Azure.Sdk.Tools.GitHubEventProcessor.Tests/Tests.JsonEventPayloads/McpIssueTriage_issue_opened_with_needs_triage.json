@@ -12,7 +12,7 @@
     "labels": [
       {
         "id": 2,
-        "name": "tool-prompts.mcp",
+        "name": "tools-prompts.mcp",
         "color": "0366d6"
       },
       {

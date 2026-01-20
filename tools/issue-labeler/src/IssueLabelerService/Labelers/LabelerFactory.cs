@@ -13,7 +13,7 @@ namespace IssueLabelerService
         private ILogger<LabelerFactory> _logger;
         private ILabelerLite _labeler;
         private TriageRag _ragService;
-        private McpTriageRag _mcpRagService;
+        private readonly McpTriageRag _mcpRagService;
         private BlobServiceClient _blobClient;
 
         public LabelerFactory(

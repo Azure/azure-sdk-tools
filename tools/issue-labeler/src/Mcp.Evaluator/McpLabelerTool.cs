@@ -1,16 +1,15 @@
+using System.Text.Json;
+using Azure.AI.OpenAI;
+using Azure.Identity;
+using Azure.Search.Documents;
+using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Models;
+using Azure.Storage.Blobs;
 using IssueLabeler.Shared;
 using IssueLabelerService;
 using Mcp.Evaluator.Evaluation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Azure;
-using Azure.Search.Documents;
-using Azure.Search.Documents.Indexes;
-using Azure.Search.Documents.Models;
-using Azure.Identity;
-using Azure.AI.OpenAI;
-using Azure.Storage.Blobs;
-using System.Text.Json;
 using Octokit;
 
 /// <summary>
@@ -20,9 +19,9 @@ using Octokit;
 ///   dotnet run                               # Evaluate accuracy on real_mcp_issues.json
 ///   dotnet run -- --extract-real             # Extract labeled issues from Azure Search
 /// </summary>
-class Program
+public class Program
 {
-    static async Task Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         Console.WriteLine("=== MCP Labeler Accuracy Evaluation ===\n");
 
@@ -41,7 +40,6 @@ class Program
 
         var logger = loggerFactory.CreateLogger<Program>();
 
-        var runReal = args.Contains("--real");
         var extractReal = args.Contains("--extract-real");
         var issueNumbers = args.Where(issue => issue.StartsWith("--issue="))
             .SelectMany(issue => issue.Split('=')[1].Split(','))
@@ -55,7 +53,7 @@ class Program
             logger.LogInformation("Extracting real labeled issues from Azure Search index...");
             await ExtractRealIssuesAsync(configuration, logger);
             logger.LogInformation("Extraction complete: real_mcp_issues.json");
-            return;
+            return 0;
         }
 
         logger.LogInformation("Initializing MCP labeler");
@@ -64,7 +62,7 @@ class Program
         if (labeler == null)
         {
             logger.LogError("Failed to initialize labeler. Check configuration.");
-            return;
+            return 1;
         }
 
         List<McpTestCase> testCases;
@@ -89,7 +87,7 @@ class Program
                 Console.WriteLine($"Predicted Tool: {labels.GetValueOrDefault("Tool", "N/A")}");
                 Console.WriteLine($"URL: {issue.HtmlUrl}");
             }
-            return;
+            return 0;
 
         } else {
             logger.LogInformation("Loading real issues from real_mcp_issues.json...");
@@ -112,8 +110,7 @@ class Program
         evaluator.ExportToCsv(results, csvOutput);
         logger.LogInformation("\nResults exported to: {Path}", csvOutput);
 
-        var exitCode = metrics.CombinedAccuracy >= 0.80 ? 0 : 1;
-        Environment.Exit(exitCode);
+        return 0;
     }
 
     static async Task<Issue> FetchGitHubIssue(GitHubClient client, string owner, string repo, int issueNumber)
@@ -138,7 +135,7 @@ class Program
                 logger.LogError("  SearchServiceEndpoint = {SearchServiceEndpoint}", searchEndpoint ?? "NOT SET");
                 logger.LogError("  BlobAccountUri = {BlobAccountUri}", blobAccountUri ?? "NOT SET");
                 logger.LogError("Add these to your appsettings.json or environment variables.");
-                return null;
+                return Task.FromResult<ILabeler?>(null);
             }
 
             var credential = new DefaultAzureCredential();

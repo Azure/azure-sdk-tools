@@ -72,14 +72,9 @@ namespace SearchIndexCreator
                 ? "microsoft" 
                 : "Azure";
             List<IssueLabeler.Shared.IssueTriageContent> issueTriageContent;
-            if (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase))
-            {
-                issueTriageContent = await issueTriageContentRetrieval.RetrieveContentForMcp("microsoft");
-            }
-            else
-            {
-                issueTriageContent = await issueTriageContentRetrieval.RetrieveContent("Azure");
-            }
+            issueTriageContent = await (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase)
+	                ? issueTriageContentRetrieval.RetrieveContentForMcp("microsoft")
+	                : issueTriageContentRetrieval.RetrieveContent("Azure"));
             Console.WriteLine($"Retrieved {issueTriageContent.Count} search contents from the repository.");
 
             // 2. Upload the search contents to Azure Blob Storage

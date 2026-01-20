@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Search.Documents.Indexes;
 using IssueLabelerService;
 using Microsoft.Extensions.Logging;
@@ -19,7 +20,7 @@ namespace IssueLabelerService
     public class McpTriageRag : TriageRag
     {
         private readonly ILogger<McpTriageRag> _logger;
-
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(1000);
         public McpTriageRag(
             ILogger<McpTriageRag> logger,
             AzureOpenAIClient openAiClient,
@@ -81,18 +82,26 @@ namespace IssueLabelerService
 
             return results;
         }
-
+        
         /// <summary>
         /// Remove tool name mentions that appear as examples
         /// </summary>
         private string CleanToolMentions(string query)
         {
-            var cleaned = Regex.Replace(query, @"\be\.g\.?,?\s+\w+", "", RegexOptions.IgnoreCase);
-            cleaned = Regex.Replace(cleaned, @"\b(like|such\s+as)\s+\w+", "", RegexOptions.IgnoreCase);
-            cleaned = Regex.Replace(cleaned, @"\s*\(e\.g\.?,?\s+[^)]+\)", "", RegexOptions.IgnoreCase);
-            cleaned = Regex.Replace(cleaned, @"\b(for\s+example|for\s+instance),?\s+\w+", "", RegexOptions.IgnoreCase);
-            cleaned = Regex.Replace(cleaned, @"\s{2,}", " ").Trim();
-            return cleaned;
+            try
+            {
+                var cleaned = Regex.Replace(query, @"\be\.g\.?,?\s+\w+", "", RegexOptions.IgnoreCase, RegexTimeout);
+                cleaned = Regex.Replace(cleaned, @"\b(like|such\s+as)\s+\w+", "", RegexOptions.IgnoreCase, RegexTimeout);
+                cleaned = Regex.Replace(cleaned, @"\s*\(e\.g\.?,?\s+[^)]+\)", "", RegexOptions.IgnoreCase, RegexTimeout);
+                cleaned = Regex.Replace(cleaned, @"\b(for\s+example|for\s+instance),?\s+\w+", "", RegexOptions.IgnoreCase, RegexTimeout);
+                cleaned = Regex.Replace(cleaned, @"\s{2,}", " ").Trim();
+                return cleaned;
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                _logger.LogWarning("Regex timeout in CleanToolMentions, returning original query");
+                return query;
+            }   
         }
 
         /// <summary>

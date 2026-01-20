@@ -479,30 +479,6 @@ namespace SearchIndexCreator
                 };
 
                 results.Add(searchContent);
-
-                // var issue_comments = await GetMcpIssueCommentsAsync(repoOwner, _repo, issue.Number);
-
-                // foreach (var comment in issue_comments)
-                // {
-                //     IssueTriageContent commentContent = new IssueTriageContent(
-                //         $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
-                //         repoOwner + "/" + _repo,
-                //         comment.HtmlUrl,
-                //         DocumentTypes.Comment.ToString() 
-                //     )
-                //     {
-                //         Title = issue.Title,
-                //         Body = $"Title: {issue.Title}\n\n{comment.Body}",  // Include title in body for context
-                //         Server = serverLabel,
-                //         Tool = toolLabel,
-                //         Author = comment.User.Login,
-                //         CreatedAt = comment.CreatedAt,
-                //         CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
-                //     };
-
-                //     results.Add(commentContent);
-
-                // }
             }
 
             return results;

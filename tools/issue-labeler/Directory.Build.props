@@ -21,9 +21,9 @@
     <MicrosoftApplicationInsightsWorkerServiceVersion>2.22.0</MicrosoftApplicationInsightsWorkerServiceVersion>
     <MicrosoftAzureFunctionsWorkerApplicationInsightsVersion>1.4.0</MicrosoftAzureFunctionsWorkerApplicationInsightsVersion>
     <MicrosoftExtensionsConfigurationAzureAppConfigurationVersion>8.1.1</MicrosoftExtensionsConfigurationAzureAppConfigurationVersion>
-    <MicrosoftExtensionsConfigurationFileExtensionsVersion>9.0.9</MicrosoftExtensionsConfigurationFileExtensionsVersion>
-    <MicrosoftExtensionsConfigurationJsonVersion>9.0.9</MicrosoftExtensionsConfigurationJsonVersion>
-    <MicrosoftExtensionsLoggingConsoleVersion>9.0.9</MicrosoftExtensionsLoggingConsoleVersion>
+    <MicrosoftExtensionsConfigurationFileExtensionsVersion>10.0.2</MicrosoftExtensionsConfigurationFileExtensionsVersion>
+    <MicrosoftExtensionsConfigurationJsonVersion>10.0.2</MicrosoftExtensionsConfigurationJsonVersion>
+    <MicrosoftExtensionsLoggingConsoleVersion>10.0.2</MicrosoftExtensionsLoggingConsoleVersion>
     <MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
   </PropertyGroup>
 

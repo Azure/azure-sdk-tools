@@ -3,48 +3,6 @@ using IssueLabeler.Shared;
 namespace Mcp.Evaluator.Evaluation
 {
     /// <summary>
-    /// Represents a test case with ground truth labels for evaluation
-    /// </summary>
-    public class McpTestCase
-    {
-        public int IssueNumber { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Body { get; set; } = string.Empty;
-        public string ExpectedServerLabel { get; set; } = string.Empty;
-        public string ExpectedToolLabel { get; set; } = string.Empty;
-        public string? Notes { get; set; }
-
-        public IssuePayload ToIssuePayload()
-        {
-            return new IssuePayload
-            {
-                IssueNumber = IssueNumber,
-                Title = Title,
-                Body = Body,
-                IssueUserLogin = "testuser",
-                RepositoryName = "mcp",
-                RepositoryOwnerName = "microsoft"
-            };
-        }
-    }
-
-    /// <summary>
-    /// Results from evaluating a single test case
-    /// </summary>
-    public class McpPredictionResult
-    {
-        public McpTestCase TestCase { get; set; } = null!;
-        public string? PredictedServerLabel { get; set; }
-        public string? PredictedToolLabel { get; set; }
-        public bool ServerCorrect { get; set; }
-        public bool ToolCorrect { get; set; }
-        public bool BothCorrect => ServerCorrect && ToolCorrect;
-        public double? ServerConfidence { get; set; }
-        public double? ToolConfidence { get; set; }
-        public Exception? Error { get; set; }
-    }
-
-    /// <summary>
     /// Aggregated metrics from a test run
     /// </summary>
     public class McpEvaluationMetrics

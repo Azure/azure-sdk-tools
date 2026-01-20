@@ -79,8 +79,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
             if (userLabels != null)
             {
-                foreach (var label in userLabels)
+                foreach (var label in userLabels) 
+                {
                     finalLabels.Add(label);
+                }
             }
 
             bool hasValidAssignee = await AssignCodeOwnerAsync(
@@ -197,15 +199,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             string? teamMention = GetTeamMentionForServerLabel(serverLabel);
             
-            string issueComment;
-            if (teamMention != null)
-            {
-                issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {teamMention}.";
-            }
-            else
-            {
-                issueComment = "Thanks for the feedback! We are routing this to the appropriate team for follow-up.";
-            }
+            string issueComment = teamMention != null 
+                ? $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {teamMention}." 
+                : "Thanks for the feedback! We are routing this to the appropriate team for follow-up.";
             
             gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
         }
@@ -214,8 +210,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             var serverTeamMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                { "server-Azure.mcp", "@microsoft/azure-mcp" },
-                { "server-Fabric.mcp", "@microsoft/fabric-mcp" }
+                { "server-Azure.Mcp", "@microsoft/azure-mcp" },
+                { "server-Fabric.Mcp", "@microsoft/fabric-mcp" }
             };
 
             return serverTeamMap.TryGetValue(serverLabel, out string? team) ? team : null;
@@ -251,13 +247,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         private static bool IsServerLabel(string label)
         {
-            return label.StartsWith(ConfigConstants.ServerLabelPrefix, StringComparison.OrdinalIgnoreCase);
+            return label.StartsWith(ConfigConstants.McpServerLabelPrefix, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsToolLabel(string label)
         {
-            return label.StartsWith(ConfigConstants.ToolLabelPrefix, StringComparison.OrdinalIgnoreCase) ||
-            ConfigConstants.OtherLabels.Any(otherLabel => label.Equals(otherLabel, StringComparison.OrdinalIgnoreCase));
+            return label.StartsWith(ConfigConstants.McpToolLabelPrefix, StringComparison.OrdinalIgnoreCase) ||
+            ConfigConstants.McpOtherLabels.Any(otherLabel => label.Equals(otherLabel, StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task<bool> GetCustomerReportedLabel(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)

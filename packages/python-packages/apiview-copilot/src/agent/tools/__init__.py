@@ -8,20 +8,20 @@
 This module initializes the plugins for the agent.
 """
 
-from ._api_review_plugin import ApiReviewPlugin
-from ._database_plugin import (
+from ._api_review_tools import ApiReviewTools
+from ._database_tools import (
     get_create_agent,
     get_delete_agent,
     get_link_agent,
     get_retrieve_agent,
 )
-from ._search_plugin import SearchPlugin
-from ._utility_plugin import UtilityPlugin
+from ._search_tools import SearchTools
+from ._utility_tools import UtilityTools
 
 __all__ = [
-    "ApiReviewPlugin",
-    "SearchPlugin",
-    "UtilityPlugin",
+    "ApiReviewTools",
+    "SearchTools",
+    "UtilityTools",
     "get_create_agent",
     "get_delete_agent",
     "get_retrieve_agent",

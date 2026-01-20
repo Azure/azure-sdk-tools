@@ -405,5 +405,105 @@ namespace APIViewUnitTests
             Assert.NotNull(regularCommentResult);
         }
 
+        [Fact]
+        public void FindDiff_DecoratorOnlyInDiff_ShouldAppearBeforeRelatedClass()
+        {
+            var activeLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            var diffLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "", // Decorators typically don't have LineId
+                    RelatedToLine = "MyClass",
+                    Tokens = [new ReviewToken("@experimental", TokenKind.Text)]
+                },
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            List<ReviewLine> result = CodeFileHelpers.FindDiff(activeLines, diffLines);
+            Assert.Equal(2, result.Count);
+
+            ReviewLine decoratorLine = result.FirstOrDefault(l => l.Tokens.Any(t => t.Value == "@experimental"));
+            ReviewLine classLine = result.FirstOrDefault(l => l.LineId == "MyClass"); 
+            Assert.NotNull(decoratorLine);
+            Assert.NotNull(classLine);
+            
+            int decoratorIndex = result.IndexOf(decoratorLine);
+            int classIndex = result.IndexOf(classLine);
+            Assert.True(decoratorIndex < classIndex, 
+                $"Decorator should appear before class. Decorator at index {decoratorIndex}, class at index {classIndex}");
+            Assert.Equal(DiffKind.Removed, decoratorLine.DiffKind);
+        }
+
+        [Fact]
+        public void FindDiff_DecoratorOnlyInActive_ShouldAppearBeforeRelatedClass()
+        {
+            var activeLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "",
+                    RelatedToLine = "MyClass",
+                    Tokens = [new ReviewToken("@experimental", TokenKind.Text)]
+                },
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            var diffLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            List<ReviewLine> result = CodeFileHelpers.FindDiff(activeLines, diffLines);
+            Assert.Equal(2, result.Count);
+
+            ReviewLine decoratorLine = result.FirstOrDefault(l => l.Tokens.Any(t => t.Value == "@experimental"));
+            ReviewLine classLine = result.FirstOrDefault(l => l.LineId == "MyClass");
+            Assert.NotNull(decoratorLine);
+            Assert.NotNull(classLine);
+            
+            int decoratorIndex = result.IndexOf(decoratorLine);
+            int classIndex = result.IndexOf(classLine);
+            Assert.True(decoratorIndex < classIndex, 
+                $"Decorator should appear before class. Decorator at index {decoratorIndex}, class at index {classIndex}");
+            Assert.Equal(DiffKind.Added, decoratorLine.DiffKind);
+        }
+
     }
 }

@@ -1,5 +1,11 @@
 # Release History
 
+## 0.7.1 (2026-01-20)
+
+### Bugs Fixed
+
+* Remove redundant source setting logic in intent recognition
+
 ## 0.7.0 (2026-01-20)
 
 ### Features Added
@@ -8,7 +14,7 @@
 * Add new knowledge sources from JS, Java and .Net
 * Support routing tenant based on question domain
 
-## Other Changes
+### Other Changes
 
 * Refine prompt for onboarding channel to improve answer accuracy
 * Refactor post process of merging and sorting and complete chunk logic, to give better context to LLM

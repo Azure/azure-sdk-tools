@@ -396,8 +396,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 				}
-				var msg *azopenai.ChatRequestUserMessage
-				msg = &azopenai.ChatRequestUserMessage{
+				msg := &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(content),
 				}
 				llmMessages = append(llmMessages, msg)

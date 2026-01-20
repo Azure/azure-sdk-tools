@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+"sessionStart": [
+  {
+    "type": "command",
+    "bash": "echo \"Session started: $(date)\" >> logs/session.log",
+    "powershell": "Add-Content -Path logs/session.log -Value \"Session started: $(Get-Date)\"",
+    "cwd": ".",
+    "timeoutSec": 10
+  }
+]
+  }
+}

@@ -8,6 +8,9 @@ parameters:
 - name: FeedName
   type: string
   default: ''
+- name: PublishToPyPi
+  type: boolean
+  default: false
 - name: ArtifactName
   type: string
   default: ''
@@ -74,42 +77,108 @@ extends:
 
                 - ${{ parameters.TestSteps }}
 
-      - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
-        - stage: 'Release'
+      - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal')) }}:
+        - stage: 'ReleaseToFeed'
+          displayName: "Release to ${{ parameters.FeedName }}"
           dependsOn: Build
-          condition: Succeeded()
+          condition: and(succeeded(), ne('${{ parameters.FeedName }}', ''))
           variables:
             - template: /eng/pipelines/templates/variables/globals.yml
             - template: /eng/pipelines/templates/variables/image.yml
           jobs:
-          - job: PublishPackage
-            displayName: 'Publish ${{ parameters.PackageName }} package to devops feed'
-            pool:
-              name: $(LINUXPOOL)
-              image: $(LINUXVMIMAGE)
-              os: linux
-            steps:
-            - checkout: none
-            - download: current
-            - task: UsePythonVersion@0
+            - job: PublishPackage
+              displayName: 'Publish ${{ parameters.PackageName }} package to devops feed'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+              - checkout: none
+              - download: current
+              - task: UsePythonVersion@0
+                inputs:
+                  versionSpec: '${{ parameters.PythonVersion}}'
 
-            - script: |
-                set -e
-                python -m pip install twine
-              displayName: Install Twine
+              - script: |
+                  set -e
+                  python -m pip install twine
+                displayName: Install Twine
 
-            - task: TwineAuthenticate@0
-              displayName: 'Twine Authenticate to feed'
-              inputs:
-                artifactFeeds: ${{ parameters.FeedName }}
+              - task: TwineAuthenticate@0
+                displayName: 'Twine Authenticate to feed'
+                inputs:
+                  artifactFeeds: ${{ parameters.FeedName }}
 
-            - task: PipAuthenticate@1
-              displayName: 'Pip Authenticate to feed'
-              inputs:
-                artifactFeeds: ${{ parameters.FeedName }}
-                onlyAddExtraIndex: false
+              - task: PipAuthenticate@1
+                displayName: 'Pip Authenticate to feed'
+                inputs:
+                  artifactFeeds: ${{ parameters.FeedName }}
+                  onlyAddExtraIndex: false
 
-            - pwsh: |
-                twine upload --repository ${{ parameters.FeedName }} --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.whl
-                echo "Uploaded whl to devops feed ${{ parameters.FeedName }}"
-              displayName: 'Publish ${{ parameters.PackageName }} to DevOps feed'
+              - pwsh: |
+                  twine upload --repository ${{ parameters.FeedName }} --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.whl
+                  echo "Uploaded whl to devops feed ${{ parameters.FeedName }}"
+                displayName: 'Publish ${{ parameters.PackageName }} to DevOps feed'
+
+        - ${{if eq(parameters.PublishToPyPi, true) }}:
+          - stage: 'ReleaseToPyPi'
+            displayName: "Release to PyPI"
+            dependsOn: Build
+            condition: Succeeded()
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
+            jobs:
+            - deployment: PublishPackage
+              displayName: "Publish to PyPI via ESRP"
+              condition: and(succeeded(), ne(variables['Skip.PublishPackage'], 'true'))
+              environment: 'package-publish'
+
+              templateContext:
+                type: releaseJob
+                isProduction: true
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: ${{ parameters.ArtifactName }}
+                  targetPath: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
+
+              pool:
+                image: $(LINUXVMIMAGE)
+                name: $(LINUXPOOL)
+                os: linux
+
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                      - task: UsePythonVersion@0
+                        inputs:
+                          versionSpec: '3.9'
+
+                      - pwsh: |
+                          $esrpDirectory = "$(Pipeline.Workspace)/esrp-release/${{parameters.ArtifactName}}"
+                          New-Item -ItemType Directory -Force -Path $esrpDirectory
+
+                          Get-ChildItem -Path "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/" `
+                            | Where-Object { ($_.Name -like "*.tar.gz" -or $_.Name -like "*.whl") } `
+                            | Copy-Item -Destination $esrpDirectory
+
+                          Get-ChildItem $esrpDirectory
+                        displayName: Isolate files for ESRP Publish
+
+                      - task: EsrpRelease@9
+                        displayName: 'Publish to ESRP'
+                        inputs:
+                          ConnectedServiceName: 'Azure SDK PME Managed Identity'
+                          ClientId: '5f81938c-2544-4f1f-9251-dd9de5b8a81b'
+                          DomainTenantId: '975f013f-7f24-47e8-a7d3-abc4752bf346'
+                          UseManagedIdentity: true
+                          KeyVaultName: 'kv-azuresdk-codesign'
+                          SignCertName: 'azure-sdk-esrp-release-certificate'
+                          Intent: 'PackageDistribution'
+                          ContentType: 'PyPI'
+                          FolderLocation: $(Pipeline.Workspace)/esrp-release/${{parameters.ArtifactName}}
+                          Owners: $(Build.RequestedForEmail)
+                          Approvers: $(Build.RequestedForEmail)
+                          ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
+                          MainPublisher: 'ESRPRELPACMANTEST'

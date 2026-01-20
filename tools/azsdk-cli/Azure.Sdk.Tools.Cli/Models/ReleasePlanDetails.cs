@@ -136,6 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;
+        public string GenerationStatus { get; set; } = string.Empty;
         public string ReleaseStatus { get; set; } = string.Empty;
         public string PullRequestStatus { get; set; } = string.Empty;
         public string ReleaseExclusionStatus { get; set; } = string.Empty;

@@ -187,14 +187,15 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private string GetEnvironmentFromUrl(string url)
     {
-        // Check if APIVIEW_ENVIRONMENT is set and use it as override
+        // First check if APIVIEW_ENVIRONMENT is set. If set, use it as an override
+        // that takes precedence over URL auto-detection.
         string? envOverride = Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT");
         if (!string.IsNullOrEmpty(envOverride))
         {
             return envOverride;
         }
 
-        // Auto-detect from URL
+        // Auto-detect from URL when no override is present
         if (url.Contains("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase))
         {
             return "staging";

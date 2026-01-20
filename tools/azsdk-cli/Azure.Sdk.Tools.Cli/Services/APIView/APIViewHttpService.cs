@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint);
+    Task<string?> GetAsync(string endpoint, string environment);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -32,16 +32,10 @@ public class APIViewHttpService : IAPIViewHttpService
         _logger = logger;
     }
 
-    private static string GetEnvironment()
-    {
-        return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
-    }
-
-    public async Task<string?> GetAsync(string endpoint)
+    public async Task<string?> GetAsync(string endpoint, string environment)
     {
         try
         {
-            string environment = GetEnvironment();
             string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
             HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
 

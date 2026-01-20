@@ -10,6 +10,21 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 /// </summary>
 public class CustomizedCodeUpdateResponse : PackageResponseBase
 {
+    /// <summary>
+    /// Error codes for classifier to parse programmatically.
+    /// These define the contract between the tool and downstream processors.
+    /// </summary>
+    public static class KnownErrorCodes
+    {
+        public const string RegenerateFailed = "RegenerateFailed";
+        public const string RegenerateAfterPatchesFailed = "RegenerateAfterPatchesFailed";
+        public const string BuildFailedAfterPatches = "BuildFailedAfterPatches";
+        public const string BuildFailedNoCustomizations = "BuildFailedNoCustomizations";
+        public const string PatchesFailed = "PatchesFailed";
+        public const string NoLanguageService = "NoLanguageService";
+        public const string InvalidInput = "InvalidInput";
+    }
+
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Message { get; set; }

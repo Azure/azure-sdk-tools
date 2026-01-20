@@ -177,6 +177,31 @@ func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
 	require.False(t, intentionResult.NeedsRagProcessing, "Suggestion message should NOT require RAG processing")
 }
 
+func TestIntentionRecognition_ReviewRequest(t *testing.T) {
+	config.InitConfiguration()
+	config.InitSecrets()
+	config.InitOpenAIClient()
+
+	service, err := agent.NewCompletionService()
+	require.NoError(t, err)
+
+	// Test case: PR review request (should need RAG processing)
+	messages := []model.Message{
+		{
+			Role:    model.Role_User,
+			Content: "Hi team, as discussed in the meeting, here is the TypeSpec PR for the new API version: [VideoTranslation] Add new API version 2026-03-01 to support auto create first iteration. Could you please review, and involve the key person to review as well?",
+		},
+	}
+
+	llmMessages := convertToLLMMessages(messages)
+	intentionResult, err := service.RecognizeIntention("api_spec_review/intention.md", llmMessages)
+
+	require.NoError(t, err)
+	require.NotNil(t, intentionResult)
+	require.True(t, intentionResult.NeedsRagProcessing, "Review request should require RAG processing")
+	require.NotEmpty(t, intentionResult.Question)
+}
+
 // Helper function to convert model.Message to LLM message format
 func convertToLLMMessages(messages []model.Message) []azopenai.ChatRequestMessageClassification {
 	llmMessages := make([]azopenai.ChatRequestMessageClassification, 0, len(messages))

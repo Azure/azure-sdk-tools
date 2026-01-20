@@ -120,18 +120,26 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     {
         // Python SDKs can have _patch.py files in multiple locations within the package:
         // e.g., azure/packagename/_patch.py, azure/packagename/models/_patch.py, azure/packagename/operations/_patch.py
-        // Finding at least one indicates the package has customizations.
+        //
+        // However, autorest.python generates empty _patch.py templates by default with:
+        //   __all__: List[str] = []
+        //
+        // A _patch.py file only has actual customizations if __all__ is non-empty.
+        // See: https://github.com/Azure/autorest.python/blob/main/docs/customizations.md
 
         try
         {
             var patchFiles = Directory.GetFiles(packagePath, "_patch.py", SearchOption.AllDirectories);
-            if (patchFiles.Length > 0)
+            foreach (var patchFile in patchFiles)
             {
-                logger.LogDebug("Found Python _patch.py file(s) in {PackagePath}", packagePath);
-                return true;
+                if (HasNonEmptyAllExport(patchFile))
+                {
+                    logger.LogDebug("Found Python _patch.py with customizations at {PatchFile}", patchFile);
+                    return true;
+                }
             }
 
-            logger.LogDebug("No Python _patch.py files found in {PackagePath}", packagePath);
+            logger.LogDebug("No Python _patch.py files with customizations found in {PackagePath}", packagePath);
             return false;
         }
         catch (Exception ex)
@@ -168,4 +176,43 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
 
         return reqs;
     }
+
+    /// <summary>
+    /// Checks if a _patch.py file has a non-empty __all__ export list, indicating actual customizations.
+    /// </summary>
+    private bool HasNonEmptyAllExport(string patchFilePath)
+    {
+        try
+        {
+            foreach (var line in File.ReadLines(patchFilePath))
+            {
+                if (line.Contains("__all__") && line.Contains("="))
+                {
+                    // If line contains quoted strings, there are exports
+                    if (line.Contains('"') || line.Contains('\''))
+                    {
+                        return true;
+                    }
+                    
+                    // If line has [ but not ] on same line, it's multiline = non-empty
+                    if (line.Contains('[') && !line.Contains(']'))
+                    {
+                        return true;
+                    }
+                    
+                    // Single-line empty: __all__ = [] or __all__: List[str] = []
+                    return false;
+                }
+            }
+            
+            // No __all__ found - assume no customizations (template file)
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error reading Python patch file {PatchFile}", patchFilePath);
+            return false;
+        }
+    }
+
 }

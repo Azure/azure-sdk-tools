@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
@@ -29,6 +30,22 @@ public class PermissionsController : BaseApiController
         var userName = User.GetGitHubLogin();
         var permissions = await _permissionsManager.GetEffectivePermissionsAsync(userName);
         return new LeanJsonResult(permissions, StatusCodes.Status200OK);
+    }
+
+    /// <summary>
+    ///     Get all usernames for autocomplete (Admin only)
+    /// </summary>
+    [HttpGet("users")]
+    public async Task<ActionResult<IEnumerable<string>>> GetAllUsernames()
+    {
+        var userName = User.GetGitHubLogin();
+        if (!await _permissionsManager.IsAdminAsync(userName))
+        {
+            return Forbid();
+        }
+
+        IEnumerable<string> users = await _permissionsManager.GetAllUsernamesAsync();
+        return new LeanJsonResult(users, StatusCodes.Status200OK);
     }
 
     /// <summary>
@@ -169,7 +186,7 @@ public class PermissionsController : BaseApiController
     ///     Add members to a group (Admin only)
     /// </summary>
     [HttpPost("groups/{groupId}/members")]
-    public async Task<ActionResult> AddMembers(string groupId, [FromBody] AddMembersRequest request)
+    public async Task<ActionResult<AddMembersResult>> AddMembers(string groupId, [FromBody] AddMembersRequest request)
     {
         var userName = User.GetGitHubLogin();
         if (!await _permissionsManager.IsAdminAsync(userName))
@@ -184,8 +201,18 @@ public class PermissionsController : BaseApiController
 
         try
         {
-            await _permissionsManager.AddMembersToGroupAsync(groupId, request.UserIds, userName);
-            return Ok();
+            AddMembersResult result = await _permissionsManager.AddMembersToGroupAsync(groupId, request.UserIds, userName);
+            
+            if (result.InvalidUsers.Count > 0 && result.AddedUsers.Count == 0)
+            {
+                // All users were invalid
+                return BadRequest(new { 
+                    message = "None of the specified users exist in our database.", 
+                    invalidUsers = result.InvalidUsers 
+                });
+            }
+
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
         catch (ArgumentException ex)
         {

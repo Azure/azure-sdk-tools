@@ -8,7 +8,8 @@ import {
     LanguageScopedRole, 
     GroupPermissions,
     GroupPermissionsRequest,
-    AddMembersRequest
+    AddMembersRequest,
+    AddMembersResult
 } from 'src/app/_models/permissions';
 
 @Injectable({
@@ -64,9 +65,9 @@ export class PermissionsService {
     /**
      * Add members to a group (Admin only)
      */
-    addMembersToGroup(groupId: string, userIds: string[]): Observable<void> {
+    addMembersToGroup(groupId: string, userIds: string[]): Observable<AddMembersResult> {
         const request: AddMembersRequest = { userIds };
-        return this.http.post<void>(`${this.baseUrl}/groups/${groupId}/members`, request, { withCredentials: true });
+        return this.http.post<AddMembersResult>(`${this.baseUrl}/groups/${groupId}/members`, request, { withCredentials: true });
     }
 
     /**
@@ -74,6 +75,14 @@ export class PermissionsService {
      */
     removeMemberFromGroup(groupId: string, userId: string): Observable<void> {
         return this.http.delete<void>(`${this.baseUrl}/groups/${groupId}/members/${userId}`, { withCredentials: true });
+    }
+
+    /**
+     * Get all usernames for autocomplete (Admin only)
+     * This loads all users once - filtering is done client-side
+     */
+    getAllUsernames(): Observable<string[]> {
+        return this.http.get<string[]>(`${this.baseUrl}/users`, { withCredentials: true });
     }
 
     hasGlobalRole(permissions: EffectivePermissions | null | undefined, roles: GlobalRole | GlobalRole[]): boolean {

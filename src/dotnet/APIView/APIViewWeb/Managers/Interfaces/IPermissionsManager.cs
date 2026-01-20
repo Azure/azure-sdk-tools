@@ -12,9 +12,10 @@ public interface IPermissionsManager
     Task<GroupPermissionsModel> CreateGroupAsync(GroupPermissionsRequest request, string createdBy);
     Task<GroupPermissionsModel> UpdateGroupAsync(string groupId, GroupPermissionsRequest request, string updatedBy);
     Task DeleteGroupAsync(string groupId);
-    Task AddMembersToGroupAsync(string groupId, IEnumerable<string> userIds, string addedBy);
+    Task<AddMembersResult> AddMembersToGroupAsync(string groupId, IEnumerable<string> userIds, string addedBy);
     Task RemoveMemberFromGroupAsync(string groupId, string userId, string removedBy);
     Task<bool> CanApproveAsync(string userId, string language);
     Task<bool> IsAdminAsync(string userId);
     Task<bool> HasElevatedAccessAsync(string userId);
+    Task<IEnumerable<string>> GetAllUsernamesAsync();
 }

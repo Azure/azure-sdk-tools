@@ -15,6 +15,7 @@ import {
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 
 interface GroupFormData {
     groupId: string;
@@ -42,7 +43,9 @@ export class AdminPermissionsPageComponent implements OnInit {
     isEditMode: boolean = false;
 
     groupForm: GroupFormData = this.getEmptyGroupForm();
-    newMemberUsername: string = '';
+    newMemberUsernames: string[] = [];
+    userSuggestions: string[] = [];
+    allUsers: string[] = []; 
 
     globalRoleOptions = GLOBAL_ROLE_OPTIONS;
     languageScopedRoleOptions = LANGUAGE_SCOPED_ROLE_OPTIONS;
@@ -52,6 +55,8 @@ export class AdminPermissionsPageComponent implements OnInit {
     newGlobalRole: GlobalRole = GlobalRole.ServiceTeam;
     newScopedRole: LanguageScopedRole = LanguageScopedRole.Architect;
     newRoleLanguage: string = 'Python';
+
+    private readonly defaultGroupId = 'azure-sdk-team';
 
     constructor(
         private permissionsService: PermissionsService,
@@ -92,7 +97,15 @@ export class AdminPermissionsPageComponent implements OnInit {
         this.permissionsService.getAllGroups().subscribe({
             next: (groups) => {
                 this.groups = groups;
-                this.isLoading = false;
+                
+                if (!this.selectedGroup) {
+                    const defaultGroup = groups.find(g => g.groupId === this.defaultGroupId);
+                    if (defaultGroup) {
+                        this.selectedGroup = defaultGroup;
+                    }
+                }
+                
+                this.loadAllUsers();
             },
             error: (err) => {
                 this.isLoading = false;
@@ -101,6 +114,19 @@ export class AdminPermissionsPageComponent implements OnInit {
                     summary: 'Error',
                     detail: 'Failed to load groups'
                 });
+            }
+        });
+    }
+
+    private loadAllUsers(): void {
+        this.permissionsService.getAllUsernames().subscribe({
+            next: (users) => {
+                this.allUsers = users;
+                this.isLoading = false;
+            },
+            error: (err) => {
+                this.allUsers = [];
+                this.isLoading = false;
             }
         });
     }
@@ -271,21 +297,56 @@ export class AdminPermissionsPageComponent implements OnInit {
     }
 
     openAddMemberDialog(): void {
-        this.newMemberUsername = '';
+        this.newMemberUsernames = [];
+        this.userSuggestions = [];
         this.showAddMemberDialog = true;
     }
 
-    addMember(): void {
-        if (!this.selectedGroup || !this.newMemberUsername.trim()) return;
+    searchUsers(event: AutoCompleteCompleteEvent): void {
+        const query = (event.query || '').toLowerCase();
+        
+        const existingMembers = new Set(this.selectedGroup?.members || []);
+        const alreadySelected = new Set(this.newMemberUsernames);
+        
+        this.userSuggestions = this.allUsers.filter(u => {
+            if (existingMembers.has(u) || alreadySelected.has(u)) {
+                return false;
+            }
+            return u.toLowerCase().startsWith(query);
+        }).slice(0, 20); 
+    }
+
+    addMembers(): void {
+        if (!this.selectedGroup || this.newMemberUsernames.length === 0) return;
 
         const groupId = this.selectedGroup.groupId;
-        this.permissionsService.addMembersToGroup(groupId, [this.newMemberUsername.trim()]).subscribe({
-            next: () => {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: `Member "${this.newMemberUsername}" added successfully`
-                });
+        const usernames = this.newMemberUsernames.map(u => u.trim()).filter(u => u.length > 0);
+        
+        if (usernames.length === 0) return;
+
+        this.permissionsService.addMembersToGroup(groupId, usernames).subscribe({
+            next: (result) => {
+                if (result.addedUsers.length > 0) {
+                    const memberText = result.addedUsers.length === 1 
+                        ? `Member "${result.addedUsers[0]}"` 
+                        : `${result.addedUsers.length} members`;
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: `${memberText} added successfully`
+                    });
+                }
+
+                if (result.invalidUsers.length > 0) {
+                    const invalidText = result.invalidUsers.join(', ');
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Users Not Found',
+                        detail: `The following users don't exist in our database and were not added: ${invalidText}`,
+                        sticky: true
+                    });
+                }
+
                 this.showAddMemberDialog = false;
                 this.refreshGroupsAndReselect(groupId);
             },
@@ -293,7 +354,7 @@ export class AdminPermissionsPageComponent implements OnInit {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to add member'
+                    detail: err.error?.message || 'Failed to add members'
                 });
             }
         });

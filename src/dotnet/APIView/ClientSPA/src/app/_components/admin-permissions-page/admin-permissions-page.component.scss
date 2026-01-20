@@ -54,9 +54,9 @@
 .detail-title { h2 { margin: 0; font-size: 1.25rem; } .group-id-code { font-size: 0.8rem; color: var(--text-color-secondary); background: var(--surface-ground); padding: 0.15rem 0.4rem; border-radius: 4px; } }
 .detail-meta { display: flex; gap: 1rem; margin-top: 0.5rem; .meta-item { display: flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; color: var(--text-color-secondary); } }
 .detail-section { margin-bottom: 1.5rem; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.section-header { margin-bottom: 0.75rem; }
 .section-title { display: flex; align-items: center; gap: 0.5rem; h3 { margin: 0; font-size: 0.95rem; } i { color: var(--primary-color); } }
-.section-count { font-size: 0.8rem; color: var(--text-color-secondary); }
+.section-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; background: var(--primary-color); color: white; font-size: 0.7rem; font-weight: 600; border-radius: 10px; }
 
 // Roles & Members
 .roles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; }
@@ -86,6 +86,17 @@
 .no-roles-hint { padding: 0.75rem; background: var(--surface-ground); border-radius: 6px; color: var(--text-color-secondary); font-size: 0.85rem; margin-top: 0.5rem; }
 .member-dialog-header { margin-bottom: 0.5rem; padding: 0.5rem 0.75rem; background: var(--surface-ground); border-radius: 6px; p { margin: 0; font-size: 0.85rem; } }
 .dialog-footer { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+// PrimeNG Dialog Footer Override
+::ng-deep .p-dialog {
+  .p-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--surface-border);
+  }
+}
 
 // Responsive
 @media (max-width: 992px) { .admin-permissions-container { padding: 1rem; } .page-header { flex-direction: column; gap: 1rem; .header-content { flex-direction: column; text-align: center; } } .main-content { grid-template-columns: 1fr; } .groups-panel { max-height: none; } }

@@ -77,6 +77,15 @@ export interface AddMembersRequest {
     userIds: string[];
 }
 
+/**
+ * Result model for adding members to a group
+ */
+export interface AddMembersResult {
+    addedUsers: string[];
+    invalidUsers: string[];
+    allUsersValid: boolean;
+}
+
 export const ROLE_DISPLAY_NAMES: { [key: string]: string } = {
     [GlobalRole.Admin]: 'Admin',
     [GlobalRole.ServiceTeam]: 'Service Team',

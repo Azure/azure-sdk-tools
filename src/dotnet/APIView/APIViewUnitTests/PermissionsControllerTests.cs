@@ -325,11 +325,17 @@ public class PermissionsControllerTests
 
         var request = new AddMembersRequest { UserIds = new List<string> { "user1", "user2" } };
 
-        _mockPermissionsManager.Setup(m => m.AddMembersToGroupAsync("test-group", request.UserIds, "testuser"))
-            .Returns(Task.CompletedTask);
+        var addMembersResult = new AddMembersResult
+        {
+            AddedUsers = new List<string> { "user1", "user2" },
+            InvalidUsers = new List<string>()
+        };
+
+        _mockPermissionsManager.Setup(m => m.AddMembersToGroupAsync("test-group", It.IsAny<IEnumerable<string>>(), "testuser"))
+            .ReturnsAsync(addMembersResult);
 
         var result = await _controller.AddMembers("test-group", request);
-        result.Should().BeOfType<OkResult>();
+        result.Result.Should().BeOfType<LeanJsonResult>();
     }
 
     [Fact]
@@ -340,7 +346,7 @@ public class PermissionsControllerTests
         var request = new AddMembersRequest { UserIds = new List<string> { "user1" } };
 
         var result = await _controller.AddMembers("test-group", request);
-        result.Should().BeOfType<ForbidResult>();
+        result.Result.Should().BeOfType<ForbidResult>();
     }
 
     [Fact]
@@ -351,7 +357,7 @@ public class PermissionsControllerTests
         var request = new AddMembersRequest { UserIds = new List<string>() };
 
         var result = await _controller.AddMembers("test-group", request);
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Fact]
@@ -362,7 +368,7 @@ public class PermissionsControllerTests
         var request = new AddMembersRequest { UserIds = null };
 
         var result = await _controller.AddMembers("test-group", request);
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Fact]
@@ -376,7 +382,7 @@ public class PermissionsControllerTests
             .ThrowsAsync(new ArgumentException("Group not found"));
 
         var result = await _controller.AddMembers("invalid", request);
-        result.Should().BeOfType<NotFoundObjectResult>();
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 
     #endregion
@@ -401,6 +407,32 @@ public class PermissionsControllerTests
 
         var result = await _controller.RemoveMember("test-group", "user1");
         result.Should().BeOfType<ForbidResult>();
+    }
+
+    #endregion
+
+    #region GetAllUsernames Tests
+
+    [Fact]
+    public async Task GetAllUsernames_WhenAdmin_ReturnsUsers()
+    {
+        SetupAdminUser();
+        var expectedUsers = new List<string> { "user1", "user2" };
+        _mockPermissionsManager.Setup(m => m.GetAllUsernamesAsync())
+            .ReturnsAsync(expectedUsers);
+
+        var result = await _controller.GetAllUsernames();
+        result.Should().NotBeNull();
+        result.Result.Should().BeOfType<LeanJsonResult>();
+    }
+
+    [Fact]
+    public async Task GetAllUsernames_WhenNotAdmin_ReturnsForbid()
+    {
+        SetupNonAdminUser();
+
+        var result = await _controller.GetAllUsernames();
+        result.Result.Should().BeOfType<ForbidResult>();
     }
 
     #endregion

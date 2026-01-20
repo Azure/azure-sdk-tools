@@ -18,13 +18,16 @@ public class PermissionsManager : IPermissionsManager
     private readonly IMemoryCache _cache;
     private readonly ILogger<PermissionsManager> _logger;
     private readonly ICosmosPermissionsRepository _permissionsRepository;
+    private readonly ICosmosUserProfileRepository _userProfileRepository;
 
     public PermissionsManager(
         ICosmosPermissionsRepository permissionsRepository,
+        ICosmosUserProfileRepository userProfileRepository,
         IMemoryCache cache,
         ILogger<PermissionsManager> logger)
     {
         _permissionsRepository = permissionsRepository;
+        _userProfileRepository = userProfileRepository;
         _cache = cache;
         _logger = logger;
     }
@@ -113,13 +116,32 @@ public class PermissionsManager : IPermissionsManager
         _logger.LogInformation("Permission group '{GroupId}' deleted", groupId);
     }
 
-    public async Task AddMembersToGroupAsync(string groupId, IEnumerable<string> userIds, string addedBy)
+    public async Task<AddMembersResult> AddMembersToGroupAsync(string groupId, IEnumerable<string> userNames, string addedBy)
     {
-        await _permissionsRepository.AddMembersToGroupAsync(groupId, userIds);
-        InvalidateMembersCaches(userIds);
+        List<string> userNamesList = userNames.ToList();
+        List<string> existingUsers = (await _userProfileRepository.GetExistingUsersAsync(userNamesList)).ToList();
+        var existingUsersSet = new HashSet<string>(existingUsers, StringComparer.OrdinalIgnoreCase);
 
-        _logger.LogInformation("Members added to group '{GroupId}' by {User}: {Members}",
-            groupId, addedBy, string.Join(", ", userIds));
+        var result = new AddMembersResult();
+        foreach (string userName in userNamesList)
+        {
+            if (existingUsersSet.Contains(userName))
+            {
+                result.AddedUsers.Add(userName);
+            }
+            else
+            {
+                result.InvalidUsers.Add(userName);
+            }
+        }
+
+        if (result.AddedUsers.Count > 0)
+        {
+            await _permissionsRepository.AddMembersToGroupAsync(groupId, result.AddedUsers);
+            InvalidateMembersCaches(result.AddedUsers);
+        }
+
+        return result;
     }
 
     public async Task RemoveMemberFromGroupAsync(string groupId, string userId, string removedBy)
@@ -147,6 +169,11 @@ public class PermissionsManager : IPermissionsManager
     {
         EffectivePermissions permissions = await GetEffectivePermissionsAsync(userId);
         return permissions.HasElevatedAccess;
+    }
+
+    public async Task<IEnumerable<string>> GetAllUsernamesAsync()
+    {
+        return await _userProfileRepository.GetAllUsernamesAsync();
     }
 
     private EffectivePermissions MergePermissions(string userId, IEnumerable<GroupPermissionsModel> groups)

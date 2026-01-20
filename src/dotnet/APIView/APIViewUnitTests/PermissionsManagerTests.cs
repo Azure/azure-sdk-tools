@@ -20,6 +20,7 @@ namespace APIViewUnitTests;
 public class PermissionsManagerTests
 {
     private readonly Mock<ICosmosPermissionsRepository> _mockRepository;
+    private readonly Mock<ICosmosUserProfileRepository> _mockUserProfileRepository;
     private readonly Mock<IMemoryCache> _mockCache;
     private readonly Mock<ILogger<PermissionsManager>> _mockLogger;
     private readonly PermissionsManager _manager;
@@ -27,6 +28,7 @@ public class PermissionsManagerTests
     public PermissionsManagerTests()
     {
         _mockRepository = new Mock<ICosmosPermissionsRepository>();
+        _mockUserProfileRepository = new Mock<ICosmosUserProfileRepository>();
         _mockCache = new Mock<IMemoryCache>();
         _mockLogger = new Mock<ILogger<PermissionsManager>>();
 
@@ -37,6 +39,7 @@ public class PermissionsManagerTests
 
         _manager = new PermissionsManager(
             _mockRepository.Object,
+            _mockUserProfileRepository.Object,
             _mockCache.Object,
             _mockLogger.Object
         );
@@ -78,10 +81,7 @@ public class PermissionsManagerTests
                 GroupId = "admin-group",
                 GroupName = "Admin Group",
                 Members = new List<string> { "testuser" },
-                Roles = new List<RoleAssignment>
-                {
-                    new GlobalRoleAssignment { Role = GlobalRole.Admin }
-                }
+                Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.Admin } }
             }
         };
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("testuser"))
@@ -109,8 +109,7 @@ public class PermissionsManagerTests
                 {
                     new LanguageScopedRoleAssignment
                     {
-                        Role = LanguageScopedRole.Architect,
-                        Language = "CSharp"
+                        Role = LanguageScopedRole.Architect, Language = "CSharp"
                     }
                 }
             }
@@ -118,7 +117,7 @@ public class PermissionsManagerTests
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("testuser"))
             .ReturnsAsync(groups);
 
-        
+
         EffectivePermissions result = await _manager.GetEffectivePermissionsAsync("testuser");
         result.Should().NotBeNull();
         result.Roles.Should().HaveCount(1);
@@ -137,10 +136,7 @@ public class PermissionsManagerTests
                 GroupId = "sdk-team",
                 GroupName = "SDK Team",
                 Members = new List<string> { "testuser" },
-                Roles = new List<RoleAssignment>
-                {
-                    new GlobalRoleAssignment { Role = GlobalRole.SdkTeam }
-                }
+                Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.SdkTeam } }
             },
             new()
             {
@@ -151,8 +147,7 @@ public class PermissionsManagerTests
                 {
                     new LanguageScopedRoleAssignment
                     {
-                        Role = LanguageScopedRole.Architect,
-                        Language = "CSharp"
+                        Role = LanguageScopedRole.Architect, Language = "CSharp"
                     }
                 }
             }
@@ -176,16 +171,13 @@ public class PermissionsManagerTests
             new()
             {
                 GroupId = "admin-group",
-                Roles = new List<RoleAssignment>
-                {
-                    new GlobalRoleAssignment { Role = GlobalRole.Admin }
-                }
+                Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.Admin } }
             }
         };
 
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("testuser"))
             .ReturnsAsync(groups);
-        
+
         await _manager.GetEffectivePermissionsAsync("testuser");
         _mockCache.Verify(c => c.CreateEntry(It.Is<object>(k => k.ToString().Contains("testuser"))), Times.Once);
     }
@@ -199,12 +191,11 @@ public class PermissionsManagerTests
     {
         var groups = new List<GroupPermissionsModel>
         {
-            new() { GroupId = "group1", GroupName = "Group 1" },
-            new() { GroupId = "group2", GroupName = "Group 2" }
+            new() { GroupId = "group1", GroupName = "Group 1" }, new() { GroupId = "group2", GroupName = "Group 2" }
         };
 
         _mockRepository.Setup(r => r.GetAllGroupsAsync()).ReturnsAsync(groups);
-        
+
         IEnumerable<GroupPermissionsModel> result = await _manager.GetAllGroupsAsync();
         result.Should().HaveCount(2);
     }
@@ -235,10 +226,7 @@ public class PermissionsManagerTests
         {
             GroupId = "new-group",
             GroupName = "New Group",
-            Roles = new List<RoleAssignment>
-            {
-                new GlobalRoleAssignment { Role = GlobalRole.SdkTeam }
-            }
+            Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.SdkTeam } }
         };
         _mockRepository.Setup(r => r.UpsertGroupAsync(It.IsAny<GroupPermissionsModel>()))
             .Returns(Task.CompletedTask);
@@ -251,9 +239,9 @@ public class PermissionsManagerTests
         result.Members.Should().BeEmpty();
         result.Roles.Should().HaveCount(1);
 
-        _mockRepository.Verify(r => r.UpsertGroupAsync(It.Is<GroupPermissionsModel>(
-            g => g.GroupId == "new-group" && g.GroupName == "New Group"
-        )), Times.Once);
+        _mockRepository.Verify(r => r.UpsertGroupAsync(
+            It.Is<GroupPermissionsModel>(g => g.GroupId == "new-group" && g.GroupName == "New Group"
+            )), Times.Once);
     }
 
     [Fact]
@@ -274,12 +262,9 @@ public class PermissionsManagerTests
         {
             GroupId = "test-group",
             GroupName = "New Name",
-            Roles = new List<RoleAssignment>
-            {
-                new GlobalRoleAssignment { Role = GlobalRole.Admin }
-            }
+            Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.Admin } }
         };
-        
+
         GroupPermissionsModel result = await _manager.UpdateGroupAsync("test-group", request, "admin");
         result.Should().NotBeNull();
         result.GroupName.Should().Be("New Name");
@@ -289,15 +274,11 @@ public class PermissionsManagerTests
     [Fact]
     public async Task DeleteGroupAsync_CallsRepository()
     {
-        var group = new GroupPermissionsModel
-        {
-            GroupId = "test-group",
-            Members = ["user1"]
-        };
+        var group = new GroupPermissionsModel { GroupId = "test-group", Members = ["user1"] };
         _mockRepository.Setup(r => r.GetGroupAsync("test-group")).ReturnsAsync(group);
         _mockRepository.Setup(r => r.DeleteGroupAsync("test-group")).Returns(Task.CompletedTask);
 
-        
+
         await _manager.DeleteGroupAsync("test-group");
         _mockRepository.Verify(r => r.DeleteGroupAsync("test-group"), Times.Once);
     }
@@ -312,6 +293,8 @@ public class PermissionsManagerTests
         var userIds = new List<string> { "user1", "user2" };
         _mockRepository.Setup(r => r.AddMembersToGroupAsync("test-group", userIds))
             .Returns(Task.CompletedTask);
+        _mockUserProfileRepository.Setup(r => r.GetExistingUsersAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(userIds);
 
         await _manager.AddMembersToGroupAsync("test-group", userIds, "admin");
         _mockRepository.Verify(r => r.AddMembersToGroupAsync("test-group", userIds), Times.Once);
@@ -339,14 +322,11 @@ public class PermissionsManagerTests
             new()
             {
                 GroupId = "admin-group",
-                Roles = new List<RoleAssignment>
-                {
-                    new GlobalRoleAssignment { Role = GlobalRole.Admin }
-                }
+                Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.Admin } }
             }
         };
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("admin")).ReturnsAsync(groups);
-        
+
         bool result = await _manager.IsAdminAsync("admin");
         result.Should().BeTrue();
     }
@@ -359,10 +339,7 @@ public class PermissionsManagerTests
             new()
             {
                 GroupId = "sdk-team",
-                Roles = new List<RoleAssignment>
-                {
-                    new GlobalRoleAssignment { Role = GlobalRole.SdkTeam }
-                }
+                Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.SdkTeam } }
             }
         };
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("user")).ReturnsAsync(groups);
@@ -376,7 +353,7 @@ public class PermissionsManagerTests
     {
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("user"))
             .ReturnsAsync(new List<GroupPermissionsModel>());
-        
+
         bool result = await _manager.IsAdminAsync("user");
         result.Should().BeFalse();
     }
@@ -397,8 +374,7 @@ public class PermissionsManagerTests
                 {
                     new LanguageScopedRoleAssignment
                     {
-                        Role = LanguageScopedRole.Architect,
-                        Language = "CSharp"
+                        Role = LanguageScopedRole.Architect, Language = "CSharp"
                     }
                 }
             }
@@ -425,7 +401,7 @@ public class PermissionsManagerTests
             }
         };
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("user")).ReturnsAsync(groups);
-        
+
         var result = await _manager.CanApproveAsync("user", "Python");
         result.Should().BeTrue();
     }
@@ -442,8 +418,7 @@ public class PermissionsManagerTests
                 {
                     new LanguageScopedRoleAssignment
                     {
-                        Role = LanguageScopedRole.Architect,
-                        Language = "CSharp"
+                        Role = LanguageScopedRole.Architect, Language = "CSharp"
                     }
                 }
             }
@@ -462,16 +437,30 @@ public class PermissionsManagerTests
             new()
             {
                 GroupId = "admin-group",
-                Roles = new List<RoleAssignment>
-                {
-                    new GlobalRoleAssignment { Role = GlobalRole.Admin }
-                }
+                Roles = new List<RoleAssignment> { new GlobalRoleAssignment { Role = GlobalRole.Admin } }
             }
         };
         _mockRepository.Setup(r => r.GetGroupsForUserAsync("user")).ReturnsAsync(groups);
 
         bool result = await _manager.CanApproveAsync("user", "CSharp");
         result.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region GetAllUsernamesAsync Tests
+
+    [Fact]
+    public async Task GetAllUsernamesAsync_CallsUserProfileRepository()
+    {
+        var expectedUsers = new List<string> { "user1", "user2", "user3" };
+        _mockUserProfileRepository.Setup(r => r.GetAllUsernamesAsync())
+            .ReturnsAsync(expectedUsers);
+
+        var result = await _manager.GetAllUsernamesAsync();
+
+        result.Should().BeEquivalentTo(expectedUsers);
+        _mockUserProfileRepository.Verify(r => r.GetAllUsernamesAsync(), Times.Once);
     }
 
     #endregion

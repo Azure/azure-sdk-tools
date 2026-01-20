@@ -18,6 +18,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
@@ -61,7 +62,8 @@ export function initializeApp(configService: ConfigService) {
     InputTextModule,
     ButtonModule,
     TooltipModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    AutoCompleteModule
   ],
   providers: [
     ConfigService,

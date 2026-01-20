@@ -136,3 +136,15 @@ public class AddMembersRequest
     [JsonPropertyName("userIds")]
     public List<string> UserIds { get; set; } = [];
 }
+
+public class AddMembersResult
+{
+    [JsonPropertyName("addedUsers")]
+    public List<string> AddedUsers { get; set; } = [];
+
+    [JsonPropertyName("invalidUsers")]
+    public List<string> InvalidUsers { get; set; } = [];
+
+    [JsonPropertyName("allUsersValid")]
+    public bool AllUsersValid => InvalidUsers.Count == 0;
+}

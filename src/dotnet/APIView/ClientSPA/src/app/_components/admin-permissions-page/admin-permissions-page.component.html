@@ -11,16 +11,6 @@
                 <p class="subtitle">Manage user groups, roles, and access permissions</p>
             </div>
         </div>
-        <div class="header-stats" *ngIf="!isLoading && isAdmin">
-            <div class="stat-card">
-                <span class="stat-value">{{ groups.length }}</span>
-                <span class="stat-label"> Groups</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-value">{{ getTotalMembers() }}</span>
-                <span class="stat-label"> Total Members</span>
-            </div>
-        </div>
     </div>
 
     <!-- Loading State -->
@@ -133,8 +123,8 @@
                     <div class="section-title">
                         <i class="pi pi-key"></i>
                         <h3>Assigned Roles</h3>
+                        <span class="section-badge">{{ selectedGroup.roles.length }}</span>
                     </div>
-                    <span class="section-count">{{ selectedGroup.roles.length }} roles</span>
                 </div>
                 <div class="roles-grid">
                     <div *ngFor="let role of selectedGroup.roles" 
@@ -163,10 +153,11 @@
                     <div class="section-title">
                         <i class="pi pi-users"></i>
                         <h3>Members</h3>
+                        <span class="section-badge">{{ selectedGroup.members.length }}</span>
+                        <button pButton label="Add" icon="pi pi-plus" 
+                            class="p-button-sm p-button-text" 
+                            (click)="openAddMemberDialog()"></button>
                     </div>
-                    <button pButton label="Add Member" icon="pi pi-user-plus" 
-                        class="p-button-sm p-button-outlined p-button-rounded" 
-                        (click)="openAddMemberDialog()"></button>
                 </div>
                 <div class="members-grid">
                     <div *ngFor="let member of selectedGroup.members" class="member-card">
@@ -333,39 +324,48 @@
 
 <!-- Add Member Dialog -->
 <p-dialog [(visible)]="showAddMemberDialog" 
-    header="👤 Add Team Member" 
+    header="👤 Add Team Members" 
     [modal]="true" 
     [draggable]="false"
-    [style]="{ width: '420px' }"
-    styleClass="custom-dialog">
+    [style]="{ width: '500px' }"
+    styleClass="custom-dialog"
+    [contentStyle]="{ 'padding-bottom': '1rem' }">
     
     <div class="dialog-content">
         <div class="member-dialog-header">
-            <p>Add a new member to <strong>{{ selectedGroup?.groupName }}</strong></p>
+            <p>Add members to <strong>{{ selectedGroup?.groupName }}</strong></p>
         </div>
         <div class="form-field">
             <label for="memberUsername">
-                <i class="pi pi-github"></i> GitHub Username
+                <i class="pi pi-github"></i> GitHub Usernames
             </label>
-            <input pInputText id="memberUsername" [(ngModel)]="newMemberUsername" 
-                placeholder="e.g., octocat" class="w-full input-enhanced" 
-                (keyup.enter)="addMember()" />
+            <p-autoComplete 
+                [(ngModel)]="newMemberUsernames" 
+                [suggestions]="userSuggestions"
+                (completeMethod)="searchUsers($event)"
+                [multiple]="true"
+                [dropdown]="false"
+                placeholder="Type to search users..."
+                class="w-full"
+                inputStyleClass="w-full input-enhanced"
+                [showEmptyMessage]="true"
+                emptyMessage="No matching users found"
+                appendTo="body">
+            </p-autoComplete>
             <small class="field-hint">
                 <i class="pi pi-info-circle"></i>
-                Enter the exact GitHub username
+                Start typing to search for users. You can add multiple users at once.
             </small>
         </div>
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="dialog-footer">
-            <button pButton label="Cancel" icon="pi pi-times" 
-                class="p-button-text p-button-secondary" 
-                (click)="showAddMemberDialog = false"></button>
-            <button pButton label="Add Member" icon="pi pi-user-plus" 
-                class="p-button-rounded"
-                (click)="addMember()" 
-                [disabled]="!newMemberUsername.trim()"></button>
-        </div>
+        <button pButton label="Cancel" icon="pi pi-times" 
+            class="p-button-text p-button-secondary" 
+            (click)="showAddMemberDialog = false"></button>
+        <button pButton label="Add Members" icon="pi pi-user-plus" 
+            class="p-button-rounded"
+            (click)="addMembers()" 
+            [disabled]="newMemberUsernames.length === 0"></button>
     </ng-template>
 </p-dialog>

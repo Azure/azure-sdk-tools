@@ -249,6 +249,7 @@ namespace Azure.Sdk.Tools.TestProxy
             );
 
             services.AddSingleton<RecordingHandler>(singletonRecordingHandler);
+            services.AddSingleton<WebSocketProxyHandler>();
             services.AddSingleton<ShutdownConfiguration>();
             services.AddSingleton<ShutdownTimer>();
         }
@@ -260,6 +261,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 app.UseDeveloperExceptionPage();
             }
             app.UseCors("DefaultPolicy");
+            app.UseWebSockets();
             app.UseMiddleware<HttpExceptionMiddleware>();
             app.UseMiddleware<ShutdownTimerMiddleware>();
 
@@ -297,6 +299,66 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.ConfigureLogger(loggerFactory);
 
+            bool IsControllerEndpoint(string path)
+            {
+                return path.StartsWith("/Record", StringComparison.OrdinalIgnoreCase) ||
+                       path.StartsWith("/Playback", StringComparison.OrdinalIgnoreCase) ||
+                       path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase);
+            }
+
+            app.Use(async (context, next) =>
+            {
+                if (!context.WebSockets.IsWebSocketRequest)
+                {
+                    await next();
+                    return;
+                }
+
+                var path = context.Request.Path.Value ?? string.Empty;
+                if (IsControllerEndpoint(path))
+                {
+                    await next();
+                    return;
+                }
+
+                var handler = context.RequestServices.GetRequiredService<WebSocketProxyHandler>();
+
+                if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)
+                {
+                    var mode = GetRecordingMode(context);
+                    if (string.Equals(mode, "playback", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status501NotImplemented;
+                        await context.Response.WriteAsync("WebSocket playback is not supported.");
+                        return;
+                    }
+                    if (!string.Equals(mode, "record", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                        await context.Response.WriteAsync("WebSocket proxying requires x-recording-mode: record.");
+                        return;
+                    }
+
+                    await handler.ProxyWebSocketAsync(context);
+                    return;
+                }
+
+                if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
+                {
+                    context.Response.StatusCode = StatusCodes.Status501NotImplemented;
+                    await context.Response.WriteAsync("WebSocket playback is not supported.");
+                    return;
+                }
+
+                if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
+                {
+                    await handler.ProxyWebSocketAsync(context);
+                    return;
+                }
+
+                await next();
+            });
+
             if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)
             {
                 // Legacy Azure SDK behavior: route based on x-recording-mode header
@@ -311,12 +373,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     // Allow admin/record/playback controller endpoints as-is
                     var path = context.Request.Path.Value ?? string.Empty;
-                    bool isControllerEndpoint =
-                        path.StartsWith("/Record", StringComparison.OrdinalIgnoreCase) ||
-                        path.StartsWith("/Playback", StringComparison.OrdinalIgnoreCase) ||
-                        path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase);
-
-                    if (!isControllerEndpoint)
+                    if (!IsControllerEndpoint(path))
                     {
                         var cfg = Startup.ProxyConfiguration;
                         var handler = context.RequestServices.GetRequiredService<RecordingHandler>();

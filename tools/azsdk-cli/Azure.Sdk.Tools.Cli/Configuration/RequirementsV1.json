@@ -9,7 +9,7 @@
             {
                 "requirement": "tsp-client >= 0.24.0",
                 "check": ["tsp-client", "--version"],
-                "instructions": ["cd eng/common/tsp-client", "npm ci"]
+                "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest"]
             },
             {
                 "requirement": "tsp >= 1.0.0",

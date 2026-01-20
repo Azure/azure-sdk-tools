@@ -143,7 +143,7 @@ describe('ThinkingHandler', () => {
 
       const result = (thinkingHandler as any).generateAnswer(successResponse);
 
-      expect(result).toBe('This is a test answer without references');
+      expect(result).toBe('This is a test answer without references\n\n> **NOTE:** If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.');
       expect(result).not.toContain('**References**');
     });
   });
@@ -309,7 +309,7 @@ describe('ThinkingHandler', () => {
       };
 
       // Test the stop method with error
-      await thinkingHandler.stop(ragError, mockPrompt);
+      await thinkingHandler.stop(new Date(), ragError, mockPrompt);
 
       // Verify that updateActivity was called with error message
       expect(mockContext.updateActivity).toHaveBeenCalledWith({
@@ -334,7 +334,7 @@ describe('ThinkingHandler', () => {
       };
 
       // Test the stop method with error
-      await thinkingHandler.stop(ragError, mockPrompt);
+      await thinkingHandler.stop(new Date(), ragError, mockPrompt);
 
       // Verify that updateActivity was called with service error message
       expect(mockContext.updateActivity).toHaveBeenCalledWith({

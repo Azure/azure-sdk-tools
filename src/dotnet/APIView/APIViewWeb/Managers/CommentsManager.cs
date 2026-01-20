@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.DTOs;
@@ -23,7 +24,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace APIViewWeb.Managers
 {
@@ -40,6 +40,7 @@ namespace APIViewWeb.Managers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
+        private readonly ICopilotAuthenticationService _copilotAuthService;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -58,6 +59,7 @@ namespace APIViewWeb.Managers
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
+            ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -72,6 +74,7 @@ namespace APIViewWeb.Managers
             _configuration = configuration;
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
+            _copilotAuthService = copilotAuthService;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -95,7 +98,7 @@ namespace APIViewWeb.Managers
 
                 var res = await c.SendAsync(req);
                 var body = await res.Content.ReadAsStringAsync();
-                var users = JsonConvert.DeserializeObject<GithubUser[]>(body);
+                var users = JsonSerializer.Deserialize<GithubUser[]>(body) ?? [];
                 foreach (var user in users)
                 {
                     TaggableUsers.Add(user);
@@ -157,7 +160,8 @@ namespace APIViewWeb.Managers
                     ElementId = comment.ElementId,
                     NodeId = comment.ElementId,
                     CommentText = comment.CommentText,
-                    Comment = comment
+                    Comment = comment,
+                    ThreadId = comment.ThreadId
                 });
         }
 
@@ -195,6 +199,7 @@ namespace APIViewWeb.Managers
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
                     NodeId = comment.ElementId,
+                    ThreadId = comment.ThreadId,
                     CommentText = comment.CommentText,
                     Severity = comment.Severity,
                 });
@@ -204,13 +209,8 @@ namespace APIViewWeb.Managers
 
         public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
         {
-            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-            return await UpdateCommentSeverityAsync(user, comment, severity);
-        }
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
 
-
-        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, CommentItemModel comment, CommentSeverity? severity)
-        {
             await AssertOwnerAsync(user, comment);
             
             comment.ChangeHistory.Add(
@@ -230,7 +230,7 @@ namespace APIViewWeb.Managers
         public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
         {
             ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            if (!IsUserAllowedToChatWithAgent(user, review))
+            if (!await IsUserAllowedToChatWithAgentAsync(user, review))
             {
                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveNotification",
                     new SiteNotificationDto()
@@ -282,16 +282,17 @@ namespace APIViewWeb.Managers
                         "application/json")
                 };
 
-                //TODO: See: https://github.com/Azure/azure-sdk-tools/issues/11128
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "dummy_token_value");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
 
                 var client = _httpClientFactory.CreateClient();
                 var clientResponse = await client.SendAsync(request);
                 clientResponse.EnsureSuccessStatusCode();
                 string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
-                AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
-
-                await AddAgentComment(comment, agentChatResponse?.Response);
+                AgentChatResponse agentChatResponse = JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
+                if (agentChatResponse != null)
+                {
+                    await AddAgentComment(comment, agentChatResponse.Response);
+                }
                 
                 _logger.LogInformation("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
             }
@@ -314,7 +315,7 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task AddAgentComment (CommentItemModel comment, string response)
+        private async Task AddAgentComment(CommentItemModel comment, string response)
         {
             var commentResult = new CommentItemModel
             {
@@ -326,6 +327,8 @@ namespace APIViewWeb.Managers
                 ResolutionLocked = false,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 CreatedOn = DateTime.UtcNow,
+                CommentSource = CommentSource.AIGenerated,
+                ThreadId = comment.ThreadId,
                 CommentType = CommentType.APIRevision
             };
 
@@ -340,23 +343,24 @@ namespace APIViewWeb.Managers
                     ReviewId = commentResult.ReviewId,
                     CommentText = commentResult.CommentText,
                     ElementId = commentResult.ElementId,
-                    Comment = commentResult
+                    Comment = commentResult,
+                    ThreadId = commentResult.ThreadId
                 });
         }
 
-        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, ReviewListItemModel review)
+        private async Task<bool> IsUserAllowedToChatWithAgentAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            return IsUserLanguageArchitect(user, review);
+            return await IsUserLanguageArchitectAsync(user, review);
         }
 
-        private bool IsUserLanguageArchitect(ClaimsPrincipal user, ReviewListItemModel review)
+        private async Task<bool> IsUserLanguageArchitectAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
             if (user == null || review == null)
                 return false;
 
             string githubUser = user.GetGitHubLogin();
-            HashSet<string> approvers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
-            return approvers.Contains(githubUser);
+            HashSet<string> approvers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, user, review);
+            return approvers != null && approvers.Contains(githubUser);
         }
 
         /// <summary>
@@ -421,13 +425,16 @@ namespace APIViewWeb.Managers
                     CommentId = comment.Id,
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
-                    NodeId = comment.ElementId
+                    NodeId = comment.ElementId,
+                    ThreadId = comment.ThreadId
                 });
         }
 
-        public async Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
+        public async Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId, string threadId = null)
         {
-            var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            comments = comments.Where(c => c.ThreadId == threadId);
+            
             foreach (var comment in comments)
             {
                 comment.ChangeHistory.Add(
@@ -450,14 +457,17 @@ namespace APIViewWeb.Managers
                         ReviewId = reviewId,
                         ElementId = lineId,
                         NodeId = lineId,
+                        ThreadId = threadId,
                         ResolvedBy = user.GetGitHubLogin()
                     });
             }
         }
 
-        public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
+        public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId, string threadId = null)
         {
-            var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            comments = comments.Where(c => c.ThreadId == threadId);
+            
             foreach (var comment in comments)
             {
                 comment.ChangeHistory.Add(
@@ -479,21 +489,28 @@ namespace APIViewWeb.Managers
                         CommentThreadUpdateAction = CommentThreadUpdateAction.CommentUnResolved,
                         ReviewId = reviewId,
                         ElementId = lineId,
-                        NodeId = lineId
+                        NodeId = lineId,
+                        ThreadId = threadId
                     });
             }
         }
 
-        public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, ResolveBatchConversationRequest request)
+        public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, BatchConversationRequest request)
         {
             var response = new List<CommentItemModel>();
             
             foreach (string commentId in request.CommentIds)
             {
                 CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+                
+                if (request.Feedback != null)
+                {
+                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                }
+                
                 if (request.Vote != FeedbackVote.None)
                 {
-                    await SetVoteAsync(user, comment, request.Vote);
+                    await SetVoteAsync(user, reviewId, commentId, request.Vote);
                 }
 
                 if (!string.IsNullOrEmpty(request.CommentReply))
@@ -508,6 +525,7 @@ namespace APIViewWeb.Managers
                         CreatedBy = user.GetGitHubLogin(),
                         CreatedOn = DateTime.UtcNow,
                         CommentType = comment.CommentType,
+                        ThreadId = comment.ThreadId,
                         IsResolved = request.Disposition == ConversationDisposition.Resolve
                     };
                     await AddCommentAsync(user, commentUpdate);
@@ -516,16 +534,17 @@ namespace APIViewWeb.Managers
 
                 if (request.Severity.HasValue && request.Severity != comment.Severity)
                 {
-                    await UpdateCommentSeverityAsync(user, comment, request.Severity);
+                    await UpdateCommentSeverityAsync(user, reviewId, commentId, request.Severity);
+                    comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
                 }
 
                 switch (request.Disposition)
                 {
                     case ConversationDisposition.Delete:
-                        await SoftDeleteCommentAsync(user, comment);
+                        await SoftDeleteCommentAsync(user, reviewId, commentId);
                         break;
                     case ConversationDisposition.Resolve:
-                        await ResolveConversation(user, reviewId, comment.ElementId);
+                        await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
                         break;
                     case ConversationDisposition.KeepOpen:
                     default:
@@ -546,6 +565,29 @@ namespace APIViewWeb.Managers
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
+        }
+
+        public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment == null)
+            {
+                _logger.LogWarning($"Comment {commentId} not found for feedback submission");
+                return;
+            }
+
+            string userName = user.GetGitHubLogin();
+            comment.Feedback.Add(new CommentFeedback
+            {
+                Reasons = feedback.Reasons?.Select(r => r.ToString()).ToList() ?? [],
+                Comment = feedback.Comment ?? string.Empty,
+                IsDelete = feedback.IsDelete,
+                SubmittedBy = userName,
+                SubmittedOn = DateTime.UtcNow
+            });
+
+            await _commentsRepository.UpsertCommentAsync(comment);
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
@@ -593,12 +635,16 @@ namespace APIViewWeb.Managers
                     CommentId = comment.Id,
                     ReviewId = comment.ReviewId,
                     ElementId = comment.ElementId,
-                    NodeId = comment.ElementId
+                    NodeId = comment.ElementId,
+                    Comment = comment,
+                    ThreadId = comment.ThreadId
                 });
         }
 
-        private async Task SetVoteAsync(ClaimsPrincipal user, CommentItemModel comment, FeedbackVote voteType)
+        private async Task SetVoteAsync(ClaimsPrincipal user, string reviewId, string commentId, FeedbackVote voteType)
         {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
             string userName = user.GetGitHubLogin();
             bool voteChanged = false;
 
@@ -637,7 +683,8 @@ namespace APIViewWeb.Managers
                         CommentId = comment.Id,
                         ReviewId = comment.ReviewId,
                         ElementId = comment.ElementId,
-                        NodeId = comment.ElementId
+                        NodeId = comment.ElementId,
+                        Comment = comment
                     });
             }
         }

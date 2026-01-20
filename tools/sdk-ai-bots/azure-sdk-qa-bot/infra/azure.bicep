@@ -283,7 +283,7 @@ resource serverErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'Global'
   properties: {
     description: 'Alert when server returns 5xx HTTP errors'
-    severity: 0  // Critical - because 5xx errors indicate server failure
+    severity: 3
     enabled: true
     scopes: [
       webApp.id
@@ -358,7 +358,7 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'Global'
   properties: {
     description: 'Alert when health check fails (server is down or not responding)'
-    severity: 0
+    severity: 3
     enabled: true
     scopes: [
       healthCheckWebTest.id

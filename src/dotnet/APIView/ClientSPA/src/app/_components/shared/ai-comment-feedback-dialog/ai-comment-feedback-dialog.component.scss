@@ -1,0 +1,115 @@
+::ng-deep .ai-feedback-dialog {
+    // 3. Border and corners
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    .p-dialog-header {
+        // 1. Header padding
+        padding: 0.75rem 1.5rem;
+        background-color: var(--base-fg-color);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--base-text-color);
+
+        .p-dialog-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        // 2. X button styling - High Specificity
+        .p-dialog-header-actions {
+            padding: 0;
+
+            .p-dialog-close-button {
+                background-color: var(--primary-color) !important;
+                color: var(--primary-btn-color) !important;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                opacity: 1 !important;
+                transition: background-color 0.2s, color 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--primary-color) !important;
+
+                &:hover {
+                    background-color: var(--primary-color) !important;
+                    color: var(--primary-btn-color) !important;
+                    filter: brightness(0.9);
+                }
+
+                &:focus {
+                    box-shadow: 0 0 0 2px var(--base-bg-color), 0 0 0 4px var(--primary-color) !important;
+                }
+
+                .p-button-icon {
+                    color: var(--primary-btn-color) !important;
+                }
+            }
+        }
+    }
+
+    .p-dialog-content {
+        background-color: var(--base-bg-color);
+        color: var(--base-text-color);
+        padding: 1.5rem;
+
+        label {
+            color: var(--base-text-color);
+            cursor: pointer;
+        }
+
+        .reason-item {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-control {
+            background-color: var(--base-fg-color);
+            color: var(--base-text-color);
+            border-color: var(--border-color);
+
+            &:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 1px var(--primary-color);
+            }
+        }
+    }
+
+    // 5. Footer buttons padding/alignment
+    .p-dialog-footer {
+        background-color: var(--base-fg-color);
+        border-top: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+
+        .d-flex {
+            align-items: center;
+        }
+
+        button {
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.375rem 0.75rem; // Standard Bootstrap padding
+        }
+
+        .btn-outline-secondary {
+            color: var(--base-text-color);
+            border-color: var(--border-color);
+            background-color: transparent;
+
+            &:hover {
+                background-color: var(--base-fg-color);
+                border-color: var(--base-text-color);
+            }
+
+            &:focus {
+                box-shadow: none;
+            }
+        }
+    }
+}

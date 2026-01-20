@@ -1,14 +1,12 @@
-@import "bootstrap/dist/css/bootstrap.min.css";
-@import "bootstrap-icons/font/bootstrap-icons.min.css";
-@import "node_modules/@fortawesome/fontawesome-free/css/all.min.css";
-@import "node_modules/highlight.js/styles/atom-one-dark.css";
-@import "primeng/resources/themes/bootstrap4-light-blue/theme.css";
-@import "primeng/resources/primeng.css";
-@import "primeicons/primeicons.css";
+@use "bootstrap/dist/css/bootstrap.min.css";
+@use "bootstrap-icons/font/bootstrap-icons.min.css";
+@use "node_modules/@fortawesome/fontawesome-free/css/all.min.css";
+@use "node_modules/highlight.js/styles/atom-one-dark.css";
+@use "primeicons/primeicons.css";
 
-@import "../../../APIView/APIViewWeb/Client/css/shared/theme-colors.scss";
-@import "../../../APIView/APIViewWeb/Client/css/shared/bootstraps-overrides.scss";
-@import "./ng-prime-overrides.scss";
+@use "../../../APIView/APIViewWeb/Client/css/shared/theme-colors.scss";
+@use "../../../APIView/APIViewWeb/Client/css/shared/bootstraps-overrides.scss";
+@use "./ng-prime-overrides.scss";
 
 body {
     background-color: var(--base-bg-color);

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { InputSwitchChangeEvent } from 'primeng/inputswitch';
+import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotificationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -16,7 +16,6 @@ import { FormControl } from '@angular/forms';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
 import { MessageService } from 'primeng/api';
-import { ToastMessageData } from 'src/app/_models/toastMessageModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
@@ -26,9 +25,10 @@ import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteN
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 
 @Component({
-  selector: 'app-review-page-options',
-  templateUrl: './review-page-options.component.html',
-  styleUrls: ['./review-page-options.component.scss']
+    selector: 'app-review-page-options',
+    templateUrl: './review-page-options.component.html',
+    styleUrls: ['./review-page-options.component.scss'],
+    standalone: false
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
@@ -53,14 +53,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() showHiddenAPIEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() disableCodeLinesLazyLoadingEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() commentThreadNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() diffNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
@@ -75,7 +74,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   showDocumentationSwitch : boolean = true;
   showHiddenAPISwitch : boolean = false;
   showLeftNavigationSwitch : boolean = true;
-  markedAsViewSwitch : boolean = false;
   subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
   disableCodeLinesLazyLoading: boolean = false;
@@ -171,12 +169,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
     if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
       this.setSubscribeSwitch();
-      this.setMarkedAsViewSwitch();
       this.setPageOptionValues();
     }
 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
-      this.setMarkedAsViewSwitch();
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
@@ -229,7 +225,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
  * Callback for commentSwitch Change
  * @param event the Filter event
  */
-  onCommentsSwitchChange(event: InputSwitchChangeEvent) {
+  onCommentsSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showCommentsEmitter.emit(event.checked);
   }
@@ -238,7 +234,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for systemCommentSwitch Change
   * @param event the Filter event
   */
-  onShowSystemCommentsSwitchChange(event: InputSwitchChangeEvent) {
+  onShowSystemCommentsSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showSystemCommentsEmitter.emit(event.checked);
   }
@@ -247,7 +243,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for showDocumentationSwitch Change
   * @param event the Filter event
   */
-  onShowDocumentationSwitchChange(event: InputSwitchChangeEvent) {
+  onShowDocumentationSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showDocumentationEmitter.emit(event.checked);
   }
@@ -256,7 +252,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for showLeftnavigationSwitch Change
   * @param event the Filter event
   */
-  onShowLeftNavigationSwitchChange(event: InputSwitchChangeEvent) {
+  onShowLeftNavigationSwitchChange(event: ToggleSwitchChangeEvent) {
     this.showLeftNavigationEmitter.emit(event.checked);
   }
 
@@ -264,7 +260,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Disable Lazy Loading
    * @param event the Filter event
    */
-  onDisableLazyLoadingSwitchChange(event: InputSwitchChangeEvent) {
+  onDisableLazyLoadingSwitchChange(event: ToggleSwitchChangeEvent) {
     if (event.checked) {
       this.showDisableCodeLinesLazyLoadingModal = true;
     } else {
@@ -295,18 +291,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
-  * Callback for markedAsViewSwitch Change
+  * Callback for subscribeSwitch Change
   * @param event the Filter event
   */
-  onMarkedAsViewedSwitchChange(event: InputSwitchChangeEvent) {
-    this.markAsViewedEmitter.emit(event.checked);
-  }
-
-  /**
-  * Callback for markedAsViewSwitch Change
-  * @param event the Filter event
-  */
-  onSubscribeSwitchChange(event: InputSwitchChangeEvent) {
+  onSubscribeSwitchChange(event: ToggleSwitchChangeEvent) {
     this.subscribeEmitter.emit(event.checked);
   }
 
@@ -314,7 +302,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Callback for showLineNumbersSwitch Change
    * @param event the Filter event
    */
-  onShowLineNumbersSwitchChange(event: InputSwitchChangeEvent) {
+  onShowLineNumbersSwitchChange(event: ToggleSwitchChangeEvent) {
     this.showLineNumbersEmitter.emit(event.checked);
   }
 
@@ -322,7 +310,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Callback for showHiddenAPISwitch Change
    * @param event the Filter event
    */
-  onShowHiddenAPISwitchChange(event: InputSwitchChangeEvent) {
+  onShowHiddenAPISwitchChange(event: ToggleSwitchChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
   }
 
@@ -466,10 +454,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
   }
 
-  setMarkedAsViewSwitch() {
-    this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile)? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!): this.markedAsViewSwitch;
-  }
-
   copyReviewText(event: Event) {
     const icon = (event?.target as Element).firstChild as HTMLElement;
 
@@ -518,12 +502,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   clearAutoGeneratedComments() {
     this.commentsService.clearAutoGeneratedComments(this.activeAPIRevision?.id!).pipe(take(1)).subscribe({
-      next: (response) => {
-        const messgaeData : ToastMessageData = {
-          action: 'RefreshPage',
-        };
-        this.messageService.add({ severity: 'success', icon: 'bi bi-check-circle', summary: 'Comments Cleared', detail: 'All auto-generated comments for this APIRevision has been deleted.', data: messgaeData, key: 'bc', life: 60000 });
-      },
       error: (error) => {
         this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Comment Error', detail: 'Failed to clear auto-generated comments.', key: 'bc', life: 3000 });
       }
@@ -531,7 +509,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   navigateCommentThread(direction: CodeLineRowNavigationDirection) {
-    this.commentThreadNavaigationEmitter.emit(direction);
+    this.commentThreadNavigationEmitter.emit(direction);
   }
 
   /**
@@ -599,7 +577,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
             this.aiReviewGenerationState = 'Failed';
             this.generateAIReviewButtonText = 'Failed to generate copilot review';
           }
-          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
+          const notificationInfo = getAIReviewNotificationInfo(aiReviewUpdate, window.location.origin);
           if (notificationInfo) {
             if (aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
               this.messageService.add(notificationInfo[1]);
@@ -664,7 +642,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
+    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
+    return `${window.location.protocol}//${window.location.host}${basePath}review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

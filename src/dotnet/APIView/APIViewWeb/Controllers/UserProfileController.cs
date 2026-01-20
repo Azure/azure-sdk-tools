@@ -33,21 +33,35 @@ namespace APIViewWeb.Controllers
             return Ok();
         }
 
+        [HttpPut]
+        public async Task<ActionResult> UpdateTheme(string theme = "light-theme")
+        {
+            var validThemes = new HashSet<string> { "light-theme", "dark-theme", "dark-solarized-theme" };
+            if (!validThemes.Contains(theme))
+            {
+                return BadRequest($"Invalid theme. Valid themes are: {string.Join(", ", validThemes)}");
+            }
+
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceDto: new UserPreferenceDto()
+            {
+                Theme = theme
+            });
+            return Ok();
+        }
+
         /// <summary>
         /// Update the user profile and preference properties
         /// </summary>
         /// <param name="email">This is the main email used for notifications</param>
         /// <param name="languages">The languages that the user has selected to approve</param>
         /// <param name="theme">The app theme</param>
-        /// <param name="useBetaIndexPage">If to use the beta index page</param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme", bool useBetaIndexPage=false)
+        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
         {
             await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: email, new UserPreferenceDto()
             {
                 Theme = theme,
-                UseBetaIndexPage = useBetaIndexPage,
                 ApprovedLanguages = new HashSet<string>(languages)
             });
             return RedirectToPage("/Assemblies/Index");

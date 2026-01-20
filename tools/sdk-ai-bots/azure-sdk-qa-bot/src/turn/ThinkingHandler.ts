@@ -6,6 +6,7 @@ import { contactCardVersion } from '../config/config.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
+import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils.js';
 
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
@@ -28,11 +29,13 @@ export class ThinkingHandler {
     this.conversationHandler = conversationHandler;
   }
 
-  public async start(context: TurnContext, conversationMessages: ConversationMessage[]): Promise<void> {
-    await this.trySendContactCard(context, conversationMessages);
-    const resource = await context.sendActivity(this.thinkingMessage);
+  public async start(conversationMessages: ConversationMessage[]): Promise<Date> {
+    await this.trySendContactCard(conversationMessages);
+    const resource = await sendActivityWithRetry(this.context, this.thinkingMessage);
+    const timestamp = new Date();
     this.resourceId = resource.id;
-    this.startCore(context, resource.id);
+    this.startCore(resource.id);
+    return timestamp;
   }
 
   // cancel timer as soon as possible when get reply
@@ -50,7 +53,7 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
+  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
     const answer = this.generateAnswer(reply);
     const updated: Partial<TurnContext> = {
       type: 'message',
@@ -58,7 +61,7 @@ export class ThinkingHandler {
       text: answer,
       conversation: this.context.activity.conversation,
     } as any;
-    const response = await this.context.updateActivity(updated);
+    const response = await updateActivityWithRetry(this.context, updated);
     if (response) {
       await this.saveCurrentConversationMessage(
         this.context.activity.conversation.id,
@@ -66,6 +69,7 @@ export class ThinkingHandler {
         response.id,
         currentPrompt,
         reply,
+        replyStartTime,
         this.meta
       );
     }
@@ -80,10 +84,11 @@ export class ThinkingHandler {
     }
 
     // received reply successfully
-    return this.addReferencesToReply(reply);
+    const answerWithReferences = this.addReferencesToReply(reply);
+    return this.addEndingText(answerWithReferences);
   }
 
-  private async startCore(context: TurnContext, resourceId: string) {
+  private async startCore(resourceId: string) {
     let count = 0;
     for (; count < this.maxRetryTimesForThinking; count++) {
       if (this.shouldStop || this.isRunning) break;
@@ -91,11 +96,11 @@ export class ThinkingHandler {
         type: 'message',
         id: resourceId,
         text: this.updateThinkingMessage(),
-        conversation: context.activity.conversation,
+        conversation: this.context.activity.conversation,
       } as any;
       try {
         this.isRunning = true;
-        await context.updateActivity(updated);
+        await updateActivityWithRetry(this.context, updated);
       } finally {
         this.isRunning = false;
       }
@@ -103,7 +108,7 @@ export class ThinkingHandler {
     }
     if (count === this.maxRetryTimesForThinking) {
       logger.warn('Thinking timer reached max retry times', { meta: this.meta });
-      await context.sendActivity('Thinking is taking too long, please try again later.');
+      await sendActivityWithRetry(this.context, 'Thinking is taking too long, please try again later.');
     }
   }
 
@@ -155,16 +160,20 @@ export class ThinkingHandler {
     return reply;
   }
 
-  private async trySendContactCard(context: TurnContext, conversationMessages: ConversationMessage[]) {
+  private addEndingText(answer: string): string {
+    return answer + '\n\n> **NOTE:** If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.';
+  }
+
+  private async trySendContactCard(conversationMessages: ConversationMessage[]) {
     const hasContactCard = conversationMessages.find((msg) => msg.contactCard);
     if (!hasContactCard) {
       const card = createContactCard();
       const attachment = CardFactory.adaptiveCard(card);
       const replyCard = MessageFactory.attachment(attachment);
-      const response = await context.sendActivity(replyCard);
+      const response = await sendActivityWithRetry(this.context, replyCard);
       if (response) {
         const contactCardMessage: ConversationMessage = {
-          conversationId: context.activity.conversation.id,
+          conversationId: this.context.activity.conversation.id,
           activityId: response.id,
           contactCard: {
             version: contactCardVersion,
@@ -182,6 +191,7 @@ export class ThinkingHandler {
     replyActivityId: string,
     prompt: Prompt,
     replyPayload: CompletionResponsePayload | RagApiError,
+    replyTimeStamp: Date,
     meta: object
   ) {
     const reply = this.convertPayloadToReply(replyPayload);
@@ -195,7 +205,7 @@ export class ThinkingHandler {
       conversationId,
       activityId: replyActivityId,
       reply,
-      timestamp: prompt.timestamp,
+      timestamp: replyTimeStamp,
     };
     try {
       await Promise.all([

@@ -10,6 +10,11 @@ export enum CommentThreadUpdateAction {
     CommentDeleted
 }
 
+export interface AICommentFeedback {
+    reasons: string[];
+    additionalComments: string;
+}
+
 export interface CommentUpdatesDto {
     commentThreadUpdateAction: CommentThreadUpdateAction;
     nodeId?: string; // effectively the same as the element id
@@ -20,9 +25,11 @@ export interface CommentUpdatesDto {
     elementId?: string;
     commentText?: string;
     comment?: CommentItemModel;
-    resolvedBy?: string;    
+    resolvedBy?: string;
     associatedRowPositionInGroup?: number;
     allowAnyOneToResolve?: boolean;
     title: string;
     severity?: CommentSeverity | null;
+    feedback?: AICommentFeedback;
+    threadId?: string;
 }

@@ -211,10 +211,56 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 36
+        assert len(apiview.diagnostics) == 99
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1
+
+    def test_api_view_diagnostic_no_duplicate(self):
+        """Verify no duplicate diagnostics exist.
+
+        Validates that diagnostics from classes, methods with @overload, enums, and legacy typing
+        are not duplicated (regression test for issue where class-level errors appeared for each method).
+        """
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
+        apiview = stub_gen.generate_tokens()
+
+        # Check for duplicates
+        all_keys = [(d['Text'], d['TargetId']) for d in apiview.diagnostics]
+        duplicates = [k for k in set(all_keys) if all_keys.count(k) > 1]
+        assert len(duplicates) == 0, f"Found duplicate diagnostics: {duplicates}"
+
+        # Verify PylintCheckerViolationsClient has diagnostics at class, constructor, and method levels
+        violations_diags = [d for d in apiview.diagnostics if 'PylintCheckerViolationsClient' in d['TargetId']]
+        class_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient']
+        constructor_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient.__init__']
+        method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId'] or 'list_secrets' in d['TargetId'] or 'set_secret' in d['TargetId'] or 'get_secret' in d['TargetId']]
+
+        # Total should be 22: 2 class-level + 2 constructor-level + 18 method-level
+        # Method-level includes overloads for list_secrets (6 diagnostics), set_secret (6 diagnostics),
+        # get_secret (3 diagnostics), and with_too_many_args (3 diagnostics)
+        assert len(violations_diags) == 22, f"Should have 22 total diagnostics, got {len(violations_diags)}"
+        assert len(class_level) == 2, f"Should have 2 class-level diagnostics, got {len(class_level)}"
+        assert len(constructor_level) == 2, f"Should have 2 constructor-level diagnostics, got {len(constructor_level)}"
+        assert len(method_level) == 18, f"Should have 18 method-level diagnostics (including overloads), got {len(method_level)}"
+
+        # Verify that overload methods with @distributed_trace have diagnostics without duplicates
+        list_secrets_overload1_diags = [d for d in violations_diags if 'list_secrets_1' in d['TargetId']]
+        set_secret_overload2_diags = [d for d in violations_diags if 'set_secret_2' in d['TargetId']]
+        get_secret_overload1_diags = [d for d in violations_diags if 'get_secret_1' in d['TargetId']]
+
+        # Each overloaded method should have diagnostics for overloads + implementation
+        assert len(list_secrets_overload1_diags) == 3 , f"list_secrets overload 1 should have diagnostics for overloads and implementation, got {len(list_secrets_overload1_diags)}"
+        assert len(set_secret_overload2_diags) == 4, f"set_secret overload 2 should have diagnostics for overloads and implementation, got {len(set_secret_overload2_diags)}"
+        assert len(get_secret_overload1_diags) == 1, f"get_secret overload 1 should have diagnostics, got {len(get_secret_overload1_diags)}"
+
+        # Verify enum value and property diagnostics exist
+        enum_value_diags = [d for d in apiview.diagnostics if d['TargetId'] == 'apistubgentest.PylintViolationEnum.password' or d['TargetId'] == 'apistubgentest.PylintViolationEnum.CERTIFICATE']
+        property_diags = [d for d in apiview.diagnostics if 'handwritten_property' in d['TargetId']]
+
+        assert len(enum_value_diags) == 2, f"Should have 2 enum value diagnostics for PylintViolationEnum.password and PylintViolationEnum.CERTIFICATE, got {len(enum_value_diags)}"
+        assert len(property_diags) == 1, f"Should have 1 property diagnostic, got {len(property_diags)}"
 
     def test_add_type(self):
         apiview = ApiView()

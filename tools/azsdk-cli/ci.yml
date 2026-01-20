@@ -15,6 +15,10 @@ pr:
     include:
       - tools/azsdk-cli
 
+variables:
+  - name: ToolDir
+    value: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
@@ -22,7 +26,7 @@ extends:
       SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
-    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+    ToolDirectory: $(ToolDir)
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests    
     VerifyChangelog: true
     StandaloneExeMatrix:
@@ -43,6 +47,15 @@ extends:
         assembly: azsdk
     ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
       CustomJobs:
-      - template: /tools/azsdk-cli/run-ai-eval.yml
+      - template: /eng/common/pipelines/templates/jobs/ai-eval-job.yml
         parameters:
           EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations
+          EvalRepoCommit: $(Build.SourceVersion)
+          TargetRepoName: azure-rest-api-specs
+          TargetRepoOwner: Azure
+          TargetRepoCommit: main
+      CustomReleaseJobs:
+      - template: /tools/azsdk-cli/auto-documentation.yml
+        parameters:
+          ToolDirectory: $(ToolDir)
+          

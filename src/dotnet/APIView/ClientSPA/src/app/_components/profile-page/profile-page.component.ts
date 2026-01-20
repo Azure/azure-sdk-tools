@@ -1,4 +1,4 @@
-import { booleanAttribute, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs';
 import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
@@ -11,9 +11,10 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-profile-page',
-  templateUrl: './profile-page.component.html',
-  styleUrl: './profile-page.component.scss'
+    selector: 'app-profile-page',
+    templateUrl: './profile-page.component.html',
+    styleUrl: './profile-page.component.scss',
+    standalone: false
 })
 export class ProfilePageComponent {
   assetsPath : string = environment.assetsPath;
@@ -33,7 +34,6 @@ export class ProfilePageComponent {
   selectedTheme : SelectItemModel = { label: "light", data: "light-theme" };
   scrollBarSizes : string[] = ["small", "medium", "large"];
   selectedScrollBarSize : ScrollBarSize = ScrollBarSize.Small;
-  useSplitIndexPage : boolean = false;
   disableSaveButton : boolean = true;
   isLoaded: boolean | undefined = undefined;
 
@@ -52,7 +52,6 @@ export class ProfilePageComponent {
           console.log(userProfile);
           console.log(this.selectedLanguages);
           this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
-          this.useSplitIndexPage = userProfile.preferences.useBetaIndexPage;
           this.selectedScrollBarSize = userProfile.preferences.scrollBarSize;
 
           if (this.userName !== userProfile.userName) {
@@ -86,7 +85,6 @@ export class ProfilePageComponent {
     this.userProfile!.email = this.notificationEmail!;
     this.userProfile!.preferences.approvedLanguages = this.selectedLanguages.map((lang: SelectItemModel) => lang.data);
     this.userProfile!.preferences.theme = this.selectedTheme.data;
-    this.userProfile!.preferences.useBetaIndexPage = this.useSplitIndexPage;
     this.userProfile!.preferences.scrollBarSize = this.selectedScrollBarSize;
     this.userProfileService.updateUserProfile(this.userProfile!).pipe(take(1)).subscribe({
       next: (response: any) => {
@@ -99,6 +97,16 @@ export class ProfilePageComponent {
   }
 
   onProfileChange(event: any){
+    if (event !== null && event !== undefined) {
+      // Update the model for input fields
+      if (typeof event === 'string') {
+        this.notificationEmail = event;
+      }
+      // Update the model for multiselect changes
+      if (event.value !== undefined) {
+        this.selectedLanguages = event.value;
+      }
+    }
     this.disableSaveButton = false;
   }
 }

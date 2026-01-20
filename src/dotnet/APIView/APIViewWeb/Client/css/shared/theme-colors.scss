@@ -1,47 +1,47 @@
-@import "../../node_modules/bootstrap/scss/functions";
-@import "../../node_modules/bootstrap/scss/variables";
+@use "bootstrap-defs" as bootstrap;
 
 .light-theme {
     /*----Base Colors-------------------------------------------------*/
     $base-bg-color: #fbfaff;
     --base-bg-color: #{$base-bg-color};
-    --base-fg-color: #{tint-color($base-bg-color, 100%)};
+    --base-fg-color: #{bootstrap.tint-color($base-bg-color, 100%)};
     --editor-bg-color: #fafafa;
     $base-text-color: #212529;
     --base-text-color: #{$base-text-color};
-    --text-muted-color: #{tint-color($base-text-color, 30%)};
-    --primary-color: #{$primary};
-    --secondary-color: #{$secondary};
-    --success-color: #{$success};
-    --info-color: #{$info};
-    --warning-color: #{$warning};
-    --danger-color: #{$danger};
-    --border-color: #{shade-color($base-bg-color, 20%)};
-    --border-color-transparent: #{shade-color($base-bg-color, 2%)};
+    --text-muted-color: #{bootstrap.tint-color($base-text-color, 30%)};
+    --primary-color: #{bootstrap.$primary};
+    --secondary-color: #{bootstrap.$secondary};
+    --success-color: #{bootstrap.$success};
+    --info-color: #{bootstrap.$info};
+    --warning-color: #{bootstrap.$warning};
+    --danger-color: #{bootstrap.$danger};
+    --border-color: #{bootstrap.shade-color($base-bg-color, 20%)};
+    --border-color-transparent: #{bootstrap.shade-color($base-bg-color, 2%)};
     --primary-btn-color: #fff;
+    --checkbox-icon-color: #{bootstrap.$primary};
     /*----Links------------------------------------------------------*/
-    --link-color: #{$primary};
-    --link-active: #{shade-color($primary, 20%)};
-    --link-visited: #{shade-color($primary, 40%)};
+    --link-color: #{bootstrap.$primary};
+    --link-active: #{bootstrap.shade-color(bootstrap.$primary, 20%)};
+    --link-visited: #{bootstrap.shade-color(bootstrap.$primary, 40%)};
     /*----Diagnostic Details Link------------------------------------*/
-    --details-link-color: #{$primary};
+    --details-link-color: #{bootstrap.$primary};
     --details-link-active-hover: #00CBEB;
-    --link-visited: #{shade-color($primary, 40%)};
+    --details-link-visited: #{bootstrap.shade-color(bootstrap.$primary, 40%)};
     /*----Shadows and Glows------------------------------------------*/
-    --outer-glow: #{tint-color($primary, 80%)};
-    --shadow-color: rgba(#{$black}, .15);
-    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary, 0.5)};
-    --box-shadow: 0 .5rem 1rem #{rgba($black, .15)};
-    --box-shadow-sm: 0 .125rem .25rem #{rgba($black, .075)};
-    --box-shadow-lg: 0 1rem 3rem #{rgba($black, .175)};
-    --box-shadow-inset: inset 0 1px 2px #{rgba($black, .075)};
-    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
-    --box-shadow-link: 0 0 0 0.2rem #{rgba($primary, 50%)};
-    --box-shadow-left: -5px 0px 0px 0rem #{rgba($primary, 100%)};
+    --outer-glow: #{bootstrap.tint-color(bootstrap.$primary, 80%)};
+    --shadow-color: rgba(#{bootstrap.$black}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba(bootstrap.$primary, 0.5)};
+    --box-shadow: 0 .5rem 1rem #{rgba(bootstrap.$black, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba(bootstrap.$black, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba(bootstrap.$black, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba(bootstrap.$black, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba(bootstrap.$success, 10%)};
+    --box-shadow-link: 0 0 0 0.2rem #{rgba(bootstrap.$primary, 50%)};
+    --box-shadow-left: -5px 0px 0px 0rem #{rgba(bootstrap.$primary, 100%)};
     /*----Nav--------------------------------------------------------*/
-    --navbar-bg: #{tint-color($base-bg-color, 100%)};
+    --navbar-bg: #{bootstrap.tint-color($base-bg-color, 100%)};
     --navbar-text: #{$base-text-color};
-    --navbar-link-active: #{shade-color($primary, 20%)};
+    --navbar-link-active: #{bootstrap.shade-color(bootstrap.$primary, 20%)};
     --icon-color-filter: invert(0.0);
     /*----Code Lines-------------------------------------------------*/
     --keyword-color: blue;
@@ -86,8 +86,24 @@
     --code-delta: #fdefc6;
     --dark-overlay: rgba(0, 0, 0, 0.1);
     --client-type-bg: rgba(13, 110, 253, 0.08);
+    /*----Severity Badges----------------------------------------*/
+    --severity-question-bg: #F0F7FF;
+    --severity-question-text: #1E40AF;
+    --severity-question-border: #B3D4FF;
+    --severity-suggestion-bg: #F0F0F0;
+    --severity-suggestion-text: #616161;
+    --severity-suggestion-border: #E0E0E0;
+    --severity-should-fix-bg: #FFF9F5;
+    --severity-should-fix-text: #8A3707;
+    --severity-should-fix-border: #FDCFB4;
+    --severity-must-fix-bg: #FDF3F4;
+    --severity-must-fix-text: #B10E1C;
+    --severity-must-fix-border: #EEACB2;
+    /*----Toggle Switch------------------------------------------*/
+    --toggle-switch-off: #6c757d;
+    --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
-    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
 
@@ -95,46 +111,47 @@
     /*----Base Colors-------------------------------------------------*/
     $base-bg-color: #010409;
     --base-bg-color: #{$base-bg-color};
-    --base-fg-color: #{tint-color($base-bg-color, 5%)};
+    --base-fg-color: #{bootstrap.tint-color($base-bg-color, 5%)};
     --editor-bg-color: #1e1e1e;
     $base-text-color: #c9d1d9;
     --base-text-color: #{$base-text-color};
-    --text-muted-color: #{shade-color($base-text-color, 30%)};
+    --text-muted-color: #{bootstrap.shade-color($base-text-color, 30%)};
     $primary-color: #0084ff;
     --primary-color: #{$primary-color};
     $secondary-color: #6F8594;
     --secondary-color: #{$secondary-color};
-    --success-color: #{$success};
+    --success-color: #{bootstrap.$success};
     $info-color: #05DBF2;
     --info-color: #{$info-color};
-    --warning-color: #{$orange};
-    --danger-color: #{$danger};
-    --border-color: #{tint-color($base-bg-color, 20%)};
-    --border-color-transparent: #{tint-color($base-bg-color, 7%)};
+    --warning-color: #{bootstrap.$orange};
+    --danger-color: #{bootstrap.$danger};
+    --border-color: #{bootstrap.tint-color($base-bg-color, 20%)};
+    --border-color-transparent: #{bootstrap.tint-color($base-bg-color, 7%)};
     --primary-btn-color: #fff;
+    --checkbox-icon-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
-    --link-active: #{tint-color($primary-color, 20%)};
-    --link-visited: #{tint-color($primary-color, 40%)};
+    --link-active: #{bootstrap.tint-color($primary-color, 20%)};
+    --link-visited: #{bootstrap.tint-color($primary-color, 40%)};
     /*----Diagnostic Details Link------------------------------------*/
     --details-link-color: #0d1dfc;
     --details-link-active-hover: #00CBEB;
     --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
-    --outer-glow: #{tint-color($primary-color, 80%)};
-    --shadow-color: rgba(#{$white}, .15);
+    --outer-glow: #{bootstrap.tint-color($primary-color, 80%)};
+    --shadow-color: rgba(#{bootstrap.$white}, .15);
     --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
-    --box-shadow: 0 .5rem 1rem #{rgba($white, .15)};
-    --box-shadow-sm: 0 .125rem .25rem #{rgba($white, .075)};
-    --box-shadow-lg: 0 1rem 3rem #{rgba($white, .175)};
-    --box-shadow-inset: inset 0 1px 2px #{rgba($white, .075)};
-    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
+    --box-shadow: 0 .5rem 1rem #{rgba(bootstrap.$white, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba(bootstrap.$white, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba(bootstrap.$white, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba(bootstrap.$white, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba(bootstrap.$success, 10%)};
     --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
     --box-shadow-left: -5px 0px 0px 0rem #{rgba($primary-color, 100%)};
     /*----Nav--------------------------------------------------------*/
-    --navbar-bg: #{tint-color($base-bg-color, 20%)};
-    --navbar-text: #{tint-color($base-text-color, 40%)};
-    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --navbar-bg: #{bootstrap.tint-color($base-bg-color, 20%)};
+    --navbar-text: #{bootstrap.tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{bootstrap.shade-color($base-text-color, 20%)};
     --icon-color-filter: invert(0.5);
     /*----Code Lines-------------------------------------------------*/
     --keyword-color: #ff7b72;
@@ -179,6 +196,22 @@
     --code-delta: #4c401a;
     --dark-overlay: rgba(0, 0, 0, 0.3);
     --client-type-bg: rgba(0, 132, 255, 0.25);
+    /*----Severity Badges----------------------------------------*/
+    --severity-question-bg: #1E3A8A;
+    --severity-question-text: #BFDBFE;
+    --severity-question-border: #3B82F6;
+    --severity-suggestion-bg: #374151;
+    --severity-suggestion-text: #D1D5DB;
+    --severity-suggestion-border: #6B7280;
+    --severity-should-fix-bg: #92400E;
+    --severity-should-fix-text: #FED7AA;
+    --severity-should-fix-border: #F59E0B;
+    --severity-must-fix-bg: #991B1B;
+    --severity-must-fix-text: #FECACA;
+    --severity-must-fix-border: #EF4444;
+    /*----Toggle Switch------------------------------------------*/
+    --toggle-switch-off: #6c757d;
+    --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
@@ -192,44 +225,45 @@
     --editor-bg-color: #1e1e1e;
     $base-text-color: #A9B7C6;
     --base-text-color: #{$base-text-color};
-    --text-muted-color: #{shade-color($base-text-color, 30%)};
+    --text-muted-color: #{bootstrap.shade-color($base-text-color, 30%)};
     $primary-color: #FFBD00;
     --primary-color: #{$primary-color};
     $secondary-color: #B7B6B7;
     --secondary-color: #{$secondary-color};
-    --success-color: #{$success};
+    --success-color: #{bootstrap.$success};
     $info-color: #87B0E6;
     --info-color: #{$info-color};
     $warning-color: #D97904;
     --warning-color: #{$warning-color};
     $danger-color: #C80C07;
     --danger-color: #{$danger-color};
-    --border-color: #{tint-color($base-bg-color, 20%)};
-    --border-color-transparent: #{tint-color($base-bg-color, 7%)};
-    --primary-btn-color: #{$base-bg-color};
+    --border-color: #{bootstrap.tint-color($base-bg-color, 20%)};
+    --border-color-transparent: #{bootstrap.tint-color($base-bg-color, 7%)};
+    --primary-btn-color: #fff;
+    --checkbox-icon-color: #{$primary-color};
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
-    --link-active: #{tint-color($primary-color, 10%)};
-    --link-visited: #{tint-color($primary-color, 20%)};
+    --link-active: #{bootstrap.tint-color($primary-color, 10%)};
+    --link-visited: #{bootstrap.tint-color($primary-color, 20%)};
     /*----Diagnostic Details Link------------------------------------*/
     --details-link-color: #0d1dfc;
     --details-link-active-hover: #00CBEB;
     --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
-    --outer-glow: #{tint-color($primary-color, 80%)};
-    --shadow-color: rgba(#{$gray-100}, .15);
+    --outer-glow: #{bootstrap.tint-color($primary-color, 80%)};
+    --shadow-color: rgba(#{bootstrap.$gray-100}, .15);
     --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
-    --box-shadow: 0 .5rem 1rem #{rgba($gray-100, .15)};
-    --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
-    --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};
-    --box-shadow-inset: inset 0 1px 2px #{rgba($gray-100, .075)};
-    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
+    --box-shadow: 0 .5rem 1rem #{rgba(bootstrap.$gray-100, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba(bootstrap.$gray-100, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba(bootstrap.$gray-100, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba(bootstrap.$gray-100, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba(bootstrap.$success, 10%)};
     --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
     --box-shadow-left: -5px 0px 0px 0rem #{rgba($primary-color, 100%)};
     /*----Nav--------------------------------------------------------*/
-    --navbar-bg: #{tint-color($base-bg-color, 20%)};
-    --navbar-text: #{tint-color($base-text-color, 40%)};
-    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --navbar-bg: #{bootstrap.tint-color($base-bg-color, 20%)};
+    --navbar-text: #{bootstrap.tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{bootstrap.shade-color($base-text-color, 20%)};
     --icon-color-filter: invert(0.5);
     /*----Code Lines-------------------------------------------------*/
     --keyword-color: #d57c32;
@@ -274,7 +308,23 @@
     --code-delta: #695b32;
     --dark-overlay: rgba(0, 0, 0, 0.3);
     --client-type-bg: rgba(255, 189, 0, 0.15);
+    /*----Severity Badges----------------------------------------*/
+    --severity-question-bg: #1E3A8A;
+    --severity-question-text: #BFDBFE;
+    --severity-question-border: #3B82F6;
+    --severity-suggestion-bg: #374151;
+    --severity-suggestion-text: #D1D5DB;
+    --severity-suggestion-border: #6B7280;
+    --severity-should-fix-bg: #92400E;
+    --severity-should-fix-text: #FED7AA;
+    --severity-should-fix-border: #F59E0B;
+    --severity-must-fix-bg: #991B1B;
+    --severity-must-fix-text: #FECACA;
+    --severity-must-fix-border: #EF4444;
+    /*----Toggle Switch------------------------------------------*/
+    --toggle-switch-off: #6c757d;
+    --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
-    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='dimgray' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
-    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='dimgray'/%3e%3c/svg%3e");
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }

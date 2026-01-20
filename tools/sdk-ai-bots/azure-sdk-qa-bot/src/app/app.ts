@@ -13,6 +13,7 @@ import { ConversationHandler } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 import { ManagedIdentityCredential, TokenCredential } from '@azure/identity';
 import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
+import { sendActivityWithRetry } from '../activityUtils.js';
 
 const conversationHandler = new ConversationHandler();
 const channelConfigManager = new ChannelConfigManager();
@@ -69,7 +70,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   logger.info(
     `Received feedback action: ${action} with comment: "${feedbackComment}" and reasons: ${JSON.stringify(
       selectedReasons
-    )}`,
+    )} from user: ${context.activity.from?.name} (ID: ${context.activity.from?.id})`,
     { meta }
   );
 
@@ -80,7 +81,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
     if (question) messages.push(question);
     const answer: Message =
-      msg.reply && msg.reply.has_result ? { role: 'assistant', content: msg.reply.answer } : undefined;
+      msg.reply ? { role: 'assistant', content: msg.reply.answer } : undefined;
     if (answer) messages.push(answer);
   });
 
@@ -90,27 +91,31 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   switch (action) {
     case 'feedback-like':
       const goodFeedback: FeedbackRequestPayload = {
+        channel_id: channelId,
         tenant_id: ragTenantId,
         messages,
         reaction: 'good',
         comment: feedbackComment,
         reasons: selectedReasons,
         link: postLink,
+        user_name: context.activity.from?.name,
       };
       await sendFeedback(goodFeedback, ragOptions, meta);
-      await context.sendActivity('You liked my service. Thanks for your feedback!');
+      await sendActivityWithRetry(context, 'Your feedback is received. Thank you!');
       break;
     case 'feedback-dislike':
       const badFeedback: FeedbackRequestPayload = {
+        channel_id: channelId,
         tenant_id: ragTenantId,
         messages,
         reaction: 'bad',
         comment: feedbackComment,
         reasons: selectedReasons,
         link: postLink,
+        user_name: context.activity.from?.name,
       };
       await sendFeedback(badFeedback, ragOptions, meta);
-      await context.sendActivity('You disliked my service. Thanks for your feedback!');
+      await sendActivityWithRetry(context, 'Your feedback is received. Thank you!');
       break;
     default:
       break;

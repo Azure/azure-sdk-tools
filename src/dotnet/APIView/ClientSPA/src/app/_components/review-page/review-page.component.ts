@@ -30,50 +30,51 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 
 @Component({
-  selector: 'app-review-page',
-  templateUrl: './review-page.component.html',
-  styleUrls: ['./review-page.component.scss']
+    selector: 'app-review-page',
+    templateUrl: './review-page.component.html',
+    styleUrls: ['./review-page.component.scss'],
+    standalone: false
 })
 export class ReviewPageComponent implements OnInit {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
   @ViewChild(ReviewPageOptionsComponent) reviewPageOptionsComponent!: ReviewPageOptionsComponent;
 
-  reviewId : string | null = null;
-  activeApiRevisionId : string | null = null;
-  diffApiRevisionId : string | null = null;
-  diffStyle : string | null = null;
+  reviewId: string | null = null;
+  activeApiRevisionId: string | null = null;
+  diffApiRevisionId: string | null = null;
+  diffStyle: string | null = null;
 
-  assetsPath : string = environment.assetsPath;
+  assetsPath: string = environment.assetsPath;
 
-  userProfile : UserProfile | undefined;
-  review : Review | undefined = undefined;
+  userProfile: UserProfile | undefined;
+  review: Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
   crossLanguageAPIRevisions: APIRevisionGroupedByLanguage[] = [];
   comments: CommentItemModel[] = [];
-  activeAPIRevision : APIRevision | undefined = undefined;
-  diffAPIRevision : APIRevision | undefined = undefined;
+  activeAPIRevision: APIRevision | undefined = undefined;
+  diffAPIRevision: APIRevision | undefined = undefined;
   latestSampleRevision: SamplesRevision | undefined = undefined;
-  revisionSidePanel : boolean | undefined = undefined;
-  crosslanguageRevisionSidePanel : boolean | undefined = undefined;
-  conversationSidePanel : boolean | undefined = undefined;
-  reviewPageNavigation : TreeNode[] = [];
+  revisionSidePanel: boolean | undefined = undefined;
+  crosslanguageRevisionSidePanel: boolean | undefined = undefined;
+  conversationSidePanel: boolean | undefined = undefined;
+  reviewPageNavigation: TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
-  scrollToNodeIdHashed : Subject<string> = new Subject<string>();
-  scrollToNodeId : string | undefined = undefined;
-  showLineNumbers : boolean = true;
-  preferredApprovers : string[] = [];
-  hasFatalDiagnostics : boolean = false;
-  hasActiveConversation : boolean = false;
-  codeLineSearchInfo : CodeLineSearchInfo | undefined;
-  numberOfActiveConversation : number = 0;
-  hasHiddenAPIs : boolean = false;
-  hasHiddenAPIThatIsDiff : boolean = false;
-  loadFailed : boolean = false;
-  loadFailedMessage : string = "API-Revision Content Load Failed...";
+  scrollToNodeIdHashed: Subject<string> = new Subject<string>();
+  scrollToNodeId: string | undefined = undefined;
+  showLineNumbers: boolean = true;
+  preferredApprovers: string[] = [];
+  hasFatalDiagnostics: boolean = false;
+  hasActiveConversation: boolean = false;
+  codeLineSearchInfo: CodeLineSearchInfo | undefined;
+  numberOfActiveConversation: number = 0;
+  hasHiddenAPIs: boolean = false;
+  hasHiddenAPIThatIsDiff: boolean = false;
+  loadFailed: boolean = false;
+  loadFailedMessage: string = "API-Revision Content Load Failed...";
 
-  showLeftNavigation : boolean = true;
-  showPageOptions : boolean = true;
+  showLeftNavigation: boolean = true;
+  showPageOptions: boolean = true;
   leftNavigationPanelSize = 14;
   pageOptionsPanelSize = 16;
   panelSizes = [this.leftNavigationPanelSize, 70, this.pageOptionsPanelSize];
@@ -88,21 +89,21 @@ export class ReviewPageComponent implements OnInit {
   codeLineSearchText: string | undefined = undefined;
 
   private destroy$ = new Subject<void>();
-  private destroyLoadAPIRevision$ : Subject<void>  | null = null;
-  private destroyApiTreeBuilder$ : Subject<void>  | null = null;
+  private destroyLoadAPIRevision$: Subject<void> | null = null;
+  private destroyApiTreeBuilder$: Subject<void> | null = null;
 
   sideMenu: MenuItem[] | undefined;
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
-    private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService) {}
+    private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService) { }
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
 
     this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
+      (userProfile: any) => {
         this.userProfile = userProfile;
         if (this.userProfile?.preferences.hideLeftNavigation) {
           this.showLeftNavigation = false;
@@ -114,12 +115,12 @@ export class ReviewPageComponent implements OnInit {
           this.updateRightPanelSize();
         }
 
-        if(this.userProfile?.preferences.hideLineNumbers) {
+        if (this.userProfile?.preferences.hideLineNumbers) {
           this.showLineNumbers = false;
         }
       });
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const navigationState = this.router.getCurrentNavigation()?.extras.state;
+      const navigationState = this.router.currentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
         this.updateStateBasedOnQueryParams(params);
       }
@@ -135,15 +136,15 @@ export class ReviewPageComponent implements OnInit {
   }
 
   createSideMenu() {
-    const menu : MenuItem [] = [
+    const menu: MenuItem[] = [
       {
-          icon: 'bi bi-clock-history',
-          tooltip: 'Revisions',
-          command: () => {
-            if (this.getLoadingStatus() === 'completed') {
-              this.revisionSidePanel = !this.revisionSidePanel;
-            }
+        icon: 'bi bi-clock-history',
+        tooltip: 'Revisions',
+        command: () => {
+          if (this.getLoadingStatus() === 'completed') {
+            this.revisionSidePanel = !this.revisionSidePanel;
           }
+        }
       }
     ];
 
@@ -164,22 +165,26 @@ export class ReviewPageComponent implements OnInit {
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => {
-            if (this.getLoadingStatus() === 'completed') {
-              this.conversationSidePanel = !this.conversationSidePanel;
-            }
+          if (this.getLoadingStatus() === 'completed') {
+            this.conversationSidePanel = !this.conversationSidePanel;
           }
+        }
       },
       {
         icon: 'bi bi-puzzle',
         tooltip: 'Samples',
         command: () => {
+          const queryParams: any = {};
           if (this.latestSampleRevision) {
-            this.router.navigate(['/samples', this.reviewId],
-            { queryParams: { activeSamplesRevisionId: this.latestSampleRevision?.id } });
+            queryParams['activeSamplesRevisionId'] = this.latestSampleRevision?.id;
           }
-          else {
-            this.router.navigate([`/samples/${this.reviewId}`])
+          if (this.activeApiRevisionId) {
+            queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
           }
+          if (this.diffApiRevisionId) {
+            queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+          }
+          this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
         }
       }
     ]);
@@ -255,7 +260,7 @@ export class ReviewPageComponent implements OnInit {
             return;
           }
           else {
-            const apiTreeBuilderData : ApiTreeBuilderData = {
+            const apiTreeBuilderData: ApiTreeBuilderData = {
               diffStyle: this.diffStyle!,
               showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
               showComments: this.userProfile?.preferences.showComments ?? true,
@@ -297,14 +302,14 @@ export class ReviewPageComponent implements OnInit {
       });
   }
 
-  loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
+  loadAPIRevisions(noOfItemsRead: number, pageSize: number) {
     // Ensure existing subscription is destroyed
     this.destroyLoadAPIRevision$?.next();
     this.destroyLoadAPIRevision$?.complete();
     this.destroyLoadAPIRevision$ = new Subject<void>();
 
     // Ensures that the pertinent apirevisons are loaded regardless of page size limits
-    const pageRevisions : string[] = [this.activeApiRevisionId!];
+    const pageRevisions: string[] = [this.activeApiRevisionId!];
     if (this.diffApiRevisionId) {
       pageRevisions.push(this.diffApiRevisionId);
     }
@@ -343,7 +348,7 @@ export class ReviewPageComponent implements OnInit {
                 packageName: revision.items[0].packageName
               }));
             return from(itemsToProcess).pipe(
-              concatMap((item : any) => this.reviewsService.getCrossLanguageContent(item.apiRevisionId, item.codeFileId).pipe(
+              concatMap((item: any) => this.reviewsService.getCrossLanguageContent(item.apiRevisionId, item.codeFileId).pipe(
                 tap(response => {
                   response.reviewId = item.reviewId;
                   response.packageVersion = item.packageVersion;
@@ -356,10 +361,10 @@ export class ReviewPageComponent implements OnInit {
           return EMPTY;
         }),
       ).subscribe({
-          next: (response: any) => {
+        next: (response: any) => {
 
-          }
-        });
+        }
+      });
   }
 
   loadComments() {
@@ -374,22 +379,39 @@ export class ReviewPageComponent implements OnInit {
   }
 
   private processEmbeddedComments() {
-    if (!this.codePanelData || !this.comments) return;
-    Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
+    if (!this.codePanelData || !this.comments) {
+        return;
+    }
+
+    Object.values(this.codePanelData.nodeMetaData).forEach((nodeData) => {
       if (nodeData.commentThread) {
-        Object.values(nodeData.commentThread).forEach(commentThreadRow => {
-          if (commentThreadRow.comments) {
-            commentThreadRow.comments.forEach(embeddedComment => {
-              const globalComment = this.comments.find(c => c.id === embeddedComment.id);
-              if (globalComment) {
-                embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
-                embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
-              }
-            });
+        Object.values(nodeData.commentThread).forEach((commentThreads: any) => {
+          let rows: any[] = [];
+          if (Array.isArray(commentThreads)) {
+            rows = commentThreads;
+          } else if (commentThreads && typeof commentThreads === 'object') {
+             if (commentThreads.type || commentThreads.comments) {
+                 rows = [commentThreads];
+             } else {
+                 rows = Object.values(commentThreads);
+             }
           }
+
+          rows.forEach((commentThreadRow: any) => {
+            if (commentThreadRow && commentThreadRow.comments) {
+              commentThreadRow.comments.forEach((embeddedComment: any) => {
+                const globalComment = this.comments.find(c => c.id === embeddedComment.id);
+                if (globalComment) {
+                  embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
+                  embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
+                }
+              });
+            }
+          });
         });
       }
     });
+    this.changeDetectorRef.detectChanges();
   }
 
   loadLatestSampleRevision(reviewId: string) {
@@ -398,7 +420,7 @@ export class ReviewPageComponent implements OnInit {
         next: (sampleRevision: SamplesRevision | undefined) => {
           this.latestSampleRevision = sampleRevision;
         }
-    });
+      });
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {
@@ -486,7 +508,7 @@ export class ReviewPageComponent implements OnInit {
 
   updateRightPanelSize() {
     const panelSize = new Array(3);
-    if  (this.userProfile!.preferences.hideReviewPageOptions) {
+    if (this.userProfile!.preferences.hideReviewPageOptions) {
       this.showPageOptions = false;
       panelSize[2] = 0.1;
     } else {
@@ -518,7 +540,7 @@ export class ReviewPageComponent implements OnInit {
         this.showPageOptions = !this.userProfile!.preferences.hideReviewPageOptions;
 
         // need this to trigger change detection
-        const userProfile : UserProfile = {
+        const userProfile: UserProfile = {
           userName: this.userProfile!.userName,
           email: this.userProfile!.email,
           languages: this.userProfile!.languages,
@@ -539,16 +561,6 @@ export class ReviewPageComponent implements OnInit {
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
     this.scrollToNodeIdHashed.next(nodeIdHashed);
-  }
-
-  handleMarkAsViewedEmitter(state: boolean) {
-    this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe({
-      next: (apiRevision: APIRevision) => {
-        this.activeAPIRevision = apiRevision;
-        const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
-        this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
-      }
-    });
   }
 
   handleSubscribeEmitter(state: boolean) {
@@ -634,11 +646,11 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
-  handleCommentThreadNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleCommentThreadNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToCommentThread(direction);
   }
 
-  handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleDiffNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToDiffNode(direction);
   }
 
@@ -665,9 +677,21 @@ export class ReviewPageComponent implements OnInit {
     this.createSideMenu();
   }
 
-  handleScrollToNodeEmitter (value: string) {
+  handleScrollToNodeEmitter(value: string) {
     this.conversationSidePanel = false;
     this.codePanelComponent.scrollToNode(undefined, value);
+  }
+
+  handleDismissSidebarAndNavigate(event: { revisionId: string, elementId: string }) {
+    this.conversationSidePanel = false;
+    const currentParams = getQueryParams(this.route);
+    this.router.navigate(['/review', this.reviewId], {
+      queryParams: {
+        ...currentParams,
+        activeApiRevisionId: event.revisionId,
+        nId: event.elementId
+      }
+    });
   }
 
   handleRealTimeReviewUpdates() {
@@ -704,7 +728,7 @@ export class ReviewPageComponent implements OnInit {
         response.reviewId = value.reviewId;
         response.packageVersion = value.packageVersion;
         response.packageName = value.packageName;
-        const cldto: CrossLanguageContentDto [] = [];
+        const cldto: CrossLanguageContentDto[] = [];
         this.crossLanguageRowData.forEach((dto: CrossLanguageContentDto) => {
           if (dto.apiRevisionId !== value.id) {
             cldto.push(dto);
@@ -715,13 +739,11 @@ export class ReviewPageComponent implements OnInit {
       });
   }
 
-  getLoadingStatus() : 'loading' | 'completed' | 'failed' {
-    if (this.codePanelComponent?.isLoading)
-    {
+  getLoadingStatus(): 'loading' | 'completed' | 'failed' {
+    if (this.codePanelComponent?.isLoading) {
       return 'loading';
     }
-    else
-    {
+    else {
       return (this.loadFailed) ? 'failed' : 'completed';
     }
   }
@@ -735,7 +757,7 @@ export class ReviewPageComponent implements OnInit {
     }
   }
 
-  updateLoadingStateBasedOnReviewDeletionStatus() : boolean {
+  updateLoadingStateBasedOnReviewDeletionStatus(): boolean {
     if (this.review?.isDeleted) {
       this.loadFailed = true;
       this.loadFailedMessage = "Review has been deleted.";

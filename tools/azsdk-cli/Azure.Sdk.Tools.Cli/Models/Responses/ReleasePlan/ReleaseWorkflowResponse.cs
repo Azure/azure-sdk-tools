@@ -32,9 +32,6 @@ public class ReleaseWorkflowResponse : ReleasePlanBaseResponse
     }
     public void SetLanguage(string language)
     {
-        if (Enum.TryParse<SdkLanguage>(language, true, out var lang))
-        {
-            Language = lang;
-        }
+        Language = SdkLanguageHelpers.GetSdkLanguage(language);
     }
 }

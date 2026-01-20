@@ -43,7 +43,7 @@
   background-color: var(--base-bg-color);
   border: 1px solid var(--border-color) !important;
   transition: all 0.2s ease;
-  
+
   &.selected {
     border-color: var(--primary-color) !important;
     box-shadow: 0 0 0 0.2rem var(--shadow-color-primary);
@@ -62,15 +62,15 @@
 .rendered-comment-content {
   font-size: 0.95rem;
   line-height: 1.4;
-  
+
   p {
     margin-bottom: 0.4rem;
-    
+
     &:last-child {
       margin-bottom: 0;
     }
   }
-  
+
   code {
     background-color: var(--base-fg-color);
     padding: 0.125rem 0.25rem;
@@ -78,14 +78,14 @@
     font-size: 0.875em;
     color: var(--base-text-color);
   }
-  
+
   pre {
     background-color: var(--base-fg-color);
     border: 1px solid var(--border-color);
     border-radius: 0.375rem;
     padding: 1rem;
     margin: 0.5rem 0;
-    
+
     code {
       background: none;
       padding: 0;
@@ -94,28 +94,61 @@
 }
 
 // Dialog customizations
-:host ::ng-deep {
-  .p-dialog {
-    z-index: 10000 !important;
-  }
-  
-  .p-dialog-mask {
-    z-index: 9999 !important;
-  }
-  
-  .p-dialog .p-dialog-header {
+::ng-deep .related-comments-dialog {
+  // 1. Border and Shadow (Theme appropriate)
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000 !important;
+
+  // 2. Header styling
+  .p-dialog-header {
+    padding: 0.75rem 1.5rem;
     background-color: var(--base-fg-color);
     border-bottom: 1px solid var(--border-color);
     color: var(--base-text-color);
-    padding: 0.75rem 1rem;
-    
+
     .p-dialog-title {
-      font-size: 1.1rem;
       font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    // 3. X button styling (Circular and Blue)
+    .p-dialog-header-actions {
+      padding: 0;
+
+      .p-dialog-close-button {
+        background-color: var(--primary-color) !important;
+        color: var(--primary-btn-color) !important;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        opacity: 1 !important;
+        transition: background-color 0.2s, color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--primary-color) !important;
+
+        &:hover {
+          background-color: var(--primary-color) !important;
+          color: var(--primary-btn-color) !important;
+          filter: brightness(0.9);
+        }
+
+        &:focus {
+          box-shadow: none !important;
+        }
+
+        .p-button-icon {
+          color: var(--primary-btn-color) !important;
+        }
+      }
     }
   }
-  
-  .p-dialog .p-dialog-content {
+
+  .p-dialog-content {
     padding: 0 !important;
     background-color: var(--base-bg-color);
     color: var(--base-text-color);
@@ -123,15 +156,21 @@
     display: flex;
     flex-direction: column;
   }
-  
-  .p-dialog .p-dialog-footer {
+
+  .p-dialog-footer {
     display: none !important;
   }
-  
+}
+
+:host ::ng-deep {
+  .p-dialog-mask {
+    z-index: 9999 !important;
+  }
+
   .p-checkbox .p-checkbox-box {
     border: 2px solid var(--border-color);
     background-color: var(--base-bg-color);
-    
+
     &.p-highlight {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
@@ -153,7 +192,7 @@
   background-color: var(--base-fg-color) !important;
   border: 1px solid var(--border-color) !important;
   font-family: 'SFMono-Regular', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
-  
+
   code {
     font-size: 0.875rem;
     line-height: 1.45;
@@ -162,10 +201,10 @@
     font-weight: 400;
     white-space: pre;
     word-wrap: break-word;
-    
+
     &::before,
     &::after {
-      content: none; 
+      content: none;
     }
   }
 }
@@ -175,28 +214,21 @@
 }
 
 
-.resolution-comment-section {
-  padding: 1rem;
-  background-color: var(--base-fg-color);
+.resolution-comment-textarea {
+  width: 100%;
+  background-color: var(--base-bg-color);
+  color: var(--base-text-color);
   border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
 
-  .resolution-comment-textarea {
-    width: 100%;
+  &:focus {
     background-color: var(--base-bg-color);
     color: var(--base-text-color);
-    border: 1px solid var(--border-color);
-    
-    &:focus {
-      background-color: var(--base-bg-color);
-      color: var(--base-text-color);
-      border-color: var(--primary-color);
-      box-shadow: var(--shadow-color-primary);
-    }
-    
-    &::placeholder {
-      color: var(--text-muted-color);
-    }
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-color-primary);
+  }
+
+  &::placeholder {
+    color: var(--text-muted-color);
   }
 }
 
@@ -206,11 +238,11 @@
   padding: 1.25rem;
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
-  
+
   h6 {
     color: var(--base-text-color);
     margin-bottom: 1rem;
-    
+
     i {
       color: var(--primary-color);
     }
@@ -219,18 +251,18 @@
 
 .vote-section {
   gap: 0.25rem;
-  
+
   .vote-btn {
     padding: 0.25rem 0.5rem !important;
     margin: 0;
     border: none;
     background: transparent;
-    
+
     &:hover {
       background-color: transparent !important;
       opacity: 0.8;
     }
-    
+
     &:focus {
       box-shadow: none !important;
     }
@@ -244,39 +276,39 @@
       background-color: var(--base-bg-color);
       border: 1px solid var(--border-color);
       color: var(--base-text-color);
-      
+
       &:not(.p-disabled):hover {
         border-color: var(--primary-color);
       }
-      
+
       &:not(.p-disabled).p-focus {
         border-color: var(--primary-color);
         box-shadow: 0 0 0 0.2rem var(--shadow-color-primary);
       }
     }
-    
+
     .p-dropdown-label {
       color: var(--base-text-color);
     }
-    
+
     .p-dropdown-trigger {
       color: var(--base-text-color);
     }
   }
-  
+
   // Dropdown panel
   .p-dropdown-panel {
     background-color: var(--base-fg-color);
     border: 1px solid var(--border-color);
-    
+
     .p-dropdown-items {
       .p-dropdown-item {
         color: var(--base-text-color);
-        
+
         &:not(.p-highlight):not(.p-disabled):hover {
           background-color: var(--base-bg-color);
         }
-        
+
         &.p-highlight {
           background-color: var(--primary-color);
           color: white;
@@ -284,26 +316,26 @@
       }
     }
   }
-  
+
   // Menu panel for action dropdown
   .p-menu {
     background-color: var(--base-fg-color);
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-    
+
     .p-menuitem-link {
       color: var(--base-text-color);
       padding: 0.75rem 1rem;
-      
+
       &:hover {
         background-color: var(--base-bg-color);
       }
-      
+
       .p-menuitem-icon {
         color: var(--base-text-color);
         margin-right: 0.5rem;
       }
-      
+
       .p-menuitem-text {
         color: var(--base-text-color);
       }
@@ -319,13 +351,154 @@
       cursor: not-allowed;
     }
   }
-  
+
   .dropdown-toggle-split {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
-    
+
     &::after {
       margin-left: 0;
     }
+  }
+}
+
+// Inline Feedback Section Styles - Compact Version with Multi-select and Collapse
+.inline-feedback-section {
+  border-color: var(--border-color) !important;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+
+  .feedback-header {
+    transition: background-color 0.2s;
+    user-select: none;
+
+    &:hover {
+      background-color: var(--editor-bg-color) !important;
+    }
+
+    .bi-chevron-down, .bi-chevron-right {
+      transition: transform 0.2s;
+      color: var(--text-muted-color);
+    }
+  }
+
+  .feedback-body {
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+  }
+
+  .form-control-sm {
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--base-text-color);
+    font-size: 0.875rem;
+
+    &:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+      background-color: var(--base-bg-color);
+      color: var(--base-text-color);
+    }
+
+    &::placeholder {
+      color: var(--text-muted-color);
+      font-size: 0.8rem;
+    }
+  }
+
+  .form-label {
+    color: var(--base-text-color);
+    margin-bottom: 0.25rem;
+
+    .bi-info-circle {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// PrimeNG MultiSelect styling
+::ng-deep {
+  .feedback-multiselect {
+    .p-multiselect {
+      border: 1px solid var(--border-color);
+      background: var(--base-bg-color);
+      color: var(--base-text-color);
+      font-size: 0.875rem;
+
+      &:not(.p-disabled):hover {
+        border-color: var(--primary-color);
+      }
+
+      &.p-focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+      }
+
+      .p-multiselect-label {
+        color: var(--base-text-color);
+        padding: 0.5rem;
+
+        &.p-placeholder {
+          color: var(--text-muted-color);
+        }
+      }
+
+      .p-multiselect-trigger {
+        color: var(--base-text-color);
+      }
+    }
+  }
+
+  // Panel needs to be global since appendTo="body"
+  .feedback-multiselect-panel {
+    background: var(--base-bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    .p-multiselect-items-wrapper {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .p-multiselect-items {
+      .p-multiselect-item {
+        color: var(--base-text-color) !important;
+        background: var(--base-bg-color) !important;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+
+        &:not(.p-highlight):hover {
+          background: var(--editor-bg-color) !important;
+          color: var(--base-text-color) !important;
+        }
+
+        &.p-highlight {
+          background: var(--primary-color) !important;
+          color: white !important;
+        }
+
+        .p-checkbox {
+          margin-right: 0.5rem;
+
+          .p-checkbox-box {
+            border-color: var(--border-color) !important;
+            background: var(--base-bg-color) !important;
+
+            &.p-highlight {
+              background: var(--primary-color) !important;
+              border-color: var(--primary-color) !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Dark theme adjustments
+:host-context(.dark-theme), :host-context(.dark-solarized-theme) {
+  .inline-feedback-section {
+    background-color: var(--editor-bg-color);
   }
 }

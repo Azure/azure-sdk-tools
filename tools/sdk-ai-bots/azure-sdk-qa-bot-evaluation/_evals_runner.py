@@ -355,12 +355,13 @@ class EvalsRunner:
             return all_results
 
         for output_file in output_file_dir.glob("*.jsonl"):
+            evaluation_name = (
+                    f"{evaluation_name_prefix}-{output_file.stem}" if evaluation_name_prefix else output_file.stem
+                )
             result = evaluate(
                 data=output_file,
                 evaluators=evaluators,
-                evaluation_name=(
-                    f"{evaluation_name_prefix}-{output_file.stem}" if evaluation_name_prefix else output_file.stem
-                ),
+                evaluation_name=evaluation_name,
                 # column mapping
                 evaluator_config=evaluator_config,
                 # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
@@ -370,7 +371,7 @@ class EvalsRunner:
                 **kwargs,
             )
             # print("✅ Evaluation completed. Results:", result)
-            logging.info("✅ Evaluation completed.")
+            logging.info(f"✅ Evaluation completed. evaluation in AI project: {evaluation_name}")
             run_result = self._evals_result.record_run_result(dict(result))
             all_results[output_file.name] = run_result
 

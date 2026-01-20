@@ -5,13 +5,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb;
-using APIViewWeb.Controllers;
+using APIViewWeb.LeanControllers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using FluentAssertions;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +24,7 @@ namespace APIViewUnitTests
         private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly Mock<IReviewManager> _mockReviewManager;
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
-        private readonly Mock<ICommentsManager> _mockCommentsManager;
+        private readonly Mock<IAutoReviewService> _mockAutoReviewService;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly List<LanguageService> _languageServices;
         private readonly AutoReviewController _controller;
@@ -35,7 +34,7 @@ namespace APIViewUnitTests
             _mockCodeFileManager = new Mock<ICodeFileManager>();
             _mockReviewManager = new Mock<IReviewManager>();
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
-            _mockCommentsManager = new Mock<ICommentsManager>();
+            _mockAutoReviewService = new Mock<IAutoReviewService>();
             _mockConfiguration = new Mock<IConfiguration>();
             _languageServices = new List<LanguageService>
             {
@@ -44,11 +43,10 @@ namespace APIViewUnitTests
 
             _controller = new AutoReviewController(
                 _mockCodeFileManager.Object,
-                _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
-                _mockCommentsManager.Object,
-                _mockConfiguration.Object,
-                _languageServices);
+                _mockAutoReviewService.Object,
+                _languageServices,
+                _mockConfiguration.Object);
 
             // Set up the HTTP context with a mock user principal
             SetupControllerContext();
@@ -59,9 +57,8 @@ namespace APIViewUnitTests
         [InlineData("mgmt")]
         [InlineData("CLIENT")]
         [InlineData("MGMT")]
-        public async Task UploadAutoReview_WithValidPackageType_CreatesNewReviewWithCorrectPackageType(string packageTypeValue)
+        public async Task UploadAutoReview_WithValidPackageType_PassesCorrectPackageTypeToService(string packageTypeValue)
         {
-            // Arrange
             var mockFile = CreateMockFormFile("test.json", "dummy content");
             var mockCodeFile = new CodeFile()
             {
@@ -69,6 +66,15 @@ namespace APIViewUnitTests
                 Language = "C#",
                 PackageName = "TestPackage",
                 PackageVersion = "1.0.0"
+            };
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false,
+                PackageType = Enum.Parse<PackageType>(packageTypeValue, true)
             };
 
             var mockApiRevision = new APIRevisionListItemModel()
@@ -79,51 +85,41 @@ namespace APIViewUnitTests
                 IsApproved = false
             };
 
-            var expectedPackageType = Enum.Parse<PackageType>(packageTypeValue, true);
-
-            // Setup mocks for new review creation scenario
             _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync((ReviewListItemModel)null); // No existing review
-
-            _mockReviewManager.Setup(m => m.CreateReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
-                .ReturnsAsync(new ReviewListItemModel() 
-                { 
-                    Id = "test-review-id", 
-                    PackageName = "TestPackage", 
-                    Language = "C#",
-                    IsApproved = false,
-                    PackageType = expectedPackageType
-                });
-
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(), It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<int?>()))
-                .ReturnsAsync(mockApiRevision);
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(mockApiRevision);
 
             _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
 
-            // Act
+             
             var result = await _controller.UploadAutoReview(mockFile.Object, "test-label", packageType: packageTypeValue);
 
-            // Assert
             result.Should().NotBeNull();
-            
-            // UploadAutoReview returns ObjectResult with 202 status and review URL
             var objectResult = result.Should().BeOfType<ObjectResult>().Which;
             objectResult.StatusCode.Should().Be(StatusCodes.Status202Accepted);
             objectResult.Value.Should().NotBeNull();
             objectResult.Value.Should().BeOfType<string>().Which.Should().Contain("/Assemblies/Review/");
 
-            // Verify that CreateReviewAsync was called with the correct parsed PackageType
-            _mockReviewManager.Verify(m => m.CreateReviewAsync(
-                "TestPackage", 
-                "C#", 
-                false, 
-                It.Is<PackageType?>(pt => pt.HasValue && pt.Value == expectedPackageType)), 
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<CodeFile>(),
+                "test-label",
+                "test.json",
+                It.IsAny<MemoryStream>(),
+                packageTypeValue,
+                false),
                 Times.Once);
         }
 
@@ -132,9 +128,8 @@ namespace APIViewUnitTests
         [InlineData("")]
         [InlineData("   ")]
         [InlineData("invalid")]
-        public async Task UploadAutoReview_WithInvalidPackageType_CreatesReviewWithNullPackageType(string packageTypeValue)
+        public async Task UploadAutoReview_WithInvalidPackageType_PassesValueToServiceAsIs(string packageTypeValue)
         {
-            // Arrange
             var mockFile = CreateMockFormFile("test.json", "dummy content");
             var mockCodeFile = new CodeFile()
             {
@@ -142,6 +137,15 @@ namespace APIViewUnitTests
                 Language = "C#",
                 PackageName = "TestPackage",
                 PackageVersion = "1.0.0"
+            };
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false,
+                PackageType = null
             };
 
             var mockApiRevision = new APIRevisionListItemModel()
@@ -152,56 +156,47 @@ namespace APIViewUnitTests
                 IsApproved = false
             };
 
-            // Setup mocks for new review creation scenario
             _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync((ReviewListItemModel)null); // No existing review
-
-            _mockReviewManager.Setup(m => m.CreateReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
-                .ReturnsAsync(new ReviewListItemModel() 
-                { 
-                    Id = "test-review-id", 
-                    PackageName = "TestPackage", 
-                    Language = "C#",
-                    IsApproved = false,
-                    PackageType = null
-                });
-
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(), It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<int?>()))
-                .ReturnsAsync(mockApiRevision);
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(mockApiRevision);
 
             _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
 
-            // Act
+            
             var result = await _controller.UploadAutoReview(mockFile.Object, "test-label", packageType: packageTypeValue);
 
-            // Assert
             result.Should().NotBeNull();
-            
-            // UploadAutoReview returns ObjectResult with 202 status and review URL
             var objectResult = result.Should().BeOfType<ObjectResult>().Which;
             objectResult.StatusCode.Should().Be(StatusCodes.Status202Accepted);
             objectResult.Value.Should().NotBeNull();
             objectResult.Value.Should().BeOfType<string>();
 
-            // Verify that CreateReviewAsync was called with null PackageType for invalid values
-            _mockReviewManager.Verify(m => m.CreateReviewAsync(
-                "TestPackage", 
-                "C#", 
-                false, 
-                It.Is<PackageType?>(pt => !pt.HasValue)), 
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<CodeFile>(),
+                "test-label",
+                "test.json",
+                It.IsAny<MemoryStream>(),
+                packageTypeValue,
+                false),
                 Times.Once);
         }
 
         [Fact]
-        public async Task UploadAutoReview_WithExistingReviewWithoutPackageType_UpdatesReviewPackageType()
+        public async Task UploadAutoReview_WhenServiceReturnsApprovedRevision_ReturnsOk()
         {
-            // Arrange
             var mockFile = CreateMockFormFile("test.json", "dummy content");
             var mockCodeFile = new CodeFile()
             {
@@ -211,66 +206,51 @@ namespace APIViewUnitTests
                 PackageVersion = "1.0.0"
             };
 
-            var existingReview = new ReviewListItemModel()
+            var mockReview = new ReviewListItemModel()
             {
-                Id = "existing-review-id",
+                Id = "test-review-id",
                 PackageName = "TestPackage",
                 Language = "C#",
-                IsApproved = false,
-                PackageType = null  // No package type set initially
+                IsApproved = false
             };
 
             var mockApiRevision = new APIRevisionListItemModel()
             {
                 Id = "test-revision-id",
-                ReviewId = "existing-review-id",
+                ReviewId = "test-review-id",
                 Language = "C#",
-                IsApproved = false
+                IsApproved = true // Approved revision
             };
 
-            // Setup mocks for existing review scenario
             _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync(existingReview);
-
-            _mockReviewManager.Setup(m => m.UpdateReviewAsync(It.IsAny<ReviewListItemModel>()))
-                .ReturnsAsync(existingReview);
-
-            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
-                .ReturnsAsync(new List<APIRevisionListItemModel>());
-
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(), It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<int?>()))
-                .ReturnsAsync(mockApiRevision);
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(mockApiRevision);
 
             _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
 
-            // Act
-            var result = await _controller.UploadAutoReview(mockFile.Object, "test-label", packageType: "mgmt");
+            var result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
 
-            // Assert
             result.Should().NotBeNull();
-            
-            // UploadAutoReview returns ObjectResult with 202 status and review URL
-            var objectResult = result.Should().BeOfType<ObjectResult>().Which;
-            objectResult.StatusCode.Should().Be(StatusCodes.Status202Accepted);
-            objectResult.Value.Should().NotBeNull();
-            objectResult.Value.Should().BeOfType<string>();
-
-            // Verify that UpdateReviewAsync was called (indicating the review was updated)
-            _mockReviewManager.Verify(m => m.UpdateReviewAsync(
-                It.Is<ReviewListItemModel>(r => r.PackageType == PackageType.mgmt)), 
-                Times.Once);
+            var okResult = result.Should().BeOfType<OkObjectResult>().Which;
+            okResult.Value.Should().NotBeNull();
+            okResult.Value.Should().BeOfType<string>().Which.Should().Contain("/Assemblies/Review/");
         }
 
         [Fact]
-        public async Task UploadAutoReview_WithExistingReviewWithPackageType_DoesNotOverridePackageType()
+        public async Task UploadAutoReview_WhenReviewIsApprovedButRevisionIsNot_Returns201Created()
         {
-            // Arrange
             var mockFile = CreateMockFormFile("test.json", "dummy content");
             var mockCodeFile = new CodeFile()
             {
@@ -280,55 +260,45 @@ namespace APIViewUnitTests
                 PackageVersion = "1.0.0"
             };
 
-            var existingReview = new ReviewListItemModel()
+            var mockReview = new ReviewListItemModel()
             {
-                Id = "existing-review-id",
+                Id = "test-review-id",
                 PackageName = "TestPackage",
                 Language = "C#",
-                IsApproved = false,
-                PackageType = PackageType.client  // Already has package type set
+                IsApproved = true 
             };
 
             var mockApiRevision = new APIRevisionListItemModel()
             {
                 Id = "test-revision-id",
-                ReviewId = "existing-review-id",
+                ReviewId = "test-review-id",
                 Language = "C#",
-                IsApproved = false
+                IsApproved = false 
             };
 
-            // Setup mocks for existing review scenario
             _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync(existingReview);
-
-            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
-                .ReturnsAsync(new List<APIRevisionListItemModel>());
-
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(), It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<int?>()))
-                .ReturnsAsync(mockApiRevision);
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(mockApiRevision);
 
             _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
 
-            // Act
-            var result = await _controller.UploadAutoReview(mockFile.Object, "test-label", packageType: "mgmt");
+            var result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
 
-            // Assert
             result.Should().NotBeNull();
-            
-            // UploadAutoReview returns ObjectResult with 202 status and review URL
             var objectResult = result.Should().BeOfType<ObjectResult>().Which;
-            objectResult.StatusCode.Should().Be(StatusCodes.Status202Accepted);
-            objectResult.Value.Should().NotBeNull();
-            objectResult.Value.Should().BeOfType<string>();
-
-            // Verify that UpdateReviewAsync was NOT called since PackageType was already set
-            _mockReviewManager.Verify(m => m.UpdateReviewAsync(It.IsAny<ReviewListItemModel>()), Times.Never);
+            objectResult.StatusCode.Should().Be(StatusCodes.Status201Created);
         }
 
         [Fact]
@@ -345,13 +315,13 @@ namespace APIViewUnitTests
             var objectResult = result.Should().BeOfType<ObjectResult>().Which;
             objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
             objectResult.Value.Should().NotBeNull();
-            
+
             string errorDetails = objectResult.Value.ToString();
             errorDetails.Should().Contain("Failed to parse code file: Invalid format");
         }
 
         [Fact]
-        public async Task UploadAutoReview_WhenReviewCreationFails_Returns500WithDetails()
+        public async Task UploadAutoReview_WhenServiceThrows_Returns500WithDetails()
         {
             var mockFile = CreateMockFormFile("test.json", "dummy content");
             var mockCodeFile = new CodeFile()
@@ -365,10 +335,14 @@ namespace APIViewUnitTests
             _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync((ReviewListItemModel)null);
-
-            _mockReviewManager.Setup(m => m.CreateReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
                 .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
             ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
@@ -377,13 +351,13 @@ namespace APIViewUnitTests
             var objectResult = result.Should().BeOfType<ObjectResult>().Which;
             objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
             objectResult.Value.Should().NotBeNull();
-            
+
             string errorDetails = objectResult.Value.ToString();
             errorDetails.Should().Contain("Database connection failed");
         }
 
         [Fact]
-        public async Task UploadAutoReview_WhenAPIRevisionCreationFails_Returns500WithDetails()
+        public async Task UploadAutoReview_WhenServiceReturnsNullRevision_Returns500()
         {
             var mockFile = CreateMockFormFile("test.json", "dummy content");
             var mockCodeFile = new CodeFile()
@@ -394,10 +368,50 @@ namespace APIViewUnitTests
                 PackageVersion = "1.0.0"
             };
 
-            var existingReview = new ReviewListItemModel()
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((new ReviewListItemModel(), (APIRevisionListItemModel)null));
+
+            var result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
+
+            result.Should().NotBeNull();
+            var objectResult = result.Should().BeOfType<ObjectResult>().Which;
+            objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        }
+
+        [Fact]
+        public async Task UploadAutoReview_PassesCompareAllRevisionsParameterToService()
+        {
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockCodeFile = new CodeFile()
             {
-                Id = "existing-review-id",
+                Name = "test",
+                Language = "C#",
                 PackageName = "TestPackage",
+                PackageVersion = "1.0.0"
+            };
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            var mockApiRevision = new APIRevisionListItemModel()
+            {
+                Id = "test-revision-id",
+                ReviewId = "test-review-id",
                 Language = "C#",
                 IsApproved = false
             };
@@ -405,25 +419,145 @@ namespace APIViewUnitTests
             _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
                 .ReturnsAsync(mockCodeFile);
 
-            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-                .ReturnsAsync(existingReview);
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
 
-            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
-                .ReturnsAsync(new List<APIRevisionListItemModel>());
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
 
-            // Setup mock to throw an exception during API revision creation
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(), It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<int?>()))
-                .ThrowsAsync(new ArgumentException("Invalid API revision data: Missing required field 'Version'"));
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
 
-            ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
+            await _controller.UploadAutoReview(mockFile.Object, "test-label", compareAllRevisions: true);
 
-            result.Should().NotBeNull();
-            var objectResult = result.Should().BeOfType<ObjectResult>().Which;
-            objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-            objectResult.Value.Should().NotBeNull();
-            
-            string errorDetails = objectResult.Value.ToString();
-            errorDetails.Should().Contain("Invalid API revision data: Missing required field 'Version'");
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<CodeFile>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<MemoryStream>(),
+                It.IsAny<string>(),
+                true), // compareAllRevisions = true
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task UploadAutoReview_UpdatesRevisionMetadataWithProvidedVersion()
+        {
+            // Arrange
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockCodeFile = new CodeFile()
+            {
+                Name = "test",
+                Language = "C#",
+                PackageName = "TestPackage",
+                PackageVersion = "1.0.0"
+            };
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            var mockApiRevision = new APIRevisionListItemModel()
+            {
+                Id = "test-revision-id",
+                ReviewId = "test-review-id",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
+
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
+
+            await _controller.UploadAutoReview(mockFile.Object, "test-label", packageVersion: "2.5.0", setReleaseTag: true);
+
+            _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                mockApiRevision,
+                "2.5.0", // Should use the provided version, not the code file's version
+                "test-label",
+                true), // setReleaseTag = true
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task UploadAutoReview_UsesCodeFileVersionWhenVersionNotProvided()
+        {
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockCodeFile = new CodeFile()
+            {
+                Name = "test",
+                Language = "C#",
+                PackageName = "TestPackage",
+                PackageVersion = "1.0.0"
+            };
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            var mockApiRevision = new APIRevisionListItemModel()
+            {
+                Id = "test-revision-id",
+                ReviewId = "test-review-id",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
+
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
+
+            await _controller.UploadAutoReview(mockFile.Object, "test-label");
+
+            _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                mockApiRevision,
+                "1.0.0", // Should use the code file's version
+                "test-label",
+                false), // setReleaseTag = false by default
+                Times.Once);
         }
 
         [Theory]
@@ -445,25 +579,25 @@ namespace APIViewUnitTests
                 packageName,
                 revisionId);
 
-            _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(),
-                    It.IsAny<RenderedCodeFile>(),
-                    true))
-                .ReturnsAsync(existingVersion == newVersion);
-
-            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<APIRevisionType>(),
-                    It.IsAny<string>(),
-                    It.IsAny<MemoryStream>(),
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
                     It.IsAny<CodeFile>(),
                     It.IsAny<string>(),
-                    It.IsAny<int?>()))
-                .ReturnsAsync(new APIRevisionListItemModel
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((new ReviewListItemModel
                 {
-                    Id = "new-revision-id", ReviewId = "review-id", Language = "Python", IsApproved = false
-                });
+                    Id = "review-id",
+                    PackageName = packageName,
+                    Language = "Python",
+                    IsApproved = false,
+                    PackageType = PackageType.client
+                },
+                shouldCreateNewRevision 
+                    ? new APIRevisionListItemModel { Id = "new-revision-id", ReviewId = "review-id", Language = "Python", IsApproved = false }
+                    : existingRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(
                     It.IsAny<APIRevisionListItemModel>(),
@@ -496,21 +630,18 @@ namespace APIViewUnitTests
                 "client"
             );
 
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    "client",
+                    false),
+                Times.Once);
+
             if (shouldCreateNewRevision)
             {
-                // Scenario 1: Different versions → Should create new revision
-                _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<APIRevisionType>(),
-                        It.IsAny<string>(),
-                        It.IsAny<MemoryStream>(),
-                        It.IsAny<CodeFile>(),
-                        It.IsAny<string>(),
-                        It.IsAny<int?>()),
-                    Times.Once,
-                    $"Expected new revision to be created when version differs ({existingVersion} → {newVersion})");
-
                 _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
                         It.Is<APIRevisionListItemModel>(r => r.Id == "new-revision-id"),
                         newVersion,
@@ -522,19 +653,6 @@ namespace APIViewUnitTests
 
             if (shouldReuseRevision)
             {
-                // Scenario 2: Same version → Should reuse existing revision
-                _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<APIRevisionType>(),
-                        It.IsAny<string>(),
-                        It.IsAny<MemoryStream>(),
-                        It.IsAny<CodeFile>(),
-                        It.IsAny<string>(),
-                        It.IsAny<int?>()),
-                    Times.Never,
-                    $"Should NOT create new revision when version and code are the same ({newVersion})");
-
                 _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
                         It.Is<APIRevisionListItemModel>(r => r.Id == existingRevision.Id),
                         newVersion,
@@ -593,10 +711,6 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m =>
                     m.GetAPIRevisionsAsync(existingReview.Id, It.IsAny<string>(), It.IsAny<APIRevisionType>()))
                 .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
-
-            _mockCommentsManager.Setup(m =>
-                    m.GetCommentsAsync(existingReview.Id, It.IsAny<bool>(), It.IsAny<CommentType>()))
-                .ReturnsAsync(new List<CommentItemModel>());
 
             return existingRevision;
         }

@@ -63,7 +63,7 @@ extends:
           - name: WebProjectPath
             value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
           - name: NodeVersion
-            value: '18.x'
+            value: '22.x'
           - name: BuildConfiguration
             value: 'Release'
           - name: GoParserPackagePath
@@ -187,11 +187,6 @@ extends:
               name: $(WINDOWSPOOL)
               image: $(WINDOWSVMIMAGE)
               os: windows
-
-            templateContext:
-              sdl: 
-                componentgovernance:
-                  enabled: true # Enable CG temporarily in the Test job to clear CG history
 
             steps:
               - script: |
@@ -358,7 +353,7 @@ extends:
                 inputs:
                   folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                   fileType: json
-                  targetFiles: wwwroot/spa/assets/config.json
+                  targetFiles: wwwroot/spa/browser/assets/config.json
 
               - task: AzureRmWebAppDeployment@4
                 displayName: 'Deploy Azure App Service'
@@ -420,7 +415,7 @@ extends:
                       inputs:
                         folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                         fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
 
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Azure App Service Deploy: apiviewuat'
@@ -480,7 +475,7 @@ extends:
                       inputs:
                         folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                         fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
 
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Deploy Azure App Service'

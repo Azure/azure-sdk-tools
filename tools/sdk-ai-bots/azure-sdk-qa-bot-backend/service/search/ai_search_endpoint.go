@@ -11,9 +11,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 type SearchClient struct {
@@ -28,7 +29,7 @@ func NewSearchClient() *SearchClient {
 		BaseUrl: config.AppConfig.AI_SEARCH_BASE_URL,
 		ApiKey:  config.AI_SEARCH_APIKEY,
 		Index:   config.AppConfig.AI_SEARCH_INDEX,
-		Agent:   config.AppConfig.AI_SEARCH_AGENT,
+		Agent:   config.AppConfig.AI_SEARCH_KNOWLEDGE_BASE,
 	}
 }
 
@@ -261,12 +262,33 @@ func (s *SearchClient) GetHeader1CompleteContext(chunk model.Index) ([]model.Ind
 	return resp.Value, nil
 }
 
+func (s *SearchClient) GetHeader2CompleteContext(chunk model.Index) ([]model.Index, error) {
+	// Escape single quotes by replacing them with double single quotes (OData filter syntax)
+	escapedHeader1 := strings.ReplaceAll(chunk.Header1, "'", "''")
+	escapedHeader2 := strings.ReplaceAll(chunk.Header2, "'", "''")
+
+	req := &model.QueryIndexRequest{
+		Count:   false,
+		OrderBy: "ordinal_position",
+		Select:  "chunk_id, chunk, title, header_1, header_2, header_3, ordinal_position, context_id",
+		Filter:  fmt.Sprintf("title eq '%s' and context_id eq '%s' and header_1 eq '%s' and header_2 eq '%s'", chunk.Title, chunk.ContextID, escapedHeader1, escapedHeader2),
+	}
+	resp, err := s.QueryIndex(context.Background(), req)
+	if err != nil {
+		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+	}
+	return resp.Value, nil
+}
+
 func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var chunks []model.Index
 	var err error
-	if strings.HasPrefix(chunk.ContextID, "static") {
+	switch chunk.ContextID {
+	case model.Source_TypeSpecQA, model.Source_TypeSpecMigration:
 		chunks, err = s.GetHeader1CompleteContext(chunk)
-	} else {
+	case model.Source_StaticTypeSpecToSwaggerMapping:
+		chunks, err = s.GetHeader2CompleteContext(chunk)
+	default:
 		chunks, err = s.GetCompleteContext(chunk)
 	}
 	if err != nil {
@@ -359,21 +381,32 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		filters = append(filters, filter)
 	}
 
-	targetIndexParam := model.KnowledgeAgentIndexParams{
-		IndexName:         s.Index,
-		RerankerThreshold: model.RerankScoreMediumRelevanceThreshold,
+	knowledgeSourceParams := []model.KnowledgeSourceParams{
+		{
+			KnowledgeSourceName: config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
+			Kind:                model.KnowledgeSourceKindSearchIndex,
+			FilterAddOn:         strings.Join(filters, " or "),
+			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
+			IncludeReferences:   to.Ptr(true),
+		},
 	}
-	if len(filters) > 0 {
-		targetIndexParam.FilterAddOn = strings.Join(filters, " or ")
+
+	req := &model.AgenticSearchRequest{
+		Messages:                 messages,
+		KnowledgeSourceParams:    knowledgeSourceParams,
+		IncludeActivity:          true,
+		OutputMode:               model.OutputModeExtractiveData,
+		RetrievalReasoningEffort: &model.RetrievalReasoningEffort{Kind: model.RetrievalReasoningEffortMedium},
 	}
-	req := &model.AgenticSearchRequest{}
-	req.Messages = messages
-	req.TargetIndexParams = []model.KnowledgeAgentIndexParams{targetIndexParam}
+
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/agents/%s/%s", s.BaseUrl, s.Agent, "/retrieve?api-version=2025-05-01-preview"), bytes.NewReader(body))
+	knowledgeBaseAPI := config.AppConfig.AI_SEARCH_KNOWLEDGE_BASE_API
+	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_BASE_URL}", s.BaseUrl)
+	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_AGENT}", s.Agent)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, knowledgeBaseAPI, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -385,7 +418,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		b, _ := io.ReadAll(resp.Body)
 		log.Println(string(b))
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -395,6 +428,5 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 	if err := json.Unmarshal(b, httpResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
-
 	return httpResp, nil
 }

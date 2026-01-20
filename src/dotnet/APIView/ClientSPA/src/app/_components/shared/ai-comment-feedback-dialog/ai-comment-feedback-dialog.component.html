@@ -1,0 +1,76 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [resizable]="false"
+  [draggable]="false"
+  [dismissableMask]="false"
+  [header]="dialogTitle"
+  [style]="{width: '500px'}"
+  styleClass="ai-feedback-dialog"
+  appendTo="body"
+  (onHide)="onHide()">
+
+  <div class="dialog-content">
+    <div class="mb-3">
+      <p class="feedback-description">
+        {{ dialogDescription }}
+      </p>
+    </div>
+
+    <!-- Feedback Reasons -->
+    <div class="feedback-reasons mb-3">
+      <label class="form-label fw-semibold">
+        Reason <span class="text-danger">*</span>
+      </label>
+      <div *ngFor="let reason of feedbackReasons" class="reason-item">
+        <p-checkbox
+          [value]="reason.key"
+          [(ngModel)]="selectedReasons"
+          [inputId]="reason.key"
+          [binary]="false"
+          styleClass="reason-checkbox">
+        </p-checkbox>
+        <label [for]="reason.key" class="ms-2">{{ reason.label }}</label>
+      </div>
+    </div>
+
+    <!-- Additional Comments -->
+    <div class="additional-comments mb-3">
+      <label for="additionalComments" class="form-label">
+        Additional comments (optional)
+      </label>
+      <textarea
+        id="additionalComments"
+        class="form-control"
+        [(ngModel)]="additionalComments"
+        rows="4"
+        placeholder="Provide additional feedback.">
+      </textarea>
+    </div>
+
+    <!-- Validation Message -->
+    <div *ngIf="!canSubmit" class="alert alert-warning py-2 px-3 mb-0" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      <small>Please select at least one reason to submit feedback.</small>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2 w-100">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="onCancel()">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!canSubmit"
+        (click)="onSubmit()">
+        Submit
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

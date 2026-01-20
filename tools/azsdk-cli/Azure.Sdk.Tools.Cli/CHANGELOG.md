@@ -1,5 +1,48 @@
 # Release History
 
+## 0.5.12 (Unreleased)
+
+### Features Added
+
+- Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.5.11 (2026-01-05)
+
+### Features Added
+
+- Updated `azsdk_verify_setup` to check that `core.longpaths` in git config is set to true on Windows
+- Removed `azsdk pkg release-readiness` and replace it with `azsdk pkg release --check-ready`
+- Add MCP Tool `azsdk_update_api_spec_pull_request_in_release_plan` & CLI command to update the TypeSpec pull request link in release plan
+
+### Bugs Fixed
+
+- Fixed test failures being reported as a success to the agent.
+- Test result output is now made available to the agent.
+- Fixed an APIView approval failure bug in `azsdk_release_sdk` tool for management plane packages.
+- Fixed issue in `azsdk_link_sdk_pull_request_to_release_plan` and `azsdk_get_sdk_pull_request_link` tools where language was set as unknown in response.
+- Fixed issue in `azsdk_get_release_plan_for_spec_pr` where tool call status was set as successful in telemetry but actually failed.
+
+## 0.5.10 (2025-12-08)
+
+### Features Added
+
+- Add CLI command to identify in progress release plans with past due date
+- Allow non-exact matches for package name in `azsdk_release_sdk` tool
+- Moved `azsdk_check_api_spec_ready_for_sdk` and `azsdk_link_sdk_pull_request_to_release_plan` under release plan command hierarchy.
+- Added APIView tools to expose APIView functionality to MCP agents (`get-comments`) and CLI (`get-content`)
+
+### Bugs Fixed
+
+- .NET validation GeneratedCode check had scriptPath passed in twice
+- Fixed invalid language error in `azsdk_link_sdk_pull_request_to_release_plan` tool
+- Fixed issues in package and release plan responses so package_type, language and TypeSpec project path are set in the telemetry.
+
 ## 0.5.9 (2025-11-24)
 
 ### Features Added

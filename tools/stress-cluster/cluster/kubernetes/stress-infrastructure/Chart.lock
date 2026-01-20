@@ -4,6 +4,6 @@ dependencies:
   version: 2.6.3
 - name: stress-test-addons
   repository: https://azuresdkartifacts.z5.web.core.windows.net/stress/
-  version: 0.3.5
-digest: sha256:190e048020a3e66f44c5f676e04b8b148fd7692d3d973b438f09ac24dd1a2d4c
-generated: "2025-06-04T14:55:12.840254127-04:00"
+  version: 0.3.6
+digest: sha256:59900baffdd6033b2e8d2aff959d582f06f1232816b188a90edd360c6f2036e2
+generated: "2025-12-04T17:14:09.560750373-05:00"

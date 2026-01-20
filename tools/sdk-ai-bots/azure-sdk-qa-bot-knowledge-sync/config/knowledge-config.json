@@ -146,13 +146,25 @@
       },
       "paths": [
         {
-          "description": "Testing Guidelines for Azure SDK",
+          "description": "Testing Guidelines for Azure SDK - main page",
+          "path": "/Engineering-System/Testing-Guidelines.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Testing Guidelines for Azure SDK - sub-pages",
           "path": "/Engineering-System/Testing-Guidelines",
           "folder": "azure-sdk-internal-wiki",
           "relativeByRepoPath": true
         },
         {
-          "description": "Azure DevOps Pipeline Guidance",
+          "description": "Azure DevOps Pipeline Guidance - main page",
+          "path": "/Engineering-System/Pipelines/Azure-DevOps-Pipeline-Guidance.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure DevOps Pipeline Guidance - sub-pages",
           "path": "/Engineering-System/Pipelines/Azure-DevOps-Pipeline-Guidance",
           "folder": "azure-sdk-internal-wiki",
           "relativeByRepoPath": true

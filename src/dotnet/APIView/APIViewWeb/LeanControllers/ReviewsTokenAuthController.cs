@@ -5,6 +5,8 @@ using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +22,7 @@ public class ReviewsTokenAuthController : ControllerBase
 {
     private readonly IRevisionResolver _revisionResolver;
     private readonly IAPIRevisionsManager _apiRevisionsManager;
+    private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
     private readonly IReviewManager _reviewManager;
     private readonly IConfiguration _configuration;
     private readonly IEnumerable<LanguageService> _languageServices;
@@ -28,6 +31,7 @@ public class ReviewsTokenAuthController : ControllerBase
     public ReviewsTokenAuthController(
         IRevisionResolver revisionResolver,
         IAPIRevisionsManager apiRevisionsManager,
+        ICosmosPullRequestsRepository pullRequestsRepository,
         IReviewManager reviewManager,
         IConfiguration configuration,
         IEnumerable<LanguageService> languageServices,
@@ -36,6 +40,7 @@ public class ReviewsTokenAuthController : ControllerBase
         _revisionResolver = revisionResolver;
         _apiRevisionsManager = apiRevisionsManager;
         _reviewManager = reviewManager;
+        _pullRequestsRepository = pullRequestsRepository;
         _configuration = configuration;
         _languageServices = languageServices;
         _logger = logger;
@@ -49,14 +54,14 @@ public class ReviewsTokenAuthController : ControllerBase
     /// - Package name + language (+ optional version)
     /// - APIView URL (review or revision link)
     /// </summary>
-    /// <param name="packageName">Package name (e.g., "Azure.Storage.Blobs"). Requires language.</param>
-    /// <param name="language">Programming language (e.g., "C#", "Python"). Requires packageName.</param>
+    /// <param name="packageQuery">Package name (e.g., "Azure.Storage.Blobs"). Requires language.</param>
+    /// <param name="language">Programming language (e.g., "C#", "Python"). Requires packageQuery.</param>
     /// <param name="version">Optional package version. If not specified, resolves to latest revision.</param>
     /// <param name="link">APIView URL (e.g., "https://spa.apiview.dev/review/{id}?activeApiRevisionId={revId}")</param>
     /// <returns>Resolved IDs for use in subsequent API calls.</returns>
     [HttpGet("resolve", Name = "ResolveReview")]
     public async Task<ActionResult<RevisionResolveResult>> Resolve(
-        [FromQuery] string packageName = null,
+        [FromQuery] string packageQuery = null,
         [FromQuery] string language = null,
         [FromQuery] string version = null,
         [FromQuery] string link = null)
@@ -69,16 +74,16 @@ public class ReviewsTokenAuthController : ControllerBase
             {
                 result = await _revisionResolver.ResolveByLinkAsync(link);
             }
-            else if (!string.IsNullOrEmpty(packageName) && !string.IsNullOrEmpty(language))
+            else if (!string.IsNullOrEmpty(packageQuery) && !string.IsNullOrEmpty(language))
             {
-                result = await _revisionResolver.ResolveByPackageAsync(packageName, language, version);
+                result = await _revisionResolver.ResolveByPackageAsync(packageQuery, language, version);
             }
             else
             {
                 return BadRequest(
                     "Invalid parameters. Provide one of: " +
                     "(1) 'link' (APIView URL), or " +
-                    "(2) 'packageName' + 'language' (with optional 'version').");
+                    "(2) 'packageQuery' + 'language' (with optional 'version').");
             }
 
             if (result == null)
@@ -123,7 +128,14 @@ public class ReviewsTokenAuthController : ControllerBase
                 return NotFound($"Review for revision '{revisionId}' not found.");
             }
 
-            ReviewMetadata metadata = MapToMetadata(review, revision);
+            string pullRequestRepo = null;
+            if (revision.PullRequestNo != null)
+            {
+                IEnumerable<PullRequestModel> pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(revision.ReviewId, revision.Id);
+                pullRequestRepo = pullRequests.FirstOrDefault()?.RepoName;
+            }
+
+            ReviewMetadata metadata = MapToMetadata(review, revision, pullRequestRepo);
             return new LeanJsonResult(metadata, StatusCodes.Status200OK);
         }
         catch (System.Exception ex)
@@ -133,7 +145,7 @@ public class ReviewsTokenAuthController : ControllerBase
         }
     }
 
-    private ReviewMetadata MapToMetadata(ReviewListItemModel review, APIRevisionListItemModel revision)
+    private ReviewMetadata MapToMetadata(ReviewListItemModel review, APIRevisionListItemModel revision, string pullRequestRepo)
     {
         var revisionLink = ManagerHelpers.ResolveReviewUrl(
             review.Id,
@@ -157,6 +169,7 @@ public class ReviewsTokenAuthController : ControllerBase
                 PackageVersion = revision.PackageVersion,
                 IsApproved = revision.IsApproved,
                 PullRequestNo = revision.PullRequestNo,
+                PullRequestRepository = pullRequestRepo,
                 CreatedBy = revision.CreatedBy,
                 CreatedOn = revision.CreatedOn,
                 RevisionLink = revisionLink

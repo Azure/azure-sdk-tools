@@ -31,6 +31,8 @@ namespace Reviews {
         isApproved: boolean;
         /** The pull request number associated with this revision, if any */
         pullRequestNo?: int32;
+        /** The pull request repository associated with this revision, if any */
+        pullRequestRepo?: string;
         /** Direct link to view this revision in APIView */
         revisionLink: string;
         /** The user who created this revision */
@@ -69,8 +71,8 @@ namespace Reviews {
      * - Package name + language (+ optional version)
      * - APIView URL (review or revision link)
      * 
-     * @param packageName Package name (e.g., "Azure.Storage.Blobs"). Requires language.
-     * @param language Programming language (e.g., "C#", "Python"). Requires packageName.
+     * @param packageQuery Package name query (e.g., "Azure.Storage.Blobs"). Requires language.
+     * @param language Programming language (e.g., "C#", "Python"). Requires packageQuery.
      * @param version Optional package version. If not specified, resolves to latest revision.
      * @param link APIView URL (e.g., "https://spa.apiview.dev/review/{id}?activeApiRevisionId={revId}")
      * @returns Resolved IDs for use in subsequent API calls.
@@ -78,7 +80,7 @@ namespace Reviews {
     @get
     @route("/resolve")
     op resolve(
-        @query packageName?: string,
+        @query packageQuery?: string,
         @query language?: string,
         @query version?: string,
         @query link?: string

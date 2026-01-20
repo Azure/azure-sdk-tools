@@ -12,7 +12,7 @@ namespace APIViewWeb.Managers.Interfaces
     public interface IRevisionResolver
     {
         Task<RevisionResolveResult> ResolveByPackageAsync(
-            string packageName,
+            string packageQuery,
             string language,
             string version = null);
         Task<RevisionResolveResult> ResolveByLinkAsync(string link);

@@ -16,7 +16,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
-    private readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
@@ -25,21 +24,19 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <param name="languageServices">The collection of available language services.</param>
     /// <param name="gitHelper">The Git helper for repository operations.</param>
     /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
-    /// <param name="specGenSdkConfigHelper">The configuration helper for building and validating code after updates.</param>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
-        ITspClientHelper tspClientHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper
+        ITspClientHelper tspClientHelper
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper;
-        this.specGenSdkConfigHelper = specGenSdkConfigHelper;
     }
 
     // MCP Tool Names
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
+    private const int CommandTimeoutInMinutes = 30;
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
@@ -124,37 +121,50 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 };
             }
 
-            var customizationRoot = languageService.GetCustomizationRoot(packagePath, ct);
-            logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
+            var hasCustomizations = languageService.HasCustomizations(packagePath, ct);
+            logger.LogDebug("Has customizations: {HasCustomizations}", hasCustomizations);
 
-            // Apply patches
-            var patchesApplied = await ApplyPatchesAsync(commitSha, customizationRoot, packagePath, languageService, ct);
             var guidance = new List<string>();
 
-            // If patches were applied, regenerate and build to validate the complete process
-            if (patchesApplied)
+            // Check if customizations exist - only activate Phase B if customization files are present
+            if (!hasCustomizations)
             {
-                logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-                var (Success, ErrorMessage) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
-                if (!Success)
-                {
-                    logger.LogWarning("Code regeneration failed: {Error}", ErrorMessage);
-                    guidance.Add($"Code regeneration failed after applying patches: {ErrorMessage}");
-                    guidance.Add("");
-                    guidance.Add(PATCHES_FAILED_GUIDANCE);
-                }
-                else
-                {
-                    logger.LogInformation("Regeneration successful, building SDK code to validate...");
-                    await BuildAndGenerateGuidanceAsync(packagePath, languageService, guidance, ct);
-                }
+                logger.LogInformation("No customization files detected - Phase B skipped");
+                guidance.Add(NO_CUSTOMIZATIONS_FOUND_NEXT_STEPS);
             }
             else
             {
-                // No patches applied or no customizations found
-                guidance.Add(string.IsNullOrEmpty(customizationRoot) || !Directory.Exists(customizationRoot) 
-                    ? NO_CUSTOMIZATIONS_FOUND_NEXT_STEPS 
-                    : PATCHES_FAILED_GUIDANCE);
+                logger.LogInformation("Customization files detected - activating Phase B");
+                
+                // Phase B: Apply patches to customization code
+                var patchesApplied = await ApplyPatchesAsync(commitSha, packagePath, packagePath, languageService, ct);
+
+                // If patches were applied, regenerate and build to validate the complete process
+                if (patchesApplied)
+                {
+                    logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
+                    var (Success, ErrorMessage) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
+                    if (!Success)
+                    {
+                        logger.LogWarning("Code regeneration failed: {Error}", ErrorMessage);
+                        guidance.Add($"Code regeneration failed after applying patches: {ErrorMessage}");
+                        guidance.Add("");
+                        guidance.Add(PATCHES_FAILED_GUIDANCE);
+                    }
+                    else
+                    {
+                        logger.LogInformation("Regeneration successful, building SDK code to validate...");
+                        await BuildAndGenerateGuidanceAsync(packagePath, languageService, guidance, ct);
+                    }
+                }
+                else
+                {
+                    // Customizations exist but patches were not applied. This can happen when:
+                    // - No applicable changes were found between old and new generated code
+                    // - The patching process encountered errors (check earlier logs for details)
+                    logger.LogInformation("Patches were not applied. This may indicate no applicable changes or a patching error. See earlier logs for details.");
+                    guidance.Add(PATCHES_FAILED_GUIDANCE);
+                }
             }
 
             return new CustomizedCodeUpdateResponse
@@ -191,76 +201,6 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     }
 
 
-    /// <summary>
-    /// Builds the SDK project to validate compilation.
-    /// </summary>
-    private async Task<(bool Success, string? ErrorMessage)> BuildSdkAsync(string packagePath, LanguageService languageService, CancellationToken ct)
-    {
-        try
-        {
-            // Validate inputs
-            if (string.IsNullOrEmpty(packagePath))
-            {
-                logger.LogError("Package path is null or empty in BuildSdkAsync");
-                return (false, "Package path is required.");
-            }
-
-            if (!Directory.Exists(packagePath))
-            {
-                logger.LogError("Package path does not exist: {PackagePath}", packagePath);
-                return (false, $"Path does not exist: {packagePath}");
-            }
-
-            logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
-
-            // Get repository root path from project path
-            string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-            if (string.IsNullOrEmpty(sdkRepoRoot))
-            {
-                return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.");
-            }
-
-            string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
-            PackageInfo? packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-            // Return if the project is python project (Python SDKs don't require compilation)
-            if (sdkRepoName.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
-            {
-                return (true, null); // Success - no build needed for Python
-            }
-
-            // Get build configuration and execute if found
-            var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
-            if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
-            {
-                // Prepare script parameters
-                var scriptParameters = new Dictionary<string, string>
-                {
-                    { "PackagePath", packagePath }
-                };
-                
-                // Create and execute process options for the build script
-                var processOptions = specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, 30);
-                if (processOptions != null)
-                {
-                    var result = await specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");
-                    var errorMessage = result.ExitCode == 0 ? null : 
-                        !string.IsNullOrEmpty(result.ResponseError) ? result.ResponseError :
-                        result.ResponseErrors?.Count > 0 ? string.Join("; ", result.ResponseErrors) :
-                        !string.IsNullOrEmpty(result.Message) ? result.Message :
-                        $"Build failed with exit code {result.ExitCode}";
-                    return (result.ExitCode == 0, errorMessage);
-                }
-            }
-            
-            return (false, "No build configuration found or failed to prepare the build command");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while building SDK");
-            return (false, $"An error occurred: {ex.Message}");
-        }
-    }
-
     private async Task<bool> ApplyPatchesAsync(
         string commitSha,
         string? customizationRoot,
@@ -287,7 +227,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         List<string> guidance,
         CancellationToken ct)
     {
-        var (success, errorMessage) = await BuildSdkAsync(packagePath, languageService, ct);
+        var (success, errorMessage, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
         if (success)
         {

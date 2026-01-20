@@ -208,6 +208,31 @@ extends:
                   ng test --no-watch --no-progress --browsers=ChromeHeadless
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Run SPA Tests"
+
+              - script: |
+                  npx playwright install --with-deps chromium
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Playwright Browsers for ClientSPA"
+
+              - script: |
+                  npm run e2e
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Run ClientSPA Playwright E2E Tests"
+
+              - task: PublishTestResults@2
+                condition: succeededOrFailed()
+                inputs:
+                  testResultsFiles: '$(SPAClientProjectDirectory)/ui-tests/test-results/**/*.xml'
+                  testRunTitle: 'ClientSPA Playwright E2E Tests'
+                  testResultsFormat: 'JUnit'
+                  mergeTestResults: true
+
+              - task: 1ES.PublishPipelineArtifact@1
+                condition: succeededOrFailed()
+                inputs:
+                  path: '$(Build.SourcesDirectory)/src/dotnet/APIView/ClientSPA/ui-tests/playwright-report'
+                  artifact: 'ClientSPA Playwright Test Report'
+
               #- template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
               #  parameters:
               #    StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'

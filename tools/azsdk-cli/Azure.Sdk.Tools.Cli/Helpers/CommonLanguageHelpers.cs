@@ -114,6 +114,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var timeout = TimeSpan.FromMinutes(5);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.");
+            }
+
             return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
@@ -150,15 +157,30 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
+            // TODO: investigate doc-warden code, this normalizes package path for Scan Paths
+            var normalizedPackagePath = Path.GetFullPath(packagePath);
+            // Ensure drive letter is uppercase on Windows for consistency
+            if (OperatingSystem.IsWindows() && normalizedPackagePath.Length >= 2)
+            {
+                normalizedPackagePath = char.ToUpperInvariant(normalizedPackagePath[0]) + normalizedPackagePath.Substring(1);
+            }
+            
             var command = "pwsh";
             var args = new[] {
                 "-File", scriptPath,
                 "-SettingsPath", settingsPath,
-                "-ScanPaths", packagePath,
+                "-ScanPaths", normalizedPackagePath,
             };
 
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
+
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.");
+            }
 
             return new PackageCheckResponse(processResult);
         }
@@ -216,6 +238,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                     _logger.LogError(ex, "Error running spelling fix microagent");
                     return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
+            }
+
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.");
             }
 
             return new PackageCheckResponse(processResult);

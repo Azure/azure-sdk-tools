@@ -17,6 +17,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Globalization;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -87,16 +88,16 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IDevOpsService
     {
-        public Task<List<ReleasePlanDetails>> ListOverdueReleasePlansAsync();
-        public Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId);
-        public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
-        public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
-        public Task<List<ReleasePlanDetails>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false);
-        public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
+        public Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync();
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId);
+        public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId);
+        public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false);
+        public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId);
-        public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
+        public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "");
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
@@ -111,11 +112,17 @@ namespace Azure.Sdk.Tools.Cli.Services
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
+        private List<WorkItemRelationType>? _cachedRelationTypes;
+
+        private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
-        public async Task<List<ReleasePlanDetails>> ListOverdueReleasePlansAsync()
+        private async Task<List<WorkItemRelationType>> GetCachedRelationTypes() =>
+            _cachedRelationTypes ??= await connection.GetWorkItemClient().GetRelationTypesAsync();
+
+        public async Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync()
         {
             try
             {
@@ -147,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
         
-        public async Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId)
+        public async Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId)
         {
             logger.LogInformation("Fetching release plan work with id {workItemId}", workItemId);
             var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId, expand: WorkItemExpand.All);
@@ -161,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public async Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId)
+        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId)
         {
             // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
@@ -173,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
         }
 
-        public async Task<List<ReleasePlanDetails>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan=false)
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan=false)
         {
             try
             {
@@ -187,10 +194,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (releasePlanWorkItems.Count == 0)
                 {
                     logger.LogInformation("Release plan does not exist for the given product id {productTreeId}",productTreeId);
-                    return new List<ReleasePlanDetails>();
+                    return new List<ReleasePlanWorkItem>();
                 }
 
-                var releasePlans = new List<ReleasePlanDetails>();
+                var releasePlans = new List<ReleasePlanWorkItem>();
 
                 foreach (var workItem in releasePlanWorkItems)
                 {
@@ -210,9 +217,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<ReleasePlanDetails> MapWorkItemToReleasePlanAsync(WorkItem workItem)
+        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
-            var releasePlan = new ReleasePlanDetails()
+            var releasePlan = new ReleasePlanWorkItem()
             {
                 WorkItemId = workItem.Id ?? 0,
                 WorkItemUrl = workItem.Url,
@@ -236,12 +243,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
-            var languages = new string[] { "Dotnet", "JavaScript", "Python", "Java", "Go" };
-            foreach (var lang in languages)
+            foreach (var lang in SUPPORTED_SDK_LANGUAGES)
             {
                 var sdkGenPipelineUrl = workItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var sdkPullRequestUrl = workItem.Fields.TryGetValue($"Custom.SDKPullRequestFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var packageName = workItem.Fields.TryGetValue($"Custom.{lang}PackageName", out value) ? value?.ToString() ?? string.Empty : string.Empty;
+                var generationStatus = workItem.Fields.TryGetValue($"Custom.GenerationStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var releaseStatus = workItem.Fields.TryGetValue($"Custom.ReleaseStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
@@ -254,7 +261,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Language = MapLanguageIdToName(lang),
                             GenerationPipelineUrl = sdkGenPipelineUrl,
                             SdkPullRequestUrl = sdkPullRequestUrl,
+                            GenerationStatus = generationStatus,
                             ReleaseStatus = releaseStatus,
+                            PullRequestStatus = pullRequestStatus,
                             PackageName = packageName,
                             ReleaseExclusionStatus = exclusionStatus
                         }
@@ -286,7 +295,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public async Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl)
+        public async Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl)
         {
             // First find the API spec work item
             try
@@ -331,7 +340,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         }
 
-        public async Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan)
+        public async Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan)
         {
             int releasePlanWorkItemId = 0;
             int apiSpecWorkItemId = 0;
@@ -341,7 +350,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 logger.LogInformation("Creating release plan with title: {releasePlanTitle}", releasePlanTitle);
-                WorkItem releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
+                var releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;
                 if (releasePlanWorkItemId == 0)
                 {
@@ -351,15 +360,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
                 logger.LogInformation("Creating api spec with title: {apiSpecTitle}", apiSpecTitle);
-                var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan, "API Spec", apiSpecTitle);
+                var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan.ToApiSpecWorkItem(), "API Spec", apiSpecTitle, parentId: releasePlanWorkItemId);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
                     throw new Exception("Failed to create API spec work item");
                 }
-
-                // Link API spec as child of release plan
-                await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
 
                 // Update release plan status to in progress
                 releasePlanWorkItem = await UpdateWorkItemAsync(releasePlanWorkItemId, new Dictionary<string, string>
@@ -391,87 +397,111 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<WorkItem> CreateWorkItemAsync(ReleasePlanDetails releasePlan, string workItemType, string title)
+        private async Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
         {
-            var releasePlanJson = JsonSerializer.Serialize(releasePlan);
-            logger.LogDebug("Input work item json: {releasePlanJson}", releasePlanJson);
-            var specDocument = releasePlan.GetPatchDocument();
-            specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-            {
-                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                Path = "/fields/System.Title",
-                Value = title
-            });
-
-            if (workItemType == "API Spec" && releasePlan.SpecPullRequests.Count > 0)
-            {
-                StringBuilder sb = new StringBuilder();
-                foreach (var pr in releasePlan.SpecPullRequests)
-                {
-                    if (sb.Length > 0)
-                    {
-                        sb.Append("<br>");
-                    }
-                    sb.Append($"<a href=\"{pr}\">{pr}</a>");
-                }
-                var prLinks = sb.ToString();
-                logger.LogInformation("Adding pull request {pullRequestLinks} to API spec work item.", prLinks);
-                specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.RESTAPIReviews",
-                    Value = sb.ToString()
-                });
-
-                var activeSpecPullRequest = releasePlan.ActiveSpecPullRequest;
-                if (string.IsNullOrEmpty(activeSpecPullRequest))
-                {
-                    // If active spec pull request is not provided, use the first pull request from the list
-                    activeSpecPullRequest = releasePlan.SpecPullRequests.FirstOrDefault() ?? string.Empty;
-                }
-                specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.ActiveSpecPullRequestUrl",
-                    Value = activeSpecPullRequest
-                });
-            }
+            workItem.Title = title;
+            var workItemsFieldJson = JsonSerializer.Serialize(workItem);
+            logger.LogDebug("Input work item json: {releasePlanJson}", workItemsFieldJson);
+            var specDocument = workItem.GetPatchDocument();
 
             logger.LogInformation("Creating {workItemType} work item", workItemType);
             logger.LogDebug("Sending work item request to DevOps: {@specDocument}", specDocument);
-            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType);
-            if (workItem == null)
+            var createdWorkItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType);
+            if (createdWorkItem == null)
             {
                 throw new Exception("Failed to create Work Item");
             }
-            return workItem;
+
+            if (createdWorkItem.Id != null)
+            {
+                if (parentId != null)
+                {
+                    // Create parent-child relation
+                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "parent", targetId: parentId);
+                }
+
+                if (relatedId != null)
+                { 
+                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "related", targetId: relatedId);
+                }
+            }
+
+            return createdWorkItem;
         }
 
-        private async Task LinkWorkItemAsChildAsync(int parentId, string childUrl)
+        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
         {
-            try
+            // Create generic work item relation(s) based on target ID and/or URL
+            if (targetId == null && string.IsNullOrWhiteSpace(targetUrl))
             {
-                // Add work item as child of release plan work item
-                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                throw new Exception("To create work item relation, either Target ID or Target URL must be provided.");
+            }
+
+            var workItemClient = connection.GetWorkItemClient();
+
+            // Resolve relation type system name/reference
+            // ex: Child, Parent, Related, etc map to the appropriate name.
+            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType);
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+
+            // Handle target ID
+            if (targetId != null)
+            {
+                var wiql = new Wiql { Query = $"SELECT [System.Id] FROM WorkItems WHERE ([System.Id] = {targetId})" };
+                var queryResult = await workItemClient.QueryByWiqlAsync(wiql);
+                var targetWorkItems = queryResult.WorkItems ?? [];
+                
+                // Query should only come up with one work item
+                if (!targetWorkItems.Any())
                 {
-                     new JsonPatchOperation
-                     {
-                          Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                          Path = "/relations/-",
-                          Value = new WorkItemRelation
-                          {
-                              Rel = "System.LinkTypes.Hierarchy-Forward",
-                              Url = childUrl
-                          }
-                      }
-                };
-                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, parentId);
+                    throw new Exception($"Work item with ID {targetId} does not exist.");
+                }
+                var targetWorkItem = targetWorkItems.First();
+
+                // targetWorkItem contains only Id + Url; URL is enough to create relation
+                patchDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/relations/-",
+                    Value = new WorkItemRelation
+                    {
+                        Rel = relationTypeSystemName,
+                        Url = targetWorkItem.Url
+                    }
+                });
+                
             }
-            catch (Exception ex)
+            // Handle target URLs (comma-separated)
+            else if (!string.IsNullOrWhiteSpace(targetUrl))
             {
-                var errorMessage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
-                throw new Exception(errorMessage);
+                patchDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/relations/-",
+                    Value = new WorkItemRelation
+                    {
+                        Rel = relationTypeSystemName,
+                        Url = targetUrl
+                    }
+                });
             }
+
+            return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+        }
+
+        private async Task<string> ResolveRelationTypeSystemName(string relationType)
+        {
+            var relationTypes = await GetCachedRelationTypes();
+
+            // Match service-provided relation type by display name (case-insensitive)
+            var match = relationTypes.FirstOrDefault(rt => string.Equals(rt.Name, relationType, StringComparison.OrdinalIgnoreCase));
+            if(match != null && match.ReferenceName != null)
+            {
+                return match.ReferenceName;
+            }
+            
+            throw new Exception($"Relation Type '{relationType}' is not valid.");
         }
 
         public static string MapLanguageToId(string language)
@@ -507,7 +537,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
+        public async Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl, string generationStatus = "")
         {
             // Adds SDK generation and pull request link in release plan work item.
             try
@@ -534,6 +564,16 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                             Path = $"/fields/Custom.SDKGenerationPipelineFor{MapLanguageToId(language)}",
                             Value = sdkGenerationPipelineUrl
+                        });
+                }
+                if (!string.IsNullOrEmpty(generationStatus))
+                {
+                    jsonLinkDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/fields/Custom.GenerationStatusFor{MapLanguageToId(language)}",
+                            Value = generationStatus
                         });
                 }
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
@@ -693,7 +733,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (workItemId != 0)
             {
                 logger.LogInformation("Adding SDK generation pipeline link to release plan");
-                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "");
+                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "", "In progress");
             }
 
             return build;
@@ -751,7 +791,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     if (workItemId != 0)
                     {
                         logger.LogInformation("Adding SDK pull request to release plan");
-                        await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl.FullUrl);
+                        await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl.FullUrl, "Completed");
                     }
                     return pullRequestUrl.FullUrl;
                 }
@@ -981,6 +1021,22 @@ namespace Azure.Sdk.Tools.Cli.Services
                     }
                 };
                 await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, apiSpecWorkItemId);
+
+                // Reset SDK generation status for all languages to "In progress" in the release plan work item
+                var releasePlanUpdateDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+                foreach (var lang in SUPPORTED_SDK_LANGUAGES)
+                {
+                    releasePlanUpdateDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/fields/Custom.GenerationStatusFor{lang}",
+                            Value = "In progress"
+                        }
+                    );
+                }
+                await connection.GetWorkItemClient().UpdateWorkItemAsync(releasePlanUpdateDocument, releasePlanWorkItemId);
+
                 return true;
             }
             catch (Exception ex)

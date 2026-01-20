@@ -360,11 +360,11 @@ public class SampleGeneratorToolTests
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper),
-            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>()),
             _mockGoLanguageService.Object,
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper)
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>())
         ];
 
         _mockGoLanguageService.Setup(ls => ls.Language).Returns(SdkLanguage.Go);
@@ -530,17 +530,16 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public async Task GenerateSamples_MissingPromptOption_ShowsError()
+    public void GenerateSamples_MissingPromptOption_ShowsError()
     {
         // Arrange: create a valid package path but omit --prompt (required)
         var (_, packagePath) = CreateFakeGoPackage();
         var command = tool.GetCommandInstances().First();
 
-        // Act: invoke without required --prompt
+        // Act: parse without required --prompt
         var parseResult = command.Parse(["generate", "--package-path", packagePath]);
-        int exitCode = await parseResult.InvokeAsync();
 
         // Assert: parser/tool should fail with non-zero exit code
-        Assert.That(exitCode, Is.Not.EqualTo(0), "Expected non-zero exit code when required --prompt option is missing");
+        Assert.That(parseResult.Errors, Is.Not.Empty, "Expected parse errors when required --prompt option is missing");
     }
 }

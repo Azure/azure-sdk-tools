@@ -1,4 +1,4 @@
-namespace Azure.Sdk.Tools.Cli.Models
+namespace Azure.Sdk.Tools.Cli.Attributes
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class FieldNameAttribute : Attribute

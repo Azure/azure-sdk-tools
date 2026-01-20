@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Reflection;
-using System.Text;
-using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using Azure.Sdk.Tools.Cli.Attributes;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
-    public class EpicWorkItem : WorkItemBase
+    public class ServiceWorkItem : WorkItemBase
     {
         [FieldName("Custom.PackageDisplayName")]
         public string PackageDisplayName { get; set; } = string.Empty;

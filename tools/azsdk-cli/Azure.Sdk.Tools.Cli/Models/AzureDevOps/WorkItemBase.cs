@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Reflection;
-using System.Text;
+using Azure.Sdk.Tools.Cli.Attributes;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps

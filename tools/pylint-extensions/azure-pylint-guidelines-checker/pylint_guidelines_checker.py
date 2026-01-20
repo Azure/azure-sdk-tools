@@ -3034,6 +3034,61 @@ class InvalidUseOfOverload(BaseChecker):
             return False
 
 
+class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):
+    """Rule to check that we use inspect.iscoroutinefunction instead of deprecated asyncio.iscoroutinefunction."""
+
+    name = "remove-deprecated-iscoroutinefunction"
+    priority = -1
+    msgs = {
+        "C4774": (
+            "Use 'inspect.iscoroutinefunction()' instead of deprecated 'asyncio.iscoroutinefunction()'. "
+            "The asyncio version was deprecated in Python 3.12 and will be removed in Python 3.16.",
+            "remove-deprecated-iscoroutinefunction",
+            "Replace asyncio.iscoroutinefunction with inspect.iscoroutinefunction.",
+        ),
+    }
+
+    def __init__(self, linter=None):
+        super(DoNotUseDeprecatedAsyncioIscoroutinefunction, self).__init__(linter)
+        self._has_asyncio_import = False
+        self._asyncio_alias = None
+
+    def visit_import(self, node):
+        """Track imports of asyncio module."""
+        for name, alias in node.names:
+            if name == "asyncio":
+                self._has_asyncio_import = True
+                self._asyncio_alias = alias if alias else "asyncio"
+
+    def visit_importfrom(self, node):
+        """Check for 'from asyncio import iscoroutinefunction' and flag it."""
+        if node.modname == "asyncio":
+            for name, alias in node.names:
+                if name == "iscoroutinefunction":
+                    self.add_message(
+                        msgid="remove-deprecated-iscoroutinefunction",
+                        node=node,
+                        confidence=None,
+                    )
+
+    def visit_call(self, node):
+        """Check for calls to asyncio.iscoroutinefunction."""
+        try:
+            # Check if this is a call like asyncio.iscoroutinefunction(...)
+            if hasattr(node.func, 'attrname') and node.func.attrname == "iscoroutinefunction":
+                if hasattr(node.func, 'expr') and hasattr(node.func.expr, 'name'):
+                    module_name = node.func.expr.name
+                    # Check if it's asyncio or an alias for asyncio
+                    if module_name == "asyncio" or (self._asyncio_alias and module_name == self._asyncio_alias):
+                        self.add_message(
+                            msgid="remove-deprecated-iscoroutinefunction",
+                            node=node,
+                            confidence=None,
+                        )
+        except AttributeError:
+            pass
+
+
 class DoNotLogExceptions(BaseChecker):
 
     """Rule to check that exceptions aren't logged"""
@@ -3491,6 +3546,7 @@ def register(linter):
     linter.register_checker(DoNotLogExceptions(linter))
     linter.register_checker(DoNotHardcodeConnectionVerify(linter))
     linter.register_checker(DoNotDedentDocstring(linter))
+    linter.register_checker(DoNotUseDeprecatedAsyncioIscoroutinefunction(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

@@ -26,15 +26,12 @@ public sealed partial class JavaLanguageService : LanguageService
         IMicroagentHostService microagentHost,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
     {
         this.microagentHost = microagentHost;
-        base.processHelper = processHelper;
         this._mavenHelper = mavenHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
     }
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)

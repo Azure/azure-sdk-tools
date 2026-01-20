@@ -4,29 +4,33 @@
 # license information.
 # --------------------------------------------------------------------------
 
-"""Plugin for database operations."""
+"""Tool for database operations."""
 
-from contextlib import AsyncExitStack, asynccontextmanager
-from datetime import timedelta
+from contextlib import contextmanager
 from typing import Optional
 
+from azure.ai.agents import AgentsClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from azure.identity import DefaultAzureCredential
 
 # pylint: disable=no-name-in-module
-from semantic_kernel.agents import AzureAIAgent, RunPollingOptions
-from semantic_kernel.functions import kernel_function
+from src._credential import get_credential
 from src._database_manager import ContainerNames, DatabaseManager
 from src._models import Example, Guideline, Memory
+from src._settings import SettingsManager
+from src.agent.tools._base import Tool
 
 
-@asynccontextmanager
-async def get_delete_agent():
+@contextmanager
+def get_delete_agent():
     """Agent for handling database delete requests."""
     # pylint: disable=import-outside-toplevel
-    from src.agent._agent import _get_agent_settings, create_kernel
+    from src.agent._agent import _get_agent_settings
 
-    ai_agent_settings = _get_agent_settings()
+    credential = get_credential()
+    settings = SettingsManager()
+    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+
     ai_instructions = f"""
 You are an agent that processes database delete requests for guidelines, examples, memories or review jobs.
 
@@ -41,40 +45,31 @@ You must ensure you adhere to the following guidelines.
 - Never delete guidelines. You MUST deny any request to delete a guideline.
 - Never delete review jobs. You MUST deny any request to delete a review job. Review jobs are deleted programmatically ONLY.
 """
-    async with AsyncExitStack() as stack:
-        credentials = DefaultAzureCredential()
-        client = await stack.enter_async_context(
-            AzureAIAgent.create_client(
-                credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version
-            )
-        )
-        agent_definition = await client.agents.create_agent(
-            name="DeleteAgent",
-            description="Handles database delete requests.",
-            model=ai_agent_settings.model_deployment_name,
-            instructions=ai_instructions,
-        )
-        agent = AzureAIAgent(
-            client=client,
-            definition=agent_definition,
-            plugins=[DatabaseDeletePlugin()],
-            polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
-            kernel=create_kernel(),
-        )
-        yield agent
-
-
-@asynccontextmanager
-async def get_create_agent():
-    """Agent for handling database create requests."""
-    # pylint: disable=import-outside-toplevel
-    from src._apiview_reviewer import SUPPORTED_LANGUAGES
-    from src.agent._agent import (
-        _get_agent_settings,
-        create_kernel,
+    client = AgentsClient(endpoint=endpoint.endpoint, credential=credential)
+    agent = client.create_agent(
+        name="DeleteAgent",
+        description="Handles database delete requests.",
+        model=model_deployment_name,
+        instructions=ai_instructions,
+        tools=[DatabaseDeleteTool()],
     )
+    try:
+        yield client, agent.id
+    finally:
+        client.delete_agent(agent.id)
 
-    ai_agent_settings = _get_agent_settings()
+
+@contextmanager
+def get_create_agent():
+    """Agent for handling database create requests."""
+    from src._apiview_reviewer import SUPPORTED_LANGUAGES
+    from src.agent._agent import _get_agent_settings
+
+    credential = get_credential()
+    settings = SettingsManager()
+    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+
     guideline_schema = Guideline.model_json_schema()
     example_schema = Example.model_json_schema()
     memory_schema = Memory.model_json_schema()
@@ -147,63 +142,57 @@ For specific fields:
   4. Report all linking actions in your response.
 - If you do not know what to link, ask the user.
 """
-    credentials = DefaultAzureCredential()
-    async with AzureAIAgent.create_client(
-        credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version
-    ) as client:
-        agent_definition = await client.agents.create_agent(
-            name="CreateAgent",
-            description="Handles database create or insert requests.",
-            model=ai_agent_settings.model_deployment_name,
-            instructions=ai_instructions,
-        )
-        agent = AzureAIAgent(
-            client=client,
-            definition=agent_definition,
-            plugins=[DatabaseCreatePlugin()],
-            polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
-            kernel=create_kernel(),
-        )
-        yield agent
+    client = AgentsClient(endpoint=endpoint, credential=credential)
+    agent = client.create_agent(
+        name="CreateAgent",
+        description="Handles database create or insert requests.",
+        model=model_deployment_name,
+        instructions=ai_instructions,
+        tools=[DatabaseCreateTool()],
+    )
+    try:
+        yield client, agent.id
+    finally:
+        client.delete_agent(agent.id)
 
 
-@asynccontextmanager
-async def get_retrieve_agent():
+@contextmanager
+def get_retrieve_agent():
     """Agent for handling database retrieval requests."""
-    # pylint: disable=import-outside-toplevel
-    from src.agent._agent import _get_agent_settings, create_kernel
+    from src.agent._agent import _get_agent_settings
 
-    ai_agent_settings = _get_agent_settings()
+    credential = get_credential()
+    settings = SettingsManager()
+    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+
     ai_instructions = """
 You are an agent that processes database get or retrieval requests for guidelines, examples, memories, or review jobs.
 """
-    credentials = DefaultAzureCredential()
-    async with AzureAIAgent.create_client(
-        credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version
-    ) as client:
-        agent_definition = await client.agents.create_agent(
-            name="RetrieveAgent",
-            description="Handles database retrieval requests.",
-            model=ai_agent_settings.model_deployment_name,
-            instructions=ai_instructions,
-        )
-        agent = AzureAIAgent(
-            client=client,
-            definition=agent_definition,
-            plugins=[DatabaseRetrievePlugin()],
-            polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
-            kernel=create_kernel(),
-        )
-        yield agent
+    client = AgentsClient(endpoint=endpoint, credential=credential)
+    agent = client.create_agent(
+        name="RetrieveAgent",
+        description="Handles database retrieval requests.",
+        model=model_deployment_name,
+        instructions=ai_instructions,
+        tools=[DatabaseRetrieveTool()],
+    )
+    try:
+        yield client, agent.id
+    finally:
+        client.delete_agent(agent.id)
 
 
-@asynccontextmanager
-async def get_link_agent():
+@contextmanager
+def get_link_agent():
     """Agent for handling database linking and unlinking requests."""
-    # pylint: disable=import-outside-toplevel
-    from src.agent._agent import _get_agent_settings, create_kernel
+    from src.agent._agent import _get_agent_settings
 
-    ai_agent_settings = _get_agent_settings()
+    credential = get_credential()
+    settings = SettingsManager()
+    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+
     ai_instructions = f"""
 You are an agent that processes database requests to link or unlink guidelines, examples, memories or review jobs.
 
@@ -215,42 +204,35 @@ You must ensure you adhere to the following guidelines.
 - target_id can refer to Guidelines, Examples or Memories.
 - The only valid container names are: {', '.join([c.value for c in ContainerNames])}
 - Guidelines have the following link fields:
-  - related_guidelines
-  - related_examples
-  - related_memories
+    - related_guidelines
+    - related_examples
+    - related_memories
 - Memories have the following link fields:
-  - related_guidelines
-  - related_examples
-  - related_memories
+    - related_guidelines
+    - related_examples
+    - related_memories
 - Examples have the following link fields:
-  - guideline_ids
-  - memory_ids
+    - guideline_ids
+    - memory_ids
 """
-    credentials = DefaultAzureCredential()
-    async with AzureAIAgent.create_client(
-        credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version
-    ) as client:
-        agent_definition = await client.agents.create_agent(
-            name="LinkUnlinkAgent",
-            description="Handles database linking and unlinking requests.",
-            model=ai_agent_settings.model_deployment_name,
-            instructions=ai_instructions,
-        )
-        agent = AzureAIAgent(
-            client=client,
-            definition=agent_definition,
-            plugins=[DatabaseLinkUnlinkPlugin()],
-            polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
-            kernel=create_kernel(),
-        )
-        yield agent
+    client = AgentsClient(endpoint=endpoint, credential=credential)
+    agent = client.create_agent(
+        name="LinkUnlinkAgent",
+        description="Handles database linking and unlinking requests.",
+        model=model_deployment_name,
+        instructions=ai_instructions,
+        tools=[DatabaseLinkUnlinkTool()],
+    )
+    try:
+        yield client, agent.id
+    finally:
+        client.delete_agent(agent.id)
 
 
-class DatabaseCreatePlugin:
-    """Plugin for creating database items."""
+class DatabaseCreateTool(Tool):
+    """Tool for creating database items."""
 
-    @kernel_function(description="Create a new Guideline in the database.")
-    async def create_guideline(
+    def create_guideline(
         self,
         id: str,
         content: str,
@@ -274,8 +256,7 @@ class DatabaseCreatePlugin:
         db = DatabaseManager.get_instance()
         return db.guidelines.create(id, data=data)
 
-    @kernel_function(description="Create a new Memory in the database.")
-    async def create_memory(
+    def create_memory(
         self,
         id: str,
         title: str,
@@ -311,8 +292,7 @@ class DatabaseCreatePlugin:
         db = DatabaseManager.get_instance()
         return db.memories.create(id, data=data)
 
-    @kernel_function(description="Create a new Example in the database.")
-    async def create_example(
+    def create_example(
         self,
         title: str,
         content: str,
@@ -349,11 +329,10 @@ class DatabaseCreatePlugin:
         return db.examples.create(id, data=data)
 
 
-class DatabaseRetrievePlugin:
-    """Plugin for retrieving database items."""
+class DatabaseRetrieveTool(Tool):
+    """Tool for retrieving database items."""
 
-    @kernel_function(description="Retrieve a memory from the database by its ID.")
-    async def get_memory(self, memory_id: str):
+    def get_memory(self, memory_id: str):
         """
         Retrieve a memory from the database by its ID.
         Args:
@@ -362,15 +341,13 @@ class DatabaseRetrievePlugin:
         db = DatabaseManager.get_instance()
         return db.memories.get(memory_id)
 
-    @kernel_function(description="Retrieve the Memory schema.")
-    async def get_memory_schema(self):
+    def get_memory_schema(self):
         """
         Retrieve the Memory schema.
         """
         return Memory.model_json_schema()
 
-    @kernel_function(description="Retrieve an example from the database by its ID.")
-    async def get_example(self, example_id: str):
+    def get_example(self, example_id: str):
         """
         Retrieve an example from the database by its ID.
         Args:
@@ -379,15 +356,13 @@ class DatabaseRetrievePlugin:
         db = DatabaseManager.get_instance()
         return db.examples.get(example_id)
 
-    @kernel_function(description="Retrieve the Example schema.")
-    async def get_example_schema(self):
+    def get_example_schema(self):
         """
         Retrieve the Example schema.
         """
         return Example.model_json_schema()
 
-    @kernel_function(description="Retrieve a guideline from the database by its ID.")
-    async def get_guideline(self, guideline_id: str):
+    def get_guideline(self, guideline_id: str):
         """
         Retrieve a guideline from the database by its ID.
         Args:
@@ -396,23 +371,17 @@ class DatabaseRetrievePlugin:
         db = DatabaseManager.get_instance()
         return db.guidelines.get(guideline_id)
 
-    @kernel_function(description="Retrieve the Guideline schema.")
-    async def get_guideline_schema(self):
+    def get_guideline_schema(self):
         """
         Retrieve the Guideline schema.
         """
         return Guideline.model_json_schema()
 
 
-class DatabaseLinkUnlinkPlugin:
-    """Plugin for linking and unlinking database items."""
+class DatabaseLinkUnlinkTool(Tool):
+    """Tool for linking and unlinking database items."""
 
-    @kernel_function(
-        description="""
-        Link one or more target items to a source item by adding their IDs to a related field in the source item.
-        """
-    )
-    async def link_items(
+    def link_items(
         self,
         source_id: str,
         source_container: str,
@@ -479,12 +448,7 @@ class DatabaseLinkUnlinkPlugin:
                 target_c.upsert(target_id, data=target_item)
         return {"status": "done", "source_id": source_id, "source_field": source_field, **results}
 
-    @kernel_function(
-        description="""
-        Unlink one or more target items from a source item by removing their IDs from a related field in the source item.
-        """
-    )
-    async def unlink_items(
+    def unlink_items(
         self,
         source_id: str,
         source_container: str,
@@ -554,11 +518,10 @@ class DatabaseLinkUnlinkPlugin:
         }
 
 
-class DatabaseDeletePlugin:
-    """Plugin for deleting database items."""
+class DatabaseDeleteTool(Tool):
+    """Tool for deleting database items."""
 
-    @kernel_function(description="Delete a Guideline from the database by its ID.")
-    async def delete_guideline(self, id: str):
+    def delete_guideline(self, id: str):
         """Delete a guideline from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:
@@ -567,8 +530,7 @@ class DatabaseDeletePlugin:
         except CosmosResourceNotFoundError:
             return f"Guideline with id '{id}' not found."
 
-    @kernel_function(description="Delete a Memory from the database by its ID.")
-    async def delete_memory(self, id: str):
+    def delete_memory(self, id: str):
         """Delete a memory from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:
@@ -577,8 +539,7 @@ class DatabaseDeletePlugin:
         except CosmosResourceNotFoundError:
             return f"Memory with id '{id}' not found."
 
-    @kernel_function(description="Delete an Example from the database by its ID.")
-    async def delete_example(self, id: str):
+    def delete_example(self, id: str):
         """Delete an example from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:
@@ -587,8 +548,7 @@ class DatabaseDeletePlugin:
         except CosmosResourceNotFoundError:
             return f"Example with id '{id}' not found."
 
-    @kernel_function(description="Delete a Review Job from the database by its ID.")
-    async def delete_review_job(self, id: str):
+    def delete_review_job(self, id: str):
         """Delete a review job from the database by its ID."""
         db = DatabaseManager.get_instance()
         try:

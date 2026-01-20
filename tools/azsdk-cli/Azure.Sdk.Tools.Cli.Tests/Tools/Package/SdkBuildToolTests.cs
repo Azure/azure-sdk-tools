@@ -21,7 +21,7 @@ public class SdkBuildToolTests
     private const string InvalidJsonContent = "{ invalid json }";
 
     // Common error message patterns
-    private const string InvalidProjectPathError = "does not exist";
+    private const string InvalidProjectPathError = "Failed to find the language from package path";
     private const string FailedToDiscoverRepoError = "Failed to discover local sdk repo";
     private const string ConfigFileNotFoundError = "Configuration file not found";
     private const string JsonParsingError = "Error parsing JSON configuration";
@@ -58,19 +58,17 @@ public class SdkBuildToolTests
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
+            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
+            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object)
         ];
 
         // Create the tool instance
         _tool = new SdkBuildTool(
             _mockGitHelper.Object,
             _logger,
-            _mockProcessHelper.Object,
-            _mockSpecGenSdkConfigHelper.Object,
             _languageServices
         );
     }
@@ -120,11 +118,11 @@ public class SdkBuildToolTests
 
             // Mock GitHelper for the resolved path
             _mockGitHelper
-                .Setup(x => x.DiscoverRepoRoot(projectDir))
-                .Returns(_tempDirectory.DirectoryPath);
-            _mockGitHelper
-                .Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath))
+                .Setup(x => x.GetRepoName(It.IsAny<string>()))
                 .Returns("azure-sdk-for-python");
+            _mockGitHelper
+                .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
+                .Returns(_tempDirectory.DirectoryPath);
 
             // Act - use relative path
             var result = await _tool.BuildSdkAsync("./sdk/project");
@@ -149,11 +147,11 @@ public class SdkBuildToolTests
 
         // Mock GitHelper to return a Python SDK repo name
         _mockGitHelper
-            .Setup(x => x.DiscoverRepoRoot(pythonProjectPath))
-            .Returns(_tempDirectory.DirectoryPath);
-        _mockGitHelper
-            .Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath))
+            .Setup(x => x.GetRepoName(It.IsAny<string>()))
             .Returns("azure-sdk-for-python");
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
+            .Returns(_tempDirectory.DirectoryPath);
 
         // Act
         var result = await _tool.BuildSdkAsync(pythonProjectPath);
@@ -169,7 +167,10 @@ public class SdkBuildToolTests
     {
         // Arrange
         _mockGitHelper
-            .Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath))
+            .Setup(x => x.GetRepoName(It.IsAny<string>()))
+            .Returns("azure-sdk-for-net");
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
             .Throws(new Exception(FailedToDiscoverRepoError));
 
         // Act
@@ -183,15 +184,12 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_ConfigFileNotFound_ReturnsError()
     {
         // Arrange
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
-        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
-        _mockGitHelper
-            .Setup(x => x.GetRepoRemoteUri(_tempDirectory.DirectoryPath))
-            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
+        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns(_tempDirectory.DirectoryPath);
 
         // Mock the SpecGenSdkConfigHelper to throw an exception for missing config
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build))
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build))
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
         // Act
@@ -205,15 +203,12 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_InvalidJsonConfig_ReturnsError()
     {
         // Arrange
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
-        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
-        _mockGitHelper
-            .Setup(x => x.GetRepoRemoteUri(_tempDirectory.DirectoryPath))
-            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
+        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns(_tempDirectory.DirectoryPath);
 
         // Mock the SpecGenSdkConfigHelper to throw a JSON parsing exception
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build))
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build))
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
         // Act
@@ -231,15 +226,12 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_ConfigurationFileNotFound_ReturnsError()
     {
         // Arrange
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
-        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
-        _mockGitHelper
-            .Setup(x => x.GetRepoRemoteUri(_tempDirectory.DirectoryPath))
-            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
+        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns(_tempDirectory.DirectoryPath);
 
         // Mock the SpecGenSdkConfigHelper to throw when config file is not found
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build))
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build))
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
         // Act

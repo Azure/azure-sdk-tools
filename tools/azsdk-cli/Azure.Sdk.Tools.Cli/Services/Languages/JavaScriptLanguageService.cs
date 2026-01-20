@@ -17,14 +17,11 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         IGitHelper gitHelper,        
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
     {
         this.npxHelper = npxHelper;
-        base.processHelper = processHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
 

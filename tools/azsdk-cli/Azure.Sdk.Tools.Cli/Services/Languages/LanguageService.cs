@@ -9,11 +9,41 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 {
     public abstract class LanguageService
     {
-        protected IProcessHelper processHelper;
-        protected IGitHelper gitHelper;
-        protected ILogger<LanguageService> logger;
-        protected ICommonValidationHelpers commonValidationHelpers;
-        protected IFileHelper fileHelper;
+        protected readonly IProcessHelper processHelper;
+        protected readonly IGitHelper gitHelper;
+        protected readonly ILogger<LanguageService> logger;
+        protected readonly ICommonValidationHelpers commonValidationHelpers;
+        protected readonly IFileHelper fileHelper;
+        protected readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+
+        /// <summary>
+        /// Protected parameterless constructor for test mocking purposes.
+        /// </summary>
+        protected LanguageService()
+        {
+            processHelper = null!;
+            gitHelper = null!;
+            logger = null!;
+            commonValidationHelpers = null!;
+            fileHelper = null!;
+            specGenSdkConfigHelper = null!;
+        }
+
+        protected LanguageService(
+            IProcessHelper processHelper,
+            IGitHelper gitHelper,
+            ILogger<LanguageService> logger,
+            ICommonValidationHelpers commonValidationHelpers,
+            IFileHelper fileHelper,
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        {
+            this.processHelper = processHelper;
+            this.gitHelper = gitHelper;
+            this.logger = logger;
+            this.commonValidationHelpers = commonValidationHelpers;
+            this.fileHelper = fileHelper;
+            this.specGenSdkConfigHelper = specGenSdkConfigHelper;
+        }
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
@@ -293,6 +323,97 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
                     _ => throw new NotImplementedException($"Sample language context is not implemented for language: {Language}"),
                 };
+            }
+        }
+
+        /// <summary>
+        /// Builds/compiles SDK code for the specified package using repository-configured build scripts.
+        /// This method retrieves build configuration and executes the appropriate build command or script.
+        /// </summary>
+        /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+        /// <param name="timeoutMinutes">Maximum time to wait for the build process to complete.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A tuple containing: Success (bool), ErrorMessage (string? - null if successful), PackageInfo (PackageInfo? - package metadata if available).</returns>
+        public virtual async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        {
+            try
+            {
+                // Skip build for Python projects early (Python SDKs don't require compilation)
+                if (Language == SdkLanguage.Python)
+                {
+                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    return (true, null, null);
+                }
+
+                logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
+
+                // Validate package path
+                if (string.IsNullOrWhiteSpace(packagePath))
+                {
+                    return (false, "Package path is required and cannot be empty.", null);
+                }
+
+                // Resolves relative paths to absolute
+                string fullPath = Path.GetFullPath(packagePath);
+
+                if (!Directory.Exists(fullPath))
+                {
+                    return (false, $"Package full path does not exist: {fullPath}, input package path: {packagePath}.", null);
+                }
+
+                packagePath = fullPath;
+                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
+
+                // Get repository root path from project path
+                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+                if (string.IsNullOrEmpty(sdkRepoRoot))
+                {
+                    return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);
+                }
+
+                logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
+
+                PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
+
+                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
+                if (configContentType == SpecGenSdkConfigContentType.Unknown || string.IsNullOrEmpty(configValue))
+                {
+                    return (false, "No build configuration found or failed to prepare the build command.", packageInfo);
+                }
+
+                logger.LogInformation("Found valid configuration for build process. Executing configured script...");
+
+                // Prepare script parameters
+                var scriptParameters = new Dictionary<string, string>
+                {
+                    { "PackagePath", packagePath }
+                };
+
+                // Create process options for the build script
+                var processOptions = specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, timeoutMinutes);
+                if (processOptions == null)
+                {
+                    return (false, "Failed to create process options for build command.", packageInfo);
+                }
+
+                // Execute the build process directly
+                var result = await processHelper.Run(processOptions, ct);
+                var trimmedOutput = (result.Output ?? string.Empty).Trim();
+
+                if (result.ExitCode != 0)
+                {
+                    var errorMessage = $"Build failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}";
+                    logger.LogError("Build failed: {ErrorMessage}", errorMessage);
+                    return (false, errorMessage, packageInfo);
+                }
+
+                logger.LogInformation("Build completed successfully.");
+                return (true, null, packageInfo);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while building SDK code");
+                return (false, $"An error occurred: {ex.Message}", null);
             }
         }
     }

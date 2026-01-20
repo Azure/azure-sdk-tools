@@ -143,6 +143,66 @@
       "expected": {
         "classification": "FAILURE"
       }
+    },
+    {
+      "id": "alternate_type_java",
+      "description": "API review feedback requesting @alternateType should route to PHASE_A",
+      "input": {
+        "service": "WidgetManager",
+        "language": "java",
+        "request": "API Review Feedback: Rename this method to serviceVersion and the param type should be an enum that implements ServiceVersion"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "rename_avoid_builtin_python",
+      "description": "Rename to avoid language builtin should route to PHASE_A",
+      "input": {
+        "service": "DocumentIntelligence",
+        "language": "python",
+        "request": "API Review Feedback: Rename the 'type' parameter to avoid clashing with Python's built-in name"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "client_namespace_change",
+      "description": "Request to change client namespace should route to PHASE_A",
+      "input": {
+        "service": "AIServices",
+        "language": "csharp",
+        "request": "Move the generated models from Azure.AI.Services namespace to Azure.AI.Services.Models"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "multi_decorator_feedback",
+      "description": "Multiple customizations in single request should route to PHASE_A",
+      "input": {
+        "service": "TextAnalytics",
+        "language": "python",
+        "request": "API Review Feedback:\n1. Rename 'get_entities' to 'extract_entities'\n2. Hide the internal 'batch_process' operation from public API\n3. Change 'AnalysisResult' to 'EntityResult'"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
+    },
+    {
+      "id": "language_exclusion_scope",
+      "description": "Request with language exclusion scope should route to PHASE_A",
+      "input": {
+        "service": "OpenAI",
+        "language": "python",
+        "request": "Apply the 'ChatMessage' rename to all languages except Python - Python SDK needs to keep the original name for backward compatibility"
+      },
+      "expected": {
+        "classification": "PHASE_A"
+      }
     }
   ]
 }

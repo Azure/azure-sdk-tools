@@ -29,7 +29,7 @@ For vscode, create the `.vscode/mcp.json` file and add the development build of 
   "servers": {
     "azure-sdk-mcp": {
       "type": "stdio",
-      "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "command": "/path/to/azsdk-install-dir/azsdk",
       "args": ["start"]
     }
   }
@@ -45,7 +45,7 @@ If you want to use a different Azure Knowledge Base service instead of the defau
   "servers": {
     "azure-sdk-mcp": {
       "type": "stdio",
-      "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "command": "/path/to/azsdk-install-dir/azsdk",
       "args": ["start"],
       "env": {
         "AZURE_SDK_KB_ENDPOINT": "https://completion.endpoint"
@@ -62,7 +62,7 @@ If the service is deployed in Azure with built-in Microsoft authentication enabl
   "servers": {
     "azure-sdk-mcp": {
       "type": "stdio",
-      "command": "/path/to/repo/azure-sdk-tools/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "command": "/path/to/azsdk-install-dir/azsdk",
       "args": ["start"],
       "env": {
         "AZURE_SDK_KB_ENDPOINT": "https://azuresdkqabot-endpoint.azurewebsites.net",

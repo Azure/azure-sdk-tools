@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.Diagnostics;
 using System.Text.Json;
+using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -128,8 +129,8 @@ public sealed partial class DotnetLanguageService: LanguageService
 
             if (process.ExitCode != 0)
             {
-                logger.LogTrace("MSBuild GetPackageInfo failed");
-                return (null, null, null);
+                logger.LogTrace("MSBuild GetPackageInfo failed, falling back to XML parsing");
+                return FallbackToXmlParsing(csproj);
             }
 
             // Parse JSON output
@@ -173,6 +174,25 @@ public sealed partial class DotnetLanguageService: LanguageService
         catch (Exception ex)
         {
             logger.LogError(ex, "Error reading . NET package info from {packagePath}", packagePath);
+            return (null, null, null);
+        }
+    }
+
+    private (string? Name, string? Version, string? SdkType) FallbackToXmlParsing(string csprojPath)
+    {
+        try
+        {
+            logger.LogTrace("Attempting to parse {csproj} as XML", csprojPath);
+            var doc = XDocument.Load(csprojPath);
+            var packageId = doc.Descendants("PackageId").FirstOrDefault()?.Value;
+            var version = doc.Descendants("Version").FirstOrDefault()?.Value;
+            
+            logger.LogTrace("Found via XML fallback: {packageId} v{version}", packageId ?? "(null)", version ?? "(null)");
+            return (packageId, version, null); // SDK type not available via XML parsing
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "XML fallback parsing also failed for {csproj}", csprojPath);
             return (null, null, null);
         }
     }

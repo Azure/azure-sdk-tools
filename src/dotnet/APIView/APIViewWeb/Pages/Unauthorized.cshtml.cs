@@ -39,8 +39,11 @@ namespace APIViewWeb.Pages
                 {
                     string[] origins = (_environment.IsDevelopment()) ? URlHelpers.GetAllowedStagingOrigins() : URlHelpers.GetAllowedProdOrigins();
                     
-                    if (!Uri.TryCreate(ReturnUrl, UriKind.Absolute, out Uri returnUri) || 
-                        !origins.Contains(returnUri.GetLeftPart(UriPartial.Authority)))
+                    if (!Uri.TryCreate(ReturnUrl, UriKind.Absolute, out Uri returnUri))
+                    {
+                        ReturnUrl = "/";
+                    }
+                    else if (!origins.Contains(returnUri.GetLeftPart(UriPartial.Authority)))
                     {
                         ReturnUrl = "/";
                     }

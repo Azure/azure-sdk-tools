@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using System.Diagnostics;
 using System.Text.Json;
-using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;

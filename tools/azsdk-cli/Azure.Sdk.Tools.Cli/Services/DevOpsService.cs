@@ -1386,7 +1386,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             if (child.WorkItemId == parent.WorkItemId)
             {
-                return; //already the parent
+                return; // already the parent
             }
 
             // Remove existing parent link

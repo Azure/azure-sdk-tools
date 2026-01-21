@@ -21,7 +21,7 @@ public static class LoggingExtensions
     // startup errors, we wouldn't want to swallow those as it could make debugging difficult.
     // This is a filter to make sure that we hide all non-error logs but show all
     // asp.net server logs even if they can't be sent over the mcp protocol.
-    public static void ConfigureMcpConsoleLogging(this ILoggingBuilder builder, bool isCommandLine)
+    public static void ConfigureMcpConsoleFallbackLogging(this ILoggingBuilder builder, bool isCommandLine)
     {
         if (!isCommandLine)
         {

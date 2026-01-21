@@ -18,14 +18,11 @@ public partial class GoLanguageService : LanguageService
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
     {
-        base.processHelper = processHelper;
         this.powershellHelper = powershellHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
     }
 
     private readonly string goUnix = "go";
@@ -36,7 +33,12 @@ public partial class GoLanguageService : LanguageService
     private readonly string golangciLintWin = "golangci-lint.exe";
     private readonly IPowershellHelper powershellHelper;
 
+    // Known locations for Go customization files
+    private const string CustomizationPathInternalGenerate = "internal/generate";
+    private const string CustomizationPathTestdataGenerate = "testdata/generate";
+
     public override SdkLanguage Language { get; } = SdkLanguage.Go;
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
@@ -132,6 +134,38 @@ public partial class GoLanguageService : LanguageService
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
         return categories.TryGetValue("go", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
+
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    {
+        // Go customization files can live in different locations depending on the package.
+        // Known locations include:
+        //   - internal/generate (most common)
+        //   - testdata/generate (e.g., azcertificates)
+        // TODO: In the future, check tspconfig.yaml for "go-generate" directive for definitive detection.
+
+        try
+        {
+            string[] knownLocations = [CustomizationPathInternalGenerate, CustomizationPathTestdataGenerate];
+            
+            foreach (var location in knownLocations)
+            {
+                var customizationPath = Path.Combine(packagePath, location);
+                if (Directory.Exists(customizationPath))
+                {
+                    logger.LogDebug("Found Go customization directory at {CustomizationPath}", customizationPath);
+                    return true;
+                }
+            }
+
+            logger.LogDebug("No Go customization directory found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for Go customization files in {PackagePath}", packagePath);
+            return false;
+        }
     }
 
     /// <summary>

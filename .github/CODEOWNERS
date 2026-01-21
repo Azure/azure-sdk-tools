@@ -113,3 +113,6 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
 /tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @chunyu3 @JiaqiZhang-Dev
+
+# Add owners for notifications for specific pipelines
+/eng/common/pipelines/codeowners-linter.yml         @weshaggard

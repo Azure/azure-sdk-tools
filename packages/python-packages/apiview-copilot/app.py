@@ -16,11 +16,13 @@ import os
 import threading
 import time
 from enum import Enum
+from typing import Literal, Optional
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
+from src._apiview import resolve_package
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
@@ -310,6 +312,73 @@ async def handle_thread_resolution(
         )
     except HTTPException as e:
         logger.error("Error in /api-review/resolve: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+class ResolvePackageRequest(BaseModel):
+    """Request model for resolving package information."""
+
+    package_query: str = Field(..., alias="packageQuery")
+    language: str
+    version: Optional[str] = None
+    environment: Literal["production", "staging"] = "production"
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+class ResolvePackageResponse(BaseModel):
+    """Response model for resolved package information."""
+
+    package_name: str = Field(..., alias="packageName")
+    review_id: str = Field(..., alias="reviewId")
+    language: str
+    version: Optional[str] = None
+    revision_id: Optional[str] = Field(None, alias="revisionId")
+    revision_label: Optional[str] = Field(None, alias="revisionLabel")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/api-review/resolve-package", response_model=ResolvePackageResponse)
+async def resolve_package_info(
+    request: ResolvePackageRequest,
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER)),
+):
+    """Resolve package information from a package description and language."""
+    logger.info(
+        "Received /api-review/resolve-package request: package_query=%s, language=%s, version=%s",
+        request.package_query,
+        request.language,
+        request.version,
+    )
+    try:
+        result = await asyncio.to_thread(
+            resolve_package,
+            package_description=request.package_query,
+            language=request.language,
+            version=request.version,
+            environment=request.environment,
+        )
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Package not found")
+
+        if "error" in result:
+            if result["error"] == "no_packages_for_language":
+                raise HTTPException(status_code=404, detail=f"No packages found for language: {result['language']}")
+            raise HTTPException(status_code=404, detail="Package not found")
+
+        return ResolvePackageResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error in /api-review/resolve-package: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

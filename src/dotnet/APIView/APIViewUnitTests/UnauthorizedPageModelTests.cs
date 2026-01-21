@@ -184,4 +184,24 @@ public class UnauthorizedPageModelTests
         var redirectResult = result as RedirectResult;
         redirectResult!.Url.Should().Be("/");
     }
+
+    [Fact]
+    public async Task OnGetAsync_WhenAuthorized_WithInvalidUri_RedirectsToRoot()
+    {
+        // Arrange
+        _pageModel.ReturnUrl = "not a valid uri://malformed";
+        _mockUrlHelper.Setup(u => u.IsLocalUrl("not a valid uri://malformed")).Returns(false);
+        _mockEnvironment.Setup(e => e.IsDevelopment()).Returns(false);
+        _mockAuthorizationService
+            .Setup(a => a.AuthorizeAsync(_testUser, null, Startup.RequireOrganizationPolicy))
+            .ReturnsAsync(AuthorizationResult.Success());
+
+        // Act
+        var result = await _pageModel.OnGetAsync();
+
+        // Assert
+        result.Should().BeOfType<RedirectResult>();
+        var redirectResult = result as RedirectResult;
+        redirectResult!.Url.Should().Be("/");
+    }
 }

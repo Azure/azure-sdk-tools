@@ -1339,5 +1339,55 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger.LogDebug("Updated work item {workItemId}", workItem.Id);
             return workItem;
         }
+
+        private async Task<WorkItem> FindParentWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        {
+            var serviceCondition = new StringBuilder();
+
+            if (!string.IsNullOrEmpty(serviceName))
+            {
+                serviceCondition.Append($"[Custom.ServiceName] = '{serviceName}'");
+
+                if (!string.IsNullOrEmpty(packageDisplayName))
+                {
+                    serviceCondition.Append($" AND [Custom.PackageDisplayName] = '{packageDisplayName}'");
+                }
+                else
+                {
+                    serviceCondition.Append(" AND [Custom.PackageDisplayName] = ''");
+                }
+            }
+            else
+            {
+                serviceCondition.Append("[Custom.ServiceName] <> ''");
+            }
+
+            if (!string.IsNullOrEmpty(tag))
+            {
+                serviceCondition.Append($" AND [System.Tags] CONTAINS '{tag}'");
+            }
+
+            if (ignoreReleasePlannerTests)
+            {
+                serviceCondition.Append($" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'");
+            }
+
+            var query = $"SELECT [System.Id], [Custom.ServiceName], [Custom.PackageDisplayName], [System.Parent], [System.Tags] FROM WorkItems WHERE [System.WorkItemType] = 'Epic' AND {serviceCondition}";
+
+            logger.LogDebug("Finding parent work item with query: {query}", query);
+
+            var workItems = await FetchWorkItemsAsync(query);
+
+            if (workItems.Count > 0)
+            {
+                if (workItems.Count > 1)
+                {
+                    logger.LogWarning("Found multiple parent work items matching criteria. Using first match with ID: {workItemId}", workItems[0].Id);
+                }
+                return workItems[0];
+            }
+
+            return null;
+        }
     }
 }

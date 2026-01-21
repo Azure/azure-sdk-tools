@@ -1390,7 +1390,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             // Remove existing parent link
-            // Child must have existing parent link or remove work item relation will fail. 
+            // Child must have existing parent link or remove work item relation will fail.
             await RemoveWorkItemRelationAsync(child.WorkItemId, "Parent", child.ParentId);
 
             await CreateWorkItemRelationAsync(child.WorkItemId, "Parent", parent.WorkItemId);

@@ -144,19 +144,15 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
       if (this.codeLineSearchInfo && this.codeLineSearchInfo.currentMatch) {
          try {
            const match = this.codeLineSearchInfo.currentMatch as any;
-           console.log('ReviewToolbar: Processing match index:', match.index);
            this.currentMatchIndexValue = (typeof match.index === 'number') ? match.index + 1 : 1;
            this.totalMatchCountValue = this.codeLineSearchInfo.totalMatchCount || 0;
            this.showSearchControls = true;
-           console.log('ReviewToolbar: Updated values:', this.currentMatchIndexValue, this.totalMatchCountValue);
          } catch(e) {
-           console.error('ReviewToolbar: Error processing match index', e);
            this.currentMatchIndexValue = 1;
            this.totalMatchCountValue = 0;
            this.showSearchControls = false;
          }
       } else {
-        console.log('ReviewToolbar: No match selected');
         this.currentMatchIndexValue = 0;
         this.totalMatchCountValue = 0;
         this.showSearchControls = false;

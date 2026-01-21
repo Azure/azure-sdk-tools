@@ -659,7 +659,6 @@ export class ReviewPageComponent implements OnInit {
   }
 
   handleCodeLineSearchTextEmitter(searchText: string) {
-    console.log('ReviewPage: Received search text:', searchText);
     this.codeLineSearchText = searchText;
   }
 
@@ -668,7 +667,6 @@ export class ReviewPageComponent implements OnInit {
   }
 
   handleCodeLineSearchInfoEmitter(value: CodeLineSearchInfo) {
-    console.log('ReviewPage: Received search info:', value);
     setTimeout(() => {
       this.codeLineSearchInfo = (value) ? new CodeLineSearchInfo(value.currentMatch, value.totalMatchCount) : undefined;
     }, 0);

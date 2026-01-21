@@ -1,4 +1,4 @@
-<div class="review-toolbar d-flex align-items-center gap-3 ps-2 py-2 pe-0 border rounded">
+<div class="review-toolbar d-flex align-items-center gap-3 ps-2 py-1 pe-0">
     <!-- Diff Revision Dropdown -->
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center">
         <label class="small fw-semibold me-2" for="diff-api-revision-select">Diff :</label>
@@ -85,20 +85,28 @@
     <span class="ms-auto d-flex align-items-center gap-2">
         <p-iconField iconPosition="left">
             <p-inputIcon styleClass="pi pi-search" />
-            <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search" class="review-search-input" data-clarity-region="toolbar-review-search-input" style="width: 250px;"/>
+            <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search" class="review-search-input" data-clarity-region="toolbar-review-search-input" style="width: 200px;"/>
         </p-iconField>
         <div [class.d-none]="!showSearchControls" [class.d-flex]="showSearchControls" class="align-items-center gap-1">
             <small class="review-search-info text-nowrap">{{ currentMatchIndexValue }} of {{ totalMatchCountValue }}</small>
-            <span class="d-flex">
-                <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)" data-clarity-region="toolbar-review-search-up"></i>
-                <i class="bi bi-arrow-down-short border review-search-icon" (click)="navigateSearch(1)" data-clarity-region="toolbar-review-search-down"></i>
-                <i class="bi bi-x border rounded-end review-search-icon" (click)="clearReviewSearch()" data-clarity-region="toolbar-review-search-clear"></i>
-            </span>
+        </div>
+        <div class="search-nav-buttons d-flex align-items-center">
+            <button type="button" class="search-nav-btn" (click)="navigateSearch(1)" data-clarity-region="toolbar-review-search-down" [disabled]="!showSearchControls">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+            <button type="button" class="search-nav-btn" (click)="navigateSearch(-1)" data-clarity-region="toolbar-review-search-up" [disabled]="!showSearchControls">
+                <i class="bi bi-chevron-up"></i>
+            </button>
+            <button *ngIf="showSearchControls" type="button" class="search-nav-btn" (click)="clearReviewSearch()" data-clarity-region="toolbar-review-search-clear">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
     </span>
 
     <!-- Settings Gear Icon with Popover -->
-    <button type="button" pButton icon="bi bi-gear" class="p-button-text p-button-rounded settings-button" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button"></button>
+    <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button">
+        <i class="bi bi-gear"></i>
+    </button>
     <p-popover #settingsPanel styleClass="settings-panel">
         <ng-template pTemplate="content">
             <div class="settings-content p-3">

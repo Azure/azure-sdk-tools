@@ -23,9 +23,9 @@
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div class="col flex flex-column align-items-center justify-content-center rounded gap-2 review-panel" style="overflow: hidden;">
+            <div class="col flex flex-column gap-1 ng-star-inserted review-panel-container" style="overflow: hidden; display: flex; flex-direction: column;">
                 <app-review-toolbar
-                    style="width: 100%;"
+                    style="width: 100%; flex-shrink: 0; flex-grow: 0;"
                     [apiRevisions]="apiRevisions"
                     [activeApiRevisionId]="activeApiRevisionId"
                     [diffApiRevisionId]="diffApiRevisionId"
@@ -44,7 +44,7 @@
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
                     (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
                 </app-review-toolbar>
-                <div style="width: 100%; flex: 1; overflow: auto;">
+                <div class="review-panel rounded" style="width: 100%; flex: 1; min-height: 0; overflow: hidden;">
                     <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
                         [crossLanguageRowData]="crossLanguageRowData"
                         [language]="language" [languageSafeName]="languageSafeName"
@@ -68,7 +68,7 @@
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center rounded overflow-auto review-panel options-panel px-3">
+            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center rounded review-panel options-panel px-3">
                 <app-review-page-options
                     [loadingStatus]="getLoadingStatus()"
                     [isDiffView]="!!diffApiRevisionId"

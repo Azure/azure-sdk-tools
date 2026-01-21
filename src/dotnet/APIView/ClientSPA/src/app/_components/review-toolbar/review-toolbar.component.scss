@@ -1,23 +1,25 @@
 .review-toolbar {
   background-color: var(--surface-section);
   border-color: var(--border-color) !important;
-  min-height: 48px;
+  min-height: 36px;
+  overflow: hidden;
+  flex-wrap: nowrap;
 
   .compact-dropdown {
     min-width: 200px;
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    border: 1px solid transparent !important;
-    border-radius: 4px;
-    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px;
+    background: var(--surface-card) !important;
     padding: 0 !important;
     position: relative !important;
     margin-right: 20px !important;
     z-index: 1000 !important;
 
     &:hover {
-      border-color: var(--outer-glow) !important;
+      border-color: var(--text-color-secondary) !important;
     }
 
     &.p-focus {
@@ -98,17 +100,47 @@
     color: var(--text-color-secondary);
   }
 
-  .review-search-icon {
+  // GitHub-style icon buttons
+  .search-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--surface-card);
+    color: var(--text-color-secondary);
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    font-size: 1.25rem;
-    background-color: var(--surface-section);
-    color: var(--text-color);
-    transition: background-color 0.2s;
+    transition: all 0.15s ease;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background-color: var(--surface-hover);
+      border-color: var(--text-color-secondary);
+      color: var(--text-color);
     }
+
+    &:active:not(:disabled) {
+      background-color: var(--surface-ground);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 0.875rem;
+    }
+  }
+
+  .search-nav-buttons {
+    gap: 4px;
+  }
+
+  .settings-btn {
+    margin-left: 4px;
   }
 
   .diff-style-toggle-wrapper {
@@ -194,34 +226,16 @@
     padding: 0.5rem 0;
     gap: 0.25rem;
   }
-
-  .settings-button {
-    color: var(--primary-color) !important;
-    margin-right: -2rem;
-
-    &:hover {
-        background-color: var(--primary-50) !important;
-        color: var(--primary-color) !important;
-    }
-
-    &:focus {
-        box-shadow: 0 0 0 2px var(--surface-card), 0 0 0 4px var(--primary-color) !important;
-    }
-  }
 }
 
 ::ng-deep .settings-panel {
   border: 1px solid var(--border-color) !important;
+  margin-top: 0px !important;
 
-  /* Ensure the arrow has the same border color as the popover */
-  &::before {
-    border-bottom-color: var(--border-color) !important;
-  }
-
-  /* Handle case where popover is flipped (arrow on bottom) */
-  &.p-popover-flipped::before {
-    border-top-color: var(--border-color) !important;
-    border-bottom-color: transparent !important;
+  /* Hide the arrow */
+  &::before,
+  &::after {
+    display: none !important;
   }
 
   .settings-content {

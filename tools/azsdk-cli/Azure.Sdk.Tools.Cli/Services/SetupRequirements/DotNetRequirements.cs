@@ -21,7 +21,7 @@ public static class DotNetRequirements
         public override string[] CheckCommand => ["dotnet", "--version"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.DotNet;
+            => ctx.Languages.Contains(SdkLanguage.DotNet);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

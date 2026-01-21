@@ -32,7 +32,7 @@ public abstract class PythonRequirementBase : Requirement
     }
 
     public override bool ShouldCheck(RequirementContext ctx)
-        => ctx.Language == SdkLanguage.Python;
+        => ctx.Languages.Contains(SdkLanguage.Python);
 }
 
 /// <summary>

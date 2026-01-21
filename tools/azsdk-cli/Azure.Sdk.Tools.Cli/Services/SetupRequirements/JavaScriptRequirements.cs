@@ -20,7 +20,7 @@ public static class JavaScriptRequirements
         public override string[] CheckCommand => ["pnpm", "--version"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.JavaScript;
+            => ctx.Languages.Contains(SdkLanguage.JavaScript);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

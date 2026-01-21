@@ -26,9 +26,9 @@ public class RequirementContext
     public OSPlatform Platform { get; init; }
 
     /// <summary>
-    /// The detected or specified SDK language, if any.
+    /// The set of SDK languages to check requirements for.
     /// </summary>
-    public SdkLanguage? Language { get; init; }
+    public IReadOnlySet<SdkLanguage> Languages { get; init; } = new HashSet<SdkLanguage>();
 
     /// <summary>
     /// True if running on Windows.
@@ -53,23 +53,25 @@ public class RequirementContext
     /// <summary>
     /// Creates a RequirementContext for the current environment.
     /// </summary>
-    public static RequirementContext Create(string? repoRoot, string? packagePath, SdkLanguage? language = null)
+    public static RequirementContext Create(string? repoRoot, string? packagePath, HashSet<SdkLanguage>? languages = null)
     {
         return new RequirementContext
         {
             RepoRoot = repoRoot,
             PackagePath = packagePath,
             Platform = GetCurrentPlatform(),
-            Language = language
+            Languages = languages ?? new HashSet<SdkLanguage>()
         };
     }
 
     private static OSPlatform GetCurrentPlatform()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             return OSPlatform.Windows;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
             return OSPlatform.OSX;
+        }
         return OSPlatform.Linux;
     }
 }

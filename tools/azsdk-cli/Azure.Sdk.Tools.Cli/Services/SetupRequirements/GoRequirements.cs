@@ -23,7 +23,7 @@ public static class GoRequirements
         public override string[] CheckCommand => ["go", "version"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Go;
+            => ctx.Languages.Contains(SdkLanguage.Go);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -41,7 +41,7 @@ public static class GoRequirements
         public override string[] CheckCommand => ["pwsh", "-Command", "Get-Command", "goimports"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Go;
+            => ctx.Languages.Contains(SdkLanguage.Go);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -55,7 +55,7 @@ public static class GoRequirements
         public override string[] CheckCommand => ["golangci-lint", "--version"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Go;
+            => ctx.Languages.Contains(SdkLanguage.Go);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -70,7 +70,7 @@ public static class GoRequirements
         public override string[] CheckCommand => ["generator", "-v"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Go;
+            => ctx.Languages.Contains(SdkLanguage.Go);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

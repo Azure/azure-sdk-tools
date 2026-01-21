@@ -22,7 +22,7 @@ public static class JavaRequirements
         public override string[] CheckCommand => ["java", "-version"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Java;
+            => ctx.Languages.Contains(SdkLanguage.Java);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -55,7 +55,7 @@ public static class JavaRequirements
         public override string[] CheckCommand => ["mvn", "-v"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Java;
+            => ctx.Languages.Contains(SdkLanguage.Java);
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

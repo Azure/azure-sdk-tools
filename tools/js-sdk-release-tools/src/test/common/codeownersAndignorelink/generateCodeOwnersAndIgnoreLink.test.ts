@@ -126,7 +126,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         expect(fsModule.writeFileSync).toHaveBeenCalledTimes(2);
 
         // Check CODEOWNERS update
-        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${mockPackageFolderPath}/ @qiaozha @MaryGao\n`;
+        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${mockPackageFolderPath}/ @qiaozha @MaryGao @JialinHuang803\n`;
         const configSectionIndex = mockCODEOWNERSContent.indexOf(
             "###########\n# Config\n###########",
         );
@@ -163,7 +163,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined);
 
         // Modify mockCODEOWNERSContent to include the entry already
-        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${mockPackageFolderPath}/ @qiaozha @MaryGao\n`;
+        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${mockPackageFolderPath}/ @qiaozha @MaryGao @JialinHuang803\n`;
         const configSectionIndex = mockCODEOWNERSContent.indexOf(
             "###########\n# Config\n###########",
         );

@@ -88,7 +88,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE)
   {
     let relatedNode = codePanelData?.nodeMetaData[node.relatedNodeIdHash]!;
-    if (!relatedNode.isNodeWithDiff && !node.isNodeWithDiffInDescendants && !visibleNodes.has(node.relatedNodeIdHash))
+    if (!relatedNode.isNodeWithDiff && !relatedNode.isNodeWithDiffInDescendants && !visibleNodes.has(node.relatedNodeIdHash))
     {
       return;
     }

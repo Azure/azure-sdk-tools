@@ -13,6 +13,7 @@ import { ConversationHandler } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 import { ManagedIdentityCredential, TokenCredential } from '@azure/identity';
 import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
+import { sendActivityWithRetry } from '../activityUtils.js';
 
 const conversationHandler = new ConversationHandler();
 const channelConfigManager = new ChannelConfigManager();
@@ -100,7 +101,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         user_name: context.activity.from?.name,
       };
       await sendFeedback(goodFeedback, ragOptions, meta);
-      await context.sendActivity('Your feedback is received. Thank you!');
+      await sendActivityWithRetry(context, 'Your feedback is received. Thank you!');
       break;
     case 'feedback-dislike':
       const badFeedback: FeedbackRequestPayload = {
@@ -114,7 +115,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         user_name: context.activity.from?.name,
       };
       await sendFeedback(badFeedback, ragOptions, meta);
-      await context.sendActivity('Your feedback is received. Thank you!');
+      await sendActivityWithRetry(context, 'Your feedback is received. Thank you!');
       break;
     default:
       break;

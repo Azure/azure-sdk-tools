@@ -30,9 +30,10 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 
 @Component({
-  selector: 'app-review-page',
-  templateUrl: './review-page.component.html',
-  styleUrls: ['./review-page.component.scss']
+    selector: 'app-review-page',
+    templateUrl: './review-page.component.html',
+    styleUrls: ['./review-page.component.scss'],
+    standalone: false
 })
 export class ReviewPageComponent implements OnInit {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
@@ -119,7 +120,7 @@ export class ReviewPageComponent implements OnInit {
         }
       });
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const navigationState = this.router.getCurrentNavigation()?.extras.state;
+      const navigationState = this.router.currentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
         this.updateStateBasedOnQueryParams(params);
       }
@@ -173,13 +174,17 @@ export class ReviewPageComponent implements OnInit {
         icon: 'bi bi-puzzle',
         tooltip: 'Samples',
         command: () => {
+          const queryParams: any = {};
           if (this.latestSampleRevision) {
-            this.router.navigate(['/samples', this.reviewId],
-              { queryParams: { activeSamplesRevisionId: this.latestSampleRevision?.id } });
+            queryParams['activeSamplesRevisionId'] = this.latestSampleRevision?.id;
           }
-          else {
-            this.router.navigate([`/samples/${this.reviewId}`])
+          if (this.activeApiRevisionId) {
+            queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
           }
+          if (this.diffApiRevisionId) {
+            queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+          }
+          this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
         }
       }
     ]);
@@ -374,13 +379,27 @@ export class ReviewPageComponent implements OnInit {
   }
 
   private processEmbeddedComments() {
-    if (!this.codePanelData || !this.comments) return;
-    Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
+    if (!this.codePanelData || !this.comments) {
+        return;
+    }
+
+    Object.values(this.codePanelData.nodeMetaData).forEach((nodeData) => {
       if (nodeData.commentThread) {
-        Object.values(nodeData.commentThread).forEach(commentThreads => {
-          commentThreads.forEach(commentThreadRow => {
-            if (commentThreadRow.comments) {
-              commentThreadRow.comments.forEach(embeddedComment => {
+        Object.values(nodeData.commentThread).forEach((commentThreads: any) => {
+          let rows: any[] = [];
+          if (Array.isArray(commentThreads)) {
+            rows = commentThreads;
+          } else if (commentThreads && typeof commentThreads === 'object') {
+             if (commentThreads.type || commentThreads.comments) {
+                 rows = [commentThreads];
+             } else {
+                 rows = Object.values(commentThreads);
+             }
+          }
+
+          rows.forEach((commentThreadRow: any) => {
+            if (commentThreadRow && commentThreadRow.comments) {
+              commentThreadRow.comments.forEach((embeddedComment: any) => {
                 const globalComment = this.comments.find(c => c.id === embeddedComment.id);
                 if (globalComment) {
                   embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
@@ -392,6 +411,7 @@ export class ReviewPageComponent implements OnInit {
         });
       }
     });
+    this.changeDetectorRef.detectChanges();
   }
 
   loadLatestSampleRevision(reviewId: string) {
@@ -626,11 +646,11 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
-  handleCommentThreadNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleCommentThreadNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToCommentThread(direction);
   }
 
-  handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+  handleDiffNavigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToDiffNode(direction);
   }
 

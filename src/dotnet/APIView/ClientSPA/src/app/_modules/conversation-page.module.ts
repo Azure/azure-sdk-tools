@@ -10,12 +10,12 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    ConversationPageComponent
   ],
   imports: [
     CommonModule,
     ReviewPageLayoutModule,
     RouterModule.forChild(routes),
+    ConversationPageComponent
   ]
 })
 export class ConversationPageModule { }

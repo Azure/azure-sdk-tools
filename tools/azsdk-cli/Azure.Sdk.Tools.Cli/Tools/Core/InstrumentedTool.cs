@@ -5,23 +5,40 @@ using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Helpers;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
-public class InstrumentedTool(
-    ITelemetryService telemetryService,
-    ILogger logger,
-    McpServerTool innerTool
-) : DelegatingMcpServerTool(innerTool)
+public class InstrumentedTool : DelegatingMcpServerTool
 {
+    private readonly ITelemetryService telemetryService;
+    private readonly ILogger logger;
+    private readonly IMcpServerContextAccessor mcpServerContextAccessor;
+    private readonly McpServerTool innerTool;
     private readonly JsonSerializerOptions serializerOptions = new()
     {
         WriteIndented = false,
     };
 
+    public InstrumentedTool(
+        ITelemetryService telemetryService,
+        ILogger logger,
+        IMcpServerContextAccessor mcpServerContextAccessor,
+        McpServerTool innerTool
+    ) : base(innerTool)
+    {
+        this.telemetryService = telemetryService;
+        this.mcpServerContextAccessor = mcpServerContextAccessor;
+        this.logger = logger;
+        this.innerTool = innerTool;
+    }
+
+    public override IReadOnlyList<object> Metadata => innerTool.Metadata;
+
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
+        mcpServerContextAccessor.Initialize(request?.Server);
         using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
         Activity.Current = activity;
         if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
@@ -71,14 +88,13 @@ public class InstrumentedTool(
                                         default:
                                             activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
                                             break;
-                                    }                                    
+                                    }
                                 }
                                 else
                                 {
                                     activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
                                 }
-
-                            }                  
+                            }
                         }
                     }
                 }
@@ -89,6 +105,7 @@ public class InstrumentedTool(
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 logger.LogError(ex, "Failed to deserialize contentBlock.Text for telemetry properties");
             }
+
             return result;
         }
         catch (Exception ex)

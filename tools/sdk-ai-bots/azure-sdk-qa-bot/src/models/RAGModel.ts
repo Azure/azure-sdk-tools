@@ -43,7 +43,7 @@ export class RAGModel implements PromptCompletionModel {
     ]);
     logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
-      endpoint: ragEndpoint,
+      endpoint: config.isLocal ? config.localBackendEndpoint : ragEndpoint,
       accessToken: token ? token.token : undefined
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
@@ -53,7 +53,7 @@ export class RAGModel implements PromptCompletionModel {
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
 
-    const replyStartTimestamp = await thinkingHandler.start(context, conversationMessages);
+    const replyStartTimestamp = await thinkingHandler.start(conversationMessages);
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);

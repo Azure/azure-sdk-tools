@@ -1,19 +1,24 @@
 
-@import "../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+@use "../../../../../APIViewWeb/Client/css/shared/mixins.scss" as *;
 
 :host ::ng-deep {
-    @include glow;
-
     font-family: Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;
     display: block;
+
+    @include glow;
 
     #viewport {
         overflow: auto;
         height: calc(100vh - 102px);
         will-change: scroll-position, contents;
         container-type: inline-size;
+        background-color: var(--base-fg-color);
+
+        p-messages.sticky-top {
+            z-index: 1 !important;
+        }
     }
 
     .code-line {
@@ -21,6 +26,7 @@
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
         width: 500% !important;
+        contain: layout style;
 
         &.diagnostics {
             padding-left: calc(var(--max-line-number-width) + 50px);
@@ -59,7 +65,7 @@
                 }
             }
         }
-        
+
         &.user-comment-thread, &.cross-language-view {
             padding-left: calc(var(--max-line-number-width) + 10px);
             border-top: none;
@@ -96,7 +102,7 @@
                 visibility: hidden;
             }
         }
-    
+
         &.removed {
             background-color: rgba(255, 0, 0, 0.25);
             .code-line-content::before {
@@ -113,7 +119,7 @@
         }
 
         &.added .line-actions, &.removed .line-actions {
-            background-color: var(--dark-overlay) 
+            background-color: var(--dark-overlay)
         }
 
         &.active, &.active .line-actions {
@@ -139,19 +145,21 @@
 
         .toggle-user-comments-btn.can-show {
             color: inherit;
-        } 
+        }
     }
-    
+
     .code-line-content {
         max-height: 21px;
         grid-column: 2;
-        position: relative; 
+        position: relative;
         white-space: pre;
+        color: var(--base-text-color);
     }
 
     .line-number {
         display: inline-block;
-        min-width: var(--max-line-number-width);
+        width: var(--max-line-number-width);
+        text-align: right;
 
         &.has-cross-language {
             color: var(--primary-color);
@@ -162,6 +170,20 @@
         position: relative;
         display: inline-flex;
         align-items: center;
+        
+        // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
+        &::after {
+            content: '';
+            display: inline-block;
+            width: 28px; // padding (6px) + icon width (14px) + padding (6px) + borders (2px) = 28px
+            height: 26px; // matches button height
+            margin-left: 6px; // matches button margin-left
+        }
+        
+        // When the button exists, hide the spacer
+        &.has-comment-btn::after {
+            display: none;
+        }
         
         .add-comment-btn {
             opacity: 0;
@@ -222,6 +244,7 @@
         position: sticky;
         left: 0;
         background-color: var(--base-fg-color);
+        color: var(--base-text-color);
         z-index: 1000;
 
         span:not(:last-child) {
@@ -306,7 +329,7 @@
         .enum {
             color: var(--class-color);
         }
-    
+
         .comment {
             color: var(--java-comment-color);
             font-style: italic !important;
@@ -315,7 +338,7 @@
         .fieldName, .enumConstant {
             color: var(--java-field-name-color);
         }
-        
+
         .methodName {
             color: var(--java-method-name-color);
         }

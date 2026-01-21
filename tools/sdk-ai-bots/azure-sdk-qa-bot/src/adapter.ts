@@ -6,8 +6,14 @@ import { LogMiddleware } from './middleware/LogMiddleware.js';
 import { logger } from './logging/logger.js';
 import { getTurnContextLogMeta } from './logging/utils.js';
 import { isAzureAppService } from './common/shared.js';
+import { sendActivityWithRetry } from './activityUtils.js';
 
-const adapter = new TeamsAdapter(config);
+// For Teams App Test Tool, don't require authentication
+const adapterConfig = config.isLocal && !config.MicrosoftAppId
+  ? {} // No authentication for test tool
+  : config;
+
+const adapter = new TeamsAdapter(adapterConfig);
 adapter.use(new LogMiddleware());
 
 // Catch-all for errors.
@@ -39,7 +45,7 @@ const onTurnErrorHandler = async (context, error) => {
       const errorMessage =
         `The bot encountered an error or bug.` +
         (!(await isAzureAppService()) ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
-      await context.sendActivity(errorMessage);
+      await sendActivityWithRetry(context, errorMessage);
       logger.warn(`Sent error to teams. Error: ${error}`, { meta });
     }
   }

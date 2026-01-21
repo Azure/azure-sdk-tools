@@ -2,6 +2,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -14,6 +15,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _newValue;
         private string _regexValue = null;
         private string _groupForReplace = null;
+        private readonly Regex _regex;
 
         /// <summary>
         /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by
@@ -37,7 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _groupForReplace = groupForReplace;
             Condition = condition;
 
-            StringSanitizer.ConfirmValidRegex(regex);
+            _regex = GetRegex(regex);
         }
 
         public override string SanitizeTextBody(string contentType, string body)
@@ -83,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                                 continue;
                             }
 
-                            var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
+                            var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
 
                             // this sanitizer should only apply to actual values
                             // if we attempt to apply a regex update to a jtoken that has a more complex type, throw

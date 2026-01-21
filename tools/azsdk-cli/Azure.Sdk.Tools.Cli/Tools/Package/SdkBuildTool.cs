@@ -5,7 +5,6 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -14,20 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType, Description("This type contains the tools to build/compile SDK code locally.")]
     public class SdkBuildTool : LanguageMcpTool
     {
-        // Fields to hold constructor parameters
-        private readonly IProcessHelper processHelper;
-        private readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
-
         public SdkBuildTool(
             IGitHelper gitHelper,
             ILogger<SdkBuildTool> logger,
-            IProcessHelper processHelper,
-            ISpecGenSdkConfigHelper specGenSdkConfigHelper,
             IEnumerable<LanguageService> languageServices
         ) : base(languageServices, gitHelper, logger)
         {
-            this.processHelper = processHelper;
-            this.specGenSdkConfigHelper = specGenSdkConfigHelper;
         }
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
@@ -35,7 +26,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Command names
         private const string BuildSdkCommandName = "build";
         private const string BuildSdkToolName = "azsdk_package_build_code";
-        private const string AzureSdkForPythonRepoName = "azure-sdk-for-python";
         private const int CommandTimeoutInMinutes = 30;
 
         protected override Command GetCommand() =>
@@ -55,8 +45,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
-
                 // Validate package path
                 if (string.IsNullOrWhiteSpace(packagePath))
                 {
@@ -65,57 +53,38 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Resolves relative paths to absolute
                 string fullPath = Path.GetFullPath(packagePath);
-                
-                if (!Directory.Exists(fullPath))
-                {
-                    return PackageOperationResponse.CreateFailure($"Package full path does not exist: {fullPath}, input package path: {packagePath}.");
-                }
-
-                packagePath = fullPath;
-                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
-
-                // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-                if (string.IsNullOrEmpty(sdkRepoRoot))
-                {
-                    return PackageOperationResponse.CreateFailure($"Failed to discover local sdk repo with project-path: {packagePath}.");
-                }
-
-                logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
-                string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
-                logger.LogInformation("Repository name: {SdkRepoName}", sdkRepoName);
-                var languageService = GetLanguageService(sdkRepoRoot);
+                var languageService = GetLanguageService(fullPath);
                 if (languageService == null)
                 {
                     return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");
                 }
-                PackageInfo? packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-                // Return if the project is python project
-                if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
+
+                // Use the shared BuildAsync method from LanguageService
+                var (success, errorMessage, packageInfo) = await languageService.BuildAsync(fullPath, CommandTimeoutInMinutes, ct);
+
+                if (success)
                 {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return PackageOperationResponse.CreateSuccess("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.", packageInfo, result: "noop");
-                }
-
-                var (configContentType, configValue) = await this.specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
-                if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
-                {
-                    logger.LogInformation("Found valid configuration for build process. Executing configured script...");
-
-                    // Prepare script parameters
-                    var scriptParameters = new Dictionary<string, string>
+                    // Check if this was a Python no-op build
+                    if (languageService.Language == SdkLanguage.Python)
                     {
-                        { "PackagePath", packagePath }
-                    };
-
-                    // Create and execute process options for the build script
-                    var processOptions = this.specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters, CommandTimeoutInMinutes);
-                    if (processOptions != null)
-                    {
-                        return await this.specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Build completed successfully.");
+                        return PackageOperationResponse.CreateSuccess(
+                            "Python SDK project detected. Skipping build step as Python SDKs do not require a build process.",
+                            packageInfo,
+                            result: "noop");
                     }
+                    return PackageOperationResponse.CreateSuccess("Build completed successfully.", packageInfo);
                 }
-                return PackageOperationResponse.CreateFailure("No build configuration found or failed to prepare the build command", packageInfo, nextSteps: ["Ensure the SDK repository has a valid 'buildScript' configuration in eng/swagger_to_sdk_config.json", "Resolve any issues reported in the build log", "Re-run the tool"]);
+
+                return PackageOperationResponse.CreateFailure(
+                    errorMessage ?? "Build failed with an unknown error.",
+                    packageInfo,
+                    nextSteps: [
+                        "Ensure the SDK repository has a valid 'buildScript' configuration in eng/swagger_to_sdk_config.json",
+                        "Check the build logs for details about the error",
+                        "Resolve any issues reported in the build log",
+                        "Re-run the tool",
+                        "Run verify setup tool if the issue is environment related"
+                    ]);
             }
             catch (Exception ex)
             {
@@ -127,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         "Resolve the issue",
                         "Re-run the tool",
                         "Run verify setup tool if the issue is environment related"
-                        ]);
+                    ]);
             }
         }
     }

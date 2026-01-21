@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'languageNames'
+    name: 'languageNames',
+    standalone: true
 })
 export class LanguageNamesPipe implements PipeTransform {
 
@@ -19,6 +20,8 @@ export class LanguageNamesPipe implements PipeTransform {
             } else {
               return "rust-light";
             }
+          case "typescript":
+            return "typescript-plain";
           default:
             return language.toLocaleLowerCase();
       }

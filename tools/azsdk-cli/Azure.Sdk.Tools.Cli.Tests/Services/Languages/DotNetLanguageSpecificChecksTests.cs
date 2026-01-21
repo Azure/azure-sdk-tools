@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -33,7 +34,8 @@ internal class DotNetLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
-            Mock.Of<IFileHelper>());
+            Mock.Of<IFileHelper>(),
+            Mock.Of<ISpecGenSdkConfigHelper>());
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
         _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");
@@ -514,6 +516,70 @@ internal class DotNetLanguageSpecificChecksTests
     private static bool IsDotNetListSdksCommand(ProcessOptions options) =>
         (options.Command == "dotnet" && options.Args.Contains("--list-sdks")) ||
         (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("--list-sdks"));
+
+    #endregion
+
+    #region HasCustomizations Tests
+
+    [Test]
+    public void HasCustomizations_ReturnsTrue_WhenPartialClassExistsOutsideGeneratedFolder()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-customization-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(srcDir);
+        
+        // Create a partial class file outside Generated folder
+        File.WriteAllText(Path.Combine(srcDir, "CustomClient.cs"), @"
+namespace Azure.Test;
+public partial class TestClient
+{
+    public void CustomMethod() { }
+}");
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void HasCustomizations_ReturnsFalse_WhenNoPartialClassesExist()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-no-customization-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(srcDir);
+        
+        // Create a regular class file (not partial)
+        File.WriteAllText(Path.Combine(srcDir, "RegularClass.cs"), @"
+namespace Azure.Test;
+public class RegularClass
+{
+    public void Method() { }
+}");
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void HasCustomizations_ReturnsFalse_WhenPartialClassOnlyInGeneratedFolder()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-generated-only-test");
+        var generatedDir = Path.Combine(tempDir.DirectoryPath, "src", "Generated");
+        Directory.CreateDirectory(generatedDir);
+        
+        // Create a partial class inside Generated folder
+        File.WriteAllText(Path.Combine(generatedDir, "GeneratedClient.cs"), @"
+namespace Azure.Test;
+public partial class TestClient
+{
+    public void GeneratedMethod() { }
+}");
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.False);
+    }
 
     #endregion
 }

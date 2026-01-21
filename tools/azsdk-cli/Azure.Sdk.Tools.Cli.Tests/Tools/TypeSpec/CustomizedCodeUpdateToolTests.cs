@@ -28,7 +28,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override bool IsCustomizedCodeUpdateSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) => null; // No customizations found
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => false; // No customizations found
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
@@ -55,11 +55,12 @@ public class CustomizedCodeUpdateToolAutoTests
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
-            Path.Combine(generationRoot, "customization"); // Mock customization root exists
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
             => Task.FromResult(true); // Simulate successful patch application
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null)); // Mock successful build
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
         {
             PackagePath = packagePath,
@@ -89,7 +90,7 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -108,7 +109,7 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -129,7 +130,7 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, specGenSdkConfigHelper.Object);
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -147,8 +148,7 @@ public class CustomizedCodeUpdateToolAutoTests
         private Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? GetCustomizationRoot(string generationRoot, CancellationToken ct) =>
-            Path.Combine(generationRoot, "customization"); // Mock customization root exists
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
         {
@@ -159,6 +159,8 @@ public class CustomizedCodeUpdateToolAutoTests
             }
             return Task.FromResult(ValidationResult.CreateSuccess());
         }
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+            => Task.FromResult<(bool, string?, PackageInfo?)>((false, "Build failed for testing", null)); // Simulate failed build for this test
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
         {
             PackagePath = packagePath,

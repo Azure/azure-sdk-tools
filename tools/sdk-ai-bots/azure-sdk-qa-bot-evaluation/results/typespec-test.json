@@ -1,5 +1,222 @@
 [
     {
+        "testcase": "Guidance on cross version breaking change for readonly and async operations in new api-versions",
+        "expected": {
+            "answer": "The 'provisioningState' change in the PATCH request model seems like a bug fix if this field was always read-only.  When you get a breaking change review, if this is explained with an appropriate comment, this is likely to be justified as a bug fix.\nOn changing PATCH to synchronous.  ARM does support async PATCH operations, although REST API Guidelines discourage async PATCH operations.  If this operation is synchronous in the previous stable version, then this change is a real breaking change that you will need to justify in breaking change review.\nSimilarly, making PUT and DELETE Asynchronous is a breaking change if these operations were synchronous in the previous stable version is a real breaking change, and you will need to justify the change in a breaking change review.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "1) Removing a readOnly property like 'provisioningState' from the PATCH (update) model (e.g., ConfigurationPropertiesUpdate) is NOT a breaking change per Azure guidelines. ReadOnly properties are not supposed to be present in the PATCH request model, since clients cannot set them. Their omission from the PATCH request body is expected and correct. The PATCH model should only include properties that are updatable by the client; properties that are readOnly or immutable (such as provisioningState) MUST NOT be updatable and therefore must not be included in the PATCH request body. This is explicitly required by the Azure Resource Manager RPC guidelines (see RPC-Patch-V1-02).\n\nIf your cross-version breaking-change checker is flagging this as a breaking change, it is a tooling issue or a misconfiguration of the checker: it should be aware that PATCH request models can and should drop readOnly fields that are not present in the request payload. This is not a breaking change and should not block your PR.\n\n2) Changing Create/Update/Delete (CUD) operations to LROs (Long Running Operations) in a new API version is an allowed breaking change ONLY if you release it in a new API version (as you are doing). Per Azure's breaking change policy, you MUST NOT break existing GA or preview versions, but you MAY introduce LRO behavior in a new version. This is because clients opting into the new API version are expected to accommodate the new LRO behavior. In the new version, make sure your TypeSpec/Swagger correctly marks the operations as LRO (using the appropriate Azure.Core templates, e.g., ArmResourceCreateOrReplaceAsync, ArmResourceDeleteWithoutOkAsync, etc.), and that the response status codes and headers (Location, Azure-AsyncOperation, etc.) conform to ARM LRO guidance. For customers who continue to use the old API versions, the operations must remain synchronous as before; for those who opt into the new API version, LRO semantics apply. There is no cross-version breaking change in this scenario as long as the behavior is versioned correctly.\n\nSummary of recommendations:\n- PATCH request models must omit readOnly properties (like provisioningState); this is not a breaking change.\n- Converting CUD operations to LROs is allowed in a new API version; be sure to implement all LRO protocol requirements for the new version.\n- If your checker flags readOnly removal in PATCH as breaking, you may need to update or configure the checker appropriately.\n\nReferences and concrete code examples for PATCH models and LRO pattern are provided below.",
+            "reference_urls": [
+                "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/patch-resource.md",
+                "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/patch-resource.md",
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering the main points about PATCH/readOnly and LROs in new versions, but it omits the explicit statement that making previously synchronous operations asynchronous is a breaking change requiring justification.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "What decorator should be used in this case?",
+        "expected": {
+            "answer": "it should be `typedChangedFrom(v2, model1)` here otherwise you are saying in v1 you changed from using model1 to model2 which then of course doesn't exists",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You are encountering the error because you annotated the property with @typeChangedFrom(v1, model1), but model2 does not exist in v1. The @typeChangedFrom decorator's version argument should indicate the version when the type changed, not the previous version. In your scenario, model2 is introduced in v2, so the type change happens in v2, not v1.\n\nThe correct usage is:\n\n```tsp\n@added(v1)\nmodel model1 {};\n\n@added(v2)\nmodel model2 {};\n\n@added(v1)\nmodel featureA {\n  @typeChangedFrom(v2, model1)\n  body: model2;\n}\n```\n\nThis tells TypeSpec: starting in v2, featureA.body uses model2 (which now exists), and in earlier versions it uses model1. The version argument to @typeChangedFrom must be the version when the new type is in effect.\n\nThis approach aligns with TypeSpec's versioning decorators best practices for type changes.\n",
+            "reference_urls": [
+                "https://typespec.io/docs/libraries/versioning/reference/decorators"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and accurate according to the provided CONTEXT and definitions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, including the correct decorator usage, the reasoning, and the implications of using the wrong version. No information is missing.",
+        "overall_score": 7.0
+    },
+    {
+        "testcase": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
+        "expected": {
+            "answer": "You need to get the necessary permissions, see here: https://aka.ms/azsdk/access",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You are encountering restricted workflow visibility because you don't currently have the required permissions to view validation check details on your Azure REST API PR. To gain access and be able to debug validation issues ahead of the final review, you need to:\n\n1. Ensure your membership in the Azure GitHub organization is set to 'public' (not private).\n2. Request to join the Azure SDK Partners group if you aren't already a member.\n3. Follow the official access instructions here: https://aka.ms/azsdk/access\n\nOnce your membership is public and you are in the correct group, you should be able to see the workflow and validation check results on your PR. This process is standard for all contributors to Azure REST API specs repositories to ensure security and proper access control.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully supported by the context, covers all necessary steps, and does not introduce unsupported information or omit critical details.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response fully contains all necessary and relevant information from the ground truth, including the key instruction and link, and adds useful details.",
+        "overall_score": 7.0
+    },
+    {
+        "testcase": "Service under conversation label",
+        "expected": {
+            "answer": "The label should not impact your previous PR, and , if this is a later api-version thatn the conversion PR, the conversion would normally be based on that version once checked in.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "The addition of the 'service-under-conversion' label to your stable API PR does NOT indicate a delay or block on merging your PR solely because of the TypeSpec migration PR. This label is used for tracking and coordination during service migrations. If your stable API PR is for a later API version than the conversion PR, the TypeSpec migration will typically be based on the version you check in once your PR is merged. You do not need to make additional changes to your stable API PR specifically because of this label. Just ensure your PR passes the required validation and review processes as usual. If there are any merge conflicts or integration issues due to concurrent changes, those will need to be resolved in the normal course of merging, but the label itself is informational and does not prevent progress.",
+            "reference_urls": []
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, accurately conveys all essential information, and does not add unsupported details or omit critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response fully and accurately reflects all relevant information from the ground truth without missing any key points.",
+        "overall_score": 6.4
+    },
+    {
+        "testcase": "Design question about suppression rules",
+        "expected": {
+            "answer": "suppression can only be provided inline for now. Linter rules can be disabled globally but that would apply to the whole project, can't filter by files",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "No, it is not currently possible to distribute TypeSpec definition packages that include non-inline (external) linting suppressions that apply only to the shared definitions and not to the rest of the consumer's project. Suppressions can only be provided inline within the TypeSpec source code for now. While linter rules can be disabled globally in the consuming project's configuration, this approach would affect the entire project and cannot be scoped to just the imported definitions. Therefore, if your shared TypeSpec definitions require suppressions for Azure linting rules, you must use inline suppression comments within those specific files/models/types. There is no mechanism to bundle a suppressions.yaml or similar with your package that will apply only to the imported code when consumed by another project.",
+            "reference_urls": []
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response perfectly contains all the necessary and relevant information from the ground truth without missing any key points.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "what's typespec",
+        "expected": {
+            "answer": "TypeSpec is a language and toolset developed by Microsoft for defining APIs and data models in a structured, reusable, and extensible way. It is similar to TypeScript in syntax, but is specifically designed for describing the shape and behavior of APIs (such as REST, gRPC, or GraphQL), not for general-purpose programming.\nTypeSpec allows you to:\nDefine the interface of your API, including operations, request/response models, and error handling.\nGenerate artifacts such as OpenAPI (Swagger) specifications, SDKs, and documentation from a single source of truth.\nEnforce API design consistency and reduce errors, especially in large organizations or when following strict guidelines (like Azure's API standards).\nReuse and extend models and patterns using TypeSpec libraries and templates.\nFor Azure, TypeSpec has dedicated extensions and libraries that help you follow Azure API guidelines and make it easier to build ARM (Azure Resource Manager) and data-plane services. Using TypeSpec leads to APIs that are easier to review, more consistent, and better supported by tooling.\nYou can get started by installing the TypeSpec CLI and using templates to quickly scaffold a project. For more information, see the official documentation linked below.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "TypeSpec is a language and toolset developed by Microsoft for describing cloud service APIs. It provides a structured way to define the interface of your API, including operations, request/response models, and error handling. TypeSpec is highly extensible and is designed to make API definitions consistent, easier to maintain, and compliant with best practices\u2014especially for Azure services. Using TypeSpec, you can generate artifacts such as OpenAPI (Swagger) specifications, client and service code, documentation, and more from a single source of truth. Microsoft uses TypeSpec internally to define APIs for many Azure products and services. For Azure, TypeSpec comes with libraries and templates (like Azure.Core and Azure.ResourceManager) to ensure APIs align with Azure guidelines and are easier to review and consume.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/intro",
+                "https://typespec.io/docs/getting-started/getting-started-rest/01-setup-basic-syntax"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering all major claims and statements, but misses some minor details about syntax similarity, supported API types, and getting started instructions.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "How to reserve \"x-ms-discriminator-value\"",
+        "expected": {
+            "answer": "Let's address both of your issues with the TypeSpec migration and generated Swagger:\n1. Missing x-ms-discriminator-value and presence of discriminator:\nYes, this is by design. The TypeSpec emitter uses the standard OpenAPI 3 discriminator property, not the Azure-specific x-ms-discriminator-value. The @discriminator decorator in TypeSpec results in the discriminator field in the generated OpenAPI, as per the latest OpenAPI and Azure SDK standards. This approach provides better compatibility with code generators and client SDKs. The use of x-ms-discriminator-value is not needed when the discriminator field is present and correctly configured.\nSee the TypeSpec documentation and Azure guidelines for more.\n2. Duplicate objectType property in generated Swagger:\nThis is a known limitation of how inheritance and discriminator are currently handled in TypeSpec to OpenAPI conversion. If both the base (AzureBackupRestoreRequest) and the derived model (AzureBackupRecoveryPointBasedRestoreRequest) define the objectType property, OpenAPI will reflect both in the derived model, leading to apparent duplication.\nThis does not cause functional issues, but it can be confusing. The current best practice is to only define the discriminator property (objectType) in the base model and set its value in the derived models, rather than redefining the property. In TypeSpec, this would look like:\n```\n@discriminator(\"objectType\")\nmodel AzureBackupRestoreRequest {\nobjectType: string;\n// ... other properties ...\n}\nmodel AzureBackupRecoveryPointBasedRestoreRequest extends AzureBackupRestoreRequest {\nobjectType: \"AzureBackupRecoveryPointBasedRestoreRequest\";\nrecoveryPointId: string;\n}\n```\nThis way, the objectType property is only defined in the base model, and the derived model just sets its value. This should prevent duplication in the emitted Swagger.\nAction Items:\nRefactor your TypeSpec so that only the base model defines the discriminator property (objectType), and the derived models assign its value.\nDo not worry about x-ms-discriminator-value not being present: it is not required when the standard discriminator property is used.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "Let's address your two questions in the context of TypeSpec migration to Swagger for Azure APIs:\n\n**1. Is the loss of `x-ms-discriminator-value` and replacement with `discriminator` by design?**\n\nYes, this is by design. TypeSpec uses the standard OpenAPI `discriminator` property when you annotate a model with `@discriminator`. The `x-ms-discriminator-value` is an Azure-specific extension used primarily in earlier ARM/AutoRest scenarios for polymorphic models. The modern TypeSpec emitters and conversion tools prioritize the standard OpenAPI `discriminator` and expect all models to use the property you specify (e.g., `objectType`) as both the discriminator and a property with a constant or enum value in each derived model. \n\nCurrently, TypeSpec's OpenAPI emitters do not automatically emit `x-ms-discriminator-value`\u2014they generate the standard `discriminator` keyword. If you need `x-ms-discriminator-value` for legacy compatibility, you can manually add it using the `@extension` decorator on your derived models:\n\n```typespec\n@extension(\"x-ms-discriminator-value\", \"AzureBackupRecoveryPointBasedRestoreRequest\")\nmodel AzureBackupRecoveryPointBasedRestoreRequest extends AzureBackupRestoreRequest {\n  objectType: \"AzureBackupRecoveryPointBasedRestoreRequest\";\n  recoveryPointId: string;\n}\n```\n\nThis will add the `x-ms-discriminator-value` to the generated Swagger for that model. But be aware that, per Azure API guidelines, new APIs should use the standard `discriminator` property unless there is a specific need for backward compatibility.\n\n**2. Why is there a duplicate `objectType` property in the generated Swagger?**\n\nThis happens because both the base (`AzureBackupRestoreRequest`) and the derived (`AzureBackupRecoveryPointBasedRestoreRequest`) models declare the `objectType` property. In TypeSpec, when you use `@discriminator(\"objectType\")` on both the base and derived models, you must ensure that only the base model declares the `objectType` property. The derived model should specify its discriminator value by assigning a literal type (not by redeclaring the property):\n\n```typespec\n@discriminator(\"objectType\")\nmodel AzureBackupRestoreRequest {\n  objectType: string;\n  // ... other properties ...\n}\n\nmodel AzureBackupRecoveryPointBasedRestoreRequest extends AzureBackupRestoreRequest {\n  objectType: \"AzureBackupRecoveryPointBasedRestoreRequest\"; // literal type sets discriminator value\n  recoveryPointId: string;\n}\n```\n\nThis pattern ensures that the `objectType` property is declared only once (in the base), but each derived type fixes its value. The emitter will generate a valid discriminator with no duplicate property.\n\n**Summary:**\n- The switch from `x-ms-discriminator-value` to `discriminator` is intentional and aligns with modern OpenAPI and Azure guidance.\n- To avoid duplicate `objectType`, only declare it in the base model; use a literal in the derived model to set its value.\n- If legacy `x-ms-discriminator-value` is required, add it manually via `@extension` on the derived model.\n\nThis approach is fully compliant with Azure TypeSpec guidelines for polymorphic modeling and migration.",
+            "reference_urls": [
+                "https://typespec.io/docs/standard-library/built-in-decorators",
+                "https://typespec.io/docs/standard-library/discriminated-types",
+                "https://typespec.io/docs/emitters/openapi3/openapi"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately conveying all relevant details and guidance without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is fully complete, accurately reflecting all necessary information and recommendations from the ground truth, with no omissions.",
+        "overall_score": 7.0
+    },
+    {
+        "testcase": "Does Typespec has any decorator to set customzed `final-state-via` for LRO API?",
+        "expected": {
+            "answer": "Yes, TypeSpec provides a decorator for setting a customized `final-state-via` value for long-running operation (LRO) APIs. You should use the `@Azure.Core.useFinalStateVia decorator` on your operation to explicitly specify the desired final state resolution strategy. The decorator supports values such as \"original-uri\", \"operation-location\", \"location\", and \"azure-async-operation\". For example:\n```\n@Azure.Core.useFinalStateVia(\"original-uri\")\nop createResource is ArmResourceCreateOrReplaceAsync<ResourceModel>;\n```\nThis will ensure the generated OpenAPI includes the correct `x-ms-long-running-operation-options` with your chosen `final-state-via setting`. This approach fully aligns with Azure REST API and ARM guidelines for LRO patterns.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "Yes, TypeSpec provides a way to set a customized `final-state-via` for Long Running Operation (LRO) APIs. The standard way is to use the `@Azure.Core.useFinalStateVia(\"<value>\")` decorator, where `<value>` can be one of the supported polling mechanisms (e.g., \"location\", \"azure-async-operation\", or \"original-uri\"). This decorator is typically used on the operation definition to instruct TypeSpec and downstream generators how to emit the `x-ms-long-running-operation-options.final-state-via` property in the generated OpenAPI/Swagger specification.\n\nFor example, to set `final-state-via: \"azure-async-operation\"` for a PUT or PATCH LRO:\n\n```typespec\n@Azure.Core.useFinalStateVia(\"azure-async-operation\")\nop createResource is ArmResourceCreateOrReplaceAsync<\n  ResourceModel,\n  BaseParameters,\n  Response = ...\n>;\n```\n\nSimilarly, you can use `@Azure.Core.useFinalStateVia(\"original-uri\")` for the \"original-uri\" polling mechanism (which is valid for PUT LROs).\n\nThis approach is the recommended and compliant way to customize the `final-state-via` setting for LROs in Azure-style REST APIs using TypeSpec.\n",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and directly supported by the CONTEXT, with no unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains almost all relevant information, but omits \"operation-location\" as a supported value, which is a minor detail from the ground truth.",
+        "overall_score": 6.6
+    },
+    {
         "testcase": "Brownfield TypeSpec migration",
         "expected": {
             "answer": "Migration to TypeSpec for existing services is not yet mandatory, but it is suggested, and teams should be planning for it in Bromine and Krypton\nServices must wholly switch to TypeSpec, there is no allowed mixing of hand-written and generated swagger\nServicesmust conform to a single, unified api-version for their service, servicesthat currently use different api-versions for parts of their service are going to need to plan for conformance -this either means SDK splitting or version uniformity.  Teams that use this 'different api-versions for different resources in the same sdk' pattern are not good candidates for conversion at the moment\nIn generally, the more compliant your service is to the RPC and best practices, the easier conversion will be\nThere is documentation on converting here: [Getting started | TypeSpec Azure](https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started/)",
@@ -8,32 +225,166 @@
             ]
         },
         "actual": {
-            "answer": "Currently, there is no mandatory or official timeframe for existing brownfield Azure resource providers (RPs) to migrate from OpenAPI swagger to TypeSpec. Migration is strongly encouraged and teams should be planning for it in upcoming engineering cycles (notably Bromine and Krypton), but enforcement has not yet begun.\n\nRegarding phased migration: Azure services must wholly switch to TypeSpec for their API surface. Mixing TypeSpec-generated OpenAPI with hand-written swagger (for example, migrating one resource type at a time) is not allowed. The migration must be complete and atomic for a given api-version. All resources and operations exposed for an api-version must be defined in TypeSpec once migration occurs. This means you cannot have a service where some resources are defined in TypeSpec and others remain in handwritten swagger within the same api-version. If your service uses different api-versions for different resource types, you will need to plan for uniformity or SDK splitting before migrating, as partial conversions are not supported.\n\nThe more compliant your service is with Azure RPC and best practices, the smoother your migration will be. For guidance and conversion tools, see the official migration documentation.\n\nIf you have specific migration concerns or need help, please reach out to the Azure TypeSpec team.",
+            "answer": "Currently, there is no mandatory timeframe for existing brownfield Resource Providers (RPs) to migrate from OpenAPI (Swagger) to TypeSpec, but migration is suggested and teams should plan for it in upcoming Azure engineering cycles (Bromine and Krypton). Importantly, partial migration\u2014mixing TypeSpec and handwritten Swagger within the same RP or migrating one resource type at a time\u2014is NOT supported. Services must fully switch to TypeSpec; you cannot combine TypeSpec-generated and hand-authored Swagger files in a single API surface. Additionally, your service must conform to a single, unified API version after migration (i.e., you cannot have different API versions for different resources within the same SDK). Teams currently using multiple API versions for different resources will need to address this for TypeSpec migration. Full documentation and guidance are available, and migration is highly encouraged for consistency and compliance with Azure API best practices.",
+            "reference_urls": []
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and precisely matches the information in the CONTEXT without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering all major requirements and recommendations, but misses some minor details and specific statements from the ground truth.",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "Unable to apply client flatten to a top level resource property.",
+        "expected": {
+            "answer": "Add\n@@Azure.ClientGenerator.Core.Legacy.flattenProperty(ArcSettings.propeties)\nBy convention put this in a back-compatible.tsp file.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You are correct that in your original OpenAPI, the top-level 'properties' property of the ArcSetting resource uses `\"x-ms-client-flatten\": true`, which influences how SDKs (notably .NET and Python) flatten the 'properties' bag into the resource class. In TypeSpec, the direct equivalent is the `@flattenProperty` decorator from the Azure TypeSpec libraries.\n\nHowever, when you define a resource using the Azure.ResourceManager.ProxyResource template in TypeSpec, the 'properties' field is defined by the base resource type and is not decorated as flattened by default. To add the equivalent of `x-ms-client-flatten` for this top-level 'properties' field, you must explicitly apply the `@flattenProperty` decorator to the `properties` property of your model in a 'back-compatible.tsp' or similar patch file. For example:\n\n```typespec\nimport \"@azure-tools/typespec-client-generator-core\";\n\n// In a compatibility file\n@@flattenProperty(ArcSetting.properties);\n```\n\nThis will instruct the emitter to include `x-ms-client-flatten: true` on the 'properties' property in the generated OpenAPI.\n\nIf you do not add this decorator, the 'properties' bag will not be flattened in the generated OpenAPI, which may cause the generated SDKs (especially for .NET and Python) to produce resource classes where all custom fields are nested under a 'properties' property, breaking existing code that expects them to be top-level on the resource class. This is a potentially breaking change for SDK consumers.\n\nTherefore, to preserve SDK shape and compatibility, you should explicitly apply `@@flattenProperty(ArcSetting.properties);` in your TypeSpec project.\n\nNote: Do NOT use `@extension(\"x-ms-client-flatten\")` directly, as this is forbidden by Azure API guidelines for TypeSpec and will fail linting. Always use the prescribed decorator approach.",
             "reference_urls": [
-                "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started/"
+                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/index",
+                "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi",
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
             ]
         },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
+        "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately and completely conveying all essential information without unsupported additions or omissions.",
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately conveys all essential information, and does not introduce unsupported details or omit critical points.",
         "groundedness_result": "pass",
-        "groundedness_threshold": 3,
+        "groundedness_threshold": 3.0,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response contains all major information from the ground truth, with only a minor omission (the direct link). It is otherwise thorough and accurate.",
-        "reference_match": 1.0,
-        "reference_match_exact_matches": [
-            "https://azure.github.io/typespec-azure/docs/migrate-swagger/01-get-started"
-        ],
-        "reference_match_unexpected_refs": [],
-        "reference_match_missing_refs": [],
-        "reference_match_result": "pass",
+        "response_completeness_reason": "The response is mostly complete, covering all major points (decorator use, file convention, purpose, and warnings), but misses the exact full decorator name from the ground truth.",
         "overall_score": 6.6
+    },
+    {
+        "testcase": "In Resource provider, what is the type I should declare for an object or dictionary of string, string?",
+        "expected": {
+            "answer": "For a property in a TypeSpec ARM resource provider model that represents a dictionary (object) mapping strings to strings, you should use the built-in `Record<string>` type.\nFor example:\n```\nmodel MyResourceProperties {\nmetadata?: Record<string>;\n}\n```\nThis models a property (`metadata`) that is an object/dictionary where all keys and values are strings, equivalent to `{ [key: string]: string }` in TypeScript or `Dictionary<string, string>` in .NET.\nYou should not use `{}` (empty model) or just `Record` (without specifying the value type) as these are either incomplete or invalid in TypeSpec. The correct, type-safe way is `Record<string>`, which will be emitted to OpenAPI/Swagger as an `object` with `additionalProperties: { type: \"string\" }`.\nIf your API spec review asks for a 'model', you can define a named type:\n```\nmodel MetadataModel is Record<string>;\nmodel MyResourceProperties {\nmetadata?: MetadataModel;\n}\n```\nBut `Record<string>` is the canonical, recommended approach for a string-to-string dictionary in TypeSpec ARM resource definitions.\nNote: While this is technically correct, ARM guidelines recommend against unbounded dictionary/object types unless absolutely necessary, as they can limit Azure Policy and ARG capabilities. Use with care, and document any supported/expected keys in your @doc comments if possible.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "For an ARM Resource Provider TypeSpec, if you want to declare a property that is a dictionary (object) mapping string to string, you should use `Record<string>`. This defines a property whose keys are strings and whose values are also strings, which is the standard way to represent a dictionary of string-to-string in TypeSpec.\n\nHere's how you should declare such a property:\n\n```typespec\nmodel ExampleProperties {\n  metadata?: Record<string>;\n}\n```\n\n- Do not use `{}` directly; TypeSpec expects a model type.\n- Do not use `Record;` (without a type argument), as this is not valid TypeSpec syntax.\n- Always specify the element type for the record, in this case `string`.\n\nHowever, note that the Azure ARM guidelines strongly discourage using Record types for resource properties except for very specific cases (like the `tags` property or other cases reviewed and approved). For most resource provider scenarios, you are expected to explicitly define the set of properties in a model. But if you have a legitimate use case (for example, for a property like `tags`), `Record<string>` is the correct TypeSpec type.\n\nExample for a `tags` property (which is a well-known dictionary in ARM):\n\n```typespec\nmodel ResourceWithTags {\n  tags?: Record<string>;\n}\n```\n\nIf your property is not one of the few ARM-approved \"additional properties\" fields (like `tags`), you may receive a linter error and need review board approval to proceed with a Record type. For standard metadata, consider explicitly modeling the keys as properties instead.",
+            "reference_urls": [
+                "https://typespec.io/docs/language-basics/built-in-types",
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type",
+                "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type",
+                "https://typespec.io/docs/language-basics/type-relations"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and precise, directly supported by the CONTEXT and does not omit or add unsupported information.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains almost all relevant information from the ground truth, missing only minor details about the named model type and documentation of expected keys. This matches the definition of \"Mostly Complete\".",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "ArmResourceActionSync how to get x-ms-pageable ?",
+        "expected": {
+            "answer": "To add the `x-ms-pageable` extension (with `nextLinkName: \"nextLink\"`) to your TypeSpec operation, you should use the `@list` decorator on your operation. This will ensure that the generated OpenAPI/Swagger includes the correct `x-ms-pageable` extension, as required by Azure ARM and API guidelines.\nHere's how you should modify your TypeSpec:\n```\n@list\n@get\n@action(\"elasticvolumes\")\nlistVolumes is ArmResourceActionSync<\nElasticSnapshotPolicy,\nvoid,\nElasticSnapshotPolicyVolumeList\n>;\nmodel ElasticSnapshotPolicyVolumeList is Azure.Core.Page<ElasticSnapshotPolicyVolume>;\n```\nThe `@list` decorator is what triggers the addition of `x-ms-pageable` in the generated OpenAPI.\nYour model should use the standard ARM paging model, which is `Azure.Core.Page<T>`. This will ensure you have the required `value` and `nextLink` properties, and that `nextLink` is correctly annotated.\nAfter adding `@list`, the generated Swagger/OpenAPI will include:\n```\n\"x-ms-pageable\": {\n\"nextLinkName\": \"nextLink\"\n}\n```\nIf you have a custom response model, make sure it uses the `@pageItems` and `@nextLink` decorators:\n```\nmodel ElasticSnapshotPolicyVolumeList {\n@pageItems\nvalue: ElasticSnapshotPolicyVolume[];\n@nextLink\nnextLink?: string;\n}\n```\nSummary:\nAdd `@list` to your operation.\nUse the ARM paging model or annotate your custom model with `@pageItems` and `@nextLink`.\nNo need to manually add the `x-ms-pageable` extension via `@extension`\u2014the emitter handles this for you when `@list` is present.\nThis approach is fully compliant with Azure API guidelines and will resolve your `XmsPageableForListCalls` lintDiff finding.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "To emit the required `x-ms-pageable` annotation on your operation, you must decorate the operation with the `@list` decorator. While your response model correctly extends `Azure.Core.Page` (which ensures the `nextLink` property is present and correctly typed), Azure's TypeSpec tooling requires the operation itself to be explicitly marked as a paging/list operation.\n\n**How to fix:**\n\nJust add `@list` to your operation definition. Here\u2019s how your operation should look:\n\n```typespec\n@get\n@action(\"elasticvolumes\")\n@added(Versions.v2025_09_01_preview)\n@list // <-- This is required!\nlistVolumes is ArmResourceActionSync<\n  ElasticSnapshotPolicyResource,\n  void,\n  ElasticSnapshotPolicyVolumeList\n>;\n```\n\n**Why?**\n- The `@list` decorator is what triggers the emission of `\"x-ms-pageable\": { \"nextLinkName\": \"nextLink\" }` in the OpenAPI operation. This is required for ARM-compliant paging and to pass the `XmsPageableForListCalls` validation.\n- Extending `Azure.Core.Page` on the model is necessary but not sufficient\u2014both the response model and the operation must be correctly annotated.\n\n**References:** See the TypeSpec Azure migration and paging documentation for confirmation.\n\nIf you do this and re-generate, your operation will now include the `x-ms-pageable` extension in the Swagger/OpenAPI output, and the linting error should be resolved.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange",
+                "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/05pagingoperations"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, complete, and accurately conveys all essential information from the context without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains almost all relevant information, including the main solution, code example, and rationale, but omits details about custom model annotation and the explicit note about manual extension.",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "Should I add a visibilityFilter to a model",
+        "expected": {
+            "answer": "ou do not need to explicitly add a visibilityFilter or use @withVisibility(Lifecycle.Read) if your model is only used as the return result of an operation. TypeSpec's HTTP library and standard emitters automatically apply Lifecycle.Read visibility to properties when a model is used as a return type. By default, properties are included in the response if they have Lifecycle.Read visibility, and all properties have all visibilities enabled unless you restrict them with @visibility.\nTherefore, unless you have properties with more restrictive visibilities, all properties will be included in the response by default. If you want to limit which properties are returned, you should annotate those properties with @visibility(Lifecycle.Read) or other appropriate modifiers, but you do not need to explicitly use a visibilityFilter just because a model is a response type.\nIf you use the built-in Lifecycle visibility model as intended, the behavior you expect is implicit and handled automatically for response models.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You do NOT need to explicitly add a visibility filter (such as @withVisibilityFilter or @withVisibility) to your model just to restrict all properties to 'Read' visibility when the model is only used as a return type of an operation. This behavior is implicit in TypeSpec's standard HTTP/OpenAPI emitter and the Azure API guidelines: for operation return types, only properties with Lifecycle.Read visibility are included by default. \n\nIf all your model's properties are meant to be visible only in responses (not in request bodies), you should decorate those properties with @visibility(Lifecycle.Read). The emitter will then automatically include only those properties when the model is used as a response type, and you do not need to filter or transform the model further.\n\nExplicitly using a visibility filter is only necessary if you need to produce a separate type (for example, to use the model in multiple contexts or to force a certain shape in a specific situation). For most use cases where a model is solely a return type, rely on the implicit visibility mechanism.\n\nExample:\n\n```typespec\nmodel MyResponse {\n  @visibility(Lifecycle.Read)\n  id: string;\n  @visibility(Lifecycle.Read)\n  status: string;\n}\n\n@get\nop getSomething(): MyResponse;\n```\n\nNo visibility filter is needed here.\n",
+            "reference_urls": [
+                "https://typespec.io/docs/standard-library/built-in-decorators",
+                "https://typespec.io/docs/language-basics/visibility",
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all major information and instructions from the ground truth, with only a minor omission in explicit phrasing about default visibilities. It is mostly complete.",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "Model validations are failing although am referring from common-types",
+        "expected": {
+            "answer": "Looking at your PR, it seems that the avocado error is the only remaining one - this is just reporting that you have removed an API.  If you do not need to continue supporting the older preview, you might consider removing it,  otherwise, this is an error you can safely suppress (https://aka.ms/ci-fix is a great link to remember, as it has links to all kinds of useful info about ci errors, including a link to the suppression guides).\nFor PrivateEndpointConnections, RPs have done both, as the name of the private endpoint connection type doesn't really matter to the API, however, there is a new template that greatly simplifies adding private endpoint connection operations to any resourc,e see:\n[typespec-azure/packages/samples/specs/resource-manager/resource-types/private-endpoints/private-end\u2026](https://github.com/Azure/typespec-azure/blob/main/packages/samples/specs/resource-manager/resource-types/private-endpoints/private-endpoints.tsp#L69-L94)\n```\nmodel PrivateEndpointConnection is PrivateEndpointConnectionResource;\nalias PrivateEndpointOperations = PrivateEndpoints<PrivateEndpointConnection>;\n@armResourceOperations\ninterface Employees {\nget is ArmResourceRead<Employee>;\ncreateOrUpdate is ArmResourceCreateOrReplaceAsync<Employee>;\nupdate is ArmCustomPatchSync<\nEmployee,\nAzure.ResourceManager.Foundations.ResourceUpdateModel<Employee, EmployeeProperties>\n>;\ndelete is ArmResourceDeleteSync<Employee>;\nlistByResourceGroup is ArmResourceListByParent<Employee>;\nlistBySubscription is ArmListBySubscription<Employee>;\n/** A sample resource action that move employee to different location */\nmove is ArmResourceActionSync<Employee, MoveRequest, MoveResponse>;\n/** A sample HEAD operation to check resource existence */\ncheckExistence is ArmResourceCheckExistence<Employee>;\ngetPrivateEndpointConnection is PrivateEndpointOperations.Read<Employee>;\ncreateOrUpdatePrivateEndpointConnection is PrivateEndpointOperations.CreateOrUpdateAsync<Employee>;\nupdatePrivateEndpointConnection is PrivateEndpointOperations.CustomPatchAsync<Employee>;\ndeletePrivateEndpointConnection is PrivateEndpointOperations.DeleteAsync<Employee>;\nlistPrivateEndpointConnections is PrivateEndpointOperations.ListByParent<Employee>;\n}\n```\nSee here for the Avocado error.  We need to find a better way to handle intentionally removed APIs in Avocado.\nhttps://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#known-issues",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "Let's address your two questions separately:\n\n1. **Reusing PrivateEndpointConnection from commonTypes/v5: Naming and Model Validation**\n\n- **Naming:** You can keep the same model name (e.g., `PrivateEndpointConnection`) as in commonTypes, or you can alias/rename it to something like `PrivateEndpointConnectionResource`. Both patterns are accepted and used by different RPs. The actual name does not impact the generated API as long as the model structure matches the expected contract. Reviewers do not require a custom name; what matters is conformance to Azure Resource Manager conventions and using the correct resource structure.\n\n- **Model Validation Error (Additional properties not allowed):**\n  - This error typically occurs if the structure of your TypeSpec model does not exactly match the definition expected by the validator (e.g., extra or missing properties).\n  - When using the commonTypes `PrivateEndpointConnection`, you should ensure that your model structure, especially the `properties` bag, matches what is defined in `PrivateEndpointConnectionProperties`.\n  - The correct approach is to use the templates and types from `Azure.ResourceManager.CommonTypes` directly, as shown below. Avoid redefining or adding properties unless required by your scenario:\n\n```typespec\nimport \"@azure-tools/typespec-azure-resource-manager\";\n\nmodel PrivateEndpointConnection is Azure.ResourceManager.CommonTypes.PrivateEndpointConnectionResource;\n```\n\n- If you want to use your own name, you can alias it:\n\n```typespec\nmodel MyPrivateEndpointConnection is Azure.ResourceManager.CommonTypes.PrivateEndpointConnectionResource;\n```\n\n- For operation interfaces, use the ARM templates as well:\n\n```typespec\nalias PrivateEndpointOperations = PrivateEndpoints<PrivateEndpointConnection>;\n\n@armResourceOperations\ninterface CodeSigningAccountPrivateEndpointConnections {\n  get is PrivateEndpointOperations.Read<CodeSigningAccount>;\n  createOrUpdate is PrivateEndpointOperations.CreateOrUpdateAsync<CodeSigningAccount>;\n  delete is PrivateEndpointOperations.DeleteAsync<CodeSigningAccount>;\n  listByParent is PrivateEndpointOperations.ListByParent<CodeSigningAccount>;\n}\n```\n\n- There is a new template to simplify adding private endpoint connection operations, see the [sample here](https://github.com/Azure/typespec-azure/blob/main/packages/samples/specs/resource-manager/resource-types/private-endpoints/private-endpoints.tsp#L69-L94).\n\n2. **Avocado Error (Removed API and Added New API):**\n\n- When you remove an API (e.g., `revokeCertificate`) and add a new one (e.g., `revokeCertificates`), Avocado will report this as a breaking change.\n- If you do not need to support the old preview API anymore, remove the old version from your spec entirely. This is the cleanest fix.\n- If you need to keep the old version, but intentionally removed the API, you can suppress the Avocado error. See the suppression guide here: https://aka.ms/ci-fix\n- You can also find more about Avocado known issues and suppressions in the [Swagger Avocado wiki](https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#known-issues).\n\n**Summary:**\n- You may keep the same name as in commonTypes, or rename as desired; reviewers will not require a custom name as long as the model structure matches.\n- Use the provided Azure templates for private endpoint connection to avoid property mismatch errors.\n- For Avocado errors on intentionally removed APIs, suppress the error or remove the old version from your spec.\n\nIf you need code samples or further guidance on aligning your models, please provide your current TypeSpec code and the exact validation errors.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, accurately and thoroughly covering both main topics and including all key statements and links.",
+        "overall_score": 0.0
     },
     {
         "testcase": "Missing APIs in default tag error for typespec conversion PR",
@@ -46,81 +397,191 @@
             ]
         },
         "actual": {
-            "answer": "Yes, you can suppress the missing APIs check for your TypeSpec migration PR if the PR does not introduce any changes to the API surface and only involves conversion to TypeSpec. This is a recognized scenario, as the validation check may report false positives when comparing generated OpenAPI files with those previously published, especially when structural differences (such as adoption of Azure common-types or improved ARM patterns) occur during migration.\n\nThe standard way to suppress this kind of validation is to add an entry to your service's `suppressions.yaml` file. This allows you to selectively suppress checks (such as TypeSpecRequirement, LintDiff, or Avocado rules) for specific API versions or files that are flagged during the migration process. Make sure your suppression reason is clear (e.g., 'TypeSpec migration, no change in API surface').\n\nExample suppression for TypeSpecRequirement:\n\n```\n# specification/widget/resource-manager/Microsoft.Widget/Widget/suppressions.yaml\n- tool: TypeSpecRequirement\n  paths: \n    - stable/2024-01-01/**/*.json\n  reason: TypeSpec migration, no change in API surface\n```\n\nFor Avocado or LintDiff errors, the suppression process is similar. See the linked documentation for more details and additional examples. Remember, it is important to carefully review any violations before suppressing to ensure the migration does not inadvertently change the functional API surface.\n\nIf you encounter persistent CI issues, follow the troubleshooting steps for local validation (merge latest main, run `npx tsv`, and compare results), and escalate via the TypeSpec Discussion channel if necessary.",
+            "answer": "Yes, you can suppress the 'Missing APIs in default tag' (Avocado) check for your TypeSpec conversion PR, even if there are no updates to the OpenAPI spec. During TypeSpec conversion, the generated Swagger/OpenAPI file may have differences due to normalization or reorganization, causing Avocado to flag missing APIs even if the underlying APIs have not changed. This is a known issue with Avocado and TypeSpec migrations.\n\nThe recommended approach is to explicitly suppress such errors. Typically, this is done by adding a suppression in the PR (for example, by using a suppression file or a PR label like 'Approved-Avocado'). This will allow your PR to proceed while acknowledging that the issue is a false positive or expected due to the conversion process. The suppression is scoped to your PR and does not require changing the TypeSpec or OpenAPI source to match exactly.\n\nReferences:\n- For Avocado errors caused by renames/moves or missing APIs during conversion, reviewers can apply the 'Approved-Avocado' label to unblock the PR.\n- Generally, Avocado and other CI tools require the generated Swagger to be equivalent, but not necessarily identical, and these issues are expected in migration PRs. If a breaking change is detected, it should be resolved or suppressed with justification if it's a false positive.\n\nSummary: You should work with your PR reviewers to apply the 'Approved-Avocado' label or otherwise document the suppression, as is common practice during TypeSpec migrations.",
             "reference_urls": [
-                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement",
-                "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff",
-                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado"
             ]
         },
-        "similarity": 3.0,
-        "gpt_similarity": 3.0,
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
+        "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The response is fully grounded, complete, and accurate, with all details directly supported by the context and no unsupported additions or omissions.",
+        "groundedness_reason": "The response is fully grounded, complete, and directly supported by the context without unsupported additions or omissions.",
         "groundedness_result": "pass",
-        "groundedness_threshold": 3,
-        "response_completeness": 3.0,
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response covers the suppression process and mentions Avocado, but misses key conceptual details about swagger equivalence and the role of Avocado in processing, as well as the connection to breaking change checks. It contains about half of the necessary information.",
-        "reference_match": 0.6666666666666666,
-        "reference_match_exact_matches": [
-            "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions",
-            "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-        ],
-        "reference_match_unexpected_refs": [
-            "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#known-issues"
-        ],
-        "reference_match_missing_refs": [
-            "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
-        ],
-        "reference_match_result": "fail",
-        "overall_score": 5.0
+        "response_completeness_reason": "The response contains all relevant information from the ground truth, accurately reflecting each statement and adding helpful practical details. It is fully complete.",
+        "overall_score": 6.4
+    },
+    {
+        "testcase": "ArmResourcePatchAsync & discriminator",
+        "expected": {
+            "answer": "we generally suggest that PATCH requests over discriminated types should require the discriminator property.  This may result in some lintdiff violations, but that is expected, and those cna be suppressed.  This is especially true if, as most services, your PATCH operation would need the discriminator value on the wire to determine how to apply the PATCH request to the existing reosurce.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "When dealing with an ARM resource that uses a discriminator (i.e., is polymorphic) and you want to support PATCH updates, you must ensure the PATCH model includes the discriminator property as required, even for partial updates. This is a strict Azure API guideline for polymorphic resources, because the discriminator is needed for correct deserialization.\n\n**Why does ArmResourcePatchAsync cause oav to fail?**\n- `ArmResourcePatchAsync` and similar PATCH operation templates auto-generate the PATCH model based on the resource properties, but for polymorphic resources, the discriminator property must always be present and required, not optional or omitted.\n- If the PATCH schema omits or makes the discriminator optional, OpenAPI validator (oav) will throw OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION because the required property (the discriminator) is missing from the schema.\n\n**How should you author PATCH for a discriminated resource?**\n- You must define a custom PATCH model that:\n  1. Includes the discriminator property (`kind`, `inventoryType`, etc.) as required.\n  2. Optionally includes other updatable properties as optional.\n  3. Is referenced in the PATCH operation using `ArmCustomPatchAsync` or `ArmCustomPatchSync`, not the default `ArmResourcePatchAsync`.\n\n**TypeSpec Example:**\n```typespec\n// Suppose your resource has a discriminator 'inventoryType' and some updatable fields\nmodel HostUpdate {\n  inventoryType: InventoryType; // Discriminator: must be required\n  // other optional updatable fields\n  displayName?: string;\n  properties?: HostPropertiesUpdate;\n}\n\n// Use a custom patch operation template\rop update is ArmCustomPatchAsync<HostResource, HostUpdate>;\n```\nThis ensures the PATCH model always includes the discriminator, satisfying both ARM guidelines and oav validation.\n\n**Summary of Steps:**\n- Do NOT use `ArmResourcePatchAsync` directly for discriminated resources.\n- Author a custom PATCH model that includes the discriminator as required.\n- Use `ArmCustomPatchAsync` (for LRO/async) or `ArmCustomPatchSync` (for sync) for your PATCH operation, referencing your custom PATCH model.\n\nThis pattern is fully compliant with Azure API guidelines for polymorphic (discriminated) resources.\n",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations",
+                "https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded in the provided CONTEXT, accurately conveying all essential details about PATCHing polymorphic resources and referencing the correct guidelines and operation templates without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering all major points and reasoning, but misses the minor detail about lintdiff violations and their suppression.",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "CI Failure \u2013 Swagger LintDiff",
+        "expected": {
+            "answer": "if you are fixing bugs already in main, this is expected.  lintdiff needs to run on your spec both before and after your PR, and if before is crashing, the PR to fix it will still crash.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "This is expected behavior if your PR is fixing an issue that already exists in the main branch. The Swagger LintDiff check works by running on both the \"before\" and \"after\" versions of your spec. If the main branch (\"before\" state) is already in a broken state (e.g., missing or invalid input files in the README), then the check will fail even when your PR fixes the issue, because it cannot load the files to perform the diff. In this case, the error `[Exception] No input files provided.` means that the LintDiff step couldn't find the necessary input files to compare, likely because the baseline (main branch) is missing or misconfigured, not your PR itself.\n\nThe recommended approach is to proceed with your PR, as your changes are actually fixing the problem. Once your PR is merged, subsequent runs should pass, provided all configuration is correct. This is not a bug in the tool, but a limitation of how the LintDiff process expects both \"before\" and \"after\" to be valid for a diff to occur.\n\nIf you want to confirm locally, ensure you are up to date with the main branch, and that all referenced input files exist and are properly listed in your `readme.md`.\n",
+            "reference_urls": []
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, with no missing statements or claims, and even adds helpful clarification.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "PR gateway pipelines not starting/waiting for long time",
+        "expected": {
+            "answer": "Looks like a permissions issue.  The PR author needs to make their membership in Azure public, not private.  And also join the Azure SDK Partners group.\nhttps://aka.ms/azsdk/access\nhttps://github.com/orgs/Azure/people?query=AbhishekSinha-AEP",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "The issue you're experiencing, where required CI checks such as \"SDK Validation Status\" and \"Swagger PrettierCheck\" remain stuck in a pending state and block merging, is most often due to GitHub permissions or organization membership configuration.\n\nTo resolve this, please ensure the following steps are completed:\n\n1. **Public Organization Membership**: The PR author must make their membership in the Azure GitHub organization public, not private. This is required for CI pipelines to recognize your permissions and trigger validation jobs.\n\n2. **Join Azure SDK Partners Group**: The PR author must be part of the Azure SDK Partners group, which grants the necessary permissions to run CI validation jobs.\n\n   - You can manage your membership visibility here: https://github.com/orgs/Azure/people?query=AbhishekSinha-AEP\n   - Instructions for access: https://aka.ms/azsdk/access\n\n3. **After updating membership settings**: Once your membership is public and you have joined the correct group, close and reopen the PR or push a new commit to retrigger the CI checks. The pipelines should then start automatically.\n\nIf you continue to face issues after completing the above steps, try cloning your branch to a new folder or running the checks from another machine to rule out local environment problems. If the problem persists, reach out in the TypeSpec Discussion Teams channel for direct assistance.\n\nThis is a common and well-documented cause for CI checks remaining in the queued state for Azure API specs PRs.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no omissions or errors.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "RPaaSMaster branch requirement for Ring 0 services",
+        "expected": {
+            "answer": "Based on the available knowledge context, syncing API specs between the public 'main' branch and the private 'RPaaSMaster' branch is the responsibility of the spec owner. There is no strict requirement in the referenced documentation that all resource providers (including ring 0 services like Microsoft.Compute) must have their specs present in RPaaSMaster if they have received an explicit exemption from RPaaS onboarding. The documentation and FAQ state that if your service is not onboarded to RPaaS (and has an exception), you do not need to merge your specs into RPaaSMaster. The presence or absence of Microsoft.Compute in RPaaSMaster does not dictate requirements for other RPs; each spec owner is responsible for their own onboarding and branch sync according to their onboarding status and exemptions. If your ring 0 service has an approved exception, you can continue to manage your specs in 'main' and do not need to merge into RPaaSMaster unless instructed otherwise by the ARM or EngSys team.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "There is no universal requirement in the Azure API spec guidelines or TypeSpec process that all Ring 0 Resource Providers (RPs) must merge their specs into the RPaaSMaster branch, especially if you have an explicit exception from RPaaS onboarding. The responsibility for syncing specs between main and RPaaSMaster is left to the spec owner. If your team has been granted an exception during RPaaS onboarding, you are not required to merge your API spec into the RPaaSMaster branch unless explicitly instructed by your onboarding contacts or governance board. This is consistent with the fact that Microsoft.Compute (also Ring 0) does not have its specs in RPaaSMaster.\n\nHowever, if you later decide to onboard to RPaaS or your governance/engineering management asks you to, you may need to maintain both branches for compatibility with tooling and release processes. Always ensure your exception is documented and, if needed, communicate it when queried by automation or reviewers.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/API-Spec-Review-FAQ"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded in the context, accurately and completely conveying all essential information without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response fully and accurately reflects all relevant information and claims from the ground truth, with no missing or incorrect statements.",
+        "overall_score": 7.0
+    },
+    {
+        "testcase": "Looking for someone to suppress CI failures https://github.com/Azure/azure-rest-api-specs/pull/36221",
+        "expected": {
+            "answer": "Based on the information provided and the knowledge context, the Avocado CI failure in your PR (https://github.com/Azure/azure-rest-api-specs/pull/36221) is expected because the Compute service currently has multiple API versions in its default tag, which violates the Uniform Versioning Principle. The Avocado check (MULTIPLE_API_VERSION) was recently made a blocking error to enforce this policy.\nTo temporarily suppress this failure and unblock your PR, you can add the Approved-Avocado label to your PR. However, this is only a one-time suppression and should be done if:\nThere is an ongoing discussion and plan to resolve the uniform versioning issue for Compute.\nYou or your team are aware that this is a temporary measure and are working towards compliance.\nImportant: Regular use of this suppression is discouraged. The long-term solution is to restructure your API versions so all components under Compute adopt a uniform versioning scheme, or split into independent services as outlined in the Uniform Versioning Violation Guide.\nIf you are not aware of any ongoing discussion or plan for resolution, you should reach out to azversioning@service.microsoft.com for guidance.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You are correct that the Avocado CI check is failing due to the MULTIPLE_API_VERSION rule, which is now treated as an error for services with multiple API versions\u2014a situation that's expected for the Compute resource provider. Since your PR is targeting a feature branch, no checks are strictly required at this stage. However, you may encounter blocking issues when merging to main.\n\nTo resolve the MULTIPLE_API_VERSION error when you eventually merge to main, follow the guidance in the Uniform Versioning Violation Guide:\n\n1. Review the instructions here: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#multiple_api_version\n2. MULTIPLE_API_VERSION is now an error as of July 2025, and addressing it is a blocker for TypeSpec conversion across Azure. \n3. If your service cannot immediately comply, contact azversioning@service.microsoft.com to check if you qualify for a one-time suppression.\n\nDo not attempt to suppress the error in TypeSpec files. The correct path is to either:\n- Resolve the versioning issue per the wiki guidance, or\n- Request a one-time suppression from the versioning team if you are not ready to migrate to a uniform versioning scheme.\n\nIf you are only working in a feature branch, you may proceed for now, but plan ahead for the main branch merge, as the check will block you at that stage.",
+            "reference_urls": [
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, complete, and directly supported by the context without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, missing only the specific temporary suppression method (Approved-Avocado label) and its conditional use, but otherwise covers all major points.",
+        "overall_score": 6.0
     },
     {
         "testcase": "is sdk generation required for private preview?",
         "expected": {
-            "answer": "As of today how the system is designed, you need to suppress those warning if you do not want to include SDK at this time. See an example:\nhttps://github.com/Azure/azure-rest-api-specs/blob/main/specification/monitor/Monitor.Ingestion/suppressions.yaml:\n```\n- tool: TypeSpecValidation\npaths:\n- tspconfig.yaml\nrules:\n- SdkTspConfigValidation\nsub-rules:\n- options.@azure-tools/typespec-ts.package-dir\n- options.@azure-tools/typespec-ts.package-details.name\nreason: 'See above comments for details'\n```\nWhen you will need SDK, you will be required to remove the file and follow the config validation process.",
+            "answer": "API approval for private preview does NOT always require SDK generation or SDK configuration in your tspconfig.yaml. For private preview ARM APIs, it is acceptable to onboard and validate your API contract without including SDK emitter settings (such as for Go, Python, Java, etc.).\n\nHowever, the Azure TypeSpec validation tooling (tsv) is configured to expect certain SDK emitter options in tspconfig.yaml by default, even for private preview, which is why you see SdkTspConfigValidation failures if you remove them.\n\nThe correct and supported approach is:\n- Remove SDK emitter configs you do NOT want in your tspconfig.yaml.\n- Add a suppressions.yaml file in the same directory as tspconfig.yaml to explicitly suppress the SdkTspConfigValidation rule (or specific sub-rules for missing SDK configs).\n\nHere is a sample suppressions.yaml to suppress all SdkTspConfigValidation checks (recommended for your scenario):\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  reason: 'SDK generation is not in scope for private preview onboarding.'\n```\n\nPlace this suppressions.yaml alongside your tspconfig.yaml. This will allow CI and local validation to succeed without requiring SDK settings, letting you focus on API review and onboarding. When you later want to add SDK support, you can remove the suppression and add the required SDK emitter configuration.\n\nIn summary: No, API approval for private preview does not require SDK generation. Use suppressions.yaml to bypass SDK validation in tspconfig.yaml until you are ready to onboard SDKs.",
             "reference_urls": [
                 "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline",
                 "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
             ]
         },
         "actual": {
-            "answer": "No, SDK generation is NOT required for private preview API approval for ARM (management plane) APIs. According to Azure's versioning guidelines, private preview versions do not have corresponding SDK package versions, and there is no requirement for SDK onboarding at this stage. You are only required to validate and emit the OpenAPI (Swagger) spec for your API in private preview. \n\nFor your `tspconfig.yaml`, you do NOT need to include any SDK emitter configurations (such as typespec-python, typespec-java, etc.) for private preview. You should only include the Autorest emitter (for OpenAPI output) and configure it as needed. Here is a minimal example for ARM spec validation:\n\n```yaml\nemit:\n  - \"@azure-tools/typespec-autorest\"\noptions:\n  \"@azure-tools/typespec-autorest\":\n    azure-resource-provider-folder: \"<your-folder>\"\n    output-file: \"<your-path>/openapi.json\"\nlinter:\n  extends:\n    - \"@azure-tools/typespec-azure-rulesets/resource-manager\"\n```\n\nIf you see validation failures after removing SDK emitters, check that your tspconfig.yaml is correctly structured and only references the required emitters for your scenario. Also ensure any import resolution issues are addressed (see the references for guidance).\n\nYou can onboard SDK generation later when you move to public preview or GA, at which point you will need to add the relevant SDK emitters and options.\n\nSummary: For ARM APIs in private preview, SDK is not required, and tspconfig.yaml should only be set up for OpenAPI validation.",
+            "answer": "For ARM (management plane) APIs seeking approval for private preview, SDK generation is NOT strictly required as part of the initial API approval process. The main requirement for onboarding a new API version (including private preview) is that the OpenAPI/Swagger must be generated from TypeSpec and passes all required validation (TSV/linting). However, the TypeSpec validation tooling (such as the SdkTspConfigValidation rule) expects certain SDK configuration sections to be present in tspconfig.yaml, even if you do not intend to generate SDKs at this stage.\n\nTo avoid TSV (TypeSpec Validation) failures when omitting SDK config, you have two options:\n\n1. **Suppress the SdkTspConfigValidation Rule**: Add a suppressions.yaml file to your service directory that disables SdkTspConfigValidation for your tspconfig.yaml. This is the officially documented approach for cases where SDK generation is deferred or not needed for private preview. Example:\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - specification/your-service/Your.Management/tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  reason: \"SDK generation is not required for private preview onboarding; will be added before public preview or GA.\"\n```\n\n2. **(Not Recommended)** Add placeholder SDK configuration sections for the required languages in tspconfig.yaml, even if you do not intend to use them yet. This will pass validation but is less clear than using an explicit suppression and may cause confusion for reviewers.\n\n**Summary:** You do NOT need SDK configs or to generate SDKs for private preview approval. If TSV fails due to missing SDK configs, add a suppression for SdkTspConfigValidation as shown above. When you are ready to onboard SDKs for public preview or GA, you can add the appropriate configuration and remove the suppression.\n",
             "reference_urls": [
-                "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline",
-                "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/00howtogen",
-                "https://azure.github.io/typespec-azure/docs/migrate-swagger/checklists/migrate-arm-tips"
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-REST-API,-SDK-development-process-with-TypeSpec",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
             ]
         },
-        "similarity": 4.0,
-        "gpt_similarity": 4.0,
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
+        "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The response is fully grounded, complete, and directly supported by the context without any unsupported additions or omissions.",
+        "groundedness_reason": "The RESPONSE is fully grounded, accurate, and complete with respect to the CONTEXT, directly reflecting the documented process and options for handling SdkTspConfigValidation failures when SDK generation is not required for private preview.",
         "groundedness_result": "pass",
-        "groundedness_threshold": 3,
-        "response_completeness": 4.0,
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response contains most of the relevant information about SDK not being required and tspconfig.yaml setup, but misses the important detail about suppressing warnings and the example, which is a minor but necessary part of the ground truth.",
-        "reference_match": 1.0,
-        "reference_match_exact_matches": [
-            "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation",
-            "https://github.com/Azure/azure-rest-api-specs/wiki/Azure-Service-Versioning-Guideline"
-        ],
-        "reference_match_unexpected_refs": [
-            "https://azure.github.io/typespec-azure/docs/migrate-swagger/checklists/migrate-arm-tips"
-        ],
-        "reference_match_missing_refs": [],
-        "reference_match_result": "pass",
-        "overall_score": 6.0
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, including the main claims, reasoning, and recommended actions, with no significant omissions.",
+        "overall_score": 7.0
     },
     {
         "testcase": "Typespec Validation Failing on PR due to `typespec-go` configuration missing",
@@ -131,7 +592,7 @@
             ]
         },
         "actual": {
-            "answer": "You do not need to add Go SDK configuration options to your `tspconfig.yaml` if your service does not plan to support a Go SDK. Instead, you should suppress the validation rules for Go-specific options in your `suppressions.yaml` file. This is the recommended approach documented and validated by others facing the same issue.\n\nHere's an example of what your `suppressions.yaml` file should look like:\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  sub-rules:\n    - options.@azure-tools/typespec-go.generate-fakes\n    - options.@azure-tools/typespec-go.inject-spans\n    - options.@azure-tools/typespec-go.service-dir\n    - options.@azure-tools/typespec-go.package-dir\n  reason: 'Service does not support Go SDK currently'\n```\n\nPlace this file in the root directory of your service specification. This will suppress the Go-specific validation failures in CI and local runs. You do not need to add dummy or placeholder configuration values\u2014suppression is the supported and correct solution for your scenario.\n\nIf you need more details, refer to the TypeSpec validation documentation and previous Q&A examples on handling emitter configuration suppressions.",
+            "answer": "You are encountering failures in CI due to missing Go SDK configuration options in your `tspconfig.yaml`, as required by the `SdkTspConfigValidation` rule. Since your service does not have a Go SDK and you do not intend to generate one, you should suppress the specific Go emitter option checks in your validation process.\n\nTo do this, add a `suppressions.yaml` file (if not present) in the same directory as your `tspconfig.yaml` and specify the sub-rules you wish to suppress for your service. Here is an example of what your `suppressions.yaml` should look like:\n\n```yaml\n- tool: TypeSpecValidation\n  paths:\n    - tspconfig.yaml\n  rules:\n    - SdkTspConfigValidation\n  sub-rules:\n    - options.@azure-tools/typespec-go.generate-fakes\n    - options.@azure-tools/typespec-go.inject-spans\n    - options.@azure-tools/typespec-go.service-dir\n    - options.@azure-tools/typespec-go.package-dir\n  reason: 'This service does not support a Go SDK.'\n```\n\nThis will instruct the validation tool to skip those checks and allow your PR to pass CI without needing to add unused configuration options. You can expand or adjust the `sub-rules` list as needed if additional Go options are flagged.\n\nThis approach strictly follows Azure REST API Specs TypeSpec Validation guidance and is the recommended way to handle required SDK config for languages you do not support.",
             "reference_urls": [
                 "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
             ]
@@ -139,24 +600,103 @@
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
+        "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately reflecting the recommended solution and providing a complete, supported example without any unsupported additions or omissions.",
+        "groundedness_reason": "The response is fully grounded, complete, and precisely follows the guidance and examples provided in the CONTEXT.",
         "groundedness_result": "pass",
-        "groundedness_threshold": 3,
+        "groundedness_threshold": 3.0,
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with only a minor difference in the reason text, which does not affect completeness. It is fully complete.",
-        "reference_match": 1.0,
-        "reference_match_exact_matches": [
-            "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation"
-        ],
-        "reference_match_unexpected_refs": [],
-        "reference_match_missing_refs": [],
-        "reference_match_result": "pass",
+        "response_completeness_reason": "The Response contains all necessary and relevant information from the Ground Truth, including the suppression method, the specific sub-rules, and the rationale, with only minor wording differences that do not affect completeness.",
         "overall_score": 7.0
+    },
+    {
+        "testcase": "Conflicting @azure-tools/typespec-azure-core/no-openapi and missing-x-ms-identifiers errors",
+        "expected": {
+            "answer": "You should NOT use @OpenAPI.extension(\"x-ms-identifiers\", #[]) in your Azure Resource Manager TypeSpec code. The no-openapi rule is strict: ARM specs must NOT use decorators from @typespec/openapi or @azure-tools/typespec-autorest, including $extension, because these are only processed by OpenAPI emitters and will break other emitters (like client SDKs).\nFor array properties, the correct approach is to use the @identifiers decorator from @azure-tools/typespec-azure-resource-manager. This decorator is the ARM-compliant way to specify identifying properties for array items and will ensure that x-ms-identifiers is emitted in the generated OpenAPI as needed, without violating the no-openapi rule. If there are no identifying properties, you can use @identifiers([]) to indicate this.\nExample:\n```\n@identifiers([])\nmyArrayField: MyItemType[];\n```\nIf you use @identifiers, the ARM linter will recognize the array is correctly specified and will not require you to use the OpenAPI extension directly.\nYou should only suppress the error if you have a legitimate, ARM-approved reason (for example, for backwards compatibility or an explicit reviewer exemption). But for new fields and normal scenarios, always use the ARM-compliant decorators, NOT OpenAPI extensions.\nSummary:\nDO NOT use @OpenAPI.extension(\"x-ms-identifiers\", #[]) in ARM specs.\nDO use @identifiers([]) or @identifiers([\"propertyName\"]) as appropriate for array items.\nSuppression should only be used in rare, reviewer-approved cases, not as a general workaround.\nThis approach ensures your spec is future-proof, passes all ARM validation, and is compliant with Azure API guidelines.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You have encountered a known conflict between two Azure TypeSpec validation rules:\n\n- `@azure-tools/typespec-azure-resource-manager/missing-x-ms-identifiers` requires you to explicitly specify identifying properties for array item types, traditionally using `@OpenAPI.extension(\"x-ms-identifiers\", #[])`.\n- `@azure-tools/typespec-azure-core/no-openapi` forbids the use of any decorators from `@typespec/openapi` or `@azure-tools/typespec-autorest`, including `@OpenAPI.extension`.\n\n**Best Practice / Supported Solution:**\n\n- You should NOT use `@OpenAPI.extension(\"x-ms-identifiers\", ...)` as this violates Azure TypeSpec guidelines and is flagged by the linter as forbidden for Azure specs. The OpenAPI extension is only a workaround for non-compliant or brownfield scenarios and should not be used for new specs.\n\n- The correct approach is to use the `@identifiers` decorator from the Azure.ResourceManager library. This decorator is the official Azure TypeSpec way to declare identifying properties on array item types and is supported by Azure generators and linters.\n\n**How to Use @identifiers:**\n\nIf you have an array property, e.g.:\n```typespec\nmodel Foo {\n  bar: Bar[];\n}\n```\nAnd `Bar` should have a key property (such as `name` or `id`):\n```typespec\nmodel Bar {\n  name: string;\n}\n```\nYou should decorate the property with `@identifiers` like this:\n```typespec\nmodel Foo {\n  @identifiers([\"name\"])\n  bar: Bar[];\n}\n```\nIf there are no identifying properties, you must still use `@identifiers([])` to be explicit:\n```typespec\nmodel Foo {\n  @identifiers([])\n  bar: Bar[];\n}\n```\n\n**Do not use `@OpenAPI.extension(\"x-ms-identifiers\", ...)`.**\n\n**Suppression Guidance:**\n- Suppress the `missing-x-ms-identifiers` rule ONLY if you are working on a brownfield migration and cannot update the model yet, but this is discouraged for new APIs.\n- Do NOT suppress `no-openapi` in new Azure specs. The use of OpenAPI decorators is not allowed for new specs.\n\n**Summary Table:**\n| Situation                              | What to do                                  |\n|-----------------------------------------|---------------------------------------------|\n| New Azure TypeSpec (recommended)        | Use `@identifiers([...])`                   |\n| No identifier properties (new spec)     | Use `@identifiers([])`                      |\n| Brownfield/legacy (cannot fix now)      | Suppress `missing-x-ms-identifiers` rule    |\n| Never (for new specs)                   | Do NOT use `@OpenAPI.extension`             |\n\n**References and examples below.**",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi",
+                "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/missing-x-ms-identifiers",
+                "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, including the prohibition of @OpenAPI.extension, the use of @identifiers, suppression guidance, and code examples. It is fully complete.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "Need help with what appear like False Positives in ARM PR",
+        "expected": {
+            "answer": "You should NOT manually edit the autogenerated hardware.json file to work around TypeSpec or linter errors. Instead, you must address these issues at the TypeSpec source level and via configuration, following Azure TypeSpec best practices.\n1.ProvisioningState Must Be ReadOnly: The LintDiff check for `ProvisioningStateMustBeReadOnly` is triggered because the validation expects the type schema referenced by `provisioningState` to be `readOnly`, not just the property instance. The recommended (and officially supported) solution is to update your `tspconfig.yaml` to set:\n```\noptions:\n\"@azure-tools/typespec-autorest\":\nuse-read-only-status-schema: true\n```\nThis ensures all `ProvisioningState` schemas are emitted as `readOnly`, resolving the LintDiff error at the TypeSpec emission layer and removing the need to edit the generated Swagger.\n2.Missing Examples for Subscription-level APIs: The OpenAPI validation (ModelValidation) requires an example for each operation, including subscription-level (preview) APIs. If auto-generation tools like OAV are not generating examples for these, you must:\nManually add a valid example JSON file in the `examples/<api-version>/` folder of your TypeSpec project, ensuring the `operationId` matches your operation.\nThere is currently NO supported way to suppress example requirements in TypeSpec or Swagger for missing examples. Suppression can sometimes be done via labels (like `Approved-ModelValidation`) to unblock a PR, but the recommended approach is to provide at least one example per operation.\nGeneral Best Practices:\nDo NOT edit the emitted Swagger (`hardware.json`). Always make changes at the TypeSpec or configuration level.\nIf you encounter TypeSpec validation failures, refer to the TypeSpec source, emitter options, or required supporting files (such as examples or suppressions.yaml for certain rule types). For LintDiff, suppressions must be done in `readme.md` or `suppressions.yaml` (for TypeSpecRequirement errors only, not LintDiff or example requirements).\nSummary:\nSet `use-read-only-status-schema: true` in `tspconfig.yaml` to resolve the `ProvisioningStateMustBeReadOnly` error.\nAdd missing example files for all operations, including subscription-level ones, as there is no suppression for missing examples.\nNever edit the generated OpenAPI files to workaround linter errors.\nLet me know if you need guidance on creating an example file or configuring the emitter options.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "Let's address each of your concerns in detail:\n\n**1. Example for Subscription-level API (Missing Example Error):**\n- The error about missing examples (e.g., XMS_EXAMPLE_NOTFOUND_ERROR) is due to every operation requiring an example for validation. The recommended solution is to provide an example JSON file for each operation, including subscription-level APIs. If you cannot generate it automatically, you can manually create a minimal valid example for the operation. \n- Suppression is generally discouraged for model validation errors because the validation system can be buggy with suppressions, and the preferred path is to add the required examples. However, you can temporarily unblock your PR by using the `Approved-ModelValidation` label if adding an example is not immediately feasible, but this is only a stopgap and not a permanent solution.\n\n**2. Marking provisioningState as readOnly (LintDiff Error):**\n- The Swagger LintDiff check expects the `provisioningState` property to be `readOnly` at the schema/type level, not just on the instance property. TypeSpec only allows marking properties as `readOnly` (via `@visibility(Lifecycle.Read)`), not entire models/types. \n- The LintDiff validation tool is outdated and doesn't detect `readOnly` on properties\u2014only on the type schema itself. The best practice is to configure the TypeSpec emitter to always output any ProvisioningState schema as `readOnly` using the `use-read-only-status-schema: true` option in your `tspconfig.yaml`. This ensures all generated schemas for `provisioningState` will have `readOnly: true`, which satisfies the lint rule and prevents the error.\n\n  Example for `tspconfig.yaml`:\n  ```yaml\n  emit:\n    - \"@azure-tools/typespec-autorest\"\n  options:\n    \"@azure-tools/typespec-autorest\":\n      use-read-only-status-schema: true\n  ```\n- This setting is enabled by default if you used the ARM scaffolding template.\n\n**3. Guidance for Avoiding False Positives and General Workflow:**\n- Always update your TypeSpec files and regenerate OpenAPI\u2014never edit the OpenAPI directly. All changes should originate from TypeSpec so that the validation pipeline stays consistent.\n- For TypeSpec validation failures that are a result of out-of-sync OpenAPI and TypeSpec files, ensure you have the latest dependencies, pull from the main branch, and run `npm ci` before compiling with `npx tsp compile`. This prevents false positives caused by stale local state.\n- If you need to suppress a validation, consult the official suppression guides, but always aim to fix the underlying TypeSpec or configuration issue.\n\n**Summary Table:**\n| Issue                           | Permanent Fix (Recommended)                 | Temporary Workaround           |\n|---------------------------------|---------------------------------------------|-------------------------------|\n| Missing example for operation   | Add a valid example JSON file               | Use Approved-ModelValidation label |\n| provisioningState readOnly error| Add use-read-only-status-schema: true to tspconfig.yaml | Edit OpenAPI manually (NOT recommended) |\n\nYou should not manually edit the OpenAPI for these issues; update TypeSpec and emitter config as above, and always regenerate. If you have followed these steps and still see false positives, ensure your repo and dependencies are up-to-date and the generated OpenAPI exactly matches the TypeSpec output.\n\nLet me know if you need a sample TypeSpec snippet for provisioningState or examples!",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/troubleshoot/status-read-only-error",
+                "https://azure.github.io/typespec-azure/docs/howtos/rest-api-publish/checking-in-api-specs-guide"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and accurately conveys all essential information from the CONTEXT without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, with only a very minor omission of the specific folder path for examples. All key claims and recommendations are accurately represented.",
+        "overall_score": 7.0
+    },
+    {
+        "testcase": "Swagger LintDiff validation for certain models",
+        "expected": {
+            "answer": "You should not suppress this LintDiff validation error. The error `RequiredPropertiesMissingInResourceModel` indicates that your `SharingDetail` model is being interpreted as a resource model, but it does not contain the required ARM resource properties: `name`, `id`, and `type` (all marked as readOnly). According to Azure API and TypeSpec guidelines, all resource models must include these properties to be compliant.\nSuppressing this error is not the correct approach\u2014instead, you must fix your TypeSpec definition. Ensure that resource models either extend the appropriate common-types resource base model (such as `Resource`, `ProxyResource`, or `ExtensionResource`) or, if `SharingDetail` is not a resource, ensure it is not referenced in a way that causes it to be treated as one.\nFor suppressing LintDiff errors in general, you can add scoped suppressions in your `readme.md` following the guidance here: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions. However, for this particular error, you are expected to fix your TypeSpec spec to meet the ARM requirements\u2014not suppress it.\nTo resolve this:\nIf `SharingDetail` is a resource, extend from the correct base model and add `id`, `name`, `type` (all readOnly).\nIf it is not a resource, check where it is referenced in your operations or model hierarchy to ensure it is not being treated as a resource by the code generator.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You should NOT suppress the RequiredPropertiesMissingInResourceModel LintDiff error for a resource model like 'SharingDetail'. According to Azure REST API and TypeSpec guidelines, resource models must include the top-level properties 'id', 'name', and 'type', all marked as readOnly. This is enforced to ensure consistency and compatibility with Azure Resource Manager and tooling. \n\nInstead of suppressing the error, you need to update your TypeSpec definition for 'SharingDetail' so that it either:\n\n1. Is NOT used as a resource model (i.e., it's a nested model or property bag), or\n2. If it IS a resource, ensure it extends from the correct base resource type (such as ProxyResource or Resource), which will add these required properties automatically. \n\nExample (if SharingDetail is a resource):\n```typespec\nmodel SharingDetail is ProxyResource<SharingDetailProperties> {}\nmodel SharingDetailProperties {\n  role: SharingRole;\n  sharedLimits?: QuotaLimitProperties[];\n  guestSubscriptions?: string[];\n  host?: string;\n}\n```\n\nIf SharingDetail is not a resource, ensure it is not used as one in your paths or resource collections. Only actual resources (with GET endpoints, etc.) should have these properties.\n\nSuppressing this error is NOT recommended and should only be considered if you have ARM review approval and a very strong business justification. The recommended action is to fix your model as described above.\n\nReferences:\n- https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions\n- https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/mustread#using-resources-from-common-types\n- https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/put-resource.md (see rules RPC-Put-V1-08)",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/mustread",
+                "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/put-resource.md",
+                "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all major and minor information from the ground truth, with only a very slight omission about the location for suppressions, but this does not affect the main completeness. It is fully complete.",
+        "overall_score": 0.0
     },
     {
         "testcase": "How to make an interface internal ?",
@@ -168,32 +708,22 @@
             ]
         },
         "actual": {
-            "answer": "Currently, TypeSpec and its client generator (tcgc) do not directly support hiding an entire interface (operation group) from the public SDK surface simply by marking it or its operations as internal or by using the `@access` decorator on the interface. The `@access` decorator works for models, operations, enums, and namespaces\u2014but NOT for interfaces themselves. This means marking all operations as internal or adding `@access` to the interface won't achieve your goal.\n\nTo hide the unwanted interface from the public Python SDK, the recommended approach is:\n\n1. **Redefine your client structure in `client.tsp`** so only the desired operations/groups are exposed. When you do this, TypeSpec will generate only the operations and operation groups that are referenced in your custom client. Default service clients and their `Operations` classes (such as `EvaluationResultsOperations`) will not be emitted if they aren't referenced.\n2. **Clean previously generated SDK code before regenerating** to ensure no leftover unwanted classes are present.\n3. **As a workaround until better TypeSpec features exist**, you can use a `_patch.py` file to rename or hide the generated client members, e.g., rename `client.evaluation_results` to `client._evaluation_results` to indicate it's internal, but this is not a permanent or ideal solution.\n\nSo, the best practice right now is to use a custom `client.tsp` to define exactly which interfaces/operations you want in your public SDK, and regenerate after cleaning old outputs.\n\nIf you need more granular control, keep watching for future TypeSpec updates that may allow hiding interfaces directly.\n\n**Summary:**\n- `@access` does not work on interfaces.\n- Marking operations as internal will hide the operations but not the interface itself if it's referenced in the client.\n- Redefine the client in `client.tsp` for best control.\n- Use patching as a workaround if necessary.\n",
-            "reference_urls": [
-                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators",
-                "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/guideline"
-            ]
+            "answer": "Currently, TypeSpec does NOT support directly making an entire interface internal so that it is generated but does not appear in the public surface of the Python SDK. Applying the @access(Access.internal) decorator to an interface does not work as expected for client generation\u2014this decorator is not interpreted that way by the client generator (tcgc). Marking all operations as internal works to hide those specific operations, but the interface itself may still emit an operations group.\n\n**Recommended Workarounds (per current best practice):**\n1. **Redefine the client using `client.tsp`**: You can control which operations appear on the public client by customizing the client structure. When you redefine the client in this way, default service clients (and their `Operations` classes) should not be emitted\u2014provided you have cleaned out any previously generated SDK output.\n2. **(Temporary workaround) Use Python `_patch.py`**: You can post-process the SDK to rename the unwanted property (e.g., `client.evaluation_results` to `client._evaluation_results`) to make it internal. This is only a workaround and not a TypeSpec solution.\n\n**Summary:**\n- There is no supported TypeSpec decorator or pattern today to make an interface internal for Python SDK client generation.\n- Use client customization in `client.tsp` and clean up generated code before regenerating.\n- The @access decorator on interfaces is currently ignored by the client generator.\n\nPlease keep an eye on TypeSpec releases for future improvements in this area.\n",
+            "reference_urls": []
         },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
+        "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE faithfully and thoroughly conveys all essential information from the CONTEXT without adding unsupported details or omitting critical points.",
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and faithful to the CONTEXT, with no unsupported additions or omissions.",
         "groundedness_result": "pass",
-        "groundedness_threshold": 3,
+        "groundedness_threshold": 3.0,
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, with no omissions, and even adds clarifying details.",
-        "reference_match": 0.0,
-        "reference_match_exact_matches": [],
-        "reference_match_unexpected_refs": [],
-        "reference_match_missing_refs": [
-            "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
-        ],
-        "reference_match_result": "fail",
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no omissions, and even adds helpful clarifications.",
         "overall_score": 7.0
     },
     {
@@ -205,23 +735,31 @@
             ]
         },
         "actual": {
+<<<<<<< HEAD
             "answer": "No, TypeSpec does not support conditional imports in main.tsp based on API version. All imports are static and processed at compile time, so you cannot conditionally include or exclude a resource type file based on the API version. Instead, the recommended and supported way to exclude a resource type from a new API version is to use the versioning decorators provided by the @typespec/versioning library. Specifically, you should mark the types, models, interfaces, or operations that you want to remove with the `@removed(version)` decorator, indicating in which version they are removed. This approach ensures that those types are only present in the versions where they should exist and are excluded from the OpenAPI output for newer versions.\n\nIf you are working with a preview version and the policy is to only have a single preview version in the spec repository, you may also simply delete the resource type if it should not be included at all in the new version.\n\nIn summary, manage version-specific inclusions and removals through decorators, not conditional imports.\n",
             "reference_urls": [
                 "https://typespec.io/docs/getting-started/getting-started-rest/06-versioning"
+=======
+            "answer": "No, TypeSpec does not support conditional imports in main.tsp based on API version. All imports in main.tsp are static and are included in every version compiled from that entry point. To handle resource types or models that should only exist in specific API versions, you should use versioning decorators such as @added and @removed from the @typespec/versioning library. \n\nThis means you must import all your resource files in main.tsp, and then use @removed(<version>) on the types, operations, or models you want to exclude from newer API versions. This will ensure that the generated OpenAPI and client code for the new version does not include the unwanted resource, while still preserving it for older versions. If you're in a preview-only phase and need to remove a resource entirely, you may also delete it from the spec, but for long-term versioned APIs, using the decorators is the recommended and correct approach.\n\nExample:\n\n```typespec\nmodel MyResource {\n  // ...\n}\n\n// Remove from 2025-01-01 version and onward\n@removed(Versions.v2025_01_01)\nmodel OldResource {\n  // ...\n}\n```\n\nThis approach is in line with Azure API guidelines and TypeSpec best practices.",
+            "reference_urls": [
+                "https://typespec.io/docs/language-basics/imports",
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+>>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
             ]
         },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
+        "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately and completely conveying all essential information without introducing unsupported details or omitting critical points.",
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and directly supported by the CONTEXT, accurately conveying all relevant details about TypeSpec versioning and import behavior.",
         "groundedness_result": "pass",
-        "groundedness_threshold": 3,
+        "groundedness_threshold": 3.0,
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
+<<<<<<< HEAD
         "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, accurately reflecting both main points without missing any claims or statements.",
         "reference_match": 0.0,
         "reference_match_exact_matches": [],
@@ -233,6 +771,9 @@
             "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
         ],
         "reference_match_result": "fail",
+=======
+        "response_completeness_reason": "The response fully covers all necessary and relevant information from the ground truth, including both the use of decorators and the deletion policy for preview versions.",
+>>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
         "overall_score": 7.0
     },
     {
@@ -242,21 +783,26 @@
             "reference_urls": []
         },
         "actual": {
+<<<<<<< HEAD
             "answer": "For documentation-only changes (like updating a model's description), the best practice is to apply the update across all API versions in your TypeSpec project\u2014even for older versions\u2014since documentation changes are not considered breaking changes and help ensure accuracy throughout your specs. You do not need to restrict your output in tspconfig.yaml to only the current version; it's preferable to regenerate all versions so your documentation remains consistent and correct for consumers of any version.\n\nIf the TypeSpec validation is failing because you haven't applied the description update to older versions, the solution is simply to update those versions as well. This is not considered a breaking change, and most reviewers will approve such updates, as confirmed in expert Q&A. Restricting the output to only the current version is not recommended because it can cause confusion and inconsistencies in your repository.\n\nSummary:\n- Update descriptions in all relevant API versions\n- Regenerate specs for all versions\n- No need to change tspconfig.yaml output path\n- Documentation-only changes are safe and recommended\n\nThis approach keeps your specs accurate and avoids unnecessary suppression or output restrictions.",
+=======
+            "answer": "The recommended approach for documentation (description/comment) changes in TypeSpec is to simply update your documentation\u2014even if that means older generated specs will reflect the improved or clarified descriptions. Documentation-only changes are not considered breaking and should not be treated as such. If TypeSpec validation fails because older specs are now updated with the new description, you should update those older specs as well to keep the documentation consistent across all versions.\n\nIt is NOT recommended to restrict your tspconfig.yaml output path to only generate the current API version as a workaround for documentation changes. This would defeat the purpose of version tracking and could cause confusion or drift between actual service behavior and documented API versions.\n\nSo, the best practice is:\n- Update your descriptions in the TypeSpec source.\n- Accept that older versions will have improved docs (this is not a breaking change).\n- Let the validation pass with these changes. Any breaking-change checks related only to documentation will be accepted in review.\n\nIn summary: Just update your docs and let the older versions benefit from the improved description. Do not try to hide previous versions from the output as a workaround.",
+>>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
             "reference_urls": []
         },
         "similarity": 5.0,
         "gpt_similarity": 5.0,
         "similarity_result": "pass",
-        "similarity_threshold": 3,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded, complete, and accurately reflects all essential points from the CONTEXT without adding unsupported details or omitting critical information.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3,
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
+<<<<<<< HEAD
         "response_completeness_reason": "The response fully includes all necessary and relevant information from the ground truth, with no omissions.",
         "reference_match": 1.0,
         "reference_match_exact_matches": NaN,
@@ -264,15 +810,158 @@
         "reference_match_missing_refs": NaN,
         "reference_match_result": "pass",
         "overall_score": 7.0
+=======
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no omissions and accurate representation of the claims.",
+        "overall_score": 0.0
+>>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
     },
     {
-        "average_score": 6.514285714285714,
-        "total_evals": 7,
-        "similarity_pass_rate": 7,
-        "groundedness_pass_rate": 7,
-        "response_completeness_pass_rate": 7,
+        "testcase": "Quantum RP, add new filter to offering API",
+        "expected": {
+            "answer": "For a case like this, just decorating the filter property with `@added` in the same operation is the simplest mechanism.  Versioning the request and response data in an operation like this is usually the most straightforward way to version an operation.\nFor more complex operation versioning, you can use the remove/rename/sharedRoute mechanism described here: [Versioning | TypeSpec Azure](https://azure.github.io/typespec-azure/docs/howtos/arm/versioning/#converting-an-operation-from-synchronous-to-asynchronous)\nNote also that you should name the property 'filter', the `@query(\"$filter\")` decorator actually sets the name on the wire,  you generally want to follow standard naming rules for parameters:\n```\n// v2 (new preview)\nlistBySubscription is ArmListBySubscription<\nQuantumSuiteOffer,\nParameters = {\n/**\n* The filter to apply to the operation. Example: '$filter=kind eq \"v1\"'\n*/\n@added(Versions.v2025_11_01_preview)\n@query(\"$filter\")\nfilter?: string;\n}\n>;\n```",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "The issue arises because in TypeSpec (and Azure ARM TypeSpec patterns), you cannot simply remove and re-add (or rename) an operation in the same interface to change its signature or parameters for a new version, especially for template-based operations like ArmListBySubscription. This pattern breaks due to how operation templates and versioning decorators interact in the compiler.\n\n**Correct way to add a new filter parameter for a new version:**\n\nYou should leverage the versioning decorators at the parameter/property level rather than removing/re-adding the entire operation. This allows you to evolve the operation's shape across versions without breaking existing clients.\n\nSuppose your original operation is:\n```tsp\n@armResourceOperations\ninterface Offerings {\n  listBySubscription is ArmListBySubscription<Offering>;\n}\n```\n\nTo add a new filter parameter in version v2025_11_01_preview, do:\n\n```tsp\n@armResourceOperations\ninterface Offerings {\n  listBySubscription is ArmListBySubscription<\n    Offering,\n    Parameters = {\n      // Existing parameters (if any)\n      @added(Versions.v2025_11_01_preview)\n      filter?: string; // or the correct type for your filter\n    }\n  >;\n}\n```\n\n**Key Points:**\n- Use the `@added(Versions.v2025_11_01_preview)` decorator directly on the new parameter inside the Parameters model.\n- Do NOT remove/re-add the operation or try to rename it for versioning. This is not supported for operation templates and will break compilation or versioned output.\n- The operation will have the new filter parameter only in v2025_11_01_preview and later, and it will not appear in earlier versions.\n- This approach is fully aligned with Azure ARM and TypeSpec versioning best practices.\n\n**References:** See the example for adding a parameter in a new version here:\n\n```tsp\n@armResourceOperations\ninterface Employees {\n  get is ArmResourceRead<\n    Employee,\n    Parameters = {\n      name: string;\n\n      @added(Versions.v2)\n      department?: string;\n    }\n  >;\n}\n```\n\nFor your case, just use `@added` on the new filter property in the Parameters model.\n\nIf you have any additional complexities (e.g., changing the type of an existing parameter, or adding/removing other aspects), always prefer property-level decorators for versioned changes. Operation removal and re-adding is only for true operation surface changes (like a breaking route or HTTP verb change), not for evolving parameters.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/getstarted/versioning",
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning",
+                "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and accurately reflects all essential information from the CONTEXT without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering all major points about versioning with `@added` and providing clear examples, but it omits minor details about `@query(\"$filter\")`, naming conventions, and alternative mechanisms for complex cases.",
+        "overall_score": 6.6
+    },
+    {
+        "testcase": "Swagger generation fails due to duplicate operations in interface irrespective of different models.",
+        "expected": {
+            "answer": "To update the maximum value of `validityPeriodInDays` from 30 to 90 for only the new API version (`2025-11-01-preview`) in your TypeSpec definition, you must use TypeSpec's versioning patterns for breaking model changes. However, TypeSpec currently does not support versioning decorators on decorator arguments (like changing the `@maxValue` parameter per version). Directly updating the decorator value would affect all versions.\nThe correct Azure-compliant pattern is:\nCreate a new property (with a different internal name) for the updated constraint.\nUse `@removed` and `@renamedFrom` on the old property, and `@added` on the new property, both on the same model. This allows you to apply different constraints in different API versions without affecting other versions or causing duplicate operation errors.\nIf the operation signature/model type is changed for only the new version, use the add/remove/rename pattern and use `@sharedRoute` on both versions of the operation (see linked examples). This avoids the duplicate operation error and ensures correct OpenAPI emission for each version.\nExample:\n```\nmodel LeafCertificateConfiguration {\n// Old property: max 30 days, removed in new version\n@maxValue(30)\n@removed(Versions.v2025_11_01_preview)\n@renamedFrom(Versions.v2025_11_01_preview, \"validityPeriodInDays\")\nvalidityPeriodInDaysV1: int32;\n// New property: max 90 days, only in new version\n@added(Versions.v2025_11_01_preview)\n@maxValue(90)\nvalidityPeriodInDays: int32;\n}\n```\nIn your operation/interface, you may need to do the same if the operation signature changes. If you want to have different models for different versions but keep the same route, use the `@sharedRoute` decorator and the `@renamedFrom` pattern for the operation as well (see the \"Converting an Operation from Synchronous to Asynchronous\" example in the docs).\nThis pattern will:\nPrevent duplicate operation errors (since each operation/model is only present in one version)\nEmit the correct schema per version\nNot require changing the operation name at the API surface (the renaming is internal)\nSummary:\nUse the add/remove/rename pattern for versioned property changes that affect validation/constraints.\nUse `@sharedRoute` and `@renamedFrom` for operations if the operation signature changes with the model.\nDo NOT update decorator arguments directly for just one version\u2014they affect all versions.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "The root cause of the `@typespec/http/duplicate-operation` error is that TypeSpec does not allow two operations with the same HTTP method and route, even if they use different models or are versioned. This is because, in the OpenAPI output, only one operation can exist per route/method combination, and TypeSpec does not automatically version routes or operation names.\n\n**Key Points:**\n- Changing only the model or using `@renamedFrom` on models does not resolve duplicate-operation issues if the operation's route and HTTP method are the same across versions.\n- The `@renamedFrom` decorator is primarily for model evolution, not for distinguishing operation routes or names across versions.\n- In Azure TypeSpec, operation versioning is handled at the API version layer, not by duplicating operations or interfaces for each version.\n\n**Correct Approach:**\nIf the only change between API versions is a property constraint (like a max value in a model), you should version only the model property, not the operation. The operation should remain a single definition, and the model property should be updated using versioning decorators.\n\nTo relax a constraint (e.g., change max from 30 to 90) only for the new version, use the remove/replace/rename pattern for the property within the model, NOT for the entire operation or interface. Here is the recommended pattern:\n\n```typespec\nmodel LeafCertificateConfiguration {\n  // For 2025-08-01-preview and earlier\n  @removed(Versions.v2025_11_01_preview)\n  validityPeriodInDays: int32 & Maximum<30>;\n\n  // For 2025-11-01-preview and later\n  @added(Versions.v2025_11_01_preview)\n  validityPeriodInDays: int32 & Maximum<90>;\n}\n```\n\n- Do NOT duplicate the operation or interface. Keep the same operation signature.\n- Do NOT use `@renamedFrom` on the model if only the property changes; only use versioning decorators on the property.\n\nThis ensures:\n- There is only one operation per route/method (no duplicate-operation error).\n- The generated OpenAPI for each version has the correct model property constraint.\n\n**If you need to change the entire operation signature or the route for a new version**, then you would use `@removed`/`@added` decorators on the operation itself. But for model property changes, only the model property should be versioned.\n\n**References:**\n- See the remove/replace/rename pattern for model properties in the knowledge context:\n  > \"it involves a remove/rename/replace pattern,  as in this playground. The reason you have to do this is that in typespec, collections like Namespace or Model or Interface use the name of included types as their identifier, so you need two different names for these types.  In this case, you need two different model properties...\"\n- Azure TypeSpec versioning docs: https://azure.github.io/typespec-azure/docs/getstarted/versioning\n\n**Summary:**\n- Do NOT duplicate operations or interfaces for different API versions if the only change is a model property constraint.\n- Use `@removed` and `@added` on the model property for the new version.\n- Do NOT use `@renamedFrom` on the model unless the property name or the model itself is changing.\n- The route and operation name must remain unique per interface.\n\nThis approach will resolve the duplicate-operation error and allow correct model evolution across API versions.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/getstarted/versioning",
+                "https://typespec.io/docs/emitters/openapi3/diagnostics"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, covering the main approach and rationale, but omits some minor details about the exact pattern (new property name, use of `@renamedFrom` on the property, and operation-level decorators) that are present in the ground truth.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "Swagger LintDiff - Analyze Code Error",
+        "expected": {
+            "answer": "You cannot directly version a decorator such as @pattern in TypeSpec; decorators themselves are not versioned. This means that if you update a pattern in your TypeSpec model, it will apply to all API versions emitted by TypeSpec, not just a new version. This is a deliberate design choice to avoid hidden inconsistencies between the declared API surface and the actual backend behavior.\nIf you need different validation patterns (such as a new regex for a resource name) for a specific API version and newer, you have two supported options in TypeSpec:\nIf the new pattern applies to all versions: Update the @pattern decorator in the model directly. This is the common and recommended path if your backend enforces the new pattern for all versions.\nIf the pattern truly differs by API version (rare, and usually discouraged): You must explicitly version the type. For example, you can introduce a new scalar type or model for the new version, and use the @typeChangedFrom or @renamedFrom decorators to describe the transition between versions. This approach requires you to manage versioning logic in TypeSpec, not in the generated OpenAPI/JSON files. You should not edit the generated files by hand, and manual changes to JSON files are not supported.\nHere's a sketch of the pattern versioning approach:\n```\n/** Legacy pattern type for old API versions */\n@pattern(\"^[a-z0-9]{3,18}$\")\nscalar ResourceNameLegacy extends string;\nmodel MyResource {\n@key(\"resourceName\")\n@typeChangedFrom(Versions.v2, ResourceNameLegacy)\n@pattern(\"^[a-zA-Z][a-zA-Z0-9]*(-[a-zA-Z0-9]+)*$\")\nname: string;\n}\n```\nIn this example, TypeSpec will emit the old pattern for older API versions and the new pattern for v2 and above, but you must structure your code accordingly. Note that this approach can lead to more complicated TypeSpec code and is only justified if your backend actually enforces different rules per API version.\nSummary: Do not manually edit JSON files generated by TypeSpec. Use versioning decorators and, if necessary, versioned types to achieve per-version differences. But for most cases, apply the new pattern universally if the service behavior matches. This approach keeps your TypeSpec code clear and maintainable.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You are correct: you should NOT manually edit the generated JSON; the right approach is to model the pattern restriction in TypeSpec, and, crucially, to version it so it only applies to new API versions. \n\nAccording to the Azure TypeSpec documentation, changing the pattern for a resource name is a breaking change for existing API versions (see [howtos#arm#versioning.md](https://azure.github.io/typespec-azure/docs/howtos/arm/versioning)). If you need to introduce a new pattern only for a specific version (such as v2025_08_01 and later), you should use versioning decorators so the pattern applies only to new versions.\n\nHere's how you can do it:\n\n1. In your `StorageMover` resource, you should apply the `@pattern` decorator with a versioning decorator (such as `@added`) so it only appears in the desired version and later.\n\nFor example:\n\n```typespec\nmodel StorageMover is Azure.ResourceManager.TrackedResource {\n  @added(Versions.v2025_08_01)\n  @pattern(\"^[a-zA-Z0-9-]{3,24}$\")\n  name: string;\n  // ... other properties ...\n}\n```\n\nBut in TypeSpec, the resource name is usually managed via the `ResourceNameParameter` spread, so you must also version the `ResourceNameParameter` usage or override the name property for the version in question.\n\nIf you want the pattern only in new versions, you can use the added/removed pattern (see [static_typespec_qa/typespec_2025_05_22.md]):\n\n```typespec\nmodel StorageMover is Azure.ResourceManager.TrackedResource {\n  @removed(Versions.v2025_08_01)\n  ...ResourceNameParameter;\n\n  @added(Versions.v2025_08_01)\n  name: string @pattern(\"^[a-zA-Z0-9-]{3,24}$\");\n  // ... other properties ...\n}\n```\n\nThis way, the pattern is only present in the specified version and newer, so older API versions do NOT see the new restriction (avoiding a breaking change), and the linter will be satisfied for the new version.\n\n**Summary:**\n- Do NOT manually edit JSON output.\n- Use TypeSpec versioning decorators to add the pattern only in the new API version and later.\n- Either version the name property or the `ResourceNameParameter` spread to achieve this.\n\nIf you need to version the spread itself, you can use @removed/@added for the old/new spread (see [static_typespec_qa/typespec_2025_09_26.md]).\n\nIf you need a code sample tailored to your specific TypeSpec resource structure, let me know.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately conveying all essential information and providing correct, context-supported solutions without unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 2.0,
+        "response_completeness_result": "fail",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response gets the basic advice about not editing JSON and using TypeSpec versioning, but its main technical recommendation is incorrect and omits the crucial mechanism for versioning patterns. It misses most of the ground truth's key points.",
+        "overall_score": 5.2
+    },
+    {
+        "testcase": "Versioning the LRO headers",
+        "expected": {
+            "answer": "here's a [playground](https://azure.github.io/typespec-azure/playground/?options=%7B%22linterRuleSet%22%3A%7B%22extends%22%3A%5B%22%40azure-tools%2Ftypespec-azure-rulesets%2Fresource-manager%22%5D%7D%7D&c=aW1wb3J0ICJAdHlwZXNwZWMvaHR0cCI7CtIZcmVzdNUZdmVyc2lvbmluZ8wfYXp1cmUtdG9vbHMvyCstxhVjb3Jl3yvIK3Jlc291cmNlLW1hbmFnZXIiOwoKdXNpbmcgSHR0cDvHDFJlc3TIDFbpAI7IEkHESi5Db3JlzhJSx1xNxls7CgovKiogQ29udG9zb8RUxR4gUHJvdmlkZXIg5gCDbWVudCBBUEkuICovCkBhcm3IIE5hbWVzcGFjZQpAc2VydmljZSgjeyB0aXRsZTogIsdXyC1IdWJDbGllbnQiIH0pCkDnAUNlZCjnAL9zKQpuyFAgTWljcm9zb2Z0LtJG7wC2QVBJIMdNc%2BQAoWVudW3oARNzIHsKICDELjIwMjUtMTAtMDEtcHJldmlld8g1xDQgIOQA10NvbW1vblTkAY%2FHQCj1ATcuyykuyGoudjUpCiAgYNJpYCwK8ACFN%2F8Ahf8Ahf8AhesAhclpYCwKfeYBOEHoATrrAVMg6AJ15ACIbW9kZWwgRW1wbG95ZWUgaXMgVHJhY2tlZOgAgjzIHFByb3BlcnRpZXM%2B5QFpLi7pAKbkAhtQYXJhbWV0ZXLJMT476ACGyV9wyUTSfMpg6QHIQWdlIG9mIGXIP%2BUBOGFnZT86IGludDMyO%2BgBbENpdHnSKmNpdHk%2FOiBzdHLlAy7HLFByb2ZpbNNZQGVuY29kZSgiYmFzZTY0dXJsIuQBYHDGMD86IGJ5dGVzyUhUaGUgc3RhdHVzxEt0aGUgbGFzdCDkAMVhdGlvbuUDQSAgQHZpc2liaWxpdHkoTGlmZWN5Y2zkAeBhZMddxCDlA9BTdGF0xGflAavMFOkBSMRzzDLlAIDlAMph6QHVxXdAbHJvxDt1cwp1buQCctFU5QFk5gEa6QKyxF%2FIRyBjcmXEJ3JlcXVlc3QgaGFzIGJlZW4gYWNjZXB0ZWTEZyAgQccOOiAiyAsi1lBpxEDkALTpAMHIROwAnDogIswP2kx1cGRhdMRPxUNVxw46ICLIC8o76QTq6QDE5gDcZOcBolN1Y2NlZWTlAMXJDNM%2FxTbkAU1mYWlsyT5GxQ06ICLGCdw4d2FzIGNhbmNlyj5Dxw%2FkBULHC%2F8BQCBkZWxl6QGARMQN5gD5yAsi6QP96QN3bW926gHK6QN5TW92ZVLHFegDcsRzbW92xGhmcm9tIGxvY%2BYAvMVuxBPxA1DLM3RvzzF0b8ov9wCVc3BvbnPrBIvmAJbHFuwAl%2B4DbMU%2BxWTGfOYC7s1uaW50ZXJm5AZhT%2BgDlHMgZXh0ZW5kc%2FYHIy7LKXt9CuUG%2F8gjyhvLWegAzeYEs2dldOQBp0HKNeQD5%2BwFEOQEEHJl5Ab6ZEZyb23pBw4u9QXFICLmAqlPcuUC1WXlBI9AcmXkAPzqB0rVPMUqc2hhcmVkUm91dGXkBQ7NTE9sZO8ArEPHIFJlcGxhY2VBc3luY%2BwAvN9RxU71AVVMZWdhY3ku1WAKICAg6QFGLMUOT3DkAWZhbOcCm0JvZHkgPSB0cnXEdOUAiOUD%2FMZxcm1DdXN0b21QYXRjaFPXUvYAl0ZvdW7kBCvkAUPIHOYAy03kAonGSdBLyhDqBq%2FFGT7oAJ3mA5%2FvAVzlA5xlV2l0aG91dE9r8wFcbGlzdEJ5yDBHcm91cM9ETMUiUGFyZW501DxTdWJzY3Jp5QE%2BxzvGM8wZzDnoB2Ugc2FtcGzrBGthY8VEdGhhdOYDaOkHKHRvIGRpZmZl5ACE7wPrxSnuALJBxUjlAZbIdyzsBHbIDeYD7fMAkkhFQUTqB1HEfmNoZWNr6gCqZXhpc3RlbuYIyyDGHkXJFO8C4M0d7gim&e=%40azure-tools%2Ftypespec-autorest&vs=%7B%7D) showing how you would version a required to optional request body for a templated async put operation:\n```\n@armResourceOperations\ninterface Employees {\nget is ArmResourceRead<Employee>;\n@renamedFrom(Versions.`2025-10-07-preview`, \"createOrUpdate\")\n@removed(Versions.`2025-10-07-preview`)\n@sharedRoute\ncreateOrUpdateOld is ArmResourceCreateOrReplaceAsync<Employee>;\n@sharedRoute\ncreateOrUpdate is Azure.ResourceManager.Legacy.CreateOrReplaceAsync<\nEmployee,\nOptionalRequestBody = true\n>;\nupdate is ArmCustomPatchSync<\nEmployee,\nAzure.ResourceManager.Foundations.ResourceUpdateModel<\nEmployee,\nEmployeeProperties\n>\n>;\ndelete is ArmResourceDeleteWithoutOkAsync<Employee>;\nlistByResourceGroup is ArmResourceListByParent<Employee>;\nlistBySubscription is ArmListBySubscription<Employee>;\n/** A sample resource action that move employee to different location */\nmove is ArmResourceActionSync<Employee, MoveRequest, MoveResponse>;\n/** A sample HEAD operation to check resource existence */\ncheckExistence is ArmResourceCheckExistence<Employee>;\n}\n```\nthe trick is to use @sharedRoute in the old and new operations and to rename and remove the old operation in the new version.",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You cannot directly apply @added(version) to LRO headers or annotations themselves, because decorators like Azure.Core.useFinalStateVia or the specific LRO header types (ArmAsyncOperationHeader, ArmLroLocationHeader) are not themselves versioned elements. Instead, you should version the operation as a whole to reflect the behavioral and shape changes across API versions. This is the recommended and supported approach for Azure TypeSpec.\n\nHere\u2019s how you can do it according to Azure TypeSpec versioning best practices:\n\n1. **Use @sharedRoute and Operation Versioning:**\n   - When the operation behavior or signature changes in a new API version (such as adding an optional request body and supporting LRO), you should create a new operation for the new version, use @sharedRoute to maintain the same path, and use @removed and @renamedFrom to control operation presence and naming in each version.\n   - The new operation can then have the LRO headers, Azure.Core.useFinalStateVia, and any new logic (such as OptionalRequestBody = true).\n\n2. **Sample Pattern:**\n\n```typespec\n@armResourceOperations\ninterface RuleSets {\n  // Old version (no request body, no LRO)\n  @renamedFrom(Versions.v2025_10_07_preview, \"createOrUpdate\")\n  @removed(Versions.v2025_10_07_preview)\n  @sharedRoute\n  createOrUpdateOld is ArmResourceCreateOrReplaceAsync<RuleSet>;\n\n  // New version (optional body, LRO enabled with bool flag)\n  @sharedRoute\n  createOrUpdate is Azure.ResourceManager.Legacy.CreateOrReplaceAsync<\n    RuleSet,\n    OptionalRequestBody = true\n  >;\n}\n```\n\n- In this pattern, the old operation is present in old versions, and the new one (with LRO, optional request body, etc.) appears in the new version. @sharedRoute ensures the route stays the same.\n- You cannot version the LRO headers separately; instead, they are part of the new operation\u2019s definition.\n- Use the TypeSpec Azure.Core templates to set final-state-via and the appropriate headers in the new operation.\n\n3. **Result:**\n- This approach cleanly separates old and new behaviors by version and ensures that clients targeting the new API version get the LRO and optional request body, while clients on older versions see the previous contract.\n\n4. **Reference Implementation:**\nSee the [TypeSpec Azure playground example](https://azure.github.io/typespec-azure/playground/?options=%7B%22linterRuleSet%22%3A%7B%22extends%22%3A%5B%22%40azure-tools%2Ftypespec-azure-rulesets%2Fresource-manager%22%5D%7D%7D&c=aW1wb3J0ICJAdHlwZXNwZWMvaHR0cCI7CtIZcmVzdNUZdmVyc2lvbmluZ8wfYXp1cmUtdG9vbHMvyCstxhVjb3Jl3yvIK3Jlc291cmNlLW1hbmFnZXIiOwoKdXNpbmcgSHR0cDvHDFJlc3TIDFbpAI7IEkHESi5Db3JlzhJSx1xNxls7CgovKiogQ29udG9zb8RUxR4gUHJvdmlkZXIg5gCDbWVudCBBUEkuICovCkBhcm3IIE5hbWVzcGFjZQpAc2VydmljZSgjeyB0aXRsZTogIsdXyC1IdWJDbGllbnQiIH0pCkDnAUNlZCjnAL9zKQpuyFAgTWljcm9zb2Z0LtJG7wC2QVBJIMdNc%2BQAoWVudW3oARNzIHsKICDELjIwMjUtMTAtMDEtcHJldmlld8g1xDQgIOQA10NvbW1vblTkAY%2FHQCj1ATcuyykuyGoudjUpCiAgYNJpYCwK8ACFN%2F8Ahf8Ahf8AhesAhclpYCwKfeYBOEHoATrrAVMg6AJ15ACIbW9kZWwgRW1wbG95ZWUgaXMgVHJhY2tlZOgAgjzIHFByb3BlcnRpZXM%2B5QFpLi7pAKbkAhtQYXJhbWV0ZXLJMT476ACGyV9wyUTSfMpg6QHIQWdlIG9mIGXIP%2BUBOGFnZT86IGludDMyO%2BgBbENpdHnSKmNpdHk%2FOiBzdHLlAy7HLFByb2ZpbNNZQGVuY29kZSgiYmFzZTY0dXJsIuQBYHDGMD86IGJ5dGVzyUhUaGUgc3RhdHVzxEt0aGUgbGFzdCDkAMVhdGlvbuUDQSAgQHZpc2liaWxpdHkoTGlmZWN5Y2zkAeBhZMddxCDlA9BTdGF0xGflAavMFOkBSMRzzDLlAIDlAMph6QHVxXdAbHJvxDt1cwp1buQCctFU5QFk5gEa6QKyxF%2FIRyBjcmXEJ3JlcXVlc3QgaGFzIGJlZW4gYWNjZXB0ZWTEZyAgQccOOiAiyAsi1lBpxEDkALTpAMHIROwAnDogIswP2kx1cGRhdMRPxUNVxw46ICLIC8o76QTq6QDE5gDcZOcBolN1Y2NlZWTlAMXJDNM%2FxTbkAU1mYWlsyT5GxQ06ICLGCdw4d2FzIGNhbmNlyj5Dxw%2FkBULHC%2F8BQCBkZWxl6QGARMQN5gD5yAsi6QP96QN3bW926gHK6QN5TW92ZVLHFegDcsRzbW92xGhmcm9tIGxvY%2BYAvMVuxBPxA1DLM3RvzzF0b8ov9wCVc3BvbnPrBIvmAJbHFuwAl%2B4DbMU%2BxWTGfOYC7s1uaW50ZXJ) for a live demonstration.\n\n**Summary:**\n- Versioning of LRO headers and behavior is achieved by versioning the operation, not the decorators or header models directly.\n- Use @sharedRoute, @removed, @renamedFrom to handle operation versioning and transition.\n- This approach fully aligns with Azure API/TypeSpec versioning guidance and ensures no breaking changes for existing clients.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, accurately reflecting the guidance, rationale, and code pattern for versioning LRO operations in Azure TypeSpec.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "Creating stable API version with select properties omitted?",
+        "expected": {
+            "answer": "TypeSpec versioning works in the following way:\nAll types in the spec are automatically part of the initial api-version\nWhen a new api-version is introduced,  any new types `use@added(VERSION)` decorators to indicate they were added in that version, they are impliciutly included in every subsequent version\nWhen a type does not appear in one version, then you use `@removed(VERSION)` to remove the type at that version, by default, it will not appear any subsequent versions.  It can be added back using `@added` [Here is a playground](https://azure.github.io/typespec-azure/playground/?options=%7B%22linterRuleSet%22%3A%7B%22extends%22%3A%5B%22%40azure-tools%2Ftypespec-azure-rulesets%2Fresource-manager%22%5D%7D%7D&c=aW1wb3J0ICJAdHlwZXNwZWMvaHR0cCI7CtIZcmVzdNUZdmVyc2lvbmluZ8wfYXp1cmUtdG9vbHMvyCstxhVjb3Jl3yvIK3Jlc291cmNlLW1hbmFnZXIiOwoKdXNpbmcgSHR0cDvHDFJlc3TIDFbpAI7IEkHESi5Db3JlzhJSx1xNxls7CgovKiogQ29udG9zb8RUxR4gUHJvdmlkZXIg5gCDbWVudCBBUEkuICovCkBhcm3IIE5hbWVzcGFjZQpAc2VydmljZSgjeyB0aXRsZTogIsdXyC1IdWJDbGllbnQiIH0pCkDnAUNlZCjnAL9zKQpuyFAgTWljcm9zb2Z0LtJG7wC2QVBJIMdNc%2BQAoWVudW3oARNzIHsKICDELjIwMjEtMTAtMDEtcHJldmlld8g1xDQgIEB1c2VEZXBlbmRlbmN5KPUBLy7IVi52MV8wX1DGSF8xKcRAYXJtQ29tbW9uVOQBz8cq10jLKctUNcRIYPIAqWAsCuoAxTTGHP8Avf8Avf8Avf8Avf4AvecAoe0AtTUtMDf%2FAXr%2FAL3%2FAL3%2FAL3%2FAL3qAL3vAKlgLAp95gJtQegCb%2BsCiCDoA6rkAMhtb2RlbCBFbXBsb3llZSBpcyBUcmFja2Vk6ACCPMgcUHJvcGVydGllcz7lAp4uLukApuQDUFBhcmFtZXRlcskxPjvoAIbJX3DJRNJ8ymDpAv1BZ2Ugb2YgZcg%2F5gF4YWRk6wN%2BLuwBveQBEGFnZT86IGludDMyO%2BgBzENpdHnSSmNpdHk%2FOiBzdHLlBIPHLFByb2ZpbNR5cmVtb3bce%2FQAm%2FABm8UoZW5jb2RlKCJiYXNlNjR1cmwixBdwxno%2FOiBieXRlc%2BkAklRoZSBzdGF0dXPkAJV0aGUgbGFzdCDkAS9hdGlvbuUE4CAgQHZpc2liaWxpdHkoTGlmZWN5Y2zkAkphZMddxCDlBW9TdGF0xGflAhXMFOkBssRzzDLlAIDlARRh6QI%2FxXdAbHJvxDt1cwp1buQDHNFU5QHO5gFk6QNcxF%2FIRyBjcmXEJ3JlcXVlc3QgaGFzIGJlZW4gYWNjZXB0ZWTEZyAgQccOOiAiyAsi1lBpxEDkALTpAMHIROwAnDogIswP2kx1cGRhdMRPxUNVxw46ICLIC8o76QaJ6QDE5gDcZOcBolN1Y2NlZWTlAMXJDNM%2FxTbkAU1mYWlsyT5GxQ06ICLGCdw4d2FzIGNhbmNlyj5Dxw%2FkBuHHC%2F8BQCBkZWxl6QGARMQN5gD5yAsi6QRn6QPh5AMh6QHK6QPjTW92ZVLHFegD3MRzbW92xGhmcm9tIGxvY%2BYAvMVuxBPxA5rLM3RvzzF0b8ov9wCVc3BvbnPrBPXmAJbHFuwAl%2B4DbMU%2BxWTGfOYC7s1uaW50ZXJm5AgAT%2BgDlHMgZXh0ZW5kc%2FYIwi7LKXt9CuUInsgjyhvLWegAzeYFHWdldOQBp0HKNeQD5%2BwFeiDnAntPcuUCp%2BUB1ssvQ8cdUmVwbGFjZUFzeW5jzj%2FlAvfIN0N1c3RvbVBhdGNoU8QqCiAgIOkAkyzFDvYA50ZvdW7kAybkBQ7IHOYAkU3kAYTGSdBLyhDqBhTFGT4KICDlAJ3mAprvANTlApdlV2l0aG91dE9r8wDUbGlzdEJ5yDBHcm91cM9ETMUiUGFyZW501DxTdWJzY3JpcOUCecY7xjPMGcw56AbKIHNhbXBs6wNmYWPFRHRoYXTmAmPpBm10byBkaWZmZeQAhO8C5sUp7gCyQcVI5QGWyHcs7ANxyA3mAujzAJJIRUFE6gZMxH5jaGVja%2BoAqmV4aXN0ZW7mCDAgxh5FyRTvAljNHe4ICw%3D%3D&e=%40azure-tools%2Ftypespec-autorest&vs=%7B%7D)\n```\n/** Contoso API versions */\nenum Versions {\n/** 2021-10-01-preview version */\n@useDependency(Azure.ResourceManager.Versions.v1_0_Preview_1)\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n`2021-10-01-preview`,\n/** 2024-10-01 version */\n@useDependency(Azure.ResourceManager.Versions.v1_0_Preview_1)\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n`2024-10-01`,\n/** 2025-07-01-preview version */\n@useDependency(Azure.ResourceManager.Versions.v1_0_Preview_1)\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n`2025-07-01-preview`,\n}\n/** A ContosoProviderHub resource */\nmodel Employee is TrackedResource<EmployeeProperties> {\n...ResourceNameParameter<Employee>;\n}\n/** Employee properties */\nmodel EmployeeProperties {\n/** Age of employee */\n@added(Versions.`2024-10-01`)\nage?: int32;\n/** City of employee */\ncity?: string;\n/** Profile of employee */\n@removed(Versions.`2024-10-01`)\n@added(Versions.`2025-07-01-preview`)\n@encode(\"base64url\")\nprofile?: bytes;\n/** The status of the last operation. */\n@visibility(Lifecycle.Read)\nprovisioningState?: ProvisioningState;\n}\n```\nshowing two propertties (EmployeeProperties.age and EmployeeProperties.profile) that use versioning.  'age' appears in the second, stable version and all subsequent versions,  'profile' appears in the first (preview) version, is removed in the stable version, and then added back again in the subsequent preview version.\nNotably, this practice of adding a property at each preview version and removing it at each stable is easy to get wrong.\nthe official Azure policy is to have only one active preview, as much as that is possible with api retention requirements.  So that, when you introduce a new preview version, the older preview is removed, ideally, this means that, especially when you just had a stable release, you remove support for the previous preview when (or soon after) you add the new preview version.\nYou can see more details about versioning in typespec here: [Versioning | TypeSpec Azure](https://azure.github.io/typespec-azure/docs/getstarted/versioning/)",
+            "reference_urls": []
+        },
+        "actual": {
+            "answer": "You cannot have multiple active preview versions marked with @previewVersion in your TypeSpec Versions enum. Azure TypeSpec guidelines and tooling assume there is only one preview version at a time, which is always the last (most recent) enum value marked with @previewVersion. \n\nTo handle properties (like faultSimulation) that should be present in multiple preview versions but not in any stable (GA) versions, you must:\n\n1. For each new preview version, if you want the property to appear in ALL preview versions (and never in any stable version), you need to use a pattern of @removed and @added decorators. \n2. Specifically, when you GA a preview, you should @removed(property, GA_VERSION) to remove it from the new stable version, and then @added(property, NEW_PREVIEW_VERSION) to reintroduce it in the new preview version.\n3. The property will appear in all versions between the original @added and the @removed, then in all preview versions after you re-add it. \n\nThis means that in the generated code, the property will only appear in preview versions, and not in any stable versions.\n\n**Example:**\n```typespec\nmodel ExampleProperties {\n  // Present in first preview\n  @added(Versions.v2024_11_01_preview)\n  // Removed in stable\n  @removed(Versions.v2025_03_01)\n  faultSimulation?: FaultSimulation;\n\n  // Added back in next preview\n  @added(Versions.v2025_03_01_preview)\n  // Removed in next stable, etc.\n}\n```\n\n**Important:**\n- You should NOT annotate multiple versions with @previewVersion; only the latest preview should be marked this way. When you release a new preview, remove the @previewVersion from the previous one and add it to the new one.\n- This is by Azure policy: only one preview version should be active at a time.\n- When you release a new stable version, move the preview-only properties forward using @removed and @added, as shown.\n\n**Summary:**\n- Only one version should have @previewVersion.\n- Use @removed at the GA version to exclude preview-only properties, then @added at the new preview to reintroduce them.\n- Do not try to have a property in multiple previews by marking each with @added; the property is only included from the version where it is first added up to where it is removed, and from where it is added again after removal.\n\nFor more details and a playground link to experiment with this pattern, see the references below.",
+            "reference_urls": [
+                "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version",
+                "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately and thoroughly conveying all essential information about preview versioning and property handling in TypeSpec, with no unsupported additions or omissions.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response perfectly covers all necessary and relevant information from the ground truth, including the decorators, policy, code pattern, and rationale, with no significant omissions.",
+        "overall_score": 6.4
+    },
+    {
+        "average_score": 4.43030303030303,
+        "total_evals": 33,
+        "similarity_pass_rate": 33,
+        "groundedness_pass_rate": 22,
+        "response_completeness_pass_rate": 32,
         "similarity_fail_rate": 0,
         "groundedness_fail_rate": 0,
-        "response_completeness_fail_rate": 0
+        "response_completeness_fail_rate": 1
     }
 ]

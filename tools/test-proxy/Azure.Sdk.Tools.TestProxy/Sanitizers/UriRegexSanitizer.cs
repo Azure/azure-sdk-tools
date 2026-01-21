@@ -1,4 +1,5 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -8,9 +9,9 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
     public class UriRegexSanitizer : RecordedTestSanitizer
     {
         private string _newValue;
-        private string _regexValue = null;
         private string _groupForReplace = null;
 
+        private readonly Regex _regex;
 
         /// <summary>
         /// Runs a regex replace on the member of your choice.
@@ -24,18 +25,17 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// </param>
         public UriRegexSanitizer(string value = "Sanitized", string regex = null, string groupForReplace = null, ApplyCondition condition = null)
         {
-            _regexValue = regex;
             _newValue = value;
             _groupForReplace = groupForReplace;
 
             Condition = condition;
 
-            StringSanitizer.ConfirmValidRegex(regex);
+            _regex = GetRegex(regex);
         }
 
         public override string SanitizeUri(string uri)
         {
-            return StringSanitizer.SanitizeValue(uri, _newValue, _regexValue, _groupForReplace);
+            return StringSanitizer.SanitizeValue(uri, _newValue, _regex, _groupForReplace);
         }
     }
 }

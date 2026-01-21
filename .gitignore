@@ -521,6 +521,8 @@ tools/apiview/emitters/typespec-apiview/temp/
 
 # ApiView Spa
 src/dotnet/APIView/APIViewWeb/wwwroot/spa
+src/dotnet/APIView/ClientSPA/**/playwright-report/**
+src/dotnet/APIView/ClientSPA/**/test-results/**
 
 # Issue Labeler Deploy
 tools/issue-labeler/src/IssueLabeler/Properties/*Zip Deploy.json

@@ -11,8 +11,10 @@ import { ReviewInfoComponent } from '../shared/review-info/review-info.component
 import { MenubarModule } from 'primeng/menubar';
 import { MenuModule } from 'primeng/menu';
 import { ContextMenuModule } from 'primeng/contextmenu';
-import { SidebarModule } from 'primeng/sidebar';
-import { DropdownModule } from 'primeng/dropdown';
+import { DrawerModule } from 'primeng/drawer';
+import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
+import { RippleModule } from 'primeng/ripple';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -23,22 +25,22 @@ describe('RevisionPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         RevisionPageComponent,
         NavBarComponent,
         ReviewInfoComponent,
         RevisionsListComponent,
         ReviewPageLayoutComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenubarModule,
         MenuModule,
         ContextMenuModule,
-        DropdownModule,
-        SidebarModule,
+        SelectModule,
+        DrawerModule,
+        TooltipModule,
+        RippleModule,
         ReactiveFormsModule,
         FormsModule
       ],

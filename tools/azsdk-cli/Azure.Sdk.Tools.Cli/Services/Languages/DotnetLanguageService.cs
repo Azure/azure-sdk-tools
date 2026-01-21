@@ -107,69 +107,68 @@ public sealed partial class DotnetLanguageService: LanguageService
             
             logger.LogTrace("Getting package info via MSBuild for: {csproj}", csproj);
 
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"msbuild \"{csproj}\" -getTargetResult:GetPackageInfo -nologo",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            var result = await processHelper.Run(new ProcessOptions(
+                command: "dotnet",
+                args: ["msbuild", csproj, "-getTargetResult:GetPackageInfo", "-nologo"]
+            ), ct);
 
-            using var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                logger.LogError("Failed to start MSBuild process");
-                return (null, null, null);
-            }
-
-            var output = await process.StandardOutput.ReadToEndAsync(ct);
-            await process.WaitForExitAsync(ct);
-
-            if (process.ExitCode != 0)
+            if (result == null || result.ExitCode != 0)
             {
                 logger.LogTrace("MSBuild GetPackageInfo failed, falling back to XML parsing");
                 return FallbackToXmlParsing(csproj);
             }
 
-            // Parse JSON output
-            var jsonDoc = JsonDocument.Parse(output);
-            var targetResults = jsonDoc.RootElement.GetProperty("TargetResults");
-            var getPackageInfo = targetResults.GetProperty("GetPackageInfo");
-            var items = getPackageInfo.GetProperty("Items");
-
-            if (items.GetArrayLength() == 0)
+            try
             {
-                logger.LogTrace("No items returned from GetPackageInfo target");
-                return (null, null, null);
-            }
+                // Parse JSON output
+                using var jsonDoc = JsonDocument.Parse(result.Stdout);
+                var targetResults = jsonDoc.RootElement.GetProperty("TargetResults");
+                var getPackageInfo = targetResults.GetProperty("GetPackageInfo");
+                var items = getPackageInfo.GetProperty("Items");
 
-            // Identity field which contains the package info
-            var identity = items[0].GetProperty("Identity").GetString();
-            if (string.IsNullOrWhiteSpace(identity))
+                if (items.GetArrayLength() == 0)
+                {
+                    logger.LogTrace("No items returned from GetPackageInfo target, falling back to XML parsing");
+                    return FallbackToXmlParsing(csproj);
+                }
+
+                // Identity field which contains the package info
+                var identity = items[0].GetProperty("Identity").GetString();
+                if (string.IsNullOrWhiteSpace(identity))
+                {
+                    logger.LogTrace("Identity field is empty, falling back to XML parsing");
+                    return FallbackToXmlParsing(csproj);
+                }
+
+                // Parse the identity string:  'pkgPath' 'serviceDir' 'pkgName' 'pkgVersion' 'sdkType' 'isNewSdk' 'dllFolder' 'AotCompatOptOut'
+                var parts = identity.Split(new[] { "' '" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim('\'', ' '))
+                    .ToArray();
+
+                if (parts.Length >= 5) // for now we only need items in the first 5 positions
+                {
+                    var name = parts[2]; // pkgName
+                    var version = parts[3]; // pkgVersion
+                    var sdkType = parts[4]; // sdkType
+
+                    // Validate we got actual values before returning
+                    if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(version))
+                    {
+                        logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})", 
+                            name, version, sdkType);
+
+                        return (name, version, sdkType);
+                    }
+                }
+
+                logger.LogTrace("unable to parse identity string, falling back to XML parsing");
+                return FallbackToXmlParsing(csproj);
+            }
+            catch (Exception ex)
             {
-                return (null, null, null);
+                logger.LogTrace(ex, "Failed to parse MSBuild JSON output, falling back to XML parsing");
+                return FallbackToXmlParsing(csproj);
             }
-
-            // Parse the identity string:  'pkgPath' 'serviceDir' 'pkgName' 'pkgVersion' 'sdkType' 'isNewSdk' 'dllFolder' 'AotCompatOptOut'
-            var parts = identity.Split(new[] { "' '" }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(p => p.Trim('\'', ' '))
-                .ToArray();
-
-            if (parts.Length >= 5)
-            {
-                var name = parts[2]; // pkgName
-                var version = parts[3]; // pkgVersion
-                var sdkType = parts[4]; // sdkType
-
-                logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})", 
-                    name, version, sdkType);
-
-                return (name, version, sdkType);
-            }
-
-            return (null, null, null);
         }
         catch (Exception ex)
         {

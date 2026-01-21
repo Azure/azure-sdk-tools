@@ -93,7 +93,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         return model;
     }
 
-    private async Task<(string?  Name, string? Version, string? SdkType)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
+    private async Task<(string? Name, string? Version, string? SdkType)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -105,7 +105,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                 return (null, null, null); 
             }
             
-            logger.LogTrace("Getting package info via MSBuild for:  {csproj}", csproj);
+            logger.LogTrace("Getting package info via MSBuild for: {csproj}", csproj);
 
             var startInfo = new ProcessStartInfo
             {
@@ -135,7 +135,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 
             // Parse JSON output
             var jsonDoc = JsonDocument.Parse(output);
-            var targetResults = jsonDoc.RootElement. GetProperty("TargetResults");
+            var targetResults = jsonDoc.RootElement.GetProperty("TargetResults");
             var getPackageInfo = targetResults.GetProperty("GetPackageInfo");
             var items = getPackageInfo.GetProperty("Items");
 
@@ -153,7 +153,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             }
 
             // Parse the identity string:  'pkgPath' 'serviceDir' 'pkgName' 'pkgVersion' 'sdkType' 'isNewSdk' 'dllFolder' 'AotCompatOptOut'
-            var parts = identity.Split(new[] { "' '" }, StringSplitOptions. RemoveEmptyEntries)
+            var parts = identity.Split(new[] { "' '" }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(p => p.Trim('\'', ' '))
                 .ToArray();
 
@@ -173,7 +173,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error reading . NET package info from {packagePath}", packagePath);
+            logger.LogError(ex, "Error reading .NET package info from {packagePath}", packagePath);
             return (null, null, null);
         }
     }

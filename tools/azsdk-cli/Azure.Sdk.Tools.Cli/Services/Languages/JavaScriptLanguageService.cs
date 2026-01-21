@@ -15,25 +15,31 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     public JavaScriptLanguageService(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
-        IGitHelper gitHelper,        
+        IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
+        IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
         IChangelogHelper changelogHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.npxHelper = npxHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
     public override bool IsCustomizedCodeUpdateSupported => true;
 
+    /// <summary>
+    /// JavaScript packages are identified by package.json files.
+    /// </summary>
+    protected override string[] PackageManifestPatterns => ["package.json"];
+
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving JavaScript package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, relativePath, fullPath) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
-        
+
         if (packageName == null)
         {
             logger.LogWarning("Could not determine package name for JavaScript package at {fullPath}", fullPath);
@@ -42,11 +48,11 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         {
             logger.LogWarning("Could not determine package version for JavaScript package at {fullPath}", fullPath);
         }
-        if(sdkType == SdkType.Unknown)
+        if (sdkType == SdkType.Unknown)
         {
             logger.LogWarning("Could not determine SDK type for JavaScript package at {fullPath}", fullPath);
         }
-        
+
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -59,10 +65,10 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             Language = SdkLanguage.JavaScript,
             SamplesDirectory = Path.Combine(fullPath, "samples-dev")
         };
-        
-        logger.LogDebug("Resolved JavaScript package: {packageName} v{packageVersion} (type {sdkType}) at {relativePath}", 
+
+        logger.LogDebug("Resolved JavaScript package: {packageName} v{packageVersion} (type {sdkType}) at {relativePath}",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", sdkType, relativePath);
-        
+
         return model;
     }
 
@@ -71,12 +77,12 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         try
         {
             var path = Path.Combine(packagePath, "package.json");
-            if (!File.Exists(path)) 
+            if (!File.Exists(path))
             {
                 logger.LogWarning("No package.json file found at {path}", path);
-                return (null, null, SdkType.Unknown); 
+                return (null, null, SdkType.Unknown);
             }
-            
+
             logger.LogTrace("Reading package.json from {path}", path);
             await using var stream = File.OpenRead(path);
             using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions
@@ -92,8 +98,8 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             if (doc.RootElement.TryGetProperty("name", out var nameProp) && nameProp.ValueKind == JsonValueKind.String)
             {
                 var nameValue = nameProp.GetString();
-                if (!string.IsNullOrWhiteSpace(nameValue)) 
-                { 
+                if (!string.IsNullOrWhiteSpace(nameValue))
+                {
                     name = nameValue;
                     logger.LogTrace("Found package name: {name}", name);
                 }
@@ -106,8 +112,8 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             if (doc.RootElement.TryGetProperty("version", out var versionProp) && versionProp.ValueKind == JsonValueKind.String)
             {
                 var versionValue = versionProp.GetString();
-                if (!string.IsNullOrWhiteSpace(versionValue)) 
-                { 
+                if (!string.IsNullOrWhiteSpace(versionValue))
+                {
                     version = versionValue;
                     logger.LogTrace("Found version: {version}", version);
                 }
@@ -120,9 +126,10 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             if (doc.RootElement.TryGetProperty("sdk-type", out var sdkTypeProp) && sdkTypeProp.ValueKind == JsonValueKind.String)
             {
                 var sdkTypeValue = sdkTypeProp.GetString();
-                if (!string.IsNullOrWhiteSpace(sdkTypeValue)) 
-                { 
-                    sdkType = sdkTypeValue switch {
+                if (!string.IsNullOrWhiteSpace(sdkTypeValue))
+                {
+                    sdkType = sdkTypeValue switch
+                    {
                         "client" => SdkType.Dataplane,
                         "mgmt" => SdkType.Management,
                         _ => SdkType.Unknown,

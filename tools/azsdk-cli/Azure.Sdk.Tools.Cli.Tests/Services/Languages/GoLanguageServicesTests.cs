@@ -39,6 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 new PowershellHelper(NullLogger<PowershellHelper>.Instance, Mock.Of<IRawOutputHelper>()),
                 new GitHelper(Mock.Of<IGitHubService>(), new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>()), NullLogger<GitHelper>.Instance),
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
+                Mock.Of<IPackageInfoHelper>(),
                 Mock.Of<IFileHelper>(),
                 Mock.Of<ISpecGenSdkConfigHelper>(),
                 Mock.Of<IChangelogHelper>());

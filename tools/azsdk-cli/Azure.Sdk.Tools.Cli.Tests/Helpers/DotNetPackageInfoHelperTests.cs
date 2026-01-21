@@ -3,7 +3,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
-using LibGit2Sharp;
 using Moq;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
@@ -25,7 +24,7 @@ public class DotNetPackageInfoHelperTests
     {
         var repoRoot = Path.Combine(_tempDir.DirectoryPath, "test-repo");
         Directory.CreateDirectory(repoRoot);
-        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { Repository.Init(repoRoot); }
+        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { GitTestHelper.GitInit(repoRoot); }
         var packagePath = Path.Combine(repoRoot, "sdk", "storage", "storage-blob");
         Directory.CreateDirectory(packagePath);
         var ghMock = new Mock<IGitHubService>();

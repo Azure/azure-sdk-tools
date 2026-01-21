@@ -11,7 +11,6 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
-using LibGit2Sharp;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators;
@@ -34,7 +33,6 @@ public class SampleGeneratorToolTests
     private List<LanguageService> _languageServices;
     private IGitHelper realGitHelper;
     private Mock<ICommonValidationHelpers> _commonValidationHelpers;
-
 
     [Test]
     public async Task GenerateSamples_MultiScenarioPrompt_ProducesMultipleFiles()
@@ -71,7 +69,7 @@ public class SampleGeneratorToolTests
     {
         using var tempRepo = TempDirectory.Create($"sample-gen-{language}");
         var repoRoot = tempRepo.DirectoryPath;
-        Repository.Init(repoRoot);
+        GitTestHelper.GitInit(repoRoot);
         var relativePath = Path.Combine("sdk", "group", "service", "pkg");
         var packagePath = Path.Combine(repoRoot, relativePath);
         Directory.CreateDirectory(packagePath);
@@ -389,7 +387,7 @@ public class SampleGeneratorToolTests
         Directory.CreateDirectory(packagePath);
         if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
         {
-            Repository.Init(repoRoot);
+            GitTestHelper.GitInit(repoRoot);
         }
         File.WriteAllText(Path.Combine(packagePath, "client.go"), "package azkeys\n// minimal source for tests\nfunc noop() {}\n");
         var engScripts = Path.Combine(repoRoot, "eng", "scripts");

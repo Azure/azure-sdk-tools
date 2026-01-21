@@ -6,7 +6,6 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -31,7 +30,7 @@ public class PackageInfoContractTests
     {
         var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root");
         Directory.CreateDirectory(repoRoot);
-        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { Repository.Init(repoRoot); }
+        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { GitTestHelper.GitInit(repoRoot); }
         var sdkPath = Path.Combine(repoRoot, "sdk", service, package);
         Directory.CreateDirectory(sdkPath);
         var ghMock = new Mock<IGitHubService>();

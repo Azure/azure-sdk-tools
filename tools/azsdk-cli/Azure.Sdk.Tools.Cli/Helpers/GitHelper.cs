@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Services;
-using LibGit2Sharp;
+using System.Diagnostics;
 
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -24,27 +24,84 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private readonly IGitHubService gitHubService = gitHubService;
 
         /// <summary>
+        /// Runs a git command and returns the trimmed stdout output.
+        /// </summary>
+        /// <param name="workingDirectory">The directory to run the git command in</param>
+        /// <param name="arguments">The git command arguments (without 'git' prefix)</param>
+        /// <returns>The trimmed stdout output from the git command</returns>
+        /// <exception cref="InvalidOperationException">Thrown when git command fails</exception>
+        private string RunGitCommand(string workingDirectory, string arguments)
+        {
+            logger.LogDebug("Running git command: git {arguments} in {workingDirectory}", arguments, workingDirectory);
+            
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = arguments,
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException("Failed to start git process");
+            }
+
+            // Read stdout and stderr asynchronously to avoid deadlock
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+            
+            // Wait with a 30-second timeout to prevent hanging
+            if (!process.WaitForExit(30000))
+            {
+                process.Kill();
+                throw new InvalidOperationException($"Git command timed out: git {arguments}");
+            }
+
+            var stdout = stdoutTask.GetAwaiter().GetResult();
+            var stderr = stderrTask.GetAwaiter().GetResult();
+
+            if (process.ExitCode != 0)
+            {
+                logger.LogDebug("Git command failed with exit code {exitCode}: {stderr}", process.ExitCode, stderr.Trim());
+                throw new InvalidOperationException($"Git command failed: {stderr.Trim()}");
+            }
+
+            logger.LogDebug("Git command succeeded: {stdout}", stdout.Trim());
+            return stdout.Trim();
+        }
+
+        /// <summary>
         /// Gets the SHA of the merge base (common ancestor) between the current branch and the target branch.
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <param name="targetBranchName">The name of the target branch to find the merge base with</param>
-        /// <returns>The SHA of the merge base commit, or empty string if not found</returns>
+        /// <returns>The SHA of the merge base commit, or empty string if not found or on error</returns>
         public string GetMergeBaseCommitSha(string pathInRepo, string targetBranchName)
         {
             var repoRoot = DiscoverRepoRoot(pathInRepo);
-            using (var repo = new Repository(repoRoot))
+            try
             {
-                // Get the current branch
-                Branch currentBranch = repo.Head;
-                var targetBranch = repo.Branches[targetBranchName];
-
-                // Find the merge base (common ancestor) (git merge-base main HEAD)
-                var mergeBaseCommit = repo.ObjectDatabase.FindMergeBase(currentBranch.Tip, targetBranch.Tip);
+                var mergeBaseSha = RunGitCommand(repoRoot, $"merge-base HEAD {targetBranchName}");
+                var currentBranch = GetBranchName(pathInRepo);
                 logger.LogDebug(
-                    "Git merge base analysis - Current branch: {currentBranch}, Target branch SHA: {mergeBaseCommitSha}",
-                    currentBranch.FriendlyName,
-                    mergeBaseCommit?.Sha);
-                return mergeBaseCommit?.Sha ?? "";
+                    "Git merge base - Current branch: {currentBranch}, Target branch SHA: {mergeBaseCommitSha}",
+                    currentBranch,
+                    mergeBaseSha);
+                return mergeBaseSha;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    "Failed to find merge base with branch '{targetBranch}': {error}",
+                    targetBranchName,
+                    ex.Message);
+                return "";
             }
         }
 
@@ -56,9 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetBranchName(string pathInRepo)
         {
             var repoRoot = DiscoverRepoRoot(pathInRepo);
-            using var repo = new Repository(repoRoot);
-            var branchName = repo.Head.FriendlyName;
-            return branchName;
+            return RunGitCommand(repoRoot, "rev-parse --abbrev-ref HEAD");
         }
 
         /// <summary>
@@ -66,18 +121,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <returns>The HTTPS URI of the remote origin</returns>
-        /// <exception cref="InvalidOperationException">Thrown when unable to determine remote URL</exception>
         public Uri GetRepoRemoteUri(string pathInRepo)
         {
             var repoRoot = DiscoverRepoRoot(pathInRepo);
-            using var repo = new Repository(repoRoot);
-            var remote = repo.Network?.Remotes["origin"];
-            if (remote != null)
-            {
-                var url = ConvertSshToHttpsUrl(remote.Url);
-                return new Uri(url);
-            }
-            throw new InvalidOperationException("Unable to determine remote URL.");
+            var remoteUrl = RunGitCommand(repoRoot, "remote get-url origin");
+            var url = ConvertSshToHttpsUrl(remoteUrl);
+            return new Uri(url);
         }
 
         /// <summary>
@@ -179,22 +228,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
         public string DiscoverRepoRoot(string pathInRepo)
         {
-            // Discover the repo root for this path
-            var repoPath = Repository.Discover(pathInRepo);
-            if (string.IsNullOrEmpty(repoPath))
+            if (string.IsNullOrEmpty(pathInRepo))
             {
-                throw new InvalidOperationException($"No git repository found at or above the path: {pathInRepo}");
+                throw new InvalidOperationException("Path cannot be null or empty");
             }
 
-            // Repository.Discover returns the path to .git directory
-            // The repository root is the parent directory of .git
-            var gitDir = new DirectoryInfo(repoPath);
-            if (gitDir.Parent == null || string.IsNullOrEmpty(gitDir.Parent.FullName))
+            // Determine the working directory for git command
+            // If path is a file, use its directory; if directory, use it directly
+            var workingDir = Directory.Exists(pathInRepo) ? pathInRepo : Path.GetDirectoryName(pathInRepo);
+            if (string.IsNullOrEmpty(workingDir) || !Directory.Exists(workingDir))
             {
-                throw new InvalidOperationException("Unable to determine repository root");
+                throw new InvalidOperationException($"Invalid path: {pathInRepo}");
             }
-            
-            return gitDir.Parent.FullName;
+
+            try
+            {
+                // git rev-parse --show-toplevel returns the root of the working tree
+                // This correctly handles both normal repos and worktrees
+                return RunGitCommand(workingDir, "rev-parse --show-toplevel");
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException($"No git repository found at or above the path: {pathInRepo}. Details: {ex.Message}", ex);
+            }
         }
 
         /// <summary>

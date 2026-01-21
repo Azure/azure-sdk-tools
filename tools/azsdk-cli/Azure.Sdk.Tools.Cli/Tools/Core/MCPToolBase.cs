@@ -67,7 +67,7 @@ public abstract class MCPToolBase
         }
         catch (Exception ex)
         {
-            activity?.AddException(ex);
+            TelemetryExceptionHelper.AddSanitizedException(activity, ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
         }

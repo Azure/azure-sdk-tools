@@ -141,8 +141,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         await uploadFilesToBlobStorage(allChangedFiles.concat(allMetadataChangedFiles));
         
         // Clean up expired blobs
-        await cleanupExpiredBlobs(allChangedFiles.concat(allMetadataChangedFiles));
-        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
+        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles).concat(allMetadataChangedFiles));
         console.log('Daily sync knowledge processing completed');
 
     } finally {

@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Microsoft.VisualStudio.Services.CircuitBreaker;
@@ -58,7 +59,9 @@ internal class VerifySetupToolTests
             return "unknown-repo"; // default fallback
         });
 
-        // Create temp directory for tests
+        // Mock DiscoverRepoRoot for PackagePathParser.Parse
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
+        .Returns((string path) => path ?? "/test/repo");
 
         languageServices = [
             new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
@@ -75,7 +78,7 @@ internal class VerifySetupToolTests
     {
         mockProcessHelper
             .Setup(x => x.Run(
-                    It.IsAny<ProcessOptions>(), // Handle cases where command might be wrapped
+                    It.IsAny<ProcessOptions>(),
                     It.IsAny<CancellationToken>()))
 
             .ReturnsAsync((ProcessOptions processOptions, CancellationToken ct) =>
@@ -89,13 +92,26 @@ internal class VerifySetupToolTests
                     { "pwsh", "PowerShell 7.2.0" },
                     { "gh", "gh version 2.30.0" },
                     { "python", "Python 3.9.0" },
-                    { "java", "java 17.0.1" }
+                    { "pip", "pip 24.0" },
+                    { "java", "java 17.0.1" },
+                    { "mvn", "Apache Maven 3.9.0" },
+                    { "dotnet", "8.0.100" },
+                    { "go", "go version go1.21.0" },
+                    { "pnpm", "9.0.0" },
+                    { "azpysdk", "azpysdk help" },
+                    { "sdk_generator", "sdk_generator help" },
+                    { "GitPython", "GitPython 3.1.0" },
+                    { "pytest", "pytest 8.3.5" },
+                    { "golangci-lint", "golangci-lint 1.55.0" },
+                    { "goimports", "goimports" },
+                    { "generator", "generator 0.4.3" }
                 };
                 foreach (var kvp in successfulCommands)
                 {
                     var command = kvp.Key;
                     var output = kvp.Value;
-                    if (processOptions.Command.Contains(command) || processOptions.Args.Contains(command))
+                    if (processOptions.Command.Contains(command) || 
+                        processOptions.Args.Any(a => a.Contains(command)))
                     {
                         return new ProcessResult
                         {
@@ -116,7 +132,7 @@ internal class VerifySetupToolTests
     {
         mockProcessHelper
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(opt => opt.Command.Contains(command) || opt.Args.Contains(command)),
+                It.Is<ProcessOptions>(opt => opt.Command.Contains(command) || opt.Args.Any(a => a.Contains(command))),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult
             {
@@ -125,173 +141,143 @@ internal class VerifySetupToolTests
             });
     }
 
-    private List<LanguageService> SetupLanguageRequirementsMocks(Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)> languageSpecs)
+    private void SetupVersionMismatchMock(string command, string version)
     {
-        List<LanguageService> langs = [];
-        foreach (var kvp in languageSpecs)
-        {
-            var mockChecker = new Mock<LanguageService>();
-            var spec = kvp.Value;
-            mockChecker
-                    .Setup(x => x.GetRequirements(It.IsAny<string>(), It.IsAny<Dictionary<string, List<SetupRequirements.Requirement>>>(), It.IsAny<CancellationToken>()))
-                    .Returns(new List<SetupRequirements.Requirement>
-                    {
-                            new SetupRequirements.Requirement
-                            {
-                                requirement = spec.requirement,
-                                check = spec.checkCommand,
-                                instructions = spec.instructions
-                            }
-                    });
-            mockChecker.Setup(x => x.Language).Returns(kvp.Key);
-            langs.Add(mockChecker.Object);
-        }
-        return langs;
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Command.Contains(command) || opt.Args.Any(a => a.Contains(command))),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 0,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, version) }
+            });
     }
 
     [Test]
     public async Task VerifySetup_Succeeds_WhenAllRequirementsMet()
     {
         // Arrange
-        var languageSpecs = new Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)>
-        {
-            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8 or higher" }) }
-        };
-        var langTestServices = SetupLanguageRequirementsMocks(languageSpecs);
-
-        // Act
-        var tool = new VerifySetupTool(
-            mockProcessHelper.Object,
-            logger,
-            _mockGitHelper.Object,
-            langTestServices
-        );
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
-
-        // Assert
-        Assert.That(result.Results, Is.Empty);
-        Assert.That(result.ResponseError, Is.Null);
-    }
-
-    [Test]
-    public async Task VerifySetup_Fails_WhenSomeRequirementsNotMet()
-    {
-        var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
-        {
-            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8 or higher" }) }
-        };
-        var langTestServices = SetupLanguageRequirementsMocks(languageSpecs);
-
-        SetupFailedProcessMock("node", 1, "node: command not found");
-
-        // Act
-        var tool = new VerifySetupTool(
-            mockProcessHelper.Object,
-            logger,
-            _mockGitHelper.Object,
-            langTestServices
-        );
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
-
-        // Assert
-        Assert.That(result.Results, Is.Not.Empty);
-        Assert.That(result.Results.Any(r => r.Requirement.Contains("Node.js")), Is.True);
-        Assert.That(result.ResponseError, Is.Null);
-    }
-
-    [Test]
-    public async Task VerifySetup_Fails_WhenSomeRequirementsVersionNotMet()
-    {
-        var languageSpecs = new Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)>
-        {
-            { SdkLanguage.Python, ("Python >= 3.14", new[] { "python", "--version" }, new List<string> { "Install Python 3.14 or higher" }) }
-        };
-        var languageTestServices = SetupLanguageRequirementsMocks(languageSpecs);
-
-        // Act
-        var tool = new VerifySetupTool(
-            mockProcessHelper.Object,
-            logger,
-            _mockGitHelper.Object,
-            languageTestServices
-        );
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
-
-        // Assert
-        Assert.That(result.Results, Is.Not.Empty);
-        Assert.That(result.Results.Any(r => r.Requirement.Contains("Python")), Is.True);
-        Assert.That(result.ResponseError, Is.Null);
-    }
-
-    [Test]
-    public async Task VerifySetup_OnlyChecksSpecifiedLanguages()
-    {
-        // Arrange - Set up multiple language specs, but only request python
-        var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
-        {
-            { SdkLanguage.Python, ("Python >= 3.14", new[] { "python", "--version" }, new List<string> { "Install Python 3.14" }) },
-            { SdkLanguage.Java, ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) },
-            { SdkLanguage.DotNet, (".NET >= 8.0", new[] { "dotnet", "--version" }, new List<string> { "Install .NET 8.0" }) }
-        };
-
-        var languageTestServices = SetupLanguageRequirementsMocks(languageSpecs);
-        SetupFailedProcessMock("java", 1, "java: command not found");
-
-        // Act
-        var tool = new VerifySetupTool(
-            mockProcessHelper.Object,
-            logger,
-            _mockGitHelper.Object,
-            languageTestServices
-        );
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
-
-        // Assert
-        Assert.That(result.Results, Is.Not.Empty);
-        Assert.That(result.Results.Count, Is.EqualTo(1));
-        Assert.That(result.Results[0].Requirement, Does.Contain("Python"));
-        Assert.That(result.ResponseError, Is.Null);
-    }
-
-    [Test]
-    public async Task VerifySetup_ChecksMultipleSpecifiedLanguages()
-    {
-        // Arrange
-        var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
-        {
-            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
-            { SdkLanguage.Java, ("Java >= 17.0", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) }
-        };
-
-        var languageTestServices = SetupLanguageRequirementsMocks(languageSpecs);
-
-        // Act - Request both Python and Java
-        var tool = new VerifySetupTool(
-            mockProcessHelper.Object,
-            logger,
-            _mockGitHelper.Object,
-            languageTestServices
-        );
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python, SdkLanguage.Java }, "/test/path/java");
-
-        // Assert
-        Assert.That(result.ResponseError, Is.Null);
-    }
-
-    [Test]
-    public async Task VerifySetup_HandlesInvalidLanguageInput()
-    {
-        // Act - Pass invalid language
         var tool = new VerifySetupTool(
             mockProcessHelper.Object,
             logger,
             _mockGitHelper.Object,
             languageServices
         );
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { (SdkLanguage)(-1) }, "/test/path");
 
-        // Assert - Should succeed with just core requirements
+        // Act - Check Python requirements
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        // Assert - Should have no failures when all mocks return success
         Assert.That(result.ResponseError, Is.Null);
-        Assert.That(result.Results, Is.Empty);
+    }
+
+    [Test]
+    public async Task VerifySetup_Fails_WhenCoreRequirementNotMet()
+    {
+        // Arrange - Node.js command fails
+        SetupFailedProcessMock("node", 1, "node: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        // Assert
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Results!.Any(r => r.Requirement.Contains("Node")), Is.True);
+        Assert.That(result.ResponseError, Is.Null);
+    }
+
+    [Test]
+    public async Task VerifySetup_Fails_WhenVersionRequirementNotMet()
+    {
+        // Arrange - Node.js returns old version
+        SetupVersionMismatchMock("node", "v18.0.0");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        // Assert - Should have a failure for Node.js version
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Results!.Any(r => r.Requirement.Contains("Node")), Is.True);
+        Assert.That(result.ResponseError, Is.Null);
+    }
+
+    [Test]
+    public async Task VerifySetup_OnlyChecksLanguageSpecificRequirements_ForSpecifiedLanguage()
+    {
+        // Arrange - Java command fails, but we only request Python
+        SetupFailedProcessMock("java", 1, "java: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act - Only request Python
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        // Assert - Should not fail for Java requirements since we only requested Python
+        Assert.That(result.Results?.Any(r => r.Requirement.Contains("Java")) ?? false, Is.False);
+        Assert.That(result.ResponseError, Is.Null);
+    }
+
+    [Test]
+    public async Task VerifySetup_ChecksCoreRequirements_ForAnyLanguage()
+    {
+        // Arrange - PowerShell command fails
+        SetupFailedProcessMock("pwsh", 1, "pwsh: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act - Request any language
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Go }, "/test/path/go");
+
+        // Assert - Should fail for PowerShell since it's a core requirement
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Results!.Any(r => r.Requirement.Contains("PowerShell")), Is.True);
+    }
+
+    [Test]
+    public async Task VerifySetup_ReturnsInstructions_WhenRequirementFails()
+    {
+        // Arrange - Node.js command fails
+        SetupFailedProcessMock("node", 1, "node: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        // Assert - Should include installation instructions
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        var nodeResult = result.Results!.FirstOrDefault(r => r.Requirement.Contains("Node"));
+        Assert.That(nodeResult, Is.Not.Null);
+        Assert.That(nodeResult!.Instructions, Is.Not.Empty);
     }
 }

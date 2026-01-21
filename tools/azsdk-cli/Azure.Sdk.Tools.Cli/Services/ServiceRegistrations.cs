@@ -11,10 +11,10 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -84,10 +84,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
-
-            // Telemetry
-            services.AddSingleton<ITelemetryService, TelemetryService>();
-            services.ConfigureOpenTelemetry();
 
             services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>

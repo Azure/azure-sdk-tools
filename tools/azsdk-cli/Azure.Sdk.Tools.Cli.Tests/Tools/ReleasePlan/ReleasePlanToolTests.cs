@@ -439,7 +439,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_notification_includes_correct_missing_sdks()
         {
             var mockDevOps = new Mock<IDevOpsService>();
-            var plan = new ReleasePlanDetails
+            var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 200,
                 Owner = "Test Owner",
@@ -486,7 +486,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_notification_excludes_approved_and_requested_languages()
         {
             var mockDevOps = new Mock<IDevOpsService>();
-            var plan = new ReleasePlanDetails
+            var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 201,
                 Owner = "Test Owner",
@@ -533,7 +533,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_notification_excludes_go_for_dataplane()
         {
             var mockDevOps = new Mock<IDevOpsService>();
-            var plan = new ReleasePlanDetails
+            var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 202,
                 Owner = "Test Owner",
@@ -579,7 +579,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_notification_includes_go_for_management_plane()
         {
             var mockDevOps = new Mock<IDevOpsService>();
-            var plan = new ReleasePlanDetails
+            var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 203,
                 Owner = "Test Owner",

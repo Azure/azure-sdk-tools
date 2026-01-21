@@ -1055,7 +1055,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanDetails> releasePlans, string emailerUri)
+        private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri)
         {
             const string subject = "Action Required: Azure SDKs Not Yet Published for Your Release Plan";
             

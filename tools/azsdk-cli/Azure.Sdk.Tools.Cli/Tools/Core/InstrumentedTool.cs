@@ -40,7 +40,7 @@ public class InstrumentedTool : DelegatingMcpServerTool
     {
         mcpServerContextAccessor.Initialize(request?.Server);
         using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
-        Activity.Current = activity;
+        Activity.Current = activity;  // Required so things like TokenUsageHelper can add activity properties and tags
         if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
         {
             activity?.SetStatus(ActivityStatusCode.Error)?.AddTag(TagName.ErrorDetails, "Cannot call tool with null parameters");

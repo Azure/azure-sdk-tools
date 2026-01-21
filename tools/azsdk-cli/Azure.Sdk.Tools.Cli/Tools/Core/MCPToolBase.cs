@@ -45,6 +45,7 @@ public abstract class MCPToolBase
         }
 
         using var activity = await telemetryService.StartActivity(ActivityName.CommandExecuted);
+        Activity.Current = activity;  // Required so things like TokenUsageHelper can add activity properties and tags
 
         try
         {

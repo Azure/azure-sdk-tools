@@ -62,6 +62,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
 
         public List<string> SourceOwners { get; set; } = new List<string>();
 
+        public List<string> OriginalSourceOwners { get; set; } = new List<string>();
+
         // PRLabels are tied to a source path/owner line
         // In theory, there should only have be one PR Label.
         public List<string> PRLabels { get; set; } = new List<string>();
@@ -74,10 +76,14 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
 
         public List<string> ServiceOwners { get; set; } = new List<string>();
 
+        public List<string> OriginalServiceOwners { get; set; } = new List<string>();
+
         // AzureSdkOwners are directly tied to the source path. If the AzureSdkOwners are defined
         // on the same line as the moniker, it'll use those, if it's empty it'll use the owners from
         // the source path/owner line.
         public List<string> AzureSdkOwners { get; set; } = new List<string>();
+
+        public List<string> OriginalAzureSdkOwners { get; set; } = new List<string>();
 
         public int startLine { get; set; } = -1;
         public int endLine { get; set; } = -1;
@@ -97,10 +103,13 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
 
             PathExpression = other.PathExpression;
             SourceOwners = other.SourceOwners != null ? new List<string>(other.SourceOwners) : new List<string>();
+            OriginalSourceOwners = other.OriginalSourceOwners != null ? new List<string>(other.OriginalSourceOwners) : new List<string>();
             PRLabels = other.PRLabels != null ? new List<string>(other.PRLabels) : new List<string>();
             ServiceLabels = other.ServiceLabels != null ? new List<string>(other.ServiceLabels) : new List<string>();
             ServiceOwners = other.ServiceOwners != null ? new List<string>(other.ServiceOwners) : new List<string>();
+            OriginalServiceOwners = other.OriginalServiceOwners != null ? new List<string>(other.OriginalServiceOwners) : new List<string>();
             AzureSdkOwners = other.AzureSdkOwners != null ? new List<string>(other.AzureSdkOwners) : new List<string>();
+            OriginalAzureSdkOwners = other.OriginalAzureSdkOwners != null ? new List<string>(other.OriginalAzureSdkOwners) : new List<string>();
 
             startLine = other.startLine;
             endLine = other.endLine;

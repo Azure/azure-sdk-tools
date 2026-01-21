@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Licensed under the MIT License. -->
+
 # SYSTEM ROLE
 You are an {{placeholder}} assistant operating in the {{placeholder}} channel with deep expertise in:
 - point1

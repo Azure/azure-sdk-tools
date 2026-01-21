@@ -129,6 +129,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                     codeownersEntry.SourceOwners = ParsingUtils.ParseOwnersFromLine(ownerDataUtils,
                                                                                     line,
                                                                                     true /*expand teams when parsing*/);
+                    codeownersEntry.OriginalSourceOwners = ParsingUtils.ParseOwnersFromLine(ownerDataUtils,
+                                                                                          line,
+                                                                                          false /*do not expand teams when parsing*/);
                     // So it's clear why this is here:
                     // The original parser left the PathExpression empty if there were no source owners for a given path
                     // in order to prevent matches against a PathExpression with no source owners. The same needs to be
@@ -153,6 +156,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                                 codeownersEntry.AzureSdkOwners = ParsingUtils.ParseOwnersFromLine(ownerDataUtils,
                                                                                                   line,
                                                                                                   true /*expand teams when parsing*/);
+                                codeownersEntry.OriginalAzureSdkOwners = ParsingUtils.ParseOwnersFromLine(ownerDataUtils,
+                                                                                                  line,
+                                                                                                  false /*do not expand teams when parsing*/);
                                 if (codeownersEntry.AzureSdkOwners.Count == 0)
                                 {
                                     emptyAzureSdkOwners = true;
@@ -177,6 +183,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                                 codeownersEntry.ServiceOwners = ParsingUtils.ParseOwnersFromLine(ownerDataUtils,
                                                                                                  line,
                                                                                                  true /*expand teams when parsing*/);
+                                codeownersEntry.OriginalServiceOwners = ParsingUtils.ParseOwnersFromLine(ownerDataUtils,
+                                                                                                 line,
+                                                                                                 false /*do not expand teams when parsing*/);
                                 break;
                             }
                         default:

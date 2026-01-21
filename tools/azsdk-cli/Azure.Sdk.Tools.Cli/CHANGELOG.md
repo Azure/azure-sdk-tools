@@ -7,9 +7,13 @@
 - Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
 - Added email notification support for overdue release plan owners.
+- Added support for GitHub URLs in TypeSpecHelper methods to accept URLs like `https://github.com/Azure/azure-rest-api-specs/blob/main/specification/...` in addition to local paths
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
+- Added CLI mode telemetry, app insights endpoint determined by debug vs. release builds
 
 ### Breaking Changes
+
+- Removed ability to set custom telemetry endpoint via environment variable
 
 ### Bugs Fixed
 

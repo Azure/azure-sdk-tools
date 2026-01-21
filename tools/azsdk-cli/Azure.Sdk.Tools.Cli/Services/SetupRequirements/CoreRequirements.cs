@@ -110,11 +110,12 @@ public static class CoreRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            if (ctx.IsLinux)
+            if (ctx.IsLinux) {
                 return [
                     "sudo apt install python3 python3-pip python3-venv",
                     "sudo apt install python-is-python3"
                 ];
+            }
             return ["Download from https://www.python.org/downloads/"];
         }
     }
@@ -127,8 +128,9 @@ public static class CoreRequirements
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             if (ctx.IsLinux)
+            {
                 return ["sudo apt install python3-pip", "Or run: python -m ensurepip"];
-
+            }
             return ["python -m ensurepip"];
         }
     }

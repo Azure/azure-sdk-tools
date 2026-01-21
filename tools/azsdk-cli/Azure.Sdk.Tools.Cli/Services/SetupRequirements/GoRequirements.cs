@@ -30,8 +30,8 @@ public static class GoRequirements
             if (ctx.IsLinux) {
                 return ["sudo snap install go"];
             }
-            if (ctx.IsWindows)
-                return ["Download and install the latest Go version of the compiler from https://go.dev/dl/"];
+           
+            return ["Download and install the latest Go version of the compiler from https://go.dev/dl/"];
         }
     }
 

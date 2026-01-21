@@ -221,11 +221,6 @@ public sealed partial class DotnetLanguageService: LanguageService
         return new TestRunResponse(result);
     }
 
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
-    }
-
     public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.

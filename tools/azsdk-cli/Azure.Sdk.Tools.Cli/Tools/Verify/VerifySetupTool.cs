@@ -225,6 +225,19 @@ public class VerifySetupTool : LanguageMcpTool
         return reqsToCheck ?? new List<Requirement>();
     }
 
+    private RequirementContext CreateRequirementContext(string packagePath)
+    {
+        var (repoRoot, _, _) = PackagePathParser.Parse(gitHelper, packagePath);
+        var languageService = GetLanguageService(packagePath);
+        var language = languageService?.Language;
+
+        return RequirementContext.Create(
+            repoRoot: repoRoot,
+            packagePath: packagePath,
+            language: language
+        );
+    }
+
     private string CheckVersion(string output, Requirement req)
     {
         // Return empty string if version requirement is satisfied, else return version to upgrade to        

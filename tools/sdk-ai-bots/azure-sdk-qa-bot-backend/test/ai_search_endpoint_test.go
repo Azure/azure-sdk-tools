@@ -53,7 +53,7 @@ func TestAgenticSearch(t *testing.T) {
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	sourceFilter := map[model.Source]string{}
-	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil, sourceFilter, "")
+	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil, sourceFilter, "", model.Scope_Unbranded, model.Plane_Unknown)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	require.Greater(t, len(resp.References), 0, "Expected at least one search result")

@@ -401,7 +401,8 @@ func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[mode
 		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", scope))
 	}
 	if plane != model.Plane_Unknown {
-		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or plane eq 'both')", plane))
+		// For a specific plane, include documents with that plane, 'both', or no plane specified.
+		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or or plane eq null)", plane))
 	}
 	metadataFilter := strings.Join(metadataFilters, " and ")
 

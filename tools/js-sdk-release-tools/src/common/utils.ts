@@ -467,9 +467,16 @@ export async function cleanUpPackageDirectory(
 
         const managementSDKType = getSDKType(packageDirectory);
         if (managementSDKType === SDKType.HighLevelClient) {
-            logger.info(`Cleaning up all files for high-level client package: ${packageDirectory}`);
-            await cleanUpDirectory(packageDirectory, []);
-            return;
+            if (pipelineRunMode) {
+                // Perform clean up by the emitter in Release/Local modes (src folder)
+                logger.info(`[HighLevelClient] Skipping cleanup in ${runMode} mode - emitter handles cleanup for: ${packageDirectory}`);
+                return;
+            } else {
+                // clean up everything in SpecPullRequest/Batch modes,
+                logger.info(`[HighLevelClient] Performing full cleanup in ${runMode} mode for: ${packageDirectory}`);
+                await cleanUpDirectory(packageDirectory, []);
+                return;
+            }
         }
         logger.info(`Skipping cleanup for management plane package (handled by emitter): ${packageDirectory}`);
     }

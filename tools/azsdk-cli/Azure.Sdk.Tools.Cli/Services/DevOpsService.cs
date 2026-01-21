@@ -1384,7 +1384,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent)
         {
-            if (child.WorkItemId == parent.WorkItemId)
+            if (child.ParentId == parent.WorkItemId)
             {
                 return; // already the parent
             }

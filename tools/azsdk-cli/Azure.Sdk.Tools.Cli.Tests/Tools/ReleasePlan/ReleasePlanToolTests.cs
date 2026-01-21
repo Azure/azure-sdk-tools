@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -165,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 isTestReleasePlan: false); // This should be overridden to true by environment variable
 
             // Assert
-            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);
@@ -206,7 +207,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 isTestReleasePlan: false);
 
             // Assert
-            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);

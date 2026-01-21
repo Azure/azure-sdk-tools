@@ -147,7 +147,7 @@ public static class CoreRequirements
         {
             if (ctx.IsLinux)
             {
-                return ["sudo apt install python3-pip", "Or run: python -m ensurepip"];
+                return ["sudo apt install python3-pip"];
             }
             return ["python -m ensurepip"];
         }

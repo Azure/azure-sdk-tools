@@ -1,11 +1,11 @@
 ---
 name: Resolve Package Name
-description: Given a package description and a list of available packages, find the best matching package name.
+description: Given a package query and a list of available packages, find the best matching package name.
 authors: 
   - apiview-copilot
 version: 1.0.0
 inputs:
-  package_description:
+  package_query:
     description: The package name or description provided by the user
     type: string
   language:
@@ -26,17 +26,17 @@ model:
     top_p: 1.0
     max_tokens: 500
 sample:
-  package_description: "azure storage blobs"
+  package_query: "azure storage blobs"
   language: "Python"
   available_packages: ["azure-storage-blob", "azure-storage-queue", "azure-storage-file-share", "azure-core"]
 ---
 system:
 You are a package name resolver for APIView, a tool that helps developers review API surfaces.
 
-Your task is to find the best matching package name from a list of available packages based on the user's description.
+Your task is to find the best matching package name from a list of available packages based on the user's query.
 
 Instructions:
-1. Analyze the package description provided by the user
+1. Analyze the package query provided by the user
 2. Compare it against the list of available packages
 3. Find the best match based on:
    - Exact name matches (highest priority)
@@ -53,7 +53,7 @@ Rules:
 - If uncertain between multiple packages, choose the most popular or most specific one
 
 user:
-Package description: {{package_description}}
+Package query: {{package_query}}
 Language: {{language}}
 
 Available packages:

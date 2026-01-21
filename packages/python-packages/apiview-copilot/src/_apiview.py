@@ -272,13 +272,13 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
 
 
 def resolve_package(
-    package_description: str, language: str, version: Optional[str] = None, environment: str = "production"
+    package_query: str, language: str, version: Optional[str] = None, environment: str = "production"
 ) -> Optional[dict]:
     """
-    Resolves package information from a package description and language.
+    Resolves package information from a package query and language.
 
     Args:
-        package_description: Package name or description to search for
+        package_query: Package name or description to search for
         language: Language of the package (e.g., 'python', 'java')
         version: Optional version to filter by. If omitted, the latest revision will be returned.
         environment: The APIView environment ('production' or 'staging')
@@ -321,9 +321,9 @@ def resolve_package(
 
         # Check for exact match first (case-insensitive)
         selected_review = None
-        package_description_lower = package_description.lower()
+        package_query_lower = package_query.lower()
         for result in all_results:
-            if result.get("PackageName", "").lower() == package_description_lower:
+            if result.get("PackageName", "").lower() == package_query_lower:
                 selected_review = result
                 break
 
@@ -338,7 +338,7 @@ def resolve_package(
                     folder="other",
                     filename="resolve_package.prompty",
                     inputs={
-                        "package_description": package_description,
+                        "package_query": package_query,
                         "language": pretty_language,
                         "available_packages": available_packages,
                     },

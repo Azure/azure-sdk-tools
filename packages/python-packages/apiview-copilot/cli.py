@@ -767,19 +767,19 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
-def resolve_package_info(package_description: str, language: str, version: str = None, environment: str = "production"):
+def resolve_package_info(package_query: str, language: str, version: str = None, environment: str = "production"):
     """
-    Resolves package information from a package description and language.
+    Resolves package information from a package query and language.
     Returns the package name, review ID, and revision ID.
     """
     result = resolve_package(
-        package_description=package_description, language=language, version=version, environment=environment
+        package_query=package_query, language=language, version=version, environment=environment
     )
 
     if result:
         print(json.dumps(result, indent=2))
     else:
-        print(f"No package found matching '{package_description}' for language '{language}'")
+        print(f"No package found matching '{package_query}' for language '{language}'")
 
 
 def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
@@ -1459,7 +1459,7 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "apiview resolve-package") as ac:
             ac.argument(
-                "package_description",
+                "package_query",
                 type=str,
                 help="The package name or description to search for.",
                 options_list=["--package", "-p"],

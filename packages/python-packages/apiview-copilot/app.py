@@ -352,15 +352,15 @@ async def resolve_package_info(
 ):
     """Resolve package information from a package description and language."""
     logger.info(
-        "Received /api-review/resolve-package request: package_description=%s, language=%s, version=%s",
-        request.package_description,
+        "Received /api-review/resolve-package request: package_query=%s, language=%s, version=%s",
+        request.package_query,
         request.language,
         request.version,
     )
     try:
         result = await asyncio.to_thread(
             resolve_package,
-            package_description=request.package_description,
+            package_description=request.package_query,
             language=request.language,
             version=request.version,
             environment=request.environment,

@@ -25,6 +25,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("System.Title")]
         public string Title { get; set; } = string.Empty;
 
+        [FieldName("System.Parent")]
+        public int ParentId { get; set; }
+
         public string Description { get; set; } = string.Empty;
 
         public string Status { get; set; } = string.Empty;

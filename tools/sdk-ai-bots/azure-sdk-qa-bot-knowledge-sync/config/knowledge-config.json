@@ -230,13 +230,19 @@
           "description": ".NET Azure SDK documentation",
           "path": "/doc",
           "folder": "azure_sdk_for_net_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         },
         {
           "description": ".NET Azure Resource Manager SDK documentation",
           "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
           "folder": "azure_sdk_for_net_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -268,19 +274,29 @@
           "description": "Documentation for Azure SDK for Java",
           "path": "/doc",
           "folder": "azure_sdk_for_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         },
         {
           "description": "Resource Manager documentation for Azure SDK for Java",
           "path": "/sdk/resourcemanager/docs",
           "folder": "azure_sdk_for_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded",
+            "plane": "management-plane"
+          }
         },
         {
           "description": "Contributing guidelines for Azure SDK for Java",
           "path": "/CONTRIBUTING.md",
           "folder": "azure_sdk_for_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -293,7 +309,10 @@
       "paths": [
         {
           "description": "Wiki documentation for Azure SDK for Java",
-          "folder": "azure_sdk_for_java_wiki"
+          "folder": "azure_sdk_for_java_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -308,7 +327,10 @@
           "description": "AutoRest Java customization documentation",
           "path": "/customization-base/README.md",
           "folder": "autorest_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -323,7 +345,10 @@
           "description": "Documentation for Azure SDK for JavaScript",
           "path": "/documentation",
           "folder": "azure_sdk_for_js_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -337,7 +362,10 @@
       "paths": [
         {
           "description": "Wiki documentation for Azure SDK for JavaScript",
-          "folder": "azure_sdk_for_js_wiki"
+          "folder": "azure_sdk_for_js_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     }

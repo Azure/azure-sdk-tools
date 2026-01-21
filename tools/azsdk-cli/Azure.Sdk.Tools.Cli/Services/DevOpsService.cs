@@ -1382,7 +1382,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        public async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent)
+        private async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent)
         {
             if (child.ParentId == parent.WorkItemId)
             {

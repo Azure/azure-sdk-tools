@@ -26,10 +26,7 @@ public class RevisionResolver : IRevisionResolver
         _logger = logger;
     }
 
-    public async Task<RevisionResolveResult> ResolveByPackageAsync(
-        string packageQuery,
-        string language,
-        string version = null)
+    public string ResolvePackageQuery(string packageQuery, string language)
     {
         if (string.IsNullOrEmpty(packageQuery))
         {
@@ -42,8 +39,21 @@ public class RevisionResolver : IRevisionResolver
         }
 
         //TODO: Add package name check after this is done: https://github.com/Azure/azure-sdk-tools/issues/13557
+        return packageQuery;
+    }
 
-        var review = await _reviewManager.GetReviewAsync(language, packageQuery, null);
+    public async Task<RevisionResolveResult> ResolveByPackageAsync(
+        string packageQuery,
+        string language,
+        string version = null)
+    {
+        string packageName = ResolvePackageQuery(packageQuery, language);
+        if (string.IsNullOrEmpty(packageName))
+        {
+            return null;
+        }
+
+        var review = await _reviewManager.GetReviewAsync(language, packageName, null);
         if (review == null)
         {
             _logger.LogWarning("Review not found for package: {PackageName}, language: {Language}", packageQuery,

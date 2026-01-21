@@ -10,7 +10,8 @@ namespace APIViewWeb.Managers.Interfaces
     }
 
     public interface IRevisionResolver
-    {
+    { 
+        string ResolvePackageQuery(string packageQuery, string language);
         Task<RevisionResolveResult> ResolveByPackageAsync(
             string packageQuery,
             string language,

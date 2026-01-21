@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public string Title { get; set; } = string.Empty;
 
         [FieldName("System.Parent")]
-        public int ParentId { get; set; }
+        public int ParentId { get; set; } = 0;
 
         public string Description { get; set; } = string.Empty;
 

@@ -71,8 +71,8 @@ export async function processDailySyncKnowledge(): Promise<void> {
 
         console.log('Preprocessing spector cases...');
         
-        // // Preprocess spector cases
-        // await preprocessSpectorCases(docsDir);
+        // Preprocess spector cases
+        await preprocessSpectorCases(docsDir);
 
         console.log('Processing documentation sources...');
         
@@ -131,15 +131,15 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log(`Processing completed: ${totalProcessed} total, ${changedDocuments} changed, ${unchangedDocuments} unchanged`);
         console.log(`Files that changed: ${allChangedFiles.length}, Files that remained unchanged: ${allUnchangedFiles.length}`);
 
-        // // Delete the AI Search index for changed files
-        // await deleteAISearchIndex(searchService, allChangedFiles);
+        // Delete the AI Search index for changed files
+        await deleteAISearchIndex(searchService, allChangedFiles);
 
         // Upload files to blob storage (only for changed documents)
         await uploadFilesToBlobStorage(allChangedFiles);
         
-        // // Clean up expired blobs
-        // await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
-        // console.log('Daily sync knowledge processing completed');
+        // Clean up expired blobs
+        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
+        console.log('Daily sync knowledge processing completed');
 
     } finally {
         // Cleanup working directory

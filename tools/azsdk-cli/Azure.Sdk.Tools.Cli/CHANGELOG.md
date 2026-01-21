@@ -8,6 +8,7 @@
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
 - Added support for GitHub URLs in TypeSpecHelper methods to accept URLs like `https://github.com/Azure/azure-rest-api-specs/blob/main/specification/...` in addition to local paths
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
+- Added `APISpecProjectPath` property to Release Plan Work Item to track the TypeSpec project path in release plans
 
 ### Breaking Changes
 

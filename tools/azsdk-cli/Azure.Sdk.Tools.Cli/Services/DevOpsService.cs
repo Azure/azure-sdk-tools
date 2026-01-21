@@ -240,6 +240,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString()),
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 

@@ -485,7 +485,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     IsTestReleasePlan = isTestReleasePlan,
                     SDKReleaseType = sdkReleaseType,
                     IsCreatedByAgent = true,
-                    ReleasePlanSubmittedByEmail = userEmail
+                    ReleasePlanSubmittedByEmail = userEmail,
+                    APISpecProjectPath = specProject
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan);
                 if (workItem == null)

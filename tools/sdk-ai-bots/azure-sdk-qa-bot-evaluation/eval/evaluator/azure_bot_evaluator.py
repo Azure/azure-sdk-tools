@@ -97,8 +97,6 @@ class AzureBotEvaluator:
         query: str,
         response: str,
         ground_truth: str,
-        reference_urls: list[str],
-        expected_reference_urls: list[str] | None = None,
     ) -> Dict[str, float]:
         base_key = f"{AzureBotEvaluator.RESULT_KEY}"
         result: dict[str, Any] = {}

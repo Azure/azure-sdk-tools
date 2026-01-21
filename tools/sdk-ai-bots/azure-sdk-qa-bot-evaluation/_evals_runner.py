@@ -16,9 +16,9 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
+from eval import AzureBotReference
 
-
-def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]:
+def extract_title_and_link_from_references(references: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Map an array of reference objects to a string array of their 'link' properties.
 
@@ -31,14 +31,23 @@ def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]
     if not references:
         return []
 
-    links = []
+    refs = []
     for ref in references:
-        if isinstance(ref, dict) and "link" in ref and ref["link"]:
-            links.append(ref["link"])
-        elif isinstance(ref, dict) and "Link" in ref and ref["Link"]:  # Handle capitalized version
-            links.append(ref["Link"])
+        title: str = ""
+        link: str = ""
 
-    return links
+        if isinstance(ref, dict) and "title" in ref and ref["title"]:
+            title = ref["title"]
+        elif isinstance(ref, dict) and "Title" in ref and ref["Title"]:  # Handle capitalized version
+            title = ref["Title"]
+
+        if isinstance(ref, dict) and "link" in ref and ref["link"]:
+            link = ref["link"]
+        elif isinstance(ref, dict) and "Link" in ref and ref["Link"]:  # Handle capitalized version
+            link = ref["Link"]
+        
+        refs.append({"title": title, "link": link})
+    return refs
 
 
 # class EvaluatorConfig:
@@ -203,7 +212,6 @@ class EvalsRunner:
                             answer = api_response.get("answer", "")
                             full_context = api_response.get("full_context", "")
                             references = api_response.get("references", [])
-                            reference_urls = extract_links_from_references(references)
                             latency = time.time() - start_time
                             processed_test_data = {
                                 "query": record["query"],
@@ -212,10 +220,10 @@ class EvalsRunner:
                                 "context": full_context,
                                 "latency": latency,
                                 "response_length": len(answer),
-                                "expected_reference_urls": (
-                                    record["expected_reference_urls"] if "expected_reference_urls" in record else []
+                                "expected_references": (
+                                    record["expected_references"] if "expected_references" in record else []
                                 ),
-                                "reference_urls": reference_urls,
+                                "references": extract_title_and_link_from_references(references),
                                 "testcase": record.get("testcase", "unknown"),
                             }
                             if processed_test_data:

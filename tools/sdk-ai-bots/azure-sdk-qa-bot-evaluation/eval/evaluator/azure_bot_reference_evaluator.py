@@ -1,5 +1,32 @@
-from typing import Any, Set
+from dataclasses import dataclass
+from typing import Any, Dict, Set
 from .constants import EVALUATION_PASS_FAIL_MAPPING
+
+@dataclass
+class AzureBotReference:
+    def __init__(self, title: str, url: str):
+        self._title = title
+        self._url = url
+    
+    @property
+    def title(self) -> str:
+        """Getter for title"""
+        return self._title
+
+    @title.setter
+    def title(self, value: str) -> None:
+        """Setter for title"""
+        self._title = value
+
+    @property
+    def url(self) -> str:
+        """Getter for url"""
+        return self._url
+
+    @title.setter
+    def url(self, value: str) -> None:
+        """Setter for url"""
+        self._url = value
 
 class AzureBotReferenceEvaluator:
     RESULT_KEY = "reference_match"
@@ -46,8 +73,41 @@ class AzureBotReferenceEvaluator:
         # Reconstruct without fragments and filtered query
         normalized = urlunparse((scheme, netloc, path, parsed.params, query, ""))
         return normalized
+    def _get_reference_matches(self, expected: list[Dict[str, Any]], actual: list[Dict[str, Any]]) -> tuple[Set, Set, Set, float]:
+        """Compare reference between expected and actual lists."""
+        # expected_in_actual_map = {ref: False for ref in expected}
+        # actual_in_expected_map = {ref: False for ref in actual}
 
-    def _get_reference_matches(self, expected: list[str], actual: list[str]) -> tuple[Set, Set, Set, float]:
+        # for expected_ref in expected:
+        #     for actual_ref in actual:
+        #         if (expected_ref.title == actual_ref.title and self._normalize_url(expected_ref.url) == self._normalize_url(actual_ref.url)):
+        #             expected_in_actual_map[expected_ref] = True
+        #             actual_in_expected_map[actual_ref] = True
+        
+        expected_in_actual = []
+        actual_in_expected = []
+
+        for expected_ref in expected:
+            for actual_ref in actual:
+                if (expected_ref["title"] == actual_ref["title"] and self._normalize_url(expected_ref["url"]) == self._normalize_url(actual_ref["url"])):
+                    expected_in_actual.add(expected_ref)
+                    actual_in_expected.add(actual_ref)
+
+        exact_matches = expected_in_actual
+        #missing_refs = expected - exact_matches
+        missing_refs = [ref for ref in expected if ref not in exact_matches]
+        # unexpected_refs = actual - actual_in_expected
+        unexpected_refs = [ref for ref in actual if ref not in actual_in_expected]
+
+        # Calculate match percentage based on expected URLs
+        if len(expected) == 0:
+            match_percentage = 1.0  # 100% if no references expected
+        else:
+            match_percentage = len(exact_matches) / len(expected)
+
+        return exact_matches, unexpected_refs, missing_refs, match_percentage
+
+    def _get_reference_matches2(self, expected: list[str], actual: list[str]) -> tuple[Set, Set, Set, float]:
         """Compare reference URLs between expected and actual lists with normalized comparison."""
         # Create mappings from normalized URL to original URL
         expected_map = {self._normalize_url(url): url for url in expected}
@@ -73,15 +133,15 @@ class AzureBotReferenceEvaluator:
 
         return exact_matches, unexpected_refs, missing_refs, match_percentage
     
-    def __call__(self, reference_urls: list[str], expected_reference_urls: list[str] | None = None):
+    def __call__(self, references: list[str], expected_references: list[str] | None = None):
         # Calculate reference matching if expected references are provided
         reference_match_score = 1.0  # Default to perfect match if no expected references
 
         result: dict[str, Any] = {}
         base_key = f"{AzureBotReferenceEvaluator.RESULT_KEY}"
-        if expected_reference_urls:
+        if expected_references:
             exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_reference_matches(
-                expected_reference_urls, reference_urls
+                expected_references, references
             )
             reference_match_score = match_percentage
             result[f"{base_key}"] = match_percentage

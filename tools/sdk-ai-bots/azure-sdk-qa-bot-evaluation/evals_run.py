@@ -115,8 +115,6 @@ if __name__ == "__main__":
                 "column_mapping": {
                     "response": "${data.response}",
                     "ground_truth": "${data.ground_truth}",
-                    "expected_reference_urls": "${data.expected_reference_urls}",
-                    "reference_urls": "${data.reference_urls}",
                     "testcase": "${data.testcase}",
                 }
             },
@@ -129,8 +127,8 @@ if __name__ == "__main__":
             reference_evaluator,
             {
                 "column_mapping": {
-                    "expected_reference_urls": "${data.expected_reference_urls}",
-                    "reference_urls": "${data.reference_urls}"
+                    "expected_references": "${data.expected_references}",
+                    "references": "${data.references}"
                 }
             }
         )

@@ -171,7 +171,7 @@ public class DotNetPackageInfoHelperTests
         // Arrange
         var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
 
-        // Create a .csproj with the GetPackageInfo target directly in the file (no imports needed)
+        // Create a .csproj with the GetPackageInfo target
         var csprojContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -185,11 +185,9 @@ public class DotNetPackageInfoHelperTests
 </Project>";
         CreateTestFile(packagePath, "Azure.Test.Package.csproj", csprojContent);
 
-        // Verify the .csproj exists
         var csprojPath = Path.Combine(packagePath, "Azure.Test.Package.csproj");
         Assert.That(File.Exists(csprojPath), Is.True, $"csproj file should exist at {csprojPath}");
 
-        // Use real implementations instead of mocks
         var realProcessHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
         var helper = new DotnetLanguageService(realProcessHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>());
 

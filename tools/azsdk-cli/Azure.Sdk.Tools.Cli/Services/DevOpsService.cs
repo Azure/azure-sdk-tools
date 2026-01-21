@@ -450,7 +450,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 var targetWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(targetId.Value);
 
-                // Query should only come up with one work item
+                // Ensure the target work item exists before creating the relation
                 if (targetWorkItem == null)
                 {
                     throw new Exception($"Work item with ID {targetId} does not exist.");

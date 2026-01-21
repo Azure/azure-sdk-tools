@@ -211,6 +211,11 @@ public class PermissionsManager : IPermissionsManager
             }
         }
 
+        if (mergedRoles.Count == 0)
+        {
+            mergedRoles.Add(new GlobalRoleAssignment { Role = GlobalRole.SdkTeam });
+        }
+
         return new EffectivePermissions { UserId = userId, Roles = mergedRoles };
     }
 

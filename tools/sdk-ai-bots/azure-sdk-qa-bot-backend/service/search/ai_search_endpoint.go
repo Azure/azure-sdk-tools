@@ -14,7 +14,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 type SearchClient struct {
@@ -107,6 +106,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
+		Top:    k,
 		Count:  false,
 		Select: "title, context_id, chunk, header_1, header_2, header_3, chunk_id, ordinal_position",
 		VectorQueries: []model.VectorQuery{
@@ -122,86 +122,20 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		QueryLanguage: "en-us",
 	}
 
-	// Build metadata filter from scope and plane
-	var metadataFilter string
-	if scope != model.Scope_Unknown || plane != model.Plane_Unknown {
-		var filters []string
-		if scope != model.Scope_Unknown {
-			filters = append(filters, fmt.Sprintf("scope eq '%s'", scope))
-		}
-		if plane != model.Plane_Unknown {
-			filters = append(filters, fmt.Sprintf("plane eq '%s'", plane))
-		}
-		if len(filters) > 0 {
-			metadataFilter = strings.Join(filters, " and ")
-		}
+	// Build a single filter for all sources and metadata
+	baseReq.Filter = s.buildFilter(sources, sourceFilter, scope, plane)
+
+	resp, err := s.QueryIndex(context.Background(), &baseReq)
+	if err != nil {
+		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
 	}
 
-	// If no sources specified, search all at once
-	if len(sources) == 0 {
-		baseReq.Top = k
-		resp, err := s.QueryIndex(context.Background(), &baseReq)
-		if err != nil {
-			return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
-		}
-		return resp.Value, nil
-	}
+	// Sort results by rerank score in descending order
+	sortResultsByScore(resp.Value)
 
-	// Query each source and apply weighted scoring
-	allResults := []model.Index{}
+	log.Printf("Returning %d search results from a single query.", len(resp.Value))
 
-	// Store results by source for weighted scoring
-	sourceResults := make(map[model.Source][]model.Index)
-
-	// Query each source separately
-	for _, source := range sources {
-		req := baseReq
-		req.Top = k
-		if val, ok := config.SourceTopK[source]; ok {
-			req.Top = val
-		}
-		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
-
-		// Combine source filter with metadata filter
-		if metadataFilter != "" {
-			req.Filter = fmt.Sprintf("(%s and %s)", req.Filter, metadataFilter)
-		}
-
-		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
-			req.Filter = fmt.Sprintf("(%s and %s)", req.Filter, sourceFilterStr)
-		}
-
-		resp, err := s.QueryIndex(context.Background(), &req)
-		if err != nil {
-			log.Printf("Warning: search error for source %s: %v", utils.SanitizeForLog(string(source)), err)
-			continue
-		}
-
-		// Filter results by relevance threshold
-		filteredResults := []model.Index{}
-		for _, doc := range resp.Value {
-			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
-				continue
-			}
-
-			filteredResults = append(filteredResults, doc)
-		}
-
-		sourceResults[source] = filteredResults
-		allResults = append(allResults, filteredResults...)
-	}
-
-	// Sort all results by rerank score in descending order
-	sortResultsByScore(allResults)
-
-	// Take top K results
-	if len(allResults) > k {
-		allResults = allResults[:k]
-	}
-
-	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(sources))
-
-	return allResults, nil
+	return resp.Value, nil
 }
 
 // Helper function to sort results by rerank score in descending order
@@ -381,7 +315,7 @@ func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, hierarchy m
 	return subChunks
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string, scope model.Scope, plane model.Plane) (*model.AgenticSearchResponse, error) {
 	var messages []model.KnowledgeAgentMessage
 
 	// Use custom prompt if provided, otherwise fall back to default
@@ -409,20 +343,11 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		},
 	})
 
-	filters := make([]string, 0, len(sources))
-	for _, source := range sources {
-		filter := fmt.Sprintf("context_id eq '%s'", source)
-		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
-			filter = fmt.Sprintf("(%s and %s)", filter, sourceFilterStr)
-		}
-		filters = append(filters, filter)
-	}
-
 	knowledgeSourceParams := []model.KnowledgeSourceParams{
 		{
 			KnowledgeSourceName: config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
 			Kind:                model.KnowledgeSourceKindSearchIndex,
-			FilterAddOn:         strings.Join(filters, " or "),
+			FilterAddOn:         s.buildFilter(sources, sourceFilter, scope, plane),
 			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
 			IncludeReferences:   to.Ptr(true),
 		},
@@ -466,6 +391,39 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 	return httpResp, nil
+}
+
+// buildFilter creates a combined OData filter string from sources, source-specific filters, and metadata filters.
+func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope model.Scope, plane model.Plane) string {
+	// Build metadata filter from scope and plane
+	var metadataFilters []string
+	if scope != model.Scope_Unknown {
+		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", scope))
+	}
+	if plane != model.Plane_Unknown {
+		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or plane eq 'both')", plane))
+	}
+	metadataFilter := strings.Join(metadataFilters, " and ")
+
+	// Build source-level filters
+	sourceFilters := make([]string, 0, len(sources))
+	for _, source := range sources {
+		filter := fmt.Sprintf("context_id eq '%s'", source)
+		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
+			filter = fmt.Sprintf("(%s and %s)", filter, sourceFilterStr)
+		}
+		sourceFilters = append(sourceFilters, filter)
+	}
+	sourceLevelFilter := strings.Join(sourceFilters, " or ")
+
+	// Combine source and metadata filters
+	if sourceLevelFilter != "" && metadataFilter != "" {
+		return fmt.Sprintf("(%s) and (%s)", sourceLevelFilter, metadataFilter)
+	}
+	if sourceLevelFilter != "" {
+		return sourceLevelFilter
+	}
+	return metadataFilter
 }
 
 // deduplicateExpansions removes duplicate chunk expansions considering hierarchy:

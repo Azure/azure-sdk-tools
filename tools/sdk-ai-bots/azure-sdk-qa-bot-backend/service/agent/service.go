@@ -493,7 +493,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 
 }
 
-func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {
+func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq, intention *model.IntentionResult) ([]model.Index, error) {
 	agenticSearchStart := time.Now()
 
 	// Get the tenant-specific agentic search prompt
@@ -515,7 +515,15 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt)
+	// Extract metadata filters from intention
+	var scope model.Scope
+	var plane model.Plane
+	if intention != nil {
+		scope = intention.Scope
+		plane = intention.Plane
+	}
+
+	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt, scope, plane)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -563,7 +571,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	// Start agentic search in a goroutine
 	go func() {
 		defer close(agenticCh)
-		chunks, err := s.agenticSearch(ctx, req.Message.Content, req)
+		chunks, err := s.agenticSearch(ctx, req.Message.Content, req, intention)
 		agenticCh <- agenticResult{chunks: chunks, err: err}
 	}()
 

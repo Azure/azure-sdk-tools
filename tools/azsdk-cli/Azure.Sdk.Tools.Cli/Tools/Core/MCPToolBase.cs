@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -56,6 +58,8 @@ public abstract class MCPToolBase
             activity?.SetTag(TagName.CommandResponse, JsonSerializer.Serialize(response, response.GetType()));
             activity?.SetStatus(response.ExitCode == 0 ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
 
+            AddCustomTelemetryFromResponse(activity, response);
+
             output.OutputCommandResponse(response);
 
             return response.ExitCode;
@@ -75,6 +79,35 @@ public abstract class MCPToolBase
             if (flushed == false && debug)
             {
                 output.OutputError("Telemetry flush did not complete before timeout");
+            }
+        }
+    }
+
+    // Add all properties to the activity's custom bag so we can filter them for well
+    // known fields to be added to the telemetry event in TelemetryProcessor
+    private static void AddCustomTelemetryFromResponse(Activity? activity, CommandResponse response)
+    {
+        if (activity == null)
+        {
+            return;
+        }
+
+        var responseProperties = response.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (var prop in responseProperties)
+        {
+            var value = prop.GetValue(response);
+            var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
+            string propertyName = jsonAttr?.Name ?? prop.Name;
+            if (value != null)
+            {
+                // Avoid string/enum properties appearing like "\"Succeeded\"" from JSON serialization
+                string serialized = value switch
+                {
+                    string s => s,
+                    Enum e => e.ToString(),
+                    _ => JsonSerializer.Serialize(value)
+                };
+                activity.SetCustomProperty(propertyName, serialized);
             }
         }
     }

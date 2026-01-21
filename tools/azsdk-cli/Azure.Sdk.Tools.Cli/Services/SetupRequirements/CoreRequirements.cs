@@ -29,7 +29,8 @@ public static class CoreRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            if (ctx.IsLinux) {
+            if (ctx.IsLinux) 
+            {
                 return ["sudo apt install nodejs"];
             }
             return ["Download Node.js from https://nodejs.org", "Or run: winget install OpenJS.NodeJS"];            

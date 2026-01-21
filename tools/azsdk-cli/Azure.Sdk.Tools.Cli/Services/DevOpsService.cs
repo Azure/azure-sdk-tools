@@ -509,17 +509,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             var targetRelation = workItem.Relations.FirstOrDefault(r =>
-                r.Rel.Equals(relationTypeSystemName, StringComparison.OrdinalIgnoreCase)
+                r.Rel.Equals(relationTypeSystemName, StringComparison.OrdinalIgnoreCase) &&
+                r.Url.Equals(targetWorkItem.Url, StringComparison.OrdinalIgnoreCase)
             );
 
             if (targetRelation == null)
             {
                 throw new Exception($"Relation of type '{relationType}' to target work item ID {targetId} not found in work item {id}.");
-            }
-
-            if (targetRelation.Url != targetWorkItem.Url)
-            {
-                throw new Exception($"Relation of type '{relationType}' does not point to target work item ID {targetId} in work item {id}.");
             }
 
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();

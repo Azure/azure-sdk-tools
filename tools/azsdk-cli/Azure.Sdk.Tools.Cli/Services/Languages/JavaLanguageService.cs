@@ -276,17 +276,19 @@ public sealed partial class JavaLanguageService : LanguageService
         string commitSha,
         string customizationRoot,
         string packagePath,
+        string buildError,
         CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Generating automated patches for customization files");
+            logger.LogInformation("Applying error-driven patches for Java customization files");
             logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
             logger.LogInformation("Package path: {PackagePath}", packagePath);
-            logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
+            logger.LogInformation("Build error to fix: {BuildError}", buildError.Length > 500 ? buildError.Substring(0, 500) + "..." : buildError);
 
             // Read all .java files under customizationRoot and concatenate their contents into customizationContent
             var customizationContentBuilder = new System.Text.StringBuilder();
+            var customizationFiles = new List<string>();
 
             if (Directory.Exists(customizationRoot))
             {
@@ -297,11 +299,10 @@ public sealed partial class JavaLanguageService : LanguageService
                 {
                     logger.LogDebug("Reading customization file: {File}", file);
                     var fileContent = await File.ReadAllTextAsync(file, ct);
-                    logger.LogInformation("File {File} has {Lines} lines and {Characters} characters",
-                        Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
 
                     // Use relative path from customizationRoot for the LLM to reference
                     var relativePath = Path.GetRelativePath(customizationRoot, file);
+                    customizationFiles.Add(relativePath);
                     customizationContentBuilder.AppendLine($"// File: {relativePath}");
                     customizationContentBuilder.AppendLine(fileContent);
                     customizationContentBuilder.AppendLine();
@@ -315,20 +316,14 @@ public sealed partial class JavaLanguageService : LanguageService
 
             var customizationContent = customizationContentBuilder.ToString();
 
-            // For now, using placeholder generated code - TODO: implement proper old/new code comparison  
-            // Future enhancement: read actual generated files and compare them
-            var oldGeneratedCode = "// TODO: Read actual old generated code for comparison";
-            var newGeneratedCode = "// TODO: Read actual new generated code for comparison";
-
-            // Build prompt for direct patch application using the java patch template
-            var prompt = new JavaPatchGenerationTemplate(
-                oldGeneratedCode,
-                newGeneratedCode,
+            // Build error-driven prompt
+            var prompt = new JavaErrorDrivenPatchTemplate(
+                buildError,
                 packagePath,
                 customizationContent,
                 customizationRoot,
-                commitSha).BuildPrompt();
-            logger.LogInformation("Generated prompt for patch analysis with {ContentLength} characters", prompt.Length);
+                customizationFiles).BuildPrompt();
+            logger.LogInformation("Generated error-driven prompt with {ContentLength} characters", prompt.Length);
 
             var agentDefinition = new Microagent<bool>
             {
@@ -349,16 +344,15 @@ public sealed partial class JavaLanguageService : LanguageService
             };
 
             // Use microagent system to apply patches directly
-            logger.LogInformation("Sending prompt to microagent for direct patch application");
+            logger.LogInformation("Sending error-driven prompt to microagent for patch application");
             var patchApplicationSuccess = await microagentHost.RunAgentToCompletion(agentDefinition, ct);
             logger.LogInformation("Patch application completed with result: {Success}", patchApplicationSuccess);
 
-            // Return the result of patch application
             return patchApplicationSuccess;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to apply automated patches");
+            logger.LogError(ex, "Failed to apply error-driven patches");
             return false;
         }
     }

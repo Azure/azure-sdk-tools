@@ -215,9 +215,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
         /// <param name="customizationRoot">Path to the customization root directory</param>
         /// <param name="packagePath">Path to the package directory containing generated code</param>
+        /// <param name="buildError">The build error and context that triggered automatic repair</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>True if patches were successfully applied; false otherwise</returns>
-        public virtual Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
+        public virtual Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct)
         {
             return Task.FromResult(false);
         }

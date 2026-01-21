@@ -14,6 +14,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 {
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private const string GeneratedFolderName = "Generated";
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
@@ -33,6 +34,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
+    public override bool IsCustomizedCodeUpdateSupported => true;
     /// <summary>
     /// Gets the default samples directory path relative to the package path.
     /// </summary>
@@ -222,5 +224,48 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
         return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
+
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    {
+        // In azure-sdk-for-net, generated code lives in the Generated folder.
+        // Customizations are partial types defined outside the Generated folder.
+        // Example: sdk/ai/Azure.AI.DocumentIntelligence/src/
+        //   - Generated/ (generated code)
+        //   - Customized/ or other folders (customization code with partial classes)
+
+        try
+        {
+            var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
+            var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories)
+                .Where(file => !file.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
+            
+            foreach (var file in csFiles)
+            {
+                try
+                {
+                    foreach (var line in File.ReadLines(file))
+                    {
+                        if (line.Contains("partial class"))
+                        {
+                            logger.LogDebug("Found .NET partial class in {FilePath}", file);
+                            return true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to read file {FilePath} for partial class detection", file);
+                }
+            }
+
+            logger.LogDebug("No .NET partial classes found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
+            return false;
+        }
     }
 }

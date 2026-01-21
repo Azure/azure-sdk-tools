@@ -12,6 +12,13 @@ parameters:
       - dev
       - preview
       - prod
+  - name: slot
+    displayName: 'Target Slot'
+    type: string
+    default: default
+    values:
+      - default
+      - authoring
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -117,13 +124,22 @@ extends:
                   scriptLocation: inlineScript
                   inlineScript: |
                     set -euo pipefail
-                    echo "Updating container image $(imageName):$(imageTag) for app $(APP_NAME)"
+                    SLOT="${{ parameters.slot }}"
+                    if [ -n "$SLOT" ] && [ "$SLOT" != "default" ]; then
+                      TARGET="$(APP_NAME)/$SLOT"
+                      SLOT_ARG="--slot $SLOT"
+                    else
+                      TARGET="$(APP_NAME)"
+                      SLOT_ARG=""
+                    fi
+                    echo "Updating container image $(imageName):$(imageTag) for app $TARGET"
                     ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
                     echo "ACR: $ACR_LOGIN_SERVER"
                     set +e
                     OUTPUT=$(az webapp config container set \
                       --name "$(APP_NAME)" \
                       --resource-group "$(RESOURCE_GROUP)" \
+                      $SLOT_ARG \
                       --container-image-name "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)" \
                       --container-registry-url "https://$ACR_LOGIN_SERVER" 2>&1)
                     STATUS=$?
@@ -131,7 +147,7 @@ extends:
                     echo "$OUTPUT"
                     [ $STATUS -eq 0 ] || { echo "Failed to update container" >&2; exit $STATUS; }
                     echo "Container configuration updated"
-                    az webapp restart --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)"
+                    az webapp restart --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" $SLOT_ARG
                     echo "Webapp restart requested"
                 env:
                   APP_NAME: $(APP_NAME)
@@ -150,7 +166,15 @@ extends:
                   scriptLocation: inlineScript
                   inlineScript: |
                     set -euo pipefail
-                    APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" --query defaultHostName -o tsv)
+                    SLOT="${{ parameters.slot }}"
+                    if [ -n "$SLOT" ] && [ "$SLOT" != "default" ]; then
+                      TARGET="$(APP_NAME)/$SLOT"
+                      SLOT_ARG="--slot $SLOT"
+                    else
+                      TARGET="$(APP_NAME)"
+                      SLOT_ARG=""
+                    fi
+                    APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" $SLOT_ARG --query defaultHostName -o tsv)
                     echo "App URL: https://$APP_URL"
                     echo "Waiting for health..."; sleep 25
                     HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://$APP_URL/ping || echo 000)
@@ -162,9 +186,10 @@ extends:
                     ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
                     echo "=== Deployment Summary ==="
                     echo "Environment: ${{ parameters.environment }}"
+                    echo "Slot: ${{ parameters.slot }}"
                     echo "Image Tag: $(imageTag)"
                     echo "Resource Group: $(RESOURCE_GROUP)"
-                    echo "App Service: $(APP_NAME)"
+                    echo "App Service: $TARGET"
                     echo "Image: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
                     echo "Health Status: $HTTP_STATUS"
                     echo "URL: https://$APP_URL"

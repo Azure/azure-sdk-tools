@@ -278,8 +278,8 @@ class TestResolvePackageVersionFiltering:
 class TestResolvePackageEdgeCases:
     """Tests for edge cases and error scenarios."""
 
-    def test_no_packages_for_language_returns_none(self):
-        """Test that None is returned when no packages exist for the language."""
+    def test_no_packages_for_language_returns_error(self):
+        """Test that an error dict is returned when no packages exist for the language."""
         with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
             reviews_container = MockContainerClient([])
 
@@ -290,7 +290,9 @@ class TestResolvePackageEdgeCases:
 
             result = resolve_package("some-package", "rust")
 
-            assert result is None
+            assert result is not None
+            assert result["error"] == "no_packages_for_language"
+            assert result["language"] == "Rust"
 
     def test_no_revisions_returns_partial_result(self, mock_reviews_data):
         """Test that partial result is returned when no revisions are found."""

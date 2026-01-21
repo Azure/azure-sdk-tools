@@ -16,7 +16,7 @@ import os
 import threading
 import time
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
@@ -318,10 +318,10 @@ async def handle_thread_resolution(
 class ResolvePackageRequest(BaseModel):
     """Request model for resolving package information."""
 
-    package_description: str = Field(..., alias="packageDescription")
+    package_query: str = Field(..., alias="packageQuery")
     language: str
-    version: str = None
-    environment: str = "production"
+    version: Optional[str] = None
+    environment: Literal["production", "staging"] = "production"
 
     class Config:
         """Configuration for Pydantic model."""
@@ -367,6 +367,11 @@ async def resolve_package_info(
         )
 
         if not result:
+            raise HTTPException(status_code=404, detail="Package not found")
+
+        if "error" in result:
+            if result["error"] == "no_packages_for_language":
+                raise HTTPException(status_code=404, detail=f"No packages found for language: {result['language']}")
             raise HTTPException(status_code=404, detail="Package not found")
 
         return ResolvePackageResponse(**result)

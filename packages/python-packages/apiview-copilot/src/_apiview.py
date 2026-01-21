@@ -317,7 +317,7 @@ def resolve_package(
         )
 
         if not all_results:
-            return None
+            return {"error": "no_packages_for_language", "language": pretty_language}
 
         # Check for exact match first (case-insensitive)
         selected_review = None
@@ -349,9 +349,10 @@ def resolve_package(
                 if matched_package == "NO_MATCH":
                     return None
 
-                # Find the review for the matched package
+                # Find the review for the matched package (case-insensitive, like exact match above)
+                matched_package_lower = matched_package.lower()
                 for result in all_results:
-                    if result.get("PackageName", "") == matched_package:
+                    if result.get("PackageName", "").lower() == matched_package_lower:
                         selected_review = result
                         break
             except Exception as e:
@@ -363,7 +364,6 @@ def resolve_package(
 
         review_id = selected_review["id"]
         package_name = selected_review.get("PackageName", "")
-        package_version = selected_review.get("packageVersion", "")
 
         # Now get the revisions for this review from the APIRevisions container
         revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)

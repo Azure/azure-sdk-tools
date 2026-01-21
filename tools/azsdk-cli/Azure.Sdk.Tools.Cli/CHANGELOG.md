@@ -7,6 +7,7 @@
 - Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
+- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
 
 ### Breaking Changes
 

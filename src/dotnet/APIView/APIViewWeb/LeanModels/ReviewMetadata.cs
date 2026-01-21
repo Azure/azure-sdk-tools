@@ -21,7 +21,7 @@ public class RevisionMetadata
     public string PackageVersion { get; set; }
     public bool IsApproved { get; set; }
     public int? PullRequestNo { get; set; }
-    public string? PullRequestRepository { get; set; }
+    public string PullRequestRepository { get; set; }
     public string RevisionLink { get; set; }
     public string CreatedBy { get; set; }
     public DateTime CreatedOn { get; set; }

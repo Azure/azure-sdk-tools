@@ -397,7 +397,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope model.Scope, plane model.Plane) string {
 	// Build metadata filter from scope and plane
 	var metadataFilters []string
-	if scope != model.Scope_Unknown {
+	if scope == model.Scope_Unbranded {
 		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", scope))
 	}
 	if plane != model.Plane_Unknown {

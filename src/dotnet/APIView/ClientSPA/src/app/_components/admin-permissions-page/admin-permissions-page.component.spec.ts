@@ -11,7 +11,9 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { 
+    AddMembersResult,
     EffectivePermissions, 
     GlobalRole, 
     GroupPermissions, 
@@ -93,7 +95,8 @@ describe('AdminPermissionsPageComponent', () => {
             'updateGroup', 
             'deleteGroup',
             'addMembersToGroup',
-            'removeMemberFromGroup'
+            'removeMemberFromGroup',
+            'getAllUsernames'
         ]);
         const userProfileSpy = jasmine.createSpyObj('UserProfileService', ['getUserProfile']);
         const messageSpy = jasmine.createSpyObj('MessageService', ['add']);
@@ -106,7 +109,8 @@ describe('AdminPermissionsPageComponent', () => {
                 FormsModule,
                 BrowserAnimationsModule,
                 SelectModule,
-                SelectButtonModule
+                SelectButtonModule,
+                AutoCompleteModule
             ],
             providers: [
                 { provide: PermissionsService, useValue: permissionsSpy },
@@ -123,6 +127,9 @@ describe('AdminPermissionsPageComponent', () => {
         userProfileServiceSpy = TestBed.inject(UserProfileService) as jasmine.SpyObj<UserProfileService>;
         messageServiceSpy = TestBed.inject(MessageService) as jasmine.SpyObj<MessageService>;
         confirmationServiceSpy = TestBed.inject(ConfirmationService) as jasmine.SpyObj<ConfirmationService>;
+
+        // Default mock for getAllUsernames - called during component initialization
+        permissionsServiceSpy.getAllUsernames.and.returnValue(of(['user1', 'user2', 'pythonDev1', 'newUser']));
     });
 
     describe('Initialization', () => {
@@ -369,16 +376,17 @@ describe('AdminPermissionsPageComponent', () => {
             component.openAddMemberDialog();
             
             expect(component.showAddMemberDialog).toBeTrue();
-            expect(component.newMemberUsername).toBe('');
+            expect(component.newMemberUsernames).toEqual([]);
         });
 
         it('should add member successfully', fakeAsync(() => {
-            permissionsServiceSpy.addMembersToGroup.and.returnValue(of(void 0));
+            const mockResult: AddMembersResult = { addedUsers: ['newUser'], invalidUsers: [], allUsersValid: true };
+            permissionsServiceSpy.addMembersToGroup.and.returnValue(of(mockResult));
             permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
             
             component.openAddMemberDialog();
-            component.newMemberUsername = 'newUser';
-            component.addMember();
+            component.newMemberUsernames = ['newUser'];
+            component.addMembers();
             tick();
             
             expect(permissionsServiceSpy.addMembersToGroup).toHaveBeenCalledWith('admins', ['newUser']);
@@ -387,10 +395,10 @@ describe('AdminPermissionsPageComponent', () => {
             }));
         }));
 
-        it('should not add member with empty username', () => {
+        it('should not add member with empty usernames', () => {
             component.openAddMemberDialog();
-            component.newMemberUsername = '  ';
-            component.addMember();
+            component.newMemberUsernames = [];
+            component.addMembers();
             
             expect(permissionsServiceSpy.addMembersToGroup).not.toHaveBeenCalled();
         });

@@ -1,32 +1,5 @@
-from dataclasses import dataclass
 from typing import Any, Dict, Set
 from .constants import EVALUATION_PASS_FAIL_MAPPING
-
-@dataclass
-class AzureBotReference:
-    def __init__(self, title: str, url: str):
-        self._title = title
-        self._url = url
-    
-    @property
-    def title(self) -> str:
-        """Getter for title"""
-        return self._title
-
-    @title.setter
-    def title(self, value: str) -> None:
-        """Setter for title"""
-        self._title = value
-
-    @property
-    def url(self) -> str:
-        """Getter for url"""
-        return self._url
-
-    @title.setter
-    def url(self, value: str) -> None:
-        """Setter for url"""
-        self._url = value
 
 class AzureBotReferenceEvaluator:
     RESULT_KEY = "reference_match"
@@ -75,14 +48,6 @@ class AzureBotReferenceEvaluator:
         return normalized
     def _get_reference_matches(self, expected: list[Dict[str, Any]], actual: list[Dict[str, Any]]) -> tuple[Set, Set, Set, float]:
         """Compare reference between expected and actual lists."""
-        # expected_in_actual_map = {ref: False for ref in expected}
-        # actual_in_expected_map = {ref: False for ref in actual}
-
-        # for expected_ref in expected:
-        #     for actual_ref in actual:
-        #         if (expected_ref.title == actual_ref.title and self._normalize_url(expected_ref.url) == self._normalize_url(actual_ref.url)):
-        #             expected_in_actual_map[expected_ref] = True
-        #             actual_in_expected_map[actual_ref] = True
         
         expected_in_actual = []
         actual_in_expected = []
@@ -104,32 +69,6 @@ class AzureBotReferenceEvaluator:
             match_percentage = 1.0  # 100% if no references expected
         else:
             match_percentage = len(exact_matches) / len(expected)
-
-        return exact_matches, unexpected_refs, missing_refs, match_percentage
-
-    def _get_reference_matches2(self, expected: list[str], actual: list[str]) -> tuple[Set, Set, Set, float]:
-        """Compare reference URLs between expected and actual lists with normalized comparison."""
-        # Create mappings from normalized URL to original URL
-        expected_map = {self._normalize_url(url): url for url in expected}
-        actual_map = {self._normalize_url(url): url for url in actual}
-
-        # Get normalized sets for comparison
-        expected_normalized = set(expected_map.keys())
-        actual_normalized = set(actual_map.keys())
-
-        # Find matches based on normalized URLs
-        matched_normalized = expected_normalized.intersection(actual_normalized)
-
-        # Convert back to original URLs for results
-        exact_matches = {expected_map[norm_url] for norm_url in matched_normalized}
-        unexpected_refs = {actual_map[norm_url] for norm_url in (actual_normalized - expected_normalized)}
-        missing_refs = {expected_map[norm_url] for norm_url in (expected_normalized - actual_normalized)}
-
-        # Calculate match percentage based on expected URLs
-        if len(expected_normalized) == 0:
-            match_percentage = 1.0  # 100% if no references expected
-        else:
-            match_percentage = len(matched_normalized) / len(expected_normalized)
 
         return exact_matches, unexpected_refs, missing_refs, match_percentage
     

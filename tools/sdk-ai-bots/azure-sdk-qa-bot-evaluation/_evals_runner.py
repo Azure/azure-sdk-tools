@@ -16,7 +16,6 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
-from eval import AzureBotReference
 
 def extract_title_and_link_from_references(references: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """

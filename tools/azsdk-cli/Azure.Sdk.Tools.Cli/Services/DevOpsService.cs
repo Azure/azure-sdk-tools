@@ -1340,7 +1340,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        private async Task<WorkItem> FindParentWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        private async Task<WorkItem?> FindParentWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
         {
             var serviceCondition = new StringBuilder();
 

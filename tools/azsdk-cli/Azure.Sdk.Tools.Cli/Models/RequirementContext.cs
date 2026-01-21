@@ -66,10 +66,12 @@ public class RequirementContext
 
     private static OSPlatform GetCurrentPlatform()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) 
+        {
             return OSPlatform.Windows;
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) 
+        {
             return OSPlatform.OSX;
         }
         return OSPlatform.Linux;

@@ -27,7 +27,8 @@ public static class GoRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            if (ctx.IsLinux) {
+            if (ctx.IsLinux) 
+            {
                 return ["sudo snap install go"];
             }
            

@@ -114,11 +114,6 @@ public class VerifySetupTool : LanguageMcpTool
                     response.ResponseErrors ??= new List<string>();
                     response.ResponseErrors.Add($"Requirement failed: {req.Name}. Error: {result.ResponseError}");
 
-                    if (req.MinVersion != null)
-                    {
-                       displayName = $"{req.Name} >= {req.MinVersion}"; 
-                    }
-
                     response.Results.Add(new RequirementCheckResult
                     {
                         Requirement = displayName,
@@ -238,7 +233,7 @@ public class VerifySetupTool : LanguageMcpTool
         if (!outputVersionMatch.Success)
         {
             // Unable to parse the version from the output
-            return req.MinVersion ?? string.Empty;
+            return req.MinVersion;
         }
 
         string installedVersion = outputVersionMatch.Value.Trim();
@@ -247,19 +242,16 @@ public class VerifySetupTool : LanguageMcpTool
         if (!Version.TryParse(installedVersion, out var installedVer))
         {
             logger.LogWarning("Failed to parse installed version as System.Version.");
-            return req.MinVersion ?? string.Empty;
+            return req.MinVersion;
         }
 
-        // Check minimum version
-        if (req.MinVersion != null)
+
+        if (Version.TryParse(req.MinVersion, out var minVer))
         {
-            if (Version.TryParse(req.MinVersion, out var minVer))
+            logger.LogDebug("Requires minimum version: {minVersion}", req.MinVersion);
+            if (installedVer < minVer)
             {
-                logger.LogDebug("Requires minimum version: {minVersion}", req.MinVersion);
-                if (installedVer < minVer)
-                {
-                    return req.MinVersion;
-                }
+                return req.MinVersion;
             }
         }
 

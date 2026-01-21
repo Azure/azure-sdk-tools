@@ -24,7 +24,8 @@ public abstract class PythonRequirementBase : Requirement
         get
         {
             var cmd = RawCheckCommand.ToArray();
-            if (cmd.Length > 0) {
+            if (cmd.Length > 0) 
+            {
                 cmd[0] = PythonOptions.ResolvePythonExecutable(cmd[0]);
             }
             return cmd;

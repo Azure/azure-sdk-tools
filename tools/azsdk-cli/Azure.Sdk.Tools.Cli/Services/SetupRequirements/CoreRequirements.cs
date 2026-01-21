@@ -120,13 +120,14 @@ public static class CoreRequirements
         public override string Name => "Python";
         public override string[] CheckCommand => ["python", "--version"];
 
-        public override string MinVersion => "3.9";
+        public override string? MinVersion => "3.9";
 
         public override string? Reason => "Python is required for all repos because it's used in a common Verify-Readme Powershell script.";
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            if (ctx.IsLinux) {
+            if (ctx.IsLinux) 
+            {
                 return [
                     "sudo apt install python3 python3-pip python3-venv",
                     "sudo apt install python-is-python3"

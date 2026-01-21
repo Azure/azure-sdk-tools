@@ -7,9 +7,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
 {
     public class TypeSpecAuthoringResponse : CommandResponse
     {
-        [JsonPropertyName("is_successful")]
-        public bool IsSuccessful { get; set; }
-
         [JsonPropertyName("solution")]
         public string Solution { get; set; } = string.Empty;
 
@@ -30,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
 
         protected override string Format()
         {
-            if (!IsSuccessful || !string.IsNullOrEmpty(ResponseError))
+            if (OperationStatus == Status.Failed)
             {
                 return string.Empty;
             }

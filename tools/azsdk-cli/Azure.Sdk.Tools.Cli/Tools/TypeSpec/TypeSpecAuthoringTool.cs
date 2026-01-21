@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         private readonly Option<string> _requestOption = new("--request")
         {
-            Description = "The request to authoring",
+            Description = "The TypeSpec‑related task or user request to be addressed by the proposed solution or execution plan.",
             Required = true,
         };
 
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                   ct: ct
                 );
 
-                if (!response.IsSuccessful)
+                if (response.OperationStatus == Status.Failed || !string.IsNullOrEmpty(response.ResponseError))
                 {
                     _logger.LogError("AI query failed: {Error}", response.ResponseError);
                     return new DefaultCommandResponse() { ResponseError = $"AI query failed: {response.ResponseError}" };
@@ -118,7 +118,7 @@ Returns an answer with supporting references and documentation links
                 // Build request
                 var completionRequest = new CompletionRequest
                 {
-                    TenantId = TenantId.AzureTypespecAuthoring,
+                    TenantId = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
                     Message = new Message
                     {
                         Role = Role.User,
@@ -142,9 +142,15 @@ Returns an answer with supporting references and documentation links
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",
                     response.Id, response.HasResult);
 
+                if (!response.HasResult)
+                {
+                    return new TypeSpecAuthoringResponse
+                    {
+                        ResponseError = "Did not receive a result from knowledge base service."
+                    };
+                }
                 return new TypeSpecAuthoringResponse
                 {
-                    IsSuccessful = response.HasResult,
                     Solution = response.Answer,
                     References = MapReferences(response.References),
                     FullContext = response.FullContext,

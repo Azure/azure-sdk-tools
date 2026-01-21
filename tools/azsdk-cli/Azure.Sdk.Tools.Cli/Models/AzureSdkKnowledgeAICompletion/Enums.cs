@@ -4,8 +4,8 @@ using Azure.Sdk.Tools.Cli.Models.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
 {
-    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<TenantId>))]
-    public enum TenantId
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<AzureSdkKnowledgeServiceTenant>))]
+    public enum AzureSdkKnowledgeServiceTenant
     {
         [EnumMember(Value = "azure_sdk_qa_bot")]
         AzureSDKQaBot,

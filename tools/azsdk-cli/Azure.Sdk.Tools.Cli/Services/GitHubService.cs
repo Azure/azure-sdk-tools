@@ -92,6 +92,7 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
@@ -398,6 +399,24 @@ public class GitConnection
         public async Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)
         {
             return await gitHubClient.Issue.Get(repoOwner, repoName, issueNumber);
+        }
+
+        /// <summary>
+        /// Creates a new issue in the specified repository.
+        /// </summary>
+        /// <param name="repoOwner">Repository owner</param>
+        /// <param name="repoName">Repository name</param>
+        /// <param name="title">Issue title</param>
+        /// <param name="body">Issue body</param>
+        /// <returns>The created issue</returns>
+        public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
+        {
+            logger.LogInformation("Creating issue in {RepoOwner}/{RepoName}: {Title}", repoOwner, repoName, title);
+            var newIssue = new NewIssue(title)
+            {
+                Body = body
+            };
+            return await gitHubClient.Issue.Create(repoOwner, repoName, newIssue);
         }
 
         /// <summary>

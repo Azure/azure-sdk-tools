@@ -211,44 +211,6 @@ func sortResultsByScore(results []model.Index) {
 	})
 }
 
-// Helper function to sort results by source priority
-func sortResultsBySource(results []model.Index, sources []model.Source) {
-	sort.Slice(results, func(i, j int) bool {
-		// Find priority index for sources
-		sourceI := model.Source(results[i].ContextID)
-		sourceJ := model.Source(results[j].ContextID)
-
-		priorityI := -1
-		priorityJ := -1
-		for idx, source := range sources {
-			if source == sourceI {
-				priorityI = idx
-			}
-			if source == sourceJ {
-				priorityJ = idx
-			}
-		}
-		if priorityI == priorityJ {
-			return results[i].RerankScore > results[j].RerankScore // If same source, sort by score
-		}
-		// If both sources are in the priority list, sort by priority
-		if priorityI >= 0 && priorityJ >= 0 {
-			return priorityI < priorityJ // Lower index = higher priority
-		}
-
-		// If one source is in priority list and the other isn't, prioritize the one in the list
-		if priorityI >= 0 && priorityJ < 0 {
-			return true // i is in priority list, j is not
-		}
-		if priorityI < 0 && priorityJ >= 0 {
-			return false // j is in priority list, i is not
-		}
-
-		// If neither source is in priority list, keep original order based on score
-		return results[i].RerankScore > results[j].RerankScore
-	})
-}
-
 func (s *SearchClient) GetCompleteContext(chunk model.Index) ([]model.Index, error) {
 	req := &model.QueryIndexRequest{
 		Count:   false,

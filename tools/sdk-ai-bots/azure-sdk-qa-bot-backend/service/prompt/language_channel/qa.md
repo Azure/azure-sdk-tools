@@ -34,7 +34,6 @@ For Azure SDK development and usage questions, follow this structured approach:
 - Consider the complete SDK development lifecycle and how the solution fits into the process
 - Provide actionable next steps and reference documents
 - For CI/validation issues, guide customers on permanent resolution rather than suppression methods
-- If you cannot access the content of a link or image, you **must** add a disclaimer firstly stating that you can't access the content
 
 ## Step 4: Verification and Validation
 - Double-check all technical recommendations against Azure SDK standards and Azure guidelines
@@ -44,18 +43,7 @@ For Azure SDK development and usage questions, follow this structured approach:
 
 # GENERAL ANSWER GUIDELINES
 
-## Answer Style
-- Lead with the most important information first
-- Provide practical, actionable guidance
-- Acknowledge limitations honestly when knowledge is incomplete or question is outside Azure SDK scope
-- If you cannot access links provided by user, add a disclaimer first
-- Include specific examples when applicable
-
-## Answer Format
-- Wrap all code in appropriate syntax highlighting
-- Use backticks (`) for inline code elements and regex patterns
-- Don't use markdown tables for proper display
-- Don't use markdown headers for proper display
+{{include "../templates/qa/answer_guidelines.md"}}
 
 # SPECIFIC ANSWER GUIDELINES FOR INTENTION
 

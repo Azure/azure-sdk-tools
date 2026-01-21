@@ -33,7 +33,6 @@ For Azure SDK onboarding and development questions, follow this structured appro
 - Consider the complete onboarding process and how the solution fits into the process
 - Provide actionable next steps and reference documents
 - For CI/validation issues, guide customers on permanent resolution rather than suppression methods
-- If you cannot access the content of a link or image, you **must** add a disclaimer firstly stating that you can't access the content
 
 ## Step 4: Verification and Validation
 - Double-check all technical recommendations against Azure standards
@@ -43,16 +42,7 @@ For Azure SDK onboarding and development questions, follow this structured appro
 
 # ANSWER GUIDELINES
 
-## Answer Style
-- Lead with the most important information first
-- Provide practical, actionable guidance
-- Acknowledge limitations honestly when knowledge is incomplete or question is outside Azure SDK scope
-
-## Answer Format
-- Wrap all code in appropriate syntax highlighting
-- Use backticks (`) for inline code elements and regex patterns
-- Don't use markdown table for proper display
-- Don't use markdown headers for proper display
+{{include "../templates/qa/answer_guidelines.md"}}
 
 # KNOWLEDGE BASE CATEGORIES
 

@@ -217,6 +217,8 @@ type Index struct {
 	Header3         string  `json:"header_3"`
 	OrdinalPosition int     `json:"ordinal_position"`
 	ContextID       Source  `json:"context_id"`
+	Scope           string  `json:"scope,omitempty"`
+	Plane           string  `json:"plane,omitempty"`
 }
 
 type Knowledge struct {

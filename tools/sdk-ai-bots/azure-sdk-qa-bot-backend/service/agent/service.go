@@ -109,7 +109,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		promptTemplate = "common/non_technical_question.md"
 	} else {
 		// Run agentic search and vector search in parallel, then merge results
-		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention)
 		if err != nil {
 			log.Printf("Parallel search failed: %v", err)
 			return nil, model.NewSearchFailureError(err)
@@ -551,7 +551,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]model.Knowledge, error) {
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.IntentionResult) ([]model.Knowledge, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -578,7 +578,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	// Start knowledge search in parallel (without agentic chunks for now)
 	go func() {
 		defer close(knowledgeCh)
-		rawResults, err := s.searchKnowledgeBase(req, query)
+		rawResults, err := s.searchKnowledgeBase(req, query, intention)
 		knowledgeCh <- knowledgeResult{rawResults: rawResults, err: err}
 	}()
 
@@ -610,13 +610,22 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 }
 
 // searchKnowledgeBase performs the core knowledge search without dependency on agentic results
-func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string) ([]model.Index, error) {
+func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string, intention *model.IntentionResult) ([]model.Index, error) {
 	searchStart := time.Now()
 	sourceFilter := map[model.Source]string{}
 	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {
 		sourceFilter = tenantConfig.SourceFilter
 	}
-	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter)
+
+	// Extract metadata filters from intention
+	var scope model.Scope
+	var plane model.Plane
+	if intention != nil {
+		scope = intention.Scope
+		plane = intention.Plane
+	}
+
+	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter, scope, plane)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}

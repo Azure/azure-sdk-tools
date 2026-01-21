@@ -103,7 +103,7 @@ func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([
 	return httpResp.Value, nil
 }
 
-func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string) ([]model.Index, error) {
+func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string, scope model.Scope, plane model.Plane) ([]model.Index, error) {
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
@@ -120,6 +120,21 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		Captions:      "extractive",
 		Answers:       "extractive|count-3",
 		QueryLanguage: "en-us",
+	}
+
+	// Build metadata filter from scope and plane
+	var metadataFilter string
+	if scope != model.Scope_Unknown || plane != model.Plane_Unknown {
+		var filters []string
+		if scope != model.Scope_Unknown {
+			filters = append(filters, fmt.Sprintf("scope eq '%s'", scope))
+		}
+		if plane != model.Plane_Unknown {
+			filters = append(filters, fmt.Sprintf("plane eq '%s'", plane))
+		}
+		if len(filters) > 0 {
+			metadataFilter = strings.Join(filters, " and ")
+		}
 	}
 
 	// If no sources specified, search all at once
@@ -146,6 +161,12 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 			req.Top = val
 		}
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
+
+		// Combine source filter with metadata filter
+		if metadataFilter != "" {
+			req.Filter = fmt.Sprintf("(%s and %s)", req.Filter, metadataFilter)
+		}
+
 		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
 			req.Filter = fmt.Sprintf("(%s and %s)", req.Filter, sourceFilterStr)
 		}
@@ -177,9 +198,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	if len(allResults) > k {
 		allResults = allResults[:k]
 	}
-
-	// Sort the top K results by source priority exactly
-	sortResultsBySource(allResults, sources)
 
 	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(sources))
 

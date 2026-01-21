@@ -44,7 +44,13 @@ public static class CoreRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            // TODO handle rest-api-specs repo case
+            if (ctx.RepoName != null && ctx.RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
+            {
+                return [
+                    $"cd {ctx.RepoRoot}",
+                    "npm ci"
+                ];
+            }
             return ["cd eng/common/tsp-client", "npm ci"];
         }
     }
@@ -57,6 +63,13 @@ public static class CoreRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
+            if (ctx.RepoName != null && ctx.RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
+            {
+                return [
+                    $"cd {ctx.RepoRoot}",
+                    "npm ci"
+                ];
+            }
             return ["npm install -g @typespec/compiler@latest"];
         }
     }

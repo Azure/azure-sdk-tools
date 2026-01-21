@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
@@ -17,7 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         {
             var logger = new TestLogger<GitHelper>();
             gitHubService = new Mock<IGitHubService>();
-            gitHelper = new GitHelper(gitHubService.Object, logger);
+            var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+            gitHelper = new GitHelper(gitHubService.Object, gitCommandHelper, logger);
             typeSpecHelper = new TypeSpecHelper(gitHelper);
         }
 

@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             LangService = new GoLanguageService(
                 processHelper,
                 new PowershellHelper(NullLogger<PowershellHelper>.Instance, Mock.Of<IRawOutputHelper>()),
-                new GitHelper(Mock.Of<IGitHubService>(), NullLogger<GitHelper>.Instance),
+                new GitHelper(Mock.Of<IGitHubService>(), new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>()), NullLogger<GitHelper>.Instance),
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
                 Mock.Of<IFileHelper>(),
                 Mock.Of<ISpecGenSdkConfigHelper>());

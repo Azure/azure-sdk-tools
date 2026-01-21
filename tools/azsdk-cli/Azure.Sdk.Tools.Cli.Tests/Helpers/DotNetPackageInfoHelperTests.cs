@@ -3,6 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
@@ -28,7 +29,8 @@ public class DotNetPackageInfoHelperTests
         var packagePath = Path.Combine(repoRoot, "sdk", "storage", "storage-blob");
         Directory.CreateDirectory(packagePath);
         var ghMock = new Mock<IGitHubService>();
-        var gitHelper = new GitHelper(ghMock.Object, new TestLogger<GitHelper>());
+        var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+        var gitHelper = new GitHelper(ghMock.Object, gitCommandHelper, new TestLogger<GitHelper>());
         var processMock = new Mock<IProcessHelper>();
         var powershellMock = new Mock<IPowershellHelper>();
         var commonValidationMock = new Mock<ICommonValidationHelpers>();

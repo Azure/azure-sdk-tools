@@ -11,6 +11,7 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators;
@@ -110,7 +111,8 @@ public class SampleGeneratorToolTests
 
         var gitHubServiceMock = new Mock<IGitHubService>();
         var gitLogger = new TestLogger<GitHelper>();
-        var realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
+        var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+        var realGitHelper = new GitHelper(gitHubServiceMock.Object, gitCommandHelper, gitLogger);
 
         if (language == SdkLanguage.Go)
         {
@@ -354,7 +356,8 @@ public class SampleGeneratorToolTests
         var languageLogger = new TestLogger<LanguageService>();
         var gitLogger = new TestLogger<GitHelper>();
         var gitHubServiceMock = new Mock<IGitHubService>();
-        realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
+        var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+        realGitHelper = new GitHelper(gitHubServiceMock.Object, gitCommandHelper, gitLogger);
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
         _languageServices = [

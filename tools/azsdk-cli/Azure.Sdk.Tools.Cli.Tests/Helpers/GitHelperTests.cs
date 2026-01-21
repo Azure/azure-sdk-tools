@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
@@ -17,7 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         {
             mockGitHubService = new Mock<IGitHubService>();
             logger = new TestLogger<GitHelper>();
-            gitHelper = new GitHelper(mockGitHubService.Object, logger);
+            var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+            gitHelper = new GitHelper(mockGitHubService.Object, gitCommandHelper, logger);
         }
 
         #region GetRepoRemoteUri Tests
@@ -43,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         {
             using var repo = CreateTestRepoWithoutRemote();
             var ex = Assert.Throws<InvalidOperationException>(() => gitHelper.GetRepoRemoteUri(repo.DirectoryPath));
-            Assert.That(ex.Message, Does.Contain("No such remote 'origin'"));
+            Assert.That(ex.Message, Does.Contain("origin"));
         }
 
         [Test]
@@ -195,13 +197,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             
             // Create initial commit on default branch
             GitTestHelper.GitCommit(repo.DirectoryPath, "Initial commit");
+            var defaultBranch = gitHelper.GetBranchName(repo.DirectoryPath);
             
             // Create and switch to feature branch
             GitTestHelper.GitCreateBranch(repo.DirectoryPath, "feature");
             GitTestHelper.GitCommit(repo.DirectoryPath, "Feature commit");
             
             // The merge base should be the initial commit
-            var result = gitHelper.GetMergeBaseCommitSha(repo.DirectoryPath, "master");
+            var result = gitHelper.GetMergeBaseCommitSha(repo.DirectoryPath, defaultBranch);
             
             // Result should be a valid SHA (40 hex characters)
             Assert.That(result, Has.Length.EqualTo(40));

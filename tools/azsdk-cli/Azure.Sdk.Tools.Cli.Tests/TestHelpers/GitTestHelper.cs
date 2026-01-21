@@ -52,8 +52,10 @@ public static class GitTestHelper
     /// <param name="message">The commit message</param>
     public static void GitCommit(string directory, string message)
     {
+        // Escape double quotes in the message
+        var escapedMessage = string.IsNullOrEmpty(message) ? string.Empty : message.Replace("\"", "\\\"");
         RunGit(directory, "add -A");
-        RunGit(directory, $"commit -m \"{message}\" --allow-empty");
+        RunGit(directory, $"commit -m \"{escapedMessage}\" --allow-empty");
     }
 
     /// <summary>
@@ -71,6 +73,7 @@ public static class GitTestHelper
     /// </summary>
     /// <param name="workingDirectory">The directory to run the command in</param>
     /// <param name="arguments">The git command arguments (without 'git' prefix)</param>
+    /// <exception cref="InvalidOperationException">Thrown when the git command fails</exception>
     private static void RunGit(string workingDirectory, string arguments)
     {
         var startInfo = new ProcessStartInfo
@@ -80,11 +83,26 @@ public static class GitTestHelper
             WorkingDirectory = workingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true, // Prevent stdin blocking in test environments
             UseShellExecute = false,
             CreateNoWindow = true
         };
 
         using var process = Process.Start(startInfo);
-        process?.WaitForExit();
+        if (process == null)
+        {
+            throw new InvalidOperationException($"Failed to start git process for command: git {arguments}");
+        }
+
+        var stderr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"Git command failed with exit code {process.ExitCode}: git {arguments}\n" +
+                $"Working directory: {workingDirectory}\n" +
+                $"Error: {stderr}");
+        }
     }
 }

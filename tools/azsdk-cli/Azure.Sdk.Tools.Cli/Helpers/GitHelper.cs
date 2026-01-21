@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Services;
-using System.Diagnostics;
 
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -18,62 +17,37 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetRepoName(string pathInRepo);
     }
 
-    public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
+    public class GitHelper(IGitHubService gitHubService, IGitCommandHelper gitCommandHelper, ILogger<GitHelper> logger) : IGitHelper
     {
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
+        private readonly IGitCommandHelper gitCommandHelper = gitCommandHelper;
 
         /// <summary>
         /// Runs a git command and returns the trimmed stdout output.
         /// </summary>
         /// <param name="workingDirectory">The directory to run the git command in</param>
-        /// <param name="arguments">The git command arguments (without 'git' prefix)</param>
+        /// <param name="arguments">The git command arguments (without 'git' prefix), space-separated</param>
         /// <returns>The trimmed stdout output from the git command</returns>
         /// <exception cref="InvalidOperationException">Thrown when git command fails</exception>
         private string RunGitCommand(string workingDirectory, string arguments)
         {
             logger.LogDebug("Running git command: git {arguments} in {workingDirectory}", arguments, workingDirectory);
             
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "git",
-                Arguments = arguments,
-                WorkingDirectory = workingDirectory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            // Split arguments string into array for GitOptions
+            var args = arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var options = new GitOptions(args, workingDirectory);
 
-            using var process = Process.Start(startInfo);
-            if (process == null)
+            var result = gitCommandHelper.Run(options, CancellationToken.None).GetAwaiter().GetResult();
+
+            if (result.ExitCode != 0)
             {
-                throw new InvalidOperationException("Failed to start git process");
+                logger.LogDebug("Git command failed with exit code {exitCode}: {output}", result.ExitCode, result.Output.Trim());
+                throw new InvalidOperationException($"Git command failed: {result.Output.Trim()}");
             }
 
-            // Read stdout and stderr asynchronously to avoid deadlock
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
-            
-            // Wait with a 30-second timeout to prevent hanging
-            if (!process.WaitForExit(30000))
-            {
-                process.Kill();
-                throw new InvalidOperationException($"Git command timed out: git {arguments}");
-            }
-
-            var stdout = stdoutTask.GetAwaiter().GetResult();
-            var stderr = stderrTask.GetAwaiter().GetResult();
-
-            if (process.ExitCode != 0)
-            {
-                logger.LogDebug("Git command failed with exit code {exitCode}: {stderr}", process.ExitCode, stderr.Trim());
-                throw new InvalidOperationException($"Git command failed: {stderr.Trim()}");
-            }
-
-            logger.LogDebug("Git command succeeded: {stdout}", stdout.Trim());
-            return stdout.Trim();
+            logger.LogDebug("Git command succeeded: {stdout}", result.Stdout.Trim());
+            return result.Stdout.Trim();
         }
 
         /// <summary>
@@ -90,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var mergeBaseSha = RunGitCommand(repoRoot, $"merge-base HEAD {targetBranchName}");
                 var currentBranch = GetBranchName(pathInRepo);
                 logger.LogDebug(
-                    "Git merge base - Current branch: {currentBranch}, Target branch SHA: {mergeBaseCommitSha}",
+                    "Git merge base - Current branch: {currentBranch}, Merge base SHA: {mergeBaseCommitSha}",
                     currentBranch,
                     mergeBaseSha);
                 return mergeBaseSha;
@@ -228,24 +202,43 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
         public string DiscoverRepoRoot(string pathInRepo)
         {
-            if (string.IsNullOrEmpty(pathInRepo))
+            if (string.IsNullOrWhiteSpace(pathInRepo))
             {
                 throw new InvalidOperationException("Path cannot be null or empty");
             }
 
             // Determine the working directory for git command
             // If path is a file, use its directory; if directory, use it directly
-            var workingDir = Directory.Exists(pathInRepo) ? pathInRepo : Path.GetDirectoryName(pathInRepo);
-            if (string.IsNullOrEmpty(workingDir) || !Directory.Exists(workingDir))
+            string? workingDir;
+            if (Directory.Exists(pathInRepo))
             {
-                throw new InvalidOperationException($"Invalid path: {pathInRepo}");
+                workingDir = pathInRepo;
+            }
+            else
+            {
+                // Path might be a file or non-existent path - get its directory
+                workingDir = Path.GetDirectoryName(pathInRepo);
+                
+                // Handle edge cases like "C:" which returns null
+                if (string.IsNullOrEmpty(workingDir))
+                {
+                    workingDir = Directory.GetCurrentDirectory();
+                }
+            }
+
+            if (!Directory.Exists(workingDir))
+            {
+                throw new InvalidOperationException($"Directory does not exist: {workingDir} (from path: {pathInRepo})");
             }
 
             try
             {
                 // git rev-parse --show-toplevel returns the root of the working tree
                 // This correctly handles both normal repos and worktrees
-                return RunGitCommand(workingDir, "rev-parse --show-toplevel");
+                var repoRoot = RunGitCommand(workingDir, "rev-parse --show-toplevel");
+                
+                // Normalize path separators: git returns forward slashes on Windows
+                return repoRoot.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
             }
             catch (InvalidOperationException ex)
             {

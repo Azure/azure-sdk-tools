@@ -37,6 +37,7 @@ interface ProcessSourceDirectoryResult {
     changedDocuments: number;
     unchangedDocuments: number;
     changedFiles: ProcessedMarkdownFile[];  // Files that changed and need to be uploaded/updated
+    metadataChangedFiles: ProcessedMarkdownFile[]; // Files with metadata-only changes - upload only, no index deletion
     unchangedFiles: ProcessedMarkdownFile[]; // Files that didn't change
 }
 
@@ -84,6 +85,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         let changedDocuments = 0;
         let unchangedDocuments = 0;
         const allChangedFiles: ProcessedMarkdownFile[] = [];
+        const allMetadataChangedFiles: ProcessedMarkdownFile[] = [];
         const allUnchangedFiles: ProcessedMarkdownFile[] = [];
         
         // Process each documentation source
@@ -120,6 +122,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
                 totalProcessed += result.totalProcessed;
                 changedDocuments += result.changedDocuments;
                 unchangedDocuments += result.unchangedDocuments;
+                allMetadataChangedFiles.push(...result.metadataChangedFiles);
                 allChangedFiles.push(...result.changedFiles);
                 allUnchangedFiles.push(...result.unchangedFiles);
             } catch (error) {
@@ -135,9 +138,10 @@ export async function processDailySyncKnowledge(): Promise<void> {
         await deleteAISearchIndex(searchService, allChangedFiles);
 
         // Upload files to blob storage (only for changed documents)
-        await uploadFilesToBlobStorage(allChangedFiles);
+        await uploadFilesToBlobStorage(allChangedFiles.concat(allMetadataChangedFiles));
         
         // Clean up expired blobs
+        await cleanupExpiredBlobs(allChangedFiles.concat(allMetadataChangedFiles));
         await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
         console.log('Daily sync knowledge processing completed');
 
@@ -352,6 +356,7 @@ async function processSourceDirectory(
     let changedDocuments = 0;
     let unchangedDocuments = 0;
     const changedFiles: ProcessedMarkdownFile[] = [];
+    const metadataChangedFiles: ProcessedMarkdownFile[] = [];
     const unchangedFiles: ProcessedMarkdownFile[] = [];
     
     // Helper function to process a single file
@@ -380,24 +385,21 @@ async function processSourceDirectory(
             const metadataChanged = blobService.hasMetadataChanged(processed.blobPath, blobMetadata, existingBlobs);
 
             if (contentChanged || metadataChanged) {
-                if (contentChanged && metadataChanged) {
-                    console.log(`Content and metadata changed for: ${processed.blobPath}`);
-                } else if (contentChanged) {
-                    console.log(`Content changed for: ${processed.blobPath}`);
-                } else {
-                    console.log(`Metadata changed for: ${processed.blobPath}`);
-                }
                 if (contentChanged) {
+                    console.log(`Content changed for: ${processed.blobPath}`);
                     changedDocuments++;
                     changedFiles.push(processed);
                     
                     const targetFilePath = path.join(targetDir, processed.filename);
                     fs.writeFileSync(targetFilePath, processed.content);
                 } else {
-                    console.log(`Content unchanged for: ${processed.blobPath}`);
-                    unchangedDocuments++;
-                    unchangedFiles.push(processed);
+                    console.log(`Metadata changed for: ${processed.blobPath}`);
+                    metadataChangedFiles.push(processed);
                 }
+            } else {
+                console.log(`File unchanged for: ${processed.blobPath}`);
+                unchangedDocuments++;
+                unchangedFiles.push(processed);
             }
         } catch (error) {
             console.error(`Error processing file ${fullPath}:`, error);
@@ -411,7 +413,7 @@ async function processSourceDirectory(
     if (isFile) {
         processSingleFile(sourceDir, path.dirname(sourceDir));
         
-        return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, unchangedFiles };
+        return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, metadataChangedFiles, unchangedFiles };
     }
     
     async function walkDirectory(dir: string): Promise<void> {
@@ -442,11 +444,12 @@ async function processSourceDirectory(
     
     await walkDirectory(sourceDir);
     
-    return { 
+    return {
         totalProcessed, 
         changedDocuments, 
         unchangedDocuments, 
         changedFiles, 
+        metadataChangedFiles,
         unchangedFiles 
     };
 }

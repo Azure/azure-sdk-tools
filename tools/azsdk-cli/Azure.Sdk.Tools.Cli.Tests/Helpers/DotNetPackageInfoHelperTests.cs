@@ -183,9 +183,9 @@ public class DotNetPackageInfoHelperTests
     </ItemGroup>
   </Target>
 </Project>";
-        CreateTestFile(packagePath, "Azure.Test.Package.csproj", csprojContent);
+        CreateTestFile(packagePath, "src/Azure.Test.Package.csproj", csprojContent);
 
-        var csprojPath = Path.Combine(packagePath, "Azure.Test.Package.csproj");
+        var csprojPath = Path.Combine(packagePath, "src", "Azure.Test.Package.csproj");
         Assert.That(File.Exists(csprojPath), Is.True, $"csproj file should exist at {csprojPath}");
 
         var realProcessHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());

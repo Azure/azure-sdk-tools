@@ -45,5 +45,5 @@ public abstract class Requirement
     /// <summary>
     /// Optional reason why the requirement is needed.
     /// </summary>
-    public virtual string? Reason;
+    public virtual string? Reason => null;
 }

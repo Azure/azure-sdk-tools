@@ -5,6 +5,7 @@ using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
@@ -73,7 +74,7 @@ public class VerifySetupTool : LanguageMcpTool
     {
         try
         {
-            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs, packagePath ?? Environment.CurrentDirectory, ct);
+            List<Requirement> reqsToCheck = GetRequirements(langs, packagePath ?? Environment.CurrentDirectory, ct);
 
             VerifySetupResponse response = new VerifySetupResponse
             {
@@ -178,7 +179,7 @@ public class VerifySetupTool : LanguageMcpTool
         return new DefaultCommandResponse();
     }
 
-    private List<SetupRequirements.Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)
+    private List<Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)
     {
         // Check core requirements before language-specific requirements
         var parsedReqs = ParseRequirements(ct);
@@ -221,35 +222,10 @@ public class VerifySetupTool : LanguageMcpTool
             reqsToCheck.AddRange(getter.GetRequirements(packagePath, parsedReqs, ct));
         }
 
-        return reqsToCheck ?? new List<SetupRequirements.Requirement>();
+        return reqsToCheck ?? new List<Requirement>();
     }
 
-    private List<SetupRequirements.Requirement> GetCoreRequirements(Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct)
-    {
-        if (categories.TryGetValue("core", out var reqs))
-        {
-            return reqs;
-        }
-        logger.LogWarning("No core requirements found in the requirements JSON.");
-        return new List<SetupRequirements.Requirement>();
-    }
-
-    private Dictionary<string, List<SetupRequirements.Requirement>> ParseRequirements(CancellationToken ct = default)
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var names = assembly.GetManifestResourceNames();
-        using var stream = assembly.GetManifestResourceStream("Azure.Sdk.Tools.Cli.Configuration.RequirementsV1.json");
-        var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(stream);
-
-        if (setupRequirements == null)
-        {
-            throw new Exception("Failed to parse requirements JSON.");
-        }
-
-        return setupRequirements.categories;
-    }
-
-    private string CheckVersion(string output, SetupRequirements.Requirement req)
+    private string CheckVersion(string output, Requirement req)
     {
         // Return empty string if version requirement is satisfied, else return version to upgrade to        
         var match = System.Text.RegularExpressions.Regex.Match(req.requirement, REQ_VERSION_PATTERN);

@@ -2,8 +2,37 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
+
+/// <summary>
+/// Base class for Python-specific requirements that handles executable resolution.
+/// </summary>
+public abstract class PythonRequirementBase : Requirement
+{
+    /// <summary>
+    /// The raw check command before Python executable resolution.
+    /// </summary>
+    protected abstract string[] RawCheckCommand { get; }
+
+    /// <summary>
+    /// Resolves the Python executable path at runtime.
+    /// </summary>
+    public override string[] CheckCommand
+    {
+        get
+        {
+            var cmd = RawCheckCommand.ToArray();
+            if (cmd.Length > 0)
+                cmd[0] = PythonOptions.ResolvePythonExecutable(cmd[0]);
+            return cmd;
+        }
+    }
+
+    public override bool ShouldCheck(RequirementContext ctx)
+        => ctx.Language == SdkLanguage.Python;
+}
 
 /// <summary>
 /// Requirements specific to Python SDK development.
@@ -19,13 +48,10 @@ public static class PythonRequirements
 
     // Python language requirement is in CoreRequirements.cs
 
-    public class AzPySdkRequirement : Requirement
+    public class AzPySdkRequirement : PythonRequirementBase
     {
         public override string Name => "azpysdk";
-        public override string[] CheckCommand => ["azpysdk", "--help"];
-
-        public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Python;
+        protected override string[] RawCheckCommand => ["azpysdk", "--help"];
 
         public override string? Reason => "Required for validating Python SDKs";
 
@@ -38,13 +64,10 @@ public static class PythonRequirements
         }
     }
 
-    public class PythonGeneratorRequirement : Requirement
+    public class PythonGeneratorRequirement : PythonRequirementBase
     {
         public override string Name => "sdk_generator";
-        public override string[] CheckCommand => ["sdk_generator", "--help"];
-
-        public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Python;
+        protected override string[] RawCheckCommand => ["sdk_generator", "--help"];
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -55,13 +78,10 @@ public static class PythonRequirements
         }
     }
 
-    public class GhToolsRequirement : Requirement
+    public class GhToolsRequirement : PythonRequirementBase
     {
         public override string Name => "ghtools";
-        public override string[] CheckCommand => ["python", "-m", "pip", "show", "GitPython"];
-
-        public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Python;
+        protected override string[] RawCheckCommand => ["python", "-m", "pip", "show", "GitPython"];
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -72,14 +92,11 @@ public static class PythonRequirements
         }
     }
 
-    public class PytestRequirement : Requirement
+    public class PytestRequirement : PythonRequirementBase
     {
         public override string Name => "pytest";
         public override string? MinVersion => "8.3.5";
-        public override string[] CheckCommand => ["pytest", "--version"];
-
-        public override bool ShouldCheck(RequirementContext ctx) 
-            => ctx.Language == SdkLanguage.Python;
+        protected override string[] RawCheckCommand => ["pytest", "--version"];
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

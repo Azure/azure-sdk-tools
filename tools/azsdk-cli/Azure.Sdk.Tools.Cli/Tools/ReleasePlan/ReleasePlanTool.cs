@@ -340,16 +340,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 throw new Exception($"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}");
             }
 
-            var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-
-            // Ensure a release plan is created only if the API specs pull request is in a public repository.
-            if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+            // Skip filesystem validation for URLs since GetSpecRepoRootPath expects local paths
+            if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
             {
-                throw new Exception("""
-                    SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
-                    Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
-                    A release plan cannot be created for SDK generation using a pull request in a private repository.
-                    """);
+                var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+
+                // Ensure a release plan is created only if the API specs pull request is in a public repository.
+                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+                {
+                    throw new Exception("""
+                        SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
+                        Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
+                        A release plan cannot be created for SDK generation using a pull request in a private repository.
+                        """);
+                }
             }
 
             if (!Guid.TryParse(serviceTreeId, out _))
@@ -418,9 +422,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
-                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                var specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                // Handle both URLs and local paths for TypeSpec projects
+                bool isValidTypeSpec;
+                bool isMgmt;
+                string specProject;
+                
+                if (typeSpecHelper.IsUrl(typeSpecProjectPath))
+                {
+                    // URL path
+                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectUrl(typeSpecProjectPath);
+                    isMgmt = typeSpecHelper.IsTypeSpecUrlForMgmtPlane(typeSpecProjectPath);
+                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath);
+                }
+                else
+                {
+                    // Local file path
+                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
+                    isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
+                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+                
+                var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";
                 logger.LogInformation("Attempting to retrieve current user email.");
 
                 var email = await userHelper.GetUserEmail();
@@ -449,7 +471,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     IsTestReleasePlan = isTestReleasePlan,
                     SDKReleaseType = sdkReleaseType,
                     IsCreatedByAgent = true,
-                    ReleasePlanSubmittedByEmail = userEmail
+                    ReleasePlanSubmittedByEmail = userEmail,
+                    APISpecProjectPath = specProject
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan);
                 if (workItem == null)

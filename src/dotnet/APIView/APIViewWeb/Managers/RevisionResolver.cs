@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Web;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers;
@@ -26,7 +27,10 @@ public class RevisionResolver : IRevisionResolver
         _logger = logger;
     }
 
-    public string ResolvePackageQuery(string packageQuery, string language)
+    public async Task<ResolvePackageResponse> ResolvePackageQuery(
+        string packageQuery,
+        string language,
+        string version = null)
     {
         if (string.IsNullOrEmpty(packageQuery))
         {
@@ -38,24 +42,11 @@ public class RevisionResolver : IRevisionResolver
             throw new ArgumentException("Language is required.", nameof(language));
         }
 
-        //TODO: Add package name check after this is done: https://github.com/Azure/azure-sdk-tools/issues/13557
-        return packageQuery;
-    }
-
-    public async Task<RevisionResolveResult> ResolveByPackageAsync(
-        string packageQuery,
-        string language,
-        string version = null)
-    {
-        string packageName = ResolvePackageQuery(packageQuery, language);
-        if (string.IsNullOrEmpty(packageName))
-        {
-            return null;
-        }
-
-        var review = await _reviewManager.GetReviewAsync(language, packageName, null);
+        ReviewListItemModel review = await _reviewManager.GetReviewAsync(language, packageQuery, null);
         if (review == null)
         {
+            //TODO: this is the section in where the call is done directly to copilot as I wasn't able to find an exact match with the packageQuery that I already had
+            // will return copilot response
             _logger.LogWarning("Review not found for package: {PackageName}, language: {Language}", packageQuery,
                 language);
             return null;
@@ -84,10 +75,18 @@ public class RevisionResolver : IRevisionResolver
             return null;
         }
 
-        return new RevisionResolveResult { ReviewId = revision.ReviewId, RevisionId = revision.Id };
+        return new ResolvePackageResponse
+        {
+            PackageName = review.PackageName,
+            Language = review.Language,
+            ReviewId = review.Id,
+            Version = revision.PackageVersion,
+            RevisionId = revision.Id,
+            RevisionLabel = revision.Label
+        };
     }
 
-    public async Task<RevisionResolveResult> ResolveByLinkAsync(string link)
+    public async Task<ResolvePackageResponse> ResolvePackageLink(string link)
     {
         if (string.IsNullOrEmpty(link))
         {
@@ -111,7 +110,15 @@ public class RevisionResolver : IRevisionResolver
                 return null;
             }
 
-            return new RevisionResolveResult { ReviewId = revision.ReviewId, RevisionId = revision.Id };
+            return new ResolvePackageResponse
+            {
+                PackageName = revision.PackageName,
+                Language = revision.Language,
+                ReviewId = revision.ReviewId,
+                Version = revision.PackageVersion,
+                RevisionId = revision.Id,
+                RevisionLabel = revision.Label
+            };
         }
 
         ReviewListItemModel review = (await _reviewManager.GetReviewsAsync([reviewId])).FirstOrDefault();
@@ -129,7 +136,15 @@ public class RevisionResolver : IRevisionResolver
             return null;
         }
 
-        return new RevisionResolveResult { ReviewId = latestRevision.ReviewId, RevisionId = latestRevision.Id };
+        return new ResolvePackageResponse
+        {
+            PackageName = latestRevision.PackageName,
+            Language = latestRevision.Language,
+            ReviewId = latestRevision.ReviewId,
+            Version = latestRevision.PackageVersion,
+            RevisionId = latestRevision.Id,
+            RevisionLabel = latestRevision.Label
+        };
     }
 
     /// <summary>

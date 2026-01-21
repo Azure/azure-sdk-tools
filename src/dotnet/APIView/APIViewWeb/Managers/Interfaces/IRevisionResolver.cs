@@ -1,21 +1,15 @@
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers.Interfaces
 {
-    public class RevisionResolveResult
-    {
-        public string ReviewId { get; set; }
-        public string RevisionId { get; set; }
-    }
-
     public interface IRevisionResolver
     { 
-        string ResolvePackageQuery(string packageQuery, string language);
-        Task<RevisionResolveResult> ResolveByPackageAsync(
+        Task<ResolvePackageResponse> ResolvePackageQuery(
             string packageQuery,
             string language,
             string version = null);
-        Task<RevisionResolveResult> ResolveByLinkAsync(string link);
+        Task<ResolvePackageResponse> ResolvePackageLink(string link);
     }
 }

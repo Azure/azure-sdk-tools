@@ -60,7 +60,7 @@ public class ReviewsTokenAuthController : ControllerBase
     /// <param name="link">APIView URL (e.g., "https://spa.apiview.dev/review/{id}?activeApiRevisionId={revId}")</param>
     /// <returns>Resolved IDs for use in subsequent API calls.</returns>
     [HttpGet("resolve", Name = "ResolveReview")]
-    public async Task<ActionResult<RevisionResolveResult>> Resolve(
+    public async Task<ActionResult<ResolvePackageResponse>> Resolve(
         [FromQuery] string packageQuery = null,
         [FromQuery] string language = null,
         [FromQuery] string version = null,
@@ -68,15 +68,15 @@ public class ReviewsTokenAuthController : ControllerBase
     {
         try
         {
-            RevisionResolveResult result;
+            ResolvePackageResponse result;
 
             if (!string.IsNullOrEmpty(link))
             {
-                result = await _revisionResolver.ResolveByLinkAsync(link);
+                result = await _revisionResolver.ResolvePackageLink(link);
             }
             else if (!string.IsNullOrEmpty(packageQuery) && !string.IsNullOrEmpty(language))
             {
-                result = await _revisionResolver.ResolveByPackageAsync(packageQuery, language, version);
+                result = await _revisionResolver.ResolvePackageQuery(packageQuery, language, version);
             }
             else
             {

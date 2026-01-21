@@ -18,11 +18,12 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     {
         public const string RegenerateFailed = "RegenerateFailed";
         public const string RegenerateAfterPatchesFailed = "RegenerateAfterPatchesFailed";
-        public const string BuildFailedAfterPatches = "BuildFailedAfterPatches";
-        public const string BuildFailedNoCustomizations = "BuildFailedNoCustomizations";
+        public const string BuildAfterPatchesFailed = "BuildAfterPatchesFailed";
+        public const string BuildNoCustomizationsFailed = "BuildNoCustomizationsFailed";
         public const string PatchesFailed = "PatchesFailed";
         public const string NoLanguageService = "NoLanguageService";
         public const string InvalidInput = "InvalidInput";
+        public const string UnexpectedError = "UnexpectedError";
     }
 
     [JsonPropertyName("message")]

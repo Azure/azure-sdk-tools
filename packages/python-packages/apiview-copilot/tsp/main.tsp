@@ -235,7 +235,7 @@ namespace ApiViewCopilot {
 
   model ResolvePackageRequest {
     /** The package description or name to search for. */
-    packageDescription: string;
+    packageQuery: string;
 
     /** The programming language of the package (e.g., 'python', 'java'). */
     language: string;
@@ -254,16 +254,16 @@ namespace ApiViewCopilot {
     /** The review ID for the package. */
     reviewId: string;
 
-    /** The revision ID for the package. */
-    revisionId: string;
-
     /** The programming language. */
     language: string;
 
     /** The package version. */
-    version: string;
+    version?: string;
+
+    /** The revision ID for the package. */
+    revisionId?: string;
 
     /** The revision label (e.g., 'Source Branch:main'). */
-    revisionLabel: string;
+    revisionLabel?: string;
   }
 }

@@ -81,10 +81,9 @@ This command retrieves comments from APIView for a specific review ID. You can s
 
 `avc apiview resolve-package --package <PACKAGE_DESCRIPTION> --language <LANGUAGE> [--version <VERSION>] [--environment "production"|"staging"]`
 
-This command resolves package information from a package description and language. It uses a multi-stage approach:
-1. **Exact match**: Searches for packages that exactly match the description
-2. **Partial match**: Searches for packages containing the description
-3. **LLM-powered matching**: If no match is found, retrieves all packages for the language and uses an LLM to find the best semantic match
+This command resolves package information from a package description and language. It uses a multi-stage matching strategy (exact match → LLM fallback):
+1. **Exact match**: Searches for packages that exactly match the description (case-insensitive)
+2. **LLM-powered matching (fallback)**: If no exact match is found, retrieves all packages for the language and uses an LLM to find the best semantic match
 
 Returns:
 - The actual package name

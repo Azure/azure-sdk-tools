@@ -16,6 +16,7 @@ import os
 import threading
 import time
 from enum import Enum
+from typing import Optional
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
@@ -333,10 +334,10 @@ class ResolvePackageResponse(BaseModel):
 
     package_name: str = Field(..., alias="packageName")
     review_id: str = Field(..., alias="reviewId")
-    revision_id: str = Field(..., alias="revisionId")
     language: str
-    version: str
-    revision_label: str = Field(..., alias="revisionLabel")
+    version: Optional[str] = None
+    revision_id: Optional[str] = Field(None, alias="revisionId")
+    revision_label: Optional[str] = Field(None, alias="revisionLabel")
 
     class Config:
         """Configuration for Pydantic model."""

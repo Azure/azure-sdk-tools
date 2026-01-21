@@ -280,17 +280,17 @@ def resolve_package(
     Args:
         package_description: Package name or description to search for
         language: Language of the package (e.g., 'python', 'java')
-        version: Optional version to filter by. Currently not used but reserved for future use.
+        version: Optional version to filter by. If omitted, the latest revision will be returned.
         environment: The APIView environment ('production' or 'staging')
 
     Returns:
         A dict containing:
         - package_name: The actual package name
-        - review_id: The review ID (use with ApiViewClient to get revisions)
-        - revision_id: Always None (revisions must be retrieved via APIView API)
+        - review_id: The review ID
         - language: The language
-        - version: The package version (if available)
-        - revision_label: The assumed revision label ("Latest")
+        - version: The package version, if available
+        - revision_id: The relevant revision ID, if available
+        - revision_label: The associated revision label, if available
 
         Returns None if no matching package is found.
     """
@@ -302,51 +302,33 @@ def resolve_package(
         # Normalize the language for comparison
         pretty_language = get_language_pretty_name(language)
 
-        # First, try exact match with CONTAINS
-        query = """
+        # Fetch all packages for this language in a single query
+        all_packages_query = """
             SELECT c.id, c.PackageName, c.Language, c.packageVersion
             FROM c 
-            WHERE CONTAINS(LOWER(c.PackageName), @package_description)
-            AND c.Language = @language
+            WHERE c.Language = @language
         """
+        all_packages_params = [{"name": "@language", "value": pretty_language}]
 
-        parameters = [
-            {"name": "@package_description", "value": package_description.lower()},
-            {"name": "@language", "value": pretty_language},
-        ]
-
-        results = list(
-            reviews_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True)
+        all_results = list(
+            reviews_container.query_items(
+                query=all_packages_query, parameters=all_packages_params, enable_cross_partition_query=True
+            )
         )
 
-        # Check for exact match first
-        exact_match = None
-        for result in results:
-            if result.get("PackageName", "").lower() == package_description.lower():
-                exact_match = result
+        if not all_results:
+            return None
+
+        # Check for exact match first (case-insensitive)
+        selected_review = None
+        package_description_lower = package_description.lower()
+        for result in all_results:
+            if result.get("PackageName", "").lower() == package_description_lower:
+                selected_review = result
                 break
 
-        selected_review = exact_match
-
-        # If no exact match found, get all packages for the language and use LLM
+        # If no exact match, use LLM to find best match
         if not selected_review:
-            # Get ALL packages for this language (whether or not we have CONTAINS results)
-            all_packages_query = """
-                SELECT c.id, c.PackageName, c.Language, c.packageVersion
-                FROM c 
-                WHERE c.Language = @language
-            """
-            all_packages_params = [{"name": "@language", "value": pretty_language}]
-
-            all_results = list(
-                reviews_container.query_items(
-                    query=all_packages_query, parameters=all_packages_params, enable_cross_partition_query=True
-                )
-            )
-
-            if not all_results:
-                return None
-
             # Extract package names
             available_packages = [r.get("PackageName", "") for r in all_results if r.get("PackageName")]
 
@@ -432,7 +414,8 @@ def resolve_package(
                     "review_id": review_id,
                     "revision_id": None,
                     "language": pretty_language,
-                    "version": package_version,
+                    "version": None,
+                    "revision_label": None,
                 }
 
             selected_revision = latest_revisions[0]

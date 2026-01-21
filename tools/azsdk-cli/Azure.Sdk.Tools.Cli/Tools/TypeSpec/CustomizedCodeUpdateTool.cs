@@ -50,7 +50,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     private static readonly string[] SuccessNoCustomizationsNextSteps =
     [
         "Review generated code changes",
-        "Create customizations if needed for your SDK requirements",
+        "Create customizations if needed for your SDK requirements (see: https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md)",
         "Open a pull request with your changes"
     ];
 
@@ -62,27 +62,37 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     ];
 
     // NextSteps for failure scenarios - formatted for classifier to parse
-    private static string[] BuildFailedNoCustomizationsNextSteps(string language) =>
+    private static string[] GetBuildNoCustomizationsFailedNextSteps(string language) =>
     [
         "Issue: Build failed after regeneration but no customization files exist",
         $"SuggestedApproach: Create customization files for {language} to fix build errors",
-        "Reason: Phase B cannot activate without customization infrastructure"
+        $"Documentation: {GetCodeCustomizationDocUrl(language)}"
     ];
 
-    private static string[] PatchesFailedNextSteps() =>
+    private static string[] GetPatchesFailedNextSteps() =>
     [
         "Issue: Automatic patching was unsuccessful or not applicable",
         "SuggestedApproach: Compare generated code with customizations and update manually",
-        "Reason: No applicable changes found or patching encountered errors"
+        "Documentation: https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
     ];
 
-    private static string[] BuildFailedAfterPatchesNextSteps(string buildError) =>
+    private static string[] GetBuildAfterPatchesFailedNextSteps(string buildError) =>
     [
-        $"Issue: Build still failing after patches applied",
+        "Issue: Build still failing after patches applied",
         $"BuildError: {buildError}",
         "SuggestedApproach: Review build errors and fix customization files manually",
-        "Reason: Automatic patches did not fully resolve the build issues"
+        "Documentation: https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
     ];
+
+    private static string GetCodeCustomizationDocUrl(string language) => language.ToLowerInvariant() switch
+    {
+        "python" => "https://github.com/Azure/autorest.python/blob/main/docs/customizations.md",
+        "java" => "https://github.com/Azure/autorest.java/blob/main/customization-base/README.md",
+        "csharp" or "dotnet" => "https://github.com/microsoft/typespec/blob/main/packages/http-client-csharp/.tspd/docs/customization.md",
+        "go" => "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/development/generate.md",
+        "javascript" or "typescript" => "https://github.com/Azure/azure-sdk-for-js/wiki/Modular-(DPG)-Customization-Guide",
+        _ => "https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
+    };
     protected override Command GetCommand() =>
        new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", CustomizedCodeUpdateToolName)
        {
@@ -105,7 +115,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             { 
                 Message = $"SDK update failed: {ex.Message}",
                 ResponseError = ex.Message, 
-                ErrorCode = ex.GetType().Name 
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError 
             };
         }
     }
@@ -183,9 +193,9 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Message = $"Build failed after regeneration: {noCustomBuildError}",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildFailedNoCustomizations,
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
                         ResponseError = noCustomBuildError,
-                        NextSteps = BuildFailedNoCustomizationsNextSteps(languageService.Language.ToString()).ToList()
+                        NextSteps = GetBuildNoCustomizationsFailedNextSteps(languageService.Language.ToString()).ToList()
                     };
                 }
             }
@@ -203,7 +213,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 {
                     Message = "Patches not applied - automatic patching unsuccessful or not applicable.",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                    NextSteps = PatchesFailedNextSteps().ToList()
+                    NextSteps = GetPatchesFailedNextSteps().ToList()
                 };
             }
 
@@ -218,7 +228,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     Message = $"Code regeneration failed after applying patches: {regenError}",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
                     ResponseError = regenError,
-                    NextSteps = PatchesFailedNextSteps().ToList()
+                    NextSteps = GetPatchesFailedNextSteps().ToList()
                 };
             }
 
@@ -241,9 +251,9 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 return new CustomizedCodeUpdateResponse
                 {
                     Message = $"Build failed after applying patches: {buildError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildFailedAfterPatches,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
                     ResponseError = buildError,
-                    NextSteps = BuildFailedAfterPatchesNextSteps(buildError ?? "Unknown error").ToList()
+                    NextSteps = GetBuildAfterPatchesFailedNextSteps(buildError ?? "Unknown error").ToList()
                 };
             }
         }
@@ -254,7 +264,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             { 
                 Message = $"Core update failed: {ex.Message}",
                 ResponseError = ex.Message, 
-                ErrorCode = ex.GetType().Name 
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError 
             };
         }
     }

@@ -9,8 +9,11 @@
 - Added support for GitHub URLs in TypeSpecHelper methods to accept URLs like `https://github.com/Azure/azure-rest-api-specs/blob/main/specification/...` in addition to local paths
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
 - Added `APISpecProjectPath` property to Release Plan Work Item to track the TypeSpec project path in release plans
+- Added CLI mode telemetry, app insights endpoint determined by debug vs. release builds
 
 ### Breaking Changes
+
+- Removed ability to set custom telemetry endpoint via environment variable
 
 ### Bugs Fixed
 

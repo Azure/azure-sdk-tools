@@ -129,11 +129,11 @@ public sealed partial class DotnetLanguageService: LanguageService
             var identity = items[0].GetProperty("Identity").GetString();
 
             // Parse the identity string:  'pkgPath' 'serviceDir' 'pkgName' 'pkgVersion' 'sdkType' 'isNewSdk' 'dllFolder' 'AotCompatOptOut'
-            var parts = identity.Split(separator, StringSplitOptions.RemoveEmptyEntries)
+            var parts = identity?.Split(separator, StringSplitOptions.RemoveEmptyEntries)
                 .Select(p => p.Trim('\'', ' '))
                 .ToArray();
 
-            if (parts.Length >= 5) // for now we only need items in the first 5 positions
+            if (parts?.Length >= 5) // for now we only need items in the first 5 positions
             {
                 var name = parts[2]; // pkgName
                 var version = parts[3]; // pkgVersion

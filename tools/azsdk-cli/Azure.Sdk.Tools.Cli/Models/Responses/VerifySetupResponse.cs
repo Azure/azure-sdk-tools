@@ -24,6 +24,10 @@ public class VerifySetupResponse : CommandResponse
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
                 sb.AppendLine($"        Instructions: {string.Join(", ", result.Instructions)}");
+                if (!string.IsNullOrEmpty(result.Reason))
+                    {
+                        sb.AppendLine($"        Reason: {result.Reason}\n");
+                    }
                 sb.AppendLine($"        Requirement Status Details: {result.RequirementStatusDetails}\n");
             }
         }

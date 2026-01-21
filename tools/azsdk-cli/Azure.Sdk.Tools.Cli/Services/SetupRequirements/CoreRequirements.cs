@@ -109,6 +109,8 @@ public static class CoreRequirements
 
         public override string MinVersion => "3.9";
 
+        public override string? Reason => "Python is required for all repos because it's used in a common Verify-Readme Powershell script.";
+
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             if (ctx.IsLinux) {
@@ -125,6 +127,8 @@ public static class CoreRequirements
     {
         public override string Name => "pip";
         public override string[] CheckCommand => ["python", "-m", "pip", "--version"];
+
+        public override string? Reason => "Pip is required for all repos because it's used in a common Verify-Readme Powershell script.";
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

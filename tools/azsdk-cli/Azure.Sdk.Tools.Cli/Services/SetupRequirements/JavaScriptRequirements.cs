@@ -24,11 +24,10 @@ public static class JavaScriptRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            var repoRoot = ctx.RepoRoot ?? "the repo root";
-
             return [
                 "npm install -g pnpm",
-                $"Run 'pnpm install' in {repoRoot}"
+                "Navigate to the root of the JavaScript SDK repository.",
+                "pnpm install"
             ];
         }
     }

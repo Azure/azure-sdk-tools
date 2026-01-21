@@ -101,14 +101,27 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 var instructions = req.GetInstructions(ctx).ToList();
                 
+                var displayName = req.Name;
+                
+                // Display version constraints if applicable
+                if (req.MinVersion != null)
+                {
+                    displayName = $"{req.Name} (>= {req.MinVersion})";
+                }
+
                 if (result.ExitCode != 0)
                 {
                     response.ResponseErrors ??= new List<string>();
                     response.ResponseErrors.Add($"Requirement failed: {req.Name}. Error: {result.ResponseError}");
 
+                    if (req.MinVersion != null)
+                    {
+                       displayName = $"{req.Name} >= {req.MinVersion}"; 
+                    }
+
                     response.Results.Add(new RequirementCheckResult
                     {
-                        Requirement = req.Name,
+                        Requirement = displayName,
                         Instructions = instructions,
                     });
                 } 
@@ -116,7 +129,7 @@ public class VerifySetupTool : LanguageMcpTool
                 {
                     response.Results.Add(new RequirementCheckResult
                     {
-                        Requirement = req.Name,
+                        Requirement = displayName,
                         Instructions = instructions,
                         RequirementStatusDetails = result.Message,
                         Reason = req.Reason
@@ -214,7 +227,7 @@ public class VerifySetupTool : LanguageMcpTool
     private string CheckVersion(string output, Requirement req)
     {
         // Return empty string if version requirement is satisfied, else return version to upgrade to
-        if (req.MinVersion == null && req.MaxVersion == null)
+        if (req.MinVersion == null)
         {
             // No version constraints
             return string.Empty;
@@ -225,7 +238,7 @@ public class VerifySetupTool : LanguageMcpTool
         if (!outputVersionMatch.Success)
         {
             // Unable to parse the version from the output
-            return req.MinVersion ?? req.MaxVersion ?? string.Empty;
+            return req.MinVersion ?? string.Empty;
         }
 
         string installedVersion = outputVersionMatch.Value.Trim();
@@ -234,7 +247,7 @@ public class VerifySetupTool : LanguageMcpTool
         if (!Version.TryParse(installedVersion, out var installedVer))
         {
             logger.LogWarning("Failed to parse installed version as System.Version.");
-            return req.MinVersion ?? req.MaxVersion ?? string.Empty;
+            return req.MinVersion ?? string.Empty;
         }
 
         // Check minimum version
@@ -246,19 +259,6 @@ public class VerifySetupTool : LanguageMcpTool
                 if (installedVer < minVer)
                 {
                     return req.MinVersion;
-                }
-            }
-        }
-
-        // Check maximum version
-        if (req.MaxVersion != null)
-        {
-            if (Version.TryParse(req.MaxVersion, out var maxVer))
-            {
-                logger.LogDebug("Requires maximum version: {maxVersion}", req.MaxVersion);
-                if (installedVer > maxVer)
-                {
-                    return req.MaxVersion;
                 }
             }
         }

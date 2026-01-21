@@ -26,11 +26,6 @@ public abstract class Requirement
     public virtual string? MinVersion => null;
 
     /// <summary>
-    /// Optional maximum version (e.g., "22.99.99"). Null if no specific version required.
-    /// </summary>
-    public virtual string? MaxVersion => null;
-
-    /// <summary>
     /// Command to run to verify the requirement is installed.
     /// </summary>
     public abstract string[] CheckCommand { get; }

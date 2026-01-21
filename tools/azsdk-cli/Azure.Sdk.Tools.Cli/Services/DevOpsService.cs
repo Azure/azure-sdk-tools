@@ -1389,5 +1389,32 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return null;
         }
+
+        private async Task<WorkItem> FindOrCreateServiceParent(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        {
+            var serviceParent = await FindParentWorkItem(serviceName, packageDisplayName: null, ignoreReleasePlannerTests, tag);
+            if (serviceParent != null)
+            {
+                logger.LogDebug("Found existing service work item [{workItemId}]", serviceParent.Id);
+                return serviceParent;
+            }
+
+            var serviceWorkItem = new EpicWorkItem
+            {
+                ServiceName = serviceName,
+                PackageDisplayName = string.Empty,
+                EpicType = "Service"
+            };
+
+            if (!string.IsNullOrEmpty(tag))
+            {
+                serviceWorkItem.Tag = tag;
+            }
+
+            var workItem = await CreateWorkItemAsync(serviceWorkItem, "Epic", serviceName);
+
+            logger.LogInformation("[{workItemId}] - Created service work item for {serviceName}", workItem.Id, serviceName);
+            return workItem;
+        }
     }
 }

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Azure.AI.OpenAI;
 using Azure.Identity;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
@@ -11,6 +10,8 @@ using Mcp.Evaluator.Evaluation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
+using OpenAI;
+using System.ClientModel.Primitives;
 
 /// <summary>
 /// Standalone console application for MCP labeler - supports prediction and evaluation modes
@@ -48,17 +49,19 @@ public class Program
         var csvOutput = args.FirstOrDefault(a => a.StartsWith("--output="))?.Split('=')[1] 
             ?? "mcp_evaluation_results.csv";
 
+        var credential = new DefaultAzureCredential();
+
         if (extractReal)
         {
             logger.LogInformation("Extracting real labeled issues from Azure Search index...");
-            await ExtractRealIssuesAsync(configuration, logger);
+            await ExtractRealIssuesAsync(configuration, logger, credential);
             logger.LogInformation("Extraction complete: real_mcp_issues.json");
             return 0;
         }
 
         logger.LogInformation("Initializing MCP labeler");
         
-        var labeler = await CreateLabeler(configuration, loggerFactory, logger);
+        var labeler = CreateLabeler(configuration, loggerFactory, logger, credential);
         if (labeler == null)
         {
             logger.LogError("Failed to initialize labeler. Check configuration.");
@@ -91,7 +94,7 @@ public class Program
 
         } else {
             logger.LogInformation("Loading real issues from real_mcp_issues.json...");
-            testCases = LoadRealIssues("real_mcp_issues.json");
+            testCases = await LoadRealIssuesAsync("real_mcp_issues.json");
             logger.LogInformation("Loaded {Count} real issues", testCases.Count);
         }
 
@@ -119,7 +122,7 @@ public class Program
         return issue;
     }
 
-    static Task<ILabeler?> CreateLabeler(IConfiguration configuration, ILoggerFactory loggerFactory, ILogger logger)
+    static ILabeler? CreateLabeler(IConfiguration configuration, ILoggerFactory loggerFactory, ILogger logger, DefaultAzureCredential credential)
     {
         try
         {
@@ -135,19 +138,28 @@ public class Program
                 logger.LogError("  SearchServiceEndpoint = {SearchServiceEndpoint}", searchEndpoint ?? "NOT SET");
                 logger.LogError("  BlobAccountUri = {BlobAccountUri}", blobAccountUri ?? "NOT SET");
                 logger.LogError("Add these to your appsettings.json or environment variables.");
-                return Task.FromResult<ILabeler?>(null);
+                return null;
             }
 
-            var credential = new DefaultAzureCredential();
             var blobClient = new BlobServiceClient(new Uri(blobAccountUri!), credential);
             var searchIndexClient = new SearchIndexClient(new Uri(searchEndpoint!), credential);
-            var openAIClient = new AzureOpenAIClient(new Uri(openAiEndpoint!), credential);
-
-            var mcpTriageRagLogger = loggerFactory.CreateLogger<McpTriageRag>();
-            var mcpTriageRag = new McpTriageRag(mcpTriageRagLogger, openAIClient, searchIndexClient);
 
             var configWrapper = new Configuration(configuration);
             var repoConfig = configWrapper.GetForRepository(repository);
+
+            var openAIClient = new OpenAIClient(
+            new BearerTokenPolicy(credential, "https://ai.azure.com/.default"),
+            new OpenAIClientOptions
+            {
+                Endpoint = new Uri($"{openAiEndpoint.TrimEnd('/')}/openai/v1/")
+            }
+            );
+
+            var triageRagLogger = loggerFactory.CreateLogger<TriageRag>();
+            var triageRag = new TriageRag(triageRagLogger, openAIClient, searchIndexClient);
+            
+            var mcpTriageRagLogger = loggerFactory.CreateLogger<McpTriageRag>();
+            var mcpTriageRag = new McpTriageRag(mcpTriageRagLogger, triageRag);
 
             logger.LogInformation("Creating McpOpenAiLabeler with configuration:");
             logger.LogInformation("  IndexName: {IndexName}", repoConfig.IndexName);
@@ -156,18 +168,18 @@ public class Program
             logger.LogInformation("  SourceCount: {SourceCount}", repoConfig.SourceCount);
 
             var labelerLogger = loggerFactory.CreateLogger<LabelerFactory>();
-            var labeler = new McpOpenAiLabeler(labelerLogger, repoConfig, mcpTriageRag, blobClient);
+            var labeler = new McpOpenAiLabeler(labelerLogger, repoConfig, mcpTriageRag, triageRag, blobClient);
 
-            return Task.FromResult<ILabeler?>(labeler);
+            return labeler;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating labeler: {Message}", ex.Message);
-            return Task.FromResult<ILabeler?>(null);
+            return null;
         }
     }
 
-    static async Task ExtractRealIssuesAsync(IConfiguration configuration, ILogger logger)
+    static async Task ExtractRealIssuesAsync(IConfiguration configuration, ILogger logger, DefaultAzureCredential credential)
     {
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
@@ -185,7 +197,6 @@ public class Program
         logger.LogInformation("Connecting to Azure Search: {Endpoint}", searchEndpoint);
         logger.LogInformation("Index: {IndexName}", indexName);
 
-        var credential = new DefaultAzureCredential();
         var searchClient = new Azure.Search.Documents.SearchClient(new Uri(searchEndpoint), indexName, credential);
 
         var filter = "DocumentType eq 'Issue' and Server ne null and Tool ne null";
@@ -202,8 +213,9 @@ public class Program
         logger.LogInformation("Executing search query...");
         var searchResults = await searchClient.SearchAsync<SearchDocument>("*", searchOptions);
 
-        var seenUrls = new HashSet<string>();
-        var issues = new List<McpTestCase>();
+        var estimatedCapacity = (int)(searchResults.Value.TotalCount ?? 500);
+        var seenUrls = new HashSet<string>(estimatedCapacity);
+        var issues = new List<McpTestCase>(estimatedCapacity);
 
         try{
             await foreach (var result in searchResults.Value.GetResultsAsync().WithCancellation(cts.Token))
@@ -269,9 +281,9 @@ public class Program
             Console.WriteLine($"  {tool}: {count}");
     }
 
-    static List<McpTestCase> LoadRealIssues(string filePath)
+    static async Task<List<McpTestCase>> LoadRealIssuesAsync(string filePath)
     {
-        var json = File.ReadAllText(filePath);
+        var json = await File.ReadAllTextAsync(filePath);
         var testCases = JsonSerializer.Deserialize<List<McpTestCase>>(json)
             ?? throw new InvalidOperationException($"Failed to parse {filePath}");
 

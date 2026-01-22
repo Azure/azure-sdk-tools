@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);OPENAI001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,11 +15,13 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="$(MicrosoftAzureFunctionsWorkerExtensionsHttpAspNetCoreVersion)" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="$(MicrosoftApplicationInsightsWorkerServiceVersion)" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="$(MicrosoftAzureFunctionsWorkerApplicationInsightsVersion)" />
-    <PackageReference Include="Azure.AI.OpenAI" Version="$(AzureAIOpenAIVersion)" />
+    <PackageReference Include="OpenAI" Version="2.8.0" />
+    <PackageReference Include="Azure.Core" Version="1.50.0" />
     <PackageReference Include="Azure.Search.Documents" Version="$(AzureSearchDocumentsVersion)" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtensionsConfigurationVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="$(MicrosoftExtensionsConfigurationAzureAppConfigurationVersion)" />
+    <PackageReference Include="System.ClientModel" Version="1.8.1" />
   </ItemGroup>
 
   <ItemGroup>

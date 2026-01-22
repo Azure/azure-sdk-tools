@@ -4,26 +4,26 @@
 using Azure.Search.Documents;
 using Microsoft.Extensions.Logging;
 using Azure.Search.Documents.Models;
+using OpenAI;
 using OpenAI.Chat;
 using Azure.Search.Documents.Indexes;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
-using Azure.AI.OpenAI;
 
 namespace IssueLabelerService
 {
     public class TriageRag
     {
-        private static AzureOpenAIClient s_openAiClient;
-        private static SearchIndexClient s_searchIndexClient;
-        private ILogger<TriageRag> _logger;
+        private readonly OpenAIClient _openAiClient;
+        private readonly SearchIndexClient _searchIndexClient;
+        private readonly ILogger<TriageRag> _logger;
 
-        public TriageRag(ILogger<TriageRag> logger, AzureOpenAIClient openAiClient, SearchIndexClient searchIndexClient)
+        public TriageRag(ILogger<TriageRag> logger, OpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
-            s_openAiClient = openAiClient;
+            _openAiClient = openAiClient;
             _logger = logger;
-            s_searchIndexClient = searchIndexClient;
+            _searchIndexClient = searchIndexClient;
         }
 
         public async Task<List<IndexContent>> IssueTriageContentIndexAsync(
@@ -67,7 +67,7 @@ namespace IssueLabelerService
             int count,
             string filter = null)
         {
-            SearchClient searchClient = s_searchIndexClient.GetSearchClient(indexName);
+            SearchClient searchClient = _searchIndexClient.GetSearchClient(indexName);
 
             _logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
             SearchOptions options = new SearchOptions
@@ -113,7 +113,7 @@ namespace IssueLabelerService
         public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, string contextBlock = null, BinaryData structure = null)
         {
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
-            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
+            ChatClient chatClient = _openAiClient.GetChatClient(modelName);
             
             ChatCompletionOptions options = new ChatCompletionOptions();
 

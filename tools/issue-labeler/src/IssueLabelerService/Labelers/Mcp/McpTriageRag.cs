@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.AI.OpenAI;
 using OpenAI;
 using Azure.Search.Documents.Indexes;
 using IssueLabelerService;
@@ -17,17 +16,17 @@ namespace IssueLabelerService
     /// <summary>
     /// MCP-specific RAG service with optimizations for MCP issue classification
     /// </summary>
-    public class McpTriageRag : TriageRag
+    public class McpTriageRag
     {
         private readonly ILogger<McpTriageRag> _logger;
+        private readonly TriageRag _triageRag;
         private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(1000);
         public McpTriageRag(
             ILogger<McpTriageRag> logger,
-            AzureOpenAIClient openAiClient,
-            SearchIndexClient searchIndexClient)
-            : base(logger, openAiClient, searchIndexClient)
+            TriageRag triageRag)
         {
             _logger = logger;
+            _triageRag = triageRag;
         }
 
         /// <summary>
@@ -66,7 +65,7 @@ namespace IssueLabelerService
                 _logger.LogDebug("Retrieving labeled MCP issues (Server label required, Tool optional)");
             }
 
-            var results = await IssueTriageContentIndexAsync(
+            var results = await _triageRag.IssueTriageContentIndexAsync(
                 indexName,
                 semanticConfigName,
                 fieldName,
@@ -90,79 +89,41 @@ namespace IssueLabelerService
         {
             try
             {
-                var cleaned = Regex.Replace(query, @"\be\.g\.?,?\s+\w+", "", RegexOptions.IgnoreCase, RegexTimeout);
-                cleaned = Regex.Replace(cleaned, @"\b(like|such\s+as)\s+\w+", "", RegexOptions.IgnoreCase, RegexTimeout);
-                cleaned = Regex.Replace(cleaned, @"\s*\(e\.g\.?,?\s+[^)]+\)", "", RegexOptions.IgnoreCase, RegexTimeout);
-                cleaned = Regex.Replace(cleaned, @"\b(for\s+example|for\s+instance),?\s+\w+", "", RegexOptions.IgnoreCase, RegexTimeout);
-                cleaned = Regex.Replace(cleaned, @"\s{2,}", " ").Trim();
-                return cleaned;
+                var cleaned = query;
+                
+                cleaned = SafeRegex(cleaned, @"\be\.g\.?,?\s+\w+", "");
+                cleaned = SafeRegex(cleaned, @"\b(like|such\s+as)\s+\w+", "");
+                cleaned = SafeRegex(cleaned, @"\s*\(e\.g\.?,?\s+[^)]+\)", "");
+                cleaned = SafeRegex(cleaned, @"\b(for\s+example|for\s+instance),?\s+\w+", "");
+                cleaned = SafeRegex(cleaned, @"\s{2,}", " ").Trim();
+                return cleaned.Trim();
             }
-            catch (RegexMatchTimeoutException)
+            catch (Exception ex)
             {
-                _logger.LogWarning("Regex timeout in CleanToolMentions, returning original query");
+                _logger.LogWarning(ex, "Unexpected error in CleanToolMentions, returning original query");
                 return query;
             }   
         }
 
         /// <summary>
-        /// Get MCP-specific search statistics for debugging
+        /// Safely execute regex replace with timeout and exception handling
         /// </summary>
-        public async Task<McpSearchStats> GetSearchStatsAsync(
-            string indexName,
-            string semanticConfigName,
-            string fieldName,
-            string query,
-            int topK = 50)
+        private string SafeRegex(string input, string pattern, string replacement)
         {
-            var stats = new McpSearchStats();
-
-            // Get raw results without filtering
-            var allResults = await AzureSearchQueryAsync<IndexContent>(
-                indexName,
-                semanticConfigName,
-                fieldName,
-                query,
-                topK,
-                filter: null);
-
-            stats.TotalResults = allResults.Count;
-
-            foreach (var (issue, score) in allResults)
+            try
             {
-                if (issue.Server != null && issue.Tool != null)
-                    stats.LabeledIssues++;
-                else
-                    stats.UnlabeledIssues++;
-
-                if (score >= 0.8)
-                    stats.HighScoreResults++;
-
-                stats.Scores.Add(score);
+                return Regex.Replace(input, pattern, replacement, RegexOptions.IgnoreCase, RegexTimeout);
             }
-
-            return stats;
-        }
-    }
-
-    /// <summary>
-    /// Statistics about MCP search results for debugging and optimization
-    /// </summary>
-    public class McpSearchStats
-    {
-        public int TotalResults { get; set; }
-        public int LabeledIssues { get; set; }
-        public int UnlabeledIssues { get; set; }
-        public int HighScoreResults { get; set; }
-        public List<double> Scores { get; set; } = new List<double>();
-
-        public double AverageScore => Scores.Count > 0 ? Scores.Average() : 0;
-        public double MaxScore => Scores.Count > 0 ? Scores.Max() : 0;
-        public double MinScore => Scores.Count > 0 ? Scores.Min() : 0;
-
-        public override string ToString()
-        {
-            return $"Total: {TotalResults}, Labeled: {LabeledIssues}, Unlabeled: {UnlabeledIssues}, " +
-                   $"High Score (>=0.8): {HighScoreResults}, Avg Score: {AverageScore:F3}";
+            catch (RegexMatchTimeoutException ex)
+            {
+                _logger.LogWarning(ex, "Regex timeout for pattern: {Pattern}", pattern);
+                return input;
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid regex pattern '{Pattern}', skipping this replacement", pattern);
+                return input;
+            }
         }
     }
 }

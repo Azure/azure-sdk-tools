@@ -7,7 +7,8 @@ using Microsoft.Extensions.Hosting;
 using Hubbup.MikLabelModel;
 using Azure.Identity;
 using System;
-using Azure.AI.OpenAI;
+using OpenAI;
+using System.ClientModel.Primitives;
 using OpenAI.Chat;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
@@ -36,15 +37,12 @@ var host = new HostBuilder()
         {
             options.Connect(configEndpoint, credential);
         });
-        // Add Function App Settings (local.settings.json locally, Environment Variables in Azure)
-        // after Azure App Config so they can override any App Config values when needed
         builder.AddConfiguration(functionConfig);
 
         var configRoot = builder.Build();
 
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-
         
         var configService = new Configuration(configRoot);
         services.AddSingleton<Configuration>(configService);
@@ -60,12 +58,24 @@ var host = new HostBuilder()
 
         services.AddSingleton(combinedConfig);
 
-        services.AddSingleton<AzureOpenAIClient>(sp =>
+        services.AddSingleton<OpenAIClient>(sp =>
         {
-            var openAIEndpoint = new Uri(config.OpenAIEndpoint);
-            
-            var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
-            return openAIClient;
+            return new OpenAIClient(
+                new BearerTokenPolicy(
+                    credential,
+                    "https://ai.azure.com/.default"
+                ),
+                new OpenAIClientOptions
+                {
+                    Endpoint = new Uri($"{config.OpenAIEndpoint.TrimEnd('/')}/openai/v1/")
+                }
+            );
+        });
+
+        services.AddSingleton<ChatClient>(sp =>
+        {
+            var openAIClient = sp.GetRequiredService<OpenAIClient>();
+            return openAIClient.GetChatClient(config.LabelModelName);
         });
 
         services.AddSingleton<BlobServiceClient>(sp =>

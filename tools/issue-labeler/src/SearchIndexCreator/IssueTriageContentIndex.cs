@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
+using SearchIndexCreator.RepositoryIndexConfigs;
 
 namespace SearchIndexCreator
 {
@@ -12,6 +13,7 @@ namespace SearchIndexCreator
         private readonly IConfiguration _config;
         private readonly string _embeddingModelName;
         private readonly int _vectorDimensions;
+        private readonly IRepositoryIndexConfig _repoConfig;
 
         public IssueTriageContentIndex(IConfiguration config)
         {
@@ -20,15 +22,16 @@ namespace SearchIndexCreator
             _vectorDimensions = _embeddingModelName?.Equals("text-embedding-3-large", StringComparison.OrdinalIgnoreCase) == true
                 ? 3072
                 : 1536;
+            _repoConfig = RepositoryIndexConfigFactory.Create(_config["repo"]);
         }
-        
+
         /// <summary>
         /// Sets up and runs the indexer.
         /// </summary>
         /// <param name="indexClient">The client to manage the Azure Search index.</param>
         /// <param name="indexerClient">The client to manage the Azure Search indexer.</param>
-        /// <param name="openAIClient">The client to interact with Azure OpenAI.</param>
-        public async Task SetupAndRunIndexer(SearchIndexClient indexClient, SearchIndexerClient indexerClient, AzureOpenAIClient openAIClient)
+        /// <param name="openAIClient">The client to interact with OpenAI.</param>
+        public async Task SetupAndRunIndexer(SearchIndexClient indexClient, SearchIndexerClient indexerClient, OpenAIClient openAIClient)
         {
             try
             {
@@ -46,12 +49,10 @@ namespace SearchIndexCreator
 
                 //Create a skillset
                 Console.WriteLine("Creating/Updating the skillset...");
-                
-                var repo = _config["repo"];
-                var isMcpRepo = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true;
-                var skillset = isMcpRepo ? GetSkillsetForMcp() : GetSkillset();
-                
-                Console.WriteLine($"Using {(isMcpRepo ? "MCP-optimized" : "Azure SDK")} skillset...");
+
+                var skillset = GetSkillset(_repoConfig);
+
+                Console.WriteLine($"Using {_repoConfig.DisplayName} skillset...");
                 await indexerClient.CreateOrUpdateSkillsetAsync(skillset).ConfigureAwait(false);
                 Console.WriteLine("Skillset Created/Updated!");
 
@@ -67,7 +68,7 @@ namespace SearchIndexCreator
                 throw;
             }
         }
-        
+
         /// <summary>
         /// Gets a sample search index with HNSW alorithm, built in vectorizer, semantic search turned on, compression set up, and all needed fields for issues.
         /// </summary>
@@ -253,151 +254,60 @@ namespace SearchIndexCreator
             };
         }
 
-        private SearchIndexerSkillset GetSkillset()
+        private SearchIndexerSkillset GetSkillset(IRepositoryIndexConfig config)
         {
-            return new SearchIndexerSkillset($@"{_config["ContainerName"]}-skillset", new List<SearchIndexerSkill>
-            {     
-                new SplitSkill(
-                    new List<InputFieldMappingEntry>
-                    {
-                        new InputFieldMappingEntry("text") { Source = "/document/Body" }
-                    },
-                    new List<OutputFieldMappingEntry>
-                    {
-                        new OutputFieldMappingEntry("textItems") { TargetName = "pages" }
-                    })
-                {
-                    Context = "/document",
-                    TextSplitMode = TextSplitMode.Pages,
-                    // 10k because token limits are so high but want to experiment with lower chunking.
-                    MaximumPageLength = 1000,
-                    PageOverlapLength = 100,
-                },
-                new AzureOpenAIEmbeddingSkill(
-                    new List<InputFieldMappingEntry>
-                    {
-                        new InputFieldMappingEntry("text") { Source = "/document/pages/*" }
-                    },
-                    new List<OutputFieldMappingEntry>
-                    {
-                        new OutputFieldMappingEntry("embedding") { TargetName = "TextVector" }
-                    }
-                )
-                {
-                    Context = "/document/pages/*",
-                    ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                    ModelName = _embeddingModelName,
-                    DeploymentName = _embeddingModelName
-                }
-            })
+            var mappings = new List<InputFieldMappingEntry>
             {
-                IndexProjection = new SearchIndexerIndexProjection(new[]
-                {
-                    new SearchIndexerIndexProjectionSelector(_config["IndexName"], parentKeyFieldName: "ParentId", sourceContext: "/document/pages/*", mappings: new[]
-                    {
-                        new InputFieldMappingEntry("TextVector")
-                        {
-                            Source = "/document/pages/*/TextVector"
-                        },
-                        new InputFieldMappingEntry("Chunk")
-                        {
-                            Source = "/document/pages/*"
-                        },
-                        new InputFieldMappingEntry("Id")
-                        {
-                            Source = "/document/Id"
-                        },
-                        new InputFieldMappingEntry("Title")
-                        {
-                            Source = "/document/Title"
-                        },
-                        new InputFieldMappingEntry("Service")
-                        {
-                            Source = "/document/Service"
-                        },
-                        new InputFieldMappingEntry("Category")
-                        {
-                            Source = "/document/Category"
-                        },
-                        new InputFieldMappingEntry("Author")
-                        {
-                            Source = "/document/Author"
-                        },
-                        new InputFieldMappingEntry("Repository")
-                        {
-                            Source = "/document/Repository"
-                        },
-                        new InputFieldMappingEntry("CreatedAt")
-                        {
-                            Source = "/document/CreatedAt"
-                        },
-                        new InputFieldMappingEntry("Url")
-                        {
-                            Source = "/document/Url"
-                        },
-                        new InputFieldMappingEntry("CodeOwner")
-                        {
-                            Source = "/document/CodeOwner"
-                        },
-                        new InputFieldMappingEntry("DocumentType")
-                        {
-                            Source = "/document/DocumentType"
-                        },
-                        // Metadata is needed for updating the document (or atleast last modified not sure of the rest)
-                        new InputFieldMappingEntry("MetadataStorageLastModified")
-                        {
-                            Source = "/document/MetadataStorageLastModified"
-                        }
-                    })
-                })
-                {
-                    Parameters = new SearchIndexerIndexProjectionsParameters
-                    {
-                        ProjectionMode = IndexProjectionMode.SkipIndexingParentDocuments
-                    }
-                }
+                new InputFieldMappingEntry("TextVector") { Source = "/document/pages/*/TextVector" },
+                new InputFieldMappingEntry("Chunk") { Source = "/document/pages/*" },
+                new InputFieldMappingEntry("Id") { Source = "/document/Id" },
+                new InputFieldMappingEntry("Title") { Source = "/document/Title" },
+                new InputFieldMappingEntry("Author") { Source = "/document/Author" },
+                new InputFieldMappingEntry("Repository") { Source = "/document/Repository" },
+                new InputFieldMappingEntry("CreatedAt") { Source = "/document/CreatedAt" },
+                new InputFieldMappingEntry("Url") { Source = "/document/Url" },
+                new InputFieldMappingEntry("CodeOwner") { Source = "/document/CodeOwner" },
+                new InputFieldMappingEntry("DocumentType") { Source = "/document/DocumentType" },
+                new InputFieldMappingEntry("MetadataStorageLastModified") { Source = "/document/MetadataStorageLastModified" }
             };
-        }
 
-        private SearchIndexerSkillset GetSkillsetForMcp()
-        {
+            // Add repo-specific field mappings
+            mappings.AddRange(config.GetCustomFieldMappings());
+
             return new SearchIndexerSkillset(
                 $"{_config["ContainerName"]}-skillset",
                 new List<SearchIndexerSkill>
                 {
-                    new SplitSkill(
-                        inputs: new List<InputFieldMappingEntry>
-                        {
-                            new InputFieldMappingEntry("text") { Source = "/document/Body" }
-                        },
-                        outputs: new List<OutputFieldMappingEntry>
-                        {
-                            new OutputFieldMappingEntry("textItems") { TargetName = "pages" }
-                        }
-                    )
-                    {
-                        Context = "/document",
-                        TextSplitMode = TextSplitMode.Pages,
-                        MaximumPageLength = 2200,
-                        PageOverlapLength = 250
-                    },
-
-                    new AzureOpenAIEmbeddingSkill(
-                        inputs: new List<InputFieldMappingEntry>
-                        {
-                            new InputFieldMappingEntry("text") { Source = "/document/pages/*" }
-                        },
-                        outputs: new List<OutputFieldMappingEntry>
-                        {
-                            new OutputFieldMappingEntry("embedding") { TargetName = "TextVector" }
-                        }
-                    )
-                    {
-                        Context = "/document/pages/*",
-                        ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                        ModelName = _embeddingModelName,
-                        DeploymentName = _embeddingModelName
-                    }
+            new SplitSkill(
+                inputs: new List<InputFieldMappingEntry>
+                {
+                    new InputFieldMappingEntry("text") { Source = "/document/Body" }
+                },
+                outputs: new List<OutputFieldMappingEntry>
+                {
+                    new OutputFieldMappingEntry("textItems") { TargetName = "pages" }
+                })
+            {
+                Context = "/document",
+                TextSplitMode = TextSplitMode.Pages,
+                MaximumPageLength = config.MaxPageLength,
+                PageOverlapLength = config.PageOverlapLength
+            },
+            new AzureOpenAIEmbeddingSkill(
+                inputs: new List<InputFieldMappingEntry>
+                {
+                    new InputFieldMappingEntry("text") { Source = "/document/pages/*" }
+                },
+                outputs: new List<OutputFieldMappingEntry>
+                {
+                    new OutputFieldMappingEntry("embedding") { TargetName = "TextVector" }
+                })
+            {
+                Context = "/document/pages/*",
+                ResourceUri = new Uri(_config["OpenAIEndpoint"]),
+                ModelName = _embeddingModelName,
+                DeploymentName = _embeddingModelName
+            }
                 })
             {
                 IndexProjection = new SearchIndexerIndexProjection(new[]
@@ -406,22 +316,7 @@ namespace SearchIndexCreator
                         targetIndexName: _config["IndexName"],
                         parentKeyFieldName: "ParentId",
                         sourceContext: "/document/pages/*",
-                        mappings: new[]
-                        {
-                            new InputFieldMappingEntry("TextVector") { Source = "/document/pages/*/TextVector" },
-                            new InputFieldMappingEntry("Chunk") { Source = "/document/pages/*" },
-                            new InputFieldMappingEntry("Id") { Source = "/document/Id" },
-                            new InputFieldMappingEntry("Title") { Source = "/document/Title" },
-                            new InputFieldMappingEntry("Server") { Source = "/document/Server" },
-                            new InputFieldMappingEntry("Tool") { Source = "/document/Tool" },
-                            new InputFieldMappingEntry("Author") { Source = "/document/Author" },
-                            new InputFieldMappingEntry("Repository") { Source = "/document/Repository" },
-                            new InputFieldMappingEntry("CreatedAt") { Source = "/document/CreatedAt" },
-                            new InputFieldMappingEntry("Url") { Source = "/document/Url" },
-                            new InputFieldMappingEntry("CodeOwner") { Source = "/document/CodeOwner" },
-                            new InputFieldMappingEntry("DocumentType") { Source = "/document/DocumentType" },
-                            new InputFieldMappingEntry("MetadataStorageLastModified") { Source = "/document/MetadataStorageLastModified" }
-                        })
+                        mappings: mappings.ToArray())
                 })
                 {
                     Parameters = new SearchIndexerIndexProjectionsParameters

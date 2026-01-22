@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -11,8 +12,8 @@ using Azure.Storage.Blobs;
 using IssueLabeler.Shared;
 using IssueLabelerService;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace IssueLabelerService
 {
@@ -20,43 +21,61 @@ namespace IssueLabelerService
     /// Experimental V2 labeler with structured tool descriptions instead of verbose rules.
     /// Hypothesis: Explicit label semantics will generalize better than few-shot examples.
     /// </summary>
-    public class McpOpenAiLabelerV2 : ILabeler
+    public class McpOpenAiLabeler : ILabeler
     {
         private readonly ILogger<LabelerFactory> _logger;
         private readonly RepositoryConfiguration _config;
-        private readonly McpTriageRag _ragService;
+        private readonly McpTriageRag _mcpRagService;
+        private readonly TriageRag _triageRag;
         private readonly BlobServiceClient _blobClient;
 
-        public McpOpenAiLabelerV2(
+        private static readonly ConcurrentDictionary<string, (List<McpLabel> Labels, DateTime FetchedAt)> _labelCache = new();
+        private static readonly TimeSpan LabelCacheDuration = TimeSpan.FromHours(24);
+        private static readonly Regex s_tagPattern = new(@"\[([A-Za-z]+)\]", RegexOptions.Compiled);
+        public McpOpenAiLabeler(
             ILogger<LabelerFactory> logger,
             RepositoryConfiguration config,
             McpTriageRag ragService,
+            TriageRag triageRag,
             BlobServiceClient blobClient)
         {
             _logger = logger;
             _config = config;
-            _ragService = ragService;
+            _mcpRagService = ragService;
+            _triageRag = triageRag;
             _blobClient = blobClient;
         }
 
         public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
             var modelName = _config.LabelModelName;
+            JsonDocument parsed;
 
-            var searchContentResults = await GetSearchContentResults(issue);
+            var searchTask = GetSearchContentResults(issue);
+            var labelsTask = GetMcpLabelsAsync(issue.RepositoryName);
 
-            var allLabels = (await GetMcpLabelsAsync(issue.RepositoryName)).ToList();
-            var serverLabels = allLabels
-                .Where(l => string.Equals(l.Type, "Server", StringComparison.OrdinalIgnoreCase))
-                .Select(l => l.Name)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            await Task.WhenAll(searchTask, labelsTask);
 
-            var toolLabels = allLabels
-                .Where(l => string.Equals(l.Type, "Tool", StringComparison.OrdinalIgnoreCase))
-                .Select(l => l.Name)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var searchContentResults = await searchTask;
+            var allLabels = await labelsTask;
+
+            var serverSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var toolSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var label in allLabels)
+            {
+                if (string.Equals(label.Type, "Server", StringComparison.OrdinalIgnoreCase))
+                {
+                    serverSet.Add(label.Name);
+                }
+                else if (string.Equals(label.Type, "Tool", StringComparison.OrdinalIgnoreCase))
+                {
+                    toolSet.Add(label.Name);
+                }
+            }
+
+            var serverLabels = serverSet.ToList();
+            var toolLabels = toolSet.ToList();
 
             if (!serverLabels.Any())
             {
@@ -87,7 +106,7 @@ namespace IssueLabelerService
             var jsonSchema = BuildJsonSchema();
 
             var instructions = _config.LabelInstructions;
-            string rawResult = await _ragService.SendMessageQnaAsync(
+            string rawResult = await _triageRag.SendMessageQnaAsync(
                 instructions,
                 userPrompt,
                 modelName,
@@ -97,22 +116,21 @@ namespace IssueLabelerService
             if (string.IsNullOrWhiteSpace(rawResult))
             {
                 _logger.LogInformation(
-                    "OpenAI MCP labeler V2 returned empty response for issue #{IssueNumber} in {Repository}.",
+                    "OpenAI MCP labeler returned empty response for issue #{IssueNumber} in {Repository}.",
                     issue.IssueNumber,
                     issue.RepositoryName);
                 return new Dictionary<string, string>();
             }
 
-            JObject parsed;
             try
             {
-                parsed = JObject.Parse(rawResult);
+                parsed = JsonDocument.Parse(rawResult);
             }
             catch (JsonException ex)
             {
                 _logger.LogWarning(
                     ex,
-                    "Failed to parse OpenAI MCP labeler V2 JSON for issue #{IssueNumber} in {Repository}. Raw: {Raw}",
+                    "Failed to parse OpenAI MCP labeler JSON for issue #{IssueNumber} in {Repository}. Raw: {Raw}",
                     issue.IssueNumber,
                     issue.RepositoryName,
                     rawResult);
@@ -124,7 +142,7 @@ namespace IssueLabelerService
             if (result.Count == 0)
             {
                 _logger.LogInformation(
-                    "MCP labeler V2 produced no valid labels for issue #{IssueNumber} in {Repository}. Raw: {Raw}",
+                    "MCP labeler produced no valid labels for issue #{IssueNumber} in {Repository}. Raw: {Raw}",
                     issue.IssueNumber,
                     issue.RepositoryName,
                     rawResult);
@@ -132,7 +150,7 @@ namespace IssueLabelerService
             else
             {
                 _logger.LogInformation(
-                    "MCP labeler V2 result for issue #{IssueNumber} in {Repository}: {Labels}",
+                    "MCP labeler result for issue #{IssueNumber} in {Repository}: {Labels}",
                     issue.IssueNumber,
                     issue.RepositoryName,
                     string.Join(", ", result.Select(kv => $"{kv.Key}: {kv.Value}")));
@@ -147,10 +165,9 @@ namespace IssueLabelerService
         private static string ExtractTags(string title)
         {
             var tags = new List<string>();
-            var tagPattern = new System.Text.RegularExpressions.Regex(@"\[([A-Za-z]+)\]");
-            var matches = tagPattern.Matches(title);
+            var matches = s_tagPattern.Matches(title);
 
-            foreach (System.Text.RegularExpressions.Match match in matches)
+            foreach (Match match in matches)
             {
                 tags.Add(match.Groups[1].Value.ToUpperInvariant());
             }
@@ -169,8 +186,8 @@ namespace IssueLabelerService
             - [CONSOLIDATED] → ALWAYS tools-Core, regardless of tool names in the title. These track server-wide routing issues.
             - [ONBOARD] → Find the closest matching tool for the Azure service being requested
             - [BUG] / [BUGBASH] → Analyze where the bug actually occurs
-            - [Tool Description] → Use the specific tool whose description needs improvement
-            - [Remote] → remote-mcp (remote MCP server connectivity)
+            - [TOOL DESCRIPTION] → Use the specific tool whose description needs improvement
+            - [REMOTE] → remote-mcp (remote MCP server connectivity)
             - [BESTPRACTICES] → tools-BestPractices
             ";
         }
@@ -200,6 +217,11 @@ namespace IssueLabelerService
 
         private async Task<IEnumerable<McpLabel>> GetMcpLabelsAsync(string repositoryName)
         {
+            if (_labelCache.TryGetValue(repositoryName, out var cachedEntry) &&
+                DateTime.UtcNow - cachedEntry.FetchedAt < LabelCacheDuration)
+            {
+                return cachedEntry.Labels;
+            }
             var containerClient = _blobClient.GetBlobContainerClient("labels");
             var blobClient = containerClient.GetBlobClient(repositoryName);
 
@@ -212,15 +234,16 @@ namespace IssueLabelerService
             var response = await blobClient.DownloadContentAsync();
             var json = response.Value.Content.ToString();
 
-            var labels = JsonConvert.DeserializeObject<IEnumerable<McpLabel>>(json);
-
+            var labels = JsonSerializer.Deserialize<IEnumerable<McpLabel>>(json);
             if (labels == null)
             {
                 throw new InvalidOperationException(
                     $"Failed to deserialize MCP labels for repository '{repositoryName}'.");
             }
 
-            return labels;
+            var labelList = labels.ToList();
+            _labelCache[repositoryName] = (labelList, DateTime.UtcNow);
+            return labelList;
         }
 
         private async Task<List<IndexContent>> GetSearchContentResults(IssuePayload issue)
@@ -233,11 +256,11 @@ namespace IssueLabelerService
 
             var query = $"Title: {issue.Title}\n\n{issue.Body ?? string.Empty}";
             _logger.LogInformation(
-                "Searching MCP content index '{IndexName}' with query (V2): {Query}",
+                "Searching MCP content index '{IndexName}' with query : {Query}",
                 indexName,
                 query);
 
-            var searchContentResults = await _ragService.SearchMcpIssuesAsync(
+            var searchContentResults = await _mcpRagService.SearchMcpIssuesAsync(
                 indexName,
                 semanticName,
                 fieldName,
@@ -255,7 +278,7 @@ namespace IssueLabelerService
             }
 
             _logger.LogInformation(
-                "Found {Count} MCP issues with score >= {Threshold} for issue #{IssueNumber} in {Repository} (V2).",
+                "Found {Count} MCP issues with score >= {Threshold} for issue #{IssueNumber} in {Repository}.",
                 searchContentResults.Count,
                 scoreThreshold,
                 issue.IssueNumber,
@@ -410,42 +433,42 @@ Return JSON only:
         private static BinaryData BuildJsonSchema()
         {
             var schemaJson = @"
-{
-  ""type"": ""object"",
-  ""properties"": {
-    ""Server"": {
-      ""type"": ""string""
-    },
-    ""Tool"": {
-      ""type"": [""string"", ""null""]
-    },
-    ""ServerConfidenceScore"": {
-      ""type"": ""number""
-    },
-    ""ToolConfidenceScore"": {
-      ""type"": [""number"", ""null""]
-    }
-  },
-  ""required"": [ ""Server"", ""Tool"" ],
-  ""additionalProperties"": false
-}
-";
+            {
+            ""type"": ""object"",
+            ""properties"": {
+                ""Server"": {
+                ""type"": ""string""
+                },
+                ""Tool"": {
+                ""type"": [""string"", ""null""]
+                },
+                ""ServerConfidenceScore"": {
+                ""type"": ""number""
+                },
+                ""ToolConfidenceScore"": {
+                ""type"": [""number"", ""null""]
+                }
+            },
+            ""required"": [ ""Server"", ""Tool"" ],
+            ""additionalProperties"": false
+            }
+            ";
             return BinaryData.FromString(schemaJson);
         }
 
         private Dictionary<string, string> ExtractAndValidateLabels(
             IssuePayload issue,
-            JObject parsed,
+            JsonDocument parsed,
             List<string> serverLabels,
             List<string> toolLabels)
         {
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var root = parsed.RootElement;
+            string server = root.TryGetProperty("Server", out var serverProp) ? serverProp.GetString() ?? string.Empty : string.Empty;
+            string tool = root.TryGetProperty("Tool", out var toolProp) ? toolProp.GetString() ?? string.Empty : string.Empty;
 
-            string server = parsed.Value<string>("Server") ?? string.Empty;
-            string tool = parsed.Value<string>("Tool") ?? string.Empty;
-
-            double serverScore = parsed.Value<double?>("ServerConfidenceScore") ?? 0.0;
-            double toolScore = parsed.Value<double?>("ToolConfidenceScore") ?? 0.0;
+            double serverScore = root.TryGetProperty("ServerConfidenceScore", out var serverScoreProp) ? serverScoreProp.GetDouble() : 0.0;
+            double toolScore = root.TryGetProperty("ToolConfidenceScore", out var toolScoreProp) ? toolScoreProp.GetDouble() : 0.0;
 
             var confidenceThreshold = double.Parse(
                 _config.ConfidenceThreshold,
@@ -454,7 +477,7 @@ Return JSON only:
             if (string.IsNullOrEmpty(server))
             {
                 _logger.LogWarning(
-                    "MCP labeler V2 returned empty Server for issue #{IssueNumber} in {Repository}.",
+                    "MCP labeler returned empty Server for issue #{IssueNumber} in {Repository}.",
                     issue.IssueNumber,
                     issue.RepositoryName);
                 return new Dictionary<string, string>();
@@ -463,7 +486,7 @@ Return JSON only:
             if (!serverLabels.Contains(server, StringComparer.OrdinalIgnoreCase))
             {
                 _logger.LogWarning(
-                    "MCP labeler V2 returned invalid Server '{Server}' for issue #{IssueNumber} in {Repository}. Valid labels: {ValidLabels}",
+                    "MCP labeler returned invalid Server '{Server}' for issue #{IssueNumber} in {Repository}. Valid labels: {ValidLabels}",
                     server,
                     issue.IssueNumber,
                     issue.RepositoryName,
@@ -474,7 +497,7 @@ Return JSON only:
             if (serverScore < confidenceThreshold)
             {
                 _logger.LogInformation(
-                    "MCP labeler V2 ServerConfidenceScore below threshold for issue #{IssueNumber} in {Repository}: {Score:F2} < {Threshold}. Skipping labeling.",
+                    "MCP labeler ServerConfidenceScore below threshold for issue #{IssueNumber} in {Repository}: {Score:F2} < {Threshold}. Skipping labeling.",
                     issue.IssueNumber,
                     issue.RepositoryName,
                     serverScore,
@@ -487,7 +510,7 @@ Return JSON only:
             if (string.IsNullOrEmpty(tool))
             {
                 _logger.LogInformation(
-                    "MCP labeler V2 returned no Tool for issue #{IssueNumber} in {Repository}. Applying Server label only.",
+                    "MCP labeler returned no Tool for issue #{IssueNumber} in {Repository}. Applying Server label only.",
                     issue.IssueNumber,
                     issue.RepositoryName);
                 result["Server"] = server;
@@ -499,7 +522,7 @@ Return JSON only:
             if (!toolIsUnknown && !toolLabels.Contains(tool, StringComparer.OrdinalIgnoreCase))
             {
                 _logger.LogWarning(
-                    "MCP labeler V2 returned invalid Tool '{Tool}' for issue #{IssueNumber} in {Repository}. Valid labels: {ValidLabels}. Server label will still be applied.",
+                    "MCP labeler returned invalid Tool '{Tool}' for issue #{IssueNumber} in {Repository}. Valid labels: {ValidLabels}. Server label will still be applied.",
                     tool,
                     issue.IssueNumber,
                     issue.RepositoryName,
@@ -510,7 +533,7 @@ Return JSON only:
             if (!toolIsUnknown && toolScore < confidenceThreshold)
             {
                 _logger.LogInformation(
-                    "MCP labeler V2 ToolConfidenceScore below threshold for issue #{IssueNumber} in {Repository}: {Score:F2} < {Threshold}. Server label will still be applied.",
+                    "MCP labeler ToolConfidenceScore below threshold for issue #{IssueNumber} in {Repository}: {Score:F2} < {Threshold}. Server label will still be applied.",
                     issue.IssueNumber,
                     issue.RepositoryName,
                     toolScore,
@@ -526,7 +549,7 @@ Return JSON only:
             }
 
             _logger.LogInformation(
-                "MCP labeler V2 predictions for issue #{IssueNumber}: Server='{Server}' ({ServerScore:F2}), Tool='{Tool}' ({ToolScore:F2})",
+                "MCP labeler predictions for issue #{IssueNumber}: Server='{Server}' ({ServerScore:F2}), Tool='{Tool}' ({ToolScore:F2})",
                 issue.IssueNumber,
                 server,
                 serverScore,

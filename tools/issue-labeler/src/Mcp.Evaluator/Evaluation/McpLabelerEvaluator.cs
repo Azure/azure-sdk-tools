@@ -1,8 +1,10 @@
+using System.Net.Http;
 using IssueLabeler.Shared;
 using IssueLabelerService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Azure;
 
 namespace Mcp.Evaluator.Evaluation
 {
@@ -25,7 +27,8 @@ namespace Mcp.Evaluator.Evaluation
         /// </summary>
         public async Task<(List<McpPredictionResult> Results, McpEvaluationMetrics Metrics)> EvaluateAsync(
             List<McpTestCase> testCases,
-            bool stopOnFirstError = false)
+            bool stopOnFirstError = false,
+            CancellationToken cancellationToken = default)
         {
             var results = new List<McpPredictionResult>();
 
@@ -33,9 +36,15 @@ namespace Mcp.Evaluator.Evaluation
 
             foreach (var testCase in testCases)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning("Cancellation requested. Returning partial results ({Count} of {Total} completed).",
+                        results.Count, testCases.Count);
+                    break;
+                }
                 _logger.LogInformation("Testing issue {IssueNumber}: {Title}", testCase.IssueNumber, testCase.Title);
 
-                var result = await EvaluateSingleAsync(testCase);
+                var result = await EvaluateSingleAsync(testCase, cancellationToken);
                 results.Add(result);
 
                 if (result.Error != null)
@@ -64,7 +73,7 @@ namespace Mcp.Evaluator.Evaluation
         /// <summary>
         /// Evaluate a single test case
         /// </summary>
-        private async Task<McpPredictionResult> EvaluateSingleAsync(McpTestCase testCase)
+        private async Task<McpPredictionResult> EvaluateSingleAsync(McpTestCase testCase, CancellationToken cancellationToken = default)
         {
             var result = new McpPredictionResult
             {
@@ -76,11 +85,9 @@ namespace Mcp.Evaluator.Evaluation
                 var issuePayload = testCase.ToIssuePayload();
                 var predictions = await _labeler.PredictLabels(issuePayload);
 
-                // Extract predicted labels
-                result.PredictedServerLabel = predictions.ContainsKey("Server") ? predictions["Server"] : null;
-                result.PredictedToolLabel = predictions.ContainsKey("Tool") ? predictions["Tool"] : null;
+                result.PredictedServerLabel = predictions.TryGetValue("Server", out var server) ? server : null;
+                result.PredictedToolLabel = predictions.TryGetValue("Tool", out var tool) ? tool : null;
 
-                // Check correctness
                 result.ServerCorrect = CheckLabelMatch(
                     result.PredictedServerLabel,
                     testCase.ExpectedServerLabel);
@@ -90,8 +97,19 @@ namespace Mcp.Evaluator.Evaluation
                     testCase.ExpectedToolLabel);
 
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
+                _logger.LogWarning(ex, "HTTP request failed for test case {IssueNumber}", testCase.IssueNumber);
+                result.Error = ex;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogWarning(ex, "Request timed out for test case {IssueNumber}", testCase.IssueNumber);
+                result.Error = ex;
+            }
+            catch (RequestFailedException ex)
+            {
+                _logger.LogWarning(ex, "Azure service request failed for test case {IssueNumber}", testCase.IssueNumber);
                 result.Error = ex;
             }
 

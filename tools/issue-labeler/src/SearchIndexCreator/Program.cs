@@ -4,9 +4,10 @@
 using Microsoft.Extensions.Configuration;
 using Octokit;
 using Azure.Identity;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Azure.Search.Documents.Indexes;
 using System.Text.Json;
+using System.ClientModel.Primitives;
 
 namespace SearchIndexCreator
 {
@@ -71,10 +72,7 @@ namespace SearchIndexCreator
             var repoOwner = repository?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true 
                 ? "microsoft" 
                 : "Azure";
-            List<IssueLabeler.Shared.IssueTriageContent> issueTriageContent;
-            issueTriageContent = await (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase)
-	                ? issueTriageContentRetrieval.RetrieveContentForMcp("microsoft")
-	                : issueTriageContentRetrieval.RetrieveContent("Azure"));
+            var issueTriageContent = await issueTriageContentRetrieval.RetrieveContent(repoOwner);
             Console.WriteLine($"Retrieved {issueTriageContent.Count} search contents from the repository.");
 
             // 2. Upload the search contents to Azure Blob Storage
@@ -84,7 +82,10 @@ namespace SearchIndexCreator
             //  3. Create an Azure Search Index
             var index = new IssueTriageContentIndex(config);
             var credential = new AzureCliCredential();
-            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), credential);
+            var openAIClient = new OpenAIClient(
+                new BearerTokenPolicy(credential, "https://ai.azure.com/.default"),
+                new OpenAIClientOptions {Endpoint = new Uri($"{config["OpenAIEndpoint"].TrimEnd('/')}/openai/v1/")});
+                
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), credential);
             await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);

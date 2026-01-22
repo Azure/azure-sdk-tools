@@ -120,15 +120,6 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     const defaultContent = "```ts\n```";
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
 
-    // Check if tag exists
-    if (!checkGitTagExists(tag)) {
-        logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-        if (file !== "CHANGELOG.md") {
-            fs.writeFileSync(targetFilePath, defaultContent, { encoding: 'utf-8' });
-        }
-        return;
-    }
-
     try {
         if (file === "CHANGELOG.md") {
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
@@ -184,12 +175,6 @@ export async function checkDirectoryExistsInGithub(
 ): Promise<boolean> {
     try {
         const tag = `${packageName}_${version}`;
-
-        // Check if tag exists
-        if (!checkGitTagExists(tag)) {
-            logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-            return false;
-        }
 
         // Get SDK root path
         const sdkRootPath = process.cwd(); // Assuming we're running from SDK root

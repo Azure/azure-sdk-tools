@@ -29,7 +29,7 @@ public static class GoRequirements
         {
             if (ctx.IsLinux) 
             {
-                return ["sudo snap install go"];
+                return ["sudo snap install go --classic"];
             }
            
             return ["Download and install the latest Go version of the compiler from https://go.dev/dl/"];

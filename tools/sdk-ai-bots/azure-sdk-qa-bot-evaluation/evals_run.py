@@ -133,12 +133,25 @@ if __name__ == "__main__":
             }
         )
 
+        knowledge_evaluator = AzureBotReferenceEvaluator(result_key="knowledge_match")
+        knowledge_evaluator_class = EvaluatorClass(
+            "knowledge_match",
+            knowledge_evaluator,
+            {
+                "column_mapping": {
+                    "expected_references": "${data.expected_knowledges}",
+                    "references": "${data.knowledges}"
+                }
+            }
+        )
+
         evaluators = {
             "similarity": similarity_class,
             "groundedness": groundedness_class,
             "response_completeness": response_completion_class,
             "bot_evals": qa_evaluator_class,
             "reference_match": reference_evaluator_class,
+            "knowledge_match": knowledge_evaluator_class,
         }
 
         metrics = {}

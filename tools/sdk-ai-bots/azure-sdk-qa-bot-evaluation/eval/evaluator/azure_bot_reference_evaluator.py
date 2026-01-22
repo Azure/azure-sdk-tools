@@ -2,8 +2,9 @@ from typing import Any, Dict, Set
 from .constants import EVALUATION_PASS_FAIL_MAPPING
 
 class AzureBotReferenceEvaluator:
-    RESULT_KEY = "reference_match"
-    def __init__(self, threshold: float = 1.0, higher_is_better: bool = True):
+    # RESULT_KEY = "reference_match"
+    def __init__(self, result_key: str = "reference_match", threshold: float = 1.0, higher_is_better: bool = True):
+        self._result_key = result_key
         self._threshold = threshold
         self._higher_is_better = higher_is_better
 
@@ -77,7 +78,7 @@ class AzureBotReferenceEvaluator:
         reference_match_score = 1.0  # Default to perfect match if no expected references
 
         result: dict[str, Any] = {}
-        base_key = f"{AzureBotReferenceEvaluator.RESULT_KEY}"
+        base_key = f"{self._result_key}"
         if expected_references:
             exact_matches, unexpected_refs, missing_refs, match_percentage = self._get_reference_matches(
                 expected_references, references

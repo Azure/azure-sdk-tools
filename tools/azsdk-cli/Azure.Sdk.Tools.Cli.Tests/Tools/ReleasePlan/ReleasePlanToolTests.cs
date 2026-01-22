@@ -1,4 +1,5 @@
 using Moq;
+using Moq.Protected;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
@@ -6,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -20,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private IEnvironmentHelper environmentHelper;
         private ReleasePlanTool releasePlanTool;
         private IInputSanitizer inputSanitizer;
+        private HttpClient httpClient;
 
         [SetUp]
         public void Setup()
@@ -29,10 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             devOpsService = new MockDevOpsService();
             gitHubService = new MockGitHubService();
             inputSanitizer = new InputSanitizer();
-
-            var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
-            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
-            typeSpecHelper = typeSpecHelperMock.Object;
+            httpClient = new Mock<HttpClient>().Object;
 
             var userHelperMock = new Mock<IUserHelper>();
             userHelperMock.Setup(x => x.GetUserEmail()).ReturnsAsync("test@example.com");
@@ -44,7 +44,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             var gitHelperMock = new Mock<IGitHelper>();
             gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
+            gitHelperMock.Setup(x => x.GetRepoRemoteUri(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute))))
+                .Returns(new Uri("https://github.com/Azure/azure-rest-api-specs.git"));
+            gitHelperMock.Setup(x => x.DiscoverRepoRoot(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute))))
+                .Returns((string path) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
             gitHelper = gitHelperMock.Object;
+
+            typeSpecHelper = new TypeSpecHelper(gitHelper);
 
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
@@ -54,7 +60,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 userHelper,
                 gitHubService,
                 environmentHelper,
-                inputSanitizer);
+                inputSanitizer,
+                httpClient);
         }
 
         [Test]
@@ -107,31 +114,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.True(releaseplan.ResponseError.Contains("Invalid API version"));
         }
 
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "2025-03-21", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "stable")]
         [Test]
-        public async Task Test_Create_releasePlan_with_valid_inputs()
+        public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string apiVersion, string prUrl, string sdkType)
         {
-            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var result = await releasePlanTool.CreateReleasePlan(
+                typeSpecPath, 
+                targetMonth, 
+                "12345678-1234-5678-9012-123456789012", 
+                "12345678-1234-5678-9012-123456789012", 
+                apiVersion, 
+                prUrl, 
+                sdkType, 
+                isTestReleasePlan: true);
 
-            var releasePlanTasks = new[]{
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview", isTestReleasePlan: true),
-                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA", isTestReleasePlan: true),
-            };
-
-            var releasePlanResults = await Task.WhenAll(releasePlanTasks);
-
-            var releasePlans = releasePlanResults
-                .Select(r => r.ReleasePlanDetails as ReleasePlanDetails)
-                .ToList();
-
-            foreach (var plan in releasePlans)
-            {
-                Assert.IsNotNull(plan);
-                Assert.IsNotNull(plan.WorkItemId);
-                Assert.IsNotNull(plan.ReleasePlanId);
-                Assert.IsNotNull(plan.ReleasePlanLink);
-            }
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.IsNotNull(result.ReleasePlanDetails);
+            Assert.IsNotNull(result.ReleasePlanDetails.WorkItemId);
+            Assert.IsNotNull(result.ReleasePlanDetails.ReleasePlanId);
+            Assert.IsNotNull(result.ReleasePlanDetails.ReleasePlanLink);
         }
 
         [Test]
@@ -149,7 +154,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 userHelper,
                 gitHubService,
                 environmentHelperMock.Object,
-                inputSanitizer);
+                inputSanitizer,
+                httpClient);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -165,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 isTestReleasePlan: false); // This should be overridden to true by environment variable
 
             // Assert
-            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);
@@ -190,7 +196,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 userHelper,
                 gitHubService,
                 environmentHelperMock.Object,
-                inputSanitizer);
+                inputSanitizer,
+                httpClient);
 
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
@@ -206,7 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 isTestReleasePlan: false);
 
             // Assert
-            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanDetails;
+            var releaseplanObj = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releaseplanObj);
             Assert.IsNotNull(releaseplanObj.WorkItemId);
             Assert.IsNotNull(releaseplanObj.ReleasePlanId);
@@ -287,22 +294,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
         }
 
+        [TestCase("Javascript", "@invalid/package/name")]
+        [TestCase("Go", "invalid/package/name")]
         [Test]
-        public async Task Test_Update_SDK_Details_single_invalid_package_name()
+        public async Task Test_Update_SDK_Details_single_invalid_package_name(string language, string package)
         {
-            var languagePackageMap = new Dictionary<string, string>
-            {
-                { "Javascript", "@invalid/package/name" },
-                { "Go", "invalid/package/name" },
-            };
-
-            foreach (var (language, package) in languagePackageMap)
-            {
-                string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
-                var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
-                Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
-                Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
-            }
+            string sdkDetails = $"[{{\"language\":\"{language}\",\"packageName\":\"{package}\"}}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.ResponseError, Does.Contain("Unsupported package name"));
+            Assert.That(updateStatus.ResponseError, Does.Contain($"{language} -> {package}"));
         }
 
         [Test]
@@ -323,28 +323,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
         }
 
+        [TestCase("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345")]
+        [TestCase(".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345")]
+        [TestCase("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
+        [TestCase("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345")]
+        [TestCase("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345")]
+        [TestCase("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345")]
         [Test]
-        public async Task Test_link_sdk_pull_request_to_release_plan()
+        public async Task Test_link_sdk_pull_request_to_release_plan(string language, string pullRequestUrl)
         {
-            var cases = new (string language, string pullRequestUrl)[]
-            {
-                ("Python", "https://github.com/Azure/azure-sdk-for-python/pull/12345"),
-                (".NET", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("Dotnet", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("csharp", "https://github.com/Azure/azure-sdk-for-net/pull/12345"),
-                ("Javascript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
-                ("typescript", "https://github.com/Azure/azure-sdk-for-js/pull/12345"),
-                ("Java", "https://github.com/Azure/azure-sdk-for-java/pull/12345"),
-                ("Go", "https://github.com/Azure/azure-sdk-for-go/pull/12345"),
-            };
-
-            foreach (var (language, pullRequestUrl) in cases)
-            {
-                var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
-                Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
-                Assert.That(response.Language, Is.Not.EqualTo(Models.SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
-            }
+            var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
+            Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
+            Assert.That(response.Language, Is.Not.EqualTo(Models.SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
         }
 
         [Test]
@@ -431,6 +424,201 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(response.ResponseError);
             Assert.That(response.ResponseError, Does.Contain("Invalid spec pull request URL"));
             Assert.That(response.ResponseError, Does.Contain("azure-rest-api-specs"));
+        }
+
+        [Test]
+        public async Task Test_list_overdue_release_plans_notify_without_emailer_uri()
+        {
+            var response = await releasePlanTool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "");
+            Assert.IsNotNull(response);
+            Assert.IsNotNull(response.ResponseError);
+            Assert.That(response.ResponseError, Does.Contain("Emailer URI is required"));
+        }
+
+        [Test]
+        public async Task Test_notification_includes_correct_missing_sdks()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 200,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "valid@example.com",
+                IsManagementPlane = true,
+                IsDataPlane = false,
+                SDKReleaseMonth = "January 2026",
+                ReleasePlanLink = "https://example.com/releaseplan/200",
+                SDKInfo =
+                [
+                    new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
+                    new SDKInfo { Language = "Python", ReleaseStatus = "Released", ReleaseExclusionStatus = "Not applicable" },
+                    new SDKInfo { Language = ".NET", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
+                ]
+            };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync()).ReturnsAsync([plan]);
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var capturedBody = "";
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
+                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                });
+
+            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient);
+
+            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
+
+            Assert.That(capturedBody, Does.Contain("Java"));
+            Assert.That(capturedBody, Does.Contain(".NET"));
+            Assert.That(capturedBody, Does.Not.Contain("Python")); // Released, should not be in missing list
+        }
+
+        [Test]
+        public async Task Test_notification_excludes_approved_and_requested_languages()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 201,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "valid@example.com",
+                IsManagementPlane = true,
+                IsDataPlane = false,
+                SDKReleaseMonth = "January 2026",
+                ReleasePlanLink = "https://example.com/releaseplan/201",
+                SDKInfo =
+                [
+                    new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
+                    new SDKInfo { Language = "Python", ReleaseStatus = "", ReleaseExclusionStatus = "Approved" },
+                    new SDKInfo { Language = ".NET", ReleaseStatus = "", ReleaseExclusionStatus = "Requested" }
+                ]
+            };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync()).ReturnsAsync([plan]);
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var capturedBody = "";
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
+                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                });
+
+            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient);
+
+            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
+
+            Assert.That(capturedBody, Does.Contain("Java"));
+            Assert.That(capturedBody, Does.Not.Contain("Python")); // Approved exclusion
+            Assert.That(capturedBody, Does.Not.Contain(".NET")); // Requested exclusion
+        }
+
+        [Test]
+        public async Task Test_notification_excludes_go_for_dataplane()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 202,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "valid@example.com",
+                IsDataPlane = true,
+                IsManagementPlane = false,
+                SDKReleaseMonth = "January 2026",
+                ReleasePlanLink = "https://example.com/releaseplan/202",
+                SDKInfo =
+                [
+                    new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
+                    new SDKInfo { Language = "Go", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
+                ]
+            };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync()).ReturnsAsync([plan]);
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var capturedBody = "";
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
+                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                });
+
+            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient);
+
+            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
+
+            Assert.That(capturedBody, Does.Contain("Java"));
+            Assert.That(capturedBody, Does.Not.Contain("Go")); // Filtered for Data Plane
+            Assert.That(capturedBody, Does.Contain("Data Plane"));
+        }
+
+        [Test]
+        public async Task Test_notification_includes_go_for_management_plane()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 203,
+                Owner = "Test Owner",
+                ReleasePlanSubmittedByEmail = "valid@example.com",
+                IsManagementPlane = true,
+                IsDataPlane = false,
+                SDKReleaseMonth = "January 2026",
+                ReleasePlanLink = "https://example.com/releaseplan/203",
+                SDKInfo =
+                [
+                    new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
+                    new SDKInfo { Language = "Go", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" }
+                ]
+            };
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync()).ReturnsAsync([plan]);
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var capturedBody = "";
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var payload = JsonSerializer.Deserialize<JsonElement>(content);
+                    capturedBody = payload.GetProperty("Body").GetString() ?? "";
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                });
+
+            var testHttpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, testHttpClient);
+
+            await tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://test.com/email");
+
+            Assert.That(capturedBody, Does.Contain("Java"));
+            Assert.That(capturedBody, Does.Contain("Go")); // Included for Management Plane
+            Assert.That(capturedBody, Does.Contain("Management Plane"));
         }
     }
 }

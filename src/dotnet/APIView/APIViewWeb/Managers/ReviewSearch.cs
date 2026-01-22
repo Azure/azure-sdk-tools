@@ -17,22 +17,22 @@ using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers;
 
-public class ResolvePackage : IResolvePackage
+public class ReviewSearch : IReviewSearch
 {
     private readonly IAPIRevisionsManager _apiRevisionsManager;
-    private readonly ILogger<ResolvePackage> _logger;
+    private readonly ILogger<ReviewSearch> _logger;
     private readonly IReviewManager _reviewManager;
     private readonly ICopilotAuthenticationService _copilotAuthService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _copilotEndpoint;
 
-    public ResolvePackage(
+    public ReviewSearch(
         IReviewManager reviewManager,
         IAPIRevisionsManager apiRevisionsManager,
         ICopilotAuthenticationService copilotAuthService,
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        ILogger<ResolvePackage> logger)
+        ILogger<ReviewSearch> logger)
     {
         _reviewManager = reviewManager;
         _apiRevisionsManager = apiRevisionsManager;

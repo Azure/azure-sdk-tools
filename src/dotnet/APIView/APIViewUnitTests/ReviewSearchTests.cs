@@ -19,21 +19,21 @@ using Xunit;
 
 namespace APIViewUnitTests;
 
-public class ResolvePackageTests
+public class ReviewSearchTests
 {
     private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
-    private readonly Mock<ILogger<ResolvePackage>> _mockLogger;
+    private readonly Mock<ILogger<ReviewSearch>> _mockLogger;
     private readonly Mock<IReviewManager> _mockReviewManager;
     private readonly Mock<ICopilotAuthenticationService> _mockCopilotAuthService;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IConfiguration> _mockConfiguration;
-    private readonly ResolvePackage package;
+    private readonly ReviewSearch package;
 
-    public ResolvePackageTests()
+    public ReviewSearchTests()
     {
         _mockReviewManager = new Mock<IReviewManager>();
         _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
-        _mockLogger = new Mock<ILogger<ResolvePackage>>();
+        _mockLogger = new Mock<ILogger<ReviewSearch>>();
         _mockCopilotAuthService = new Mock<ICopilotAuthenticationService>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockConfiguration = new Mock<IConfiguration>();
@@ -41,7 +41,7 @@ public class ResolvePackageTests
         _mockConfiguration.Setup(x => x["CopilotServiceEndpoint"]).Returns("https://copilot.test");
         _mockCopilotAuthService.Setup(x => x.GetAccessTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync("test-token");
 
-        package = new ResolvePackage(
+        package = new ReviewSearch(
             _mockReviewManager.Object,
             _mockApiRevisionsManager.Object,
             _mockCopilotAuthService.Object,

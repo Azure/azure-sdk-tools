@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
-using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers.Interfaces
 {
-    public interface IResolvePackage
+    public interface IReviewSearch
     { 
         Task<ResolvePackageResponse> ResolvePackageQuery(
             string packageQuery,

@@ -37,6 +37,7 @@ from src._apiview import (
     get_apiview_cosmos_client,
     get_approvers,
     get_comments_in_date_range,
+    resolve_package,
 )
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
@@ -766,6 +767,21 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
+def resolve_package_info(package_query: str, language: str, version: str = None, environment: str = "production"):
+    """
+    Resolves package information from a package query and language.
+    Returns the package name, review ID, and revision ID.
+    """
+    result = resolve_package(
+        package_query=package_query, language=language, version=version, environment=environment
+    )
+
+    if result:
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"No package found matching '{package_query}' for language '{language}'")
+
+
 def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
     """Generate a report of APIView metrics between two dates."""
     environment = os.getenv("ENVIRONMENT_NAME", None)
@@ -1090,6 +1106,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
             g.command("analyze-comments", "analyze_comments")
+            g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -1439,6 +1456,35 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Language to filter comments (e.g., python)",
                 choices=ANALYZE_COMMENT_LANGUAGES,
                 options_list=("--language", "-l"),
+            )
+        with ArgumentsContext(self, "apiview resolve-package") as ac:
+            ac.argument(
+                "package_query",
+                type=str,
+                help="The package name or description to search for.",
+                options_list=["--package", "-p"],
+            )
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the package.",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "version",
+                type=str,
+                help="Optional version to filter by. If not provided, gets the latest revision.",
+                options_list=["--version", "-v"],
+                default=None,
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

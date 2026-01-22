@@ -470,6 +470,7 @@ export async function cleanUpPackageDirectory(
             if (pipelineRunMode) {
                 // Perform clean up by the emitter in Release/Local modes (src folder)
                 logger.info(`[HighLevelClient] Skipping cleanup in ${runMode} mode - emitter handles cleanup for: ${packageDirectory}`);
+                await cleanUpDirectory(packageDirectory, ["test","assets.json"]);
                 return;
             } else {
                 // clean up everything in SpecPullRequest/Batch modes,

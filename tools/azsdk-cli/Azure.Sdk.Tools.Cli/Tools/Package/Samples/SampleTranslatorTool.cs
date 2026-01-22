@@ -353,7 +353,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             var originalsByName = batchList.ToDictionary(
                 sample => Path.GetFileName(sample.FilePath),
                 sample => sample,
-                StringComparer.OrdinalIgnoreCase);
+                StringComparer.Ordinal);
 
             // Build samples context for the batch
             var samplesContext = new StringBuilder();

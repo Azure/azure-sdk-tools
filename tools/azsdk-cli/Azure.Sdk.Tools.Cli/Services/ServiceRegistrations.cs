@@ -11,10 +11,10 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -86,13 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
 
-            // Telemetry
-            services.AddSingleton<ITelemetryService, TelemetryService>();
-            services.ConfigureOpenTelemetry();
-
-            // Add HttpClient
             services.AddHttpClient();
-
             services.AddAzureClients(clientBuilder =>
             {
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection

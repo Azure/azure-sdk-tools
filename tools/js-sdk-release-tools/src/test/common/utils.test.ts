@@ -412,7 +412,7 @@ describe("cleanUpPackageDirectory", () => {
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
         
         try {            
-            // Run the function with Release mode
+            // Run the function with Release mode (representing pipeline run modes)
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
             // Verify that cleanup was skipped - all files should still exist

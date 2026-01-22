@@ -1,6 +1,6 @@
-<div class="review-toolbar d-flex align-items-center gap-3 ps-2 py-1 pe-0">
+<div class="review-toolbar d-flex align-items-center ps-2 py-1 pe-2">
     <!-- Diff Revision Dropdown -->
-    <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center">
+    <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center me-3">
         <label class="small fw-semibold me-2" for="diff-api-revision-select">Diff :</label>
         <p-select
             [options]="diffApiRevisionsMenu"
@@ -77,12 +77,12 @@
     </span>
 
     <!-- Diff Style Toggle -->
-    <span *ngIf="isDiffView" class="d-flex align-items-center diff-style-toggle-wrapper">
+    <span *ngIf="isDiffView" class="d-flex align-items-center diff-style-toggle-wrapper me-3">
         <p-selectButton (onChange)="onDiffStyleChange($event)" [options]="diffStyleOptions" [(ngModel)]="selectedDiffStyle" [disabled]="!contentHasDiff" optionLabel="label" optionValue="value" styleClass="neutral-toggle-group"></p-selectButton>
     </span>
 
-    <!-- Search Bar -->
-    <span class="ms-auto d-flex align-items-center gap-2">
+    <!-- Search Bar and Controls -->
+    <div class="ms-auto d-flex align-items-center gap-2">
         <p-iconField iconPosition="left">
             <p-inputIcon styleClass="pi pi-search" />
             <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search" class="review-search-input" data-clarity-region="toolbar-review-search-input" style="width: 200px;"/>
@@ -101,12 +101,12 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-    </span>
-
-    <!-- Settings Gear Icon with Popover -->
-    <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button">
-        <i class="bi bi-gear"></i>
-    </button>
+        
+        <!-- Settings Gear Icon with Popover -->
+        <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button">
+            <i class="bi bi-gear"></i>
+        </button>
+    </div>
     <p-popover #settingsPanel styleClass="settings-panel">
         <ng-template pTemplate="content">
             <div class="settings-content p-3">

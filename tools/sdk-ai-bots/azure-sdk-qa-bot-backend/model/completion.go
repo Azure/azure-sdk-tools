@@ -86,6 +86,7 @@ type CompletionReq struct {
 	WithFullContext *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
 	WithPreprocess  *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
 	AdditionalInfos []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
+	Intention       *IntentionResult `json:"intention,omitempty" jsonschema:"omitempty,description=Optional intention fields that override LLM intention recognition results"`
 }
 
 type CompletionResp struct {
@@ -116,12 +117,12 @@ const (
 )
 
 type IntentionResult struct {
-	Question           string `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category           string `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType           string `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
-	NeedsRagProcessing bool   `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
-	Scope              Scope  `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
-	Plane              Plane  `json:"plane,omitempty" jsonschema:"omitempty,description=The plane for filtering"`
+	Question           string  `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category           string  `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType           *string `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	NeedsRagProcessing bool    `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
+	Scope              *Scope  `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	Plane              *Plane  `json:"plane,omitempty" jsonschema:"omitempty,description=The plane for filtering"`
 }
 
 type TenantRoutingResult struct {

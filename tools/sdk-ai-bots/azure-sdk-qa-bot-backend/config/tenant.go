@@ -1,6 +1,9 @@
 package config
 
-import "github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+import (
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+)
 
 type TenantConfig struct {
 	Sources                 []model.Source
@@ -10,6 +13,7 @@ type TenantConfig struct {
 	IntentionPromptTemplate string
 	KeywordReplaceMap       map[string]string
 	EnableRouting           bool
+	DefaultScope            *model.Scope
 }
 
 var typespecSources = []model.Source{
@@ -41,6 +45,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate:          "language_python/qa.md",
 		IntentionPromptTemplate: "language_python/intention.md",
 		AgenticSearchPrompt:     "language_python/agentic_search.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_DotnetChannelQaBot: {
 		Sources: append([]model.Source{model.Source_AzureSDKForNetDocs, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
@@ -50,6 +55,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_GolangChannelQaBot: {
 		Sources: append([]model.Source{model.Source_AzureSDKForGo, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
@@ -59,6 +65,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_JavaChannelQaBot: {
 		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKForJavaWiki, model.Source_AzureSDKGuidelines, model.Source_AutorestJava, model.Source_AzureSDKDocsEng}, typespecSources...),
@@ -68,6 +75,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_JavaScriptChannelQaBot: {
 		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
@@ -77,6 +85,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_AzureSDKQaBot: {
 		PromptTemplate: "typespec/qa.md",
@@ -86,18 +95,21 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_AzureSDKOnboarding: {
 		PromptTemplate:          "azure_sdk_onboarding/qa.md",
 		Sources:                 []model.Source{model.Source_AzureSDKDocsEng},
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_GeneralQaBot: {
 		PromptTemplate:          "general/qa.md",
 		IntentionPromptTemplate: "general/intention.md",
 		AgenticSearchPrompt:     "general/agentic_search.md",
 		EnableRouting:           true,
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
@@ -108,6 +120,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		IntentionPromptTemplate: "api_spec_review/intention.md",
 		AgenticSearchPrompt:     "api_spec_review/agentic_search.md",
 		EnableRouting:           true,
+		DefaultScope:            to.Ptr(model.Scope_Branded),
 	},
 }
 

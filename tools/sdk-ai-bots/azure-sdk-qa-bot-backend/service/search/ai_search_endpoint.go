@@ -102,7 +102,7 @@ func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([
 	return httpResp.Value, nil
 }
 
-func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string, scope model.Scope, plane model.Plane) ([]model.Index, error) {
+func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string, scope *model.Scope, plane *model.Plane) ([]model.Index, error) {
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
@@ -315,7 +315,7 @@ func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, hierarchy m
 	return subChunks
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string, scope model.Scope, plane model.Plane) (*model.AgenticSearchResponse, error) {
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string, scope *model.Scope, plane *model.Plane) (*model.AgenticSearchResponse, error) {
 	var messages []model.KnowledgeAgentMessage
 
 	// Use custom prompt if provided, otherwise fall back to default
@@ -394,15 +394,15 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 }
 
 // buildFilter creates a combined OData filter string from sources, source-specific filters, and metadata filters.
-func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope model.Scope, plane model.Plane) string {
+func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.Scope, plane *model.Plane) string {
 	// Build metadata filter from scope and plane
 	var metadataFilters []string
-	if scope == model.Scope_Unbranded {
-		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", scope))
+	if scope != nil && *scope == model.Scope_Unbranded {
+		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", *scope))
 	}
-	if plane != model.Plane_Unknown {
+	if plane != nil && *plane != model.Plane_Unknown {
 		// For a specific plane, include documents with that plane, 'both', or no plane specified.
-		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or or plane eq null)", plane))
+		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or or plane eq null)", *plane))
 	}
 	metadataFilter := strings.Join(metadataFilters, " and ")
 

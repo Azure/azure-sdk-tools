@@ -49,18 +49,8 @@ The question must be classified into one of these categories:
   - How to fix typespec validation check failures?
   **You need to rewrite TypeSpec CI failures to TypeSpec Validation failures**
 
-## Intent Scopes
-The question must be classified into one of these categories:
-
-- **branded**: Questions from internal Azure users about TypeSpec, identified by:
-    - Mentions of Azure-specific concepts: Azure, ARM(Azure Resource Manager), data plane, management (mgmt) plane, TCGC(typespec-client-generator-core) and so on
-    - Discussion of Azure service specifications
-    - Questions about Azure-specific TypeSpec extensions
-
-- **unbranded**: Questions from external users about general TypeSpec usage, such as:
-    - Basic TypeSpec syntax and features
-    - General code generation queries
-    - Questions about core TypeSpec concepts
+## Intent Planes
+{{include "../templates/intention/intent_planes.md"}}
 
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}
@@ -69,8 +59,8 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "scope": string        // Must be one of the intent scopes or unknown
-  "category": string     // Must be one of the intent categories or unknown
+  "plane": string,       // Must be one of the intent planes or unknown, required if scope is branded
+  "category": string,    // Must be one of the intent categories or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 
@@ -81,7 +71,7 @@ Response:
 {
   "question": "How do I migrate Azure Resource Manager (ARM) swagger specifications to TypeSpec?",
   "category": "TypeSpec Migration",
-  "scope": "branded",
+  "plane": "management-plane",
   "needs_rag_processing": true
 }
 
@@ -90,6 +80,6 @@ Response:
 {
   "question": "Good Job",
   "category": "unknown",
-  "scope": "unknown",
+  "plane": "unknown",
   "needs_rag_processing": false
 }

@@ -83,11 +83,11 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
 
 	// 1. Build messages from the openai request
-	llmMessages, reasoningModelMessages := s.buildMessages(req)
+	llmMessages := s.buildMessages(req)
 
 	// 2. Handle tenant routing if enabled
 	if tenantConfig.EnableRouting {
-		routedTenantID, routed = s.RouteTenant(req.TenantID, reasoningModelMessages)
+		routedTenantID, routed = s.RouteTenant(req.TenantID, llmMessages)
 		if routed {
 			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
 			req.Sources = tenantConfig.Sources
@@ -95,8 +95,35 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 	}
 
-	// 3. Build query for search
-	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
+	// 3. Recognize intention
+	query := req.Message.Content
+	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
+		query = *req.Message.RawContent
+	}
+	intention, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, llmMessages)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+	} else if intention != nil {
+		if len(intention.Question) > 0 {
+			query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
+		}
+		// Apply default scope from tenant config
+		if tenantConfig.DefaultScope != nil {
+			intention.Scope = tenantConfig.DefaultScope
+		}
+
+		// Apply intention override if provided
+		if req.Intention != nil {
+			if req.Intention.Scope != nil {
+				intention.Scope = req.Intention.Scope
+			}
+			if req.Intention.Plane != nil {
+				intention.Plane = req.Intention.Plane
+			}
+		}
+		log.Printf("Intent Result (after override): %+v", intention)
+	}
+	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 
 	var knowledges []model.Knowledge
 	var prompt string
@@ -149,6 +176,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 }
 
 func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
@@ -183,7 +211,7 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 		}
 		return result, nil
 	}
-
+	log.Printf("RecognizaIntention took %f s", time.Since(start).Seconds())
 	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 }
 
@@ -302,7 +330,7 @@ func getImageDataURI(url string) (string, error) {
 	}
 }
 
-func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []azopenai.ChatRequestMessageClassification) {
+func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.ChatRequestMessageClassification {
 	// avoid token limit error, we need to limit the number of messages in the history
 	if len(req.Message.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 		log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
@@ -316,7 +344,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
 	llmMessages := []azopenai.ChatRequestMessageClassification{}
-	reasoningModelMessages := []azopenai.ChatRequestMessageClassification{}
 
 	// process history messages
 	for _, message := range req.History {
@@ -326,12 +353,10 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		if message.Role == model.Role_Assistant {
 			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
 			llmMessages = append(llmMessages, msg)
-			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
 		if message.Role == model.Role_User {
 			msg := &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(content), Name: processName(message.Name)}
 			llmMessages = append(llmMessages, msg)
-			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
 	}
 
@@ -371,7 +396,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					}
 				}
 				llmMessages = append(llmMessages, msg)
-				reasoningModelMessages = append(reasoningModelMessages, msg)
 			} else if info.Type == model.AdditionalInfoType_Image {
 				link, err := getImageDataURI(info.Link)
 				if err != nil {
@@ -401,30 +425,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		Name:    processName(req.Message.Name),
 	}
 	llmMessages = append(llmMessages, msg)
-	reasoningModelMessages = append(reasoningModelMessages, msg)
-	return llmMessages, reasoningModelMessages
-}
-
-func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntentionResult) {
-	query := req.Message.Content
-	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
-		query = *req.Message.RawContent
-	}
-	intentStart := time.Now()
-	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-	} else if intentResult != nil {
-		if len(intentResult.Question) > 0 {
-			query = fmt.Sprintf("category:%s question:%s", intentResult.Category, intentResult.Question)
-		}
-		log.Printf("Intent Result: %+v", intentResult)
-	}
-	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
-	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-	log.Printf("Searching query: %s", utils.SanitizeForLog(query))
-	return query, intentResult
+	return llmMessages
 }
 
 func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowledges []model.Knowledge, promptTemplate string) (string, error) {
@@ -515,15 +516,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	// Extract metadata filters from intention
-	var scope model.Scope
-	var plane model.Plane
-	if intention != nil {
-		scope = intention.Scope
-		plane = intention.Plane
-	}
-
-	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt, scope, plane)
+	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt, intention.Scope, intention.Plane)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -617,15 +610,7 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	// Extract metadata filters from intention
-	var scope model.Scope
-	var plane model.Plane
-	if intention != nil {
-		scope = intention.Scope
-		plane = intention.Plane
-	}
-
-	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter, scope, plane)
+	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter, intention.Scope, intention.Plane)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}

@@ -28,7 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IUserHelper userHelper,
         IGitHubService githubService,
         IEnvironmentHelper environmentHelper,
-        IInputSanitizer inputSanitizer
+        IInputSanitizer inputSanitizer,
+        HttpClient httpClient
     ) : MCPMultiCommandTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [new("release-plan", "Manage release plans in AzureDevops")];
@@ -145,7 +146,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
+        private readonly Option<bool> notifyOwnersOpt = new("--notify-owners")
+        {
+            Description = "Send email notification to owners of overdue release plans",
+            Required = false,
+        };
+
+        private readonly Option<string> azureSDKEmailerUriOpt = new("--emailer-uri")
+        {
+            Description = "The Uri of the app used to send email notifications",
+            Required = false,
+        };
+
         private const string sdkBotEmail = "azuresdk@microsoft.com";
+        private const string sdkApexEmail = "azsdkapex@microsoft.com";
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string NAMESPACE_APPROVAL_REPO = "azure-sdk";
@@ -197,7 +211,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
-            new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline"),
+            new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, }
         ];
 
@@ -246,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await LinkSdkPullRequestToReleasePlan(commandParser.GetValue(languageOpt), commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
 
                 case listOverdueReleasePlansCommandName:
-                    return await ListOverdueReleasePlans();
+                    return await ListOverdueReleasePlans(commandParser.GetValue(notifyOwnersOpt), commandParser.GetValue(azureSDKEmailerUriOpt));
                 
                 case updateApiSpecPullRequestCommandName:
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
@@ -1013,11 +1027,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleasePlanListResponse> ListOverdueReleasePlans()
+        public async Task<ReleasePlanListResponse> ListOverdueReleasePlans(bool notifyOwners = false, string emailerUri = "")
         {
             try
             {
+                if (notifyOwners && string.IsNullOrWhiteSpace(emailerUri))
+                {
+                    return new ReleasePlanListResponse { ResponseError = "Emailer URI is required when notify owners is enabled." };
+                }
                 var releasePlans = await devOpsService.ListOverdueReleasePlansAsync();
+                
+                if (notifyOwners)
+                {
+                    await NotifyOwnersOfOverdueReleasePlans(releasePlans, emailerUri);
+                }
+                
                 return new ReleasePlanListResponse
                 {
                     Message = "List of overdue Release plans:",
@@ -1028,6 +1052,93 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Error retrieving overdue release plans");
                 return new ReleasePlanListResponse { ResponseError = $"An error occurred while retrieving overdue release plans: {ex.Message}" };
+            }
+        }
+
+        private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri)
+        {
+            const string subject = "Action Required: Azure SDKs Not Yet Published for Your Release Plan";
+            
+            foreach (var releasePlan in releasePlans)
+            {
+                var releaseOwnerEmail = releasePlan.ReleasePlanSubmittedByEmail;
+                
+                // Validate email address
+                if (string.IsNullOrWhiteSpace(releaseOwnerEmail) || !Regex.IsMatch(releaseOwnerEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase))
+                {
+                    logger.LogWarning("Skipped notification for Release Plan ID {WorkItemId}: invalid email '{Email}'", 
+                        releasePlan.WorkItemId, releaseOwnerEmail);
+                    continue;
+                }
+
+                var releaseOwnerName = releasePlan.Owner;
+                var plane = releasePlan.IsManagementPlane ? "Management Plane" : "Data Plane";
+                var releasePlanLink = releasePlan.ReleasePlanLink;
+                var releasePlanDate = releasePlan.SDKReleaseMonth;
+                
+                // Identify SDKs not yet released (skip Go for Data Plane and skip excluded languages)
+                var missingSDKs = releasePlan.SDKInfo
+                    .Where(info => (string.IsNullOrEmpty(info.ReleaseStatus) || !string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+                             && (releasePlan.IsManagementPlane || !string.Equals(info.Language, "Go", StringComparison.OrdinalIgnoreCase))
+                             && !string.Equals(info.ReleaseExclusionStatus, "Requested", StringComparison.OrdinalIgnoreCase)
+                             && !string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+                    .Select(info => info.Language)
+                    .ToList();
+                
+                var body = $"""
+                    <html>
+                    <body>
+                        <p>Hello {releaseOwnerName},</p>
+                        <p>Our automation has detected that one or more Azure SDKs generated for your release plan have not yet been published to the required language package managers.</p>
+                        <ul>
+                            <li><strong>Azure SDK Type:</strong> {plane}</li>
+                            <li><strong>SDKs not yet published:</strong> {string.Join(", ", missingSDKs)}</li>
+                            <li><strong>Release Plan:</strong> <a href="{releasePlanLink}">{releasePlanLink}</a></li>
+                            <li><strong>Release Plan Target Release Date:</strong> {releasePlanDate}</li>
+                        </ul>
+                        <p>Per Azure SDK release requirements, all Tier 1 language SDKs must be <strong>published to their respective package managers</strong> before a release plan can be marked as complete.</p>
+                        <p>Until the missing SDKs are published:</p>
+                        <ul>
+                            <li>The release plan cannot be completed in Release Planner.</li>
+                            <li>If this release is in scope for CPEX, Cloud Lifecycle phase KPIs for Public Preview or GA will remain incomplete.</li>
+                        </ul>
+                        <p><strong>Required actions:</strong></p>
+                        <ol>
+                            <li>Publish the missing SDKs to their respective package managers, or</li>
+                            <li>Update the target release date in the release plan, or</li>
+                            <li>If publication is not intended, file an approved exception: <a href="https://eng.ms/docs/products/azure-developer-experience/onboard/request-exception">https://eng.ms/docs/products/azure-developer-experience/onboard/request-exception</a></li>
+                        </ol>
+                        <p>Once publication is complete, this status will clear automatically. Thank you for helping maintain consistent, complete Azure SDK releases across all mandatory Tier 1 languages.</p>
+                        <p>Best regards,</p>
+                        <p>Azure SDK PM Team</p>
+                    </body>
+                    </html>
+                """;
+                
+                await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, subject, body);
+            }
+        }
+
+        private async Task SendEmailNotification(string emailerUri, string to, string cc, string subject, string body)
+        {
+            var emailPayload = new
+            {
+                EmailTo = to,
+                CC = cc,
+                Subject = subject,
+                Body = body
+            };
+            
+            var jsonContent = JsonSerializer.Serialize(emailPayload);
+            
+            using (var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json"))
+            {
+                logger.LogInformation("Sending Email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
+                
+                var response = await httpClient.PostAsync(emailerUri, httpContent);
+                response.EnsureSuccessStatusCode();
+                
+                logger.LogInformation("Successfully sent email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
             }
         }
 

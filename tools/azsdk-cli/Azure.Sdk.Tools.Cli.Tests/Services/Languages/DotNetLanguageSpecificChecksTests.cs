@@ -517,6 +517,15 @@ internal class DotNetLanguageSpecificChecksTests
         (options.Command == "dotnet" && options.Args.Contains("--list-sdks")) ||
         (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("--list-sdks"));
 
+    /// <summary>
+    /// Checks if the ProcessOptions represents a dotnet test command with the specified working directory.
+    /// Handles both Unix (dotnet test) and Windows (cmd.exe /C dotnet test) patterns.
+    /// </summary>
+    private static bool IsDotNetTestCommand(ProcessOptions options, string expectedWorkingDirectory) =>
+        ((options.Command == "dotnet" && options.Args.Contains("test")) ||
+         (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("test"))) &&
+        options.WorkingDirectory == expectedWorkingDirectory;
+
     #endregion
 
     #region HasCustomizations Tests
@@ -597,10 +606,7 @@ public partial class TestClient
         
         _processHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    p.Command == "dotnet" && 
-                    p.Args.Contains("test") &&
-                    p.WorkingDirectory == testsDir),
+                It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, testsDir)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
@@ -613,7 +619,7 @@ public partial class TestClient
         });
         
         _processHelperMock.Verify(x => x.Run(
-            It.Is<ProcessOptions>(p => p.WorkingDirectory == testsDir),
+            It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, testsDir)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -627,10 +633,7 @@ public partial class TestClient
         
         _processHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    p.Command == "dotnet" && 
-                    p.Args.Contains("test") &&
-                    p.WorkingDirectory == tempDir.DirectoryPath),
+                It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
@@ -643,7 +646,7 @@ public partial class TestClient
         });
         
         _processHelperMock.Verify(x => x.Run(
-            It.Is<ProcessOptions>(p => p.WorkingDirectory == tempDir.DirectoryPath),
+            It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

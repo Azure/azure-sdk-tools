@@ -275,5 +275,40 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.Ignore("Live testing disabled for GoLanguageServiceTests: AZSDK_CLI_TEST_AZSDKGO is not set to a Go repo path");
             return "";
         }
+
+        #region HasCustomizations Tests
+
+        [Test]
+        public void HasCustomizations_ReturnsTrue_WhenInternalGenerateDirectoryExists()
+        {
+            var customizationDir = Path.Combine(packagePath, "internal", "generate");
+            Directory.CreateDirectory(customizationDir);
+
+            var result = LangService.HasCustomizations(packagePath, CancellationToken.None);
+
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public void HasCustomizations_ReturnsTrue_WhenTestdataGenerateDirectoryExists()
+        {
+            var customizationDir = Path.Combine(packagePath, "testdata", "generate");
+            Directory.CreateDirectory(customizationDir);
+
+            var result = LangService.HasCustomizations(packagePath, CancellationToken.None);
+
+            Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public void HasCustomizations_ReturnsFalse_WhenNoCustomizationDirectoryExists()
+        {
+            // packagePath is already created without customization directories
+            var result = LangService.HasCustomizations(packagePath, CancellationToken.None);
+
+            Assert.That(result, Is.False);
+        }
+
+        #endregion
     }
 }

@@ -68,7 +68,10 @@ public class PermissionsManagerTests
         EffectivePermissions result = await _manager.GetEffectivePermissionsAsync("testuser");
         result.Should().NotBeNull();
         result.UserId.Should().Be("testuser");
-        result.Roles.Should().BeEmpty();
+        result.Roles.Count.Should().Be(1);
+        result.Roles.First().Should().BeOfType<GlobalRoleAssignment>();
+        ((GlobalRoleAssignment)result.Roles.First()).Role.Should().Be(GlobalRole.SdkTeam);
+
     }
 
     [Fact]

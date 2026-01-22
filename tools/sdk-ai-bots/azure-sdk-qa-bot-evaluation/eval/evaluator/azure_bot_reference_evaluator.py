@@ -54,9 +54,9 @@ class AzureBotReferenceEvaluator:
 
         for expected_ref in expected:
             for actual_ref in actual:
-                if (expected_ref["title"] == actual_ref["title"] and self._normalize_url(expected_ref["url"]) == self._normalize_url(actual_ref["url"])):
-                    expected_in_actual.add(expected_ref)
-                    actual_in_expected.add(actual_ref)
+                if (expected_ref["title"] == actual_ref["title"] and self._normalize_url(expected_ref["link"]) == self._normalize_url(actual_ref["link"])):
+                    expected_in_actual.append(expected_ref)
+                    actual_in_expected.append(actual_ref)
 
         exact_matches = expected_in_actual
         #missing_refs = expected - exact_matches

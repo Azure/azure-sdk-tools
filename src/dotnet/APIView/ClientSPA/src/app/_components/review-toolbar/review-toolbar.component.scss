@@ -144,48 +144,29 @@
   }
 
   .diff-style-toggle-wrapper {
-    width: 250px;
     display: flex;
-
-    ::ng-deep .p-selectbutton {
-      display: flex !important;
-      flex-wrap: nowrap !important;
-      width: 100% !important;
-    }
-
-    ::ng-deep .p-button {
-      flex: 1 1 50% !important;
-      width: 50% !important;
-      min-width: 0 !important;
-      padding: 0 !important;
-
-      /* Flex layout for the button content to ensure single line */
-      display: flex !important;
-      flex-direction: row !important;
-      flex-wrap: nowrap !important;
-      align-items: center !important;
-      justify-content: center !important;
-
-      /* Enforce no wrapping on the button container itself */
-      white-space: nowrap !important;
-      overflow: hidden !important;
-
-      font-size: 0.75rem !important;
-    }
-
-    /* Aggressively target all potential label containers */
-    ::ng-deep .p-button-label,
-    ::ng-deep .p-togglebutton-label,
-    ::ng-deep span {
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      display: inline-block !important;
-      max-width: 100% !important;
-      text-align: center !important;
-    }
+    align-items: center;
   }
+}
 
+::ng-deep .neutral-toggle-group {
+  --p-togglebutton-background: var(--border-color);
+  --p-togglebutton-color: var(--text-muted-color);
+  --p-togglebutton-border-color: var(--border-color);
+  --p-togglebutton-checked-background: var(--base-fg-color);
+  --p-togglebutton-checked-color: var(--base-text-color);
+  --p-togglebutton-checked-border-color: var(--border-color);
+  --p-togglebutton-hover-background: var(--base-fg-color);
+  --p-togglebutton-hover-color: var(--base-text-color);
+  --p-togglebutton-hover-border-color: var(--border-color);
+  --p-togglebutton-padding: 0.20rem 0.5rem;
+  --p-selectbutton-border-radius: 6px;
+
+  border: 1px solid var(--border-color) !important;
+  overflow: hidden !important;
+}
+
+.review-toolbar {
   .emphasis-badge {
     border-radius: 5px;
     padding: 0px 5px 2px 5px;

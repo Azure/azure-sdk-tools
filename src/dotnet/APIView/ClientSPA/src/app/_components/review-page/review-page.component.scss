@@ -1,6 +1,6 @@
 :host ::ng-deep {
     .review-panel-container {
-        height: calc(100vh - 100px);
+        height: calc(100vh - 120px);
     }
 
     .review-panel{
@@ -15,14 +15,14 @@
 
     .options-panel {
         background-color: var(--base-fg-color);
-        height: calc(100vh - 100px);
+        height: calc(100vh - 120px);
         overflow-y: auto;
         overflow-x: hidden;
     }
 
     // Constrain the splitter to prevent page scroll
     p-splitter {
-        height: calc(100vh - 100px);
+        height: calc(100vh - 120px);
         overflow: hidden;
 
         .p-splitter {

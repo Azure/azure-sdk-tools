@@ -408,11 +408,11 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
 
-    test("skips cleanup for Management Plane HighLevelClient in Release mode (handled by emitter)", async () => {
+    test("skips cleanup for Management Plane HighLevelClient in Release/Local mode (handled by emitter)", async () => {
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
         
         try {            
-            // Run the function with Release mode
+            // Run the function with Release mode (representing pipeline run modes)
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
             // Verify that cleanup was skipped - all files should still exist

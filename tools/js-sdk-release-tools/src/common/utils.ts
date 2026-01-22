@@ -473,7 +473,7 @@ export async function cleanUpPackageDirectory(
                 await cleanUpDirectory(packageDirectory, ["test","assets.json"]);
                 return;
             } else {
-                // clean up everything in SpecPullRequest/Batch modes,
+                // clean up everything in SpecPullRequest/Batch modes
                 logger.info(`[HighLevelClient] Performing full cleanup in ${runMode} mode for: ${packageDirectory}`);
                 await cleanUpDirectory(packageDirectory, []);
                 return;

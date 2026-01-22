@@ -151,7 +151,7 @@ model Asset is TrackedResource<AssetProperties> {
 ```
  
 **Problem 3: Adding a New version following Azure versioning guidelines**
-- TypeSpec versioning is intricate, involving decorators such as @added, @removed, and @useDependency to manage preview vs stable versions. These rules are nuanced and tied to Azure’s breaking-change policies, making them hard for generic AI to infer without domain-specific context.
+- TypeSpec versioning is intricate, involving decorators such as `@added`, `@removed`, `@useDependency` to manage preview vs stable versions. These rules are nuanced and tied to Azure’s breaking-change policies, making them hard for generic AI to infer without domain-specific context.
 - Generic AI currently cannot reliably provide effective guidance for scenarios requiring integrated knowledge of TypeSpec versioning decorators and Azure-specific conversion and breaking-change policies.
 
 **Example**: When a user asks to "add a new preview version", generic AI may add a new version without replacing the older one.
@@ -163,13 +163,13 @@ Current AI only simply adds a new api version enum option in versions enum
 ```typespec main.tsp
 /** The available API versions. */
 enum Versions {
-  /** 2021-10-01-preview version */
-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2021_10_01_preview: "2021-10-01-preview",
-
   /** 2021-11-01 version */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
   v2021_11_01: "2021-11-01",
+
+  /** 2021-10-01-preview version */
+  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+  v2022_10_01_preview: "2022-10-01-preview",
 
   /** 2025-10-01-preview version */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
@@ -178,15 +178,11 @@ enum Versions {
 ```
 
 According to the ARM versioning guideline and best practices, the expected code should:
-1. add a new API version enum option and decorate it with @previewVersion
+1. add a new API version enum option and decorate it with `@previewVersion` and remove the existing preview version to follow one preview guideline.
 
 ```typespec main.tsp
 /** The available API versions. */
 enum Versions {
-  /** 2021-10-01-preview version */
-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2021_10_01_preview: "2021-10-01-preview",
-
   /** 2021-11-01 version */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
   v2021_11_01: "2021-11-01",
@@ -197,7 +193,11 @@ enum Versions {
   v2025_10_01_preview: "2025-10-01-preview",
 }
 ```
-2. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
+2. Make changes to the API description based on how the API has changed
+- If any type that was introduced in the latest preview is not in the new preview, simply remove the type
+- If any other types are removed in this preview (unlikely) mark these with an @removed decorator referencing the new version
+- If any types are added, renamed, or otherwise modified in the new version, mark them with the appropriate versioning decorator
+3. Add and modify examples to match the api changes
   
 
 ### Why This Matters
@@ -493,20 +493,24 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 
 **Expected Agent Activity:**
 
-1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_consult` with the request and collected information
-3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
-4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-5. Ask for features to add to this version. e.g.
-    - Add new resources
-    - Add new operations to an existing resource
-    - Add new models, unions, or enums
-    - Deprecate resources
-    - Deprecate operations
-    - Deprecate models, unions, or enums
-6. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-7. Update code, by default the features will only be added to this new version
-8. Summarize all the actions taken and display the reference docs
+1. Analyzes current TypeSpec project to identify namespace and version
+2. Calls `azsdk_typespec_consult` tool with the request and collected information
+3. Apply version related changes according to the retrieved solution
+   - Replace an existing preview with the new preview version if latest version is preview
+   - Update examples according to API changes
+5. Ask for features to add or update to this version. e.g.
+   - Add new resources
+   - Add new operations to an existing resource
+   - Add new models, unions, or enums
+   - Update existing resources
+   - Update existing operations
+   - Update existing models, unions, or enums
+   - Remove resources, operations, or models
+6. For each feature, follow below steps:
+    - Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+    - Call `azsdk_typespec_consult` to retrieve solution
+    - Update code, by default the features will only be added to this new version
+    - Summarize all the actions taken and display the reference docs
 
 ### Scenario 2: Add a new stable API version
 
@@ -518,21 +522,24 @@ add a new stable API version 2025-10-01 for service widget resource management
 
 **Expected Agent Activity:**
 
-1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_consult` with the request and collected information
-3. Add a enum option `v2025_10_01` in version enum for this new API version
-4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
-5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
-6. Ask for features to add to this version. e.g.
-    - Add new resources
-    - Add new operations to an existing resource
-    - Add new models, unions, or enums
-    - Deprecate resources
-    - Deprecate operations
-    - Deprecate models, unions, or enums
-7. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-8. Update code, by default the features will only be added to this new version
-9. Summarize all the actions taken and display the reference docs
+1. Analyzes current TypeSpec project to identify namespace and version
+2. Aalls `azsdk_typespec_consult` tool with the request and collected information
+3. Apply changes according to the retrieved solution:
+   - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
+   - Update examples according to API changes
+5. Ask for features to add or update to this version. e.g.
+   - Add new resources
+   - Add new operations to an existing resource
+   - Add new models, unions, or enums
+   - Update existing resources
+   - Update existing operations
+   - Update existing models, unions, or enums
+   - Remove resources, operations, or models
+6. For each feature, follow below steps:
+    - Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
+    - Call `azsdk_typespec_consult` to retrieve solution
+    - Update code, by default the features will only be added to this new version
+    - Summarize all the actions taken and display the reference docs
 
 ### Scenario 3: Update TypeSpec to follow Azure guidelines
 

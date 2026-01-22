@@ -573,7 +573,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 mockGitHubEventClient.OwnersWithAssignPermission.AddRange(ownersWithAssignPermission.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList());
             }
 
-            await IssueProcessing.InitialIssueTriage(mockGitHubEventClient, issueEventPayload);
+            var issueProcessor = new IssueProcessing();
+            await issueProcessor.InitialIssueTriage(mockGitHubEventClient, issueEventPayload);
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
 
             // Verify the RuleChecks

@@ -17,10 +17,6 @@ using System.Text.RegularExpressions;
 
 namespace IssueLabelerService
 {
-    /// <summary>
-    /// Experimental V2 labeler with structured tool descriptions instead of verbose rules.
-    /// Hypothesis: Explicit label semantics will generalize better than few-shot examples.
-    /// </summary>
     public class McpOpenAiLabeler : ILabeler
     {
         private readonly ILogger<LabelerFactory> _logger;

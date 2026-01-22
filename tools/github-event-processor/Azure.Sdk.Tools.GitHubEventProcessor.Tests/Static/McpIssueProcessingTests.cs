@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             
             var mcpProcessor = new McpIssueProcessing(logger);
             
-            await IssueProcessing.ProcessIssueEvent(mockGitHubEventClient, issueEventPayload, mcpProcessor);
+            await mcpProcessor.ProcessIssueEvent(mockGitHubEventClient, issueEventPayload);
             
             Assert.AreEqual(ruleState == RuleState.On, 
                 mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), 

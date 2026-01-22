@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Search.Documents.Indexes;
-using Microsoft.Extensions.Configuration;
-using Azure.Search.Documents.Indexes.Models;
 using Azure;
+using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace SearchIndexCreator
 {

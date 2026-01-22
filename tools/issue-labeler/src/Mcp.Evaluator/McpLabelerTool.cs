@@ -1,3 +1,4 @@
+using System.ClientModel.Primitives;
 using System.Text.Json;
 using Azure.Identity;
 using Azure.Search.Documents;
@@ -11,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
 using OpenAI;
-using System.ClientModel.Primitives;
 
 /// <summary>
 /// Standalone console application for MCP labeler - supports prediction and evaluation modes

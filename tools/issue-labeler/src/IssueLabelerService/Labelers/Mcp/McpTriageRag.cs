@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using OpenAI;
-using Azure.Search.Documents.Indexes;
-using IssueLabelerService;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Azure.Search.Documents.Indexes;
+using IssueLabelerService;
+using Microsoft.Extensions.Logging;
+using OpenAI;
 
 namespace IssueLabelerService
 {

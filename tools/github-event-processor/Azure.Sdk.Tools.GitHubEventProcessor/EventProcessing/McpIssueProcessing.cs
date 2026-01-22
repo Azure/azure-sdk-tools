@@ -99,12 +99,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 issueEventPayload, 
                 finalLabels.ToList());
 
-            bool addNeedsTeamAttention = true;
-
             if (!hasValidAssignee) 
             {
                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamTriage);
-                addNeedsTeamAttention = false;
 
                 if (usePredictedLabels.UsePredictedServer && 
                     usePredictedLabels.PredictedServerLabel != null)
@@ -112,8 +109,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     CreateServerTeamComment(gitHubEventClient, issueEventPayload, usePredictedLabels.PredictedServerLabel, triageOutput);
                 }
             }
-
-            if(addNeedsTeamAttention)
+            else
             {
                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
             }           

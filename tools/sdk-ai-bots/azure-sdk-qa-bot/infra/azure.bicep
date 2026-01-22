@@ -4,6 +4,10 @@ param azureStorageUrl string
 @secure()
 param azureTableNameForConversation string
 
+// Azure Blob
+@secure()
+param azureBlobStorageUrl string
+
 // RAG
 @secure()
 param ragScope string
@@ -145,6 +149,11 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
           value: azureTableNameForConversation
+        }
+        // Azure Blob
+        {
+          name: 'AZURE_BLOB_STORAGE_URL'
+          value: azureBlobStorageUrl
         }
         {
           name: 'AZURE_CLIENT_ID'

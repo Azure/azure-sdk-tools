@@ -8,6 +8,7 @@ import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenera
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';
+import { TenantConfigManager } from '../config/tenant.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 import { AccessToken, ManagedIdentityCredential, TokenCredential } from '@azure/identity';
@@ -17,12 +18,19 @@ export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
   private readonly promptGenerator: PromptGenerator;
   private readonly channelConfigManager: ChannelConfigManager;
+  private readonly tenantConfigManager: TenantConfigManager;
   private readonly credential: TokenCredential;
 
-  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager, credential: TokenCredential) {
+  constructor(
+    conversationHandler: ConversationHandler,
+    channelConfigManager: ChannelConfigManager,
+    tenantConfigManager: TenantConfigManager,
+    credential: TokenCredential
+  ) {
     this.conversationHandler = conversationHandler;
     this.promptGenerator = new PromptGenerator();
     this.channelConfigManager = channelConfigManager;
+    this.tenantConfigManager = tenantConfigManager;
     this.credential = credential;
   }
 
@@ -43,12 +51,12 @@ export class RAGModel implements PromptCompletionModel {
     ]);
     logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
-      endpoint: config.isLocal ? config.localBackendEndpoint : ragEndpoint,
+      endpoint: ragEndpoint,
       accessToken: token ? token.token : undefined
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
 
-    const thinkingHandler = new ThinkingHandler(context, this.conversationHandler);
+    const thinkingHandler = new ThinkingHandler(context, this.conversationHandler, this.tenantConfigManager);
 
     const conversationId = context.activity.conversation.id;
     const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);

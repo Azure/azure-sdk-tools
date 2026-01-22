@@ -15,9 +15,13 @@ const config = {
   // Azure Table Storage
   azureStorageUrl: process.env.AZURE_STORAGE_URL,
   azureTableNameForConversation: process.env.AZURE_TABLE_NAME_FOR_CONVERSATION,
+  // Azure Blob Storage
+  azureBlobStorageUrl: process.env.AZURE_BLOB_STORAGE_URL,
   isLocal: process.env.IS_LOCAL === 'true',
-  // Backend sevice endpoint used in local env
-  localBackendEndpoint: process.env.LOCAL_BACKEND_ENDPOINT ?? "http://127.0.0.1:8088"
+  // Backend service endpoint used in local env
+  localBackendEndpoint: process.env.LOCAL_BACKEND_ENDPOINT,
+  // RAG tenant used in local env
+  localRagTenant: process.env.LOCAL_RAG_TENANT,
 };
 
 export const ragApiPaths = {

@@ -11,6 +11,9 @@
     "azureTableNameForConversation": {
       "value": "${{AZURE_TABLE_NAME_FOR_CONVERSATION}}"
     },
+    "azureBlobStorageUrl": {
+      "value": "${{AZURE_BLOB_STORAGE_URL}}"
+    },
     "ragScope": {
       "value": "${{RAG_SERVICE_SCOPE}}"
     },

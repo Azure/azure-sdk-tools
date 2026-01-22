@@ -8,21 +8,25 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
 import { extractSelectedReasons } from '../cards/components/feedback.js';
 import config from '../config/config.js';
-import { ChannelConfigManager } from '../config/channel.js';
+import { ConfigFacade } from '../config/configFacade.js';
 import { ConversationHandler } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 import { ManagedIdentityCredential, TokenCredential } from '@azure/identity';
 import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 import { sendActivityWithRetry } from '../activityUtils.js';
 
+// Initialize all config managers via facade
+await ConfigFacade.initialize();
+const channelConfigManager = ConfigFacade.getChannelConfigManager();
+const tenantConfigManager = ConfigFacade.getTenantConfigManager();
+
 const conversationHandler = new ConversationHandler();
-const channelConfigManager = new ChannelConfigManager();
-await Promise.all([conversationHandler.initialize(), channelConfigManager.initialize()]);
+await conversationHandler.initialize();
 
 let credential: TokenCredential = new ManagedIdentityCredential(config.userManagedIdentityClientID);
 
 // Create AI components
-const model = new RAGModel(conversationHandler, channelConfigManager, credential);
+const model = new RAGModel(conversationHandler, channelConfigManager, tenantConfigManager, credential);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

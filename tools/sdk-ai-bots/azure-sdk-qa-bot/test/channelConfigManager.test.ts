@@ -1,16 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BlobServiceClient } from '@azure/storage-blob';
-import { DefaultAzureCredential } from '@azure/identity';
 import { ChannelConfigManager } from '../src/config/channel.js';
-
-// Mock the Azure modules
-vi.mock('@azure/storage-blob');
-vi.mock('@azure/identity');
 
 // Mock config module
 vi.mock('../src/config/config.js', () => ({
   default: {
     azureStorageUrl: 'https://teststorage.table.core.windows.net',
+    azureBlobStorageUrl: 'https://teststorage.blob.core.windows.net',
+    isLocal: false,
+  },
+}));
+
+// Mock BlobClientManager
+const mockBlobClientManager = {
+  downloadBlobContent: vi.fn(),
+  getBlobLastModified: vi.fn(),
+};
+
+vi.mock('../src/config/blobClient.js', () => ({
+  BlobClientManager: {
+    getInstance: vi.fn(() => mockBlobClientManager),
   },
 }));
 
@@ -46,32 +54,9 @@ channels:
 
 describe('ChannelConfigManager', () => {
   let manager: ChannelConfigManager;
-  let mockBlobServiceClient: any;
-  let mockContainerClient: any;
-  let mockBlobClient: any;
 
   beforeEach(() => {
     manager = new ChannelConfigManager();
-
-    // Create mock blob client chain
-    mockBlobClient = {
-      download: vi.fn(),
-      getProperties: vi.fn(),
-    };
-
-    mockContainerClient = {
-      getBlobClient: vi.fn().mockReturnValue(mockBlobClient),
-    };
-
-    mockBlobServiceClient = {
-      getContainerClient: vi.fn().mockReturnValue(mockContainerClient),
-    };
-
-    // Mock BlobServiceClient constructor
-    vi.mocked(BlobServiceClient).mockImplementation(() => mockBlobServiceClient);
-
-    // Mock DefaultAzureCredential
-    vi.mocked(DefaultAzureCredential).mockImplementation(() => ({} as any));
 
     // Reset all mocks
     vi.clearAllMocks();
@@ -83,68 +68,69 @@ describe('ChannelConfigManager', () => {
 
   describe('Blob Storage Loading and Watching', () => {
     it('should initialize blob client and load configuration', async () => {
-      // Mock blob download response
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from(mockConfigYaml, 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties.mockResolvedValue({
-        lastModified: new Date('2023-01-01T10:00:00Z'),
-      });
+      // Mock BlobClientManager methods
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(mockConfigYaml);
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
-      expect(BlobServiceClient).toHaveBeenCalledWith('https://teststorage.blob.core.windows.net', expect.any(Object));
-      expect(mockContainerClient.getBlobClient).toHaveBeenCalledWith('channel.yaml');
-      expect(mockBlobClient.download).toHaveBeenCalled();
+      expect(mockBlobClientManager.downloadBlobContent).toHaveBeenCalledWith('channel.yaml');
     });
 
-    it('should handle blob download errors gracefully', async () => {
-      mockBlobClient.download.mockRejectedValue(new Error('Blob not found'));
-      mockBlobClient.getProperties.mockRejectedValue(new Error('Blob not found'));
+    it('should handle blob download errors gracefully when download returns undefined', async () => {
+      // Simulate download with undefined content (all retries exhausted)
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(undefined);
 
-      // Initialize should complete, but when trying to get config it should fail
+      // Initialize should throw since no config to fall back to
+      await expect(manager.initialize()).rejects.toThrow('Failed to load channel configuration');
+    });
+
+    it('should handle blob download errors gracefully when download throws', async () => {
+      // Simulate download failure with an error
+      mockBlobClientManager.downloadBlobContent.mockRejectedValue(new Error('Blob not found'));
+
+      // Initialize should throw since config cannot be loaded
+      await expect(manager.initialize()).rejects.toThrow('Failed to load channel configuration');
+    });
+
+    it('should keep old config when download fails during reload', async () => {
+      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
+
+      // First load succeeds
+      mockBlobClientManager.downloadBlobContent.mockResolvedValueOnce(testConfig);
+      mockBlobClientManager.getBlobLastModified
+        .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
+        // Second call indicates blob changed
+        .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'));
+
       await manager.initialize();
 
-      // Getting config should throw since no config was loaded
-      await expect(manager.getConfig()).rejects.toThrow('Channel configuration is not loaded');
+      // Verify initial config loaded
+      let config = await manager.getConfig();
+      expect(config.default.tenant).toBe('test');
+
+      // Now simulate download failure during reload
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(undefined);
+
+      // Trigger reload by accessing config (blob has changed)
+      config = await manager.getConfig();
+
+      // Should still have the old config
+      expect(config.default.tenant).toBe('test');
     });
 
     it('should reload configuration when blob changes', async () => {
-      // Initial setup
-      const mockReadableStream1 = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: old\n  endpoint: old\nchannels: []', 'utf8');
-        },
-      };
+      const oldConfig = 'default:\n  tenant: old\n  endpoint: old\nchannels: []';
+      const newConfig = 'default:\n  tenant: new\n  endpoint: new\nchannels: []';
 
-      const mockReadableStream2 = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: new\n  endpoint: new\nchannels: []', 'utf8');
-        },
-      };
+      mockBlobClientManager.downloadBlobContent
+        .mockResolvedValueOnce(oldConfig)
+        .mockResolvedValueOnce(newConfig);
 
-      mockBlobClient.download
-        .mockResolvedValueOnce({ readableStreamBody: mockReadableStream1 })
-        .mockResolvedValueOnce({ readableStreamBody: mockReadableStream2 });
-
-      mockBlobClient.getProperties
-        // init
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
-        // getConfig
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
-        // getConfig
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T11:00:00Z') })
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T11:00:00Z') });
-
+      mockBlobClientManager.getBlobLastModified
+        .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
+        .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'))
+        .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'));
       await manager.initialize();
 
       // Verify initial config
@@ -157,46 +143,27 @@ describe('ChannelConfigManager', () => {
     });
 
     it('should not reload if blob has not changed', async () => {
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: test\n  endpoint: test\nchannels: []', 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties.mockResolvedValue({
-        lastModified: new Date('2023-01-01T10:00:00Z'),
-      });
+      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
       // Clear the download mock calls from initialization
-      mockBlobClient.download.mockClear();
+      mockBlobClientManager.downloadBlobContent.mockClear();
 
       // Call getConfig again - should not trigger reload since blob hasn't changed
       await manager.getConfig();
 
       // download should not be called again
-      expect(mockBlobClient.download).not.toHaveBeenCalled();
+      expect(mockBlobClientManager.downloadBlobContent).not.toHaveBeenCalled();
     });
 
     it('should handle blob properties check errors gracefully', async () => {
-      // Initial setup
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: test\n  endpoint: test\nchannels: []', 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
+      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
+      mockBlobClientManager.getBlobLastModified
+        .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
         .mockRejectedValueOnce(new Error('Network error'));
 
       await manager.initialize();
@@ -208,20 +175,8 @@ describe('ChannelConfigManager', () => {
 
   describe('Configuration Access', () => {
     beforeEach(async () => {
-      // Setup manager with mock data using the YAML string
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from(mockConfigYaml, 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties.mockResolvedValue({
-        lastModified: new Date('2023-01-01T10:00:00Z'),
-      });
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(mockConfigYaml);
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
     });
@@ -261,66 +216,30 @@ describe('ChannelConfigManager', () => {
 
   describe('Concurrent Loading', () => {
     it('should handle concurrent getConfig calls', async () => {
-      const mockReadableStream1 = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: test\n  endpoint: test\nchannels: []', 'utf8');
-        },
-      };
+      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
 
-      const mockReadableStream2 = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: concurrent\n  endpoint: concurrent\nchannels: []', 'utf8');
-        },
-      };
-
-      mockBlobClient.download
-        .mockResolvedValueOnce({ readableStreamBody: mockReadableStream1 })
-        .mockResolvedValueOnce({ readableStreamBody: mockReadableStream2 });
-
-      mockBlobClient.getProperties
-        // init
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
-        .mockResolvedValueOnce({ lastModified: new Date('2023-01-01T10:00:00Z') })
-        // getConfig
-        .mockResolvedValue({ lastModified: new Date('2023-01-01T11:00:00Z') });
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
-      // Clear previous download calls from initialization
-      mockBlobClient.download.mockClear();
-
-      // Setup download for the reload that will be triggered
-      mockBlobClient.download.mockResolvedValue({ readableStreamBody: mockReadableStream2 });
-
-      // Make multiple concurrent calls - they should all wait for the same reload
+      // Make multiple concurrent calls - they should all return the same config
       const promises = [manager.getConfig(), manager.getConfig(), manager.getConfig()];
 
       const results = await Promise.all(promises);
 
-      // Should only load once due to concurrent loading protection, but all calls should get the same result
-      expect(mockBlobClient.download).toHaveBeenCalledTimes(1);
+      // All calls should get the same result
       results.forEach((config) => {
-        expect(config.default.tenant).toBe('concurrent');
+        expect(config.default.tenant).toBe('test');
       });
     });
   });
 
   describe('Error Handling', () => {
     beforeEach(async () => {
-      // Setup basic working manager
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: test\n  endpoint: test\nchannels: []', 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties.mockResolvedValue({
-        lastModified: new Date('2023-01-01T10:00:00Z'),
-      });
+      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
     });
@@ -350,57 +269,18 @@ describe('ChannelConfigManager', () => {
       const newManager = new ChannelConfigManager();
 
       // Mock invalid config - missing default section
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('channels: []', 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties.mockResolvedValue({
-        lastModified: new Date('2023-01-01T10:00:00Z'),
-      });
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue('channels: []');
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await expect(newManager.initialize()).rejects.toThrow('Failed to load channel configuration');
-    });
-
-    it('should handle missing storage URL configuration', async () => {
-      // Create a new manager
-      const newManager = new ChannelConfigManager();
-
-      // Import the config module and spy on it
-      const configModule = await import('../src/config/config.js');
-      const configSpy = vi.spyOn(configModule, 'default', 'get').mockReturnValue({
-        azureStorageUrl: undefined,
-      } as any);
-
-      try {
-        await expect(newManager.initialize()).rejects.toThrow('AZURE_STORAGE_URL environment variable is not set');
-      } finally {
-        // Restore the spy
-        configSpy.mockRestore();
-      }
     });
   });
 
   describe('Watch Loop', () => {
     it('should stop watching when stopWatching is called', async () => {
-      const mockReadableStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield Buffer.from('default:\n  tenant: test\n  endpoint: test\nchannels: []', 'utf8');
-        },
-      };
-
-      mockBlobClient.download.mockResolvedValue({
-        readableStreamBody: mockReadableStream,
-      });
-
-      mockBlobClient.getProperties.mockResolvedValue({
-        lastModified: new Date('2023-01-01T10:00:00Z'),
-      });
+      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
+      mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
+      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 

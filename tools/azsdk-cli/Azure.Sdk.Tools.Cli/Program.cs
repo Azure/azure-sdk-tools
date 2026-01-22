@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Telemetry;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli;
@@ -100,13 +101,23 @@ public class Program
 
     private static string LoadServerInstructions()
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        using var stream = assembly.GetManifestResourceStream("Azure.Sdk.Tools.Cli.Resources.azsdk-rules.txt");
-        if (stream == null)
+        const string resourceName = "Azure.Sdk.Tools.Cli.Resources.azsdk-rules.txt";
+        try
         {
+            var assembly = Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                Console.Error.WriteLine($"Warning: Server instructions resource '{resourceName}' not found. MCP server will run without instructions.");
+                return string.Empty;
+            }
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Warning: Failed to load server instructions from '{resourceName}': {ex.Message}");
             return string.Empty;
         }
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
     }
 }

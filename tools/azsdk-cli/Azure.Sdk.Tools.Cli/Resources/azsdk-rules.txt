@@ -1,12 +1,8 @@
 Azure SDK Tools MCP server usage rules:
-- Use Azure SDK Tools: When working with Azure SDK repositories, TypeSpec API specifications, SDK code generation, SDK releases, or SDK workflows, always use azsdk tools.
-- SDK Generation: When generating SDKs from TypeSpec specifications, use the `azsdk_package_generate_code` tool. This handles TypeSpec compilation and SDK code generation for all supported languages (Java, .NET, Python, JavaScript, Go).
-- SDK Building: When building or compiling generated SDK code, use the `azsdk_package_build_code` tool. This runs language-specific build commands (Maven, dotnet, npm, pip, go).
-- Pipeline Analysis: When analyzing Azure Pipeline failures, CI/CD issues, or build errors in SDK repositories, use the `azsdk_pipeline_analyze` tool. Set `analyzeWithAgent` to false unless explicitly requested.
-- TypeSpec Projects: When working with TypeSpec projects or needing to find modified TypeSpec specifications, use `azsdk_typespec_get_modified_projects` to identify changed specs in the current branch.
-- Pull Requests: When creating or managing pull requests in Azure SDK repositories, use the GitHub tools (`azsdk_github_create_pr`, `azsdk_github_get_pr`, `azsdk_github_get_pr_link`).
-- Release Plans: When working with SDK release workflows, use the release plan tools to generate SDKs via pipeline and track SDK pull request links.
-- Setup Verification: Before running SDK generation or build operations, use `azsdk_verify_setup` to ensure the environment has required tools installed for the target language.
-- Package Metadata: When updating package metadata, changelogs, or version information, use the metadata update tools.
-- APIView: When working with API reviews or needing to analyze API surfaces, use the APIView tools.
-- Workflow Instructions: For detailed step-by-step guidance on specific workflows (local SDK generation, TypeSpec to SDK, release planning), reference the instruction files in `eng/common/instructions/azsdk-tools/`.
+- When working with Azure SDK repositories, TypeSpec API specifications, SDK code generation, SDK releases, or SDK workflows, use azsdk tools.
+- When generating SDKs from TypeSpec, ask user preference for local vs pipeline-based generation before proceeding.
+- When analyzing Azure Pipeline failures or CI/CD issues, use azsdk pipeline analysis tools.
+- When working with TypeSpec projects, use azsdk TypeSpec tools.
+- When managing pull requests in Azure SDK repositories, use azsdk GitHub tools.
+- When working with SDK release workflows or release plans, use azsdk release tools.
+- When checking package release readiness, use azsdk validation tools.

@@ -177,8 +177,8 @@ enum Versions {
 }
 ```
 
-According to the ARM versioning guideline and best practices, the expected code should:
-1. Rename the latest preview version to match the new preview version, in all instances in the spec. Add `@previewVersion` decorator.
+According to the ARM versioning guideline and best practices, the expected behavior should:
+1. Rename the latest preview version to match the new preview version, in all instances in the spec. e.g. change the `Versions` enum.
 ```typespec main.tsp
 /** The available API versions. */
 enum Versions {
@@ -192,13 +192,12 @@ enum Versions {
   v2025_10_01_preview: "2025-10-01-preview",
 }
 ```
-2. Update any version documentation to use the new version
-3. Change the name of the `examples` version folder for the latest preview to match the new preview version
-4. Make changes to the API description based on how the API has changed
+1. Change the name of the `examples` version folder for the latest preview to match the new preview version
+1. Make changes to the API description based on how the API has changed
   - If any type that was introduced in the latest preview is _not_ in the new preview, simply remove the type
   - If any other types are removed in this preview (unlikely) mark these with an `@removed` decorator referencing the new version
   - If any types are added, renamed, or otherwise modified in the new version, mark them with the appropriate versioning decorator
-5. Add and modify examples to match the API changes
+1. Add and modify examples to match the API changes
   
 
 ### Why This Matters
@@ -285,11 +284,11 @@ Based on the request, the agent will invoke an Azure KB tool to retrieve the sol
 The TypeSpec authoring workflow follows a streamlined process where the user interacts with Custom agent `azure-typespec-author-agent` using natural language, and agent leverages the TypeSpec Solution Tool (MCP) to generate standards-compliant solutions. The architecture diagram above illustrates this end-to-end flow:
 
 1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
-2. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
-3. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_consult`) with the user's request and any additional context
-4. The `azsdk_typespec_consult` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
-5. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
-6. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
+1. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
+1. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_consult`) with the user's request and any additional context
+1. The `azsdk_typespec_consult` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
+1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
+1. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
 
 This design ensures that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices by grounding every solution in authoritative Azure documentation.
 
@@ -328,9 +327,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 **Workflow**:
 
 1. **Parse Input**: Extract request details and optional context from parameters
-2. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
-3. **Process Response**: Format the solution and extract relevant documentation references
-4. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
+1. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
+1. **Process Response**: Format the solution and extract relevant documentation references
+1. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
 
 #### Component 2: Azure SDK Knowledge Base
 
@@ -496,23 +495,23 @@ add a new ARM resource type named 'Asset' with CRUD operations
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project structure and namespace
-2. Clarifies resource characteristics with user:
+1. Clarifies resource characteristics with user:
    - Is this a top-level resource or a child resource?
    - If child resource, identify the parent resource
    - What properties should the resource have?
    - Should operations be synchronous or asynchronous/LRO?
-3. Calls `azsdk_typespec_consult` tool with the request and collected information
-4. Apply changes according to the retrieved solution:
+1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Apply changes according to the retrieved solution:
    - Create resource model extending appropriate base (`TrackedResource`/`ProxyResource`)
    - Add resource name parameter
    - Define resource properties model
    - Create interface with `@armResourceOperations` decorator
    - Implement CRUD operations using appropriate templates (`ArmResourceRead`, `ArmResourceCreateOrReplaceAsync`, etc.)
    - For child resources, apply `@parentResource` decorator
-5. Compile the TypeSpec to validate generated OpenAPI paths
-6. Summarize all actions taken and display reference documentation
+1. Compile the TypeSpec to validate generated OpenAPI paths
+1. Summarize all actions taken and display reference documentation
 
-### Scenario 2: Add a new preview API version (an e2e scenario that contains multiple cases)
+### Scenario 2: Add a new preview API version (an e2e user story that contains multiple cases)
 
 **Prompt:**
 
@@ -523,11 +522,11 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-2. Calls `azsdk_typespec_consult` tool with the request and collected information
-3. Apply version related changes according to the retrieved solution
-   - Replace an existing preview with the new preview version if latest version is preview
+1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Apply version related changes according to the retrieved solution
+   - Replace an existing preview with the new preview version if latest version is preview, otherwise, just add the new preview version.
    - Update examples according to API changes
-5. Ask for features to add or update to this version. e.g.
+1. Ask for features to add or update to this version. e.g.
    - Add new resources
    - Add new operations to an existing resource
    - Add new models, unions, or enums
@@ -535,9 +534,9 @@ add a new preview API version 2025-10-01-preview for service widget resource man
    - Update existing operations
    - Update existing models, unions, or enums
    - Remove resources, operations, or models
-6. For each feature, the agent actions are similar to Scenario 1.
+1. For each feature, the agent actions are similar to Scenario 1.
 
-### Scenario 3: Add a new stable API version  (an e2e scenario that contains multiple cases)
+### Scenario 3: Add a new stable API version  (an e2e user story that contains multiple cases)
 
 **Prompt:**
 
@@ -548,11 +547,11 @@ add a new stable API version 2025-10-01 for service widget resource management
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-2. Calls `azsdk_typespec_consult` tool with the request and collected information
-3. Apply changes according to the retrieved solution:
+1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Apply changes according to the retrieved solution:
    - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
    - Update examples according to API changes
-5. Ask for features to add or update to this version. e.g.
+1. Ask for features to add or update to this version. e.g.
    - Add new resources
    - Add new operations to an existing resource
    - Add new models, unions, or enums
@@ -560,7 +559,7 @@ add a new stable API version 2025-10-01 for service widget resource management
    - Update existing operations
    - Update existing models, unions, or enums
    - Remove resources, operations, or models
-6. For each feature, the agent actions are similar to Scenario 1.
+1. For each feature, the agent actions are similar to Scenario 1.
 
 ### Scenario 4: Update TypeSpec to follow Azure guidelines
 
@@ -603,7 +602,7 @@ azsdk typespec consult <typespec-request> --additional-information <additional c
 **Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
 **Step-by-step guidance:**
 1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix and decorate @previewVersion on the enum.
-2. Add an example folder for this version and copy the relative examples.
+1. Add an example folder for this version and copy the relative examples.
 ```
 
 **Error Cases:**

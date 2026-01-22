@@ -16,6 +16,10 @@ resources:
       type: git
       name: internal/azure-sdk-docs-eng.ms
       ref: main
+    - repository: internal-wiki
+      type: git
+      name: internal/internal.wiki
+      ref: wikiMaster
 
 variables:
   - group: Release Secrets for GitHub
@@ -40,6 +44,9 @@ stages:
 
     - checkout: azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+
+    - checkout: internal-wiki
+      displayName: 'Checkout internal wiki repository'
 
     - task: AzureCLI@2
       inputs:
@@ -77,6 +84,7 @@ stages:
         # Azure App Configuration
         AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
         AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
+        AZURE_SDK_WIKI_PATH: "$(Agent.BuildDirectory)/s/internal.wiki"
 
         # Set working directory for temporary files
         TMPDIR: $(Agent.TempDirectory)

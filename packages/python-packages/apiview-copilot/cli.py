@@ -767,19 +767,44 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     return filtered_dicts
 
 
-def resolve_package_info(package_query: str, language: str, version: str = None, environment: str = "production"):
+def resolve_package_info(
+    package_query: str, language: str, version: str = None, environment: str = "production", remote: bool = False
+):
     """
     Resolves package information from a package query and language.
     Returns the package name, review ID, and revision ID.
     """
-    result = resolve_package(
-        package_query=package_query, language=language, version=version, environment=environment
-    )
-
-    if result:
-        print(json.dumps(result, indent=2))
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/resolve-package"
+        payload = {
+            "packageQuery": package_query,
+            "language": language,
+            "environment": environment,
+        }
+        if version:
+            payload["version"] = version
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+            if resp.status_code == 200:
+                print(json.dumps(resp.json(), indent=2))
+            else:
+                print(f"Error: {resp.status_code} - {resp.text}")
+        except Exception as e:
+            print(f"Error: {e}")
     else:
-        print(f"No package found matching '{package_query}' for language '{language}'")
+        result = resolve_package(
+            package_query=package_query, language=language, version=version, environment=environment
+        )
+
+        if result:
+            if "error" in result:
+                print(f"Error: {result.get('error')} - Language: {result.get('language')}")
+            else:
+                print(json.dumps(result, indent=2))
+        else:
+            print(f"No package found matching '{package_query}' for language '{language}'")
 
 
 def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
@@ -1485,6 +1510,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API instead of local processing.",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

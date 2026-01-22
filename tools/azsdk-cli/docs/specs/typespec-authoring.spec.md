@@ -167,7 +167,7 @@ enum Versions {
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
   v2021_11_01: "2021-11-01",
 
-  /** 2021-10-01-preview version */
+  /** 2022-10-01-preview version */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
   v2022_10_01_preview: "2022-10-01-preview",
 
@@ -178,8 +178,7 @@ enum Versions {
 ```
 
 According to the ARM versioning guideline and best practices, the expected code should:
-1. add a new API version enum option and decorate it with `@previewVersion` and remove the existing preview version to follow one preview guideline.
-
+1. Rename the latest preview version to match the new preview version, in all instances in the spec. Add `@previewVersion` decorator.
 ```typespec main.tsp
 /** The available API versions. */
 enum Versions {
@@ -193,11 +192,13 @@ enum Versions {
   v2025_10_01_preview: "2025-10-01-preview",
 }
 ```
-2. Make changes to the API description based on how the API has changed
-- If any type that was introduced in the latest preview is not in the new preview, simply remove the type
-- If any other types are removed in this preview (unlikely) mark these with an @removed decorator referencing the new version
-- If any types are added, renamed, or otherwise modified in the new version, mark them with the appropriate versioning decorator
-3. Add and modify examples to match the api changes
+2. Update any version documentation to use the new version
+3. Change the name of the `examples` version folder for the latest preview to match the new preview version
+4. Make changes to the API description based on how the API has changed
+  - If any type that was introduced in the latest preview is _not_ in the new preview, simply remove the type
+  - If any other types are removed in this preview (unlikely) mark these with an `@removed` decorator referencing the new version
+  - If any types are added, renamed, or otherwise modified in the new version, mark them with the appropriate versioning decorator
+5. Add and modify examples to match the API changes
   
 
 ### Why This Matters
@@ -449,7 +450,7 @@ This feature/tool is complete when:
   - ARM resource creation with CRUD operations (15+ variants)
   - Parent-child resource hierarchy and routing (10+ variants)
   - API versioning scenarios (preview, stable, deprecated) (10+ variants)
-  - Complex decorator usage (@armResourceOperations, @parentResource, @route, @added, @removed) (10+ variants)
+  - Complex decorator usage (`@armResourceOperations`, `@parentResource`, `@route`, `@added`, `@removed`) (10+ variants)
   - Common anti-patterns and their corrections (5+ variants)
 
 - **Agent Output Accuracy**: When tested against the benchmark suite:
@@ -471,7 +472,7 @@ This feature/tool is complete when:
 
 - **Comparative Improvement**: Compared to generic GitHub Copilot baseline:
   - Reduction in decorator hallucinations
-  - Improvement in correct usage of @parentResource and @route for hierarchical resources
+  - Improvement in correct usage of `@parentResource` and `@route` for hierarchical resources
   - Improvement in adherence to Azure versioning guidelines
 
 - **Review Effort Reduction**: Measurable impact on TypeSpec PR reviews:
@@ -483,7 +484,35 @@ This feature/tool is complete when:
 
 ## Agent Prompts
 
-### Scenario 1: Add a new preview API version
+
+### Scenario 1: Add a new resource type (a simple case)
+
+**Prompt:**
+
+```text
+add a new ARM resource type named 'Asset' with CRUD operations
+```
+
+**Expected Agent Activity:**
+
+1. Analyzes current TypeSpec project structure and namespace
+2. Clarifies resource characteristics with user:
+   - Is this a top-level resource or a child resource?
+   - If child resource, identify the parent resource
+   - What properties should the resource have?
+   - Should operations be synchronous or asynchronous/LRO?
+3. Calls `azsdk_typespec_consult` tool with the request and collected information
+4. Apply changes according to the retrieved solution:
+   - Create resource model extending appropriate base (`TrackedResource`/`ProxyResource`)
+   - Add resource name parameter
+   - Define resource properties model
+   - Create interface with `@armResourceOperations` decorator
+   - Implement CRUD operations using appropriate templates (`ArmResourceRead`, `ArmResourceCreateOrReplaceAsync`, etc.)
+   - For child resources, apply `@parentResource` decorator
+5. Compile the TypeSpec to validate generated OpenAPI paths
+6. Summarize all actions taken and display reference documentation
+
+### Scenario 2: Add a new preview API version (an e2e scenario that contains multiple cases)
 
 **Prompt:**
 
@@ -506,13 +535,9 @@ add a new preview API version 2025-10-01-preview for service widget resource man
    - Update existing operations
    - Update existing models, unions, or enums
    - Remove resources, operations, or models
-6. For each feature, follow below steps:
-    - Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-    - Call `azsdk_typespec_consult` to retrieve solution
-    - Update code, by default the features will only be added to this new version
-    - Summarize all the actions taken and display the reference docs
+6. For each feature, the agent actions are similar to Scenario 1.
 
-### Scenario 2: Add a new stable API version
+### Scenario 3: Add a new stable API version  (an e2e scenario that contains multiple cases)
 
 **Prompt:**
 
@@ -523,7 +548,7 @@ add a new stable API version 2025-10-01 for service widget resource management
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-2. Aalls `azsdk_typespec_consult` tool with the request and collected information
+2. Calls `azsdk_typespec_consult` tool with the request and collected information
 3. Apply changes according to the retrieved solution:
    - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
    - Update examples according to API changes
@@ -535,13 +560,9 @@ add a new stable API version 2025-10-01 for service widget resource management
    - Update existing operations
    - Update existing models, unions, or enums
    - Remove resources, operations, or models
-6. For each feature, follow below steps:
-    - Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-    - Call `azsdk_typespec_consult` to retrieve solution
-    - Update code, by default the features will only be added to this new version
-    - Summarize all the actions taken and display the reference docs
+6. For each feature, the agent actions are similar to Scenario 1.
 
-### Scenario 3: Update TypeSpec to follow Azure guidelines
+### Scenario 4: Update TypeSpec to follow Azure guidelines
 
 **Prompt:**
 

@@ -472,7 +472,7 @@ export async function cleanUpPackageDirectory(
                 logger.info(`[HighLevelClient] Skipping cleanup in ${runMode} mode - emitter handles cleanup for: ${packageDirectory}`);
                 return;
             } else {
-                // clean up everything in SpecPullRequest/Batch modes,
+                // clean up everything in SpecPullRequest/Batch modes
                 logger.info(`[HighLevelClient] Performing full cleanup in ${runMode} mode for: ${packageDirectory}`);
                 await cleanUpDirectory(packageDirectory, []);
                 return;

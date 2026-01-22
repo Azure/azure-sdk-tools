@@ -285,8 +285,8 @@ The TypeSpec authoring workflow follows a streamlined process where the user int
 
 1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
 2. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
-3. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_retrieve_solution`) with the user's request and any additional context
-4. The `azsdk_typespec_retrieve_solution` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
+3. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_consult`) with the user's request and any additional context
+4. The `azsdk_typespec_consult` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
 5. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
 6. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
 
@@ -294,9 +294,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 #### Component 1: TypeSpec Solution Tool
 
-**Name (CLI)**: `azsdk typespec retrieve-solution`
+**Name (CLI)**: `azsdk typespec consult`
 
-**Name (MCP)**: `azsdk_typespec_retrieve_solution`
+**Name (MCP)**: `azsdk_typespec_consult`
 
 **Purpose**: Provide a solution to define or edit TypeSpec API specifications for TypeSpec-related tasks.
 
@@ -304,10 +304,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `--request` | string | Yes | N/A | The TypeSpec-related request or task description |
+| `<request>` | string | Yes | N/A | The TypeSpec-related request or task description |
 | `--additional-information` | string | No | "" | Additional context for the request |
 | `--category` | string | No | Auto-detected | Request category (e.g., "versioning", "resource-modeling", "routing") |
-| `--typespec-source-path` | string | No | Current directory | Path to TypeSpec source file or folder |
 
 **Output Format**:
 
@@ -328,10 +327,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 **Workflow**:
 
 1. **Parse Input**: Extract request details and optional context from parameters
-2. **Analyze Context**: Detect TypeSpec project structure and current state (if `--typespec-source-path` provided)
-3. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
-4. **Process Response**: Format the solution and extract relevant documentation references
-5. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
+2. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
+3. **Process Response**: Format the solution and extract relevant documentation references
+4. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
 
 #### Component 2: Azure SDK Knowledge Base
 
@@ -368,7 +366,7 @@ TypeSpec authoring is language-agnostic. The generated SDKs target specific lang
 
 **Description:**
 
-Enhance Custom agent `typespec-author-agent` capability with multiple Skills. Agent will choose skill according to the request scenario.
+Enhance Custom agent `azure-typespec-author-agent` capability with multiple Skills. Agent will choose skill according to the request scenario.
 
 ```code
 ┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐          ┌────────────────┐
@@ -496,7 +494,7 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+2. **Agent calls** `azsdk_typespec_consult` with the request and collected information
 3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
 4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
 5. Ask for features to add to this version. e.g.
@@ -521,7 +519,7 @@ add a new stable API version 2025-10-01 for service widget resource management
 **Expected Agent Activity:**
 
 1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+2. **Agent calls** `azsdk_typespec_consult` with the request and collected information
 3. Add a enum option `v2025_10_01` in version enum for this new API version
 4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
 5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
@@ -560,12 +558,15 @@ update the TypeSpec code to follow Azure guidelines for service widget resource 
 **Command:**
 
 ```bash
-azsdk typespec retrieve-solution --request <typespec-request> --additional-information <additional context>
+azsdk typespec consult <typespec-request> --additional-information <additional context>
 ```
+
+**Argument**
+
+- `<request>`: the typespec-related task or request to consult
 
 **Options:**
 
-- `--request`: the TypeSpec request to author
 - `--additional-information <value>`: Set the additional information, such as the context (optional)
 
 **Expected Output:**
@@ -583,7 +584,7 @@ azsdk typespec retrieve-solution --request <typespec-request> --additional-infor
 
 ✗ Error: Required argument missing for command: 'authoring'
   
-Usage: azsdk typespec retrieve-solution
+Usage: azsdk typespec consult
 ```
 
 ---

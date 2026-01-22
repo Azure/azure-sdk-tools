@@ -227,7 +227,7 @@ describe("cleanUpPackageDirectory", () => {
     //   * Release/Local mode: Cleanup is skipped (handled by emitter)
     //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) HighLevelClient: 
-    //   * Release/Local mode: Cleanup is skipped (handled by emitter)
+    //   * Release/Local mode: Preserves test and assets.json, cleans up everything else
     //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) Non-HighLevelClient: 
     //   * All modes: Cleanup is skipped (handled by emitter)
@@ -408,21 +408,25 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
 
-    test("skips cleanup for Management Plane HighLevelClient in Release/Local mode (handled by emitter)", async () => {
+    test("preserves test and assets.json for Management Plane HighLevelClient in Release/Local mode", async () => {
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
         
         try {            
-            // Run the function with Release mode (representing pipeline run modes)
+            // Run the function with Release mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
-            // Verify that cleanup was skipped - all files should still exist
+            // Verify that only test and assets.json are preserved, others are removed
             const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
             const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
             const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
             
-            expect(srcDirExists).toBe(true);
-            expect(packageJsonExists).toBe(true);
+            expect(srcDirExists).toBe(false);
+            expect(packageJsonExists).toBe(false);
+            expect(distDirExists).toBe(false);
             expect(testDirExists).toBe(true);
+            expect(assetsFileExists).toBe(true);
         } finally {
             await remove(tempPackageDir);
         }

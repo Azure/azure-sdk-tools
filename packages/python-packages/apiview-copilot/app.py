@@ -360,7 +360,7 @@ async def resolve_package_info(
     try:
         result = await asyncio.to_thread(
             resolve_package,
-            package_description=request.package_query,
+            package_query=request.package_query,
             language=request.language,
             version=request.version,
             environment=request.environment,

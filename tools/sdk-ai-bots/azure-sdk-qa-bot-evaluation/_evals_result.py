@@ -53,8 +53,13 @@ class EvalsResult:
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
+                "knowledges": row["inputs.expected_knowledges"],
             }
-            row_result["actual"] = {"answer": row["inputs.response"], "references": row["inputs.references"]}
+            row_result["actual"] = {
+                "answer": row["inputs.response"],
+                "references": row["inputs.references"],
+                "knowledges": row["inputs.knowledges"],
+            }
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)

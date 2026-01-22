@@ -21,23 +21,22 @@ namespace IssueLabelerService
     {
         private readonly ILogger<LabelerFactory> _logger;
         private readonly RepositoryConfiguration _config;
-        private readonly McpTriageRag _mcpRagService;
         private readonly TriageRag _triageRag;
         private readonly BlobServiceClient _blobClient;
 
         private static readonly ConcurrentDictionary<string, (List<McpLabel> Labels, DateTime FetchedAt)> _labelCache = new();
         private static readonly TimeSpan LabelCacheDuration = TimeSpan.FromHours(24);
         private static readonly Regex s_tagPattern = new(@"\[([A-Za-z]+)\]", RegexOptions.Compiled);
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(1000);
+
         public McpOpenAiLabeler(
             ILogger<LabelerFactory> logger,
             RepositoryConfiguration config,
-            McpTriageRag ragService,
             TriageRag triageRag,
             BlobServiceClient blobClient)
         {
             _logger = logger;
             _config = config;
-            _mcpRagService = ragService;
             _triageRag = triageRag;
             _blobClient = blobClient;
         }
@@ -250,22 +249,33 @@ namespace IssueLabelerService
             var scoreThreshold = double.Parse(_config.ScoreThreshold, CultureInfo.InvariantCulture);
             var fieldName = _config.IssueIndexFieldName;
 
-            var query = $"Title: {issue.Title}\n\n{issue.Body ?? string.Empty}";
+            var rawQuery = $"Title: {issue.Title}\n\n{issue.Body ?? string.Empty}";
+            var query = CleanToolMentions(rawQuery);
+            
+            if (query != rawQuery)
+            {
+                _logger.LogDebug("Query cleaned - Original: {Original}", rawQuery.Substring(0, Math.Min(100, rawQuery.Length)));
+                _logger.LogDebug("Query cleaned - Cleaned: {Cleaned}", query.Substring(0, Math.Min(100, query.Length)));
+            }
+
             _logger.LogInformation(
                 "Searching MCP content index '{IndexName}' with query : {Query}",
                 indexName,
                 query);
 
-            var searchContentResults = await _mcpRagService.SearchMcpIssuesAsync(
+            // Build filter for labeled issues, excluding current issue to prevent data leakage
+            var excludeIssueId = $"microsoft/mcp/{issue.IssueNumber}/Issue";
+            var filter = $"DocumentType eq 'Issue' and Server ne null and Id ne '{excludeIssueId}'";
+            _logger.LogDebug("Retrieving labeled MCP issues (Server label required, Tool optional). Excluding issue {IssueId}", excludeIssueId);
+
+            var searchContentResults = await _triageRag.IssueTriageContentIndexAsync(
                 indexName,
                 semanticName,
                 fieldName,
                 query,
-                topK: top,
-                scoreThreshold: scoreThreshold,
-                cleanQuery: true,
-                onlyLabeledIssues: true,
-                excludeIssueId: $"microsoft/mcp/{issue.IssueNumber}/Issue");
+                top,
+                scoreThreshold,
+                filter);
 
             if (searchContentResults.Count == 0)
             {
@@ -302,128 +312,18 @@ namespace IssueLabelerService
             var tags = ExtractTags(issue.Title);
             var tagHints = BuildTagHints(tags);
 
-            return $@"
-You are a GitHub issue classifier for the Azure MCP (Model Context Protocol) repository.
+            var replacements = new Dictionary<string, string>
+            {
+                { "Title", issue.Title ?? string.Empty },
+                { "Description", issue.Body ?? string.Empty },
+                { "TagHints", tagHints },
+                { "ToolLabelDescriptions", toolLabelDescriptions },
+                { "ServerLabelList", serverLabelList },
+                { "PrintableContent", printableContext }
+            };
 
-## TASK
-Classify the issue into:
-1. **Server label** (required): Which MCP server does this issue belong to?
-2. **Tool label** (required for Azure MCP): Which specific tool/subsystem does this issue relate to?
-
-**For other servers (Fabric, PowerBI, Template):** Tool label is typically OMITTED (set to null).
-
-## SERVER LABELS
-Choose exactly one: {serverLabelList}
-
-## TOOL LABELS WITH DESCRIPTIONS
-Read these carefully - each label has a specific scope:
-
-{toolLabelDescriptions}
-
-## FEW-SHOT EXAMPLES (learn from these)
-
-Example 1: [CONSOLIDATED] always means tools-Core
-
-Title:
-[CONSOLIDATED] Some `get_azure_databases_details` prompts do not trigger the corresponding tool as expected
-
-Description:
-Multiple prompts across different Azure services fail to invoke their tools.
-The database tool mentioned is only an example.
-
-Correct classification:
-Server: server-Azure.Mcp
-Tool: tools-Core
-
-Why:
-The [CONSOLIDATED] tag means multiple tools or prompts are affected.
-This is a server-level routing or dispatch issue, not a single service tool issue.
-
-Example 2: Azure CLI tool behavior issues mean tools-AzCLI
-
-Title:
-Azure CLI returns incorrect subscription context despite successful invocation
-
-Description:
-The Azure CLI tool is invoked correctly and runs, but it returns incorrect
-subscription or tenant information compared to the active az login context.
-Other MCP tools work as expected.
-
-Correct classification:
-Server: server-Azure.Mcp
-Tool: tools-AzCLI
-
-Why:
-The Azure CLI tool is selected and executed correctly, but its
-Azure-CLI–specific behavior is incorrect.
-This is not a routing, framework, or authentication infrastructure issue.
-
-Example 3: VS Code extension issues mean tools-VSIX
-
-Title:
-Display warning message during install or first setup of Azure MCP extension
-when organizational policies disable MCP
-
-Description:
-The issue occurs during installation or setup of the Azure MCP VS Code extension.
-
-Correct classification:
-Server: server-Azure.Mcp
-Tool: tools-VSIX
-
-Why:
-The “Azure MCP extension” refers to the VS Code extension.
-Extension installation or setup issues always belong to tools-VSIX,
-not tools-Setup.
-
-## HOW TO CLASSIFY (follow in order)
-{tagHints}
-**STEP 1: Check similar issues below**
-Similar issues show real labeling decisions. If you find a close match, follow that pattern.
-
-**STEP 2: Ask ""Who owns the fix?""**
-Identify which team/component would need to change their code to fix this issue.
-- If the fix is in ONE tool's code → use that tool's label
-- If the fix is in server infrastructure (routing, dispatch, startup) → use tools-Core
-- If [CONSOLIDATED] tag or issue affects MULTIPLE tools → use tools-Core
-
-**STEP 3: Match to tool description**
-Use the tool descriptions above to find the best semantic match.
-- Ignore illustrative examples in the issue (""like KeyVault"", ""e.g., Storage"")
-- Focus on the actual component being reported
-
-Reasoning: We label based on WHAT the issue is ABOUT, not where code changes will go.
-An onboarding request for ""Azure SQL"" is ABOUT SQL, so use tools-SQL label.
-
-**STEP 4: When Multiple Tools Mentioned**
-- Identify the PRIMARY failing component or requested feature
-- Ignore tools mentioned as examples, comparisons, or in passing
-- Example: ""Remove deplicated logging and telemetry operations"" → tools-Telemetry (where failure occurs)
-
-**Key Distinction - tools-Core vs specific tools:**
-- MCP client/server behavior issues, overall MCP subsystem issues, multiple tools affected → tools-Core  
-- ONE tool returns wrong/empty data or has implementation bug → that specific tool
-- ONE specific tool not triggered AND issue is NOT [CONSOLIDATED] (its description/registration issue) → that specific tool (eg: prompt does not trigger the `azmcp_get_bestpractices_get` tool -> tools-BestPractices)
-
-## RESPONSE FORMAT
-Return JSON only:
-{{
-  ""Server"": ""<server-label>"",
-  ""Tool"": ""<tool-label>"",
-  ""ServerConfidenceScore"": <0.0-1.0>,
-  ""ToolConfidenceScore"": <0.0-1.0>
-}}
-
-## ISSUE TO CLASSIFY
-
-**Title:** {issue.Title}
-
-**Description:**
-{issue.Body}
-
-## SIMILAR ISSUES (for reference - learn from their labels)
-{printableContext}
-";
+            var userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelPrompt, replacements, _logger);
+            return userPrompt;
         }
 
         private static BinaryData BuildJsonSchema()
@@ -554,6 +454,51 @@ Return JSON only:
 
             return result;
         }
+
+        /// <summary>
+        /// Remove tool name mentions that appear as examples to improve search quality
+        /// </summary>
+        private string CleanToolMentions(string query)
+        {
+            try
+            {
+                var cleaned = query;
+                
+                cleaned = SafeRegex(cleaned, @"\be\.g\.?,?\s+\w+", "");
+                cleaned = SafeRegex(cleaned, @"\b(like|such\s+as)\s+\w+", "");
+                cleaned = SafeRegex(cleaned, @"\s*\(e\.g\.?,?\s+[^)]+\)", "");
+                cleaned = SafeRegex(cleaned, @"\b(for\s+example|for\s+instance),?\s+\w+", "");
+                cleaned = SafeRegex(cleaned, @"\s{2,}", " ").Trim();
+                return cleaned.Trim();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unexpected error in CleanToolMentions, returning original query");
+                return query;
+            }   
+        }
+
+        /// <summary>
+        /// Safely execute regex replace with timeout and exception handling
+        /// </summary>
+        private string SafeRegex(string input, string pattern, string replacement)
+        {
+            try
+            {
+                return Regex.Replace(input, pattern, replacement, RegexOptions.IgnoreCase, RegexTimeout);
+            }
+            catch (RegexMatchTimeoutException ex)
+            {
+                _logger.LogWarning(ex, "Regex timeout for pattern: {Pattern}", pattern);
+                return input;
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid regex pattern '{Pattern}', skipping this replacement", pattern);
+                return input;
+            }
+        }
+
         private class McpLabel
         {
             public string Name { get; set; }

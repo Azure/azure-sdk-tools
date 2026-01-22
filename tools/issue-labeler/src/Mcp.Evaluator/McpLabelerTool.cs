@@ -157,9 +157,6 @@ public class Program
 
             var triageRagLogger = loggerFactory.CreateLogger<TriageRag>();
             var triageRag = new TriageRag(triageRagLogger, openAIClient, searchIndexClient);
-            
-            var mcpTriageRagLogger = loggerFactory.CreateLogger<McpTriageRag>();
-            var mcpTriageRag = new McpTriageRag(mcpTriageRagLogger, triageRag);
 
             logger.LogInformation("Creating McpOpenAiLabeler with configuration:");
             logger.LogInformation("  IndexName: {IndexName}", repoConfig.IndexName);
@@ -168,7 +165,7 @@ public class Program
             logger.LogInformation("  SourceCount: {SourceCount}", repoConfig.SourceCount);
 
             var labelerLogger = loggerFactory.CreateLogger<LabelerFactory>();
-            var labeler = new McpOpenAiLabeler(labelerLogger, repoConfig, mcpTriageRag, triageRag, blobClient);
+            var labeler = new McpOpenAiLabeler(labelerLogger, repoConfig, triageRag, blobClient);
 
             return labeler;
         }

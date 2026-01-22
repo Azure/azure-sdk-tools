@@ -129,15 +129,7 @@ namespace SearchIndexCreator
             var repoOwner = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true 
                 ? "microsoft" 
                 : "Azure";
-
-            if (repoOwner.Equals("microsoft", StringComparison.OrdinalIgnoreCase))
-            {
-                await labelRetrieval.CreateOrRefreshMcpLabels(repoOwner);
-            }
-            else
-            {
-                await labelRetrieval.CreateOrRefreshLabels(repoOwner);
-            }
+            await labelRetrieval.CreateOrRefreshLabels(repoOwner);
         }
 
         private static async Task ProcessKnowledgeAgent(IConfigurationSection config)
@@ -150,7 +142,7 @@ namespace SearchIndexCreator
 
         private static async Task DeleteKnowledgeAgent(IConfigurationSection config)
         {
-            var defaultCredential = new DefaultAzureCredential();
+            var defaultCredential = new AzureCliCredential();
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
             var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
             await issueKnowledgeAgent.DeleteAsync();

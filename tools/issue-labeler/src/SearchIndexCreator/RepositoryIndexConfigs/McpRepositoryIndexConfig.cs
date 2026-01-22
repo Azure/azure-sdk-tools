@@ -14,9 +14,13 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
     /// </summary>
     public class McpRepositoryIndexConfig : IRepositoryIndexConfig
     {
+        private const int DefaultMaxPageLength = 2200;
+        private const int DefaultPageOverlapLength = 250;
+        private const int DefaultMinCommentLength = 150;
+
         public string DisplayName => "MCP";
-        public int MaxPageLength => 2200;
-        public int PageOverlapLength => 250;
+        public int MaxPageLength => DefaultMaxPageLength;
+        public int PageOverlapLength => DefaultPageOverlapLength;
 
         public IEnumerable<InputFieldMappingEntry> GetCustomFieldMappings()
         {
@@ -27,7 +31,7 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         // Issue retrieval configuration
         public ItemStateFilter IssueStateFilter => ItemStateFilter.All;
         public IEnumerable<string> RequiredLabels => Enumerable.Empty<string>();
-        public int MinCommentLength => 150;
+        public int MinCommentLength => DefaultMinCommentLength;
          // MCP doesn't fetch comments currently
         public bool IncludeComments => false;
 

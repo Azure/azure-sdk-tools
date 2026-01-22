@@ -1,20 +1,20 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+using System.ClientModel.Primitives;
+using Azure.Core;
+using Azure.Identity;
+using Azure.Search.Documents.Indexes;
+using Azure.Storage.Blobs;
+using Hubbup.MikLabelModel;
+using IssueLabelerService;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Hubbup.MikLabelModel;
-using Azure.Identity;
-using System;
 using OpenAI;
-using System.ClientModel.Primitives;
 using OpenAI.Chat;
-using Azure.Search.Documents.Indexes;
-using Microsoft.Extensions.Configuration;
-using Azure.Core;
-using IssueLabelerService;
-using Azure.Storage.Blobs;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -92,7 +92,6 @@ var host = new HostBuilder()
 
         services.AddSingleton<TokenCredential>(credential);
         services.AddSingleton<TriageRag>();
-        services.AddSingleton<McpTriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();

@@ -14,11 +14,15 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
     /// </summary>
     public class AzureSdkRepositoryIndexConfig : IRepositoryIndexConfig
     {
+        private const int DefaultMaxPageLength = 1000;
+        private const int DefaultPageOverlapLength = 100;
+        private const int DefaultMinCommentLength = 250;
+
         public string DisplayName => "Azure SDK";
 
         // Skillset configuration
-        public int MaxPageLength => 1000;
-        public int PageOverlapLength => 100;
+        public int MaxPageLength => DefaultMaxPageLength;
+        public int PageOverlapLength => DefaultPageOverlapLength;
 
         public IEnumerable<InputFieldMappingEntry> GetCustomFieldMappings()
         {
@@ -29,7 +33,7 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         // Issue retrieval configuration
         public ItemStateFilter IssueStateFilter => ItemStateFilter.Closed;
         public IEnumerable<string> RequiredLabels => new[] { "customer-reported", "issue-addressed" };
-        public int MinCommentLength => 250;
+        public int MinCommentLength => DefaultMinCommentLength;
         public bool IncludeComments => true;
 
         public (string? primary, string? secondary) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels)

@@ -8,25 +8,17 @@ namespace Azure.Sdk.Tools.Cli.Services
     public interface IAzureSdkKnowledgeBaseService
     {
         /// <summary>
-        /// Sends a completion request to the AI service.
+        /// Sends an AI chat completion request to the Azure SDK Knowledge Base service.
         /// </summary>
-        /// <param name="request">The completion request containing the question and parameters</param>
-        /// <param name="apiKey">Optional API key override</param>
-        /// <param name="endpoint">Optional endpoint override</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>The completion response from the AI service</returns>
-        /// <exception cref="ArgumentNullException">Thrown when request is null</exception>
-        /// <exception cref="ArgumentException">Thrown when request validation fails</exception>
-        /// <exception cref="InvalidOperationException">Thrown when the service call fails</exception>
+        /// <param name="request">The completion request containing the message and configuration.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the completion response.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="request"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when request validation fails.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the API returns an error or the request fails.</exception>
+        /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
         Task<CompletionResponse> SendCompletionRequestAsync(
             CompletionRequest request,
             CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Validates a completion request to ensure it meets API requirements.
-        /// </summary>
-        /// <param name="request">The request to validate</param>
-        /// <returns>True if valid, false otherwise</returns>
-        bool ValidateRequest(CompletionRequest request);
     }
 }

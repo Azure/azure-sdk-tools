@@ -146,7 +146,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public bool ValidateRequest(CompletionRequest request)
+        /// <summary>
+        /// Validates a completion request to ensure it meets API requirements.
+        /// </summary>
+        /// <param name="request">The request to validate</param>
+        /// <returns>True if valid, false otherwise</returns>
+        private bool ValidateRequest(CompletionRequest request)
         {
             if (request == null)
             {

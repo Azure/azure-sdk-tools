@@ -582,4 +582,70 @@ public partial class TestClient
     }
 
     #endregion
+
+    #region RunAllTests Tests
+
+    [Test]
+    public async Task RunAllTests_UsesTestsDirectory_WhenTestsDirectoryExists()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-test-directory-test");
+        var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
+        Directory.CreateDirectory(testsDir);
+        
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+        
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => 
+                    p.Command == "dotnet" && 
+                    p.Args.Contains("test") &&
+                    p.WorkingDirectory == testsDir),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.TestRunOutput, Does.Contain("Tests passed!"));
+        });
+        
+        _processHelperMock.Verify(x => x.Run(
+            It.Is<ProcessOptions>(p => p.WorkingDirectory == testsDir),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_UsesPackageDirectory_WhenTestsDirectoryDoesNotExist()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-no-test-directory-test");
+        
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+        
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => 
+                    p.Command == "dotnet" && 
+                    p.Args.Contains("test") &&
+                    p.WorkingDirectory == tempDir.DirectoryPath),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.TestRunOutput, Does.Contain("Tests passed!"));
+        });
+        
+        _processHelperMock.Verify(x => x.Run(
+            It.Is<ProcessOptions>(p => p.WorkingDirectory == tempDir.DirectoryPath),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
 }

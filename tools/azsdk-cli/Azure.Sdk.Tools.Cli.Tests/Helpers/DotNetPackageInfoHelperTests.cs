@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
 using LibGit2Sharp;
@@ -159,5 +160,43 @@ public class DotNetPackageInfoHelperTests
         
         // Assert - should return the first directory found (alphabetically, "examples" comes before "snippets")
         Assert.That(packageInfo.SamplesDirectory, Is.EqualTo(Path.Combine(packagePath, "tests", "examples")));
+    }
+
+    [Test]
+    [TestCase("client", SdkType.Dataplane)]
+    [TestCase("mgmt", SdkType.Management)]
+    [TestCase("functions", SdkType.Functions)]
+    public async Task GetPackageInfo_ParsesSdkTypeFromMSBuild(string sdkTypeValue, SdkType expectedSdkType)
+    {
+        // Arrange
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+
+        // Create a .csproj with the GetPackageInfo target
+        var csprojContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  
+  <Target Name=""GetPackageInfo"" Returns=""@(PackageInfoItem)"">
+    <ItemGroup>
+      <PackageInfoItem Include=""'$(MSBuildProjectDirectory)' 'testservice' 'Azure.Test.Package' '1.0.0' '{sdkTypeValue}' 'true' 'bin/Release/net8.0' 'false'"" />
+    </ItemGroup>
+  </Target>
+</Project>";
+        CreateTestFile(packagePath, "src/Azure.Test.Package.csproj", csprojContent);
+
+        var csprojPath = Path.Combine(packagePath, "src", "Azure.Test.Package.csproj");
+        Assert.That(File.Exists(csprojPath), Is.True, $"csproj file should exist at {csprojPath}");
+
+        var realProcessHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+        var helper = new DotnetLanguageService(realProcessHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>());
+
+        // Act
+        var packageInfo = await helper.GetPackageInfo(packagePath);
+
+        // Assert
+        Assert.That(packageInfo.SdkType, Is.EqualTo(expectedSdkType), $"Expected SdkType to be {expectedSdkType} for sdkTypeValue '{sdkTypeValue}'");
+        Assert.That(packageInfo.PackageName, Is.EqualTo("Azure.Test.Package"));
+        Assert.That(packageInfo.PackageVersion, Is.EqualTo("1.0.0"));
     }
 }

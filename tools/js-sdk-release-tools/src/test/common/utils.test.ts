@@ -408,7 +408,7 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
 
-    test("skips cleanup for Management Plane HighLevelClient in Release mode (handled by emitter)", async () => {
+    test("skips cleanup for Management Plane HighLevelClient in Release/Local mode (handled by emitter)", async () => {
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
         
         try {            

@@ -2,29 +2,45 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
+using APIViewWeb.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers;
 
-public class RevisionResolver : IRevisionResolver
+public class ResolvePackage : IResolvePackage
 {
     private readonly IAPIRevisionsManager _apiRevisionsManager;
-    private readonly ILogger<RevisionResolver> _logger;
+    private readonly ILogger<ResolvePackage> _logger;
     private readonly IReviewManager _reviewManager;
+    private readonly ICopilotAuthenticationService _copilotAuthService;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _copilotEndpoint;
 
-    public RevisionResolver(
+    public ResolvePackage(
         IReviewManager reviewManager,
         IAPIRevisionsManager apiRevisionsManager,
-        ILogger<RevisionResolver> logger)
+        ICopilotAuthenticationService copilotAuthService,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ILogger<ResolvePackage> logger)
     {
         _reviewManager = reviewManager;
         _apiRevisionsManager = apiRevisionsManager;
+        _copilotAuthService = copilotAuthService;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
+
+        _copilotEndpoint = configuration["CopilotServiceEndpoint"];
     }
 
     public async Task<ResolvePackageResponse> ResolvePackageQuery(
@@ -45,12 +61,21 @@ public class RevisionResolver : IRevisionResolver
         ReviewListItemModel review = await _reviewManager.GetReviewAsync(language, packageQuery, null);
         if (review == null)
         {
-            //TODO: this is the section in where the call is done directly to copilot as I wasn't able to find an exact match with the packageQuery that I already had
-            // will return copilot response
-            _logger.LogWarning("Review not found for package: {PackageName}, language: {Language}", packageQuery,
-                language);
-            return null;
+            var client = _httpClientFactory.CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_copilotEndpoint}/api-review/resolve-package");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+            request.Content = JsonContent.Create(new { packageQuery, language });
+
+            var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ResolvePackageResponse>();
         }
+
 
         APIRevisionListItemModel revision;
         if (!string.IsNullOrEmpty(version))

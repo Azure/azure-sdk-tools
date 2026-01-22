@@ -1,33 +1,52 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
+using APIViewWeb.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.Protected;
 using Xunit;
 
 namespace APIViewUnitTests;
 
-public class RevisionResolverTests
+public class ResolvePackageTests
 {
     private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
-    private readonly Mock<ILogger<RevisionResolver>> _mockLogger;
+    private readonly Mock<ILogger<ResolvePackage>> _mockLogger;
     private readonly Mock<IReviewManager> _mockReviewManager;
-    private readonly RevisionResolver _resolver;
+    private readonly Mock<ICopilotAuthenticationService> _mockCopilotAuthService;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly ResolvePackage package;
 
-    public RevisionResolverTests()
+    public ResolvePackageTests()
     {
         _mockReviewManager = new Mock<IReviewManager>();
         _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
-        _mockLogger = new Mock<ILogger<RevisionResolver>>();
+        _mockLogger = new Mock<ILogger<ResolvePackage>>();
+        _mockCopilotAuthService = new Mock<ICopilotAuthenticationService>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
-        _resolver = new RevisionResolver(
+        _mockConfiguration.Setup(x => x["CopilotServiceEndpoint"]).Returns("https://copilot.test");
+        _mockCopilotAuthService.Setup(x => x.GetAccessTokenAsync(It.IsAny<CancellationToken>())).ReturnsAsync("test-token");
+
+        package = new ResolvePackage(
             _mockReviewManager.Object,
             _mockApiRevisionsManager.Object,
+            _mockCopilotAuthService.Object,
+            _mockHttpClientFactory.Object,
+            _mockConfiguration.Object,
             _mockLogger.Object);
     }
 
@@ -49,7 +68,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetLatestAPIRevisionsAsync(mockReview.Id, null, APIRevisionType.Automatic))
             .ReturnsAsync(mockRevision);
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageQuery(packageName, language);
+        ResolvePackageResponse result = await package.ResolvePackageQuery(packageName, language);
         Assert.NotNull(result);
         Assert.Equal("review123", result.ReviewId);
         Assert.Equal("revision123", result.RevisionId);
@@ -72,7 +91,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetAPIRevisionsAsync(mockReview.Id, version, APIRevisionType.All))
             .ReturnsAsync(new List<APIRevisionListItemModel> { mockRevision });
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageQuery(packageName, language, version);
+        ResolvePackageResponse result = await package.ResolvePackageQuery(packageName, language, version);
         Assert.NotNull(result);
         Assert.Equal("revision456", result.RevisionId);
     }
@@ -93,18 +112,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetAPIRevisionsAsync(mockReview.Id, version, APIRevisionType.All))
             .ReturnsAsync(new List<APIRevisionListItemModel>()); // Empty - version not found
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageQuery(packageName, language, version);
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public async Task ResolvePackageQuery_ReviewNotFound_ReturnsNull()
-    {
-        _mockReviewManager
-            .Setup(x => x.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), null))
-            .ReturnsAsync((ReviewListItemModel)null);
-
-        ResolvePackageResponse result = await _resolver.ResolvePackageQuery("NonExistent", "C#");
+        ResolvePackageResponse result = await package.ResolvePackageQuery(packageName, language, version);
         Assert.Null(result);
     }
 
@@ -121,7 +129,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetLatestAPIRevisionsAsync(mockReview.Id, null, APIRevisionType.Automatic))
             .ReturnsAsync((APIRevisionListItemModel)null);
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageQuery("Azure.Storage.Blobs", "C#");
+        ResolvePackageResponse result = await package.ResolvePackageQuery("Azure.Storage.Blobs", "C#");
         Assert.Null(result);
     }
 
@@ -131,7 +139,7 @@ public class RevisionResolverTests
     public async Task ResolvePackageQuery_EmptyPackageName_ThrowsArgumentException(string packageName,
         string language)
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _resolver.ResolvePackageQuery(packageName, language));
+        await Assert.ThrowsAsync<ArgumentException>(() => package.ResolvePackageQuery(packageName, language));
     }
 
     [Theory]
@@ -139,7 +147,106 @@ public class RevisionResolverTests
     [InlineData("Azure.Storage.Blobs", "")]
     public async Task ResolvePackageQuery_EmptyLanguage_ThrowsArgumentException(string packageName, string language)
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _resolver.ResolvePackageQuery(packageName, language));
+        await Assert.ThrowsAsync<ArgumentException>(() => package.ResolvePackageQuery(packageName, language));
+    }
+
+    [Fact]
+    public async Task ResolvePackageQuery_ReviewNotFoundLocally_CopilotReturnsResult_ReturnsResponse()
+    {
+        string packageQuery = "azure-storage";
+        string language = "Python";
+
+        _mockReviewManager
+            .Setup(x => x.GetReviewAsync(language, packageQuery, null))
+            .ReturnsAsync((ReviewListItemModel)null);
+
+        var copilotResponse = new ResolvePackageResponse
+        {
+            PackageName = "azure-storage-blob",
+            Language = "Python",
+            ReviewId = "copilot-review-123",
+            Version = "12.0.0",
+            RevisionId = "copilot-revision-456",
+            RevisionLabel = "Latest"
+        };
+
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(copilotResponse))
+        };
+
+        HttpRequestMessage capturedRequest = null;
+        string capturedRequestBody = null;
+        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+        mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>(async (req, _) =>
+            {
+                capturedRequest = req;
+                if (req.Content != null)
+                {
+                    capturedRequestBody = await req.Content.ReadAsStringAsync();
+                }
+            })
+            .ReturnsAsync(httpResponse);
+
+        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+        _mockHttpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        ResolvePackageResponse result = await package.ResolvePackageQuery(packageQuery, language);
+
+        Assert.NotNull(result);
+        Assert.Equal("azure-storage-blob", result.PackageName);
+        Assert.Equal("copilot-review-123", result.ReviewId);
+        Assert.Equal("copilot-revision-456", result.RevisionId);
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(HttpMethod.Post, capturedRequest.Method);
+        Assert.Equal("https://copilot.test/api-review/resolve-package", capturedRequest.RequestUri.ToString());
+        Assert.Equal("Bearer", capturedRequest.Headers.Authorization.Scheme);
+        Assert.Equal("test-token", capturedRequest.Headers.Authorization.Parameter);
+
+        Assert.NotNull(capturedRequestBody);
+        Assert.Contains("\"packageQuery\":\"azure-storage\"", capturedRequestBody);
+        Assert.Contains("\"language\":\"Python\"", capturedRequestBody);
+    }
+
+    [Fact]
+    public async Task ResolvePackageQuery_ReviewNotFoundLocally_CopilotReturnsNotFound_ReturnsNull()
+    {
+        string packageQuery = "nonexistent-package";
+        string language = "Python";
+
+        _mockReviewManager
+            .Setup(x => x.GetReviewAsync(language, packageQuery, null))
+            .ReturnsAsync((ReviewListItemModel)null);
+
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.NotFound);
+
+        HttpRequestMessage capturedRequest = null;
+        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+        mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) => capturedRequest = req)
+            .ReturnsAsync(httpResponse);
+
+        var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+        _mockHttpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        ResolvePackageResponse result = await package.ResolvePackageQuery(packageQuery, language);
+        Assert.Null(result);
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(HttpMethod.Post, capturedRequest.Method);
+        Assert.Equal("https://copilot.test/api-review/resolve-package", capturedRequest.RequestUri.ToString());
     }
 
     #endregion
@@ -161,7 +268,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetLatestAPIRevisionsAsync(mockReview.Id, null, It.IsAny<APIRevisionType>()))
             .ReturnsAsync(mockRevision);
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageLink(link);
+        ResolvePackageResponse result = await package.ResolvePackageLink(link);
         Assert.NotNull(result);
         Assert.Equal("review123", result.ReviewId);
         Assert.Equal("revision123", result.RevisionId);
@@ -177,7 +284,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetAPIRevisionAsync("revision456"))
             .ReturnsAsync(mockRevision);
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageLink(link);
+        ResolvePackageResponse result = await package.ResolvePackageLink(link);
         Assert.NotNull(result);
         Assert.Equal("review123", result.ReviewId);
         Assert.Equal("revision456", result.RevisionId);
@@ -198,7 +305,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetLatestAPIRevisionsAsync(mockReview.Id, null, APIRevisionType.Automatic))
             .ReturnsAsync(mockRevision);
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageLink(link);
+        ResolvePackageResponse result = await package.ResolvePackageLink(link);
         Assert.NotNull(result);
         Assert.Equal("review789", result.ReviewId);
     }
@@ -207,7 +314,7 @@ public class RevisionResolverTests
     public async Task ResolvePackageLink_InvalidUrl_ReturnsNull()
     {
         string link = "https://example.com/invalid/path";
-        ResolvePackageResponse result = await _resolver.ResolvePackageLink(link);
+        ResolvePackageResponse result = await package.ResolvePackageLink(link);
         Assert.Null(result);
     }
 
@@ -219,7 +326,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetReviewsAsync(It.IsAny<List<string>>(), It.IsAny<bool>()))
             .ReturnsAsync(new List<ReviewListItemModel>());
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageLink(link);
+        ResolvePackageResponse result = await package.ResolvePackageLink(link);
         Assert.Null(result);
     }
 
@@ -231,7 +338,7 @@ public class RevisionResolverTests
             .Setup(x => x.GetAPIRevisionAsync("nonexistent"))
             .ReturnsAsync((APIRevisionListItemModel)null);
 
-        ResolvePackageResponse result = await _resolver.ResolvePackageLink(link);
+        ResolvePackageResponse result = await package.ResolvePackageLink(link);
         Assert.Null(result);
     }
 
@@ -240,7 +347,7 @@ public class RevisionResolverTests
     [InlineData("")]
     public async Task ResolvePackageLink_EmptyLink_ThrowsArgumentException(string link)
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _resolver.ResolvePackageLink(link));
+        await Assert.ThrowsAsync<ArgumentException>(() => package.ResolvePackageLink(link));
     }
 
     #endregion

@@ -4,7 +4,7 @@ using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers.Interfaces
 {
-    public interface IRevisionResolver
+    public interface IResolvePackage
     { 
         Task<ResolvePackageResponse> ResolvePackageQuery(
             string packageQuery,

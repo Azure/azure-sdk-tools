@@ -20,7 +20,7 @@ namespace APIViewWeb.LeanControllers;
 [Route("api/reviews")]
 public class ReviewsTokenAuthController : ControllerBase
 {
-    private readonly IRevisionResolver _revisionResolver;
+    private readonly IResolvePackage resolvePackage;
     private readonly IAPIRevisionsManager _apiRevisionsManager;
     private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
     private readonly IReviewManager _reviewManager;
@@ -29,7 +29,7 @@ public class ReviewsTokenAuthController : ControllerBase
     private readonly ILogger<ReviewsTokenAuthController> _logger;
 
     public ReviewsTokenAuthController(
-        IRevisionResolver revisionResolver,
+        IResolvePackage resolvePackage,
         IAPIRevisionsManager apiRevisionsManager,
         ICosmosPullRequestsRepository pullRequestsRepository,
         IReviewManager reviewManager,
@@ -37,7 +37,7 @@ public class ReviewsTokenAuthController : ControllerBase
         IEnumerable<LanguageService> languageServices,
         ILogger<ReviewsTokenAuthController> logger)
     {
-        _revisionResolver = revisionResolver;
+        this.resolvePackage = resolvePackage;
         _apiRevisionsManager = apiRevisionsManager;
         _reviewManager = reviewManager;
         _pullRequestsRepository = pullRequestsRepository;
@@ -72,11 +72,11 @@ public class ReviewsTokenAuthController : ControllerBase
 
             if (!string.IsNullOrEmpty(link))
             {
-                result = await _revisionResolver.ResolvePackageLink(link);
+                result = await resolvePackage.ResolvePackageLink(link);
             }
             else if (!string.IsNullOrEmpty(packageQuery) && !string.IsNullOrEmpty(language))
             {
-                result = await _revisionResolver.ResolvePackageQuery(packageQuery, language, version);
+                result = await resolvePackage.ResolvePackageQuery(packageQuery, language, version);
             }
             else
             {

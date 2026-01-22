@@ -59,6 +59,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
+        [FieldName("Custom.ApiSpecProjectPath")]
+        public string APISpecProjectPath { get; set; } = string.Empty;
+
         public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
             var jsonDocument = base.GetPatchDocument();

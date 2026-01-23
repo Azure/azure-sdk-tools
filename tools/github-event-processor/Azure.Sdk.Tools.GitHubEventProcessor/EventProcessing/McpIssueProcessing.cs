@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Microsoft.Extensions.Logging;
@@ -18,10 +19,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     public class McpIssueProcessing : IssueProcessing
     {
         private readonly ILogger<McpIssueProcessing> _logger;
+        private readonly McpConfiguration _mcpConfiguration;
 
-        public McpIssueProcessing(ILogger<McpIssueProcessing> logger)
+        public McpIssueProcessing(ILogger<McpIssueProcessing> logger, McpConfiguration mcpConfiguration)
         {
             _logger = logger;
+            _mcpConfiguration = mcpConfiguration;
         }
 
         /// <summary>
@@ -211,15 +214,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
         }
 
-        private static string? GetTeamMentionForServerLabel(string serverLabel)
+        private string? GetTeamMentionForServerLabel(string serverLabel)
         {
-            var serverTeamMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "server-Azure.Mcp", "@microsoft/azure-mcp" },
-                { "server-Fabric.Mcp", "@microsoft/fabric-mcp" }
-            };
-
-            return serverTeamMap.TryGetValue(serverLabel, out string? team) ? team : null;
+            return _mcpConfiguration.GetTeamMentionForServerLabel(serverLabel);
         }
 
         private static McpPredictedLabelDecision EvaluatePredictedLabelsForMcp(IEnumerable<string> userLabels, IEnumerable<string> predictedLabels)

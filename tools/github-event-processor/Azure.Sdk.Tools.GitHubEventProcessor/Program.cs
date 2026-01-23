@@ -9,9 +9,13 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Azure.Core;
+using Azure.Identity;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -19,6 +23,41 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
     internal class Program
     {
+        private const string AppConfigurationEndpoint = "https://gh-triage-app-config.azconfig.io";
+
+        /// <summary>
+        /// Creates an McpConfiguration instance by connecting to Azure App Configuration.
+        /// This method is shared between the main entry point and test methods.
+        /// </summary>
+        private static McpConfiguration CreateMcpConfiguration()
+        {
+            TokenCredential credential = new ChainedTokenCredential(
+                new ManagedIdentityCredential(),
+                new AzureCliCredential(),
+                new VisualStudioCredential(),
+                new VisualStudioCodeCredential()
+            );
+
+            IConfiguration mcpConfig;
+            try
+            {
+                var builder = new ConfigurationBuilder();
+                builder.AddAzureAppConfiguration(options =>
+                {
+                    options.Connect(new Uri(AppConfigurationEndpoint), credential);
+                });
+                mcpConfig = builder.Build();
+                Console.WriteLine($"Connected to Azure App Configuration: {AppConfigurationEndpoint}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not connect to Azure App Configuration. Error: {ex.Message}");
+                mcpConfig = new ConfigurationBuilder().Build();
+            }
+
+            return new McpConfiguration(mcpConfig);
+        }
+
         static async Task Main(string[] args)
         {
             var host = Host.CreateDefaultBuilder(args)
@@ -32,8 +71,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 });
                 logging.SetMinimumLevel(LogLevel.Information);
             })
-            .ConfigureServices(services =>
+            .ConfigureServices((context, services) =>
             {
+                services.AddSingleton<McpConfiguration>(sp => CreateMcpConfiguration());
                 services.AddSingleton<McpIssueProcessing>();
             })
             .Build();

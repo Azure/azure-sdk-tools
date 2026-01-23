@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -171,7 +173,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 mockGitHubEventClient.OwnersWithAssignPermission = ownersWithPermission;
             }
             
-            var mcpProcessor = new McpIssueProcessing(logger);
+            var mcpProcessor = new McpIssueProcessing(logger, CreateTestMcpConfiguration());
             
             await mcpProcessor.ProcessIssueEvent(mockGitHubEventClient, issueEventPayload);
             
@@ -249,6 +251,23 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     Assert.That(labelsToAdd, Does.Contain(TriageLabelConstants.Question));
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates a test McpConfiguration with mock server team mappings.
+        /// </summary>
+        private static McpConfiguration CreateTestMcpConfiguration()
+        {
+            var configData = new Dictionary<string, string?>
+            {
+                { "microsoft/mcp:ServerTeamMappings", "server-Azure.Mcp=@microsoft/azure-mcp;server-Fabric.Mcp=@microsoft/fabric-mcp" }
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(configData)
+                .Build();
+
+            return new McpConfiguration(configuration);
         }
     }
 }

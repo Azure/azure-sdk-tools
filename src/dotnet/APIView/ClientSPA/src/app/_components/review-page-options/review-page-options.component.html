@@ -98,17 +98,6 @@
                 </div>
             </div>
         </li>
-        <li class="list-group-item" *ngIf="isDiffView && contentHasDiff">
-            <label class="small mx-1 fw-semibold">Diff:</label>
-            <div class="d-grid gap-2">
-                <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
-                        <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)">
-                        <i class="bi bi-arrow-down"></i>Next</button>
-                </div>
-            </div>
-        </li>
         <li class="list-group-item">
             <div class="d-grid gap-2">
                 <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)" data-clarity-region="copy-review-text-button">

@@ -100,7 +100,6 @@
     color: var(--text-color-secondary);
   }
 
-  // GitHub-style icon buttons
   .search-nav-btn {
     display: inline-flex;
     align-items: center;
@@ -135,8 +134,63 @@
     }
   }
 
-  .search-nav-buttons {
-    gap: 4px;
+  ::ng-deep p-buttongroup {
+    .p-buttongroup {
+      display: inline-flex;
+      gap: 0;
+
+      .p-button {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        background-color: var(--surface-card);
+        color: var(--text-color-secondary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border-radius: 0;
+
+        i {
+          font-size: 0.875rem;
+        }
+
+        &:hover:not(:disabled) {
+          background-color: var(--surface-hover);
+          border-color: var(--text-color-secondary);
+          color: var(--text-color);
+          z-index: 1;
+        }
+
+        &:active:not(:disabled) {
+          background-color: var(--surface-ground);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      // Target the p-button wrapper components
+      p-button {
+        &:first-of-type .p-button {
+          border-top-left-radius: 6px;
+          border-bottom-left-radius: 6px;
+        }
+
+        &:last-of-type .p-button {
+          border-top-right-radius: 6px;
+          border-bottom-right-radius: 6px;
+        }
+
+        &:not(:last-of-type) .p-button {
+          border-right: none;
+        }
+      }
+    }
   }
 
   .diff-style-toggle-wrapper {
@@ -152,9 +206,9 @@
   --p-togglebutton-checked-background: var(--base-fg-color);
   --p-togglebutton-checked-color: var(--base-text-color);
   --p-togglebutton-checked-border-color: var(--border-color);
-  --p-togglebutton-hover-background: var(--base-fg-color);
-  --p-togglebutton-hover-color: var(--base-text-color);
-  --p-togglebutton-hover-border-color: var(--border-color);
+  --p-togglebutton-hover-background: var(--border-color);
+  --p-togglebutton-hover-color: var(--text-color-secondary);
+  --p-togglebutton-hover-border-color: var(--text-color-secondary);
   --p-togglebutton-padding: 0.20rem 0.5rem;
   --p-selectbutton-border-radius: 6px;
 

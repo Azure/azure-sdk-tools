@@ -10,6 +10,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
 import { DialogModule } from 'primeng/dialog';
 import { TimeagoModule } from 'ngx-timeago';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
@@ -35,6 +36,7 @@ import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
     InputTextModule,
     PopoverModule,
     ButtonModule,
+    ButtonGroupModule,
     DialogModule,
     TimeagoModule,
     LastUpdatedOnPipe
@@ -54,6 +56,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   @Input() hasHiddenAPIs: boolean = false;
 
   @Output() diffStyleEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Output() diffNavigationEmitter: EventEmitter<number> = new EventEmitter<number>();
   @Output() showCommentsEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -299,13 +302,24 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   navigateSearch(direction: number) {
     const searchInfo = this.codeLineSearchInfo;
     if (searchInfo && searchInfo.currentMatch && searchInfo.totalMatchCount !== undefined) {
-      const newMatch = searchInfo.currentMatch;
-      newMatch.index += direction;
-      if (newMatch.index < 0) {
-        newMatch.index = searchInfo.totalMatchCount - 1;
-      } else if (newMatch.index >= searchInfo.totalMatchCount) {
-        newMatch.index = 0;
+      let newMatch = searchInfo.currentMatch;
+      
+      if (direction > 0) {
+        newMatch = newMatch.next || searchInfo.currentMatch;
+        if (!newMatch.next && direction > 0) {
+          while (!newMatch.isHead()) {
+            newMatch = newMatch.prev!;
+          }
+        }
+      } else {
+        newMatch = newMatch.prev || searchInfo.currentMatch;
+        if (!newMatch.prev && direction < 0) {
+          while (!newMatch.isTail()) {
+            newMatch = newMatch.next!;
+          }
+        }
       }
+      
       this.codeLineSearchInfoEmitter.emit(new CodeLineSearchInfo(newMatch, searchInfo.totalMatchCount));
     }
   }

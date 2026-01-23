@@ -12,6 +12,7 @@ public class TelemetryPathSanitizerTests
     [TestCase(@"C:\Users\ben\sdk\azure-sdk-for-net\sdk\storage", @"[PATH REDACTED]\azure-sdk-for-net\sdk\storage")]
     [TestCase("C:/Users/ben/sdk/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
     [TestCase("/home/ben/sdk/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
+    [TestCase("/home/ben/sdk/azure-sdk-for-go/sdk/resourcemanager/advisor/armadvisor", "[PATH REDACTED]/azure-sdk-for-go/sdk/resourcemanager/advisor/armadvisor")]
     [TestCase("~/specification/service", "[PATH REDACTED]/specification/service")]
     public void Sanitize_PreservesAllowlistedSegments(string input, string expected)
     {

@@ -179,19 +179,19 @@ enum Versions {
 
 According to the ARM versioning guideline and best practices, the expected behavior should:
 1. Rename the latest preview version to match the new preview version, in all instances in the spec. e.g. change the `Versions` enum.
-```typespec main.tsp
-/** The available API versions. */
-enum Versions {
-  /** 2021-11-01 version */
-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2021_11_01: "2021-11-01",
+    ```typespec main.tsp
+    /** The available API versions. */
+    enum Versions {
+      /** 2021-11-01 version */
+      @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+      v2021_11_01: "2021-11-01",
 
-  /** 2025-10-01-preview version */
-  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  @previewVersion
-  v2025_10_01_preview: "2025-10-01-preview",
-}
-```
+      /** 2025-10-01-preview version */
+      @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
+      @previewVersion
+      v2025_10_01_preview: "2025-10-01-preview",
+    }
+    ```
 1. Change the name of the `examples` version folder for the latest preview to match the new preview version
 1. Make changes to the API description based on how the API has changed
   - If any type that was introduced in the latest preview is _not_ in the new preview, simply remove the type
@@ -234,6 +234,10 @@ enum Versions {
 
 ## Design Proposal
 
+This spec proposes two approaches for providing AI-powered TypeSpec authoring assistance. Each approach has different tradeoffs in terms of implementation complexity, maintenance overhead, and specialization capability.
+
+### Approach 1: Custom Agent-Based Design
+
 Build a custom agent `azure-typespec-author-agent` that assists users in defining or updating TypeSpec API specifications and handling other TypeSpec‑related tasks.
 The agent adopts Azure KB to provide solution for user request:
 
@@ -242,7 +246,7 @@ Based on the request, the agent will invoke an Azure KB tool to retrieve the sol
 - Leverage the existing APIs for Azure SDK knowledge base to deliver solutions aligned with Azure guidelines and best practices. 
 - Implement a TypeSpec solution MCP tool that consults the Azure SDK RAG service to generate these solutions.
 
-### Overview
+#### Overview
 
 ```code
 ┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
@@ -279,7 +283,7 @@ Based on the request, the agent will invoke an Azure KB tool to retrieve the sol
    │                     │                       │                      │
 ```
 
-### Detailed Design
+#### Detailed Design
 
 The TypeSpec authoring workflow follows a streamlined process where the user interacts with Custom agent `azure-typespec-author-agent` using natural language, and agent leverages the TypeSpec Solution Tool (MCP) to generate standards-compliant solutions. The architecture diagram above illustrates this end-to-end flow:
 
@@ -292,7 +296,7 @@ The TypeSpec authoring workflow follows a streamlined process where the user int
 
 This design ensures that generated TypeSpec code adheres to Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices by grounding every solution in authoritative Azure documentation.
 
-#### Component 1: TypeSpec Solution Tool
+##### Component 1: TypeSpec Solution Tool
 
 **Name (CLI)**: `azsdk typespec consult`
 
@@ -331,7 +335,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 1. **Process Response**: Format the solution and extract relevant documentation references
 1. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
 
-#### Component 2: Azure SDK Knowledge Base
+##### Component 2: Azure SDK Knowledge Base
 
 **Purpose**: Backend service that provides RAG-powered solutions for Azure SDK and TypeSpec authoring tasks.
 
@@ -354,15 +358,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 ---
 
-### Cross-Language Considerations
+#### Future Enhancement for Approach 1
 
-TypeSpec authoring is language-agnostic. The generated SDKs target specific languages, but the TypeSpec authoring experience with AI assistance applies uniformly across all target SDK languages. Language-specific considerations come into play during SDK generation validation, not during TypeSpec authoring.
-
----
-
-### Future enhancement
-
-#### Multiple Skills
+##### Multiple Skills
 
 **Description:**
 
@@ -435,12 +433,88 @@ Enhance Custom agent `azure-typespec-author-agent` capability with multiple Skil
 
 ```
 
-#### Call AI Search instead of Azure Knowledge Base
+##### Call AI Search instead of Azure Knowledge Base
 
 The custom agent will invoke an AI search to retrieve the relevant TypeSpec information, then use that knowledge as context to generate the final response.
 
 This approach cleanly decouples knowledge retrieval from final responses, enabling the custom agent to leverage the VS Code model to generate solutions. The custom agent can also craft tailored prompts to produce responses that are well‑suited for authoring tasks.
+
+---
+
+### Approach 2: Skills-Only Approach (Without Custom Agent)
+
+Instead of building a custom agent, leverage GitHub Copilot's Skills framework to provide TypeSpec authoring assistance directly through MCP tools. This approach allows the existing Copilot agent to intelligently invoke specialized TypeSpec skills based on user context and requests.
+
+#### Overview
+
+```code
+┌──────┐          ┌─────────────┐          ┌───────────┐          ┌───────────┐
+│ User │          │ TypeSpec    │          │ azsdk     │          │ Knowledge │
+│      │          │ Authoring   │          │ MCP       │          │ base      │
+│      │          │ Skills      │          │           │          │           │
+└──┬───┘          └──────┬──────┘          └─────┬─────┘          └─────┬─────┘
+   │                     │                       │                      │
+   │ "Add new preview    │                       │                      │
+   │  version 2025-12-09 │                       │                      │
+   │  to project widget" │                       │                      │
+   │────────────────────>│                       │                      │
+   │                     │────┐                  │                      │
+   │                     │    │ detect TypeSpec  │                      │
+   │                     │    │ context & choose │                      │
+   │                     │<───┘ appropriate skill│                      │
+   │                     │                       │                      │
+   │                     │ Request versioning    │                      │
+   │                     │ info                  │                      │
+   │                     │──────────────────────>│                      │
+   │                     │                       │                      │
+   │                     │                       │ Search request       │
+   │                     │                       │─────────────────────>│
+   │                     │                       │                      │
+   │                     │                       │ Versioning solution  │
+   │                     │                       │<─────────────────────│
+   │                     │                       │                      │
+   │                     │ Versioning solution   │                      │
+   │                     │<──────────────────────│                      │
+   │                     │────┐                  │                      │
+   │                     │    │ Make edits       │                      │
+   │                     │<───┘                  │                      │
+   │                     │                       │                      │
+   │ "Changes made"      │                       │                      │
+   │<────────────────────│                       │                      │
+   │                     │                       │                      │
+```
+
+#### Detailed Design
+
+1. **User prompts** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
+1. **Skill detects TypeSpec context** based on:
+   - User's query and case to resolve
+   - File extensions (`.tsp`)
+   - Project structure (presence of `tspconfig.yaml`, `package.json` with TypeSpec dependencies)
+   - Active file content and imports
+   - Workspace-indexed TypeSpec files
+1. **Skill automatically invokes the appropriate MCP tool** (`azsdk_typespec_consult`) without requiring custom agent routing logic
+1. The MCP tool queries the Azure SDK Knowledge Base with the user's request and project context
+1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance
+1. **Agent processes the solution** and applies appropriate file edits, presenting changes to the user with explanations
+
+---
+
+### Approach Comparison Summary
+
+Both approaches leverage the same Azure SDK Knowledge Base backend and provide similar core functionality. The key differences are:
+
+- **Approach 1 (Custom Agent)**: Does NOT redirect every TypeSpec question to the Azure SDK Knowledge Base backend, making it more lightweight. However, customers need to explicitly know when to switch to use the custom agent. 
+
+- **Approach 2 (Skills-Only)**: Redirects every TypeSpec question to the Azure SDK Knowledge Base backend, which acts like a proxy and may be heavier in processing. And calling Azure SDK Knowledge Base backend multiple times may potentially have performance issue. However, it's transparent to customers who by default use the TypeSpec Authoring tool without needing to explicitly switch context. 
+
+---
+## Cross-Language Considerations
+
+TypeSpec authoring is language-agnostic. The generated SDKs target specific languages, but the TypeSpec authoring experience with AI assistance applies uniformly across all target SDK languages. Language-specific considerations come into play during SDK generation validation, not during TypeSpec authoring.
   
+---
+
 ## Success Criteria
 
 This feature/tool is complete when:

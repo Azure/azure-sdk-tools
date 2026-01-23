@@ -31,6 +31,11 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             ValidateBooleanMetricEvaluator(result, ToolDescriptionSimilarityEvaluator.SimilarityMetricName);
         }
 
+        public static void ValidatePromptToToolMatchEvaluator(EvaluationResult result)
+        {
+            ValidateBooleanMetricEvaluator(result, PromptToToolMatchEvaluator.MatchMetricName);
+        }
+
         public static async Task<EvaluationResult> RunScenarioAsync(
             IEnumerable<ChatMessage> messages,
             ChatResponse response,

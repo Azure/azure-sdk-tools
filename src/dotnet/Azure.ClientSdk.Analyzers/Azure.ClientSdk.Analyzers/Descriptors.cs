@@ -134,6 +134,15 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
 
+        public static DiagnosticDescriptor AZC0021 = new DiagnosticDescriptor(
+            nameof(AZC0021),
+            "ClientSettings constructor parameters should not be combined with other parameters",
+            "A constructor with a ClientSettings-derived parameter should only take that single parameter",
+            DiagnosticCategory.Usage,
+            DiagnosticSeverity.Warning,
+            isEnabledByDefault: true
+        );
+
         public static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(
             nameof(AZC0030),
             "Improper model name suffix",

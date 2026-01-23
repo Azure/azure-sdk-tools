@@ -100,6 +100,142 @@ namespace RandomNamespace.Foo
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
-    }
+
+        [Fact]
+        public async Task AZC0007NotProducedForClientWithClientSettings()
+        {
+            const string code = @"
+namespace System.ClientModel
+{
+    public class ClientSettings {}
 }
 
+namespace RandomNamespace
+{
+    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(SomeClientSettings settings) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0005ProducedForClientWithOnlyClientSettingsAndNoParameterlessCtor()
+        {
+            const string code = @"
+namespace System.ClientModel
+{
+    public class ClientSettings {}
+}
+
+namespace RandomNamespace
+{
+    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+
+    public class {|AZC0005:SomeClient|}
+    {
+        public SomeClient(SomeClientSettings settings) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0007NotProducedForClientWithClientSettingsAndOtherOverloads()
+        {
+            const string code = @"
+namespace System.ClientModel
+{
+    public class ClientSettings {}
+}
+
+namespace RandomNamespace
+{
+    using Azure.Core;
+
+    public class SomeClientOptions : ClientOptions {}
+    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString) {}
+        public SomeClient(string connectionString, SomeClientOptions options) {}
+        public SomeClient(SomeClientSettings settings) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0007ProducedForClientWithClientSettingsButMissingOptionsOverload()
+        {
+            const string code = @"
+namespace System.ClientModel
+{
+    public class ClientSettings {}
+}
+
+namespace RandomNamespace
+{
+    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public {|AZC0007:SomeClient|}(string connectionString) {}
+        public SomeClient(SomeClientSettings settings) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0007NotProducedForClientWithMultipleClientSettingsOverloads()
+        {
+            const string code = @"
+namespace System.ClientModel
+{
+    public class ClientSettings {}
+}
+
+namespace RandomNamespace
+{
+    using System;
+    using Azure;
+
+    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class AnotherClientSettings : System.ClientModel.ClientSettings {}
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(SomeClientSettings settings) {}
+        public SomeClient(AnotherClientSettings settings) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0007ProducedForClientsWithSettingsNotDerivedFromClientSettings()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientSettings { }
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public {|AZC0007:SomeClient|}(SomeClientSettings settings) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+    }
+}

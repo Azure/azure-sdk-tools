@@ -292,6 +292,36 @@
           "folder": "azure_sdk_for_js_wiki"
         }
       ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-rest-api-specs.git",
+        "branch": "master",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Azure REST API Breaking Change And Oad Rules Mapping",
+          "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+          "folder": "static_azure_docs",
+          "relativeByRepoPath": true
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/openapi-diff.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "oad rules",
+          "path": "/docs",
+          "folder": "static_azure_docs",
+          "relativeByRepoPath": true
+        }
+      ]
     }
   ]
 }

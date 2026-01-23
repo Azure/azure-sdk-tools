@@ -728,6 +728,58 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
             print(f"Error purging container: {e}")
 
 
+def db_ingest_guidelines(
+    dry_run: bool = False,
+    force: bool = False,
+    language_filter: Optional[str] = None,
+):
+    """
+    Ingest guidelines from the azure-sdk repository into the knowledge base.
+
+    Detects changes using git commit comparison and only updates guidelines
+    where content has actually changed.
+    """
+    from src._guideline_ingestor import GuidelineIngestor
+
+    ingestor = GuidelineIngestor.get_instance()
+    result = ingestor.sync_guidelines(
+        dry_run=dry_run,
+        force=force,
+        language_filter=language_filter,
+    )
+
+    # Print detailed results
+    if dry_run:
+        print(f"{BOLD}[DRY RUN] No changes were made to the database.{RESET}\n")
+
+    if result.created:
+        print(f"{GREEN}Guidelines to create ({len(result.created)}):{RESET}")
+        for gid in result.created:
+            print(f"  + {gid}")
+        print()
+
+    if result.updated:
+        print(f"{BLUE}Guidelines to update ({len(result.updated)}):{RESET}")
+        for gid in result.updated:
+            print(f"  ~ {gid}")
+        print()
+
+    if result.deleted:
+        print(f"{Fore.RED}Guidelines to delete ({len(result.deleted)}):{RESET}")
+        for gid in result.deleted:
+            print(f"  - {gid}")
+        print()
+
+    if result.errors:
+        print(f"{Fore.RED}Errors ({len(result.errors)}):{RESET}")
+        for err in result.errors:
+            print(f"  ! {err}")
+        print()
+
+    print(result.summary())
+    return result
+
+
 def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
     """
     Retrieves comments for a specific APIView revision and returns them grouped by line number and
@@ -1156,6 +1208,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get", "db_get")
             g.command("delete", "db_delete")
             g.command("purge", "db_purge")
+            g.command("ingest-guidelines", "db_ingest_guidelines")
         with CommandGroup(self, "metrics", "__main__#{}") as g:
             g.command("report", "report_metrics")
         with CommandGroup(self, "permissions", "__main__#{}") as g:
@@ -1459,6 +1512,26 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Whether to run the search indexer before purging.",
                 options_list=["--run-indexer"],
                 action="store_true",
+            )
+        with ArgumentsContext(self, "db ingest-guidelines") as ac:
+            ac.argument(
+                "dry_run",
+                action="store_true",
+                help="Report what would be changed without actually modifying the database.",
+                options_list=["--dry-run", "-d"],
+            )
+            ac.argument(
+                "force",
+                action="store_true",
+                help="Ignore the last synced commit SHA and process all guideline files (full resync).",
+                options_list=["--force", "-f"],
+            )
+            ac.argument(
+                "language_filter",
+                type=str,
+                help="Only process guidelines for this language (e.g., 'python', 'java').",
+                options_list=["--language", "-l"],
+                choices=list(SUPPORTED_LANGUAGES) + ["general"],
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(

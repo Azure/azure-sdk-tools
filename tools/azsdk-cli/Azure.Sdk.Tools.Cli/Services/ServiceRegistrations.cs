@@ -57,6 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
+            services.AddSingleton<IAPIViewFeedbackCustomizationsHelpers, APIViewFeedbackCustomizationsHelpers>();
             if (outputMode == OutputHelper.OutputModes.Mcp)
             {
                 services.AddSingleton<IRawOutputHelper, McpRawOutputHelper>();

@@ -23,12 +23,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
-        private const string TypeSpecAuthoringToolCommandName = "retrieve-solution";
+        private const string TypeSpecAuthoringToolCommandName = "consult";
 
-        private readonly Option<string> _requestOption = new("--request")
+        private readonly Argument<string> _requestArgument = new("typespec request")
         {
-            Description = "The TypeSpec‑related task or user request to be addressed by the proposed solution or execution plan.",
-            Required = true,
+            Description = "The TypeSpec‑related task or user request sent to an AI agent to produce a proposed solution or execution plan with references.",
         };
 
         private readonly Option<string> _additionalInformationOption = new("--additional-information")
@@ -46,9 +45,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         protected override Command GetCommand()
         {
-            var command = new Command(TypeSpecAuthoringToolCommandName, "Retrieve a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.")
+            var command = new Command(TypeSpecAuthoringToolCommandName, "Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.")
             {
-                _requestOption,
+                _requestArgument,
                 _additionalInformationOption
             };
 
@@ -57,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var request = parseResult.GetValue(_requestOption);
+            var request = parseResult.GetValue(_requestArgument);
 
             if (string.IsNullOrWhiteSpace(request))
             {
@@ -90,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
 
-        [McpServerTool(Name = "azsdk_typespec_retrieve_solution")]
+        [McpServerTool(Name = "azsdk_typespec_consult")]
         [Description(@"Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.
 Pass in a `request` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links

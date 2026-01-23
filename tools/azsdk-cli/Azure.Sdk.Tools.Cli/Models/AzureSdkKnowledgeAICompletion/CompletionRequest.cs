@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
     public class CompletionRequest
     {
         [JsonPropertyName("tenant_id")]
-        public AzureSdkKnowledgeServiceTenant TenantId { get; set; } = AzureSdkKnowledgeServiceTenant.AzureSDKQaBot;
+        public AzureSdkKnowledgeServiceTenant TenantId { get; set; } = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring;
 
         [JsonPropertyName("message")]
         [Required]

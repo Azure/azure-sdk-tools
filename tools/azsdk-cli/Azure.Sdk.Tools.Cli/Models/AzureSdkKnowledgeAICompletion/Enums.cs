@@ -7,18 +7,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
     [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<AzureSdkKnowledgeServiceTenant>))]
     public enum AzureSdkKnowledgeServiceTenant
     {
-        [EnumMember(Value = "azure_sdk_qa_bot")]
-        AzureSDKQaBot,
-
-        [EnumMember(Value = "typespec_extension")]
-        TypeSpecExtension,
-
-        [EnumMember(Value = "python_channel_qa_bot")]
-        PythonChannelQaBot,
-
-        [EnumMember(Value = "azure_sdk_onboarding")]
-        AzureSDKOnboarding,
-
         [EnumMember(Value = "azure_typespec_authoring")]
         AzureTypespecAuthoring
     }

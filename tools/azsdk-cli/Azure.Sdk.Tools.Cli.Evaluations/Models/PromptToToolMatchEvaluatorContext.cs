@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Models
 
         /// <summary>
         /// Minimum confidence score (cosine similarity) required for a match.
-        /// Default is 0.4 (40%), matching Microsoft MCP's threshold.
+        /// Default is 0.4 (40%).
         /// </summary>
         public double MinConfidence { get; init; } = 0.4;
 

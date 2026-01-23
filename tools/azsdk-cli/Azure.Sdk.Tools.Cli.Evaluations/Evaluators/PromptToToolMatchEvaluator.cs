@@ -8,10 +8,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 {
     /// <summary>
     /// Evaluates how well a user prompt matches expected tool descriptions using
-    /// Azure OpenAI embeddings and cosine similarity. This provides deterministic,
-    /// CI-friendly testing of tool discoverability.
+    /// Azure OpenAI embeddings and cosine similarity.
     /// 
-    /// Based on Microsoft MCP's ToolDescriptionEvaluator approach:
+    /// Based on <a href="https://github.com/Azure/azure-mcp/tree/main/eng/tools/ToolDescriptionEvaluator">ToolDescriptionEvaluator</a> approach:
     /// - Generates embeddings for the prompt and all tool descriptions
     /// - Ranks tools by cosine similarity to the prompt
     /// - Passes if the expected tool ranks in top K with sufficient confidence

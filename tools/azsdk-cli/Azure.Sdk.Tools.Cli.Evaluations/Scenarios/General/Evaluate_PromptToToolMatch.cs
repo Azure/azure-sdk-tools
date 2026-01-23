@@ -144,16 +144,5 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                     .SetCategory(entry.Category);
             }
         }
-
-        /// <summary>
-        /// Sanitizes a string to be safe for use in file paths.
-        /// </summary>
-        private static string SanitizeForPath(string input)
-        {
-            var invalidChars = Path.GetInvalidFileNameChars();
-            var sanitized = new string(input.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
-            // Also limit length to avoid path too long errors
-            return sanitized.Length > 50 ? sanitized.Substring(0, 50) : sanitized;
-        }
     }
 }

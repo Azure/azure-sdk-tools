@@ -56,7 +56,6 @@ variations showing how users might invoke it.
 | Tool Name | Test Prompt | Category |
 |:----------|:------------|:---------|
 | azsdk_create_pull_request | Create a pull request for my changes | all |
-| azsdk_create_pull_request | Open a PR with title "Add new feature" | all |
 | azsdk_get_github_user_details | Get details for GitHub user octocat | all |
 | azsdk_get_github_user_details | Who is the GitHub user johndoe? | all |
 | azsdk_get_pull_request | Get the details of my pull request | all |
@@ -72,7 +71,7 @@ variations showing how users might invoke it.
 | azsdk_package_build_code | Compile the code for my package | all |
 | azsdk_package_generate_code | Generate SDK code from my TypeSpec | all |
 | azsdk_package_generate_code | Run code generation for my package | all |
-| azsdk_package_run_check | Check if my package is ready for release | all |
+| azsdk_package_run_check | Run the azsdk package check command to validate my SDK | all |
 | azsdk_package_run_check | Run validation checks on my SDK package | all |
 | azsdk_package_run_check | Validate the changelog and dependencies for my package | all |
 | azsdk_package_run_tests | Run tests for my SDK package | all |
@@ -85,7 +84,7 @@ variations showing how users might invoke it.
 | azsdk_package_update_version | Bump the version to 1.2.0 | all |
 | azsdk_release_sdk | Release my SDK package | all |
 | azsdk_release_sdk | Trigger the release pipeline for my package | all |
-| azsdk_release_sdk | Check if my package is ready for release | all |
+| azsdk_release_sdk | Start the SDK release process for my package | all |
 
 ## Pipeline Tools
 

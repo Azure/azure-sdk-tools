@@ -85,7 +85,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 }
 
                 // Skip separator row (|:---|:---|:---|)
-                if (inTable && !headerSkipped && trimmedLine.StartsWith("|:") || trimmedLine.StartsWith("| :") || trimmedLine.StartsWith("|-"))
+                if (inTable && !headerSkipped && 
+                    (trimmedLine.StartsWith("|:") || trimmedLine.StartsWith("| :") || trimmedLine.StartsWith("|-")))
                 {
                     headerSkipped = true;
                     continue;

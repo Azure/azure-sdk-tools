@@ -72,7 +72,8 @@ function executeCommand(
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const result = shell.exec(command, { silent: true });
-            if (result.code === 0) {
+            logger.info(`Command executed with result: ${result}`);
+            if (result.code === 0 && result.stdout.trim()) {
                 return result;
             }
             logger.warn(`Command failed (attempt ${attempt}/${maxRetries}): ${command}`);

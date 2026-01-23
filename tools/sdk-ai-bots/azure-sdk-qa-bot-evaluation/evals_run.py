@@ -169,7 +169,14 @@ if __name__ == "__main__":
             "groundedness_weight": 0.4,  # Staying grounded in guidelines
             "response_completeness_weight": 0.4,
         }
-        eval_result = EvalsResult(weights=weights, metrics=metrics)
+
+        suppression_file = os.path.join(script_directory, "suppression.json")
+        suppression = {"evaluators": [], "testcases": []}
+        if os.path.exists(suppression_file):
+            with open(suppression_file, "r", encoding="utf-8") as f:
+                suppression = json.load(f)
+        
+        eval_result = EvalsResult(weights=weights, metrics=metrics, suppressions=suppression)
 
         evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result)
 

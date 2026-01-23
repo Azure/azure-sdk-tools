@@ -8,9 +8,26 @@ from tabulate import tabulate
 
 
 class EvalsResult:
-    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str] | None]):
+    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str] | None], suppressions: dict[str, list[str] | None]):
+        """
+        Initialize an EvalsResult instance for managing evaluation results.
+
+        Args:
+            weights: A dictionary mapping metric names to their weights for calculating
+                     overall scores. Keys should be in the format "{metric}_weight".
+                     If None, an empty dictionary is used and metrics are weighted equally.
+            metrics: A dictionary mapping evaluator names to their output field names.
+                     Each key is an evaluator name, and the value is a list of field names
+                     that the evaluator outputs, or None if only the default field is used.
+            suppressions: A dictionary specifying which evaluators and test cases should be
+                          suppressed (excluded from failure counting). Expected keys are:
+                          - "evaluators": List of evaluator names to suppress.
+                          - "testcases": List of test case names to suppress.
+                          If None, defaults to empty lists for both.
+        """
         self._weights = weights or {}
         self._metrics = metrics
+        self._suppressions = suppressions or {"evaluators":[], "testcases":[]}
 
     def calculate_overall_score(self, row: dict[str, Any]) -> float:
         """Calculate weighted score based on various metrics."""
@@ -69,7 +86,10 @@ class EvalsResult:
                     logging.debug(f"Metric: {metric}, Name: {metric_name}")
                     if key == f"outputs.{metric}.{metric}_result":
                         if value == "fail":
-                            fail_rates[metric] += 1
+                            if row["inputs.testcase"] not in self._suppressions["testcases"]:
+                                fail_rates[metric] += 1
+                            else:
+                                pass_rates[metric] += 1 #record to pass rate if the testcase is suppressed.
                         if value == "pass":
                             pass_rates[metric] += 1
 
@@ -241,6 +261,8 @@ class EvalsResult:
                             logging.warning(f"scenario {name} avarage score decrease!")
 
             for metric in metrics:
+                if metric in self._suppressions["evaluators"]:
+                    continue
                 pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
                 fail_rate = test_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in test_results[-1] else 0
                 # workaround: for groundedness, only caculate the `fail`

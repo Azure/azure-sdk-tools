@@ -104,9 +104,6 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intention != nil {
-		if len(intention.Question) > 0 {
-			query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
-		}
 		// Apply default scope from tenant config
 		if tenantConfig.DefaultScope != nil {
 			intention.Scope = tenantConfig.DefaultScope
@@ -121,7 +118,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 				intention.Plane = req.Intention.Plane
 			}
 		}
-		log.Printf("Intent Result (after override): %+v", intention)
+		jsonReq, _ := json.Marshal(intention)
+		log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
 	}
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 

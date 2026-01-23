@@ -8,5 +8,5 @@ Determine whether the user's message requires RAG (Retrieval Augmented Generatio
 **Return `true` for:**
 - Technical questions
 - Permission-related questions
-- PR review process questions
+- PR review or approval process questions
 - All other cases not explicitly listed above

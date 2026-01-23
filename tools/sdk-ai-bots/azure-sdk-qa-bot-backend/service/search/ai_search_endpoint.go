@@ -106,7 +106,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
-		Top:    k,
 		Count:  false,
 		Select: "title, context_id, chunk, header_1, header_2, header_3, chunk_id, ordinal_position",
 		VectorQueries: []model.VectorQuery{
@@ -122,20 +121,63 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		QueryLanguage: "en-us",
 	}
 
-	// Build a single filter for all sources and metadata
-	baseReq.Filter = s.buildFilter(sources, sourceFilter, scope, plane)
-
-	resp, err := s.QueryIndex(context.Background(), &baseReq)
-	if err != nil {
-		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+	// If no sources specified, search all at once
+	if len(sources) == 0 {
+		baseReq.Top = k
+		baseReq.Filter = s.buildFilter(nil, sourceFilter, scope, plane)
+		resp, err := s.QueryIndex(context.Background(), &baseReq)
+		if err != nil {
+			return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+		}
+		return resp.Value, nil
 	}
 
-	// Sort results by rerank score in descending order
-	sortResultsByScore(resp.Value)
+	// Query each source and apply weighted scoring
+	allResults := []model.Index{}
 
-	log.Printf("Returning %d search results from a single query.", len(resp.Value))
+	// Store results by source for weighted scoring
+	sourceResults := make(map[model.Source][]model.Index)
 
-	return resp.Value, nil
+	// Query each source separately
+	for _, source := range sources {
+		req := baseReq
+		req.Top = k
+		if val, ok := config.SourceTopK[source]; ok {
+			req.Top = val
+		}
+		req.Filter = s.buildFilter([]model.Source{source}, sourceFilter, scope, plane)
+
+		resp, err := s.QueryIndex(context.Background(), &req)
+		if err != nil {
+			log.Printf("Warning: search error for source %s: %v", source, err)
+			continue
+		}
+
+		// Filter results by relevance threshold
+		filteredResults := []model.Index{}
+		for _, doc := range resp.Value {
+			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
+				continue
+			}
+
+			filteredResults = append(filteredResults, doc)
+		}
+
+		sourceResults[source] = filteredResults
+		allResults = append(allResults, filteredResults...)
+	}
+
+	// Sort all results by rerank score in descending order
+	sortResultsByScore(allResults)
+
+	// Take top K results
+	if len(allResults) > k {
+		allResults = allResults[:k]
+	}
+
+	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(sources))
+
+	return allResults, nil
 }
 
 // Helper function to sort results by rerank score in descending order
@@ -365,6 +407,8 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
+	log.Printf("Agentic Search Req: %s", string(body))
+
 	knowledgeBaseAPI := config.AppConfig.AI_SEARCH_KNOWLEDGE_BASE_API
 	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_BASE_URL}", s.BaseUrl)
 	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_AGENT}", s.Agent)
@@ -402,7 +446,7 @@ func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[mode
 	}
 	if plane != nil && *plane != model.Plane_Unknown {
 		// For a specific plane, include documents with that plane, 'both', or no plane specified.
-		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or or plane eq null)", *plane))
+		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or plane eq null)", *plane))
 	}
 	metadataFilter := strings.Join(metadataFilters, " and ")
 

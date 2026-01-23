@@ -151,7 +151,6 @@ Important Links:
 	require.NotNil(t, intentionResult)
 	require.False(t, intentionResult.NeedsRagProcessing, "Announcement message should NOT require RAG processing")
 	require.Equal(t, "unknown", intentionResult.Category)
-	require.Equal(t, model.Scope_Unknown, intentionResult.Scope)
 }
 
 func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {

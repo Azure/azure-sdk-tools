@@ -7,9 +7,11 @@ public class TelemetryPathSanitizerTests
 {
     [TestCase("specification/service", "[PATH REDACTED]/specification/service")]
     [TestCase("azure-rest-api-specs/specification/service", "[PATH REDACTED]/azure-rest-api-specs/specification/service")]
+    [TestCase("/azure-rest-api-specs/specification/service", "[PATH REDACTED]/azure-rest-api-specs/specification/service")]
     [TestCase("/Users/ben/specification/service", "[PATH REDACTED]/specification/service")]
-    [TestCase(@"C:\Users\ben\azure-sdk-for-net\sdk\storage", @"[PATH REDACTED]\azure-sdk-for-net\sdk\storage")]
-    [TestCase("C:/Users/ben/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
+    [TestCase(@"C:\Users\ben\sdk\azure-sdk-for-net\sdk\storage", @"[PATH REDACTED]\azure-sdk-for-net\sdk\storage")]
+    [TestCase("C:/Users/ben/sdk/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
+    [TestCase("/home/ben/sdk/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
     [TestCase("~/specification/service", "[PATH REDACTED]/specification/service")]
     public void Sanitize_PreservesAllowlistedSegments(string input, string expected)
     {
@@ -117,5 +119,25 @@ public class TelemetryPathSanitizerTests
         var sanitized = TelemetryPathSanitizer.Sanitize(input);
 
         Assert.That(sanitized, Is.EqualTo(input));
+    }
+
+    [Test]
+    public void Sanitize_PreservesPathsWithFileReferences()
+    {
+        var input = "/home/ben/azs/azure-sdk-tools/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/MCPToolBase.cs:line 66";
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo("[PATH REDACTED]/azure-sdk-tools/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/MCPToolBase.cs:line 66"));
+    }
+
+    [Test]
+    public void Sanitize_PreservesCustomPathsWithFileReferences()
+    {
+        TelemetryPathSanitizer.AddAllowlistedSegment("custom-repo");
+
+        var input = "/home/ben/azs/custom-repo/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/MCPToolBase.cs:line 66";
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo("[PATH REDACTED]/custom-repo/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/Core/MCPToolBase.cs:line 66"));
     }
 }

@@ -273,33 +273,6 @@ public static class TelemetryPathSanitizer
 
     private static string SanitizePathCore(string token)
     {
-        foreach (var root in KnownRoots.Keys)
-        {
-            if (token.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-            {
-                var remainder = token.Substring(root.Length);
-                if (string.IsNullOrEmpty(remainder))
-                {
-                    var rootSeparator = GetSeparator(token);
-                    return IsAllowlistedSegment(root) ? $"{Redacted}{rootSeparator}{root}" : Redacted;
-                }
-
-                var sep = GetSeparator(token);
-                if (IsAllowlistedSegment(root) && (remainder[0] == '/' || remainder[0] == '\\'))
-                {
-                    return $"{Redacted}{sep}{root}{remainder}";
-                }
-
-                var trimmedRemainder = remainder.TrimStart('/', '\\');
-                if (string.IsNullOrEmpty(trimmedRemainder))
-                {
-                    return Redacted + sep;
-                }
-
-                return $"{Redacted}{sep}{trimmedRemainder}";
-            }
-        }
-
         var sepChar = GetSeparator(token);
         var trimmed = token;
         if (token.StartsWith(@"\\", StringComparison.Ordinal))
@@ -320,6 +293,29 @@ public static class TelemetryPathSanitizer
         }
 
         var segments = trimmed.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+        
+        // First check if any segment is a known root
+        for (int i = 0; i < segments.Length; i++)
+        {
+            var segment = segments[i];
+            if (KnownRoots.ContainsKey(segment))
+            {
+                var remainder = string.Join(sepChar, segments.Skip(i + 1));
+                if (string.IsNullOrEmpty(remainder))
+                {
+                    return IsAllowlistedSegment(segment) ? $"{Redacted}{sepChar}{segment}" : Redacted;
+                }
+
+                if (IsAllowlistedSegment(segment))
+                {
+                    return $"{Redacted}{sepChar}{segment}{sepChar}{remainder}";
+                }
+
+                return string.IsNullOrEmpty(remainder) ? Redacted + sepChar : $"{Redacted}{sepChar}{remainder}";
+            }
+        }
+
+        // If no known roots found, check for allowlisted segments
         var allowedIndex = FindAllowlistedSegmentIndex(segments);
         if (allowedIndex >= 0)
         {

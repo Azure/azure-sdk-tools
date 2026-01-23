@@ -28,6 +28,7 @@ const (
 	Source_AzureResourceManagerRPC        Source = "azure_resource_manager_rpc"
 	Source_TypeSpecMigration              Source = "static_typespec_migration_docs"
 	Source_AzureSDKDocsEng                Source = "azure-sdk-docs-eng"
+	Source_AzureSDKInternalWiki           Source = "azure-sdk-internal-wiki"
 	Source_AzureSDKGuidelines             Source = "azure-sdk-guidelines"
 	Source_TypeSpecAzureHttpSpecs         Source = "typespec_azure_http_specs"
 	Source_TypeSpecHttpSpecs              Source = "typespec_http_specs"

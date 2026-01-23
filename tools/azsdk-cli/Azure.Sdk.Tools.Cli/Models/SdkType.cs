@@ -11,5 +11,7 @@ public enum SdkType
     [JsonPropertyName("client")]
     Dataplane,
     [JsonPropertyName("spring")]
-    Spring
+    Spring,
+    [JsonPropertyName("functions")]
+    Functions
 }

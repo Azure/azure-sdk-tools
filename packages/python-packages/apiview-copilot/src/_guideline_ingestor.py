@@ -9,9 +9,14 @@ Module for ingesting guidelines from the azure-sdk repository.
 
 This module provides functionality to:
 1. Detect changes in the azure-sdk repo guidelines using git commit comparison
-2. Parse guidelines from markdown files
-3. Compute content hashes for efficient change detection
-4. Sync guidelines to Cosmos DB, only updating records where content differs
+2. Parse guidelines from markdown files using BeautifulSoup (similar to original archagent-ai process)
+3. Extract examples from guidelines using LLM parsing
+4. Compute content hashes for efficient change detection
+5. Sync guidelines and examples to Cosmos DB, only updating records where content differs
+
+The ingestion process follows the original archagent-ai approach:
+- Step 1: Preprocess markdown files to extract guidelines with Jekyll-style requirement tags
+- Step 2: Use LLM to parse guidelines into structured format with examples
 """
 
 from __future__ import annotations
@@ -19,12 +24,21 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
-import time
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import httpx
+from bs4 import BeautifulSoup
+
+try:
+    import markdown_it
+
+    MARKDOWN_IT = markdown_it.MarkdownIt()
+except ImportError:
+    MARKDOWN_IT = None
+
 from src._database_manager import DatabaseManager
 from src._models import Guideline
 from src._search_manager import SearchManager
@@ -38,7 +52,18 @@ AZURE_SDK_REPO = "azure-sdk"
 GUIDELINES_PATH_PREFIX = "docs/"
 
 # App Configuration key for tracking sync state
-LAST_SYNCED_COMMIT_SHA_KEY = "guidelines:lastSyncedCommitSha"
+LAST_SYNCED_COMMIT_SHA_KEY = "guidelines:last_synced_commit_sha"
+
+# Files to parse from the azure-sdk repo (matches original process)
+FILES_TO_PARSE = [
+    "design.md",
+    "implementation.md",
+    "introduction.md",
+    "azurecore.md",
+    "compatibility.md",
+    "documentation.md",
+    "spring.md",
+]
 
 # Language mappings from folder names to language identifiers
 LANGUAGE_FOLDER_MAP = {
@@ -55,16 +80,58 @@ LANGUAGE_FOLDER_MAP = {
     "general": None,  # Language-agnostic guidelines
 }
 
+# ============================================================================
+# Jekyll/Markdown Tag Patterns (from original archagent-ai preprocess_guidelines.py)
+# ============================================================================
+
+# Requirement tag patterns with IDs
+MAY_PATTERN = r'{% include requirement/MAY\s*id=\\?"[a-zA-Z0-9_-]+\\?" %}'
+MAY_REPLACE = "YOU MAY"
+MUST_DO_PATTERN = r'{% include requirement/MUST\s*id=\\?"[a-zA-Z0-9_-]+\\?" %}'
+MUST_NO_ID_PATTERN = r"{% include requirement/MUST %}"
+MUST_DO_REPLACE = "DO"
+MUST_NOT_PATTERN = r'{% include requirement/MUSTNOT\s*id=\\?"[a-zA-Z0-9_-]+\\?" %}'
+MUST_NOT_REPLACE = "DO NOT"
+SHOULD_PATTERN = r'{% include requirement/SHOULD\s*id=\\?"[a-zA-Z0-9_-]+\\?" %}'
+SHOULD_NO_ID_PATTERN = r"{% include requirement/SHOULD %}"
+SHOULD_REPLACE = "YOU SHOULD"
+SHOULD_NOT_PATTERN = r'{% include requirement/SHOULDNOT\s*id=\\?"[a-zA-Z0-9_-]+\\?" %}'
+SHOULD_NOT_REPLACE = "YOU SHOULD NOT"
+
+# Include patterns
+INCLUDE_PATTERN = r"{%\s*(include|include_relative)\s*([^\s%}]+)\s*%}"
+INCLUDE_NOTE_PATTERN = r'{% include note.html content=\\?"([^\\]+)\\?" %}'
+INCLUDE_NOTE_REPLACE = r"**NOTE:** \1"
+INCLUDE_DRAFT_PATTERN = r'{% include draft.html content=\\?"([^\\]+)\\?" %}'
+INCLUDE_DRAFT_REPLACE = r"**DRAFT:** \1"
+INCLUDE_IMPORTANT_PATTERN = r'{% include important.html content=\\?"([^\\]+)\\?" %}'
+INCLUDE_IMPORTANT_REPLACE = r"**IMPORTANT:** \1"
+
+# Icon pattern (to strip)
+ICON_PATTERN = r"^:[a-z_]+: "
+ICON_REPLACE = ""
+
 
 @dataclass
 class ParsedGuideline:
-    """Represents a guideline parsed from markdown."""
+    """Represents a guideline parsed from markdown (intermediate format)."""
+
+    id: str
+    text: str
+    language: Optional[str]
+    source_file_path: str
+
+
+@dataclass
+class ParsedExample:
+    """Represents an example parsed from a guideline."""
 
     id: str
     title: str
     content: str
+    example_type: str  # "good" or "bad"
+    guideline_ids: List[str]
     language: Optional[str]
-    anchor: str
     source_file_path: str
 
 
@@ -72,26 +139,53 @@ class ParsedGuideline:
 class SyncResult:
     """Result of a guideline sync operation."""
 
-    created: list[str] = field(default_factory=list)
-    updated: list[str] = field(default_factory=list)
-    deleted: list[str] = field(default_factory=list)
-    unchanged: list[str] = field(default_factory=list)
+    guidelines_created: list[str] = field(default_factory=list)
+    guidelines_updated: list[str] = field(default_factory=list)
+    guidelines_deleted: list[str] = field(default_factory=list)
+    guidelines_unchanged: list[str] = field(default_factory=list)
+    examples_created: list[str] = field(default_factory=list)
+    examples_updated: list[str] = field(default_factory=list)
+    examples_deleted: list[str] = field(default_factory=list)
+    examples_unchanged: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
     @property
-    def total_processed(self) -> int:
-        return len(self.created) + len(self.updated) + len(self.deleted) + len(self.unchanged)
+    def total_guidelines(self) -> int:
+        return (
+            len(self.guidelines_created)
+            + len(self.guidelines_updated)
+            + len(self.guidelines_deleted)
+            + len(self.guidelines_unchanged)
+        )
+
+    @property
+    def total_examples(self) -> int:
+        return (
+            len(self.examples_created)
+            + len(self.examples_updated)
+            + len(self.examples_deleted)
+            + len(self.examples_unchanged)
+        )
 
     def summary(self) -> str:
         return (
-            f"Sync complete: {len(self.created)} created, {len(self.updated)} updated, "
-            f"{len(self.deleted)} deleted, {len(self.unchanged)} unchanged, {len(self.errors)} errors"
+            f"Sync complete: "
+            f"Guidelines: {len(self.guidelines_created)} created, {len(self.guidelines_updated)} updated, "
+            f"{len(self.guidelines_deleted)} deleted, {len(self.guidelines_unchanged)} unchanged | "
+            f"Examples: {len(self.examples_created)} created, {len(self.examples_updated)} updated, "
+            f"{len(self.examples_deleted)} deleted, {len(self.examples_unchanged)} unchanged | "
+            f"{len(self.errors)} errors"
         )
 
 
 class GuidelineIngestor:
     """
     Handles ingestion of guidelines from the azure-sdk repository into Cosmos DB.
+
+    Follows the original archagent-ai process:
+    1. Preprocess markdown files using BeautifulSoup to extract guidelines with Jekyll-style requirement tags
+    2. Optionally use LLM to parse guidelines into structured format with examples
+    3. Sync to Cosmos DB with change detection via content hashing
 
     Uses git commit comparison to detect changes efficiently, only processing
     files that have been modified since the last sync.
@@ -122,6 +216,10 @@ class GuidelineIngestor:
         if github_token:
             self._client.headers["Authorization"] = f"token {github_token}"
 
+    # ========================================================================
+    # Git/GitHub Operations
+    # ========================================================================
+
     def get_last_synced_commit_sha(self) -> Optional[str]:
         """Get the last synced commit SHA from App Configuration."""
         return self._settings.get(LAST_SYNCED_COMMIT_SHA_KEY)
@@ -142,6 +240,7 @@ class GuidelineIngestor:
         Get list of changed markdown files in the docs/ folder between two commits.
 
         Uses GitHub's compare API to efficiently determine which files changed.
+        Only returns files that match FILES_TO_PARSE.
         """
         url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/compare/{base_sha}...{head_sha}"
         resp = self._client.get(url)
@@ -151,17 +250,21 @@ class GuidelineIngestor:
         changed_files = []
         for file_info in data.get("files", []):
             filename = file_info["filename"]
-            # Only process markdown files in the docs/ folder
+            # Only process specific markdown files in the docs/ folder
             if filename.startswith(GUIDELINES_PATH_PREFIX) and filename.endswith(".md"):
-                changed_files.append(filename)
+                # Check if the filename (without path) is in our list of files to parse
+                base_name = filename.split("/")[-1]
+                if base_name in FILES_TO_PARSE:
+                    changed_files.append(filename)
 
         return changed_files
 
     def get_all_guideline_files(self) -> list[str]:
         """
-        Get all markdown files in the docs/ folder.
+        Get all guideline markdown files in the docs/ folder.
 
         Used for initial full sync or when --force is specified.
+        Only returns files that match FILES_TO_PARSE.
         """
         url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/git/trees/main?recursive=1"
         resp = self._client.get(url)
@@ -175,7 +278,10 @@ class GuidelineIngestor:
                 and item["path"].startswith(GUIDELINES_PATH_PREFIX)
                 and item["path"].endswith(".md")
             ):
-                files.append(item["path"])
+                # Check if the filename (without path) is in our list of files to parse
+                base_name = item["path"].split("/")[-1]
+                if base_name in FILES_TO_PARSE:
+                    files.append(item["path"])
 
         return files
 
@@ -186,52 +292,199 @@ class GuidelineIngestor:
         resp.raise_for_status()
         return resp.text
 
+    # ========================================================================
+    # Markdown Preprocessing (BeautifulSoup-based, from archagent-ai)
+    # ========================================================================
+
     @staticmethod
-    def compute_content_hash(content: str) -> str:
+    def _extract_id_from_inline(item) -> Optional[str]:
+        """Extract the id from inline text like {% include requirement/MUST id="some-id" %}."""
+        text = item.text if hasattr(item, "text") else str(item)
+        id_match = re.search(r'id="([a-zA-Z0-9_-]+)"', text)
+        if id_match:
+            return id_match.group(1)
+        try:
+            # Try to get id from anchor element
+            id_val = item.next_element.attrs.get("name") if hasattr(item, "next_element") else None
+            return id_val
+        except (AttributeError, TypeError):
+            return None
+
+    @staticmethod
+    def _split_tags(item, file_path: str) -> Tuple[str, Optional[str]]:
         """
-        Compute SHA-256 hash of normalized content.
+        Split the tag from the ID and replace Jekyll requirement tags with readable text.
 
-        Normalization:
-        - Strip leading/trailing whitespace
-        - Normalize line endings to LF
-        - Collapse multiple blank lines to single blank line
+        Returns tuple of (processed_text, guideline_id).
         """
-        normalized = content.strip()
-        normalized = normalized.replace("\r\n", "\n").replace("\r", "\n")
-        normalized = re.sub(r"\n{3,}", "\n\n", normalized)
-        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        text = item.text if hasattr(item, "text") else str(item)
+        guideline_id = GuidelineIngestor._extract_id_from_inline(item)
 
-    def parse_guidelines_from_file(self, file_path: str, content: str) -> list[ParsedGuideline]:
+        # Replace Jekyll requirement tags with readable text
+        text = re.sub(MAY_PATTERN, MAY_REPLACE, text)
+        text = re.sub(MUST_DO_PATTERN, MUST_DO_REPLACE, text)
+        text = re.sub(MUST_NO_ID_PATTERN, MUST_DO_REPLACE, text)
+        text = re.sub(MUST_NOT_PATTERN, MUST_NOT_REPLACE, text)
+        text = re.sub(SHOULD_PATTERN, SHOULD_REPLACE, text)
+        text = re.sub(SHOULD_NO_ID_PATTERN, SHOULD_REPLACE, text)
+        text = re.sub(SHOULD_NOT_PATTERN, SHOULD_NOT_REPLACE, text)
+        text = re.sub(ICON_PATTERN, ICON_REPLACE, text)
+        text = re.sub(INCLUDE_NOTE_PATTERN, INCLUDE_NOTE_REPLACE, text)
+        text = re.sub(INCLUDE_IMPORTANT_PATTERN, INCLUDE_IMPORTANT_REPLACE, text)
+        text = re.sub(INCLUDE_DRAFT_PATTERN, INCLUDE_DRAFT_REPLACE, text)
+
+        # Build the guideline ID in format: {language}_{filename}=html={id}
+        # e.g., python_design=html=some-id
+        segments = file_path.replace("\\", "/").split("/")
+        try:
+            docs_idx = segments.index("docs")
+            relevant_segments = segments[docs_idx + 1 :]
+        except ValueError:
+            relevant_segments = segments
+
+        prefix = "_".join(relevant_segments).replace(".md", "=html")
+        full_id = f"{prefix}={guideline_id}" if guideline_id else None
+
+        return text, full_id
+
+    @staticmethod
+    def _add_links(text: str, item) -> str:
+        """Find any links associated with the text and add them in format: text (link)."""
+        if not hasattr(item, "find_all"):
+            return text
+
+        links = [link for link in item.find_all("a") if link.get("href", "").startswith("http")]
+        if not links:
+            return text
+
+        for link in links:
+            index = text.find(link.text)
+            if index == -1:
+                continue
+            text = f"{text[:index]}{link.text} ({link['href']}) {text[len(link.text) + 1 + index:]}"
+        return text
+
+    @staticmethod
+    def _convert_code_tag_to_markdown(html: str) -> str:
+        """Convert HTML code tag to markdown code block."""
+        code_tag_pattern = r'<code class="language-(.+)">([\s\S]*?)</code>'
+        match = re.search(code_tag_pattern, html)
+        if match:
+            language = match[1]
+            code = match[2]
+            return f"```{language}\n{code}\n```"
+        return html
+
+    def parse_markdown_file(self, file_path: str, content: str) -> List[ParsedGuideline]:
         """
-        Parse individual guidelines from a markdown file.
+        Parse a markdown file to extract guidelines using BeautifulSoup.
 
-        Guidelines are identified by headers with anchors in the format:
-        ## Header Text {#anchor-id}
+        This follows the original archagent-ai preprocessing approach:
+        - Renders markdown to HTML using markdown-it
+        - Uses BeautifulSoup to parse HTML structure
+        - Extracts guidelines from list items and paragraphs with requirement IDs
+        """
+        if MARKDOWN_IT is None:
+            logger.warning("markdown-it-py not installed, falling back to regex-based parsing")
+            return self._parse_markdown_fallback(file_path, content)
 
-        Each guideline's content extends from its header to the next header of same or higher level.
+        # Determine language from file path
+        parts = file_path.replace("\\", "/").split("/")
+        language = None
+        if len(parts) >= 2:
+            try:
+                docs_idx = parts.index("docs")
+                if docs_idx + 1 < len(parts):
+                    folder = parts[docs_idx + 1]
+                    language = LANGUAGE_FOLDER_MAP.get(folder)
+            except ValueError:
+                pass
+
+        entries: List[ParsedGuideline] = []
+
+        # Render markdown to HTML
+        html = MARKDOWN_IT.render(content)
+        soup = BeautifulSoup(html, features="html.parser")
+
+        for item in soup.find_all():
+            if item.name == "p":
+                text, guideline_id = self._split_tags(item, file_path)
+                text = self._add_links(text, item)
+
+                if guideline_id:
+                    entries.append(
+                        ParsedGuideline(
+                            id=guideline_id,
+                            text=text,
+                            language=language,
+                            source_file_path=file_path,
+                        )
+                    )
+                else:
+                    # Try to append orphan paragraphs to the previous guideline
+                    if entries:
+                        entries[-1].text += "\n\n" + text
+
+            elif item.name == "pre":
+                # Handle code blocks
+                raw_html = "".join(str(tag) for tag in item.contents)
+                markdown_text = self._convert_code_tag_to_markdown(raw_html)
+                if entries:
+                    entries[-1].text += "\n\n" + markdown_text
+
+            elif item.name in ["ol", "ul"]:
+                # Handle list items (common location for requirement IDs)
+                list_items = item.find_all("li")
+                for li in list_items:
+                    item_text, guideline_id = self._split_tags(li, file_path)
+                    item_text = self._add_links(item_text, li)
+
+                    if guideline_id:
+                        entries.append(
+                            ParsedGuideline(
+                                id=guideline_id,
+                                text=item_text,
+                                language=language,
+                                source_file_path=file_path,
+                            )
+                        )
+                    else:
+                        # Append to previous guideline
+                        if entries:
+                            entries[-1].text += "\n" + item_text
+
+        return entries
+
+    def _parse_markdown_fallback(self, file_path: str, content: str) -> List[ParsedGuideline]:
+        """
+        Fallback regex-based parsing when markdown-it is not available.
+
+        This uses the header anchor pattern: ## Header Text {#anchor-id}
         """
         guidelines = []
 
         # Determine language from file path
-        # e.g., "docs/python/design.md" -> "python"
-        parts = file_path.split("/")
+        parts = file_path.replace("\\", "/").split("/")
         language = None
         if len(parts) >= 2:
-            folder = parts[1]  # e.g., "python", "java", "general"
-            language = LANGUAGE_FOLDER_MAP.get(folder)
+            try:
+                docs_idx = parts.index("docs")
+                if docs_idx + 1 < len(parts):
+                    folder = parts[docs_idx + 1]
+                    language = LANGUAGE_FOLDER_MAP.get(folder)
+            except ValueError:
+                pass
 
         # Extract filename without extension for ID prefix
         filename = parts[-1].replace(".md", "") if parts else "unknown"
 
         # Pattern to match headers with explicit anchors: ## Text {#anchor}
-        # Also match DO/DO NOT/SHOULD/SHOULD NOT/MAY/MUST patterns which are common in guidelines
         header_pattern = re.compile(r"^(#{1,6})\s+(.+?)\s*\{#([a-zA-Z0-9_-]+)\}\s*$", re.MULTILINE)
 
         matches = list(header_pattern.finditer(content))
 
         for i, match in enumerate(matches):
             header_level = len(match.group(1))
-            title = match.group(2).strip()
             anchor = match.group(3)
 
             # Content starts after this header and ends at the next header of same or higher level
@@ -251,22 +504,94 @@ class GuidelineIngestor:
             if not guideline_content:
                 continue
 
-            # Create ID in format: {filename}=html={anchor}
-            # This matches the existing ID format used in the search index
+            # Create ID in format: {language}_{filename}=html={anchor}
             guideline_id = f"{language}_{filename}=html={anchor}" if language else f"{filename}=html={anchor}"
 
             guidelines.append(
                 ParsedGuideline(
                     id=guideline_id,
-                    title=title,
-                    content=guideline_content,
+                    text=guideline_content,
                     language=language,
-                    anchor=anchor,
                     source_file_path=file_path,
                 )
             )
 
         return guidelines
+
+    # ========================================================================
+    # Content Hashing and Validation
+    # ========================================================================
+
+    @staticmethod
+    def compute_content_hash(content: str) -> str:
+        """
+        Compute SHA-256 hash of normalized content.
+
+        Normalization:
+        - Strip leading/trailing whitespace
+        - Normalize line endings to LF
+        - Collapse multiple blank lines to single blank line
+        """
+        normalized = content.strip()
+        normalized = normalized.replace("\r\n", "\n").replace("\r", "\n")
+        normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def check_id_format(items: List[ParsedGuideline]) -> List[str]:
+        """
+        Ensures ids are compatible with Azure AI Search.
+        Returns a list of malformed ids.
+        """
+        malformed = []
+        pattern = re.compile(r"^[A-Za-z0-9_=\\-]{1,1024}$")
+        for item in items:
+            if not item.id:
+                malformed.append(f"(missing id for text: {item.text[:50]}...)")
+            elif not bool(pattern.fullmatch(item.id)):
+                malformed.append(item.id)
+        return malformed
+
+    @staticmethod
+    def filter_duplicates(items: List[ParsedGuideline]) -> Dict[str, List[ParsedGuideline]]:
+        """
+        Filter out duplicate guidelines.
+
+        Returns dict with 'good' (valid unique items) and 'bad' (duplicates with different content).
+        """
+        filtered = []
+        bad_filtered = []
+        counter = Counter(x.id for x in items)
+        duplicates = [x for x, count in counter.items() if count > 1]
+        bad_ids = set()
+        copied_ids = set()
+
+        # Determine which ids are exact copies vs improperly reused
+        for dup_id in duplicates:
+            matches = [x for x in items if x.id == dup_id]
+            match_set = set(x.text for x in matches)
+            if len(match_set) == 1:
+                copied_ids.add(dup_id)
+            else:
+                bad_ids.add(dup_id)
+
+        # Filter out bad ids and all but one of copied ids
+        final_ids = set()
+        for item in items:
+            item_id = item.id
+            if item_id in bad_ids:
+                bad_filtered.append(item)
+            elif item_id in copied_ids and item_id in final_ids:
+                continue  # Skip duplicate copies
+            else:
+                filtered.append(item)
+                final_ids.add(item_id)
+
+        return {"good": filtered, "bad": bad_filtered}
+
+    # ========================================================================
+    # Main Sync Method
+    # ========================================================================
 
     def sync_guidelines(
         self,
@@ -274,6 +599,9 @@ class GuidelineIngestor:
         dry_run: bool = False,
         force: bool = False,
         language_filter: Optional[str] = None,
+        use_llm: bool = False,
+        base_sha: Optional[str] = None,
+        target_sha: Optional[str] = None,
     ) -> SyncResult:
         """
         Synchronize guidelines from the azure-sdk repository to Cosmos DB.
@@ -282,15 +610,25 @@ class GuidelineIngestor:
             dry_run: If True, report changes without writing to the database.
             force: If True, ignore the last synced SHA and process all files.
             language_filter: If specified, only process guidelines for this language.
+            use_llm: If True, use LLM to parse guidelines into structured format with examples.
+            base_sha: If provided, use this SHA as the baseline instead of the last synced SHA from AppConfig.
+            target_sha: If provided, use this SHA as the target instead of the latest on main.
 
         Returns:
             SyncResult with details of what was created, updated, deleted, or unchanged.
         """
         result = SyncResult()
 
-        # Get current HEAD and last synced SHA
-        current_sha = self.get_current_head_sha()
-        last_sha = None if force else self.get_last_synced_commit_sha()
+        # Get target SHA (use provided value or fetch current HEAD)
+        current_sha = target_sha if target_sha else self.get_current_head_sha()
+        
+        # Get base SHA (use provided value, or AppConfig value unless force is True)
+        if force:
+            last_sha = None
+        elif base_sha:
+            last_sha = base_sha
+        else:
+            last_sha = self.get_last_synced_commit_sha()
 
         logger.info(f"Current HEAD: {current_sha}")
         logger.info(f"Last synced: {last_sha or '(none - full sync)'}")
@@ -319,75 +657,108 @@ class GuidelineIngestor:
                 self.set_last_synced_commit_sha(current_sha)
             return result
 
-        # Track all guideline IDs we've seen from changed files (for deletion detection)
-        seen_ids_by_file: dict[str, set[str]] = {}
+        # Step 1: Preprocess all files and collect raw guidelines
+        all_parsed_guidelines: List[ParsedGuideline] = []
 
-        # Process each file
         for file_path in files_to_process:
             try:
-                logger.info(f"Processing: {file_path}")
+                logger.info(f"Preprocessing: {file_path}")
                 content = self.fetch_file_content(file_path, current_sha)
-                parsed_guidelines = self.parse_guidelines_from_file(file_path, content)
-
-                seen_ids_by_file[file_path] = set()
-
-                for parsed in parsed_guidelines:
-                    seen_ids_by_file[file_path].add(parsed.id)
-
-                    # Compute hash of the new content
-                    new_hash = self.compute_content_hash(parsed.content)
-
-                    # Check if guideline exists and compare hash
-                    try:
-                        existing = self._db.guidelines.get(parsed.id)
-                        existing_hash = existing.get("content_hash")
-
-                        if existing_hash == new_hash:
-                            result.unchanged.append(parsed.id)
-                            continue
-
-                        # Content changed - update
-                        if not dry_run:
-                            guideline = Guideline(
-                                id=parsed.id,
-                                title=parsed.title,
-                                content=parsed.content,
-                                language=parsed.language,
-                                content_hash=new_hash,
-                                source_file_path=parsed.source_file_path,
-                                source_commit_sha=current_sha,
-                                last_synced_at=datetime.now(timezone.utc),
-                                # Preserve existing relationships
-                                related_guidelines=existing.get("related_guidelines", []),
-                                related_examples=existing.get("related_examples", []),
-                                related_memories=existing.get("related_memories", []),
-                                tags=existing.get("tags"),
-                            )
-                            self._db.guidelines.upsert(parsed.id, data=guideline, run_indexer=False)
-                        result.updated.append(parsed.id)
-
-                    except Exception:
-                        # Guideline doesn't exist - create
-                        if not dry_run:
-                            guideline = Guideline(
-                                id=parsed.id,
-                                title=parsed.title,
-                                content=parsed.content,
-                                language=parsed.language,
-                                content_hash=new_hash,
-                                source_file_path=parsed.source_file_path,
-                                source_commit_sha=current_sha,
-                                last_synced_at=datetime.now(timezone.utc),
-                            )
-                            self._db.guidelines.create(parsed.id, data=guideline, run_indexer=False)
-                        result.created.append(parsed.id)
-
+                parsed = self.parse_markdown_file(file_path, content)
+                all_parsed_guidelines.extend(parsed)
             except Exception as e:
-                logger.error(f"Error processing {file_path}: {e}")
-                result.errors.append(f"{file_path}: {e}")
+                logger.error(f"Error preprocessing {file_path}: {e}")
+                result.errors.append(f"preprocess {file_path}: {e}")
 
-        # Handle deletions: find guidelines that were in changed files but are no longer present
-        for file_path, seen_ids in seen_ids_by_file.items():
+        logger.info(f"Preprocessed {len(all_parsed_guidelines)} raw guidelines from {len(files_to_process)} files")
+
+        # Validate and deduplicate
+        malformed_ids = self.check_id_format(all_parsed_guidelines)
+        if malformed_ids:
+            logger.warning(f"Found {len(malformed_ids)} malformed IDs: {malformed_ids[:5]}...")
+
+        # Filter out guidelines without valid IDs
+        all_parsed_guidelines = [g for g in all_parsed_guidelines if g.id]
+
+        duplicates_result = self.filter_duplicates(all_parsed_guidelines)
+        good_guidelines = duplicates_result["good"]
+        bad_guidelines = duplicates_result["bad"]
+
+        if bad_guidelines:
+            logger.warning(f"Filtered out {len(bad_guidelines)} duplicate guidelines with conflicting content")
+
+        logger.info(f"After validation: {len(good_guidelines)} valid guidelines")
+
+        # Step 2: Optionally use LLM to enrich guidelines with examples
+        # (This would be implemented if use_llm=True)
+        if use_llm:
+            logger.info("LLM parsing is enabled but not yet implemented - using raw guidelines")
+            # TODO: Implement LLM parsing step similar to parse_guidelines_with_llm.py
+
+        # Step 3: Sync to database
+        seen_guideline_ids: set[str] = set()
+        files_with_guidelines: set[str] = set()
+
+        for parsed in good_guidelines:
+            seen_guideline_ids.add(parsed.id)
+            files_with_guidelines.add(parsed.source_file_path)
+
+            # Compute hash of the new content
+            new_hash = self.compute_content_hash(parsed.text)
+
+            # Extract a title from the text (first line or first N chars)
+            title_lines = parsed.text.strip().split("\n")
+            title = title_lines[0][:100] if title_lines else "Untitled Guideline"
+            # Clean up any remaining requirement tags in title
+            title = re.sub(r"(DO|YOU SHOULD|YOU MAY|DO NOT|YOU SHOULD NOT)\s*", "", title).strip()
+
+            # Check if guideline exists and compare hash
+            try:
+                existing = self._db.guidelines.get(parsed.id)
+                existing_hash = existing.get("content_hash")
+
+                if existing_hash == new_hash:
+                    result.guidelines_unchanged.append(parsed.id)
+                    continue
+
+                # Content changed - update
+                if not dry_run:
+                    guideline = Guideline(
+                        id=parsed.id,
+                        title=title,
+                        content=parsed.text,
+                        language=parsed.language,
+                        content_hash=new_hash,
+                        source_file_path=parsed.source_file_path,
+                        source_commit_sha=current_sha,
+                        last_synced_at=datetime.now(timezone.utc),
+                        # Preserve existing relationships
+                        related_guidelines=existing.get("related_guidelines", []),
+                        related_examples=existing.get("related_examples", []),
+                        related_memories=existing.get("related_memories", []),
+                        tags=existing.get("tags"),
+                    )
+                    self._db.guidelines.upsert(parsed.id, data=guideline, run_indexer=False)
+                result.guidelines_updated.append(parsed.id)
+
+            except Exception:
+                # Guideline doesn't exist - create
+                if not dry_run:
+                    guideline = Guideline(
+                        id=parsed.id,
+                        title=title,
+                        content=parsed.text,
+                        language=parsed.language,
+                        content_hash=new_hash,
+                        source_file_path=parsed.source_file_path,
+                        source_commit_sha=current_sha,
+                        last_synced_at=datetime.now(timezone.utc),
+                    )
+                    self._db.guidelines.create(parsed.id, data=guideline, run_indexer=False)
+                result.guidelines_created.append(parsed.id)
+
+        # Handle deletions: find guidelines that were in processed files but are no longer present
+        for file_path in files_with_guidelines:
             try:
                 # Query existing guidelines from this file
                 query = f"SELECT c.id FROM c WHERE c.source_file_path = '{file_path}' AND (NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false)"
@@ -396,17 +767,17 @@ class GuidelineIngestor:
                 )
 
                 for item in existing_items:
-                    if item["id"] not in seen_ids:
+                    if item["id"] not in seen_guideline_ids:
                         if not dry_run:
                             self._db.guidelines.delete(item["id"], run_indexer=False)
-                        result.deleted.append(item["id"])
+                        result.guidelines_deleted.append(item["id"])
 
             except Exception as e:
                 logger.error(f"Error handling deletions for {file_path}: {e}")
                 result.errors.append(f"deletion check {file_path}: {e}")
 
         # Run indexer once at the end (if not dry run)
-        if not dry_run and (result.created or result.updated or result.deleted):
+        if not dry_run and (result.guidelines_created or result.guidelines_updated or result.guidelines_deleted):
             logger.info("Running search indexer...")
             SearchManager.run_indexers(["guidelines"])
 

@@ -203,6 +203,28 @@
     },
     {
       "repository": {
+        "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/internal.wiki",
+        "branch": "wikiMaster",
+        "authType": "local",
+        "localPathEnv": "AZURE_SDK_WIKI_PATH"
+      },
+      "paths": [
+        {
+          "description": "Testing Guidelines for Azure SDK - main page",
+          "path": "/Engineering-System/Testing-Guidelines.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
+        },
+        {
+          "description": "Azure DevOps Pipeline Guidance - main page",
+          "path": "/Engineering-System/Pipelines/Azure-DevOps-Pipeline-Guidance.md",
+          "folder": "azure-sdk-internal-wiki",
+          "relativeByRepoPath": true
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/azure-sdk.git",
         "branch": "main",
         "authType": "public"

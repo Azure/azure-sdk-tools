@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Attributes;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
@@ -9,7 +8,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
     {
         private SdkLanguage _language = SdkLanguage.Unknown;
 
-        [Telemetry]
         [JsonPropertyName("language")]
         public SdkLanguage Language
         {
@@ -29,10 +27,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         }
 
         /// <summary>
-        /// The package name, within the package ecosystem (ie: azure-core, @azure/core, etc..). 
+        /// The package name, within the package ecosystem (ie: azure-core, @azure/core, etc..).
         /// Go uses the sub-path as the package name (sdk/azcore, sdk/resourcemanager/msi/armmsi).
         /// </summary>
-        [Telemetry]
         [JsonPropertyName("package_name")]
         public string? PackageName { get; set; }
 
@@ -40,10 +37,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         public string? DisplayName { get; set; }
         [JsonPropertyName("version")]
         public string? Version { get; set; }
-        [Telemetry]
         [JsonPropertyName("package_type")]
         public SdkType PackageType { get; set; }
-        [Telemetry]
         [JsonPropertyName("typespec_project")]
         public string? TypeSpecProject { get; set; }
         [JsonPropertyName("sdk_repo")]

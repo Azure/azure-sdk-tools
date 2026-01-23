@@ -77,6 +77,34 @@ If you need to retrieve comments from APIView, you can use the following command
 
 This command retrieves comments from APIView for a specific review ID. You can specify the environment (production or staging) to get the comments from the appropriate APIView instance, but the default is production.
 
+### Resolving Package Information
+
+`avc apiview resolve-package --package <PACKAGE_DESCRIPTION> --language <LANGUAGE> [--version <VERSION>] [--environment "production"|"staging"]`
+
+This command resolves package information from a package description and language. It uses a multi-stage matching strategy (exact match → LLM fallback):
+1. **Exact match**: Searches for packages that exactly match the description (case-insensitive)
+2. **LLM-powered matching (fallback)**: If no exact match is found, retrieves all packages for the language and uses an LLM to find the best semantic match
+
+Returns:
+- The actual package name
+- The review ID (can be used with ApiViewClient to get revisions)
+- Language and version information
+
+Note: To get the actual revision content, use the returned `review_id` with the `ApiViewClient.get_revision_text()` method.
+
+Examples:
+```bash
+# Get latest revision for azure-core in Python
+avc apiview resolve-package --package azure-core --language python
+
+# Get specific version
+avc apiview resolve-package --package azure-storage-blob --language python --version 12.19.0
+
+# Use natural language descriptions - LLM will find the best match
+avc apiview resolve-package --package "storage blobs" --language python
+avc apiview resolve-package --package "cosmos database" --language python
+```
+
 If you need RBAC permissions to access CosmosDB, you can run the following script:
 `python scripts\apiview_permissions.py`
 

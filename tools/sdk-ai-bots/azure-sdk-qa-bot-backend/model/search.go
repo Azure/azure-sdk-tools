@@ -294,6 +294,10 @@ func GetIndexLink(chunk Index) string {
 		return "https://github.com/Azure/azure-sdk-for-js/wiki/" + path
 	case Source_AzureSDKForNetDocs:
 		return "https://github.com/Azure/azure-sdk-for-net/blob/main/" + path
+	case Source_AzureSDKInternalWiki:
+		path = TrimFileFormat(path)
+		wikiPath := strings.ReplaceAll(path, "#", "/")
+		return "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=/" + wikiPath
 	default:
 		return ""
 	}

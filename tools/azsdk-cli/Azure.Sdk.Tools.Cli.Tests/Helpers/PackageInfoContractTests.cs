@@ -58,9 +58,28 @@ public class PackageInfoContractTests
         File.WriteAllText(fullPath, content);
     }
 
-    private void SetupDotNetPackage(string packagePath, string version)
+    private void SetupDotNetPackage(string packagePath, string packageName, string version, SdkType sdkType)
     {
-        CreateTestFile(packagePath, "src/test.csproj", $"<Project><PropertyGroup><Version>{version}</Version></PropertyGroup></Project>");
+        var sdkTypeValue = sdkType switch
+        {
+            SdkType.Dataplane => "client",
+            SdkType.Management => "mgmt",
+            SdkType.Functions => "functions",
+            _ => "client"
+        };
+
+        var csprojContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  
+  <Target Name=""GetPackageInfo"" Returns=""@(PackageInfoItem)"">
+    <ItemGroup>
+      <PackageInfoItem Include=""'$(MSBuildProjectDirectory)' 'testservice' '{packageName}' '{version}' '{sdkTypeValue}' 'true' 'bin/Release/net8.0' 'false'"" />
+    </ItemGroup>
+  </Target>
+</Project>";
+        CreateTestFile(packagePath, $"src/{packageName}.csproj", csprojContent);
     }
 
     private void SetupJavaPackage(string packagePath, string artifactId, string version)
@@ -124,7 +143,7 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
         switch (language)
         {
             case SdkLanguage.DotNet:
-                SetupDotNetPackage(packagePath, version);
+                SetupDotNetPackage(packagePath, packageName, version, sdkType);
                 break;
             case SdkLanguage.Java:
                 SetupJavaPackage(packagePath, packageName, version);
@@ -182,6 +201,11 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
         var (pkgPath, gitHelper, outputHelper, processHelper, powershellHelper, microAgentMock, npxHelper, pythonHelper, commonValidationHelper) = CreateSdkPackage(servicePath, package);
 
         SetupPackageForLanguage(language, pkgPath, package, expectedVersion, SdkType.Unknown);
+
+        if (language == SdkLanguage.DotNet)
+        {
+            processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+        }
 
         if (language == SdkLanguage.Go)
         {

@@ -58,6 +58,7 @@ class AzureBotReferenceEvaluator:
                 if (expected_ref["title"] == actual_ref["title"] and self._normalize_url(expected_ref["link"]) == self._normalize_url(actual_ref["link"])):
                     expected_in_actual.append(expected_ref)
                     actual_in_expected.append(actual_ref)
+                    break  # Break inner loop (actual_ref loop) once a match is found for the current expected_ref
 
         exact_matches = expected_in_actual
         #missing_refs = expected - exact_matches
@@ -88,18 +89,16 @@ class AzureBotReferenceEvaluator:
             result[f"{base_key}_exact_matches"] = list(exact_matches)
             result[f"{base_key}_unexpected_refs"] = list(unexpected_refs)
             result[f"{base_key}_missing_refs"] = list(missing_refs)
-        else:
-            result[f"{base_key}"] = reference_match_score
         
-        result_key = f"{base_key}_result"
-        if self._higher_is_better:
-            if float(reference_match_score) >= self._threshold:
-                result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
+            result_key = f"{base_key}_result"
+            if self._higher_is_better:
+                if float(reference_match_score) >= self._threshold:
+                    result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
+                else:
+                    result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
             else:
-                result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
-        else:
-            if float(reference_match_score) <= self._threshold:
-                result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
-            else:
-                result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
+                if float(reference_match_score) <= self._threshold:
+                    result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
+                else:
+                    result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
         return result

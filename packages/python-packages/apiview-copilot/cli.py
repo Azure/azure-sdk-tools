@@ -732,6 +732,8 @@ def db_ingest_guidelines(
     dry_run: bool = False,
     force: bool = False,
     language_filter: Optional[str] = None,
+    base_sha: Optional[str] = None,
+    target_sha: Optional[str] = None,
 ):
     """
     Ingest guidelines from the azure-sdk repository into the knowledge base.
@@ -746,6 +748,8 @@ def db_ingest_guidelines(
         dry_run=dry_run,
         force=force,
         language_filter=language_filter,
+        base_sha=base_sha,
+        target_sha=target_sha,
     )
 
     # Print detailed results
@@ -1532,6 +1536,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Only process guidelines for this language (e.g., 'python', 'java').",
                 options_list=["--language", "-l"],
                 choices=list(SUPPORTED_LANGUAGES) + ["general"],
+            )
+            ac.argument(
+                "base_sha",
+                type=str,
+                help="The baseline commit SHA to compare against. If not provided, uses the last synced SHA from AppConfig.",
+                options_list=["--base-sha", "-b"],
+            )
+            ac.argument(
+                "target_sha",
+                type=str,
+                help="The target commit SHA to sync to. If not provided, uses the latest commit on main.",
+                options_list=["--target-sha", "-t"],
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(

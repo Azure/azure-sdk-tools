@@ -89,6 +89,7 @@ public class Program
             builder.Services.ConfigureMcpLogging();
             builder.Services.Configure<McpServerOptions>(options =>
             {
+                // BASELINE TEST: Temporarily disabled to measure LLM tool selection without instructions
                 options.ServerInstructions = LoadServerInstructions();
             });
             builder.Services

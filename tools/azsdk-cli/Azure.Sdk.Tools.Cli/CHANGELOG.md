@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added a new CLI command to update the package release status in release plan.
+
 ### Breaking Changes
 
 ### Bugs Fixed

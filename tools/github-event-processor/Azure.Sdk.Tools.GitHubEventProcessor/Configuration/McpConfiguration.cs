@@ -7,7 +7,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
 {
     /// <summary>
     /// Configuration service for MCP-specific settings loaded from Azure App Configuration.
-    /// Settings are stored in Azure App Config with the format: "microsoft/mcp:{settingName}"
     /// </summary>
     public class McpConfiguration
     {
@@ -21,8 +20,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
 
         /// <summary>
         /// Gets the mapping of server labels to their corresponding GitHub team mentions.
-        /// Configuration key: "microsoft/mcp:ServerTeamMappings" 
-        /// Expected format: "server-Azure.Mcp=@microsoft/azure-mcp;server-Fabric.Mcp=@microsoft/fabric-mcp"
         /// </summary>
         public Dictionary<string, string> GetServerTeamMappings()
         {
@@ -36,7 +33,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
                 return mappings;
             }
 
-            // Parse format: "server-Azure.Mcp=@microsoft/azure-mcp;server-Fabric.Mcp=@microsoft/fabric-mcp"
             var pairs = configValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
             foreach (var pair in pairs)
             {
@@ -54,8 +50,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
         }
 
         /// <summary>
-        /// Gets the team mention for a specific server label.
-        /// Returns null if no mapping exists.
+        /// Gets the team mention for a specific server label. Returns null if no mapping exists.
         /// </summary>
         public string? GetTeamMentionForServerLabel(string serverLabel)
         {

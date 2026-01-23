@@ -14,7 +14,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenAI;
-using OpenAI.Chat;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -70,12 +69,6 @@ var host = new HostBuilder()
                     Endpoint = new Uri($"{config.OpenAIEndpoint.TrimEnd('/')}/openai/v1/")
                 }
             );
-        });
-
-        services.AddSingleton<ChatClient>(sp =>
-        {
-            var openAIClient = sp.GetRequiredService<OpenAIClient>();
-            return openAIClient.GetChatClient(config.LabelModelName);
         });
 
         services.AddSingleton<BlobServiceClient>(sp =>

@@ -28,12 +28,11 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
             yield return new InputFieldMappingEntry("Tool") { Source = "/document/Tool" };
         }
 
-        // Issue retrieval configuration
         public ItemStateFilter IssueStateFilter => ItemStateFilter.All;
         public IEnumerable<string> RequiredLabels => Enumerable.Empty<string>();
         public int MinCommentLength => DefaultMinCommentLength;
-         // MCP doesn't fetch comments currently
         public bool IncludeComments => false;
+        public bool SkipPullRequests => true;
 
         public (string? primary, string? secondary) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels)
         {
@@ -46,7 +45,7 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
             return (serverLabel, toolLabel);
         }
 
-        public bool ShouldSkipIssue(string? primaryLabel, string? secondaryLabel)
+        public bool ShouldSkipIssue(IReadOnlyList<Octokit.Label> labels, string? primaryLabel, string? secondaryLabel)
         {
             // MCP includes all issues regardless of labels
             return false;
@@ -66,9 +65,9 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
             content.Tool = secondaryLabel;
         }
 
-        public IEnumerable<string> GetCodeowners(IReadOnlyList<string> labels)
+        public IEnumerable<string> GetCodeowners(List<string> labels)
         {
-            return CodeOwnerUtils.GetCodeownersEntryForLabelList(labels.ToList()).ServiceOwners;
+            return CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).ServiceOwners;
         }
 
         private static bool IsServerLabel(Octokit.Label label) =>

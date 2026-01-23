@@ -18,7 +18,7 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         /// </summary>
         string DisplayName { get; }
 
-        // ===== Skillset/Indexing Configuration =====
+        // Skillset/Indexing Configuration
 
         /// <summary>
         /// Maximum page length for text chunking in the search skillset.
@@ -35,7 +35,7 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         /// </summary>
         IEnumerable<InputFieldMappingEntry> GetCustomFieldMappings();
 
-        // ===== Issue Retrieval Configuration =====
+        // Issue Retrieval Configuration
 
         /// <summary>
         /// Issue state filter for GitHub API requests.
@@ -58,15 +58,19 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         bool IncludeComments { get; }
 
         /// <summary>
-        /// Analyzes issue labels and returns primary and secondary label values.
-        /// Returns (primaryLabel, secondaryLabel) - field names depend on repo type.
+        /// Whether to skip pull requests when retrieving issues.
+        /// </summary>
+        bool SkipPullRequests { get; }
+
+        /// <summary>
+        /// Analyzes issue labels and returns primary and secondary label values. Returns (primaryLabel, secondaryLabel) - field names depend on repo type.
         /// </summary>
         (string? primary, string? secondary) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels);
 
         /// <summary>
-        /// Determines if an issue should be skipped based on label analysis results.
+        /// Determines if an issue should be skipped. Each repository type implements its own skip logic (e.g., Azure SDK checks for required labels).
         /// </summary>
-        bool ShouldSkipIssue(string? primaryLabel, string? secondaryLabel);
+        bool ShouldSkipIssue(IReadOnlyList<Octokit.Label> labels, string? primaryLabel, string? secondaryLabel);
 
         /// <summary>
         /// Formats the issue body for indexing.
@@ -81,6 +85,6 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         /// <summary>
         /// Gets the codeowners property name to use (e.g., AzureSdkOwners or ServiceOwners).
         /// </summary>
-        IEnumerable<string> GetCodeowners(IReadOnlyList<string> labels);
+        IEnumerable<string> GetCodeowners(List<string> labels);
     }
 }

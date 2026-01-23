@@ -6,14 +6,10 @@ using System.Collections.Generic;
 
 namespace IssueLabelerService
 {
-    /// <summary>
-    /// Provides tool label descriptions for MCP issue classification.
-    /// </summary>
     internal static class McpToolDescription
     {
         /// <summary>
-        /// Static dictionary of tool label descriptions.
-        /// This provides semantic context to the LLM about what each label means.
+        /// Static dictionary of tool label descriptions. This provides semantic context to the LLM about what each label means.
         /// </summary>
         public static Dictionary<string, string> ToolDescriptions { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {

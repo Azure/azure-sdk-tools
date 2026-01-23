@@ -12,10 +12,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
-    /// <summary>
-    /// MCP-specific issue processing that extends the base IssueProcessing class.
-    /// Only InitialIssueTriage is overridden - all other rules use the base implementation.
-    /// </summary>
     public class McpIssueProcessing : IssueProcessing
     {
         private readonly ILogger<McpIssueProcessing> _logger;
@@ -26,11 +22,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             _logger = logger;
             _mcpConfiguration = mcpConfiguration;
         }
-
-        /// <summary>
-        /// MCP-specific Initial Issue Triage implementation.
-        /// Overrides the base SDK logic with MCP-specific labeling (server/tool labels) and CODEOWNERS handling.
-        /// </summary>
+        
         public override async Task InitialIssueTriage(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
 

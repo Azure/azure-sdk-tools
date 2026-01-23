@@ -37,16 +37,9 @@ namespace SearchIndexCreator
         {
             Console.WriteLine($"Retrieving content for {repoOwner}/{_repo} ({_repoConfig.DisplayName} repository)...");
 
-            try
-            {
-                var codeownersContents = await _client.Repository.Content.GetAllContents(repoOwner, _repo, ".github/CODEOWNERS");
-                CodeOwnerUtils.codeOwnersFilePathOverride = codeownersContents[0].DownloadUrl;
-                Console.WriteLine("CODEOWNERS file loaded.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Warning: Could not load CODEOWNERS: {ex.Message}");
-            }
+            var codeownersContents = await _client.Repository.Content.GetAllContents(repoOwner, _repo, ".github/CODEOWNERS");
+            CodeOwnerUtils.codeOwnersFilePathOverride = codeownersContents[0].DownloadUrl;
+            Console.WriteLine("CODEOWNERS file loaded.");
 
             var issues = await RetrieveAllIssuesAsync(repoOwner);
             var documents = await RetrieveAllDocumentsAsync(repoOwner);
@@ -207,9 +200,9 @@ namespace SearchIndexCreator
             var processedCount = 0;
             foreach (var issue in issues)
             {
-                if (issue.PullRequest != null)
+                if (_repoConfig.SkipPullRequests && issue.PullRequest != null)
                 {
-                    continue; // Skip pull requests
+                    continue;
                 }
 
                 processedCount++;
@@ -220,7 +213,7 @@ namespace SearchIndexCreator
 
                 var (primaryLabel, secondaryLabel) = _repoConfig.AnalyzeLabels(issue.Labels);
 
-                if (_repoConfig.ShouldSkipIssue(primaryLabel, secondaryLabel))
+                if (_repoConfig.ShouldSkipIssue(issue.Labels, primaryLabel, secondaryLabel))
                 {
                     continue;
                 }

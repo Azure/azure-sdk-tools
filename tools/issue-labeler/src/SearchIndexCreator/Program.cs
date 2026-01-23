@@ -69,9 +69,7 @@ namespace SearchIndexCreator
             // 1. Retrieve all issues from a repository
             var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
             var repository = config["repo"];
-            var repoOwner = repository?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true 
-                ? "microsoft" 
-                : "Azure";
+            var repoOwner = GetRepositoryOwner(repository);
             var issueTriageContent = await issueTriageContentRetrieval.RetrieveContent(repoOwner);
             Console.WriteLine($"Retrieved {issueTriageContent.Count} search contents from the repository.");
 
@@ -90,6 +88,14 @@ namespace SearchIndexCreator
             var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), credential);
             await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
         }
+
+        private static string GetRepositoryOwner(string repository)
+        {
+            return repository?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true
+                ? "microsoft"
+                : "Azure";
+        }
+
         private static async Task ProcessIssueExamples(IConfigurationSection config)
         {
             // Retrieve examples of issues for testing from a repository
@@ -126,9 +132,7 @@ namespace SearchIndexCreator
             var tokenAuth = new Credentials(config["GithubKey"]);
             var labelRetrieval = new LabelRetrieval(tokenAuth, config);
             var repo = config["repo"];
-            var repoOwner = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true 
-                ? "microsoft" 
-                : "Azure";
+            var repoOwner = GetRepositoryOwner(repo);
             await labelRetrieval.CreateOrRefreshLabels(repoOwner);
         }
 

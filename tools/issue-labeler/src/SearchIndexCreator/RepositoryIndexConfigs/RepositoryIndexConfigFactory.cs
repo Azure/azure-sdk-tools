@@ -3,16 +3,13 @@
 
 namespace SearchIndexCreator.RepositoryIndexConfigs
 {
-    /// <summary>
-    /// Factory for creating repository index configurations based on repository name.
-    /// </summary>
     public static class RepositoryIndexConfigFactory
     {
         /// <summary>
         /// Creates the appropriate repository index configuration based on the repository name.
         /// </summary>
         /// <param name="repoName">The repository name from configuration.</param>
-        /// <returns>The appropriate IRepositoryIndexConfig implementation.</returns>
+        /// <returns>The corresponding IRepositoryIndexConfig implementation.</returns>
         public static IRepositoryIndexConfig Create(string? repoName)
         {
             if (string.Equals(repoName, "mcp", StringComparison.OrdinalIgnoreCase))

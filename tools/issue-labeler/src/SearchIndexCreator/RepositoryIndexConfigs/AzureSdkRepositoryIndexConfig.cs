@@ -10,7 +10,6 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
 {
     /// <summary>
     /// Repository index configuration for Azure SDK repositories.
-    /// Uses Service/Category labels identified by color (pink/yellow).
     /// </summary>
     public class AzureSdkRepositoryIndexConfig : IRepositoryIndexConfig
     {
@@ -35,6 +34,7 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         public IEnumerable<string> RequiredLabels => new[] { "customer-reported", "issue-addressed" };
         public int MinCommentLength => DefaultMinCommentLength;
         public bool IncludeComments => true;
+        public bool SkipPullRequests => false;
 
         public (string? primary, string? secondary) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels)
         {
@@ -52,10 +52,15 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
             return (service?.Name, category?.Name);
         }
 
-        public bool ShouldSkipIssue(string? primaryLabel, string? secondaryLabel)
+        public bool ShouldSkipIssue(IReadOnlyList<Octokit.Label> labels, string? primaryLabel, string? secondaryLabel)
         {
-            // Azure SDK requires both service and category labels
-            return primaryLabel == null || secondaryLabel == null;
+            if (primaryLabel == null || secondaryLabel == null)
+                return true;
+
+            var hasCustomerReported = labels.Any(l => l.Name.Equals("customer-reported", StringComparison.OrdinalIgnoreCase));
+            var hasIssueAddressed = labels.Any(l => l.Name.Equals("issue-addressed", StringComparison.OrdinalIgnoreCase));
+
+            return !hasCustomerReported || !hasIssueAddressed;
         }
 
         public string FormatBody(Issue issue)
@@ -69,9 +74,9 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
             content.Category = secondaryLabel;
         }
 
-        public IEnumerable<string> GetCodeowners(IReadOnlyList<string> labels)
+        public IEnumerable<string> GetCodeowners(List<string> labels)
         {
-            return CodeOwnerUtils.GetCodeownersEntryForLabelList(labels.ToList()).AzureSdkOwners;
+            return CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).AzureSdkOwners;
         }
 
         private static bool IsServiceLabel(Octokit.Label label) =>
